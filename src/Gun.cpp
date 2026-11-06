@@ -3649,7 +3649,7 @@ namespace bo3z
 			for (auto& b : g_skyBeams) {
 				b.left -= a_delta;
 				if (!p || !proj || (b.next -= a_delta) > 0) continue;
-				b.next = 0.1f;
+				b.next = 0.0f;   // (Noah: "the beam of light from the sky is broken" - launched every tenth of a second it flickered in dashes: every frame now)
 				const RE::NiPoint3 from = b.at + RE::NiPoint3{ 25.0f, 0, 1700.0f };
 				RE::Projectile::ProjectileRot rot{ RE::NI_HALF_PI * 0.985f, 0.0f };   // (straight down out of the sky)
 				RE::Projectile::LaunchData ld(proj, p, from, rot);
@@ -3692,7 +3692,7 @@ namespace bo3z
 		// (Noah: the Alchemist's flasks "explode right in front of my face - there's no travel, it doesn't arc") a thrown
 		// flask is flown here: its model hung in the scene, carried along its arc under gravity, tumbling; it comes down on
 		// the first body or wall or ground its path crosses, and its burst is called there
-		struct Lobbed { Spellcraft::Fx fx; RE::ObjectRefHandle ref; RE::NiPoint3 p, v; float t = 0, spin = 12.0f, scale = 1.0f; std::function<void(const RE::NiPoint3&)> land; bool done = false; bool meteor = false; RE::NiPoint3 target; RE::NiMatrix3 turn; std::vector<std::pair<RE::ObjectRefHandle, FxPart>> trail; RE::ActorHandle chase; };
+		struct Lobbed { Spellcraft::Fx fx; RE::ObjectRefHandle ref; RE::NiPoint3 p, v; float t = 0, spin = 12.0f, scale = 1.0f; std::function<void(const RE::NiPoint3&)> land; bool done = false; bool meteor = false; RE::NiPoint3 target; RE::NiMatrix3 turn; std::vector<std::pair<RE::ObjectRefHandle, FxPart>> trail; RE::ActorHandle chase; float grav = 900.0f; };
 		std::vector<Lobbed> g_lobs;
 		void TickLobs(float a_delta)
 		{
@@ -3715,7 +3715,7 @@ namespace bo3z
 						const float k = std::min(1.0f, 5.0f * dt);
 						l.v = l.v + (want - l.v) * k;
 					}
-				} else l.v.z -= 900.0f * dt;
+				} else l.v.z -= l.grav * dt;
 				const RE::NiPoint3 next = l.p + l.v * dt;
 				RE::NiPoint3 hit = next;
 				bool down = l.t > 8.0f;
@@ -3781,7 +3781,7 @@ namespace bo3z
 			std::erase_if(g_lobs, [](const Lobbed& l) { return l.done; });
 			for (auto& [fn, at] : landed) if (fn) fn(at);
 		}
-		void  Lob(const std::string& a_model0, const RE::NiPoint3& a_from, const RE::NiPoint3& a_vel, float a_scale0, std::function<void(const RE::NiPoint3&)> a_land, float a_spin)
+		void  Lob(const std::string& a_model0, const RE::NiPoint3& a_from, const RE::NiPoint3& a_vel, float a_scale0, std::function<void(const RE::NiPoint3&)> a_land, float a_spin, float a_grav)
 		{
 			if (g_lobs.size() > 40) return;
 			Lobbed l;
@@ -3805,7 +3805,7 @@ namespace bo3z
 				if (tp.none || tp.blast >= 0 || !Spellcraft::LoadPath(tp.model)) continue;
 				if (auto r = PlaceAtPoint(ModelActivator(tp.model), a_from)) l.trail.push_back({ r->GetHandle(), tp }), WatchTint(r.get(), tp, true);
 			}
-			l.p = a_from, l.v = a_vel, l.scale = a_scale, l.spin = a_spin, l.land = std::move(a_land);
+			l.p = a_from, l.v = a_vel, l.scale = a_scale, l.spin = a_spin, l.land = std::move(a_land), l.grav = a_grav;
 			logger::info("lob: {} ({})", a_model, l.ref ? "placed" : "NOT PLACED");
 			g_lobs.push_back(std::move(l));
 		}

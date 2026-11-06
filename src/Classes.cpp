@@ -3019,8 +3019,10 @@ namespace bo3z::Classes
 		{
 			static constexpr const char* kModel[7] = { "fire", "frost", "shock", "poison", "sun", "blood", "philosopher" };
 			FlaskShot shot{ {}, a_el, a_tier, a_from, false, a_child, 0.0f };
+			// (Noah: "flasks are thrown faster and straighter so it's easier to land them on enemies") a flatter, quicker flight: a
+			// thrown flask falls at half the pull a stone would (a chain-reaction's child keeps the old arc)
 			Gun::Lob(std::string("CurseOfAlduin\\alchemist\\flask_") + kModel[a_el] + ".nif", a_from, a_vel, a_child ? 0.7f : 1.0f,
-				[shot](const RE::NiPoint3& at) { FlaskBurst(shot, at); });
+				[shot](const RE::NiPoint3& at) { FlaskBurst(shot, at); }, 12.0f, a_child ? 900.0f : 450.0f);
 		}
 		void FlaskBlast(int a_el, int a_tier, const RE::NiPoint3& a_at, float a_size, float a_share, float a_radius)
 		{
@@ -3345,9 +3347,9 @@ namespace bo3z::Classes
 					}
 				}
 			}
-			const float speed = el == 6 ? 1350.0f : 1500.0f;
-			LaunchFlask(el, t, from, aim * speed + RE::NiPoint3{ 0.0f, 0.0f, 260.0f }, false);
-			// (a little up: it arcs onto where you aim)
+			// (Noah: "faster and straighter") about twice as fast, barely lifted: it flies near where the crosshair points
+			const float speed = el == 6 ? 2500.0f : 2700.0f;
+			LaunchFlask(el, t, from, aim * speed + RE::NiPoint3{ 0.0f, 0.0f, 90.0f }, false);
 		}
 		int FlaskHeld(bool a_left)
 		{

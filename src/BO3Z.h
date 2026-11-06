@@ -839,7 +839,7 @@ namespace bo3z
 		void                  TickLooks(float a_delta);
 		void                  StartThrow(bool a_left, std::function<void()> a_release);  // the underhand throw on that arm; a_release at the top of the swing
 		bool                  Throwing();  // the Light Orb over your head, lit or put away
-		void                  Lob(const std::string& a_model, const RE::NiPoint3& a_from, const RE::NiPoint3& a_vel, float a_scale, std::function<void(const RE::NiPoint3&)> a_land, float a_spin = 12.0f);  // (a_spin 0: it flies nose first - a meteor)  // a thrown thing flown on its arc; a_land where it comes down
+		void                  Lob(const std::string& a_model, const RE::NiPoint3& a_from, const RE::NiPoint3& a_vel, float a_scale, std::function<void(const RE::NiPoint3&)> a_land, float a_spin = 12.0f, float a_grav = 900.0f);  // (a_spin 0: it flies nose first - a meteor)  // a thrown thing flown on its arc; a_land where it comes down
 		void                  Hazard(const std::string& a_model, const RE::NiPoint3& a_at, float a_scale, float a_life, float a_yaw = 0.0f);  // a model of light lingering a_life seconds where it's set (drawn as the flasks' ground fires are)
 		RE::ObjectRefHandle   PlaceAt(RE::TESBoundObject* a_obj, const RE::NiPoint3& a_at, float a_yaw);  // a placed object made at the point itself (its 3D drawn there, not made at the player and moved)
 		void                  BlackHole(const RE::NiPoint3& a_at, bool a_legendary);  // the Subsuming Vortex: a purple singularity pulls the dead in, then bursts

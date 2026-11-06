@@ -6428,9 +6428,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.QuestUpdateBaseInstance._alpha", RE::GFxValue(0.0));
 						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.QuestUpdateBaseInstance._visible", RE::GFxValue(false));
 						// and its crosshair to our dot
-						if (!Hud::kEdgeHud) {
-							hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.CrosshairInstance._alpha", RE::GFxValue(0.0));
-							hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.CrosshairAlert._alpha", RE::GFxValue(0.0));
+						// (Noah: "remove the crosshair dot from the gameplay UI" - then "I can see the base Skyrim crosshair icon") gone in
+						// the Edge UI too: SkyHUD's dot is off (skyhud.txt bDotCrosshair=0) and Skyrim's own reticle hidden here
+						for (const char* v : { "_root.HUDMovieBaseInstance.CrosshairInstance", "_root.HUDMovieBaseInstance.CrosshairAlert" }) {
+							hud->uiMovie->SetVariable((std::string(v) + "._alpha").c_str(), RE::GFxValue(0.0));
+							hud->uiMovie->SetVariable((std::string(v) + "._visible").c_str(), RE::GFxValue(false));
 						}
 						// (Noah: the arrow count sat behind our bow card) the altar's bows never run dry, so Skyrim's arrow line
 						// bottom-right goes while one is in hand; any other bow keeps it
