@@ -169,55 +169,49 @@ namespace Props
 	}
 	// the beam: segments of the element's beam (tools/gauntlet.py gauntlet_beam_<el>.nif, 64 units along +Y) laid end to
 	// end from the palm to where it strikes, each face-on to the camera; a flare at each end
-	struct GBeam { std::vector<Spellcraft::Fx> segs; int el = -1; Spellcraft::Fx f0, f1; };
+	// (seen in game: models hung on the scene's root were never drawn - the renderer drops them) each piece of the beam is a
+	// placed object wearing its model (WorldFx), posed every frame
+	struct GBeam { std::vector<WorldFx> segs; int el = -1; WorldFx f0, f1; bool f0on = false; };
 	GBeam g_gbeam;
+	constexpr float kGSeg = 256.0f;   // (tools/gauntlet.py: a beam segment's length along +Y)
 	void GBeamOff()
 	{
 		for (auto& f : g_gbeam.segs) f.Detach();
 		g_gbeam.segs.clear();
 		g_gbeam.f0.Detach(), g_gbeam.f1.Detach();
-		g_gbeam.f0 = {}, g_gbeam.f1 = {};
+		g_gbeam.f0 = WorldFx{}, g_gbeam.f1 = WorldFx{};
 		g_gbeam.el = -1;
 	}
 	void GBeamLay(int a_el, const RE::NiPoint3& a, const RE::NiPoint3& b, float w)
 	{
 		static constexpr const char* kName[6] = { "fire", "frost", "shock", "acid", "holy", "void" };
 		a_el = std::clamp(a_el, 0, 5);
+		const std::string seg = std::string("CurseOfAlduin\\alchemist\\gauntlet_beam_") + kName[a_el] + ".nif";
 		if (a_el != g_gbeam.el) {
 			GBeamOff();
 			g_gbeam.el = a_el;
-			g_gbeam.f0 = Spellcraft::Fx{ Spellcraft::LoadPath(std::string("CurseOfAlduin\\alchemist\\gauntlet_flare_") + kName[a_el] + ".nif") };
-			g_gbeam.f1 = Spellcraft::Fx{ Spellcraft::LoadPath(std::string("CurseOfAlduin\\alchemist\\gauntlet_flare_") + kName[a_el] + ".nif") };
+			g_gbeam.f0 = WorldFx{ std::string("CurseOfAlduin\\alchemist\\gauntlet_flare_") + kName[a_el] + ".nif" };
+			g_gbeam.f1 = WorldFx{ std::string("CurseOfAlduin\\alchemist\\gauntlet_flare_") + kName[a_el] + ".nif" };
 		}
-		auto* root = Spellcraft::WorldRoot();
-		if (!root) return;
 		const RE::NiPoint3 d = b - a;
 		const float len = d.Length();
-		const float step = Spellcraft::kSeg * w;
-		const int n = std::clamp(static_cast<int>(std::ceil(len / std::max(1.0f, step))), 1, 130);
-		while (static_cast<int>(g_gbeam.segs.size()) < n) {
-			Spellcraft::Fx f{ Spellcraft::LoadPath(std::string("CurseOfAlduin\\alchemist\\gauntlet_beam_") + kName[a_el] + ".nif") };
-			if (!f.obj) return;
-			f.Attach(root);
-			g_gbeam.segs.push_back(std::move(f));
-		}
+		const float step = kGSeg * w;
+		const int n = std::clamp(static_cast<int>(std::ceil(len / std::max(1.0f, step))), 1, 40);
+		while (static_cast<int>(g_gbeam.segs.size()) > n) { g_gbeam.segs.back().Detach(); g_gbeam.segs.pop_back(); }
+		while (static_cast<int>(g_gbeam.segs.size()) < n) g_gbeam.segs.emplace_back(seg);
 		RE::NiPoint3 prev = a;
-		for (int i = 0; i < static_cast<int>(g_gbeam.segs.size()); ++i) {
-			auto& sg = g_gbeam.segs[i];
-			if (i >= n) { sg.Show(false); continue; }
+		for (int i = 0; i < n; ++i) {
 			const RE::NiPoint3 next = a + d * (static_cast<float>(i + 1) / n);
-			sg.Show(true);
-			if (sg.obj && sg.obj->parent) {
-				// (the width kept: each segment is the beam's width w, its length its share - the model is scaled evenly, so the
-				// segments are laid at the width and as many as it takes)
-				sg.Place(prev, Spellcraft::FacingCam(next - prev, (prev + next) * 0.5f), std::max(0.01f, (next - prev).Length() / Spellcraft::kSeg));
-			}
+			g_gbeam.segs[i].Place(prev, Spellcraft::FacingCam(next - prev, (prev + next) * 0.5f), std::max(0.01f, (next - prev).Length() / kGSeg));
 			prev = next;
 		}
-		for (auto* f : { &g_gbeam.f0, &g_gbeam.f1 }) if (f->obj && f->obj->parent != root) f->Attach(root);
 		const float pulse = 1.0f + 0.12f * std::sin(static_cast<float>(Spellcraft::g_time) * 23.0f);
-		if (g_gbeam.f0.obj) g_gbeam.f0.Place(a, Spellcraft::FaceView(), 0.32f * w * pulse);
-		if (g_gbeam.f1.obj) g_gbeam.f1.Place(b, Spellcraft::FaceView(), 1.4f * w * pulse);
+		g_gbeam.f0.Place(a, Spellcraft::FaceView(), 0.32f * w * pulse);
+		g_gbeam.f1.Place(b, Spellcraft::FaceView(), 1.4f * w * pulse);
+		if (static float said = 0; (said -= 0.016f) <= 0) {
+			said = 1.0f;
+			logger::info("gauntlet beam: {} segments, {:.0f} long, drawn {}", n, len, g_gbeam.segs.empty() ? false : g_gbeam.segs[0].drawn);
+		}
 	}
 
 	void ChargedLook(int a_w);

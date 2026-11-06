@@ -759,7 +759,7 @@ def fx_tex():
 
 
 def build_beams():
-    """the beam, one model per element: a 64-unit segment along +Y, flat in its XY plane (src/WonderProps.inl lays them
+    """the beam, one model per element: a 256-unit segment along +Y, flat in its XY plane (src/WonderProps.inl lays them
     end to end from the palm, each turned face-on to the camera): the glow, the twisting strands and the core, all
     flowing away from the hand; and the flare (where it leaves the palm, and where it strikes): the orb's pulsing core
     and a glow, always facing you"""
@@ -770,7 +770,7 @@ def build_beams():
         for sh, t, w, col, sc, vs in (('BeamGlow', FX['beam_glow'], 15.0, c, 1.5, 0.45), ('BeamStrand', FX['beam_strand'], 11.0, pale, 2.2, 0.3),
                                         ('BeamCore', FX['beam_core'], 5.0, pale, 3.0, 0.6)):
             L.append(f'shape {sh} tex={t} color={col[0]:.2f},{col[1]:.2f},{col[2]:.2f},1 scale={sc} blend=add vscroll={vs}')
-            for X, Y, uu, vv in ((-w, 0, 0, 1), (w, 0, 1, 1), (w, 64, 1, 0), (-w, 64, 0, 0)):
+            for X, Y, uu, vv in ((-w, 0, 0, 4), (w, 0, 1, 4), (w, 256, 1, 0), (-w, 256, 0, 0)):   # (256 long: 4 turns of the texture)
                 L.append(f'v {X} {Y} 0 {uu} {vv}')
             L.extend(['t 0 1 2', 't 0 2 3'])
         (WORK / f'beam_{name}.job').write_text('\n'.join(fx_fix(L)) + '\n')

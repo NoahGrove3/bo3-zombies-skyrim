@@ -2811,7 +2811,8 @@ namespace bo3z
 		// the push, 2/3 how far below them, 4/5 how far out to the side, 6 the elbow straightened for the push, 7 how fully the
 		// hand is turned to its frame, 8 third person: the shoulder's height, 9 third person: farther out, 10 the arm's reach
 		// (0..1), 11 the charge's palm (0 up, 1 turned in), 12 the push's fingers (0 up .. 1 ahead)
-		float g_gbP[13] = { 26.0f, 46.0f, 17.0f, 6.0f, 3.0f, 8.0f, 0.45f, 1.0f, 112.0f, 14.0f, 1.0f, 1.0f, 0.25f };
+		float g_gbReach = 0.0f;
+		float g_gbP[13] = { 26.0f, 46.0f, 17.0f, 6.0f, 3.0f, 8.0f, 0.97f, 1.0f, 112.0f, 14.0f, 1.0f, 1.0f, 0.25f };
 		// a rotation matrix as an axis and an angle
 		bool AxisOf(const RE::NiMatrix3& m, RE::NiPoint3& a_axis, float& a_ang)
 		{
@@ -2877,10 +2878,21 @@ namespace bo3z
 			auto* fa = root->GetObjectByName(HandBone(L, "fa"));
 			auto* hand = root->GetObjectByName(HandBone(L, "hand"));
 			if (!ua || !fa || !hand) return;
-			// the elbow eased straighter for the push (first: the reach below then aims the straighter arm)
-			if (s > 0.01f && P[6] != 0.0f) {
-				RE::NiPoint3 hinge = BoneZ(ua).Cross(BoneZ(fa));
-				if (hinge.Length() > 0.05f) TurnBone(fa, AxisAngle(hinge * (1.0f / hinge.Length()), -P[6] * s * w));
+			// the elbow bent just so the hand can reach its mark (a two-bone reach: the bend from the arm's own lengths), then
+			// the arm aimed at it below. P[6]: how much of the arm's full length it may straighten to (the elbow never locks)
+			{
+				const RE::NiPoint3 v1 = fa->world.translate - ua->world.translate, v2 = hand->world.translate - fa->world.translate;
+				const float l1 = v1.Length(), l2 = v2.Length();
+				RE::NiPoint3 hinge = v1.Cross(v2);
+				if (l1 > 1e-3f && l2 > 1e-3f && hinge.Length() > 1e-4f) {
+					hinge = hinge * (1.0f / hinge.Length());
+					const float cur = std::acos(std::clamp(v1.Dot(v2) / (l1 * l2), -1.0f, 1.0f));
+					const float D = std::clamp((target - ua->world.translate).Length(), std::abs(l1 - l2) + 1.0f, (l1 + l2) * std::clamp(P[6], 0.5f, 0.995f));
+					const float inner = std::acos(std::clamp((l1 * l1 + l2 * l2 - D * D) / (2.0f * l1 * l2), -1.0f, 1.0f));
+					const float want = 3.14159265f - inner;
+					TurnBone(fa, AxisAngle(hinge, (want - cur) * w));
+					g_gbReach = l1 + l2;
+				}
 			}
 			{   // the arm swung so the hand reaches its mark
 				RE::NiPoint3 a = hand->world.translate - ua->world.translate, b = target - ua->world.translate;
@@ -2926,7 +2938,7 @@ namespace bo3z
 				auto cd = [&](const RE::NiPoint3& v) { return fmt::format("({:.2f},{:.2f},{:.2f})", v.Dot(r), v.Dot(f), v.Dot(u)); };
 				RE::NiPoint3 n, fz, c;
 				PalmNormal(root, L, n, fz, c);
-				logger::info("gauntlet pose: phase {} s {:.2f} w {:.2f} {} | hand {} target {} | palm {} fingers {}", gs.phase, s, w, first ? "1st" : "3rd",
+				logger::info("gauntlet pose: phase {} s {:.2f} w {:.2f} {} reach {:.0f} | hand {} target {} | palm {} fingers {}", gs.phase, s, w, first ? "1st" : "3rd", g_gbReach,
 					cs(hand->world.translate - eye), cs(target - eye), cd(n), cd(fz));
 			}
 		}
