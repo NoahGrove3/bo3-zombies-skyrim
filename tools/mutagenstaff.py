@@ -35,13 +35,13 @@ TOOLS = g.TOOLS
 ELS, ELC = g.ELS, g.ELC
 
 # the staff's stations along its axis (Z here, +Y in the game): the foot, the grip at 0, the head
-FOOT, SHAFT_TOP = -34.0, 57.0
-COLLAR = (56.0, 60.5)
-VIAL_RING = 3.05            # the vials' axis, out from the staff's
-VIAL_R, VIAL_Z = 0.62, (58.6, 64.4)
-ORB_C, ORB_R = 68.6, 2.75
-CAGE_R = 3.9
-TOP = 79.0
+FOOT, SHAFT_TOP = -34.0, 59.0
+# (Noah: "the staff head ... simpler with more detailed textures ... the vials to be on the staff shaft right under the head")
+VIAL_R, VIAL_Z = 0.6, (46.2, 52.0)    # the vials stand round the shaft just under the head, strapped to it
+VIAL_RING = 1.62                      # their axis, out from the staff's
+SOCKET = (57.5, 62.6)                 # the brass socket the orb sits in, on the shaft's top
+ORB_C, ORB_R = 65.4, 2.75
+TOP = ORB_C + ORB_R
 
 
 def shaft_r(z):
@@ -56,6 +56,34 @@ def lathe(prof, nc=40, u0=0.0, u1=1.0, v0=0.0, v1=1.0, cx=0.0, cy=0.0):
     return g.lathe_z(prof, cx, cy, nc, u0, u1, v0, v1)
 
 
+BRASS_TILE = 6.0   # (the brass sheet tiles every 6 units of surface: its detail at the same size on every part)
+
+
+def blathe(prof, nc=40, cx=0.0, cy=0.0):
+    """a turned brass part with its texture laid at true scale (u round its widest girth, v along its profile)"""
+    prof = np.asarray(prof, float)
+    P, N, UV, F = g.lathe_z(prof, cx, cy, nc, 0, 1, 0, 1)
+    circ = 2 * np.pi * max(0.2, float(prof[:, 1].max()))
+    L = np.concatenate([[0], np.cumsum(np.hypot(np.diff(prof[:, 0]), np.diff(prof[:, 1])))])
+    UV = UV.copy()
+    UV[:, 0] *= circ / BRASS_TILE
+    UV[:, 1] *= max(L[-1], 0.1) / BRASS_TILE
+    UV += np.random.default_rng(int(prof[0, 0] * 100) & 0xFFFF).random(2)   # (each part a different patch of the sheet)
+    return P, N, UV, F
+
+
+def btube(path, r, nseg=10):
+    """a brass rod or band along a path, its texture at true scale"""
+    P, N, UV, F = g.tube(path, r, nseg)
+    Ln = np.linalg.norm(np.diff(path, axis=0), axis=1).sum()
+    UV = UV.copy()
+    rr = float(np.max(r)) if np.ndim(r) else float(r)
+    UV[:, 0] *= 2 * np.pi * rr / BRASS_TILE
+    UV[:, 1] *= Ln / BRASS_TILE
+    UV += np.random.default_rng(int(Ln * 100) & 0xFFFF).random(2)
+    return P, N, UV, F
+
+
 def shaft(M):
     """the wood from the foot's shoe to the collar; UV u round, v up the wood sheet (one sheet over its length)"""
     zs = np.linspace(FOOT + 2.5, SHAFT_TOP, 90)
@@ -67,12 +95,12 @@ def bands(M):
     """the brass: the foot's pointed shoe, three bands, and the collars either side of the grip"""
     f0 = FOOT
     shoe = [(f0 - 1.2, 0.0), (f0 - 1.0, 0.25), (f0, 0.7), (f0 + 1.2, 1.12), (f0 + 2.4, 1.18), (f0 + 2.7, 1.08), (f0 + 2.8, 0.9)]
-    M.add('Brass', 'brass', *lathe(shoe, 32, 0.02, 0.3, 0.02, 0.05))
-    for k, zc in enumerate((-20.0, -10.5, 11.5, 28.0, 46.0)):
+    M.add('Brass', 'brass', *blathe(shoe, 32))
+    for k, zc in enumerate((-20.0, -10.5, 11.5, 28.0, 40.0)):
         r = float(shaft_r(zc))
         w = 0.6 if k in (1, 2) else 0.45
         prof = [(zc - w - 0.1, r - 0.02), (zc - w, r + 0.12), (zc - w * 0.4, r + 0.2), (zc, r + 0.16), (zc + w * 0.4, r + 0.2), (zc + w, r + 0.12), (zc + w + 0.1, r - 0.02)]
-        M.add('Brass', 'brass', *lathe(prof, 36, 0.02, 0.3, 0.06 + 0.04 * k, 0.09 + 0.04 * k))
+        M.add('Brass', 'brass', *blathe(prof, 36))
 
 
 PITCH = 1.15
@@ -95,7 +123,7 @@ def grip(M):
     M.add('Grip', 'grip', V.reshape(-1, 3), N.reshape(-1, 3), UV.reshape(-1, 2), grid_faces(nr, nc + 1))
 
 
-VIAL_TH = np.radians(np.arange(6) * 60.0 + 90.0)   # (the fire vial facing ahead of the staff's face: the thumb's side is free)
+VIAL_TH = np.radians(np.arange(6) * 60.0 + 90.0)
 
 
 def vial_xy(k):
@@ -103,24 +131,9 @@ def vial_xy(k):
     return VIAL_RING * math.cos(t), VIAL_RING * math.sin(t)
 
 
-def collar(M):
-    """the collar the vials stand on: a flared brass cup on the shaft's top, a ring of six sockets, a fluted rim"""
-    c0, c1 = COLLAR
-    prof = [(c0 - 0.4, float(shaft_r(c0)) - 0.02), (c0, float(shaft_r(c0)) + 0.18), (c0 + 0.6, 1.25), (c0 + 1.4, 2.1), (c0 + 2.2, 3.6),
-            (c0 + 2.5, 3.9), (c0 + 2.75, 3.95), (c0 + 2.95, 3.75), (c0 + 3.0, 3.2), (c0 + 3.05, 2.0), (c0 + 3.4, 1.6), (c0 + 4.5, 1.25), (c1, 1.1), (c1 + 0.05, 0.0)]
-    M.add('Brass', 'brass', *lathe(prof, 60, 0.02, 0.3, 0.3, 0.38))
-    # the vials' cups and clasps
-    z0, z1 = VIAL_Z
-    for k in range(6):
-        cx, cy = vial_xy(k)
-        cup = [(z0 - 0.5, 0.0), (z0 - 0.5, VIAL_R * 0.9), (z0 - 0.3, VIAL_R * 1.18), (z0 + 0.5, VIAL_R * 1.2), (z0 + 0.6, VIAL_R * 1.05)]
-        M.add('Brass', 'brass', *lathe(cup, 24, 0.02, 0.3, 0.42 + 0.03 * k, 0.44 + 0.03 * k, cx, cy))
-        clasp = [(z0 + 2.4, VIAL_R * 1.02), (z0 + 2.5, VIAL_R * 1.14), (z0 + 2.9, VIAL_R * 1.14), (z0 + 3.0, VIAL_R * 1.02)]
-        M.add('Brass', 'brass', *lathe(clasp, 24, 0.02, 0.3, 0.6 + 0.02 * k, 0.61 + 0.02 * k, cx, cy))
-
-
 def vials(M):
-    """six glass vials (the liquid is an effect, skinned: fx below); a brass cap and spigot on each. Returns the spigots"""
+    """six glass vials standing round the shaft under the head (the liquid is an effect, skinned: fx below), each in a
+    brass cup with a cap and spigot; two brass bands round them all strap them to the staff. Returns the spigots"""
     tops = []
     z0, z1 = VIAL_Z
     R = VIAL_R
@@ -130,67 +143,126 @@ def vials(M):
                [(z, R) for z in np.linspace(z0 + 0.7, z1 - 1.0, 6)] + \
                [(z1 - 0.75, R * 0.92), (z1 - 0.55, R * 0.62), (z1 - 0.35, R * 0.58), (z1 - 0.25, R * 0.7), (z1 - 0.12, R * 0.7), (z1 - 0.06, R * 0.55)]
         M.add('Glass', 'glass', *lathe(prof, 28, cx=cx, cy=cy))
-        cp = [(z1 - 0.28, R * 0.74), (z1 - 0.28, R * 0.82), (z1 + 0.07, R * 0.82), (z1 + 0.1, R * 0.78), (z1 + 0.28, R * 0.6),
+        cp = [(z1 - 0.28, R * 0.74), (z1 - 0.28, R * 0.84), (z1 + 0.07, R * 0.84), (z1 + 0.1, R * 0.78), (z1 + 0.28, R * 0.6),
               (z1 + 0.4, R * 0.3), (z1 + 0.65, R * 0.22), (z1 + 0.85, R * 0.25), (z1 + 0.88, 0.0)]
-        M.add('Brass', 'brass', *lathe(cp, 24, 0.02, 0.3, 0.05 + 0.05 * k, 0.08 + 0.05 * k, cx, cy))
+        M.add('Brass', 'brass', *blathe(cp, 24, cx, cy))
+        cup = [(z0 - 0.45, 0.0), (z0 - 0.45, R * 0.9), (z0 - 0.3, R * 1.16), (z0 + 0.45, R * 1.18), (z0 + 0.55, R * 1.04)]
+        M.add('Brass', 'brass', *blathe(cup, 24, cx, cy))
         tops.append(np.array([cx, cy, z1 + 0.84]))
+    # the shelf the cups sit on, and the two straps round the vials
+    zs = z0 - 0.45
+    shelf = [(zs - 0.9, float(shaft_r(zs - 0.9)) - 0.02), (zs - 0.6, float(shaft_r(zs - 0.6)) + 0.16), (zs - 0.15, VIAL_RING + R * 1.05),
+             (zs, VIAL_RING + R * 1.25), (zs + 0.12, VIAL_RING + R * 1.2), (zs + 0.14, float(shaft_r(zs)) + 0.05)]
+    M.add('Brass', 'brass', *blathe(shelf, 60))
+    for zc in (z0 + 1.3, z1 - 1.35):
+        a = np.linspace(0, 2 * np.pi, 145)
+        rr = VIAL_RING + R + 0.05 - 0.22 * (0.5 + 0.5 * np.cos(6 * (a - VIAL_TH[0]) + np.pi))   # (pulled in between the vials)
+        band = np.stack([rr * np.cos(a), rr * np.sin(a), np.full_like(a, zc)], -1)
+        M.add('Brass', 'brass', *btube(band, 0.13, 8))
+        for zz in (zc - 0.17, zc + 0.17):
+            M.add('Brass', 'brass', *btube(np.stack([(rr + 0.02) * np.cos(a), (rr + 0.02) * np.sin(a), np.full_like(a, zz)], -1), 0.05, 6))
     return tops
 
 
-def cage(M):
-    """six brass ribs from the collar's rim up round the orb (between the vials) to the finial; a ring at the orb's waist;
-    the finial: a spire with a bead"""
-    base_z = COLLAR[0] + 2.9
-    for k in range(6):
-        t = VIAL_TH[k] + math.radians(30)
+def socket(M):
+    """the head: a brass socket swelling from the shaft's top - a knop, a fluted neck, a cup - and three claws holding
+    the orb; simple and solid"""
+    s0, s1 = SOCKET
+    r0 = float(shaft_r(s0))
+    prof = [(s0 - 0.6, r0 - 0.02), (s0 - 0.4, r0 + 0.18), (s0 + 0.1, r0 + 0.25), (s0 + 0.5, 1.45), (s0 + 0.95, 1.55), (s0 + 1.4, 1.15),
+            (s0 + 2.0, 0.95), (s0 + 2.6, 1.0), (s0 + 3.0, 1.35), (s0 + 3.6, 2.0), (s1 - 0.35, 2.25), (s1, 2.2), (s1 + 0.05, 1.9), (s1 - 0.2, 1.6), (s1 - 0.25, 0.0)]
+    M.add('Brass', 'brass', *blathe(prof, 56))
+    for k in range(3):
+        t = math.radians(30 + 120 * k)
         pts = []
-        for s in np.linspace(0, 1, 26):
-            z = base_z + (TOP - 4.2 - base_z) * s
-            rr = 3.75 * (1 - s) ** 0.35 * (0.35 + 0.65 * math.sin(math.pi * min(1.0, s * 1.05)) ** 0.7) + 0.0
-            rr = max(rr, 0.35) if s < 0.98 else 0.3
-            rr = rr + 1.0 * math.sin(math.pi * s) ** 1.5 * (CAGE_R - 3.0)
-            pts.append((rr * math.cos(t), rr * math.sin(t), z))
-        pts = g.spline(np.array(pts), 60)
-        M.add('Brass', 'brass', *g.tube(pts, np.linspace(0.26, 0.17, 60), 10, vrange=(0.7, 0.74), urange=(0.05, 0.12)))
-    # the ring at the orb's waist, and a smaller one above
-    for zc, rr in ((ORB_C, ORB_R + 0.35), (ORB_C + 2.6, 1.9)):
-        a = np.linspace(0, 2 * np.pi, 97)
-        ring = np.stack([rr * np.cos(a), rr * np.sin(a), np.full_like(a, zc)], -1)
-        M.add('Brass', 'brass', *g.tube(ring, 0.14, 8, vrange=(0.76, 0.78), urange=(0.05, 0.4)))
-    fz = TOP - 4.4
-    spire = [(fz, 0.0), (fz, 0.9), (fz + 0.5, 1.05), (fz + 0.9, 0.8), (fz + 1.6, 0.42), (fz + 2.0, 0.55), (fz + 2.4, 0.42), (fz + 3.4, 0.18), (TOP, 0.0)]
-    M.add('Brass', 'brass', *lathe(spire, 28, 0.02, 0.3, 0.8, 0.84))
-    bead = [(fz + 2.2 + 0.45 * math.cos(b), 0.45 * math.sin(b)) for b in np.linspace(np.pi, 0, 12)]
-    M.add('Brass', 'brass', *lathe(bead, 20, 0.02, 0.3, 0.85, 0.86))
+        for b in np.linspace(math.radians(150), math.radians(62), 14):
+            rr = ORB_R + 0.04 + 0.16 * (1 - (b - math.radians(62)) / math.radians(88)) ** 2   # (hugging the glass, tightest at the tip)
+            pts.append((rr * math.sin(b) * math.cos(t), rr * math.sin(b) * math.sin(t), ORB_C + rr * math.cos(b)))
+        pts = np.array([(2.05 * math.cos(t), 2.05 * math.sin(t), s1 - 0.2)] + pts)
+        pts = g.spline(pts, 30)
+        M.add('Brass', 'brass', *btube(pts, np.linspace(0.32, 0.12, 30), 10))
+        tip = pts[-1]
+        M.add('Brass', 'brass', *blathe([(tip[2] - 0.18, 0.0), (tip[2] - 0.12, 0.17), (tip[2], 0.2), (tip[2] + 0.12, 0.15), (tip[2] + 0.18, 0.0)], 14, tip[0], tip[1]))
 
 
 def orb(M):
-    """the glass orb, seated on a cup at the collar's top"""
-    prof = [(ORB_C - ORB_R * math.cos(a), ORB_R * math.sin(a)) for a in np.linspace(0, np.pi, 26)]
-    M.add('Glass', 'orbglass', *lathe(prof, 48))
-    zb = ORB_C - ORB_R
-    seat = [(COLLAR[1] - 0.2, 1.0), (COLLAR[1] + 0.4, 0.62), (COLLAR[1] + 1.4, 0.5), (COLLAR[1] + 2.2, 0.62), (COLLAR[1] + 2.5, 0.5),
-            (zb - 0.9, 0.55), (zb - 0.3, 1.05), (zb + 0.25, 1.5), (zb + 0.55, 1.62), (zb + 0.62, 1.45)]   # (a slender stem, a ring knop, the orb's cup)
-    M.add('Brass', 'brass', *lathe(seat, 36, 0.02, 0.3, 0.88, 0.9))
+    prof = [(ORB_C - ORB_R * math.cos(a), ORB_R * math.sin(a)) for a in np.linspace(0, np.pi, 30)]
+    M.add('Glass', 'orbglass', *lathe(prof, 56))
 
 
 def tubes(M, tops):
-    """six glass tubes, each from its vial's spigot curving in and up into the orb's lower half; brass ferrules at both ends"""
+    """six glass tubes, each from its vial's spigot winding up the shaft a sixth of a turn into the socket's underside;
+    brass ferrules at both ends and a clip half way"""
     paths = []
+    s0 = SOCKET[0]
     for k in range(6):
         p0 = tops[k]
         t = VIAL_TH[k]
-        d = np.array([math.cos(t), math.sin(t), 0.0])
-        entry_dir = unit(np.array([d[0] * 0.75, d[1] * 0.75, -0.66]))
-        p3 = np.array([0, 0, ORB_C]) + entry_dir * (ORB_R + 0.05)
-        way = [p0, p0 + np.array([0, 0, 0.7]), p0 + d * 0.3 + np.array([0, 0, 1.6]), p3 + entry_dir * 1.0, p3]
-        path = g.spline(np.array(way), 40)
-        M.add('Tube', 'tubeglass', *g.tube(path, 0.2, 10))
-        for q in (2, len(path) - 3):
+        way = [p0, p0 + np.array([0, 0, 0.6])]
+        for f in np.linspace(0.15, 1.0, 5):
+            a = t + 0.5 * f
+            r = VIAL_RING - 0.25 * f + 0.15 * math.sin(math.pi * f)
+            way.append(np.array([r * math.cos(a), r * math.sin(a), p0[2] + 0.6 + (s0 + 0.35 - p0[2] - 0.6) * f]))
+        a = t + 0.5
+        way.append(np.array([1.25 * math.cos(a), 1.25 * math.sin(a), s0 + 0.6]))
+        path = g.spline(np.array(way), 46)
+        M.add('Tube', 'tubeglass', *g.tube(path, 0.17, 10))
+        for q in (2, 23, len(path) - 3):
             seg = path[max(0, q - 2):q + 3]
-            M.add('Brass', 'brass', *g.tube(seg, 0.27, 10, vrange=(0.97, 0.99), urange=(0.05, 0.12)))
+            M.add('Brass', 'brass', *btube(seg, 0.23, 10))
         paths.append(path)
     return paths
+
+
+def brass_tex():
+    """2048, tiling: aged brass - fine hand-hammered dimples, brushed lines, a tiling scroll of engraved vines, scratches,
+    dark grime and green verdigris settled in the low places, burnished bright on the high ones"""
+    S = 2048
+    v, u = (np.mgrid[0:S, 0:S].astype(np.float32) + 0.5) / S
+    d1, d2 = g.cells(512, 900, 101)
+    dimple = np.tile(np.clip(d1 / 14.0, 0, 1), (4, 4))
+    brushed = tileable(S, S, 1.1, 102, aniso=(1.0, 0.05))
+    fine = tileable(S, S, 0.5, 103)
+    big = tileable(S, S, 2.2, 104)
+    mid = tileable(S, S, 1.6, 105)
+    # engraved vines: a tiling sinuous scroll with curling leaves (periods that wrap)
+    vine = np.zeros((S, S), np.float32)
+    for row in range(4):
+        vc = (row + 0.5) / 4
+        y0 = vc + 0.035 * np.sin(2 * np.pi * u * 3 + row)
+        vine = np.maximum(vine, np.exp(-((v - y0) / 0.0028) ** 2))
+        for k in range(12):
+            uc = (k + 0.5 * (row % 2)) / 12
+            du = (u - uc + 0.5) % 1 - 0.5
+            yy = vc + 0.035 * np.sin(2 * np.pi * uc * 3 + row)
+            side = 1 if k % 2 else -1
+            th = np.arctan2(v - yy - side * 0.02, du)
+            rr = np.hypot(du, v - yy - side * 0.02)
+            spiral = np.exp(-((rr - (0.006 + 0.004 * ((th + np.pi) / (2 * np.pi)))) / 0.0022) ** 2) * (rr < 0.022)
+            vine = np.maximum(vine, spiral)
+    rngs = np.random.default_rng(106)
+    from PIL import Image as _I, ImageDraw as _D
+    sc = _I.new('L', (S, S), 0); dr = _D.Draw(sc)
+    for _ in range(1800):
+        x, y = rngs.random(2) * S; a = rngs.random() * math.pi; l = 6 + rngs.random() ** 2 * 90
+        for ox in (-S, 0, S):
+            for oy in (-S, 0, S):
+                dr.line([(x + ox, y + oy), (x + ox + math.cos(a) * l, y + oy + math.sin(a) * l)], fill=int(50 + 140 * rngs.random()), width=1)
+    scr = np.asarray(sc, np.float32) / 255
+    h = 0.35 * dimple + 0.25 * brushed + 0.15 * fine - 0.9 * vine - 0.3 * scr
+    low = np.clip((0.45 - (0.5 * dimple + 0.5 * big)) * 3, 0, 1) + 0.8 * vine
+    patina = np.clip((mid - 0.55) * 2.5, 0, 1) * np.clip(low * 1.5, 0, 1)
+    base = np.array([186, 140, 70], np.float32)
+    lum = 0.78 + 0.22 * (brushed - 0.5) + 0.25 * (big - 0.5) + 0.18 * dimple + 0.22 * scr
+    col = base * lum[..., None]
+    col = col * (1 - 0.55 * np.clip(low, 0, 1)[..., None]) + np.array([40, 30, 18]) * 0.55 * np.clip(low, 0, 1)[..., None]
+    col = col * (1 - 0.7 * patina[..., None]) + np.array([70, 112, 88]) * 0.7 * patina[..., None]
+    col = col * (1 - 0.6 * vine[..., None]) + np.array([34, 24, 14]) * 0.6 * vine[..., None]
+    D = g.save(col, 'mutagen_brass_d.dds')
+    nrm = height_to_normal(gaussian_filter(h, 0.8), 7.0)
+    spec = np.clip(190 + 50 * (dimple - 0.5) + 40 * scr - 140 * patina - 120 * np.clip(low, 0, 1), 0, 255)
+    N = g.save(np.dstack([nrm, spec]), 'mutagen_brass_n.dds', True)
+    return D, N
 
 
 # ------------------------------------------------------------------ textures
@@ -318,7 +390,7 @@ def fx_job(base, out, paths):
         skinned(f'VialBubbles{e}', [(zb, R * 0.8), (zt - 0.06, R * 0.8)], 1, f'tex={tex["bubbles"]} color={c[0]:.2f},{c[1]:.2f},{c[2]:.2f},1 scale=1.6 blend=add vscroll=-{1.8 + 0.23 * k:.2f}')
         card(f'VialGlow{e}', tex['glow'], np.array([cx, cy, (z0 + z1) / 2]), 1.7, f'{c[0]:.2f},{c[1]:.2f},{c[2]:.2f},0.5', 0.7)
     # motes of the six colours circling the head
-    for band, (rad, za, zb2, us, vs, alpha) in enumerate(((5.2, COLLAR[0] - 1.0, TOP - 3.0, 5.5, 14, 0.9), (6.6, COLLAR[0] + 1.0, TOP, -8.0, 21, 0.6))):
+    for band, (rad, za, zb2, us, vs, alpha) in enumerate(((4.2, SOCKET[0] + 1.0, TOP + 0.5, 5.5, 14, 0.9), (3.4, VIAL_Z[0] - 1.0, VIAL_Z[1] + 1.5, -8.0, 21, 0.6))):
         L.append(f'shape Motes{band} tex={tex["motes"]} color=1,1,1,{alpha} scale=1.7 blend=add uscroll={us} vscroll=-{vs}')
         nu, nv = 48, 10
         for i in range(nv + 1):
@@ -361,9 +433,9 @@ def turn_y(L):
 
 def build(tex):
     M = Mesh()
-    shaft(M); bands(M); grip(M); collar(M)
+    shaft(M); bands(M); grip(M)
     tops = vials(M)
-    cage(M); orb(M)
+    socket(M); orb(M)
     paths = tubes(M, tops)
     merged = {}
     for gname, m, V, N, UV, F in M.groups:
@@ -402,7 +474,7 @@ def build(tex):
 if __name__ == '__main__':
     WORK.mkdir(parents=True, exist_ok=True)
     tool('addprn')
-    tex = {'brass': g.brass_tex(), 'glass': g.glass_tex(), 'wood': wood_tex(), 'grip': grip_tex()}
+    tex = {'brass': brass_tex(), 'glass': g.glass_tex(), 'wood': wood_tex(), 'grip': grip_tex()}
     g.FX.update(g.fx_tex())
     build(tex)
     g.build_beams()
