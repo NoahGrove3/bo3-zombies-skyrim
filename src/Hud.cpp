@@ -50,6 +50,7 @@ namespace bo3z
 		ID3D11ShaderResourceView* g_menuFog = nullptr;  // a tileable fog layer that drifts over it
 		ID3D11ShaderResourceView* g_mapIcons = nullptr;  // the world map's marker icons, an 8x8 atlas (tools/mapicons.py)
 		ID3D11ShaderResourceView* g_essence = nullptr;  // the Cursed Essence emblem: 8x6 flipbook (tools/essence.py)
+		ID3D11ShaderResourceView* g_moon = nullptr;     // the night box's blood moon: 8x6 flipbook (tools/bloodmoon.py)
 		ID3D11ShaderResourceView* g_fire = nullptr;     // the shrine orb's purple magic fire: 16x8 flipbook (tools/magicfire.py)
 		ID3D11ShaderResourceView* g_flame = nullptr;    // the aura round a spell emblem: 4x4 atlas of a looping white flame ring (tools/flameaura.py)
 		ID3D11ShaderResourceView* g_frame = nullptr;
@@ -1600,58 +1601,68 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// (Noah: hidden until a class is chosen - the essence, the perks and the night's box)
 			const bool classChosen = Classes::Get() >= 0;
 			if (Hud::kEdgeHud && s.round > 0 && classChosen) {
+				// (Noah: "remake the Nights Survived and wave box on the top left UI so its higher quality and animated to match the
+				// Cursed essence box" - "Blood moon", "Ring round the emblem", "Blood red") no frame: a shadow fading out to the right,
+				// an animated blood moon ringed by turning dragon-script (the wave's segments lit round it through a night), a small
+				// red label over the big number, the wave and the dead still to fall beside it
 				const bool   waveOn = s.nightActive && s.waves > 0 && s.sanctuary.empty();
 				const bool   ev = s.nightActive && s.nightEvent >= 0 && s.nightEvent < static_cast<int>(gen::kEvents.size());
-				const bool   noiseOn = false;  // (Noah: the noise meter removed)  // (the Volatiles: how loud you've been)
-				const float  W = 300 * k, H = (waveOn ? 112 : 46) * k + (waveOn && !s.waveTheme.empty() ? 18 * k : 0.0f) + (noiseOn ? 22 * k : 0.0f);
-				const ImVec2 a{ 24 * k, 20 * k }, b{ a.x + W, a.y + H };
-				Panel(dl, a, b, k * 0.7f, 0.85f);
 				const float  flash = std::clamp(roundFlash, 0.0f, 1.0f);
-				const std::string head = s.nightActive ? "NIGHT " + std::to_string(s.round) : "NIGHTS SURVIVED  " + std::to_string(s.round);
-				Txt(dl, g_title, 22 * k, { a.x + 16 * k, a.y + 10 * k }, flash > 0 ? IM_COL32(255, 120, 90, 255) : Fade(kGold, 0.95f), head, flash > 0 ? 2 * k * flash : 0.0f, IM_COL32(200, 40, 20, 255));
-				if (ev) {
-					const auto  t = gen::kEvents[s.nightEvent].tint;
-					const ImU32 c = IM_COL32(std::min(255, static_cast<int>(((t >> 24) & 0xFF) * 1.6f) + 60), std::min(255, static_cast<int>(((t >> 16) & 0xFF) * 1.6f) + 60), std::min(255, static_cast<int>(((t >> 8) & 0xFF) * 1.6f) + 60), 255);
-					const std::string lab = Upper(std::string(gen::kEvents[s.nightEvent].label));
-					Txt(dl, g_body, 14 * k, { b.x - 16 * k - Measure(g_body, 14 * k, lab).x, a.y + 15 * k }, c, lab);
+				const ImU32  kBlood = IM_COL32(235, 70, 55, 240), kBloodSoft = IM_COL32(255, 140, 120, 235);
+				const float  cr = 15 * k, hh = cr * (flash > 0 ? 2.2f + 0.3f * flash : 2.2f);
+				const ImVec2 moon{ 24 * k + cr * 2.2f, 22 * k + cr * 2.2f };
+				const std::string num = std::to_string(s.round);
+				const std::string label = s.nightActive ? "NIGHT" : "NIGHTS SURVIVED";
+				const std::string wave = waveOn ? fmt::format("WAVE {} / {}", s.wave, s.waves) : std::string();
+				const std::string sub = !waveOn ? std::string() : s.waveRest > 0 ? fmt::format("Next wave in {:.0f}", std::ceil(s.waveRest)) : fmt::format("{} left to fall", std::max(0, s.waveLeft));
+				const std::string evLab = ev ? Upper(std::string(gen::kEvents[s.nightEvent].label)) : std::string();
+				const float tx = moon.x + cr + 22 * k;
+				const float numW = Measure(g_num, 26 * k, num).x;
+				float w = tx + std::max({ numW + (waveOn ? 18 * k + Measure(g_title, 15 * k, wave).x : 0.0f), Measure(g_body, 11 * k, label).x + (ev ? 14 * k + Measure(g_body, 11 * k, evLab).x : 0.0f),
+				                          waveOn ? numW + 18 * k + Measure(g_body, 13 * k, sub).x : 0.0f });
+				const float foot = moon.y + hh + (s.waveTheme.empty() || !waveOn ? 10 : 30) * k;
+				dl->AddRectFilledMultiColor({ 0, 0 }, { w + 70 * k, foot }, IM_COL32(0, 0, 0, 90), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 60));
+				// the moon
+				if (g_moon) {
+					const int   fr = static_cast<int>(now * 24.0f) % 48;
+					const float uu = (fr % 8) / 8.0f, vv = (fr / 8) / 6.0f;
+					dl->AddCircleFilled(moon, hh * 0.9f, IM_COL32(0, 0, 0, 110), 40);
+					dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_moon)), { moon.x - hh, moon.y - hh }, { moon.x + hh, moon.y + hh }, { uu, vv }, { uu + 0.125f, vv + 1.0f / 6.0f });
+					if (flash > 0) dl->AddCircleFilled(moon, hh * 1.05f, IM_COL32(255, 60, 40, static_cast<int>(70 * flash)), 40);
+				} else {
+					dl->AddCircleFilled(moon, cr * 1.6f, IM_COL32(200, 30, 20, 50), 32);
+					dl->AddCircleFilled(moon, cr * 0.95f, IM_COL32(190, 35, 25, 255), 40);
 				}
+				// the wave's segments round it: done bright, the one being fought breathing, the rest dim
 				if (waveOn) {
 					static int   lastWaveE = 0;
 					static float startE = 0;
 					if (s.wave != lastWaveE) startE = 1.0f, lastWaveE = s.wave;
 					startE = std::max(0.0f, startE - dt * 1.2f);
-					Divider(dl, (a.x + b.x) * 0.5f, a.y + 44 * k, W * 0.42f, k, 0.8f);
-					float ty = a.y + 54 * k;
-					if (!s.waveTheme.empty()) {
-						Txt(dl, g_title, 14 * k, { a.x + 16 * k, ty }, s.waveThemeColor ? s.waveThemeColor : IM_COL32(255, 90, 60, 255), Upper(s.waveTheme));
-						ty += 18 * k;
-					}
-					const float  R = 21 * k;
-					const ImVec2 c{ a.x + 16 * k + R, ty + R + 2 * k };
-					dl->AddCircleFilled(c, R + 3 * k, IM_COL32(10, 10, 12, 200), 40);
-					const int n = std::clamp(s.waves, 1, 40);
+					const int   n = std::clamp(s.waves, 1, 40);
+					const float R = hh * 1.02f;
 					for (int i = 0; i < n; ++i) {
-						const float a0 = -1.5708f + 6.2832f * i / n + 0.06f, a1 = -1.5708f + 6.2832f * (i + 1) / n - 0.06f;
+						const float a0 = -1.5708f + 6.2832f * i / n + 0.07f, a1 = -1.5708f + 6.2832f * (i + 1) / n - 0.07f;
 						const bool  done = i + 1 < s.wave || (i + 1 == s.wave && s.waveRest > 0);
 						const bool  cur = i + 1 == s.wave && s.waveRest <= 0;
-						const float alpha = done ? 0.95f : cur ? 0.55f + 0.45f * std::sin(now * 5.0f) : 0.22f;
-						dl->PathArcTo(c, R + (cur ? startE * 5 * k : 0.0f), a0, a1, 6);
-						dl->PathStroke(Fade(done || cur ? kGold : kParch, alpha), 0, (cur ? 3.5f : 2.5f) * k);
+						const float al = done ? 0.95f : cur ? 0.55f + 0.45f * std::sin(now * 5.0f) : 0.25f;
+						dl->PathArcTo(moon, R + (cur ? startE * 5 * k : 0.0f), a0, a1, 8);
+						dl->PathStroke(Fade(done || cur ? IM_COL32(255, 80, 60, 255) : IM_COL32(140, 60, 55, 255), al), 0, (cur ? 3.5f : 2.5f) * k);
 					}
-					TxtC(dl, g_num, 22 * k, c.x, c.y - 13 * k, kParch, std::to_string(s.wave));
-					const float tx = c.x + R + 16 * k;
-					Txt(dl, g_title, 19 * k, { tx, c.y - 20 * k }, kParch, fmt::format("WAVE {} / {}", s.wave, s.waves));
-					const std::string sub = s.waveRest > 0 ? fmt::format("Next wave in {:.0f}", std::ceil(s.waveRest)) : fmt::format("{} left to fall", std::max(0, s.waveLeft));
-					Txt(dl, g_body, 15 * k, { tx, c.y + 4 * k }, Fade(kGold, 0.9f), sub);
-					if (noiseOn) {  // NOISE: a thin bar that fills as the night hears you; full, a Volatile comes
-						const float ny = c.y + R + 14 * k, nx = a.x + 16 * k, nw = W - 32 * k;
-						const float fr = std::clamp(s.noise, 0.0f, 1.0f);
-						const bool  loud = fr > 0.75f;
-						Txt(dl, g_body, 13 * k, { nx, ny - 8 * k }, loud ? IM_COL32(255, 120, 90, 230) : IM_COL32(170, 160, 140, 210), "NOISE");
-						const float bx = nx + 52 * k;
-						dl->AddRectFilled({ bx, ny - 1 * k }, { nx + nw, ny + 2 * k }, IM_COL32(30, 28, 24, 200));
-						dl->AddRectFilled({ bx, ny - 1 * k }, { bx + (nx + nw - bx) * fr, ny + 2 * k }, loud ? IM_COL32(230, 90, 60, static_cast<int>(200 + 55 * std::sin(now * 8.0f))) : kGold);
-					}
+				}
+				// the label (and the night's kind) over the number
+				Txt(dl, g_body, 11 * k, { tx + 1 * k, moon.y - 23 * k }, kBloodSoft, label, 1 * k, IM_COL32(0, 0, 0, 200));
+				if (ev) {
+					const auto  t = gen::kEvents[s.nightEvent].tint;
+					const ImU32 c = IM_COL32(std::min(255, static_cast<int>(((t >> 24) & 0xFF) * 1.6f) + 60), std::min(255, static_cast<int>(((t >> 16) & 0xFF) * 1.6f) + 60), std::min(255, static_cast<int>(((t >> 8) & 0xFF) * 1.6f) + 60), 255);
+					Txt(dl, g_body, 11 * k, { tx + 1 * k + Measure(g_body, 11 * k, label).x + 14 * k, moon.y - 23 * k }, c, evLab, 1 * k, IM_COL32(0, 0, 0, 200));
+				}
+				Txt(dl, g_num, 26 * k, { tx, moon.y - 9 * k }, flash > 0 ? IM_COL32(255, 200, 185, 255) : kParch, num, flash > 0 ? 2 * k * flash + 1.2f * k : 1.2f * k, flash > 0 ? IM_COL32(220, 40, 25, 255) : IM_COL32(0, 0, 0, 220));
+				if (waveOn) {
+					const float wx = tx + numW + 18 * k;
+					Txt(dl, g_title, 15 * k, { wx, moon.y - 10 * k }, kParch, wave, 1 * k, IM_COL32(0, 0, 0, 200));
+					Txt(dl, g_body, 13 * k, { wx, moon.y + 7 * k }, kBlood, sub, 1 * k, IM_COL32(0, 0, 0, 200));
+					if (!s.waveTheme.empty()) Txt(dl, g_title, 13 * k, { tx, moon.y + hh + 4 * k }, s.waveThemeColor ? s.waveThemeColor : IM_COL32(255, 90, 60, 255), Upper(s.waveTheme), 1 * k, IM_COL32(0, 0, 0, 200));
 				}
 			}
 			if (!Hud::kEdgeHud && s.round > 0) {
@@ -5677,6 +5688,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\flame_ring.png", nullptr, &g_flame);
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\menu_fire.png", nullptr, &g_fire);
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\essence.png", nullptr, &g_essence);
+			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\bloodmoon.png", nullptr, &g_moon);
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\divider.png", nullptr, &g_divider);
 			g_init = true;
 			logger::info("hud: ready ({} perk icons, {} weapon icons, menu art {})", icons, wicons, bg);
