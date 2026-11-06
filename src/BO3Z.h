@@ -435,6 +435,7 @@ namespace bo3z
 		bool               FlaskInHand(bool a_left);  // a flask held, drawn, in that hand
 		int                FlaskElementInHand(bool a_left);  // which flask that hand holds (drawn or not): 0-6, -1 none
 		void               FlaskAttack(bool a_left);  // its throw
+		void               FlaskAttackUp(bool a_left);  // the attack let go (the Mutagen Gauntlet's beam stops)
 		void               MaceSwing(bool a_power);  // a swing of a class sword (any swing: hit or miss) - its tier's arc, burst and Tier III
 		void               SlayerSwing(bool a_power);  // the Dragon Slayer's swing: a charged one spends its dragon embers (Dragonbreaker)
 		void               SlayerKill();              // a kill by the Dragon Slayer: an ember
@@ -821,6 +822,13 @@ namespace bo3z
 			std::function<void(RE::Actor*)> touch; std::function<void(const RE::NiPoint3&)> burst;
 		};
 		void                  ElemCyclone(CycloneSpec a_s);
+		// (Noah: the Mutagen Gauntlet "shoot a beam coming from the palm/glass ball while holding attack") its state, set by
+		// Classes every frame for the glove's look (the vials' levels, which one pours, the orb's colour) and the arm's pose
+		struct GauntletState { float fill[6]{ 1, 1, 1, 1, 1, 1 }; int active = -1; int phase = 0; float t = 0; bool left = false; };   // phase: 0 idle, 1 the charge's gesture, 2 the beam
+		void                  SetGauntlet(const GauntletState& a_s);
+		bool                  GauntletBeam(int a_el, float a_width, RE::NiPoint3& a_from, RE::NiPoint3& a_to);   // the beam laid from the palm's orb to where you aim (false: no glove in sight)
+		void                  GauntletBeamOff();
+		std::vector<RE::Actor*> LineHurt(const RE::NiPoint3& a_from, const RE::NiPoint3& a_to, float a_radius, float a_share);   // every one of the dead along a line struck (share of one's health); those struck
 		bool                  SkyBeam(const RE::NiPoint3& a_at, float a_secs);   // Mysticism's Sunbeam down out of the sky onto a point (false: not installed - the sunlit pillar instead)
 		void                  FxBlastSized(std::string_view a_name, const RE::NiPoint3& a_at, float a_scale);   // one of Skyrim's explosions at a size
 		void                  QueueFx(std::string a_path, const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life, bool a_flat);   // one of our effect models (or its effects-map stand-ins) set off at a point   // a cyclone of an element carried along the ground (FireCyclone's, any look)

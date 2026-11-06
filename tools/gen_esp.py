@@ -104,7 +104,7 @@ FLASKS = [('fire', 'Fire Flask', 'A flask of liquid fire. It bursts where it lan
           ('poison', 'Acid Flask', 'A flask of green acid. It bursts into a corroding splash where it lands.'),
           ('sun', 'Holy Water', 'Blessed water of Stendarr. It bursts into searing light where it lands; the dead burn in it.'),
           ('blood', 'Voidglass Flask', 'A flask of bottled void. It shatters and drags the dead in to where it broke.'),
-          ('philosopher', "Mutagen Gauntlet", 'The Alchemist\'s wonder: an alchemist\'s glove fed by six vials of the elements. Attack to throw a cluster of all six flasks that bounces from one of the dead to the next, bursting in each element in turn. Recharges in 30 seconds.')]
+          ('philosopher', "Mutagen Gauntlet", 'The Alchemist\'s wonder: an alchemist\'s glove fed by six vials of the elements. Hold attack to loose a beam from the orb in your palm that pierces the dead, pouring each vial in turn for 5 seconds; let go and the emptied vials refill.')]
 FLASK_TIERS = ' The glass shatters, its element bursts, and a pool of it lingers on the ground. Tier I: a burst half again as wide. Tier II: a chain reaction - the dead it kills burst in its element too. Legendary: a cyclone of its element rises where it breaks and rolls into the dead.'
 for e, label, text in FLASKS:
     pd = bytearray(tsub('proj_bullet', 'DATA'))
@@ -174,7 +174,7 @@ for e, label, text in FLASKS:
         elif name == 'FULL': b = z(label)
         elif name == 'MODL': b = z('CurseOfAlduin\\alchemist\\gauntlet_hold.nif' if e == 'philosopher' else 'CurseOfAlduin\\alchemist\\flask_' + e + '_held.nif')   # (Noah: the Mutagen Gauntlet - "Glowing hand only")
         elif name in ('MODT', 'EITM', 'EAMT'): continue
-        elif name == 'DESC': b = z(text + ' Attack to throw it; it never runs out.')   # (Noah: short - its tier's line added by src/Classes.cpp TickItemCard)
+        elif name == 'DESC': b = z(text + ('' if e == 'philosopher' else ' Attack to throw it; it never runs out.'))   # (Noah: short - its tier's line added by src/Classes.cpp TickItemCard)
         elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_flask_' + e))
         # (Noah: "it still makes dagger sound effects when drawing ... the alchemist class should have its own combat noises")
         # glass and liquid drawing and putting away (tools/alchsfx.py), no blade's failed-swing or steel impact set

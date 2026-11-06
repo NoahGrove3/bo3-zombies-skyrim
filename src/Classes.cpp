@@ -709,7 +709,7 @@ namespace bo3z::Classes
 			static constexpr const char* kText[4] = {
 				"A horn carved from a dragon's throne of bone. Blow it and a little dragon of bare bone answers: it flies at your side, never more than 15 m off, and rains green grave-fire on the dead for a minute. Once the three dragons fall it stays for an hour, or until it is slain.",
 				"The Staff of Magnus. Hold its beam on the dead: it drains them and feeds your magicka, and erupts where it ends. Hold it two seconds or more and the eruption leaves an orb of searing light that pulses on everything round it. Once the three dragons fall it burns hotter still.",
-				"The Mutagen Gauntlet. Your hand glows with every element at once. Attack to throw a cluster of all six flasks: it bounces from one of the dead to the next, bursting in fire, frost, lightning, acid, holy light and the void. It recharges in thirty seconds. Once the three dragons fall, every burst is its Legendary form.",
+				"The Mutagen Gauntlet. An alchemist's glove fed by six vials of the elements. Hold attack to gather their light and loose a beam from the orb in your palm: it pierces every one of the dead in its path, pouring each vial in turn for five seconds - fire, frost, lightning, acid, holy light and the void. Let go and the emptied vials refill; empty all six and they must refill completely. Once the three dragons fall, the beam burns stronger.",
 				"The Akaviri dragon slayer, two tiers above your blade. Every hit carries the last Spellsword spell you held. Once the three dragons fall it grows stronger again, and a power attack looses that spell on the dead round you." };
 			std::string up(kWonderName[a_cls]);
 			for (auto& ch : up) ch = static_cast<char>(std::toupper(static_cast<unsigned char>(ch)));
@@ -4108,6 +4108,11 @@ namespace bo3z::Classes
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		return p && p->AsActorState()->IsWeaponDrawn() && FlaskHeld(a_left) >= 0;
 	}
+	namespace
+	{
+#include "GauntletBeam.inl"
+	}
+	void FlaskAttackUp(bool a_left) { if (FlaskHeld(a_left) == 6) g_gb.held = false; }
 	// (Noah: "hold it in my left or right hand with an underhand throwing animation ... it should feel like a weapon") the
 	// hand's attack: the arm swings it underhand and lets it go at the top of the swing; a breath between throws
 	void FlaskAttack(bool a_left)
@@ -4115,6 +4120,7 @@ namespace bo3z::Classes
 		const int el = FlaskHeld(a_left);
 		if (el < 0 || Gun::Throwing()) return;
 		if (el == 6 && g_class.load() != coffer::kAlchemist) { Hud::QuestBanner("The Mutagen Gauntlet answers only to an Alchemist", 2.5f)   /* (Noah: "it won't let me throw it" - and nothing said why: always shown) */; return; }
+		if (el == 6) { GauntletPress(a_left); return; }   // (Noah: the Mutagen Gauntlet's beam - held, not thrown)
 		float& cool = el == 6 ? g_philCool : g_flaskCool;
 		if (cool > 0) {
 			if (el == 6) Hud::QuestBanner(fmt::format("The Mutagen Gauntlet is recharging ({:.0f} s)", std::ceil(cool)), 1.5f);
@@ -4133,6 +4139,7 @@ namespace bo3z::Classes
 		TickShadow(a_delta);
 		TickSwords(a_delta);
 		g_flaskCool = std::max(0.0f, g_flaskCool - a_delta), g_philCool = std::max(0.0f, g_philCool - a_delta);
+		TickGauntletBeam(a_delta);
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (!p || !p->Is3DLoaded() || p->IsDead() || ItemMenusOpen()) return;
 		// (Noah: "turn off player voice grunts while casting the flasks") with a flask in hand your voice is quiet: its voice

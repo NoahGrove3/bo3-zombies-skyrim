@@ -56,6 +56,54 @@ namespace Props
 	// (Noah: the Mutagen Gauntlet - "Alchemist's glove ... very very high quality ... with passive animations around the
 	// gauntlet") the glove (tools/gauntlet.py) worn on the hand that holds the wonder - drawn or not - in both bodies: hung on
 	// that hand's own bone (the model is in its frame; the left hand's is the mirror)
+	Gun::GauntletState g_gs;   // (Classes::TickGauntlet sets it: Gun::SetGauntlet)
+	// the parts of a glove the beam's state shows and hides (by name: tools/gauntlet.py)
+	struct GloveParts
+	{
+		RE::NiAVObject* root = nullptr;
+		RE::NiAVObject* liq[6][8]{};
+		RE::NiAVObject* tube[6]{};
+		RE::NiAVObject* bub[6]{};
+		RE::NiAVObject* vglow[6]{};
+		RE::NiAVObject* tint[6]{};
+		RE::NiAVObject* flare[6]{};
+		RE::NiAVObject* core = nullptr;
+	};
+	void FindParts(GloveParts& a_p, RE::NiAVObject* a_root)
+	{
+		a_p = GloveParts{};
+		a_p.root = a_root;
+		std::function<void(RE::NiAVObject*)> walk = [&](RE::NiAVObject* o) {
+			if (!o) return;
+			const std::string_view n = o->name.c_str();
+			auto el = [&](std::string_view pre) { return n.size() > pre.size() && n.substr(0, pre.size()) == pre ? n[pre.size()] - '0' : -1; };
+			if (int e = el("Liq"); e >= 0 && e < 6 && n.size() > 5 && n[4] == '_') { const int j = n[5] - '0'; if (j >= 0 && j < 8) a_p.liq[e][j] = o; }
+			else if (int e1 = el("TubeLight"); e1 >= 0 && e1 < 6) a_p.tube[e1] = o;
+			else if (int e2 = el("VialBubbles"); e2 >= 0 && e2 < 6) a_p.bub[e2] = o;
+			else if (int e3 = el("VialGlow"); e3 >= 0 && e3 < 6 && n.find("_bb") == std::string_view::npos) a_p.vglow[e3] = o;
+			else if (int e4 = el("OrbTint"); e4 >= 0 && e4 < 6) a_p.tint[e4] = o;
+			else if (int e5 = el("OrbFlare"); e5 >= 0 && e5 < 6 && n.find("_bb") == std::string_view::npos) a_p.flare[e5] = o;
+			else if (n == "OrbCore_bb") a_p.core = o;
+			if (auto* nd = o->AsNode()) for (auto& c : nd->GetChildren()) walk(c.get());
+		};
+		walk(a_root);
+	}
+	void ShowParts(GloveParts& a_p)
+	{
+		const auto& s = g_gs;
+		for (int e = 0; e < 6; ++e) {
+			const float f = std::clamp(s.fill[e], 0.0f, 1.0f);
+			for (int j = 0; j < 8; ++j) if (a_p.liq[e][j]) a_p.liq[e][j]->SetAppCulled(!(f * 6.0f > static_cast<float>(j) + 0.12f));   // (6 slices: the top ones go first)
+			const bool pour = s.phase == 2 && s.active == e;
+			const bool next = s.phase == 1 && s.active == e;
+			if (a_p.tube[e]) a_p.tube[e]->SetAppCulled(!pour);
+			if (a_p.bub[e]) a_p.bub[e]->SetAppCulled(f < 0.05f);
+			if (a_p.vglow[e]) a_p.vglow[e]->SetAppCulled(f < 0.05f);
+			if (a_p.tint[e]) a_p.tint[e]->SetAppCulled(!(pour || next));
+			if (a_p.flare[e]) a_p.flare[e]->SetAppCulled(!pour);
+		}
+	}
+	GloveParts g_parts[2][2];
 	struct Glove { Spellcraft::Fx fx; RE::NiNode* on = nullptr; };
 	Glove g_glove[2][2];   // [hand: right, left][body: third, first]
 	void TickGauntlet()
@@ -77,8 +125,75 @@ namespace Props
 					g.fx.obj->local = RE::NiTransform{};
 					logger::info("gauntlet: the glove on the {} hand ({} person)", L ? "left" : "right", b == 1 ? "first" : "third");
 				}
+				auto& gp = g_parts[h][b];
+				if (gp.root != g.fx.obj.get()) FindParts(gp, g.fx.obj.get());
+				ShowParts(gp);
 			}
 		}
+	}
+
+	// the palm orb's place in the world: the glove on the hand that holds it, in the body you are seeing
+	bool PalmOrb(RE::NiPoint3& a_at)
+	{
+		auto* cam = RE::PlayerCamera::GetSingleton();
+		const int b = cam && cam->IsInFirstPerson() ? 1 : 0;
+		const int h = g_gs.left ? 1 : 0;
+		auto* core = g_parts[h][b].core;
+		if (!core || !g_glove[h][b].fx.obj || !g_glove[h][b].fx.obj->parent) return false;
+		a_at = core->world.translate;
+		return true;
+	}
+	// the beam: segments of the element's beam (tools/gauntlet.py gauntlet_beam_<el>.nif, 64 units along +Y) laid end to
+	// end from the palm to where it strikes, each face-on to the camera; a flare at each end
+	struct GBeam { std::vector<Spellcraft::Fx> segs; int el = -1; Spellcraft::Fx f0, f1; };
+	GBeam g_gbeam;
+	void GBeamOff()
+	{
+		for (auto& f : g_gbeam.segs) f.Detach();
+		g_gbeam.segs.clear();
+		g_gbeam.f0.Detach(), g_gbeam.f1.Detach();
+		g_gbeam.f0 = {}, g_gbeam.f1 = {};
+		g_gbeam.el = -1;
+	}
+	void GBeamLay(int a_el, const RE::NiPoint3& a, const RE::NiPoint3& b, float w)
+	{
+		static constexpr const char* kName[6] = { "fire", "frost", "shock", "acid", "holy", "void" };
+		a_el = std::clamp(a_el, 0, 5);
+		if (a_el != g_gbeam.el) {
+			GBeamOff();
+			g_gbeam.el = a_el;
+			g_gbeam.f0 = Spellcraft::Fx{ Spellcraft::LoadPath(std::string("CurseOfAlduin\\alchemist\\gauntlet_flare_") + kName[a_el] + ".nif") };
+			g_gbeam.f1 = Spellcraft::Fx{ Spellcraft::LoadPath(std::string("CurseOfAlduin\\alchemist\\gauntlet_flare_") + kName[a_el] + ".nif") };
+		}
+		auto* root = Spellcraft::WorldRoot();
+		if (!root) return;
+		const RE::NiPoint3 d = b - a;
+		const float len = d.Length();
+		const float step = Spellcraft::kSeg * w;
+		const int n = std::clamp(static_cast<int>(std::ceil(len / std::max(1.0f, step))), 1, 130);
+		while (static_cast<int>(g_gbeam.segs.size()) < n) {
+			Spellcraft::Fx f{ Spellcraft::LoadPath(std::string("CurseOfAlduin\\alchemist\\gauntlet_beam_") + kName[a_el] + ".nif") };
+			if (!f.obj) return;
+			f.Attach(root);
+			g_gbeam.segs.push_back(std::move(f));
+		}
+		RE::NiPoint3 prev = a;
+		for (int i = 0; i < static_cast<int>(g_gbeam.segs.size()); ++i) {
+			auto& sg = g_gbeam.segs[i];
+			if (i >= n) { sg.Show(false); continue; }
+			const RE::NiPoint3 next = a + d * (static_cast<float>(i + 1) / n);
+			sg.Show(true);
+			if (sg.obj && sg.obj->parent) {
+				// (the width kept: each segment is the beam's width w, its length its share - the model is scaled evenly, so the
+				// segments are laid at the width and as many as it takes)
+				sg.Place(prev, Spellcraft::FacingCam(next - prev, (prev + next) * 0.5f), std::max(0.01f, (next - prev).Length() / Spellcraft::kSeg));
+			}
+			prev = next;
+		}
+		for (auto* f : { &g_gbeam.f0, &g_gbeam.f1 }) if (f->obj && f->obj->parent != root) f->Attach(root);
+		const float pulse = 1.0f + 0.12f * std::sin(static_cast<float>(Spellcraft::g_time) * 23.0f);
+		if (g_gbeam.f0.obj) g_gbeam.f0.Place(a, Spellcraft::FaceView(), 0.32f * w * pulse);
+		if (g_gbeam.f1.obj) g_gbeam.f1.Place(b, Spellcraft::FaceView(), 1.4f * w * pulse);
 	}
 
 	void ChargedLook(int a_w);

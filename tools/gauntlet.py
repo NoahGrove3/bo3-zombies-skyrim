@@ -234,7 +234,17 @@ def lathe_z(prof, cx, cy, nc=24, u0=0.0, u1=1.0, v0=0.0, v1=1.0):
     return P.reshape(-1, 3), N.reshape(-1, 3), UV.reshape(-1, 2), grid_faces(len(prof), nc + 1)
 
 
-def vials(M):
+NSL = 6   # the liquid in each vial in this many stacked slices: the code hides them from the top down as the vial drains
+
+
+def vial_el(k, mirror):
+    """(Noah: "cycle through all six left to right") the element in vial k (counted from the thumb's side): seen from
+    the back of the hand held out, left to right is fire .. void on either hand - the right hand's thumb is on the left,
+    the left hand's on the right, so its vials run the other way"""
+    return 5 - k if mirror else k
+
+
+def vials(M, mirror=False):
     """each vial: a glass tube with a rounded foot, a waist and a lipped neck; the liquid inside (its column of the
     liquid sheet); a brass cap with a tube spigot; a brass foot cup"""
     tops = []
@@ -246,10 +256,19 @@ def vials(M):
                [(z, R) for z in np.linspace(z0 + 0.5, z1 - 0.75, 6)] + \
                [(z1 - 0.55, R * 0.92), (z1 - 0.4, R * 0.62), (z1 - 0.25, R * 0.58), (z1 - 0.18, R * 0.7), (z1 - 0.1, R * 0.7), (z1 - 0.05, R * 0.55)]
         M.add('Glass', 'glass', *lathe_z(prof, cx, cy, 28))
-        fill = z0 + 0.12 + (z1 - z0 - 0.9) * (0.78 + 0.04 * (k % 3))
-        lp = [(z0 + 0.07, 0.0), (z0 + 0.1, R * 0.5), (z0 + 0.2, R * 0.8), (z0 + 0.36, R * 0.9)] + \
-             [(z, R * 0.9) for z in np.linspace(z0 + 0.5, fill - 0.05, 5)] + [(fill, R * 0.86), (fill + 0.01, 0.0)]
-        M.add('Liquid', 'liquid', *lathe_z(lp, cx, cy, 24, u0=k / 6 + 0.01, u1=(k + 1) / 6 - 0.01))
+        e = vial_el(k, mirror)
+        fill = z0 + 0.12 + (z1 - z0 - 0.9) * 0.84
+        # the liquid in NSL slices (Liq<element>_<slice>, the bottom first), each closed at its top: the bottom one the rounded
+        # foot; src/WonderProps.inl hides them from the top as the vial drains and shows them again as it fills
+        zs = np.linspace(z0 + 0.36, fill, NSL + 1)
+        for j in range(NSL):
+            lo_, hi_ = zs[j], zs[j + 1]
+            if j == 0:
+                lp = [(z0 + 0.07, 0.0), (z0 + 0.1, R * 0.5), (z0 + 0.2, R * 0.8), (lo_, R * 0.9)]
+            else:
+                lp = [(lo_ + 0.002, R * 0.9)]
+            lp = lp + [(hi_ - 0.01, R * 0.9), (hi_, R * 0.86), (hi_ + 0.002, 0.0)]
+            M.add(f'Liq{e}_{j}', 'liquid', *lathe_z(lp, cx, cy, 20, u0=e / 6 + 0.01, u1=(e + 1) / 6 - 0.01, v0=j / NSL, v1=(j + 1) / NSL))
         # the brass cap (a domed cap, a knurled band) and the spigot the tube leaves from
         cp = [(z1 - 0.2, R * 0.74), (z1 - 0.2, R * 0.82), (z1 + 0.05, R * 0.82), (z1 + 0.08, R * 0.78), (z1 + 0.2, R * 0.62),
               (z1 + 0.3, R * 0.3), (z1 + 0.5, R * 0.2), (z1 + 0.7, R * 0.22), (z1 + 0.72, 0.0)]
@@ -723,7 +742,58 @@ def fx_tex():
         rr, cc = divmod(i, 4)
         atlas[rr * F:(rr + 1) * F, cc * F:(cc + 1) * F] = np.dstack([rgb, a])
     out['core'] = save(atlas, 'gauntlet_fx_core.dds', True)
+    # (Noah: "shoot a beam coming from the palm/glass ball while holding attack") the beam's three layers, each tileable down
+    # its length (v) and soft across it (u): a wide glow full of flowing streaks, two strands twisting round each other, a
+    # white-hot core
+    B = 512
+    by, bx = (np.mgrid[0:B, 0:B].astype(np.float32) + 0.5) / B
+    x = bx - 0.5
+    flow = tileable(B, B, 1.3, 71, aniso=(1.0, 0.12))
+    glow = np.exp(-(x / 0.24) ** 2) * (0.55 + 0.6 * flow) + 0.35 * np.exp(-(x / 0.42) ** 2)
+    out['beam_glow'] = save(np.dstack([np.full((B, B, 3), 255.0), np.clip(glow, 0, 1) * 255]), 'gauntlet_beam_glow.dds', True)
+    st = np.zeros((B, B), np.float32)
+    for ph in (0.0, np.pi):
+        c = 0.28 * np.sin(2 * np.pi * by * 2 + ph)
+        depth = 0.6 + 0.4 * np.cos(2 * np.pi * by * 2 + ph)          # (the strand passing behind is dimmer)
+        st = np.maximum(st, np.exp(-((x - c) / 0.035) ** 2) * depth)
+    spark = np.clip((tileable(B, B, 0.4, 72) - 0.82) * 6, 0, 1) * np.exp(-(x / 0.3) ** 2)
+    out['beam_strand'] = save(np.dstack([np.full((B, B, 3), 255.0), np.clip(st + spark, 0, 1) * 255]), 'gauntlet_beam_strand.dds', True)
+    flick = tileable(B, B, 1.0, 73, aniso=(1.0, 0.3))
+    core = np.exp(-(x / (0.07 + 0.03 * flick)) ** 2)
+    out['beam_core'] = save(np.dstack([np.full((B, B, 3), 255.0), np.clip(core, 0, 1) * 255]), 'gauntlet_beam_core.dds', True)
     return out
+
+
+def build_beams():
+    """the beam, one model per element: a 64-unit segment along +Y, flat in its XY plane (src/WonderProps.inl lays them
+    end to end from the palm, each turned face-on to the camera): the glow, the twisting strands and the core, all
+    flowing away from the hand; and the flare (where it leaves the palm, and where it strikes): the orb's pulsing core
+    and a glow, always facing you"""
+    for e, name in enumerate(ELS):
+        c = ELC[name]
+        pale = tuple(0.55 + 0.45 * x for x in c)
+        L = [f'out {MESHDIR / f"gauntlet_beam_{name}.nif"}']
+        for sh, t, w, col, sc, vs in (('BeamGlow', FX['beam_glow'], 15.0, c, 1.5, 0.45), ('BeamStrand', FX['beam_strand'], 11.0, pale, 2.2, 0.3),
+                                        ('BeamCore', FX['beam_core'], 5.0, pale, 3.0, 0.6)):
+            L.append(f'shape {sh} tex={t} color={col[0]:.2f},{col[1]:.2f},{col[2]:.2f},1 scale={sc} blend=add vscroll=-{vs}')
+            for X, Y, uu, vv in ((-w, 0, 0, 0), (w, 0, 1, 0), (w, 64, 1, 1), (-w, 64, 0, 1)):
+                L.append(f'v {X} {Y} 0 {uu} {vv}')
+            L.extend(['t 0 1 2', 't 0 2 3'])
+        (WORK / f'beam_{name}.job').write_text('\n'.join(L) + '\n')
+        r = subprocess.run([str(TOOLS / 'fxwrite'), str(WORK / f'beam_{name}.job')], capture_output=True, text=True)
+        if r.returncode: print(r.stdout, r.stderr); raise SystemExit('fxwrite failed (beam)')
+        L = [f'out {MESHDIR / f"gauntlet_flare_{name}.nif"}']
+        for sh, t, hs, col, sc, flip in (('FlareCore', FX['core'], 20.0, '1,1,1,1', 2.4, True), ('FlareTint', FX['core'], 30.0, f'{c[0]:.2f},{c[1]:.2f},{c[2]:.2f},1', 2.0, True),
+                                          ('FlareGlow', FX['glow'], 46.0, f'{c[0]:.2f},{c[1]:.2f},{c[2]:.2f},0.6', 1.2, False)):
+            extra = ' flip=4x4 fps=18 phase=0' if flip else ''
+            L.append(f'shape {sh} tex={t} color={col} scale={sc} blend=add billboard=1 at=0,0,0{extra}')
+            cu = 0.25 if flip else 1
+            for X, Y, uu, vv in ((-hs, hs, 0, 0), (hs, hs, cu, 0), (hs, -hs, cu, cu), (-hs, -hs, 0, cu)):
+                L.append(f'v {X} {Y} 0 {uu} {vv} 1 1 1 1')
+            L.extend(['t 0 1 2', 't 0 2 3'])
+        (WORK / f'flare_{name}.job').write_text('\n'.join(L) + '\n')
+        r = subprocess.run([str(TOOLS / 'fxwrite'), str(WORK / f'flare_{name}.job')], capture_output=True, text=True)
+        if r.returncode: print(r.stdout, r.stderr); raise SystemExit('fxwrite failed (flare)')
 
 
 # ------------------------------------------------------------------ the effect shapes (fxwrite)
@@ -777,22 +847,29 @@ def fx_job(base, out, mirror, orbc, orbn, paths, vialx, lens):
         L.extend(['t 0 1 2', 't 0 2 3'])
     card('OrbCore', tex['core'], orbc, 0.95, '1,1,1,1', 2.2, (4, 4, 10, 0))
     card('OrbHalo', tex['glow'], orbc + orbn * 0.2, 2.6, '0.8,0.75,1,0.5', 0.9)
+    # the orb flooded with one element's light while that vial pours into it (OrbTint<e>: hidden unless it is the one;
+    # src/WonderProps.inl), its glow spilling out round the palm (OrbFlare<e>)
+    for e in range(6):
+        c = ELC[ELS[e]]
+        L.append(f'shape OrbTint{e} tex={tex["swirl"]} color={c[0]:.2f},{c[1]:.2f},{c[2]:.2f},1 scale=3.0 blend=add falloff=1 uscroll=1.6 vscroll=4')
+        emit(*sphere(orbc, ORB_R * 0.97, 28, 14))
+        card(f'OrbFlare{e}', tex['core'], orbc + orbn * 0.4, 2.2, f'{c[0]:.2f},{c[1]:.2f},{c[2]:.2f},1', 2.0, (4, 4, 16, 0))
     # the light running up each tube into the orb (a thin core inside the glass, the element's colour)
     for k, path in enumerate(paths):
-        c = ELC[ELS[k]]
-        L.append(f'shape TubeLight{k} tex={tex["pulse"]} color={c[0]:.2f},{c[1]:.2f},{c[2]:.2f},1 scale=2.4 blend=add vscroll=-{1.3 + 0.17 * k:.2f}')
+        e = vial_el(k, mirror); c = ELC[ELS[e]]
+        L.append(f'shape TubeLight{e} tex={tex["pulse"]} color={c[0]:.2f},{c[1]:.2f},{c[2]:.2f},1 scale=2.4 blend=add vscroll=-{1.3 + 0.17 * k:.2f}')
         Pp, N, UV, F = tube(path, 0.085, 6, vrange=(0, np.linalg.norm(np.diff(path, axis=0), axis=1).sum() / 4.0))
         emit([(Pp[i], UV[i][0], UV[i][1], N[i]) for i in range(len(Pp))], F)
     # bubbles rising in each vial, and a faint glow about it
     z0, z1 = VIAL_Z
     for k in range(6):
         (cx, cy), t = vialx[k]
-        c = ELC[ELS[k]]
-        L.append(f'shape VialBubbles{k} tex={tex["bubbles"]} color={c[0]:.2f},{c[1]:.2f},{c[2]:.2f},1 scale=1.6 blend=add vscroll=-{1.8 + 0.23 * k:.2f}')
+        e = vial_el(k, mirror); c = ELC[ELS[e]]
+        L.append(f'shape VialBubbles{e} tex={tex["bubbles"]} color={c[0]:.2f},{c[1]:.2f},{c[2]:.2f},1 scale=1.6 blend=add vscroll=-{1.8 + 0.23 * k:.2f}')
         prof = [(z0 + 0.25, VIAL_R * 0.72), (z1 - 1.0, VIAL_R * 0.72)]
         Pp, N, UV, F = lathe_z(prof, cx, cy, 14, 0, 1, 0, 1.6)
         emit([(Pp[i], UV[i][0], UV[i][1], N[i]) for i in range(len(Pp))], F)
-        card(f'VialGlow{k}', tex['glow'], np.array([cx, cy, (z0 + z1) / 2 - 0.3]), 1.2, f'{c[0]:.2f},{c[1]:.2f},{c[2]:.2f},0.55', 0.7)
+        card(f'VialGlow{e}', tex['glow'], np.array([cx, cy, (z0 + z1) / 2 - 0.3]), 1.2, f'{c[0]:.2f},{c[1]:.2f},{c[2]:.2f},0.55', 0.7)
     # the lens's swirl
     lc, ln = lens
     L.append(f'shape LensSwirl tex={tex["swirl"]} color=1,1,1,1 scale=1.4 blend=add falloff=1 uscroll=2.6 vscroll=7')
@@ -828,7 +905,7 @@ FX = {}
 def build_model(mirror, tex):
     M = Mesh()
     glove(M); cuff(M)
-    tops = vials(M)
+    tops = vials(M, mirror)
     straps(M); rivets(M)
     orbc, orbn, socks = orb(M)
     lens = plate(M)
@@ -842,9 +919,10 @@ def build_model(mirror, tex):
     # one shape per material (fewer draw calls): the groups of each material joined
     merged = {}
     for g, m, V, N, UV, F in M.groups:
-        if m not in merged: merged[m] = [g, m, [], [], [], [], 0]
-        e = merged[m]; e[2].append(V); e[3].append(N); e[4].append(UV); e[5].append(np.asarray(F) + e[6]); e[6] += len(V)
-    M.groups = [(m.capitalize(), m, np.vstack(e[2]), np.vstack(e[3]), np.vstack(e[4]), np.vstack(e[5])) for m, e in merged.items()]
+        key = g if g.startswith('Liq') else m
+        if key not in merged: merged[key] = [g, m, [], [], [], [], 0]
+        e = merged[key]; e[2].append(V); e[3].append(N); e[4].append(UV); e[5].append(np.asarray(F) + e[6]); e[6] += len(V)
+    M.groups = [(key if key.startswith('Liq') else e[1].capitalize(), e[1], np.vstack(e[2]), np.vstack(e[3]), np.vstack(e[4]), np.vstack(e[5])) for key, e in merged.items()]
     side = 'l' if mirror else 'r'
     obj = WORK / f'gauntlet_{side}.obj'; M.write_obj(obj)
     static = WORK / f'gauntlet_{side}_static.nif'
@@ -893,5 +971,6 @@ if __name__ == '__main__':
     FX.update(fx_tex())
     models = [build_model(False, tex), build_model(True, tex)]
     build_hold()
+    build_beams()
     if '--keep' not in sys.argv:
         shutil.rmtree(WORK, ignore_errors=True)
