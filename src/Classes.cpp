@@ -594,7 +594,7 @@ namespace bo3z::Classes
 	{
 		constexpr int kWonderSteps = 3, kWonderOpensAt = 6;  // (g_wStep: 0 shut, 1-3 its quest open, 4 won and taken up, 5 won - waiting on its pedestal)
 		constexpr int kWonderTaken = kWonderSteps + 1, kWonderWaiting = kWonderSteps + 2;
-		constexpr const char* kWonderName[4] = { "Bone-Throne Horn", "Staff of Magnus", "Mutagen Staff", "Dragon Slayer" };  // (Noah: the Summoner's, Destruction's and the Alchemist's remade)
+		constexpr const char* kWonderName[4] = { "Horn of the Violet Wyrm", "Staff of Magnus", "Mutagen Staff", "Dragon Slayer" };  // (Noah: the Summoner's, Destruction's and the Alchemist's remade)
 		std::array<std::uint8_t, 4>  g_wStep{};    // per class: 0 not open, 1..3 the step under way, 4 earned
 		std::array<std::uint16_t, 4> g_wKills{};
 		std::array<std::uint32_t, 4> g_wTowns{};   // cities where a step was done (bits)
@@ -3448,7 +3448,7 @@ namespace bo3z::Classes
 		if (auto* fac = Director::UndeadFactionForm()) a->RemoveFromFaction(fac);
 		if (auto* pf = PlayerFaction()) a->AddToFaction(pf, 0);
 		Console(a, "SetPlayerTeammate 1");
-		a->SetDisplayName("Bone-Throne Dragon", true);
+		a->SetDisplayName("Violet Wyrm", true);
 		// (Noah: "the dragon I spawned also spoke with me, and it gave me the Saltair shout") a dragon's talk from another mod:
 		// yours can't be spoken to
 		a->SetActivationBlocked(true);

@@ -208,12 +208,12 @@ for e, label, text in FLASKS:
         elif name == 'DATA': b = struct.pack('<IfH', 0, 0.5, 0)
         subs.append(sub(name, b))
     recs['WEAP'].append(record('WEAP', fid('WEAP', 'flaskweap_' + e), subs))
-# (Noah: the Summoner's new wonder, "Bone-Throne Horn: an undead bone dragon that lands and fights beside you") a hand spell
+# (Noah: the Summoner's new wonder, "Horn of the Violet Wyrm: an undead bone dragon that lands and fights beside you") a hand spell
 # at 100 magicka: src/Classes.cpp calls the dragon up itself (Skyrim's skeletal dragon) and keeps it on the ground
 sp = bytearray(tsub('spel_firebolt', 'SPIT'))
 struct.pack_into('<IIIfIIffI', sp, 0, 100, 0x1, 0, 0.25, 1, 0, 0.0, 0.0, 0)
 recs['SPEL'].append(record('SPEL', fid('SPEL', 'bonehorn'), [
-    sub('EDID', z('UN_BoneThroneHorn')), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z('Bone-Throne Horn')),
+    sub('EDID', z('UN_BoneThroneHorn')), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z('Horn of the Violet Wyrm')),
     sub('MDOB', tsub('spel_firebolt', 'MDOB')), sub('ETYP', tsub('spel_firebolt', 'ETYP')),
     sub('DESC', z('The Summoner\'s wonder. Blow it and a little dragon of bare bone answers: it flies at your side, never more than 15 m off, and rains green grave-fire on the dead for a minute. Once the three dragons fall it stays for an hour.')),
     sub('SPIT', bytes(sp)), sub('EFID', struct.pack('<I', fid('MGEF', 'flaskcast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
