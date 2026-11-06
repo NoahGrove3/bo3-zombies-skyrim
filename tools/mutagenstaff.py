@@ -214,7 +214,7 @@ def tubes(M, tops):
     return paths
 
 
-def brass_tex():
+def brass_tex(name='mutagen_brass', base_rgb=(186, 140, 70), patina_rgb=(70, 112, 88)):
     """2048, tiling: aged brass - fine hand-hammered dimples, brushed lines, a tiling scroll of engraved vines, scratches,
     dark grime and green verdigris settled in the low places, burnished bright on the high ones"""
     S = 2048
@@ -252,16 +252,16 @@ def brass_tex():
     h = 0.35 * dimple + 0.25 * brushed + 0.15 * fine - 0.9 * vine - 0.3 * scr
     low = np.clip((0.45 - (0.5 * dimple + 0.5 * big)) * 3, 0, 1) + 0.8 * vine
     patina = np.clip((mid - 0.55) * 2.5, 0, 1) * np.clip(low * 1.5, 0, 1)
-    base = np.array([186, 140, 70], np.float32)
+    base = np.array(base_rgb, np.float32)
     lum = 0.78 + 0.22 * (brushed - 0.5) + 0.25 * (big - 0.5) + 0.18 * dimple + 0.22 * scr
     col = base * lum[..., None]
     col = col * (1 - 0.55 * np.clip(low, 0, 1)[..., None]) + np.array([40, 30, 18]) * 0.55 * np.clip(low, 0, 1)[..., None]
-    col = col * (1 - 0.7 * patina[..., None]) + np.array([70, 112, 88]) * 0.7 * patina[..., None]
+    col = col * (1 - 0.7 * patina[..., None]) + np.array(patina_rgb) * 0.7 * patina[..., None]
     col = col * (1 - 0.6 * vine[..., None]) + np.array([34, 24, 14]) * 0.6 * vine[..., None]
-    D = g.save(col, 'mutagen_brass_d.dds')
+    D = g.save(col, name + '_d.dds')
     nrm = height_to_normal(gaussian_filter(h, 0.8), 7.0)
     spec = np.clip(190 + 50 * (dimple - 0.5) + 40 * scr - 140 * patina - 120 * np.clip(low, 0, 1), 0, 255)
-    N = g.save(np.dstack([nrm, spec]), 'mutagen_brass_n.dds', True)
+    N = g.save(np.dstack([nrm, spec]), name + '_n.dds', True)
     return D, N
 
 

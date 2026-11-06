@@ -208,6 +208,21 @@ for e, label, text in FLASKS:
         elif name == 'DATA': b = struct.pack('<IfH', 0, 0.5, 0)
         subs.append(sub(name, b))
     recs['WEAP'].append(record('WEAP', fid('WEAP', 'flaskweap_' + e), subs))
+# (Noah: the Horn of the Violet Wyrm - "Held in hand", "my character actually blow the horn with a horn sound then the
+# dragon flies in") the horn itself: a weapon held as a dagger is (tools/wyrmhorn.py's model), its attack taken by
+# src/Classes.cpp (HornAttack): the arm lifts it to your lips and blows
+subs = []
+for name, hx in T['weap_daedricdagger']['subs']:
+    b = bytes.fromhex(hx)
+    if name == 'EDID': b = z('UN_WyrmHorn')
+    elif name == 'FULL': b = z('Horn of the Violet Wyrm')
+    elif name == 'MODL': b = z('CurseOfAlduin\\summoner\\wyrm_horn.nif')
+    elif name in ('MODT', 'EITM', 'EAMT'): continue
+    elif name == 'DESC': b = z("The Summoner's wonder: a dragon's horn bound in silver. Attack to blow it: a violet wyrm flies in and burns the dead within 30 m of you for 90 seconds. It can be blown again a minute after the wyrm departs.")
+    elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_wyrmhorn'))
+    elif name == 'DATA': b = struct.pack('<IfH', 0, 2.0, 0)
+    subs.append(sub(name, b))
+recs['WEAP'].append(record('WEAP', fid('WEAP', 'wyrmhorn'), subs))
 # (Noah: the Summoner's new wonder, "Horn of the Violet Wyrm: an undead bone dragon that lands and fights beside you") a hand spell
 # at 100 magicka: src/Classes.cpp calls the dragon up itself (Skyrim's skeletal dragon) and keeps it on the ground
 sp = bytearray(tsub('spel_firebolt', 'SPIT'))

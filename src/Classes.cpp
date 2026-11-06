@@ -691,8 +691,9 @@ namespace bo3z::Classes
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			if (!p) return;
 			switch (a_cls) {
-			case coffer::kSummoner:
-				if (auto* sp = WyrmSpell()) Learn(sp);
+			case coffer::kSummoner:   // (Noah: the Horn of the Violet Wyrm "Held in hand")
+				if (auto* sp = WyrmSpell(); sp && p->HasSpell(sp)) p->RemoveSpell(sp);
+				if (auto* dh = RE::TESDataHandler::GetSingleton()) GiveItem(p, dh->LookupForm<RE::TESObjectWEAP>(gen::kWyrmHorn, gen::kPlugin), 1, true);
 				break;
 			case coffer::kDestruction:
 				GiveItem(p, Magnus(), 1, true);
@@ -1881,9 +1882,9 @@ namespace bo3z::Classes
 		GrantWonder(a_cls);
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		auto* em = RE::ActorEquipManager::GetSingleton();
-		auto* sp = a_cls == coffer::kSummoner ? WyrmSpell() : nullptr;
-		if (p && em && sp) em->EquipSpell(p, sp, RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x13F42));  // (the right hand)
-		auto* w = a_cls == coffer::kDestruction ? Magnus() : a_cls == coffer::kSpellsword ? Slayer() : nullptr;
+		auto* dh = RE::TESDataHandler::GetSingleton();
+		RE::TESBoundObject* w = a_cls == coffer::kDestruction ? static_cast<RE::TESBoundObject*>(Magnus()) : a_cls == coffer::kSpellsword ? static_cast<RE::TESBoundObject*>(Slayer())
+		                      : a_cls == coffer::kSummoner && dh ? static_cast<RE::TESBoundObject*>(dh->LookupForm<RE::TESObjectWEAP>(gen::kWyrmHorn, gen::kPlugin)) : nullptr;
 		if (p && em && w) em->EquipObject(p, w);
 		logger::info("dev: wonder {} given", kWonderName[a_cls]);
 	}
@@ -1915,7 +1916,7 @@ namespace bo3z::Classes
 			return true;
 		}
 		if (g_wStep[a_cls] == kWonderTaken && p) {  // (lost from the pack, or a new copy wanted: given again)
-			const bool have = a_cls == coffer::kSummoner ? (WyrmSpell() && p->HasSpell(WyrmSpell())) : a_cls == coffer::kDestruction ? (Magnus() && p->GetItemCount(Magnus()) > 0)
+			const bool have = a_cls == coffer::kSummoner ? [&] { auto* dh = RE::TESDataHandler::GetSingleton(); auto* h = dh ? dh->LookupForm<RE::TESObjectWEAP>(gen::kWyrmHorn, gen::kPlugin) : nullptr; return h && p->GetItemCount(h) > 0; }() : a_cls == coffer::kDestruction ? (Magnus() && p->GetItemCount(Magnus()) > 0)
 			                : a_cls == coffer::kAlchemist ? (FlaskItem(6) && p->GetItemCount(FlaskItem(6)) > 0) : (Slayer() && p->GetItemCount(Slayer()) > 0);
 			if (!have) {
 				// (the audit: a dropped bow or blade was given again for free - copies without end) a lost weapon is made
@@ -2072,6 +2073,7 @@ namespace bo3z::Classes
 		// a body of the night's dead (or a Flame Atronach) stood up on your side for a while: a teammate, out of the Curse's
 		// faction, in yours; when its time is up it crumbles back into the dark
 		static auto* PlayerFaction() { static auto* f = RE::TESForm::LookupByID<RE::TESFaction>(0x00000DB1); return f; }
+#include "WyrmHorn.inl"
 		void EndThrall(RE::Actor* a)
 		{
 			if (!a) return;
@@ -2151,20 +2153,25 @@ namespace bo3z::Classes
 			// attacks or fighting or shouts") the Bone-Throne's little dragon flies and fights as a dragon does; strayed past
 			// 15 m it is drawn back toward you; and every 1.2 s it breathes green grave-fire down onto the nearest of the dead,
 			// its stream seen from its jaws to where it lands - the strongest of any summon's
-			if (static float boneT = 0, breathT = 0; (boneT += a_delta) > 0.1f) {
+			// (Noah: the Horn of the Violet Wyrm - "burns enemies within 30 meters of the player") the horn's blow and rest, and
+			// its wyrm (and at Legendary its wyrmling) flying and burning as below, held within 30 m of you
+			TickHorn(a_delta);
+			if (static float boneT = 0, breathTs[2] = { 0, 0.6f }; (boneT += a_delta) > 0.1f) {
 				const float dt = boneT;
 				boneT = 0;
+				for (int wi = 0; wi < 2; ++wi) {
+				float& breathT = breathTs[wi];
 				breathT -= dt;
-				if (auto a = g_boneDragon.get(); a && !a->IsDead() && !a->IsDisabled() && a->Is3DLoaded()) {
+				if (auto a = g_wyrms[wi].get(); a && !a->IsDead() && !a->IsDisabled() && a->Is3DLoaded()) {
 					const auto me = p->GetPosition();
 					auto       at = a->GetPosition();
 					RE::NiPoint3 flat = at - me;
 					flat.z = 0;
-					if (flat.Length() > 3000.0f) {  // (left far behind: at your side at once)
+					if (flat.Length() > 4500.0f && g_wh.blow < 0.0f && breathT < -4.0f) {  // (left far behind: at your side at once - not while it flies in)
 						const float yaw = p->GetAngleZ() + 1.2f;
 						a->SetPosition(me + RE::NiPoint3{ std::sin(yaw) * 400.0f, std::cos(yaw) * 400.0f, 250.0f }, true);
-					} else if (flat.Length() > 1400.0f) {  // (Noah: a 20 m leash - past it, drawn back toward you)
-						const RE::NiPoint3 want = me + flat * (1200.0f / flat.Length()) + RE::NiPoint3{ 0, 0, std::clamp(at.z - me.z, 80.0f, 600.0f) };
+					} else if (flat.Length() > 2100.0f) {  // (Noah: a 30 m leash - past it, drawn back toward you)
+						const RE::NiPoint3 want = me + flat * (1900.0f / flat.Length()) + RE::NiPoint3{ 0, 0, std::clamp(at.z - me.z, 80.0f, 600.0f) };
 						RE::NiPoint3 step = want - at;
 						if (const float d = step.Length(); d > 10.0f) a->SetPosition(at + step * std::min(1.0f, 220.0f * dt / d), true);  // (gently: a hard pull fought its flight)
 					}
@@ -2172,7 +2179,7 @@ namespace bo3z::Classes
 					// (Noah: "cast green fire breath not ice breath") its own shouts held back (the frost, the drain, the
 					// Soul Cairn's summons): its breath is the green grave-fire below
 					if (auto* pr = a->GetActorRuntimeData().currentProcess; pr && pr->high) pr->high->voiceRecoveryTime = 1.0e6f;
-					const auto foes = NearFoes(me, 1500.0f, 1);
+					const auto foes = NearFoes(me, 2100.0f, 1);
 					if (!foes.empty() && breathT <= 0) {
 						breathT = 1.2f;
 						SafeCombat(a.get(), foes[0]);
@@ -2193,6 +2200,7 @@ namespace bo3z::Classes
 						Gun::AreaHurt(tgt, 300.0f, 0.6f * top * pf, "");
 					}
 				}
+			}
 			}
 			// (Noah: "they aren't attacking the Curse's enemies") every summon of yours not already fighting goes for the
 			// nearest of the night's dead within reach
@@ -3470,6 +3478,17 @@ namespace bo3z::Classes
 		Hud::Banner("THE BONE-THRONE DRAGON RISES", 3.0f);
 		logger::info("classes: the Bone-Throne dragon called up");
 	}
+	bool HornInHand(bool a_left) { auto* p = RE::PlayerCharacter::GetSingleton(); return p && p->AsActorState()->IsWeaponDrawn() && HornHeldIn(a_left); }
+	bool HornHeld(bool a_left) { return HornHeldIn(a_left); }
+	void HornAttack(bool a_left) { HornPress(a_left); }
+	void DevWyrm(std::string_view a_what, std::string_view a_plugin, RE::FormID a_id)
+	{
+		if (a_what == "base") g_wyrmPlugin = a_plugin, g_wyrmBase = a_id;
+		else if (a_what == "sound") g_hornSndPlugin = a_plugin, g_hornSnd = a_id;
+		else if (a_what == "play") { if (auto* f = Lookup(a_id, a_plugin)) Audio::Game(f->GetFormID(), RE::PlayerCharacter::GetSingleton(), 1.0f); }
+		else if (a_what == "call") { g_wh.cool = 0; g_wh.aloft = false; CallWyrm(0); if (a_id) CallWyrm(1); g_wh.aloft = true; g_wh.called = true; }
+		logger::info("dev: wyrm {} {} {:06X}", a_what, a_plugin, a_id);
+	}
 	bool ThrowFlask(RE::FormID) { return false; }  // (the flasks were spells: items now - TickAlchemy)
 	namespace
 	{
@@ -4096,6 +4115,7 @@ namespace bo3z::Classes
 
 	bool FlaskSwingBlocked(bool a_left)
 	{
+		if (HornHeldIn(a_left)) return true;   // (the horn: never a dagger's swing - the blow is ours)
 		const int el = FlaskHeld(a_left);
 		if (el < 0 || el == 6) return false;   // (the Mutagen Staff: Skyrim's staff cast plays)
 		// (Noah: "my character is still making swing grunt sounds when throwing") Skyrim's own swing never plays with a flask in

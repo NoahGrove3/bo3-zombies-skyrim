@@ -2949,6 +2949,81 @@ namespace bo3z
 			for (float v : g_gbP) all += fmt::format("{:g} ", v);
 			logger::info("gauntlet pose numbers: {}", all);
 		}
+		// (Noah: "have my character actually blow the horn") the arm lifting the horn to your lips, held as the horn sounds, and
+		// lowered: the hand reaches for a mark just before your mouth (a two-bone reach), turned so the horn's mouthpiece
+		// (HornLip, tools/wyrmhorn.py) comes to the lips - its error each frame nudging the mark, so it settles there
+		bool  g_hornLeft = false;
+		float g_hornT = -1.0f, g_hornW = 0.0f;
+		RE::NiPoint3 g_hornFix{};
+		void PoseHornBlow(RE::PlayerCharacter* a_player, float a_delta)
+		{
+			const float t = g_hornT;
+			// the weight: up in 0.45 s, held, down from 1.7 s
+			const float want = t < 0.0f ? 0.0f : t < 1.7f ? std::min(1.0f, t / 0.45f) : std::max(0.0f, 1.0f - (t - 1.7f) / 0.4f);
+			g_hornW += (want - g_hornW) * std::min(1.0f, a_delta * 14.0f);
+			if (g_hornW <= 0.002f) { g_hornFix = {}; return; }
+			auto* cam = RE::PlayerCamera::GetSingleton();
+			if (!cam || !cam->cameraRoot) return;
+			const bool first = cam->IsInFirstPerson();
+			auto* root = a_player->Get3D(first);
+			if (!root) return;
+			g_turnFirst = first;
+			const bool L = g_hornLeft;
+			const float w = Ease(g_hornW);
+			const auto& cw = cam->cameraRoot->world;
+			RE::NiPoint3 f{ cw.rotate.entry[0][1], cw.rotate.entry[1][1], cw.rotate.entry[2][1] };
+			RE::NiPoint3 u{ cw.rotate.entry[0][2], cw.rotate.entry[1][2], cw.rotate.entry[2][2] };
+			f.Unitize(), u.Unitize();
+			RE::NiPoint3 mouth;
+			if (first) mouth = cw.translate - u * 6.0f + f * 3.0f;
+			else if (auto* head = root->GetObjectByName("NPC Head [Head]")) {
+				RE::NiPoint3 hf{ head->world.rotate.entry[0][1], head->world.rotate.entry[1][1], head->world.rotate.entry[2][1] };
+				mouth = head->world.translate + hf * 9.0f - RE::NiPoint3{ 0, 0, 3.0f };
+				f = { std::sin(a_player->GetAngleZ()), std::cos(a_player->GetAngleZ()), 0.0f };
+			} else return;
+			auto* ua = root->GetObjectByName(L ? "NPC L UpperArm [LUar]" : "NPC R UpperArm [RUar]");
+			auto* fa = root->GetObjectByName(HandBone(L, "fa"));
+			auto* hand = root->GetObjectByName(HandBone(L, "hand"));
+			auto* lip = root->GetObjectByName("HornLip");
+			if (!ua || !fa || !hand) return;
+			// the mark: a hand's breadth before the mouth and below it (the horn runs back from the fist to the lips), nudged
+			RE::NiPoint3 target = mouth + f * 10.0f - u * 5.0f + g_hornFix;
+			{   // the elbow bent to reach it
+				const RE::NiPoint3 v1 = fa->world.translate - ua->world.translate, v2 = hand->world.translate - fa->world.translate;
+				const float l1 = v1.Length(), l2 = v2.Length();
+				RE::NiPoint3 hinge = v1.Cross(v2);
+				if (l1 > 1e-3f && l2 > 1e-3f && hinge.Length() > 1e-4f) {
+					hinge = hinge * (1.0f / hinge.Length());
+					const float cur = std::acos(std::clamp(v1.Dot(v2) / (l1 * l2), -1.0f, 1.0f));
+					const float D = std::clamp((target - ua->world.translate).Length(), std::abs(l1 - l2) + 1.0f, (l1 + l2) * 0.97f);
+					const float inner = std::acos(std::clamp((l1 * l1 + l2 * l2 - D * D) / (2.0f * l1 * l2), -1.0f, 1.0f));
+					TurnBone(fa, AxisAngle(hinge, ((3.14159265f - inner) - cur) * w));
+				}
+			}
+			{   // the arm aimed at it
+				RE::NiPoint3 a = hand->world.translate - ua->world.translate, b = target - ua->world.translate;
+				if (a.Length() > 1e-3f && b.Length() > 1e-3f) {
+					a.Unitize(), b.Unitize();
+					RE::NiPoint3 ax = a.Cross(b);
+					const float ang = std::acos(std::clamp(a.Dot(b), -1.0f, 1.0f));
+					if (ax.Length() > 1e-5f && ang > 1e-4f) TurnBone(ua, AxisAngle(ax * (1.0f / ax.Length()), ang * w));
+				}
+			}
+			// the horn turned so its mouthpiece points at the lips (the bell up and out ahead), and the error fed back
+			if (lip) {
+				RE::NiPoint3 a = lip->world.translate - hand->world.translate, b = mouth - hand->world.translate;
+				if (a.Length() > 1e-3f && b.Length() > 1e-3f) {
+					a.Unitize(), b.Unitize();
+					RE::NiPoint3 ax = a.Cross(b);
+					const float ang = std::acos(std::clamp(a.Dot(b), -1.0f, 1.0f));
+					if (ax.Length() > 1e-5f && ang > 1e-4f) TurnBone(hand, AxisAngle(ax * (1.0f / ax.Length()), ang * w * 0.85f));
+				}
+				const RE::NiPoint3 err = mouth - lip->world.translate;
+				if (g_hornW > 0.9f) g_hornFix += err * std::min(1.0f, a_delta * 3.0f);
+				const float lim = 25.0f;
+				if (g_hornFix.Length() > lim) g_hornFix = g_hornFix * (lim / g_hornFix.Length());
+			}
+		}
 		// the bottle on the palm (after the throw's swing, so it rides the hand through it): its base where the palm is, its
 		// neck up out of the hand - the held model hangs from its neck (tools/flasks.py), its base this far down it
 		float FlaskBase(int a_el) { return a_el == 6 ? 15.76f : a_el == 0 ? 11.56f : 10.67f; }
@@ -3035,6 +3110,7 @@ namespace bo3z
 					// by its neck again (tools/flasks.py: the neck drawn out to fill the hand) - the palm-up hold is set aside
 					if constexpr (kPalmHold) PoseFlaskHand(a_this, a_delta);
 					PoseThrow(a_this);
+					PoseHornBlow(a_this, a_delta);
 					PoseEnd();
 					if constexpr (kPalmHold) PlaceHeldFlask(a_this);
 					Spellcraft::OnPose(a_this);
@@ -3164,6 +3240,7 @@ namespace bo3z
 		void  SkyFall(const RE::NiPoint3& a_at) { Props::SkyFireball(a_at); }  // (a burning star from the sky onto a point)
 
 		void SetGauntlet(const GauntletState& a_s) { Props::g_gs = a_s; }
+		void SetHornBlow(bool a_left, float a_t) { g_hornLeft = a_left, g_hornT = a_t; }
 		void DevGauntletTune(int a_i, float a_v) { GauntletTune(a_i, a_v); }
 		bool GauntletBeam(int a_el, float a_width, RE::NiPoint3& a_from, RE::NiPoint3& a_to)
 		{
@@ -4980,6 +5057,10 @@ namespace bo3z
 			// (Noah: the Alchemist's flasks "should feel like a weapon") a flask held in a hand: that hand's attack throws it
 			if (IsFireButton(a_event) || IsAimButton(a_event)) {
 				const bool left = IsAimButton(a_event);
+				if (Classes::HornInHand(left)) {   // (the Horn of the Violet Wyrm: its attack blows it)
+					if (down) Classes::HornAttack(left);
+					return true;
+				}
 				if (Classes::FlaskInHand(left)) {
 					if (down) Classes::FlaskAttack(left);
 					else if (up) Classes::FlaskAttackUp(left);

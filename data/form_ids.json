@@ -1659,6 +1659,8 @@
   "MGEF:arcane_blade3": "0xe77",
   "SPEL:arcane_blade3": "0xe78",
   "MGEF:mutagencast": "0xe79",
-  "ENCH:mutagenstaff": "0xe7a"
+  "ENCH:mutagenstaff": "0xe7a",
+  "STAT:1st_wyrmhorn": "0xe7b",
+  "WEAP:wyrmhorn": "0xe7c"
  }
 }

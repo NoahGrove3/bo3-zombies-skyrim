@@ -599,6 +599,12 @@ namespace bo3z
 				in >> hand;
 				logger::info("dev: flask attack ({} hand, held {})", hand == "l" ? "left" : "right", Classes::FlaskInHand(hand == "l"));
 				Classes::FlaskAttack(hand == "l");
+			} else if (cmd == "wyrm") {  // wyrm <base|sound|play|call> [plugin hex]: the horn's wyrm and call (call: hex 1 = two)
+				std::string what, plugin, hex;
+				in >> what >> plugin >> hex;
+				RE::FormID id = 0;
+				try { id = static_cast<RE::FormID>(std::stoul(hex.empty() ? (what == "call" ? plugin : "0") : hex, nullptr, 16)); } catch (...) {}
+				Classes::DevWyrm(what, what == "call" ? "" : plugin, id);
 			} else if (cmd == "gpose") {  // gpose [i v]: the Mutagen Gauntlet beam pose's numbers (Gun.cpp g_gbP)
 				int i = -1;
 				float v = 0;

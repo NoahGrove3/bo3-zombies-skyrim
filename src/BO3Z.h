@@ -436,6 +436,10 @@ namespace bo3z
 		int                FlaskElementInHand(bool a_left);  // which flask that hand holds (drawn or not): 0-6, -1 none
 		void               FlaskAttack(bool a_left);  // its throw
 		void               FlaskAttackUp(bool a_left);  // the attack let go (the Mutagen Gauntlet's beam stops)
+		bool               HornInHand(bool a_left);     // (the Horn of the Violet Wyrm) held in that hand, drawn
+		bool               HornHeld(bool a_left);
+		void               HornAttack(bool a_left);     // its blow
+		void               DevWyrm(std::string_view a_what, std::string_view a_plugin, RE::FormID a_id);   // (dev: wyrm base|sound|play|call)
 		void               DevGauntletHold(bool a_on, bool a_left);  // (dev: gbeam) the Gauntlet's attack held down / let go
 		void               MaceSwing(bool a_power);  // a swing of a class sword (any swing: hit or miss) - its tier's arc, burst and Tier III
 		void               SlayerSwing(bool a_power);  // the Dragon Slayer's swing: a charged one spends its dragon embers (Dragonbreaker)
@@ -827,6 +831,7 @@ namespace bo3z
 		// Classes every frame for the glove's look (the vials' levels, which one pours, the orb's colour) and the arm's pose
 		struct GauntletState { float fill[6]{ 1, 1, 1, 1, 1, 1 }; int active = -1; int phase = 0; float t = 0; bool left = false; };   // phase: 0 idle, 1 the charge's gesture, 2 the beam
 		void                  SetGauntlet(const GauntletState& a_s);
+		void                  SetHornBlow(bool a_left, float a_t);   // (the Horn of the Violet Wyrm) the arm's blow, a_t into it (-1: none)
 		void                  DevGauntletTune(int a_i, float a_v);   // (dev: gpose) the beam pose's numbers
 		bool                  GauntletBeam(int a_el, float a_width, RE::NiPoint3& a_from, RE::NiPoint3& a_to);   // the beam laid from the palm's orb to where you aim (false: no glove in sight)
 		void                  GauntletBeamOff();
