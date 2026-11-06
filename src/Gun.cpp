@@ -3626,11 +3626,19 @@ namespace bo3z
 		}
 		bool SkyBeam(const RE::NiPoint3& a_at, float a_secs)
 		{
-			// (Noah: the beam "is still broken" - Mysticism's Sunbeam launched from the sky only drew short dashes: it is a beam that
-			// needs a caster holding it) "Sunlit pillar + sunburst": Skyrim's pillar of fire in sunlight from the sky, Mysticism's
-			// sunburst where it lands (fxmap.ini sun_strike)
-			(void)a_secs;
-			QueueFx("CurseOfAlduin\\fx\\sun_strike.nif", a_at, 1.0f, 0.0f, 2.5f, false);
+			// (Noah: "I want the light beams to be animated" - "Strikes down from the sky", "Swirling light inside", "Pulses, then
+			// fades", "Golden motes rising") a bolt of sunlight drops out of the sky; where it lands Mysticism's sunburst goes off, the
+			// pillar of sunlit fire rises turning (a cyclone that stands: it spins, swells as it ends, and is gone), and golden sparks
+			// rise round its foot (fxmap.ini sun_bolt, sun_burst, sun_pillar, sun_motes) - about half a second from the call to the strike
+			const float life = std::max(1.2f, a_secs);
+			Lob("CurseOfAlduin\\fx\\sun_bolt.nif", a_at + RE::NiPoint3{ 0, 0, 1800.0f }, RE::NiPoint3{ 0, 0, -4200.0f }, 1.0f, [life](const RE::NiPoint3& at) {
+				QueueFx("CurseOfAlduin\\fx\\sun_burst.nif", at, 1.0f, 0.0f, 2.0f, false);
+				CycloneSpec cs;
+				cs.model = "CurseOfAlduin\\fx\\sun_pillar.nif";
+				cs.from = at, cs.fwd = { 0, 1, 0 }, cs.dist = 0.0f, cs.life = life, cs.size = 1.0f, cs.fec = -1, cs.share = 0.0f, cs.noPull = true;
+				ElemCyclone(std::move(cs));
+				for (int k = 0; k < 3; ++k) QueueFx("CurseOfAlduin\\fx\\sun_motes.nif", at, 1.0f, 0.15f + 0.55f * static_cast<float>(k), 1.5f, false);
+			}, 0.0f, 0.0f);
 			return true;
 		}
 		void TickSkyBeams(float a_delta)

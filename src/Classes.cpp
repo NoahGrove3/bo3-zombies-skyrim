@@ -594,7 +594,7 @@ namespace bo3z::Classes
 	{
 		constexpr int kWonderSteps = 3, kWonderOpensAt = 6;  // (g_wStep: 0 shut, 1-3 its quest open, 4 won and taken up, 5 won - waiting on its pedestal)
 		constexpr int kWonderTaken = kWonderSteps + 1, kWonderWaiting = kWonderSteps + 2;
-		constexpr const char* kWonderName[4] = { "Bone-Throne Horn", "Staff of Magnus", "Philosopher's Flask", "Dragon Slayer" };  // (Noah: the Summoner's, Destruction's and the Alchemist's remade)
+		constexpr const char* kWonderName[4] = { "Bone-Throne Horn", "Staff of Magnus", "Mutagen Gauntlet", "Dragon Slayer" };  // (Noah: the Summoner's, Destruction's and the Alchemist's remade)
 		std::array<std::uint8_t, 4>  g_wStep{};    // per class: 0 not open, 1..3 the step under way, 4 earned
 		std::array<std::uint16_t, 4> g_wKills{};
 		std::array<std::uint32_t, 4> g_wTowns{};   // cities where a step was done (bits)
@@ -709,7 +709,7 @@ namespace bo3z::Classes
 			static constexpr const char* kText[4] = {
 				"A horn carved from a dragon's throne of bone. Blow it and a little dragon of bare bone answers: it flies at your side, never more than 15 m off, and rains green grave-fire on the dead for a minute. Once the three dragons fall it stays for an hour, or until it is slain.",
 				"The Staff of Magnus. Hold its beam on the dead: it drains them and feeds your magicka, and erupts where it ends. Hold it two seconds or more and the eruption leaves an orb of searing light that pulses on everything round it. Once the three dragons fall it burns hotter still.",
-				"The Philosopher's Flask. Where it shatters a burst of sunlit gold turns the dead around it to gold statues: held fast for four seconds, every blow on them twice as hard. Each that dies gilded shatters in gold and drops extra Cursed Essence. Once the three dragons fall its gold reaches wider.",
+				"The Mutagen Gauntlet. Your hand glows with every element at once. Attack to throw a cluster of all six flasks: it bounces from one of the dead to the next, bursting in fire, frost, lightning, acid, holy light and the void. It recharges in thirty seconds. Once the three dragons fall, every burst is its Legendary form.",
 				"The Akaviri dragon slayer, two tiers above your blade. Every hit carries the last Spellsword spell you held. Once the three dragons fall it grows stronger again, and a power attack looses that spell on the dead round you." };
 			std::string up(kWonderName[a_cls]);
 			for (auto& ch : up) ch = static_cast<char>(std::toupper(static_cast<unsigned char>(ch)));
@@ -3250,29 +3250,37 @@ namespace bo3z::Classes
 		}
 		void FlaskBurst(const FlaskShot& f, const RE::NiPoint3& a_at)
 		{
-			if (f.el == 6) {  // the Philosopher's Flask
-				// (Noah: "Midas touch" - "Frozen, not killed") Mysticism's sunburst in gold where it shatters; every one of the dead it
-				// catches turned to a statue of gold - held fast for four seconds, every blow on it twice as hard - then free again.
-				// Each that dies gilded shatters in gold and drops extra Essence (TickGoldClouds). Once the three dragons fall, wider
+			if (f.el == 6) {  // (Noah: the Philosopher's Flask made the Mutagen Gauntlet - "Bouncing cluster", "6 bounces, fixed order") the cluster
+				// bounces from one of the dead to the next, a flask of each element bursting on each in turn: fire, frost, shock, acid,
+				// holy, void; once the three dragons fall each burst is its Legendary form ("Bigger bursts")
 				const bool legend = AfterSovngarde();
-				GoldCloud g;
-				g.at = a_at, g.left = 4.2f, g.radius = legend ? 560.0f : 450.0f, g.legend = legend;
-				Gun::BlastSound("lightmassive", a_at, 1.0f);  // (Skyrim's own: a great burst of light)
-				if (auto* pl = RE::PlayerCharacter::GetSingleton()) Audio::Game(0x0003F3D8, pl, 1.0f), Audio::Game(0x000B6435, pl, 0.7f);
-				Gun::QueueFx("CurseOfAlduin\\fx\\philosopher_burst.nif", a_at, legend ? 1.25f : 1.0f, 0.0f, 2.0f, false);
-				const float top = UpgradeMult(legend ? kWonderUps + 1 : kWonderUps) * (0.7f + 0.3f * Arcana::Power());
-				Gun::AreaHurt(a_at, g.radius, 0.35f * top, "");
-				auto* gild = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kBowSkin[4], gen::kPlugin);  // (the sun bow's gold)
-				for (auto* a : NearFoes(a_at, g.radius, 24)) {
-					if (a->IsDead()) continue;
-					if (gild) a->ApplyEffectShader(gild, 4.0f, nullptr, false, false, nullptr, false);
-					a->EnableAI(false);   // (a statue: held fast)
-					g.gilded.insert(a->GetFormID());
-					g_gildedUntil[a->GetFormID()] = std::chrono::steady_clock::now() + std::chrono::milliseconds(4000);
-					g_flaskMark[a->GetFormID()] = std::chrono::steady_clock::now();
+				Gun::BlastSound("lightmassive", a_at, 0.8f);
+				static constexpr const char* kModel[6] = { "fire", "frost", "shock", "poison", "sun", "blood" };
+				std::vector<RE::ActorHandle> hit;
+				RE::NiPoint3 from = a_at;
+				float delay = 0.0f;
+				for (int el = 0; el < 6; ++el) {
+					RE::Actor* next = nullptr;
+					float best = 1e9f;
+					for (auto* fo : NearFoes(from, 1100.0f, 24)) {
+						if (fo->IsDead() || std::any_of(hit.begin(), hit.end(), [fo](const RE::ActorHandle& h) { return h.get().get() == fo; })) continue;
+						if (const float d = fo->GetPosition().GetDistance(from); d < best) best = d, next = fo;
+					}
+					RE::NiPoint3 to = next ? next->GetPosition() : from + RE::NiPoint3{ std::cos(el * 1.05f) * 260.0f, std::sin(el * 1.05f) * 260.0f, 0.0f };
+					if (next) hit.push_back(next->GetHandle());
+					const RE::NiPoint3 a0 = from + RE::NiPoint3{ 0, 0, 40.0f };
+					constexpr float kFly = 0.35f;
+					RE::NiPoint3 vel = (to - a0) * (1.0f / kFly);
+					vel.z += 0.5f * 900.0f * kFly;
+					const int tier = legend ? 3 : 1;
+					Tasks::Later(delay, [el, tier, a0, vel]() {
+						FlaskShot shot{ {}, el, tier, a0, false, false, 0.0f };
+						Gun::Lob(std::string("CurseOfAlduin\\\\alchemist\\\\flask_") + kModel[el] + ".nif", a0, vel, 0.7f, [shot](const RE::NiPoint3& at) { FlaskBurst(shot, at); });
+					});
+					delay += kFly + 0.1f;
+					from = to;
 				}
-				g_gold.push_back(std::move(g));
-				logger::info("alchemist: the Philosopher's Flask shatters - {} turned to gold", g_gold.back().gilded.size());
+				logger::info("alchemist: the Mutagen Gauntlet's cluster - {} of the dead to bounce through{}", hit.size(), legend ? " (Legendary)" : "");
 				return;
 			}
 			// (Noah, the flasks redone: "Glass shatter + spell blast + lingering pool"; Tier I a bigger burst, Tier II a chain reaction,
@@ -3360,7 +3368,7 @@ namespace bo3z::Classes
 					Gun::SkyBeam(a_at, 1.6f);
 					Gun::BlastSound("lightmassive", a_at, 0.8f);
 					const float rr = r * 1.2f;
-					Tasks::Later(0.3f, [a_at, rr, share, whole]() {
+					Tasks::Later(0.5f, [a_at, rr, share, whole]() {
 						Gun::AreaHurt(a_at, rr, 1.5f * share, "");
 						for (auto* fo : NearFoes(a_at, rr, 20)) { Gun::Burn(fo, whole * 0.03f, 3.0f); Gun::Knock(fo, 0.4f); }
 					});
@@ -3765,7 +3773,7 @@ namespace bo3z::Classes
 			(void)sz;
 			Gun::BlastSound("lightmassive", at, 0.9f);
 			const float pw = a_pw, whole = Director::RoundHealth() * gen::kRounds.hpScale;
-			Tasks::Later(0.3f, [at, r, pw, whole, big]() {
+			Tasks::Later(0.5f, [at, r, pw, whole, big]() {   // (the sun's bolt lands about half a second on)
 				Gun::Ring("white", at, 30.0f, r, 0.6f);
 				Gun::AreaHurt(at, r, (big ? 0.55f : 0.4f) * pw, "");
 				for (auto* f : NearFoes(at, r, 20)) { Gun::Burn(f, whole * 0.04f * pw, 3.0f); Gun::Knock(f, 0.6f); }
@@ -4103,13 +4111,13 @@ namespace bo3z::Classes
 	{
 		const int el = FlaskHeld(a_left);
 		if (el < 0 || Gun::Throwing()) return;
-		if (el == 6 && g_class.load() != coffer::kAlchemist) { Hud::QuestBanner("The Philosopher's Flask answers only to an Alchemist", 2.5f)   /* (Noah: "it won't let me throw it" - and nothing said why: always shown) */; return; }
+		if (el == 6 && g_class.load() != coffer::kAlchemist) { Hud::QuestBanner("The Mutagen Gauntlet answers only to an Alchemist", 2.5f)   /* (Noah: "it won't let me throw it" - and nothing said why: always shown) */; return; }
 		float& cool = el == 6 ? g_philCool : g_flaskCool;
 		if (cool > 0) {
-			if (el == 6) Hud::QuestBanner(fmt::format("The Philosopher's Flask is still brewing ({:.0f} s)", std::ceil(cool)), 1.5f);
+			if (el == 6) Hud::QuestBanner(fmt::format("The Mutagen Gauntlet is recharging ({:.0f} s)", std::ceil(cool)), 1.5f);
 			return;
 		}
-		cool = el == 6 ? 12.0f : 0.9f * (Kit::ArmourTier(coffer::kAlchemist) >= 1 ? 0.85f : 1.0f) * Perks::FlaskCostMult();
+		cool = el == 6 ? 30.0f :   /* (Noah: the Mutagen Gauntlet "once every 30s") */ 0.9f * (Kit::ArmourTier(coffer::kAlchemist) >= 1 ? 0.85f : 1.0f) * Perks::FlaskCostMult();
 		g_throwAt = std::chrono::steady_clock::now();
 		// (Noah: the flasks' own synthesized sounds "really toony") the throw makes no sound of its own: the impact carries it
 		Gun::StartThrow(a_left, [el, a_left]() { ThrowFlaskEl(el, a_left); });

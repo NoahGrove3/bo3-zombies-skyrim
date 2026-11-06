@@ -235,7 +235,7 @@
    "cls": "ranger",
    "title": "The Philosopher's Stone",
    "reward": "wonder",
-   "rewardText": "The Greybeards call you to High Hrothgar: the Philosopher's Flask waits on its pedestal in the Reliquary.",
+   "rewardText": "The Greybeards call you to High Hrothgar: the Mutagen Gauntlet waits on its pedestal in the Reliquary.",
    "steps": [
     {
      "type": "touch",

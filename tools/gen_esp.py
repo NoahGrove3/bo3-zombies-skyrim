@@ -104,7 +104,7 @@ FLASKS = [('fire', 'Fire Flask', 'A flask of liquid fire. It bursts where it lan
           ('poison', 'Acid Flask', 'A flask of green acid. It bursts into a corroding splash where it lands.'),
           ('sun', 'Holy Water', 'Blessed water of Stendarr. It bursts into searing light where it lands; the dead burn in it.'),
           ('blood', 'Voidglass Flask', 'A flask of bottled void. It shatters and drags the dead in to where it broke.'),
-          ('philosopher', "Philosopher's Flask", 'The Alchemist\'s wonder. Where it shatters a burst of sunlit gold turns the dead around it to gold statues: held fast for four seconds, every blow on them twice as hard. Each that dies gilded shatters in gold and drops extra Cursed Essence.')]
+          ('philosopher', "Mutagen Gauntlet", 'The Alchemist\'s wonder. Your hand glows with every element: attack to throw a cluster of all six flasks that bounces from one of the dead to the next, bursting in each element in turn. Recharges in 30 seconds.')]
 FLASK_TIERS = ' The glass shatters, its element bursts, and a pool of it lingers on the ground. Tier I: a burst half again as wide. Tier II: a chain reaction - the dead it kills burst in its element too. Legendary: a cyclone of its element rises where it breaks and rolls into the dead.'
 for e, label, text in FLASKS:
     pd = bytearray(tsub('proj_bullet', 'DATA'))
@@ -172,7 +172,7 @@ for e, label, text in FLASKS:
         b = bytes.fromhex(hx)
         if name == 'EDID': b = z('UN_Flask_' + e)
         elif name == 'FULL': b = z(label)
-        elif name == 'MODL': b = z('CurseOfAlduin\\alchemist\\flask_' + e + '_held.nif')
+        elif name == 'MODL': b = z('apocnew\\restorationarcane_hands.nif' if e == 'philosopher' else 'CurseOfAlduin\\alchemist\\flask_' + e + '_held.nif')   # (Noah: the Mutagen Gauntlet - "Glowing hand only")
         elif name in ('MODT', 'EITM', 'EAMT'): continue
         elif name == 'DESC': b = z(text + ' Attack to throw it; it never runs out.')   # (Noah: short - its tier's line added by src/Classes.cpp TickItemCard)
         elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_flask_' + e))
@@ -1318,7 +1318,7 @@ recs['ACTI'].append(record('ACTI', fid('ACTI', 'rel_portal'), [sub('EDID', z('UN
 # (Noah: "skeleton dragon horn is from sketchfab so replace that with a spell model since its conjuration anyways") the Bone-Throne
 # Horn floats as a spell: its orb of green grave-fire (our own, tools/orbfx.py), not the horn
 for key, model, r in (('hf_gravecaller', 'CurseOfAlduin\\wonder\\bonehorn_show.nif', 40), ('hf_frostbinder', 'Weapons\\StaffofMagnus\\StaffofMagnus.nif', 80),
-                      ('hf_wolfcrown', 'CurseOfAlduin\\alchemist\\flask_philosopher_held.nif', 20), ('hf_barrowhorn', lgs('slayer'), 60),
+                      ('hf_wolfcrown', 'apocnew\\restorationarcane_projectile_withershins.nif', 20), ('hf_barrowhorn', lgs('slayer'), 60),
                       ('hf_bane', lgs('bane'), 90), ('hf_glow', 'CurseOfAlduin\\fx\\hall_glow.nif', 60),
                       ('hf_glowtall', 'CurseOfAlduin\\fx\\hall_glow_tall.nif', 120), ('hf_pillar', 'CurseOfAlduin\\fx\\pillar_fire.nif', 120)):
     recs['ACTI'].append(record('ACTI', fid('ACTI', key), [sub('EDID', z('UN_' + key)), sub('OBND', struct.pack('<6h', -r, -r, -r, r, r, r * 2)),

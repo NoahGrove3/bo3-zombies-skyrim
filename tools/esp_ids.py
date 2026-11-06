@@ -99,7 +99,7 @@ def dressing(S):
         records[('STAT', 'show_' + w['id'])] = {'model': f"CurseOfAlduin\\fx\\{w['id']}_icon.nif" if w['id'] in sc_ids else w['standinModel'], 'color': '', 'radius': 0}  # the roll shows the spell's logo
     records[('STAT', '1st_vortex')] = {'model': 'CurseOfAlduin\\bow\\vortex.nif', 'color': '', 'radius': 0}
     for _e in ('fire', 'frost', 'shock', 'poison', 'sun', 'blood', 'philosopher'):   # (Noah: the flasks held in the hand)
-        records[('STAT', '1st_flask_' + _e)] = {'model': 'CurseOfAlduin\\alchemist\\flask_' + _e + '_held.nif', 'color': '', 'radius': 0}
+        records[('STAT', '1st_flask_' + _e)] = {'model': 'apocnew\\restorationarcane_hands.nif' if _e == 'philosopher' else 'CurseOfAlduin\\alchemist\\flask_' + _e + '_held.nif', 'color': '', 'radius': 0}
     records[('STAT', '1st_slayer')] = {'model': 'Light Greatswords\\akaviri\\LightGreatsword.nif', 'color': '', 'radius': 0}        # (Noah) the Dragon Slayer: the Ayleid Crystal Saber
     records[('STAT', '1st_mace')] = {'model': 'Light Greatswords\\daedric\\LightGreatsword.nif', 'color': '', 'radius': 0}  # (Noah) the Alchemist's Shadowflame Sword: Kv's purple crystal sword
     records[('STAT', '1st_kvred')] = {'model': 'Light Greatswords\\nordic\\LightGreatsword.nif', 'color': '', 'radius': 0}  # the Spellsword's
