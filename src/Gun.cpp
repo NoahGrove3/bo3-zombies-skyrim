@@ -3098,9 +3098,9 @@ namespace bo3z
 			const auto& cw = cam->cameraRoot->world;
 			RE::NiPoint3 f{ cw.rotate.entry[0][1], cw.rotate.entry[1][1], cw.rotate.entry[2][1] };
 			f.Unitize();
-			const RE::NiPoint3 eye = cw.translate, far = eye + f * 2800.0f;
-			const float hit = Spellcraft::WorldHit(eye + f * 40.0f, far);
-			RE::NiPoint3 to = hit <= 1.0f ? (eye + f * 40.0f) + (far - (eye + f * 40.0f)) * hit : far;
+			const RE::NiPoint3 eye = cw.translate, farPt = eye + f * 2800.0f;
+			const float hit = Spellcraft::WorldHit(eye + f * 40.0f, farPt);
+			RE::NiPoint3 to = hit <= 1.0f ? (eye + f * 40.0f) + (farPt - (eye + f * 40.0f)) * hit : farPt;
 			// (from the palm: no wall between it and the hand's own reach)
 			a_from = palm, a_to = to;
 			Props::GBeamLay(a_el, palm, to, a_width);
