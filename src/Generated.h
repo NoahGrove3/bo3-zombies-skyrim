@@ -1729,7 +1729,7 @@ namespace bo3z::gen
 	} };
 	struct EchoWonder { std::string_view id, label, text; std::uint32_t color, pedestal, gem; };
 	inline constexpr std::array<EchoWonder, 4> kEchoWonders{ {
-		EchoWonder{ "gravecaller", "Horn of the Violet Wyrm", "A horn carved from a dragon's throne of bone. Blow it and a little dragon of bare bone answers, flying at your side - never more than 15 m off - and raining green grave-fire on the dead for a minute; an hour once the three dragons fall.", 0x9CFF6A, 0xC44, 0xC4A },
+		EchoWonder{ "gravecaller", "Horn of the Violet Wyrm", "A dragon's horn bound in silver, a violet gem in its mouthpiece. Hold it and attack to blow it: a violet wyrm flies in and burns the dead within 30 m of you for 90 seconds, circling, strafing and hovering to breathe on crowds. The horn rests a minute after the wyrm departs. Once the three dragons fall, a second, smaller wyrm answers with it.", 0x9CFF6A, 0xC44, 0xC4A },
 		EchoWonder{ "frostbinder", "Staff of Magnus", "The Staff of Magnus. Its beam drains the dead and feeds your magicka, and erupts where it lets go; held two seconds, the eruption leaves an orb of searing light pulsing on everything round it.", 0x9FD8FF, 0xC45, 0xC4B },
 		EchoWonder{ "wolfcrown", "Mutagen Gauntlet", "A flask of molten gold. Where it shatters a gold cloud hangs: the dead inside are gilded and torn apart, and each one that dies in it drops extra Cursed Essence. Wider and longer once the three dragons fall.", 0xFFD24A, 0xC46, 0xC4C },
 		EchoWonder{ "barrowhorn", "Dragon Slayer", "The Akaviri dragon slayer. Every hit carries the spell in your other hand. Once the three dragons fall, a power attack sends that spell down the line.", 0xFF7A3C, 0xC47, 0xC4D },

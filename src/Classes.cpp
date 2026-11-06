@@ -708,7 +708,7 @@ namespace bo3z::Classes
 		g_wStep[a_cls] = kWonderTaken;
 			Forms::Play(gen::Sound::shout_learned);
 			static constexpr const char* kText[4] = {
-				"A horn carved from a dragon's throne of bone. Blow it and a little dragon of bare bone answers: it flies at your side, never more than 15 m off, and rains green grave-fire on the dead for a minute. Once the three dragons fall it stays for an hour, or until it is slain.",
+				"A dragon's horn bound in silver, a violet gem in its mouthpiece. Hold it and attack to blow it: a violet wyrm flies in and burns the dead within 30 m of you for 90 seconds, circling, strafing and hovering to breathe on crowds. The horn rests a minute after the wyrm departs. Once the three dragons fall, a second, smaller wyrm answers with it.",
 				"The Staff of Magnus. Hold its beam on the dead: it drains them and feeds your magicka, and erupts where it ends. Hold it two seconds or more and the eruption leaves an orb of searing light that pulses on everything round it. Once the three dragons fall it burns hotter still.",
 				"The Mutagen Staff. A staff whose glass orb is fed by six vials of the elements. Hold attack to loose a beam from the orb: it pierces every one of the dead in its path, pouring each vial in turn for five seconds - fire, frost, lightning, acid, holy light and the void. Let go and the emptied vials refill; empty all six and they must refill completely. Once the three dragons fall, the beam burns stronger.",
 				"The Akaviri dragon slayer, two tiers above your blade. Every hit carries the last Spellsword spell you held. Once the three dragons fall it grows stronger again, and a power attack looses that spell on the dead round you." };
