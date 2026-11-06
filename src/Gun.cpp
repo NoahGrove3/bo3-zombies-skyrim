@@ -2755,8 +2755,15 @@ namespace bo3z
 		// (the knuckles a little, the joints past them more) so they never close through the orb - as the flask's open hold,
 		// without its roll
 		float g_gauntW[2]{};
+		float g_gauntCurl = 0.0f, g_gauntOpen = 0.0f;
 		void PoseGauntletHand(RE::PlayerCharacter* a_player, float a_delta)
 		{
+			{
+				const auto& gs = Props::g_gs;
+				const float curl = gs.phase == 1 && gs.t < 0.5f ? 1.0f : 0.0f, open = gs.phase == 2 || (gs.phase == 1 && gs.t >= 0.5f) ? 1.0f : 0.0f;
+				g_gauntCurl += (curl - g_gauntCurl) * std::min(1.0f, a_delta * 8.0f);
+				g_gauntOpen += (open - g_gauntOpen) * std::min(1.0f, a_delta * (open > g_gauntOpen ? 20.0f : 6.0f));
+			}
 			for (const bool L : { false, true }) {
 				const bool want = Classes::FlaskElementInHand(L) == 6 && Classes::FlaskInHand(L) && !Movement::Gliding();
 				float& w = g_gauntW[L ? 1 : 0];
@@ -2786,7 +2793,9 @@ namespace bo3z
 							if (sn < 1e-3f) continue;
 							ax = ax * (1.0f / sn);
 							const float ang = std::atan2(sn, pd.Dot(sd));
-							const float k = (i == 0 ? 0.35f : j == 0 ? 0.6f : 0.8f) * ww;
+							// (the beam's gesture: the fingers curling in as it gathers, flung straight and open for the push)
+							const float base = i == 0 ? 0.35f : j == 0 ? 0.6f : 0.8f, open = i == 0 ? 0.75f : 1.0f;
+							const float k = (base + (0.12f - base) * g_gauntCurl + (open - base) * g_gauntOpen) * ww;
 							TurnBone(bone, AxisAngle(ax, -ang * k));
 						}
 					}
@@ -2798,6 +2807,43 @@ namespace bo3z
 		// the arm reaching, the palm rolled down and the wrist bent back so the palm - and its orb - faces where you aim;
 		// held there, trembling a little, as long as the beam pours
 		float g_gbW = 0.0f, g_gbS = 0.0f;
+		// the pose's numbers, tunable in game (dev: gpose <i> <v>): 0/1 the hand's distance ahead of your eyes in the charge /
+		// the push, 2/3 how far below them, 4/5 how far out to the side, 6 the elbow straightened for the push, 7 how fully the
+		// hand is turned to its frame, 8 third person: the shoulder's height, 9 third person: farther out, 10 the arm's reach
+		// (0..1), 11 the charge's palm (0 up, 1 turned in), 12 the push's fingers (0 up .. 1 ahead)
+		float g_gbP[13] = { 26.0f, 46.0f, 17.0f, 6.0f, 3.0f, 8.0f, 0.45f, 1.0f, 112.0f, 14.0f, 1.0f, 1.0f, 0.25f };
+		// a rotation matrix as an axis and an angle
+		bool AxisOf(const RE::NiMatrix3& m, RE::NiPoint3& a_axis, float& a_ang)
+		{
+			const float tr = m.entry[0][0] + m.entry[1][1] + m.entry[2][2];
+			a_ang = std::acos(std::clamp((tr - 1.0f) * 0.5f, -1.0f, 1.0f));
+			if (a_ang < 1e-4f) return false;
+			RE::NiPoint3 ax{ m.entry[2][1] - m.entry[1][2], m.entry[0][2] - m.entry[2][0], m.entry[1][0] - m.entry[0][1] };
+			if (ax.Length() < 1e-5f) {   // (a half turn: the axis from the matrix's diagonal)
+				ax = { std::sqrt(std::max(0.0f, (m.entry[0][0] + 1) * 0.5f)), std::sqrt(std::max(0.0f, (m.entry[1][1] + 1) * 0.5f)), std::sqrt(std::max(0.0f, (m.entry[2][2] + 1) * 0.5f)) };
+				if (m.entry[0][1] < 0) ax.y = -ax.y;
+				if (m.entry[0][2] < 0) ax.z = -ax.z;
+			}
+			a_axis = ax * (1.0f / ax.Length());
+			return true;
+		}
+		RE::NiMatrix3 Cols(const RE::NiPoint3& x, const RE::NiPoint3& y, const RE::NiPoint3& z)
+		{
+			RE::NiMatrix3 m;
+			m.entry[0][0] = x.x, m.entry[1][0] = x.y, m.entry[2][0] = x.z;
+			m.entry[0][1] = y.x, m.entry[1][1] = y.y, m.entry[2][1] = y.z;
+			m.entry[0][2] = z.x, m.entry[1][2] = z.y, m.entry[2][2] = z.z;
+			return m;
+		}
+		// the hand's frame in the world for a palm facing pn with the fingers along fz: the bone's -Y the palm, +Z the fingers
+		RE::NiMatrix3 HandFrame(RE::NiPoint3 pn, RE::NiPoint3 fz)
+		{
+			fz.Unitize();
+			RE::NiPoint3 y = -pn;
+			y = y - fz * y.Dot(fz);
+			y.Unitize();
+			return Cols(y.Cross(fz), y, fz);
+		}
 		void PoseGauntletBeam(RE::PlayerCharacter* a_player, float a_delta)
 		{
 			const auto& gs = Props::g_gs;
@@ -2821,55 +2867,75 @@ namespace bo3z
 			f.Unitize(), u.Unitize(), r.Unitize();
 			const float side = L ? -1.0f : 1.0f;
 			const float tt = static_cast<float>(Spellcraft::g_time);
-			// where the hand goes: close and low in the charge (a slow gathering sway), out ahead for the push
-			const float dist = (first ? 24.0f : 34.0f) + (first ? 30.0f : 30.0f) * s;
-			const RE::NiPoint3 base = first ? cw.translate : a_player->GetPosition() + RE::NiPoint3{ 0, 0, 108.0f };
-			RE::NiPoint3 target = base + f * dist + r * (side * ((first ? 4.0f : 9.0f) + 4.0f * s)) - u * ((first ? 19.0f : 6.0f) - 9.0f * s);
-			const float shake = gs.phase == 2 ? 0.35f : 0.15f;
+			const float* P = g_gbP;
+			const float dist = P[0] + (P[1] - P[0]) * s + (first ? 0.0f : P[9]);
+			const RE::NiPoint3 base = first ? cw.translate : a_player->GetPosition() + RE::NiPoint3{ 0, 0, P[8] };
+			RE::NiPoint3 target = base + f * dist + r * (side * (P[4] + (P[5] - P[4]) * s)) - u * (P[2] + (P[3] - P[2]) * s);
+			const float shake = gs.phase == 2 ? 0.3f : 0.12f;
 			target += RE::NiPoint3{ std::sin(tt * 13.0f), std::sin(tt * 17.0f + 2.0f), std::sin(tt * 11.0f + 1.0f) } * shake;
 			auto* ua = root->GetObjectByName(L ? "NPC L UpperArm [LUar]" : "NPC R UpperArm [RUar]");
 			auto* fa = root->GetObjectByName(HandBone(L, "fa"));
 			auto* hand = root->GetObjectByName(HandBone(L, "hand"));
 			if (!ua || !fa || !hand) return;
+			// the elbow eased straighter for the push (first: the reach below then aims the straighter arm)
+			if (s > 0.01f && P[6] != 0.0f) {
+				RE::NiPoint3 hinge = BoneZ(ua).Cross(BoneZ(fa));
+				if (hinge.Length() > 0.05f) TurnBone(fa, AxisAngle(hinge * (1.0f / hinge.Length()), -P[6] * s * w));
+			}
 			{   // the arm swung so the hand reaches its mark
 				RE::NiPoint3 a = hand->world.translate - ua->world.translate, b = target - ua->world.translate;
 				if (a.Length() > 1e-3f && b.Length() > 1e-3f) {
 					a.Unitize(), b.Unitize();
 					RE::NiPoint3 ax = a.Cross(b);
 					const float ang = std::acos(std::clamp(a.Dot(b), -1.0f, 1.0f));
-					if (ax.Length() > 1e-5f && ang > 1e-4f) TurnBone(ua, AxisAngle(ax * (1.0f / ax.Length()), ang * w));
+					if (ax.Length() > 1e-5f && ang > 1e-4f) TurnBone(ua, AxisAngle(ax * (1.0f / ax.Length()), ang * w * P[10]));
 				}
 			}
-			// the elbow eased straighter for the push
-			if (s > 0.01f) {
-				RE::NiPoint3 hinge = BoneZ(ua).Cross(BoneZ(fa));
-				if (hinge.Length() > 0.05f) TurnBone(fa, AxisAngle(hinge * (1.0f / hinge.Length()), -0.45f * s * w));
+			// the hand turned to its frame: in the charge the palm up (or turned in) with the fingers ahead, cupping the light;
+			// for the push the palm square to where you aim, the fingers up - the turn between them eased through by the push.
+			// A third of the turn about the forearm's line goes to the forearm (and its twist), so the wrist doesn't wring
+			const RE::NiPoint3 cupN = P[11] > 0.5f ? (r * -side) * 0.8f + u * 0.6f : u;
+			const RE::NiMatrix3 R0 = HandFrame(cupN, f * 0.9f - u * 0.2f);
+			const RE::NiMatrix3 R1 = HandFrame(f, u * (1.0f - P[12]) + f * P[12]);
+			RE::NiMatrix3 want = R0;
+			if (RE::NiPoint3 ax; s > 0.001f) {
+				float ang = 0;
+				if (AxisOf(R1 * R0.Transpose(), ax, ang)) want = AxisAngle(ax, ang * s) * R0;
+				else want = R1;
 			}
-			// the palm's roll about the forearm: up in the charge, round through facing in, to down for the push
-			RE::NiPoint3 n, fingers, centre;
-			if (!PalmNormal(root, L, n, fingers, centre)) return;
-			RE::NiPoint3 a = hand->world.translate - fa->world.translate;
-			if (a.Length() < 1e-3f) return;
-			a.Unitize();
-			const float k = 3.14159f * s;
-			RE::NiPoint3 want = u * std::cos(k) + r * (-side * std::sin(k));
-			RE::NiPoint3 wp = want - a * a.Dot(want), np = n - a * a.Dot(n);
-			if (wp.Length() > 0.2f && np.Length() > 0.2f) {
-				wp.Unitize(), np.Unitize();
-				const float phi = std::clamp(std::atan2(a.Dot(np.Cross(wp)), np.Dot(wp)), -2.8f, 2.8f) * w;
-				TurnBone(fa, AxisAngle(a, phi * 0.6f));
-				TurnBone(root->GetObjectByName(HandBone(L, "twist")), AxisAngle(a, phi * 0.2f));
-				TurnBone(hand, AxisAngle(a, phi * 0.4f));
-			}
-			// and the wrist bent back so the palm faces ahead
-			if (s > 0.01f && PalmNormal(root, L, n, fingers, centre)) {
-				RE::NiPoint3 ax = n.Cross(f);
-				const float sn = ax.Length();
-				if (sn > 1e-3f) {
-					const float ang = std::min(1.35f, std::atan2(sn, n.Dot(f)));
-					TurnBone(hand, AxisAngle(ax * (1.0f / sn), ang * s * w));
+			{
+				RE::NiPoint3 ax;
+				float ang = 0;
+				if (AxisOf(want * hand->world.rotate.Transpose(), ax, ang)) {
+					ang *= w * P[7];
+					RE::NiPoint3 a = hand->world.translate - fa->world.translate;
+					if (a.Length() > 1e-3f) {
+						a.Unitize();
+						const float roll = ax.Dot(a) * ang * 0.35f;   // (part of it about the forearm: given to the forearm)
+						TurnBone(fa, AxisAngle(a, roll * 0.75f));
+						TurnBone(root->GetObjectByName(HandBone(L, "twist")), AxisAngle(a, roll * 0.25f));
+					}
+					if (AxisOf(want * hand->world.rotate.Transpose(), ax, ang)) TurnBone(hand, AxisAngle(ax, ang * w * P[7]));
 				}
 			}
+			// (dev: where the hand landed, in your view's terms - right, ahead, up - for tuning the numbers above)
+			if (static float said = 0; (said -= a_delta) <= 0) {
+				said = 0.5f;
+				const RE::NiPoint3 eye = cw.translate;
+				auto cs = [&](const RE::NiPoint3& v) { return fmt::format("({:.0f},{:.0f},{:.0f})", v.Dot(r), v.Dot(f), v.Dot(u)); };
+				auto cd = [&](const RE::NiPoint3& v) { return fmt::format("({:.2f},{:.2f},{:.2f})", v.Dot(r), v.Dot(f), v.Dot(u)); };
+				RE::NiPoint3 n, fz, c;
+				PalmNormal(root, L, n, fz, c);
+				logger::info("gauntlet pose: phase {} s {:.2f} w {:.2f} {} | hand {} target {} | palm {} fingers {}", gs.phase, s, w, first ? "1st" : "3rd",
+					cs(hand->world.translate - eye), cs(target - eye), cd(n), cd(fz));
+			}
+		}
+		void GauntletTune(int a_i, float a_v)
+		{
+			if (a_i >= 0 && a_i < static_cast<int>(std::size(g_gbP))) g_gbP[a_i] = a_v;
+			std::string all;
+			for (float v : g_gbP) all += fmt::format("{:g} ", v);
+			logger::info("gauntlet pose numbers: {}", all);
 		}
 		// the bottle on the palm (after the throw's swing, so it rides the hand through it): its base where the palm is, its
 		// neck up out of the hand - the held model hangs from its neck (tools/flasks.py), its base this far down it
@@ -3088,6 +3154,7 @@ namespace bo3z
 		void  SkyFall(const RE::NiPoint3& a_at) { Props::SkyFireball(a_at); }  // (a burning star from the sky onto a point)
 
 		void SetGauntlet(const GauntletState& a_s) { Props::g_gs = a_s; }
+		void DevGauntletTune(int a_i, float a_v) { GauntletTune(a_i, a_v); }
 		bool GauntletBeam(int a_el, float a_width, RE::NiPoint3& a_from, RE::NiPoint3& a_to)
 		{
 			auto* cam = RE::PlayerCamera::GetSingleton();
@@ -5272,7 +5339,7 @@ namespace bo3z
 			TickStorm(a_delta);
 			Props::Tick(a_delta, GunOut() ? CurrentGun() : -1);
 			Props::TickMad();
-			Props::TickGauntlet();
+			Props::TickGauntlet(a_delta);
 			Props::TickWorld(a_delta);
 			Props::TickFang(a_delta);
 			TickStaffs(a_delta);

@@ -61,7 +61,11 @@ namespace Props
 	struct GloveParts
 	{
 		RE::NiAVObject* root = nullptr;
-		RE::NiAVObject* liq[6][8]{};
+		RE::NiAVObject* top[6]{};       // Liq<e>_T: the liquid's surface (its column skinned to it)
+		float           zB[6]{}, zT[6]{};   // its foot's and full surface's heights
+		RE::NiAVObject* body[6]{};
+		RE::NiAVObject* glow[6]{};
+		float           shown[6]{ 1, 1, 1, 1, 1, 1 };   // the level shown (easing after the real one, as liquid settles)
 		RE::NiAVObject* tube[6]{};
 		RE::NiAVObject* bub[6]{};
 		RE::NiAVObject* vglow[6]{};
@@ -77,7 +81,12 @@ namespace Props
 			if (!o) return;
 			const std::string_view n = o->name.c_str();
 			auto el = [&](std::string_view pre) { return n.size() > pre.size() && n.substr(0, pre.size()) == pre ? n[pre.size()] - '0' : -1; };
-			if (int e = el("Liq"); e >= 0 && e < 6 && n.size() > 5 && n[4] == '_') { const int j = n[5] - '0'; if (j >= 0 && j < 8) a_p.liq[e][j] = o; }
+			if (int e = el("Liq"); e >= 0 && e < 6 && n.size() == 6 && n[4] == '_') {
+				if (n[5] == 'T') a_p.top[e] = o, a_p.zT[e] = o->local.translate.z;
+				else if (n[5] == 'B') a_p.zB[e] = o->local.translate.z;
+			}
+			else if (int eb = el("LiqBody"); eb >= 0 && eb < 6) a_p.body[eb] = o;
+			else if (int eg = el("LiqGlow"); eg >= 0 && eg < 6) a_p.glow[eg] = o;
 			else if (int e1 = el("TubeLight"); e1 >= 0 && e1 < 6) a_p.tube[e1] = o;
 			else if (int e2 = el("VialBubbles"); e2 >= 0 && e2 < 6) a_p.bub[e2] = o;
 			else if (int e3 = el("VialGlow"); e3 >= 0 && e3 < 6 && n.find("_bb") == std::string_view::npos) a_p.vglow[e3] = o;
@@ -88,12 +97,25 @@ namespace Props
 		};
 		walk(a_root);
 	}
-	void ShowParts(GloveParts& a_p)
+	void ShowParts(GloveParts& a_p, float a_delta)
 	{
 		const auto& s = g_gs;
 		for (int e = 0; e < 6; ++e) {
-			const float f = std::clamp(s.fill[e], 0.0f, 1.0f);
-			for (int j = 0; j < 8; ++j) if (a_p.liq[e][j]) a_p.liq[e][j]->SetAppCulled(!(f * 6.0f > static_cast<float>(j) + 0.12f));   // (6 slices: the top ones go first)
+			// the surface eased after the true level (liquid settling, never stepping), a faint ripple while it moves
+			float& d = a_p.shown[e];
+			const float want = std::clamp(s.fill[e], 0.0f, 1.0f);
+			d += (want - d) * std::min(1.0f, a_delta * 5.0f);
+			const float f = d;
+			if (a_p.top[e]) {
+				const float moving = std::min(1.0f, std::abs(want - d) * 40.0f) + (s.active == e && s.phase == 2 ? 1.0f : 0.0f);
+				const float ripple = 0.03f * std::min(1.0f, moving) * std::sin(static_cast<float>(Spellcraft::g_time) * 9.0f + e);
+				a_p.top[e]->local.translate.z = a_p.zB[e] + (a_p.zT[e] - a_p.zB[e]) * std::max(0.03f, f) + ripple * (f > 0.05f ? 1.0f : 0.0f);
+				RE::NiUpdateData ud;
+				ud.time = 0.0f;
+				a_p.top[e]->Update(ud);
+			}
+			if (a_p.body[e]) a_p.body[e]->SetAppCulled(f < 0.015f);
+			if (a_p.glow[e]) a_p.glow[e]->SetAppCulled(f < 0.015f);
 			const bool pour = s.phase == 2 && s.active == e;
 			const bool next = s.phase == 1 && s.active == e;
 			if (a_p.tube[e]) a_p.tube[e]->SetAppCulled(!pour);
@@ -106,11 +128,13 @@ namespace Props
 	GloveParts g_parts[2][2];
 	struct Glove { Spellcraft::Fx fx; RE::NiNode* on = nullptr; };
 	Glove g_glove[2][2];   // [hand: right, left][body: third, first]
-	void TickGauntlet()
+	float g_glDelta = 0.016f;
+	void TickGauntlet(float a_delta)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		for (int h = 0; h < 2; ++h) {
 			const bool L = h == 1;
+			g_glDelta = a_delta;
 			const bool want = p && Classes::FlaskElementInHand(L) == 6;
 			for (int b = 0; b < 2; ++b) {
 				auto& g = g_glove[h][b];
@@ -127,7 +151,7 @@ namespace Props
 				}
 				auto& gp = g_parts[h][b];
 				if (gp.root != g.fx.obj.get()) FindParts(gp, g.fx.obj.get());
-				ShowParts(gp);
+				ShowParts(gp, g_glDelta);
 			}
 		}
 	}

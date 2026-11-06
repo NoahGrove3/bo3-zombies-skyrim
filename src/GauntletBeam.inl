@@ -132,10 +132,11 @@
 		// the vials filling again whenever it isn't pouring: the emptied ones, in order, the whole six in 5 s
 		if (g_gb.phase == 0) {
 			g_gb.since += a_delta;
+			// (Noah: "slow and very smooth so it looks like liquid") every emptied vial filling at once, slowly - the whole six
+			// over the 5 s - easing in as it starts
 			if (g_gb.since > 0.4f) {
-				for (int e = 0; e < 6; ++e) {
-					if (g_gb.fill[e] < 1.0f) { g_gb.fill[e] = std::min(1.0f, g_gb.fill[e] + a_delta * 6.0f / kGbRefill); break; }
-				}
+				const float ramp = std::min(1.0f, (g_gb.since - 0.4f) / 0.6f);
+				for (float& f : g_gb.fill) f = std::min(1.0f, f + a_delta * ramp / kGbRefill);
 			}
 			if (g_gb.locked && std::all_of(std::begin(g_gb.fill), std::end(g_gb.fill), [](float f) { return f >= 1.0f; })) {
 				g_gb.locked = false;

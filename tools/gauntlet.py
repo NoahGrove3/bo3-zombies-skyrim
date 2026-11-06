@@ -26,7 +26,7 @@ from PIL import Image, ImageDraw, ImageFilter
 from scipy.ndimage import gaussian_filter, map_coordinates
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from throwdagger import Mesh, unit, grid_faces, tileable, height_to_normal, tool
+from throwdagger import Mesh, unit, grid_faces, tileable, height_to_normal, tool, rename_root
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT = ROOT / 'assets' / 'fx'
@@ -45,6 +45,9 @@ rng = np.random.default_rng(5150)
 
 # ------------------------------------------------------------------ the hand's envelope
 C0 = np.array(FIT['c'])
+# (seen in game: the Alchemist's Black Mage robes wrap the hand - the glove fitted to the bare hand sat inside them) the
+# glove stands this far off the bare hand's skin, over the wraps
+SKIN = 0.95
 FZ = np.array(FIT['z'])
 FR = np.array(FIT['r'])                    # rows z, 72 columns round from +X (0) through +Y (back, 90deg)
 NT = FR.shape[1]
@@ -62,7 +65,7 @@ def env(theta, z):
 def surf(theta, z, lift):
     """a point on (lift units off) the glove's skin: the hand's envelope, eased fuller over the wrist"""
     theta, z = np.broadcast_arrays(np.asarray(theta, float), np.asarray(z, float))
-    r = env(theta, z) + 0.42 + lift
+    r = env(theta, z) + SKIN + lift
     return np.stack([C0[0] + r * np.cos(theta), C0[1] + r * np.sin(theta), z], -1)
 
 
@@ -169,7 +172,7 @@ CUFF_Z = (-4.7, 0.9)
 
 def cuff_base(theta, z):
     """the cuff's inner line: the wrist's ring (z 0.2) a touch fuller, flaring a little toward the elbow"""
-    return env(theta, 0.2) + 0.62 + 0.30 * np.clip((0.9 - z) / 5.6, 0, 1)
+    return env(theta, 0.2) + SKIN + 0.25 + 0.45 * np.clip((0.9 - z) / 5.6, 0, 1)
 
 
 def cuff_pt(theta, z, d):
@@ -256,19 +259,6 @@ def vials(M, mirror=False):
                [(z, R) for z in np.linspace(z0 + 0.5, z1 - 0.75, 6)] + \
                [(z1 - 0.55, R * 0.92), (z1 - 0.4, R * 0.62), (z1 - 0.25, R * 0.58), (z1 - 0.18, R * 0.7), (z1 - 0.1, R * 0.7), (z1 - 0.05, R * 0.55)]
         M.add('Glass', 'glass', *lathe_z(prof, cx, cy, 28))
-        e = vial_el(k, mirror)
-        fill = z0 + 0.12 + (z1 - z0 - 0.9) * 0.84
-        # the liquid in NSL slices (Liq<element>_<slice>, the bottom first), each closed at its top: the bottom one the rounded
-        # foot; src/WonderProps.inl hides them from the top as the vial drains and shows them again as it fills
-        zs = np.linspace(z0 + 0.36, fill, NSL + 1)
-        for j in range(NSL):
-            lo_, hi_ = zs[j], zs[j + 1]
-            if j == 0:
-                lp = [(z0 + 0.07, 0.0), (z0 + 0.1, R * 0.5), (z0 + 0.2, R * 0.8), (lo_, R * 0.9)]
-            else:
-                lp = [(lo_ + 0.002, R * 0.9)]
-            lp = lp + [(hi_ - 0.01, R * 0.9), (hi_, R * 0.86), (hi_ + 0.002, 0.0)]
-            M.add(f'Liq{e}_{j}', 'liquid', *lathe_z(lp, cx, cy, 20, u0=e / 6 + 0.01, u1=(e + 1) / 6 - 0.01, v0=j / NSL, v1=(j + 1) / NSL))
         # the brass cap (a domed cap, a knurled band) and the spigot the tube leaves from
         cp = [(z1 - 0.2, R * 0.74), (z1 - 0.2, R * 0.82), (z1 + 0.05, R * 0.82), (z1 + 0.08, R * 0.78), (z1 + 0.2, R * 0.62),
               (z1 + 0.3, R * 0.3), (z1 + 0.5, R * 0.2), (z1 + 0.7, R * 0.22), (z1 + 0.72, 0.0)]
@@ -719,6 +709,10 @@ def fx_tex():
         g = np.exp(-(d / r) ** 2)
         Mt[..., :3] = np.maximum(Mt[..., :3], c * g[..., None]); Mt[..., 3] = np.maximum(Mt[..., 3], g * 255)
     out['motes'] = save(Mt, 'gauntlet_fx_motes.dds', True)
+    # the liquid: swirling streaks of light and shade, near opaque (coloured by its vial's element)
+    lq = tileable(S, S, 1.5, 66, aniso=(0.5, 1.0)); lf = tileable(S, S, 0.8, 67)
+    lum = np.clip(0.55 + 0.5 * (lq - 0.5) * 2 + 0.15 * (lf - 0.5), 0.25, 1.0)
+    out['liquid'] = save(np.dstack([np.repeat((lum * 255)[..., None], 3, -1), np.full((S, S), 235.0)]), 'gauntlet_fx_liquid.dds', True, size=512)
     # a soft glow
     d = np.hypot(xx - 0.5, yy - 0.5) * 2
     g = np.clip(1 - d, 0, 1) ** 2.2
@@ -775,11 +769,11 @@ def build_beams():
         L = [f'out {MESHDIR / f"gauntlet_beam_{name}.nif"}']
         for sh, t, w, col, sc, vs in (('BeamGlow', FX['beam_glow'], 15.0, c, 1.5, 0.45), ('BeamStrand', FX['beam_strand'], 11.0, pale, 2.2, 0.3),
                                         ('BeamCore', FX['beam_core'], 5.0, pale, 3.0, 0.6)):
-            L.append(f'shape {sh} tex={t} color={col[0]:.2f},{col[1]:.2f},{col[2]:.2f},1 scale={sc} blend=add vscroll=-{vs}')
-            for X, Y, uu, vv in ((-w, 0, 0, 0), (w, 0, 1, 0), (w, 64, 1, 1), (-w, 64, 0, 1)):
+            L.append(f'shape {sh} tex={t} color={col[0]:.2f},{col[1]:.2f},{col[2]:.2f},1 scale={sc} blend=add vscroll={vs}')
+            for X, Y, uu, vv in ((-w, 0, 0, 1), (w, 0, 1, 1), (w, 64, 1, 0), (-w, 64, 0, 0)):
                 L.append(f'v {X} {Y} 0 {uu} {vv}')
             L.extend(['t 0 1 2', 't 0 2 3'])
-        (WORK / f'beam_{name}.job').write_text('\n'.join(L) + '\n')
+        (WORK / f'beam_{name}.job').write_text('\n'.join(fx_fix(L)) + '\n')
         r = subprocess.run([str(TOOLS / 'fxwrite'), str(WORK / f'beam_{name}.job')], capture_output=True, text=True)
         if r.returncode: print(r.stdout, r.stderr); raise SystemExit('fxwrite failed (beam)')
         L = [f'out {MESHDIR / f"gauntlet_flare_{name}.nif"}']
@@ -810,6 +804,29 @@ def sphere(c, r, nu=32, nv=16):
             a = i * (nu + 1) + j; b = a + 1; cc = a + nu + 1; d = cc + 1
             F += [(a, cc, b), (b, cc, d)]
     return V, F
+
+
+def fx_fix(L):
+    """(seen in game: the effects with no vertex colours never drew, and fxwrite skips a scroll of a negative period) every
+    effect shape given white vertex colours where it has none, and a backward scroll made forward by turning that
+    texture coordinate round"""
+    out, nu, nv = [], False, False
+    for l in L:
+        if l.startswith('shape '):
+            parts = l.split(' ')
+            nu = nv = False
+            for i, w in enumerate(parts):
+                if w.startswith('uscroll=-'): parts[i] = 'uscroll=' + w[9:]; nu = True
+                if w.startswith('vscroll=-'): parts[i] = 'vscroll=' + w[9:]; nv = True
+            out.append(' '.join(parts)); continue
+        if l.startswith('v '):
+            p = l.split(' ')
+            if nu: p[4] = f'{-float(p[4]):.4f}'
+            if nv: p[5] = f'{-float(p[5]):.4f}'
+            if len(p) == 6: p += ['1', '1', '1', '1']
+            out.append(' '.join(p)); continue
+        out.append(l)
+    return out
 
 
 def fx_job(base, out, mirror, orbc, orbn, paths, vialx, lens):
@@ -860,15 +877,36 @@ def fx_job(base, out, mirror, orbc, orbn, paths, vialx, lens):
         L.append(f'shape TubeLight{e} tex={tex["pulse"]} color={c[0]:.2f},{c[1]:.2f},{c[2]:.2f},1 scale=2.4 blend=add vscroll=-{1.3 + 0.17 * k:.2f}')
         Pp, N, UV, F = tube(path, 0.085, 6, vrange=(0, np.linalg.norm(np.diff(path, axis=0), axis=1).sum() / 4.0))
         emit([(Pp[i], UV[i][0], UV[i][1], N[i]) for i in range(len(Pp))], F)
-    # bubbles rising in each vial, and a faint glow about it
+    # (Noah: "The vial draining should be slow and very smooth so it looks like liquid same for the vial refill") each vial's
+    # liquid an effect shape skinned to two nodes of its own - Liq<e>_B at its foot and Liq<e>_T at its surface - so the
+    # code lowers and raises the surface (moving Liq<e>_T) and the column follows it smoothly: a glowing, swirling liquid
+    # (LiqBody, alpha) with brighter light curling inside it (LiqGlow) and the bubbles rising through it (VialBubbles)
     z0, z1 = VIAL_Z
+    zb, zt = z0 + 0.36, z0 + 0.12 + (z1 - z0 - 0.9) * 0.84
+    R = VIAL_R
     for k in range(6):
         (cx, cy), t = vialx[k]
         e = vial_el(k, mirror); c = ELC[ELS[e]]
-        L.append(f'shape VialBubbles{e} tex={tex["bubbles"]} color={c[0]:.2f},{c[1]:.2f},{c[2]:.2f},1 scale=1.6 blend=add vscroll=-{1.8 + 0.23 * k:.2f}')
-        prof = [(z0 + 0.25, VIAL_R * 0.72), (z1 - 1.0, VIAL_R * 0.72)]
-        Pp, N, UV, F = lathe_z(prof, cx, cy, 14, 0, 1, 0, 1.6)
-        emit([(Pp[i], UV[i][0], UV[i][1], N[i]) for i in range(len(Pp))], F)
+        q0 = P((cx, cy, zb)); q1 = P((cx, cy, zt))
+        L.append(f'node LiqN{e} Gauntlet 0 0 0')
+        L.append(f'node Liq{e}_B LiqN{e} {q0[0]:.4f} {q0[1]:.4f} {q0[2]:.4f}')
+        L.append(f'node Liq{e}_T LiqN{e} {q1[0]:.4f} {q1[1]:.4f} {q1[2]:.4f}')
+        def skinned(name, prof, rr_u, opts):
+            L.append(f'shape {name} {opts} parent=LiqN{e} skin=Liq{e}_B,Liq{e}_T')
+            Pp, N, UV, F = lathe_z(prof, cx, cy, 20, 0, rr_u, 0, 1)
+            for i2 in range(len(Pp)):
+                q = P(Pp[i2]); n = N[i2]
+                wt = float(np.clip((Pp[i2][2] - zb) / (zt - zb), 0, 1))
+                L.append(f'v {q[0]:.4f} {q[1]:.4f} {q[2]:.4f} {UV[i2][0]:.4f} {UV[i2][1] * (zt - z0) / 1.2:.4f} 1 1 1 1')
+                L.append(f'n {n[0] * s:.4f} {n[1]:.4f} {n[2]:.4f}')
+                L.append(f'w 0 {1 - wt:.4f} 1 {wt:.4f}' if 0 < wt < 1 else (f'w 1 1' if wt >= 1 else 'w 0 1'))
+            for a, b, cc in F:
+                L.append(f't {a} {cc} {b}' if mirror else f't {a} {b} {cc}')
+        body = [(z0 + 0.07, 0.0), (z0 + 0.1, R * 0.5), (z0 + 0.2, R * 0.8), (zb, R * 0.9)] + [(z, R * 0.9) for z in np.linspace(zb + 0.2, zt - 0.03, 6)] + [(zt, R * 0.86), (zt + 0.002, 0.0)]
+        skinned(f'LiqBody{e}', body, 1, f'tex={tex["liquid"]} color={c[0]:.2f},{c[1]:.2f},{c[2]:.2f},0.9 scale=1.1 blend=alpha uscroll={6.0 + 0.7 * k:.2f}')
+        inner = [(z0 + 0.12, 0.0), (z0 + 0.2, R * 0.55), (zb, R * 0.7)] + [(z, R * 0.72) for z in np.linspace(zb + 0.2, zt - 0.06, 5)] + [(zt - 0.04, 0.0)]
+        skinned(f'LiqGlow{e}', inner, 2, f'tex={tex["swirl"]} color={c[0]:.2f},{c[1]:.2f},{c[2]:.2f},1 scale=1.5 blend=add falloff=1 uscroll={3.5 + 0.4 * k:.2f} vscroll={5.0 + 0.5 * k:.2f}')
+        skinned(f'VialBubbles{e}', [(zb, R * 0.8), (zt - 0.05, R * 0.8)], 1, f'tex={tex["bubbles"]} color={c[0]:.2f},{c[1]:.2f},{c[2]:.2f},1 scale=1.6 blend=add vscroll=-{1.8 + 0.23 * k:.2f}')
         card(f'VialGlow{e}', tex['glow'], np.array([cx, cy, (z0 + z1) / 2 - 0.3]), 1.2, f'{c[0]:.2f},{c[1]:.2f},{c[2]:.2f},0.55', 0.7)
     # the lens's swirl
     lc, ln = lens
@@ -942,8 +980,10 @@ def build_model(mirror, tex):
     MESHDIR.mkdir(parents=True, exist_ok=True)
     nif = MESHDIR / f'gauntlet_{side}.nif'
     vialx = [vial_axis(k) for k in range(6)]
+    import throwdagger; throwdagger.WORK.mkdir(parents=True, exist_ok=True)
+    rename_root(static, 'Gauntlet')   # (a root name with no space: the liquid's nodes hang under it, fxwrite node <name> <parent>)
     L = fx_job(static, nif, mirror, orbc, orbn, paths, vialx, lens)
-    (WORK / f'fx_{side}.job').write_text('\n'.join(L) + '\n')
+    (WORK / f'fx_{side}.job').write_text('\n'.join(fx_fix(L)) + '\n')
     r = subprocess.run([str(TOOLS / 'fxwrite'), str(WORK / f'fx_{side}.job')], capture_output=True, text=True)
     if r.returncode or 'no node' in r.stderr: print(r.stdout, r.stderr); raise SystemExit('fxwrite failed')
     lo, hi = M.bounds()

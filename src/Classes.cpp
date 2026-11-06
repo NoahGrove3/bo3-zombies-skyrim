@@ -4113,6 +4113,7 @@ namespace bo3z::Classes
 #include "GauntletBeam.inl"
 	}
 	void FlaskAttackUp(bool a_left) { if (FlaskHeld(a_left) == 6) g_gb.held = false; }
+	void DevGauntletHold(bool a_on, bool a_left) { if (a_on) GauntletPress(a_left); else g_gb.held = false; }
 	// (Noah: "hold it in my left or right hand with an underhand throwing animation ... it should feel like a weapon") the
 	// hand's attack: the arm swings it underhand and lets it go at the top of the swing; a breath between throws
 	void FlaskAttack(bool a_left)

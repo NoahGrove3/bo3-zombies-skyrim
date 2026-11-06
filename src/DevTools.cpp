@@ -599,6 +599,17 @@ namespace bo3z
 				in >> hand;
 				logger::info("dev: flask attack ({} hand, held {})", hand == "l" ? "left" : "right", Classes::FlaskInHand(hand == "l"));
 				Classes::FlaskAttack(hand == "l");
+			} else if (cmd == "gpose") {  // gpose [i v]: the Mutagen Gauntlet beam pose's numbers (Gun.cpp g_gbP)
+				int i = -1;
+				float v = 0;
+				in >> i >> v;
+				Gun::DevGauntletTune(i, v);
+			} else if (cmd == "gbeam") {  // gbeam <1|0> [l]: the Gauntlet's attack held / let go
+				int on = 0;
+				std::string hand;
+				in >> on >> hand;
+				Classes::DevGauntletHold(on != 0, hand == "l");
+				logger::info("dev: gauntlet attack {}", on ? "held" : "let go");
 			} else if (cmd == "fx") {  // fx <mesh path under Meshes> <w|c|p> <sideways>
 				std::string path, root;
 				float side = 0;
