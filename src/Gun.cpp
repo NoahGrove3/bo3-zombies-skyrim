@@ -3878,7 +3878,7 @@ namespace bo3z
 		void FireCyclone(const RE::NiPoint3& a_from, const RE::NiPoint3& a_fwd, float a_dist, float a_life, float a_share,
 			std::function<void(RE::Actor*)> a_touch, std::function<void(const RE::NiPoint3&)> a_burst)
 		{
-			ElemCyclone(CycloneSpec{ "CurseOfAlduin\\fx\\firecyclone.nif", a_from, a_fwd, a_dist, a_life, a_share, 1.0f, 0, false, std::move(a_touch), std::move(a_burst) });
+			ElemCyclone(CycloneSpec{ "CurseOfAlduin\\fx\\firecyclone.nif", a_from, a_fwd, a_dist, a_life, a_share, 1.0f, 0, false, false, std::move(a_touch), std::move(a_burst) });
 		}
 		// (Noah: every class sword's Tier II heavy a small cyclone, its Tier III a large one, each in the class's element; the Dragon
 		// Slayer's in golden flame, twice the harm to dragons) any cyclone: its look (an effects-map model), size, path and harm
