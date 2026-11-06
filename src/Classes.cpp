@@ -2597,7 +2597,8 @@ namespace bo3z::Classes
 					m->data.imageSpaceMod = nullptr;
 					if (auto* pr = m->data.projectileBase; pr && pr->data.explosionType) {
 						auto* ex = pr->data.explosionType;
-						ex->data.imageSpaceModifier = nullptr;
+						ex->imageSpaceModifying = nullptr;
+						ex->data.imageSpaceRadius = 0.0f;
 						ex->data.radius *= 0.6f;
 						logger::info("arcane: Apocalypse's flash taken off ({})", ex->GetFormEditorID());
 					}
