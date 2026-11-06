@@ -709,7 +709,7 @@ namespace bo3z::Classes
 			static constexpr const char* kText[4] = {
 				"A horn carved from a dragon's throne of bone. Blow it and a little dragon of bare bone answers: it flies at your side, never more than 15 m off, and rains green grave-fire on the dead for a minute. Once the three dragons fall it stays for an hour, or until it is slain.",
 				"The Staff of Magnus. Hold its beam on the dead: it drains them and feeds your magicka, and erupts where it ends. Hold it two seconds or more and the eruption leaves an orb of searing light that pulses on everything round it. Once the three dragons fall it burns hotter still.",
-				"The Philosopher's Flask. Where it shatters a cloud of molten gold hangs for twelve seconds: the dead inside are gilded and torn apart, and each one that dies in it shatters into gold and drops extra Cursed Essence. Once the three dragons fall the cloud is wider and lasts longer.",
+				"The Philosopher's Flask. Where it shatters a burst of sunlit gold turns the dead around it to gold statues: held fast for four seconds, every blow on them twice as hard. Each that dies gilded shatters in gold and drops extra Cursed Essence. Once the three dragons fall its gold reaches wider.",
 				"The Akaviri dragon slayer, two tiers above your blade. Every hit carries the last Spellsword spell you held. Once the three dragons fall it grows stronger again, and a power attack looses that spell on the dead round you." };
 			std::string up(kWonderName[a_cls]);
 			for (auto& ch : up) ch = static_cast<char>(std::toupper(static_cast<unsigned char>(ch)));
@@ -3010,6 +3010,7 @@ namespace bo3z::Classes
 		std::vector<FlaskShot> g_flasks;
 		struct GoldCloud { RE::NiPoint3 at; float left = 0, tick = 0, radius = 450, puff = 0; bool legend = false; std::unordered_set<RE::FormID> gilded; };
 		std::vector<GoldCloud> g_gold;
+		std::unordered_map<RE::FormID, std::chrono::steady_clock::time_point> g_gildedUntil;   // (the Philosopher's Flask's statues: until when)
 		// (Noah, the flasks redone: Tier I "Bigger burst radius" - half again as far)
 		float FlaskRadius(int a_tier) { return 230.0f * (a_tier >= 1 ? 1.5f : 1.0f) * (Kit::ArmourTier(coffer::kAlchemist) >= 2 ? 1.2f : 1.0f) * Perks::FlaskRadiusMult(); }
 		float FlaskShare(int a_tier) { return 0.5f * UpgradeMult(a_tier) * (0.7f + 0.3f * Arcana::Power()) * (a_tier >= 3 ? 1.3f : 1.0f); }
@@ -3139,18 +3140,29 @@ namespace bo3z::Classes
 		}
 		void FlaskBurst(const FlaskShot& f, const RE::NiPoint3& a_at)
 		{
-			if (f.el == 6) {  // the Philosopher's Flask: a cloud of molten gold
+			if (f.el == 6) {  // the Philosopher's Flask
+				// (Noah: "Midas touch" - "Frozen, not killed") Mysticism's sunburst in gold where it shatters; every one of the dead it
+				// catches turned to a statue of gold - held fast for four seconds, every blow on it twice as hard - then free again.
+				// Each that dies gilded shatters in gold and drops extra Essence (TickGoldClouds). Once the three dragons fall, wider
 				const bool legend = AfterSovngarde();
 				GoldCloud g;
-				g.at = a_at, g.left = legend ? 16.0f : 12.0f, g.radius = legend ? 560.0f : 450.0f, g.legend = legend;
+				g.at = a_at, g.left = 4.2f, g.radius = legend ? 560.0f : 450.0f, g.legend = legend;
 				Gun::BlastSound("lightmassive", a_at, 1.0f);  // (Skyrim's own: a great burst of light)
 				if (auto* pl = RE::PlayerCharacter::GetSingleton()) Audio::Game(0x0003F3D8, pl, 1.0f), Audio::Game(0x000B6435, pl, 0.7f);
-				// (Noah: "Gold sun burst + cloud") Dawnguard's sunburst in gold where it breaks, then the cloud of molten gold hanging
-				// there its whole life (fxmap.ini: philosopher_burst, philosopher_cloud)
-				Gun::QueueFx("CurseOfAlduin\\fx\\philosopher_burst.nif", a_at, 1.0f, 0.0f, 1.5f, false);
-
+				Gun::QueueFx("CurseOfAlduin\\fx\\philosopher_burst.nif", a_at, legend ? 1.25f : 1.0f, 0.0f, 2.0f, false);
+				const float top = UpgradeMult(legend ? kWonderUps + 1 : kWonderUps) * (0.7f + 0.3f * Arcana::Power());
+				Gun::AreaHurt(a_at, g.radius, 0.35f * top, "");
+				auto* gild = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kBowSkin[4], gen::kPlugin);  // (the sun bow's gold)
+				for (auto* a : NearFoes(a_at, g.radius, 24)) {
+					if (a->IsDead()) continue;
+					if (gild) a->ApplyEffectShader(gild, 4.0f, nullptr, false, false, nullptr, false);
+					a->EnableAI(false);   // (a statue: held fast)
+					g.gilded.insert(a->GetFormID());
+					g_gildedUntil[a->GetFormID()] = std::chrono::steady_clock::now() + std::chrono::milliseconds(4000);
+					g_flaskMark[a->GetFormID()] = std::chrono::steady_clock::now();
+				}
 				g_gold.push_back(std::move(g));
-				logger::info("alchemist: the Philosopher's Flask shatters");
+				logger::info("alchemist: the Philosopher's Flask shatters - {} turned to gold", g_gold.back().gilded.size());
 				return;
 			}
 			// (Noah, the flasks redone: "Glass shatter + spell blast + lingering pool"; Tier I a bigger burst, Tier II a chain reaction,
@@ -3177,8 +3189,30 @@ namespace bo3z::Classes
 					}
 				});
 			}
+			if (t >= 3 && f.el == 4) {  // (Noah: "the holy flask needs to have a golden light beam shoot down from the sky that does area
+				// damage, just like the radiant blade") Holy Water's Legendary: Mysticism's Sunbeam down out of the sky where it broke
+				Gun::SkyBeam(a_at, 1.6f);
+				Gun::BlastSound("lightmassive", a_at, 0.8f);
+				const float pw = share, whole = Director::RoundHealth() * gen::kRounds.hpScale, rr = r * 1.2f;
+				Tasks::Later(0.3f, [a_at, rr, pw, whole]() {
+					Gun::AreaHurt(a_at, rr, 1.5f * pw, "");
+					for (auto* fo : NearFoes(a_at, rr, 20)) { Gun::Burn(fo, whole * 0.03f, 3.0f); Gun::Knock(fo, 0.4f); }
+				});
+				return;
+			}
+			if (t >= 3 && f.el == 1) {  // (Noah: "make a blizzard on the impact of the flask instead of the ice tornado") Skyrim's own Blizzard
+				// where it broke, five seconds of blowing snow that freezes the dead caught in it (fxmap.ini flask_blizzard)
+				Gun::CycloneSpec cs;
+				cs.model = "CurseOfAlduin\\fx\\flask_blizzard.nif";
+				cs.from = a_at, cs.fwd = { 0, 1, 0 }, cs.dist = 0.0f, cs.life = 5.0f, cs.size = 1.0f, cs.fec = 1, cs.noPull = true;
+				cs.share = 0.05f * FlaskShare(t) * 0.8f;
+				Gun::ElemCyclone(std::move(cs));
+				return;
+			}
 			if (t >= 3) {  // Legendary: a small cyclone of its element rises where it burst and rolls toward the nearest of the dead
-				static constexpr const char* kCyc[6] = { "fire", "frost", "shock", "poison", "gold", "blood" };   // (Holy Water's in gold: its cream one read as white smoke)
+				// (Noah: "the fire flask needs to have a small fire tornado instead of a black translucent one") the Fire Flask's its own
+				// (fxmap.ini flask_firetornado: Apocalypse's tornado in flame)
+				static constexpr const char* kCyc[6] = { "fire", "frost", "shock", "poison", "gold", "blood" };
 				static constexpr int kFec[6] = { 0, 1, 2, -1, -1, -1 };
 				const auto closest = NearFoes(a_at, 1200.0f, 1);
 				RE::NiPoint3 fwd = closest.empty() ? RE::NiPoint3{ 0, 1, 0 } : closest[0]->GetPosition() - a_at;
@@ -3186,7 +3220,7 @@ namespace bo3z::Classes
 				if (fwd.Length() < 1.0f) fwd = { 0, 1, 0 };
 				fwd.Unitize();
 				Gun::CycloneSpec cs;
-				cs.model = std::string("CurseOfAlduin\\fx\\cyclone_") + kCyc[std::clamp(f.el, 0, 5)] + ".nif";
+				cs.model = f.el == 0 ? std::string("CurseOfAlduin\\fx\\flask_firetornado.nif") : std::string("CurseOfAlduin\\fx\\cyclone_") + kCyc[std::clamp(f.el, 0, 5)] + ".nif";
 				cs.from = a_at, cs.fwd = fwd, cs.dist = 700.0f, cs.life = 5.0f, cs.size = 0.4f,   /* (seen in game: a flask thrown close, its 0.55 cyclone a white wall a third of the screen) */ cs.fec = kFec[std::clamp(f.el, 0, 5)];
 				cs.share = 0.05f * FlaskShare(t) * 0.8f;
 				const int el = f.el;
@@ -3198,39 +3232,29 @@ namespace bo3z::Classes
 		{
 			for (auto& g : g_gold) {
 				g.left -= a_delta;
-				// (Noah: "Philosopher's Flask doesn't do anything when I throw it") the cloud kept rolling the whole of its life: Skyrim's
-				// poison cloud in molten gold, billowing up again every 2.5 s (fxmap.ini philosopher_cloud)
-				if ((g.puff -= a_delta) <= 0) {
-					g.puff = 2.5f;
-					Gun::QueueFx("CurseOfAlduin\\fx\\philosopher_cloud.nif", g.at + RE::NiPoint3{ 0, 0, 30.0f }, g.radius / 450.0f, 0.0f, 3.0f, false);
-				}
-				if ((g.tick -= a_delta) > 0) continue;
-				g.tick = 0.5f;
-				const float top = UpgradeMult(g.legend ? kWonderUps + 1 : kWonderUps) * (0.7f + 0.3f * Arcana::Power());
-				// (Noah: the cloud's big gold stars were low quality) its look is the gold pool and the fine motes rising off it (FlaskBurst)
-				auto* gild = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kBowSkin[4], gen::kPlugin);  // (the sun bow's gold)
-				const auto inside = NearFoes(g.at, g.radius, 24);
-				for (auto* a : inside) {
-					if (gild) a->ApplyEffectShader(gild, 0.6f, nullptr, false, false, nullptr, false);
-					g.gilded.insert(a->GetFormID());
-					g_flaskMark[a->GetFormID()] = std::chrono::steady_clock::now();
-				}
-				Gun::AreaHurt(g.at, g.radius, 0.22f * top, "");
-				// the gilded that fell: they shatter in gold, and each drops extra Essence
+				// the gilded that fell: they shatter in gold, and each drops extra Essence; the rest set free when the gold wears off
 				for (auto it = g.gilded.begin(); it != g.gilded.end();) {
 					auto* a = RE::TESForm::LookupByID<RE::Actor>(*it);
-					if (!a) { it = g.gilded.erase(it); continue; }
+					if (!a) { g_gildedUntil.erase(*it); it = g.gilded.erase(it); continue; }
 					if (a->IsDead()) {
 						Gun::ElemBurst(8, a->GetPosition() + RE::NiPoint3{ 0, 0, 30.0f }, 0.7f, 0.0f, 0.8f);
 						Points::Add(g.legend ? 150 : 100);
+						g_gildedUntil.erase(*it);
 						it = g.gilded.erase(it);
 						continue;
 					}
+					if (g.left <= 0) { a->EnableAI(true); g_gildedUntil.erase(*it); }
 					++it;
 				}
 			}
 			std::erase_if(g_gold, [](const GoldCloud& g) { return g.left <= 0; });
 		}
+	}
+	bool Gilded(RE::Actor* a_a)
+	{
+		if (!a_a) return false;
+		auto it = g_gildedUntil.find(a_a->GetFormID());
+		return it != g_gildedUntil.end() && std::chrono::steady_clock::now() < it->second;
 	}
 	// the Bone-Throne Horn: Skyrim's skeletal dragon (Labyrinthian's) raised at your side, on your side, kept from flight
 	void SummonBoneDragon()
@@ -3421,7 +3445,10 @@ namespace bo3z::Classes
 				if (!from) { logger::warn("swords: Visual Animated Enchants' {} effect not found", kSrc[k].what); continue; }
 				for (int t = 0; t < 3; ++t) {
 					if (auto* m = dh->LookupForm<RE::EffectSetting>(gen::kBladeVizFx[k][t], gen::kPlugin)) {
-						if (from->data.enchantShader) m->data.enchantShader = from->data.enchantShader;
+						// (Noah: "remove the red effect ... it looks better with just the elemental effects from the mod" - "Both") the
+						// Spellbound Blade's looks (3-8) wear the mod's element art alone, no glow over the blade
+						if (k >= 3 && k <= 8) m->data.enchantShader = nullptr;
+						else if (from->data.enchantShader) m->data.enchantShader = from->data.enchantShader;
 						if (from->data.enchantEffectArt) m->data.enchantEffectArt = from->data.enchantEffectArt;
 						++n;
 					}
@@ -3436,7 +3463,7 @@ namespace bo3z::Classes
 		PatchLookArt();
 		int key = SwordClass(a_w) >= 0 ? LookKey(SwordClass(a_w)) : -1;
 		if (a_w && a_w == Slayer()) key = 9;
-		if (key < 0 || a_tier < 1) return nullptr;   // (Base: the bare sword)
+		if (key < 0 || key == 3 || a_tier < 1) return nullptr;   // (Base: the bare sword; the Spellbound Blade with no spell in the other hand bare too)
 		return RE::TESDataHandler::GetSingleton()->LookupForm<RE::EnchantmentItem>(gen::kBladeViz[key][std::clamp(a_tier, 1, 3) - 1], gen::kPlugin);
 	}
 	// a swing of a class sword (any swing, hit or miss - WonderProps hears it)
@@ -3568,7 +3595,7 @@ namespace bo3z::Classes
 		static constexpr const char* kModel[7] = { "white", "storm", "violet", "fire", "frost", "shock", "blood" };
 		static constexpr const char* kRing[7] = { "white", "blue", "purple", "fire", "frost", "shock", "blood" };
 		static constexpr int kBurst[7] = { 4, 2, 9, 0, 1, 2, 5 };   // (Gun::ElemBurst: 0 fire 1 frost 2 shock 4 sun 5 blood 9 shadowfire)
-		static constexpr int kFec[7] = { -1, 2, 0, 0, 1, 2, -1 };     // (how its dead die: burning, frozen, shocked)
+		static constexpr int kFec[7] = { -1, 2, -1, 0, 1, 2, -1 };   // (the Shadowflame's: no orange fire death - its violet one, touch below)     // (how its dead die: burning, frozen, shocked)
 		static constexpr const char* kSound[7] = { "lightmassive", "shockmass", "fireball", "fireball", "icevolley", "runeshock", "bloodplague" };
 		const bool big = a_t >= 3;
 		const RE::NiPoint3 fwd = Flat(a_dir, p);
@@ -3578,7 +3605,9 @@ namespace bo3z::Classes
 			// round it - Tier II smaller, Tier III great (fxmap.ini sun_strike: Dawnguard's own)
 			const RE::NiPoint3 at = OnGround(a_me + fwd * (big ? 650.0f : 480.0f), a_me.z);
 			const float sz = big ? 1.0f : 0.65f, r = big ? 420.0f : 280.0f;
-			Gun::QueueFx("CurseOfAlduin\\fx\\sun_strike.nif", at, sz, 0.0f, 2.5f, false);
+			// (Noah: "Cast the real Sunbeam") Mysticism's own Sunbeam down out of the sky (Gun::SkyBeam; without Mysticism the sunlit pillar)
+			Gun::SkyBeam(at, big ? 2.0f : 1.4f);
+			(void)sz;
 			Gun::BlastSound("lightmassive", at, 0.9f);
 			const float pw = a_pw, whole = Director::RoundHealth() * gen::kRounds.hpScale;
 			Tasks::Later(0.3f, [at, r, pw, whole, big]() {
@@ -3608,7 +3637,7 @@ namespace bo3z::Classes
 			if (!a || a->IsDead()) return;
 			Gun::Knock(a, 0.3f);
 			switch (el) {
-			case kShadow: Shadowburn(a, t); break;
+			case kShadow: Shadowburn(a, t); if (a->IsDead()) CorpseBurn(a); break;
 			case kStorm: {   // (fire, ice and lightning in one: each it catches struck by one of the three in turn)
 				static int k = 0;
 				const int e = (k++) % 3;
@@ -3685,9 +3714,10 @@ namespace bo3z::Classes
 			sl.scale = (isBolt ? 1.3f : 0.9f) + 0.15f * t;
 			sl.share = BladeShare(w->As<RE::TESObjectWEAP>()) * (0.7f + 0.3f * Arcana::Power());   // (the blade's own light blow, at its tier)
 			sl.flingKill = 16.0f;   // (Noah: "send enemies flying if the slash kills them")
-			if (cls == 2) sl.fec = 0;   // (the Shadowflame's dead die burning)
+			// (Noah: "when enemies are killed by my sword swinging on them, they explode in golden fire instead of purple fire") Skyrim's
+			// fire death burns orange whatever it's asked: the Shadowflame's dead die in its own violet fire instead (below)
 			sl.onHit = [cls, t, bolt](RE::Actor* a, bool killed) {
-				if (killed && a && cls == 2) CorpseBurn(a);
+				if (killed && a && cls == 2) { CorpseBurn(a); Gun::ElemBurst(9, a->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f }, 0.6f, 0.0f, 0.6f); }
 				if (killed || !a) return;
 				if (cls == 2) Shadowburn(a, t);                                   // shadowflame
 				else if (cls == 1) Gun::ElemBurst(bolt - 4, a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, 0.35f, 0.0f, 0.4f);   // (its element bursting on each it passes through)
@@ -3723,17 +3753,17 @@ namespace bo3z::Classes
 			if (g_goldRain <= 0 || !p) return;
 			g_goldRain -= a_delta;
 			if ((g_goldNext -= a_delta) > 0) return;
-			g_goldNext = 0.28f;
-			const auto foes = NearFoes(p->GetPosition(), 2100.0f, 40);   // (30 m)
+			g_goldNext = 0.6f;
+			const auto foes = NearFoes(p->GetPosition(), 1400.0f, 40);   // (20 m)
 			if (foes.empty()) return;
-			auto* f = foes[static_cast<std::size_t>(std::rand()) % foes.size()];
-			const float share = 0.35f * SlayerTop();
-			Gun::Meteor(f->GetPosition(), true, 1.2f, [share](const RE::NiPoint3& at) {
-				Gun::MeteorImpact(at, true, 0.9f);
-				for (auto* g : NearFoes(at, 230.0f, 12)) {
-					Gun::AreaHurt(g->GetPosition(), 10.0f, share, "");
-					GoldBurn(g, IsDragon(g) ? share : 0.0f);
-				}
+			static std::size_t turn = 0;
+			auto* f = foes[(turn++) % foes.size()];   // (a different one each time, round the ones near you)
+			const float share = BladeShare(Slayer()) * (0.7f + 0.3f * Arcana::Power());
+			// (the look Noah kept: Skyrim's fireball in gold, small, homing; a small burst where it lands)
+			Gun::MeteorAt(f, true, 0.8f, [share](const RE::NiPoint3& hit) {
+				Gun::FxBlastSized("fireball", hit, 0.45f);
+				Gun::ElemBurst(8, hit + RE::NiPoint3{ 0, 0, 30.0f }, 0.5f, 0.0f, 0.5f);
+				for (auto* g : NearFoes(hit, 240.0f, 12)) GoldBurn(g, share * 1.6f);
 			});
 		}
 	}
@@ -3748,31 +3778,12 @@ namespace bo3z::Classes
 		if (now - last < std::chrono::milliseconds(200)) return;   // (one swing heard from both bodies)
 		last = now;
 		if (a_power) {
-			// (Noah: "the heavy attack should be Calling golden fireballs, three at a time per heavy swing") three fireballs of golden
-			// flame called down from the sky - on the three nearest of the dead before you, or spread ahead where there are fewer
-			const RE::NiPoint3 fwd = Flat(Gun::SwingDir(), p);
-			const RE::NiPoint3 me = p->GetPosition();
-			const float share = BladeShare(Slayer()) * (0.7f + 0.3f * Arcana::Power());
-			// (Noah: "homing ... realistic, smaller fireballs that home in on enemies") each one chasing one of the three nearest of the
-			// dead before you; where there are fewer, falling ahead
-			std::vector<RE::ActorHandle> marks;
-			for (auto* f : NearFoes(me + fwd * 600.0f, 1100.0f, 3)) marks.push_back(f->GetHandle());
-			const RE::NiPoint3 right{ fwd.y, -fwd.x, 0 };
-			Gun::BlastSound("fireball", me, 0.7f);
-			auto land = [share](const RE::NiPoint3& hit) {
-				Gun::FxBlastSized("fireball", hit, 0.45f);
-				Gun::ElemBurst(8, hit + RE::NiPoint3{ 0, 0, 30.0f }, 0.5f, 0.0f, 0.5f);
-				for (auto* f : NearFoes(hit, 240.0f, 12)) GoldBurn(f, share * 1.6f);
-			};
-			for (int k = 0; k < 3; ++k) {
-				const RE::ActorHandle h = k < static_cast<int>(marks.size()) ? marks[k] : RE::ActorHandle{};
-				const RE::NiPoint3 at = OnGround(me + fwd * 700.0f + right * (static_cast<float>(k - 1) * 260.0f), me.z);
-				Tasks::Later(0.15f * static_cast<float>(k), [h, at, land]() {
-					if (auto a = h.get(); a && !a->IsDead()) Gun::MeteorAt(a.get(), true, 0.8f, land);
-					else Gun::Meteor(at, true, 0.8f, land);
-				});
-			}
-			logger::info("swords: the Dragon Slayer calls down three golden fireballs");
+			// (Noah: "the heavy attack ... should spawn meteors from the sky that look like the smaller fireballs for 5 seconds on enemies
+			// within 20 meters of the player" - "About 8 per swing") five seconds of small golden fireballs out of the sky, one every 0.6 s,
+			// each chasing one of the dead near you (TickGoldRain); a swing during it starts the five seconds over
+			g_goldRain = 5.0f, g_goldNext = 0.0f;
+			Gun::BlastSound("fireball", p->GetPosition(), 0.7f);
+			logger::info("swords: the Dragon Slayer calls down five seconds of golden fireballs");
 			return;
 		}
 		// (Noah: "Light attack for the Dragon Slayer sword should shoot a fireball that is golden flames and deals 2x damage to dragon
@@ -3834,6 +3845,14 @@ namespace bo3z::Classes
 			art = 0.25f;
 			int key = cls >= 0 && t >= 1 ? LookKey(cls) : -1;
 			if (w && w == Slayer()) key = 9;
+			if (key == 3) key = -1;   // (the Spellbound Blade bare-handed: no look)
+			// (Noah: "when I change it to ice, my sword is still on fire") its enchantment's look was only set when the kit was synced:
+			// the moment the other hand's element changes, the blade is given its new look (taken off and on again)
+			static int lastSs = -2;
+			if (cls == 3 && key != lastSs) {
+				if (lastSs != -2) Kit::SyncWeapons(true);
+				lastSs = key;
+			}
 			auto* dh = RE::TESDataHandler::GetSingleton();
 			auto* want = key >= 0 ? dh->LookupForm<RE::SpellItem>(gen::kBladeVizArt[key], gen::kPlugin) : nullptr;
 			for (const auto id : gen::kBladeVizArt) {   // (every other look's taken off - a saved game may still wear one)

@@ -430,6 +430,7 @@ namespace bo3z
 		RE::TESObjectWEAP* Riftblade();
 		RE::TESBoundObject* FlaskItem(int a_el);  // the Alchemist's flasks, items in the pack (0 fire 1 frost 2 shock 3 acid 4 holy water 5 bloodbloom 6 the Philosopher's Flask)
 		void               GiveFlask(int a_el);   // put in your pack
+		bool               Gilded(RE::Actor* a_a);    // turned to gold by the Philosopher's Flask (held fast, every blow twice as hard)
 		bool               FlaskInHand(bool a_left);  // a flask held, drawn, in that hand
 		int                FlaskElementInHand(bool a_left);  // which flask that hand holds (drawn or not): 0-6, -1 none
 		void               FlaskAttack(bool a_left);  // its throw
@@ -815,10 +816,11 @@ namespace bo3z
 		int                   FecElem(int a_elem);  // the element the blows struck from now on kill with (FEC's death effects: 0 fire 1 frost 2 shock ...); returns the one before
 		struct CycloneSpec
 		{
-			std::string model; RE::NiPoint3 from, fwd; float dist, life, share, size = 1.0f; int fec = 0; bool dragons = false;
+			std::string model; RE::NiPoint3 from, fwd; float dist, life, share, size = 1.0f; int fec = 0; bool dragons = false; bool noPull = false;   /* (a blizzard: it stands, it doesn't drag the dead in) */
 			std::function<void(RE::Actor*)> touch; std::function<void(const RE::NiPoint3&)> burst;
 		};
 		void                  ElemCyclone(CycloneSpec a_s);
+		bool                  SkyBeam(const RE::NiPoint3& a_at, float a_secs);   // Mysticism's Sunbeam down out of the sky onto a point (false: not installed - the sunlit pillar instead)
 		void                  FxBlastSized(std::string_view a_name, const RE::NiPoint3& a_at, float a_scale);   // one of Skyrim's explosions at a size
 		void                  QueueFx(std::string a_path, const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life, bool a_flat);   // one of our effect models (or its effects-map stand-ins) set off at a point   // a cyclone of an element carried along the ground (FireCyclone's, any look)
 		void                  FireCyclone(const RE::NiPoint3& a_from, const RE::NiPoint3& a_fwd, float a_dist, float a_life, float a_share, std::function<void(RE::Actor*)> a_touch, std::function<void(const RE::NiPoint3&)> a_burst);  // a tornado of violet fire carried along the ground

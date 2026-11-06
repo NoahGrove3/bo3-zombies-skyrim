@@ -5650,7 +5650,7 @@ namespace bo3z
 
 		// (Noah: "power-ups drop on the bodies: walk into one before it's gone in 20 s, blinking faster as it goes; a low
 		// chance, like 2%, on any kill")
-		constexpr bool kDropsOn = true;
+		constexpr bool kDropsOn = false;   // (Noah: "remove the power-up drops ... like the nuke and the insta-kill" - "Remove all power-ups"; and nothing at a boss's dawn)
 		void MaybeDrop(const RE::NiPoint3& a_at, bool a_force)
 		{
 			if (!kDropsOn) return;

@@ -104,7 +104,7 @@ FLASKS = [('fire', 'Fire Flask', 'A flask of liquid fire. It bursts where it lan
           ('poison', 'Acid Flask', 'A flask of green acid. It bursts into a corroding splash where it lands.'),
           ('sun', 'Holy Water', 'Blessed water of Stendarr. It bursts into searing light where it lands; the dead burn in it.'),
           ('blood', 'Bloodbloom Flask', 'A flask of vampire\'s blood. It bursts where it lands, and what it drains comes back to you.'),
-          ('philosopher', "Philosopher's Flask", 'The Alchemist\'s wonder. Where it shatters a cloud of molten gold hangs: the dead inside are gilded and torn apart, and every one that dies in it drops extra Essence.')]
+          ('philosopher', "Philosopher's Flask", 'The Alchemist\'s wonder. Where it shatters a burst of sunlit gold turns the dead around it to gold statues: held fast for four seconds, every blow on them twice as hard. Each that dies gilded shatters in gold and drops extra Cursed Essence.')]
 FLASK_TIERS = ' The glass shatters, its element bursts, and a pool of it lingers on the ground. Tier I: a burst half again as wide. Tier II: a chain reaction - the dead it kills burst in its element too. Legendary: a cyclone of its element rises where it breaks and rolls into the dead.'
 for e, label, text in FLASKS:
     pd = bytearray(tsub('proj_bullet', 'DATA'))
@@ -878,7 +878,6 @@ LOADING_TIPS = [
     "Solitude's bards remember a song the dead cannot resist. Free their city and the Dance of Death is yours.",
     "Wake a city's Echo Altar and its dead sleep again: no curse-dead rise inside a freed city, by night or by day.",
     "Three dragons carry Alduin's words. Slay them and only his echo is left, on the summit of the Throat of the World.",
-    "Walk into a glowing token on a body before it blinks out: Nuke, Double Essence, Refill Stats, Merchant's Blessing, Shadow of Nocturnal, Thu'um Unbound, Kynareth's Mercy.",
     "The altars take no gold - only the Cursed Essence the dead leave behind.",
     "Every spell the Echo Altar gives is the echo of a fallen mage's last. Carry it well.",
     "The violet fire in the altar is Alduin's own Thu'um, caught and turned back. The blue runes hold it there.",
@@ -1139,7 +1138,6 @@ def guide_text():
            "[pagebreak]", h("Cursed Essence"),
            p("Every risen thing you kill leaves Cursed Essence. A headshot leaves more, and a kill with a blade or a spell more still. "
              "Cursed Essence is the only coin the Echo Altars take."),
-           p("Now and then a body drops a glowing token (1 kill in 50): walk into it before it blinks out (20 s). Nuke (the dead around you turn to ash), Double Essence (30 s), Refill Stats (ammo, health, magicka, stamina and your shout), Merchant's Blessing (the altars at half price, 45 s), Shadow of Nocturnal (the dead lose you, 15 s), Thu'um Unbound (no shout cooldown, 20 s) and Kynareth's Mercy (everyone healed, a fallen friend lifted). In a party, what one takes everyone gets."),
            "[pagebreak]", h("The Echo Altar"),
            p("Every city has one. Look into its star and press Activate. Its menu does not stop the night. Move through it with the D-pad (or W and S) and take a row with A (or Enter); B leaves."),
            p("<b>Your class</b> - Summoner, Battle-mage, Ranger or Spellsword, chosen at the top of the altar. Each keeps its own gear and spells when you change."),

@@ -608,6 +608,7 @@ namespace bo3z
 				if (!behind) damage *= 0.5f;
 			}
 			if (Undead::IsDancing(a_target)) damage *= 1.5f;  // (the Dance Of Death: half again as hard)
+			if (Classes::Gilded(a_target)) damage *= 2.0f;  // (Noah: the Philosopher's Flask's gold statues - "taking double damage")
 			damage *= Director::TakenMult(a_target) * Kit::ArmorAscendMult() * Echo::SetDamageMult();  // (a brute dazed or berserk; your armor's Ascends; the First Dragonborn's Regalia)
 			if (PowerUps::InstaKill() && Director::IsRoundUndead(a_target)) {
 				damage = av->GetActorValue(RE::ActorValue::kHealth) + 1.0f;  // Insta-Kill (every one of them, one hit)
@@ -3607,6 +3608,61 @@ namespace bo3z
 				logger::info("swords: the Dragon Slayer's art in gold: {}", names);
 			}
 		}
+		// (Noah: "Cast the real Sunbeam" - "animated and hyper realistic") Mysticism's own Sunbeam, cast down out of the sky onto
+		// a point: its beam (a concentration spell's: held by launching it again every tenth of a second) from high overhead into
+		// the ground, Mysticism's massive sunbeam explosion where it lands; without Mysticism, the pillar of sunlit fire
+		// (fxmap.ini sun_strike)
+		struct SkyBeamLive { RE::NiPoint3 at; float left = 0, next = 0; };
+		std::vector<SkyBeamLive> g_skyBeams;
+		RE::SpellItem* SunbeamSpell()
+		{
+			static RE::SpellItem* sp = [] {
+				auto* f = RE::TESDataHandler::GetSingleton()->LookupForm(0x7388D3, "MysticismMagic.esp");
+				auto* s = f ? f->As<RE::SpellItem>() : nullptr;
+				logger::info("skybeam: Mysticism's Sunbeam {}", s ? "found" : "not found - the pillar of sunlit fire instead");
+				return s;
+			}();
+			return sp;
+		}
+		bool SkyBeam(const RE::NiPoint3& a_at, float a_secs)
+		{
+			auto* sp = SunbeamSpell();
+			auto* proj = sp && !sp->effects.empty() && sp->effects[0] && sp->effects[0]->baseEffect ? sp->effects[0]->baseEffect->data.projectileBase : nullptr;
+			if (!proj) {
+				QueueFx("CurseOfAlduin\\fx\\sun_strike.nif", a_at, 1.0f, 0.0f, 2.5f, false);
+				return false;
+			}
+			g_skyBeams.push_back({ a_at, a_secs, 0.0f });
+			if (auto* ex = RE::TESDataHandler::GetSingleton()->LookupForm<RE::BGSExplosion>(0x798BFA, "MysticismMagic.esp")) {
+				PendingBlast pb{ a_at + RE::NiPoint3{ 0, 0, 10.0f }, 0.15f, -1, 1.0f, QuietClone(ex) };
+				pb.exact = true;
+				g_blasts.push_back(pb);
+			}
+			return true;
+		}
+		void TickSkyBeams(float a_delta)
+		{
+			if (g_skyBeams.empty()) return;
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* sp = SunbeamSpell();
+			auto* proj = sp && !sp->effects.empty() && sp->effects[0] && sp->effects[0]->baseEffect ? sp->effects[0]->baseEffect->data.projectileBase : nullptr;
+			for (auto& b : g_skyBeams) {
+				b.left -= a_delta;
+				if (!p || !proj || (b.next -= a_delta) > 0) continue;
+				b.next = 0.1f;
+				const RE::NiPoint3 from = b.at + RE::NiPoint3{ 25.0f, 0, 1700.0f };
+				RE::Projectile::ProjectileRot rot{ RE::NI_HALF_PI * 0.985f, 0.0f };   // (straight down out of the sky)
+				RE::Projectile::LaunchData ld(proj, p, from, rot);
+				ld.useOrigin = true;
+				ld.autoAim = false;
+				ld.spell = sp;
+				ld.castingSource = RE::MagicSystem::CastingSource::kInstant;
+				RE::ProjectileHandle h;
+				RE::Projectile::Launch(&h, ld);
+				if (static int said = 0; said++ < 3) { auto pr = h.get(); logger::info("skybeam: launched {} at ({:.0f},{:.0f},{:.0f})", pr ? "a beam" : "nothing", b.at.x, b.at.y, b.at.z); }
+			}
+			std::erase_if(g_skyBeams, [](const SkyBeamLive& b) { return b.left <= 0; });
+		}
 		void DevFxReload() { FxMapLoad(); }
 		void DevSwing(int a_power) { g_devSwing = a_power ? 2 : 1; }
 		void DevNodes()
@@ -3815,7 +3871,7 @@ namespace bo3z
 		{
 			WorldFx fx; RE::NiPoint3 from, fwd, at; float dist, life, share, t = 0, beat = 0;
 			std::function<void(RE::Actor*)> touch; std::function<void(const RE::NiPoint3&)> burst; std::unordered_set<RE::FormID> seen;
-			float size = 1.0f; int fec = 0; bool dragons = false;   // (its size; how its dead die; twice the harm to dragons)
+			float size = 1.0f; int fec = 0; bool dragons = false, noPull = false;   // (its size; how its dead die; twice the harm to dragons)
 			float trail = 0;   // (the time to the next of what it leaves burning on the ground behind it)
 		};
 		std::vector<Cyclone> g_cyclones;
@@ -3831,7 +3887,7 @@ namespace bo3z
 			if (g_cyclones.size() > 4) return;
 			Cyclone c{ WorldFx(a_s.model), a_s.from, a_s.fwd, a_s.from, a_s.dist, std::max(0.3f, a_s.life), a_s.share };
 			c.touch = std::move(a_s.touch), c.burst = std::move(a_s.burst);
-			c.size = std::max(0.2f, a_s.size), c.fec = a_s.fec, c.dragons = a_s.dragons;
+			c.size = std::max(0.1f, a_s.size), c.fec = a_s.fec, c.dragons = a_s.dragons, c.noPull = a_s.noPull;
 			if (c.fx.ok) g_cyclones.push_back(std::move(c));
 			else logger::warn("cyclone: {} has no look", a_s.model);
 		}
@@ -3871,7 +3927,7 @@ namespace bo3z
 					RE::NiPoint3 to = c.at - pos;
 					to.z = 0;
 					const float d = to.Length();
-					if (d > 55.0f) {   // (dragged in, harder the nearer)
+					if (d > 55.0f && !c.noPull) {   // (dragged in, harder the nearer)
 						pos += to * (std::min(d - 45.0f, 560.0f * (1.0f + 1.5f * (1.0f - d / pull)) * a_delta) / d);
 						a->SetPosition(pos, true);
 					}
@@ -5141,6 +5197,7 @@ namespace bo3z
 			TickWeaponFlame();
 			TrackBlade(a_delta);
 			TickSlashes(a_delta);
+			TickSkyBeams(a_delta);
 			TickHalo(a_delta);
 			for (auto& d : g_devFx) if ((d.left -= a_delta) <= 0) d.fx.Detach();
 			std::erase_if(g_devFx, [](auto& d) { return d.left <= 0; });

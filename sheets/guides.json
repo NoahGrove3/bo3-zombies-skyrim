@@ -135,7 +135,7 @@
      "title": "Your Trial and Wonder",
      "paras": [
       "<b>Trial of the Crucible</b> (your city trial): kills with your flasks - 10 on Novice up to 30 on Legendary.",
-      "<b>The Philosopher's Flask</b> (your wonder): it can't be rolled or bought. Once six cities are freed, your path's <b>secret</b> wakes - a long hidden quest played from altar to altar, never twice in a row in the same city. Listen to the freed altars' whispers. When it is won the Greybeards call: the wonder floats waiting in High Hrothgar's great hall. Where it shatters a cloud of molten gold hangs: the dead inside are gilded and torn apart, and each one that dies in it drops extra Cursed Essence."
+      "<b>The Philosopher's Flask</b> (your wonder): it can't be rolled or bought. Once six cities are freed, your path's <b>secret</b> wakes - a long hidden quest played from altar to altar, never twice in a row in the same city. Listen to the freed altars' whispers. When it is won the Greybeards call: the wonder floats waiting in High Hrothgar's great hall. Where it shatters a burst of sunlit gold turns the dead around it to gold statues: held fast for four seconds, every blow on them twice as hard. Each that dies gilded shatters in gold and drops extra Cursed Essence."
      ]
     }
    ]
@@ -193,7 +193,7 @@
     "The night's dead are the curse's whole host, each under its own name: Mihail's zombies and the Thriceborn walk first with the Rag Draugr, rotten skeletons and plague wolves; then Bonemen, skeleton mages and the necromancers who serve the curse; then Hulking Draugr, Draugr Liches, Draman Brutes, Ash Spawn and werewolves; then the Daedra - Clannfear, Daedroth, Dremora - and at the last the Overlords, the Mythic Liches and the Skeleton Reaper Warlords. Casters keep back and raise more dead - kill them first.",
     "Some nights the noise you make draws a hunter: a feral nightwalker, far faster than the rest, that comes through a portal and pounces.",
     "Busy with a quest? Open the wait menu at night, once the countdown has ended, and choose <b>Skip the Night</b>. It passes the whole night to dawn and does not count: no night survived, and the next dusk brings the same night again.",
-    "<b>Cursed Essence</b> drops from every kill - spend it at the Echo Altars. Now and then a body drops a glowing token (1 kill in 50): walk into it before it blinks out (20 s). Nuke (the dead around you turn to ash), Double Essence (30 s), Refill Stats (ammo, health, magicka, stamina and your shout), Merchant's Blessing (the altars at half price, 45 s), Shadow of Nocturnal (the dead lose you, 15 s), Thu'um Unbound (no shout cooldown, 20 s) and Kynareth's Mercy (everyone healed, a fallen friend lifted). In a party, what one takes everyone gets. From dusk to dawn a lantern at your belt lights 20 metres round you. At dawn the dead leave their ash where they fell, and in a freed city its people leave an offering at their altar for you each day.",
+    "<b>Cursed Essence</b> drops from every kill - spend it at the Echo Altars. From dusk to dawn a lantern at your belt lights 20 metres round you. At dawn the dead leave their ash where they fell, and in a freed city its people leave an offering at their altar for you each day.",
     "Your health, magicka and stamina sit on one plate at the bottom; its rim glows blue while your shout recovers."
    ]
   },
@@ -203,7 +203,7 @@
     "Every city has one. Step onto it and activate it. Move with the D-pad or W/S, choose with A or Enter, leave with B.",
     "From the top: <b>your class</b> (change it for Cursed Essence - each class keeps its own kit and progress), then sections that open one at a time: <b>Your Kit</b> (select an item to upgrade it), <b>the Armory</b> (new items, opened by freed cities), <b>Perks</b>, <b>Your Dragon</b>, the city's <b>Trials</b> and the <b>Whispers</b> of your path's secret.",
     "<b>Freeing a city</b>: finish four trials (three shared, one your class's), then slay its <b>Dragon Priest</b>, who rises at night. Its fall ends the night and drops 3,000 Cursed Essence. A freed city is a sanctuary: none of the curse's dead rise inside it. Whiterun gives you a dragon to ride and Dragon's Updraft; Solitude gives you the Dance of Death.",
-    "<b>Every 5th night</b> a great boss walks with the dead - and its dawn leaves a power-up at your feet.",
+    "<b>Every 5th night</b> a great boss walks with the dead - kill it before dawn.",
     "<b>Waking an altar</b>: Riverwood's altar is open from the first night. Every other city's trials stay locked until that city's own quest is done - Whiterun: <b>Dragon Rising</b>; Solitude: <b>The Wolf Queen Awakened</b>; Windhelm: <b>The White Phial</b>; Markarth: <b>The Forsworn Conspiracy</b>; Riften: <b>The Book of Love</b>; Falkreath: <b>Ill Met By Moonlight</b>; Morthal: <b>Laid to Rest</b>; Dawnstar: <b>Waking Nightmare</b>; Winterhold: the Jarl's <b>Helm of Winterhold</b> (Dungeon Delving)."
    ]
   },
