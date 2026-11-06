@@ -35,8 +35,8 @@ LADDERS = [
     ('destruction', 'frost', 'Frost', 'frost', [(SKY, 'Ice Spike'), (SKY, 'Ice Storm'), (SKY, 'Icy Spear'), (MYST, 'Throat of the World')]),
     # (Noah: "Lightning Bolt stopped shooting after about ten casts - take it out of the Echo Altar") Chain Lightning is the
     # rung the altar rolls now; the ladder is three rungs, all bolts
-    ('destruction', 'shock', 'Shock', 'shock', [(SKY, 'Chain Lightning'), (SKY, 'Thunderbolt'), (MYST, 'Finger of the Mountain')]),
-    ('destruction', 'sun', 'Sun', 'sun', [(MYST, 'Solar Flare'), (MYST, 'Sunbeam'), (MYST, 'Radiant Sunbeam'), (MYST, 'Daybreak')]),
+    ('destruction', 'shock', 'Shock', 'shock', [(SKY, 'Chain Lightning'), (APOC, 'Shock Nova'), (MYST, 'Finger of the Mountain')]),   # (Noah, 2026-11-05: Thunderbolt -> Apocalypse's Shock Nova)
+    ('destruction', 'sun', 'Sun', 'sun', [(MYST, 'Solar Flare'), (MYST, 'Sunbeam'), (APOC, 'Forbidden Sun'), (MYST, 'Daybreak')]),   # (Noah: Radiant Sunbeam -> Apocalypse's Forbidden Sun)
     ('destruction', 'blood', 'Blood', 'blood', [(MYST, 'Vampiric Bolt'), (MYST, 'Vampiric Blast'), (MYST, 'Vampiric Rune'), (MYST, 'Blood Lance')]),
     # (the class review: every rune read as frost - the Elements trial counted one element, the seals missed them) each rung
     # its own element
@@ -68,7 +68,7 @@ LADDERS = [
     ('summoner', 'wrath', 'The Wrath', 'arcane', [(DG, 'Conjure Mistman'), (DG, 'Conjure Wrathman'), (MYST, 'Conjure Wrathman Marksman'), (MYST, 'Conjure Wrathman Warlock')]),
     ('destruction', 'cloaks', 'Cloaks', 'fire', [(SKY, 'Flame Cloak'), (SKY, 'Frost Cloak', 'frost'), (SKY, 'Lightning Cloak', 'shock')]),
     ('destruction', 'walls', 'Walls', 'fire', [(SKY, 'Wall of Flames'), (SKY, 'Wall of Frost', 'frost'), (SKY, 'Wall of Storms', 'shock')]),
-    ('destruction', 'storms', 'Storms', 'shock', [(SKY, 'Lightning Storm'), (SKY, 'Blizzard', 'frost'), (SKY, 'Fire Storm', 'fire')]),
+    ('destruction', 'storms', 'Storms', 'shock', [(APOC, 'Frost Nova', 'frost'), (SKY, 'Lightning Storm'), (APOC, 'Multivortex', 'arcane')]),   # (Noah: Frost Nova, Multivortex, Cinder Storm and Lightning Storm, weakest first by cost)
 ]
 # (the new ladders) Skyrim's and the DLCs' own spells (Mysticism reworks them): form id, cost, concentration
 EXTRA = {(SKY, 'Conjure Flame Atronach'): (0x0204C3, 150, False), (SKY, 'Conjure Frost Atronach'): (0x0204C4, 260, False), (SKY, 'Conjure Storm Atronach'): (0x0204C5, 383, False),
@@ -81,10 +81,12 @@ EXTRA = {(SKY, 'Conjure Flame Atronach'): (0x0204C3, 150, False), (SKY, 'Conjure
 # Legendary rungs from Apocalypse - appended after every other spell (a spell's index is in the saves); their damage comes
 # from the scripted spells they cast (PROCS: those hit as the rung itself)
 APPEND = {('destruction', 'shock'): [(APOC, 'Lightning Strike')], ('destruction', 'cloaks'): [(APOC, 'Ravaging Storm', 'shock')],
-          ('destruction', 'walls'): [(APOC, 'Volcano', 'fire')], ('destruction', 'storms'): [(APOC, 'Flamestrike', 'fire')]}
+          ('destruction', 'walls'): [(APOC, 'Inferno', 'fire')], ('destruction', 'storms'): [(MYST, 'Cinder Storm', 'fire')]}   # (Noah: Volcano -> Inferno)
 EXTRA.update({(APOC, 'Lightning Strike'): (0x002878, 361, False), (APOC, 'Ravaging Storm'): (0x15E728, 431, False),
-              (APOC, 'Volcano'): (0x04733C, 636, False), (APOC, 'Flamestrike'): (0x02E0C0, 664, False)})
-PROCS = {(APOC, 'Ravaging Storm'): [0x15E725], (APOC, 'Volcano'): [0x0834B3], (APOC, 'Flamestrike'): [0x02E0BD]}
+              (APOC, 'Volcano'): (0x04733C, 636, False), (APOC, 'Flamestrike'): (0x02E0C0, 664, False),
+              (APOC, 'Shock Nova'): (0x00186D, 375, False), (APOC, 'Forbidden Sun'): (0x044264, 610, False), (APOC, 'Inferno'): (0x022DAB, 180, False),
+              (APOC, 'Frost Nova'): (0x1347EE, 136, False), (APOC, 'Multivortex'): (0x1A4A4A, 200, False), (MYST, 'Cinder Storm'): (0x4B065B, 658, False)})
+PROCS = {(APOC, 'Ravaging Storm'): [0x15E725]}   # (Volcano and Flamestrike left the ladders)
 ELEMENTS = ['fire', 'frost', 'shock', 'poison', 'corrosion', 'sun', 'blood', 'arcane']  # (corrosion took disease's place: nothing used it)
 
 

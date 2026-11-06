@@ -21,8 +21,8 @@ namespace bo3z::Kit
 			{ Kind::Ladder, "Daedra", 5 }, { Kind::Ladder, "The Wild", 3 }, { Kind::Ladder, "Dwemer", 1 },
 			{ Kind::Armour, "armour", -1 }, { Kind::Ladder, "Atronachs", 2 }, { Kind::Ladder, "Ash", 4 }, { Kind::Ladder, "The Night", 7 }, { Kind::Ladder, "The Wrath", 9 } };  // (Noah: "I want them all to be 7")  // (Noah: the Dwarven Spider at 1 city freed, the Spriggan at 3, the Dremora - the strongest - at 5) (the list's order is the save's: the Armory shows them by when they open)
 		constexpr Def kDestruction[] = { { Kind::Ladder, "Fire", -1 }, { Kind::Ladder, "Frost", -1 }, { Kind::Ladder, "Shock", 1 }, { Kind::Ladder, "Sun", 3 },
-			{ Kind::Ladder, "Blood", 5 }, { Kind::Ladder, "Runes", 7 },
-			{ Kind::Armour, "armour", -1 }, { Kind::Ladder, "Cloaks", 2 }, { Kind::Ladder, "Walls", 4 }, { Kind::Ladder, "Storms", 9 },
+			{ Kind::Ladder, "Blood", 5 }, { Kind::Ladder, "Runes", kGone },   /* (Noah: "I dont want to use runes or cloaks in the loot pool") */
+			{ Kind::Armour, "armour", -1 }, { Kind::Ladder, "Cloaks", kGone }, { Kind::Ladder, "Walls", 4 }, { Kind::Ladder, "Storms", 9 },
 			{ Kind::Blade, "carian", -1 } };  // (Noah: "destruction should get an elemental upgradable sword too" - last: the saves' order)
 		// (Noah: "remove everything from the Ranger class ... and replace it with the Alchemist class") the knife, six flasks
 		// opening with the cities freed, and the Drifter's outfit

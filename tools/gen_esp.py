@@ -103,7 +103,7 @@ FLASKS = [('fire', 'Fire Flask', 'A flask of liquid fire. It bursts where it lan
           ('shock', 'Shock Flask', 'A flask of bottled storm. It bursts into arcing lightning where it lands.'),
           ('poison', 'Acid Flask', 'A flask of green acid. It bursts into a corroding splash where it lands.'),
           ('sun', 'Holy Water', 'Blessed water of Stendarr. It bursts into searing light where it lands; the dead burn in it.'),
-          ('blood', 'Bloodbloom Flask', 'A flask of vampire\'s blood. It bursts where it lands, and what it drains comes back to you.'),
+          ('blood', 'Voidglass Flask', 'A flask of bottled void. It shatters and drags the dead in to where it broke.'),
           ('philosopher', "Philosopher's Flask", 'The Alchemist\'s wonder. Where it shatters a burst of sunlit gold turns the dead around it to gold statues: held fast for four seconds, every blow on them twice as hard. Each that dies gilded shatters in gold and drops extra Cursed Essence.')]
 FLASK_TIERS = ' The glass shatters, its element bursts, and a pool of it lingers on the ground. Tier I: a burst half again as wide. Tier II: a chain reaction - the dead it kills burst in its element too. Legendary: a cyclone of its element rises where it breaks and rolls into the dead.'
 for e, label, text in FLASKS:

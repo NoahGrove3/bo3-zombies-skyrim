@@ -3059,7 +3059,7 @@ namespace bo3z::Classes
 			Gun::AreaHurt(a_at, a_radius, share, "");
 			if (!p || caught.empty()) return;
 			auto* av = p->AsActorValueOwner();
-			if (a_el == 5) av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * std::min(0.06f, 0.012f * static_cast<float>(caught.size())));  // (Bloodbloom: what it drains comes back)
+			if (false && a_el == 5) av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * std::min(0.06f, 0.012f * static_cast<float>(caught.size())));  // (Bloodbloom: what it drains comes back)
 			if (Kit::ArmourTier(coffer::kAlchemist) >= 3) {  // (the Drifter's set, Tier III: flask kills heal you)
 				std::vector<RE::ActorHandle> hs;
 				for (auto* f : caught) hs.push_back(f->GetHandle());
@@ -3176,6 +3176,15 @@ namespace bo3z::Classes
 			Gun::QueueFx("CurseOfAlduin\\fx\\flask_glass.nif", a_at + RE::NiPoint3{ 0, 0, 10.0f }, f.child ? 0.5f : 0.8f, 0.0f, 1.0f, false);
 			FlaskBlast(f.el, t, a_at, (f.child ? 0.6f : 1.0f) * 1.0f * (r / 230.0f), share, r);
 			if (f.child) return;
+			if (f.el == 5) {  // (Noah: the Bloodbloom made the Voidglass Flask - "Mana Void pull") Apocalypse's Mana Void: the dead round it
+				// dragged in to where it broke for a second and a half (fxmap.ini flask_manavoid), then struck
+				Gun::CycloneSpec cs;
+				cs.model = "CurseOfAlduin\\fx\\flask_manavoid.nif";
+				cs.from = a_at, cs.fwd = { 0, 1, 0 }, cs.dist = 0.0f, cs.life = 1.5f, cs.size = std::max(0.6f, r / 420.0f), cs.fec = -1;
+				cs.share = 0.03f * FlaskShare(t);
+				cs.burst = [r, share](const RE::NiPoint3& at) { Gun::AreaHurt(at, r * 0.8f, 0.6f * share, ""); };
+				Gun::ElemCyclone(std::move(cs));
+			}
 			if (t >= 2) {  // Tier II: a chain reaction - the dead it kills burst in its element themselves (once: no chain of chains)
 				const auto caught = NearFoes(a_at, r, 16);
 				std::vector<RE::ActorHandle> hs;
@@ -3191,43 +3200,75 @@ namespace bo3z::Classes
 					}
 				});
 			}
-			if (t >= 3 && f.el == 4) {  // (Noah: "the holy flask needs to have a golden light beam shoot down from the sky that does area
-				// damage, just like the radiant blade") Holy Water's Legendary: Mysticism's Sunbeam down out of the sky where it broke
-				Gun::SkyBeam(a_at, 1.6f);
-				Gun::BlastSound("lightmassive", a_at, 0.8f);
-				const float pw = share, whole = Director::RoundHealth() * gen::kRounds.hpScale, rr = r * 1.2f;
-				Tasks::Later(0.3f, [a_at, rr, pw, whole]() {
-					Gun::AreaHurt(a_at, rr, 1.5f * pw, "");
-					for (auto* fo : NearFoes(a_at, rr, 20)) { Gun::Burn(fo, whole * 0.03f, 3.0f); Gun::Knock(fo, 0.4f); }
-				});
-				return;
-			}
-			if (t >= 3 && f.el == 1) {  // (Noah: "make a blizzard on the impact of the flask instead of the ice tornado") Skyrim's own Blizzard
-				// where it broke, five seconds of blowing snow that freezes the dead caught in it (fxmap.ini flask_blizzard)
-				Gun::CycloneSpec cs;
-				cs.model = "CurseOfAlduin\\fx\\flask_blizzard.nif";
-				cs.from = a_at, cs.fwd = { 0, 1, 0 }, cs.dist = 0.0f, cs.life = 5.0f, cs.size = 1.0f, cs.fec = 1, cs.noPull = true;
-				cs.share = 0.05f * FlaskShare(t) * 0.8f;
-				Gun::ElemCyclone(std::move(cs));
-				return;
-			}
-			if (t >= 3) {  // Legendary: a small cyclone of its element rises where it burst and rolls toward the nearest of the dead
-				// (Noah: "the fire flask needs to have a small fire tornado instead of a black translucent one") the Fire Flask's its own
-				// (fxmap.ini flask_firetornado: Apocalypse's tornado in flame)
-				static constexpr const char* kCyc[6] = { "fire", "frost", "shock", "poison", "gold", "blood" };
-				static constexpr int kFec[6] = { 0, 1, 2, -1, -1, -1 };
-				const auto closest = NearFoes(a_at, 1200.0f, 1);
-				RE::NiPoint3 fwd = closest.empty() ? RE::NiPoint3{ 0, 1, 0 } : closest[0]->GetPosition() - a_at;
-				fwd.z = 0;
-				if (fwd.Length() < 1.0f) fwd = { 0, 1, 0 };
-				fwd.Unitize();
-				Gun::CycloneSpec cs;
-				cs.model = f.el == 0 ? std::string("CurseOfAlduin\\fx\\flask_firetornado.nif") : std::string("CurseOfAlduin\\fx\\cyclone_") + kCyc[std::clamp(f.el, 0, 5)] + ".nif";
-				cs.from = a_at, cs.fwd = fwd, cs.dist = 700.0f, cs.life = 5.0f, cs.size = 0.4f,   /* (seen in game: a flask thrown close, its 0.55 cyclone a white wall a third of the screen) */ cs.fec = kFec[std::clamp(f.el, 0, 5)];
-				cs.share = 0.05f * FlaskShare(t) * 0.8f;
-				const int el = f.el;
-				cs.burst = [el, t, r](const RE::NiPoint3& at) { FlaskShot child{ {}, el, t, at, false, true, 0.0f }; FlaskBurst(child, at); };
-				Gun::ElemCyclone(std::move(cs));
+			// (Noah: "remove the tornados to be only used on the class swords and the flasks should focus more on splash damage and crowd
+			// control") each flask's Legendary its own burst - no cyclones
+			if (t >= 3) {
+				const float whole = Director::RoundHealth() * gen::kRounds.hpScale;
+				const int   el = f.el;
+				switch (el) {
+				case 0: {  // Fire: "Firestorm burst" - "Ring of fire outward": Skyrim's Fire Storm ring spreading out once (fxmap.ini flask_firestorm)
+					Gun::QueueFx("CurseOfAlduin\\fx\\flask_firestorm.nif", a_at, 1.0f, 0.0f, 2.5f, false);
+					Gun::BlastSound("fireball", a_at, 0.9f);
+					const float rr = r * 1.8f;
+					Tasks::Later(0.25f, [a_at, rr, share, whole]() {
+						Gun::AreaHurt(a_at, rr, 1.2f * share, "");
+						for (auto* fo : NearFoes(a_at, rr, 20)) Gun::Burn(fo, whole * 0.04f, 3.0f);
+					});
+					break;
+				}
+				case 1: {  // Frost: "Frost Nova instead" - "Slowed, not frozen": Apocalypse's Frost Nova, the dead at half speed for 5 s
+					Gun::QueueFx("CurseOfAlduin\\fx\\flask_frostnova.nif", a_at, 1.0f, 0.0f, 2.0f, false);
+					Gun::BlastSound("icevolley", a_at, 0.9f);
+					const float rr = r * 1.6f;
+					Gun::AreaHurt(a_at, rr, 0.8f * share, "");
+					for (auto* fo : NearFoes(a_at, rr, 20)) {
+						if (fo->IsDead()) continue;
+						fo->AsActorValueOwner()->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, -50.0f);
+						Tasks::Later(5.0f, [h = fo->GetHandle()]() { if (auto a = h.get()) a->AsActorValueOwner()->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, 50.0f); });
+					}
+					break;
+				}
+				case 2: {  // Shock: "Lightning strikes" - three bolts from the sky round where it broke (Apocalypse's Lightning Strike look)
+					auto foes = NearFoes(a_at, r * 1.8f, 3);
+					for (int k = 0; k < 3; ++k) {
+						RE::NiPoint3 at = k < static_cast<int>(foes.size()) ? foes[k]->GetPosition() : a_at + RE::NiPoint3{ std::cos(k * 2.1f) * r * 0.7f, std::sin(k * 2.1f) * r * 0.7f, 0.0f };
+						Tasks::Later(0.25f * static_cast<float>(k), [at, share]() {
+							Gun::QueueFx("CurseOfAlduin\\fx\\flask_strike.nif", at, 1.0f, 0.0f, 1.5f, false);
+							Gun::BlastSound("runeshock", at, 0.8f);
+							Gun::AreaHurt(at, 170.0f, 0.7f * share, "");
+						});
+					}
+					break;
+				}
+				case 3: {  // Acid: "Splash split" - three smaller acid splashes round the first
+					for (int k = 0; k < 3; ++k) {
+						const RE::NiPoint3 at = a_at + RE::NiPoint3{ std::cos(k * 2.094f + 0.5f) * r * 0.8f, std::sin(k * 2.094f + 0.5f) * r * 0.8f, 0.0f };
+						FlaskShot child{ {}, el, t, at, false, true, 0.0f };
+						Tasks::Later(0.15f + 0.12f * static_cast<float>(k), [child, at]() { FlaskBurst(child, at); });
+					}
+					break;
+				}
+				case 4: {  // Holy Water: "a golden light beam ... from the sky" - the sunlit pillar and Mysticism's sunburst (Gun::SkyBeam)
+					Gun::SkyBeam(a_at, 1.6f);
+					Gun::BlastSound("lightmassive", a_at, 0.8f);
+					const float rr = r * 1.2f;
+					Tasks::Later(0.3f, [a_at, rr, share, whole]() {
+						Gun::AreaHurt(a_at, rr, 1.5f * share, "");
+						for (auto* fo : NearFoes(a_at, rr, 20)) { Gun::Burn(fo, whole * 0.03f, 3.0f); Gun::Knock(fo, 0.4f); }
+					});
+					break;
+				}
+				case 5: {  // Voidglass: "Pull + Lunar Tide" - once the pull ends, a Lunar Tide ring blasts them back out
+					Tasks::Later(1.6f, [a_at, r, share]() {
+						Gun::QueueFx("CurseOfAlduin\\fx\\flask_lunartide.nif", a_at, 1.0f, 0.0f, 2.0f, false);
+						Gun::BlastSound("lightmassive", a_at, 0.8f);
+						Gun::AreaHurt(a_at, r * 1.5f, 1.0f * share, "");
+						for (auto* fo : NearFoes(a_at, r * 1.5f, 20)) Gun::Knock(fo, 0.9f);
+					});
+					break;
+				}
+				default: break;
+				}
 			}
 		}
 		void TickGoldClouds(float a_delta)
@@ -3535,10 +3576,14 @@ namespace bo3z::Classes
 			{ "Shock Flask", "A flask of bottled storm: it shatters into arcing lightning.", {} },
 			{ "Acid Flask", "A flask of green acid: it shatters into a corroding splash.", {} },
 			{ "Holy Water", "Blessed water of Stendarr: it shatters into searing light; the dead burn in it.", {} },
-			{ "Bloodbloom Flask", "A flask of vampire's blood: it shatters, and what it drains comes back to you.", {} },
+			{ "Voidglass Flask", "A flask of bottled void: it shatters and drags the dead in to where it broke.", {} },
 		};
 		static constexpr const char* kFlaskTier[3] = { "Tier I: its burst reaches half again as wide.", "Tier II: a chain reaction - the dead it kills burst in its element too.",
-			"Legendary: a cyclone of its element rises where it breaks and rolls into the dead." };
+			"Legendary: a greater burst of its element." };
+		// (each flask's own Legendary, Noah 2026-11-05)
+		static constexpr const char* kFlaskLegend[6] = { "Legendary: a ring of fire spreads out from where it breaks.", "Legendary: a freezing nova slows the dead to half speed for 5 seconds.",
+			"Legendary: three bolts of lightning strike from the sky around it.", "Legendary: it splits into three more acid splashes.",
+			"Legendary: a pillar of sunlight strikes down where it breaks.", "Legendary: after the pull, a lunar tide blasts the dead back out." };
 		static const Card kSets[] = {
 			{ "Conjurer's Violet", "The Summoner's set: the Black Mage's robes in violet.", { "Tier I: your summons take a fifth less harm.", "Tier II: one more summon slot.", "Tier III: your summons' kills heal you." } },
 			{ "Battlemage's Ember", "The Battle-mage's set: the Black Mage's robes in ember orange.", { "Tier I: your spells cost 10% less.", "Tier II: your magicka comes back faster.", "Tier III: your spells cost a quarter less." } },
@@ -3556,7 +3601,7 @@ namespace bo3z::Classes
 		for (int e = 0; !c && e < 6; ++e) if (nm == kFlasks[e].name) {
 			c = &kFlasks[e];
 			const int t = std::clamp(Kit::FlaskTier(e), 0, 3);
-			want = std::string(c->base) + (t >= 1 ? std::string(" ") + kFlaskTier[t - 1] : std::string{}) + " Attack to throw it; it never runs out.";
+			want = std::string(c->base) + (t >= 3 ? std::string(" ") + kFlaskLegend[e] : t >= 1 ? std::string(" ") + kFlaskTier[t - 1] : std::string{}) + " Attack to throw it; it never runs out.";
 		}
 		for (int k = 0; !c && k < 4; ++k) if (nm.rfind(kSets[k].name, 0) == 0) {
 			c = &kSets[k];

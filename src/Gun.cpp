@@ -3626,18 +3626,11 @@ namespace bo3z
 		}
 		bool SkyBeam(const RE::NiPoint3& a_at, float a_secs)
 		{
-			auto* sp = SunbeamSpell();
-			auto* proj = sp && !sp->effects.empty() && sp->effects[0] && sp->effects[0]->baseEffect ? sp->effects[0]->baseEffect->data.projectileBase : nullptr;
-			if (!proj) {
-				QueueFx("CurseOfAlduin\\fx\\sun_strike.nif", a_at, 1.0f, 0.0f, 2.5f, false);
-				return false;
-			}
-			g_skyBeams.push_back({ a_at, a_secs, 0.0f });
-			if (auto* ex = RE::TESDataHandler::GetSingleton()->LookupForm<RE::BGSExplosion>(0x798BFA, "MysticismMagic.esp")) {
-				PendingBlast pb{ a_at + RE::NiPoint3{ 0, 0, 10.0f }, 0.15f, -1, 1.0f, QuietClone(ex) };
-				pb.exact = true;
-				g_blasts.push_back(pb);
-			}
+			// (Noah: the beam "is still broken" - Mysticism's Sunbeam launched from the sky only drew short dashes: it is a beam that
+			// needs a caster holding it) "Sunlit pillar + sunburst": Skyrim's pillar of fire in sunlight from the sky, Mysticism's
+			// sunburst where it lands (fxmap.ini sun_strike)
+			(void)a_secs;
+			QueueFx("CurseOfAlduin\\fx\\sun_strike.nif", a_at, 1.0f, 0.0f, 2.5f, false);
 			return true;
 		}
 		void TickSkyBeams(float a_delta)

@@ -22,11 +22,11 @@ namespace bo3z::coffer
 		{ "Skyrim.esm", 0x10F7EC, "Icy Spear", kFrost, 2, 57, false, 1.0f, kDestruction, 1, 3, 4, "Frost" },
 		{ "MysticismMagic.esp", 0x2E8870, "Throat of the World", kFrost, 3, 60, false, 1.0f, kDestruction, 1, 4, 4, "Frost" },
 		{ "Skyrim.esm", 0x045F9D, "Chain Lightning", kShock, 0, 36, false, 1.0f, kDestruction, 2, 1, 4, "Shock" },
-		{ "Skyrim.esm", 0x10F7EE, "Thunderbolt", kShock, 1, 60, false, 1.0f, kDestruction, 2, 2, 4, "Shock" },
+		{ "Apocalypse - Magic of Skyrim.esp", 0x00186D, "Shock Nova", kShock, 1, 60, false, 1.0f, kDestruction, 2, 2, 4, "Shock" },
 		{ "MysticismMagic.esp", 0x1DC141, "Finger of the Mountain", kShock, 2, 60, false, 1.0f, kDestruction, 2, 3, 4, "Shock" },
 		{ "MysticismMagic.esp", 0x2466C0, "Solar Flare", kSun, 0, 60, false, 1.0f, kDestruction, 3, 1, 4, "Sun" },
 		{ "MysticismMagic.esp", 0x7388D3, "Sunbeam", kSun, 1, 8, true, 1.0f, kDestruction, 3, 2, 4, "Sun" },
-		{ "MysticismMagic.esp", 0x78E9F4, "Radiant Sunbeam", kSun, 2, 12, true, 1.0f, kDestruction, 3, 3, 4, "Sun" },
+		{ "Apocalypse - Magic of Skyrim.esp", 0x044264, "Forbidden Sun", kSun, 2, 60, false, 1.0f, kDestruction, 3, 3, 4, "Sun" },
 		{ "MysticismMagic.esp", 0x7BC311, "Daybreak", kSun, 3, 40, true, 1.0f, kDestruction, 3, 4, 4, "Sun" },
 		{ "MysticismMagic.esp", 0x1B8A15, "Vampiric Bolt", kBlood, 0, 34, false, 1.0f, kDestruction, 4, 1, 4, "Blood" },
 		{ "MysticismMagic.esp", 0x46E8A8, "Vampiric Blast", kBlood, 1, 60, false, 1.0f, kDestruction, 4, 2, 4, "Blood" },
@@ -108,19 +108,17 @@ namespace bo3z::coffer
 		{ "Skyrim.esm", 0x035D7F, "Wall of Flames", kFire, 0, 24, true, 1.0f, kDestruction, 27, 1, 4, "Walls" },
 		{ "Skyrim.esm", 0x035D80, "Wall of Frost", kFrost, 1, 22, true, 1.0f, kDestruction, 27, 2, 4, "Walls" },
 		{ "Skyrim.esm", 0x035D81, "Wall of Storms", kShock, 2, 25, true, 1.0f, kDestruction, 27, 3, 4, "Walls" },
-		{ "Skyrim.esm", 0x07E8E5, "Lightning Storm", kShock, 0, 46, true, 1.0f, kDestruction, 28, 1, 4, "Storms" },
-		{ "Skyrim.esm", 0x07E8E4, "Blizzard", kFrost, 1, 60, false, 1.0f, kDestruction, 28, 2, 4, "Storms" },
-		{ "Skyrim.esm", 0x07A82B, "Fire Storm", kFire, 2, 60, false, 1.0f, kDestruction, 28, 3, 4, "Storms" },
+		{ "Apocalypse - Magic of Skyrim.esp", 0x1347EE, "Frost Nova", kFrost, 0, 34, false, 1.0f, kDestruction, 28, 1, 4, "Storms" },
+		{ "Skyrim.esm", 0x07E8E5, "Lightning Storm", kShock, 1, 46, true, 1.0f, kDestruction, 28, 2, 4, "Storms" },
+		{ "Apocalypse - Magic of Skyrim.esp", 0x1A4A4A, "Multivortex", kArcane, 2, 50, false, 1.0f, kDestruction, 28, 3, 4, "Storms" },
 		{ "Apocalypse - Magic of Skyrim.esp", 0x002878, "Lightning Strike", kShock, 3, 60, false, 1.0f, kDestruction, 2, 4, 4, "Shock" },
 		{ "Apocalypse - Magic of Skyrim.esp", 0x15E728, "Ravaging Storm", kShock, 3, 60, false, 1.0f, kDestruction, 26, 4, 4, "Cloaks" },
-		{ "Apocalypse - Magic of Skyrim.esp", 0x04733C, "Volcano", kFire, 3, 60, false, 1.0f, kDestruction, 27, 4, 4, "Walls" },
-		{ "Apocalypse - Magic of Skyrim.esp", 0x02E0C0, "Flamestrike", kFire, 3, 60, false, 1.0f, kDestruction, 28, 4, 4, "Storms" },
+		{ "Apocalypse - Magic of Skyrim.esp", 0x022DAB, "Inferno", kFire, 3, 45, false, 1.0f, kDestruction, 27, 4, 4, "Walls" },
+		{ "MysticismMagic.esp", 0x4B065B, "Cinder Storm", kFire, 3, 60, false, 1.0f, kDestruction, 28, 4, 4, "Storms" },
 	} };
 	// the spells a rung casts by script (their hits are the rung's): its index in kSpells, the proc's plugin and id
 	struct Proc { int spell; const char* plugin; std::uint32_t id; };
-	inline constexpr std::array<Proc, 3> kProcs{ {
+	inline constexpr std::array<Proc, 1> kProcs{ {
 		{ 99, "Apocalypse - Magic of Skyrim.esp", 0x15E725 },
-		{ 100, "Apocalypse - Magic of Skyrim.esp", 0x0834B3 },
-		{ 101, "Apocalypse - Magic of Skyrim.esp", 0x02E0BD },
 	} };
 }
