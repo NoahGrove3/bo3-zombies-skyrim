@@ -53,6 +53,34 @@ namespace Props
 		g_madLook = look;
 	}
 
+	// (Noah: the Mutagen Gauntlet - "Alchemist's glove ... very very high quality ... with passive animations around the
+	// gauntlet") the glove (tools/gauntlet.py) worn on the hand that holds the wonder - drawn or not - in both bodies: hung on
+	// that hand's own bone (the model is in its frame; the left hand's is the mirror)
+	struct Glove { Spellcraft::Fx fx; RE::NiNode* on = nullptr; };
+	Glove g_glove[2][2];   // [hand: right, left][body: third, first]
+	void TickGauntlet()
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		for (int h = 0; h < 2; ++h) {
+			const bool L = h == 1;
+			const bool want = p && Classes::FlaskElementInHand(L) == 6;
+			for (int b = 0; b < 2; ++b) {
+				auto& g = g_glove[h][b];
+				auto* root = want ? p->Get3D(b == 1) : nullptr;
+				auto* bone = root ? root->GetObjectByName(L ? "NPC L Hand [LHnd]" : "NPC R Hand [RHnd]") : nullptr;
+				auto* node = bone ? bone->AsNode() : nullptr;
+				if (!node) { if (g.fx.obj) g.fx.Detach(); g.on = nullptr; continue; }
+				if (!g.fx.obj) g.fx = Spellcraft::Fx{ Spellcraft::LoadPath(L ? "CurseOfAlduin\\alchemist\\gauntlet_l.nif" : "CurseOfAlduin\\alchemist\\gauntlet_r.nif") };
+				if (!g.fx.obj) continue;
+				if (g.fx.obj->parent != node) {
+					g.fx.Attach(node), g.on = node;
+					g.fx.obj->local = RE::NiTransform{};
+					logger::info("gauntlet: the glove on the {} hand ({} person)", L ? "left" : "right", b == 1 ? "first" : "third");
+				}
+			}
+		}
+	}
+
 	void ChargedLook(int a_w);
 	struct Hung
 	{

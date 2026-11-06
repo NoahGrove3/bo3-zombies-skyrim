@@ -2751,6 +2751,48 @@ namespace bo3z
 				}
 			}
 		}
+		// (the Mutagen Gauntlet: an orb set in the palm) the hand wearing it held open, its fingers eased out of the dagger's fist
+		// (the knuckles a little, the joints past them more) so they never close through the orb - as the flask's open hold,
+		// without its roll
+		float g_gauntW[2]{};
+		void PoseGauntletHand(RE::PlayerCharacter* a_player, float a_delta)
+		{
+			for (const bool L : { false, true }) {
+				const bool want = Classes::FlaskElementInHand(L) == 6 && Classes::FlaskInHand(L) && !Movement::Gliding();
+				float& w = g_gauntW[L ? 1 : 0];
+				w = std::clamp(w + (want ? 1.0f : -1.0f) * a_delta * 5.0f, 0.0f, 1.0f);
+				if (w <= 0.001f) continue;
+				const float ww = Ease(w);
+				for (const bool first : { false, true }) {
+					auto* root = a_player->Get3D(first);
+					if (!root) continue;
+					g_turnFirst = first;
+					auto* hand = root->GetObjectByName(HandBone(L, "hand"));
+					if (!hand) continue;
+					for (int i = 0; i < 5; ++i) {
+						for (int j = 0; j < 3; ++j) {
+							const char id[3] = { static_cast<char>('0' + i), static_cast<char>('0' + j), 0 };
+							auto* bone = root->GetObjectByName(HandBone(L, id));
+							if (!bone) continue;
+							RE::NiAVObject* prev = hand;
+							if (j > 0) {
+								const char pid[3] = { static_cast<char>('0' + i), static_cast<char>('0' + j - 1), 0 };
+								prev = root->GetObjectByName(HandBone(L, pid));
+							}
+							if (!prev) continue;
+							const RE::NiPoint3 pd = BoneZ(prev), sd = BoneZ(bone);
+							RE::NiPoint3 ax = pd.Cross(sd);
+							const float sn = ax.Length();
+							if (sn < 1e-3f) continue;
+							ax = ax * (1.0f / sn);
+							const float ang = std::atan2(sn, pd.Dot(sd));
+							const float k = (i == 0 ? 0.35f : j == 0 ? 0.6f : 0.8f) * ww;
+							TurnBone(bone, AxisAngle(ax, -ang * k));
+						}
+					}
+				}
+			}
+		}
 		// the bottle on the palm (after the throw's swing, so it rides the hand through it): its base where the palm is, its
 		// neck up out of the hand - the held model hangs from its neck (tools/flasks.py), its base this far down it
 		float FlaskBase(int a_el) { return a_el == 6 ? 15.76f : a_el == 0 ? 11.56f : 10.67f; }
@@ -2837,6 +2879,7 @@ namespace bo3z
 					// by its neck again (tools/flasks.py: the neck drawn out to fill the hand) - the palm-up hold is set aside
 					if constexpr (kPalmHold) PoseFlaskHand(a_this, a_delta);
 					PoseThrow(a_this);
+					PoseGauntletHand(a_this, a_delta);
 					PoseEnd();
 					if constexpr (kPalmHold) PlaceHeldFlask(a_this);
 					Spellcraft::OnPose(a_this);
@@ -5112,6 +5155,7 @@ namespace bo3z
 			TickStorm(a_delta);
 			Props::Tick(a_delta, GunOut() ? CurrentGun() : -1);
 			Props::TickMad();
+			Props::TickGauntlet();
 			Props::TickWorld(a_delta);
 			Props::TickFang(a_delta);
 			TickStaffs(a_delta);
