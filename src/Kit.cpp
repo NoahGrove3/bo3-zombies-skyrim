@@ -21,7 +21,7 @@ namespace bo3z::Kit
 			{ Kind::Ladder, "Daedra", 5 }, { Kind::Ladder, "The Wild", 3 }, { Kind::Ladder, "Dwemer", 1 },
 			{ Kind::Armour, "armour", -1 }, { Kind::Ladder, "Atronachs", 2 }, { Kind::Ladder, "Ash", 4 }, { Kind::Ladder, "The Night", 7 }, { Kind::Ladder, "The Wrath", 9 } };  // (Noah: "I want them all to be 7")  // (Noah: the Dwarven Spider at 1 city freed, the Spriggan at 3, the Dremora - the strongest - at 5) (the list's order is the save's: the Armory shows them by when they open)
 		constexpr Def kDestruction[] = { { Kind::Ladder, "Fire", -1 }, { Kind::Ladder, "Frost", -1 }, { Kind::Ladder, "Shock", 1 }, { Kind::Ladder, "Sun", 3 },
-			{ Kind::Ladder, "Blood", 5 }, { Kind::Ladder, "Runes", kGone },   /* (Noah: "I dont want to use runes or cloaks in the loot pool") */
+			{ Kind::Ladder, "Arcane", 5 }, { Kind::Ladder, "Runes", kGone },   /* (Noah: "I dont want to use runes or cloaks in the loot pool") */
 			{ Kind::Armour, "armour", -1 }, { Kind::Ladder, "Cloaks", kGone }, { Kind::Ladder, "Walls", 4 }, { Kind::Ladder, "Storms", 9 },
 			{ Kind::Blade, "carian", -1 } };  // (Noah: "destruction should get an elemental upgradable sword too" - last: the saves' order)
 		// (Noah: "remove everything from the Ranger class ... and replace it with the Alchemist class") the knife, six flasks
@@ -30,7 +30,7 @@ namespace bo3z::Kit
 			{ Kind::Bomb, "3", 6 }, { Kind::Bomb, "4", 8 }, { Kind::Bomb, "5", 9 }, { Kind::Armour, "armour", -1 } };  // (Noah: "replace the crossbows with ... throwing daggers") (last: the saves' order)
 		constexpr Def kSpellsword[] = { { Kind::Blade, "sword", -1 }, { Kind::Ladder, "Fire", -1 }, { Kind::Ladder, "Frost", 1 }, { Kind::Ladder, "Flame Breath", kGone },
 			{ Kind::Ladder, "Shock", 3 }, { Kind::Ladder, "Frost Breath", kGone }, { Kind::Ladder, "Sun", 5 }, { Kind::Ladder, "Storm Breath", kGone },
-			{ Kind::Ladder, "Blood", 7 }, { Kind::Ladder, "Poison", kGone }, { Kind::Ladder, "Blood Breath", kGone }, { Kind::Ladder, "Poison Breath", kGone },
+			{ Kind::Ladder, "Arcane", 7 }, { Kind::Ladder, "Poison", kGone }, { Kind::Ladder, "Blood Breath", kGone }, { Kind::Ladder, "Poison Breath", kGone },
 			{ Kind::Armour, "armour", -1 } };
 		std::span<const Def> Defs(int a_cls)
 		{

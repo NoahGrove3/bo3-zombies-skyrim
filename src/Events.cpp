@@ -933,7 +933,7 @@ namespace bo3z
 								last = now;
 								if (g_rider.size() > 256) g_rider.clear();
 								g_rider[t->GetFormID()] = now;
-								Forms::CastOnce(player, sp, t, 1.0f, player);
+								if (!Classes::ArcaneBladeHit(t, sp)) Forms::CastOnce(player, sp, t, 1.0f, player);
 								// (Noah: "remove twin resonance from the spellsword class") only the one spell rides the blade
 								static int told = 0;
 								if (told++ < 5) logger::info("spellsword: the blade struck with {}", sp->GetName());

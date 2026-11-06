@@ -2557,11 +2557,118 @@ namespace bo3z::Classes
 		}
 	}
 
+	// ---- (Noah, 2026-11-05: Blood made "Arcane / Spectral", blue-white) the Destruction ladder's three spells of ours and the
+	// Spellsword's arcane blade - built from Apocalypse's own arcane effects (fxmap.ini arc_arcane, arcane_orb, arcane_burst,
+	// arcane_ring); their damage on the one curve every Echo Altar spell shares (src/Arcana.cpp)
+	namespace
+	{
+		int ArcaneKind(RE::FormID a_spell)   // 0 bolt, 1 orb, 2 tide, 3-5 the blade I-III, -1 not one
+		{
+			auto* dh = RE::TESDataHandler::GetSingleton();
+			for (int k = 0; k < 6; ++k) if (auto* f = dh->LookupForm(gen::kArcaneSpell[k], gen::kPlugin); f && f->GetFormID() == a_spell) return k;
+			return -1;
+		}
+		float ArcaneShare(RE::FormID a_spell)   // one hit's share of one of the night's dead
+		{
+			const int i = Arcana::IndexOf(RE::TESForm::LookupByID(a_spell));
+			const float skyrimDmg = 20.0f * UpgradeMult(i >= 0 ? Arcana::Ups(i) : 0) * 0.45f * Arcana::Power();
+			const float whole = std::max(1.0f, Director::RoundHealth());
+			return skyrimDmg / whole;
+		}
+		// (once) the arcane spells' casting art in the hands: Apocalypse's Multivortex's; the top rung, Apocalypse's own Apocalypse,
+		// its blinding flash taken off (Noah: "Apocalypse, smaller flash")
+		void PatchArcane()
+		{
+			static bool done = false;
+			if (done) return;
+			done = true;
+			auto* dh = RE::TESDataHandler::GetSingleton();
+			const char* apoc = "Apocalypse - Magic of Skyrim.esp";
+			auto* vortex = dh->LookupForm<RE::EffectSetting>(0x1A4A49, apoc);
+			for (int k = 0; k < 6; ++k) {
+				auto* sp = dh->LookupForm<RE::SpellItem>(gen::kArcaneSpell[k], gen::kPlugin);
+				auto* m = sp && !sp->effects.empty() && sp->effects[0] ? sp->effects[0]->baseEffect : nullptr;
+				if (m && vortex) m->data.castingArt = vortex->data.castingArt, m->data.light = vortex->data.light, m->data.castingSoundLevel = vortex->data.castingSoundLevel;
+			}
+			if (auto* sp = dh->LookupForm<RE::SpellItem>(0x023316, apoc)) {
+				for (auto* e : sp->effects) {
+					auto* m = e ? e->baseEffect : nullptr;
+					if (!m) continue;
+					m->data.imageSpaceMod = nullptr;
+					if (auto* pr = m->data.projectileBase; pr && pr->data.explosionType) {
+						auto* ex = pr->data.explosionType;
+						ex->data.imageSpaceModifier = nullptr;
+						ex->data.radius *= 0.6f;
+						logger::info("arcane: Apocalypse's flash taken off ({})", ex->GetFormEditorID());
+					}
+				}
+			}
+			logger::info("arcane: casting art {}", vortex ? "Apocalypse's Multivortex" : "not found");
+		}
+		void ArcaneCast(int a_kind, RE::FormID a_spell)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p) return;
+			const float share = ArcaneShare(a_spell);
+			const RE::NiPoint3 from = Gun::SwingFrom(), dir = Gun::SwingDir();
+			if (a_kind == 0) {  // "Arcane bolt" (Noah: "BOLT A") - a bolt of blue-white light through the first it strikes
+				Gun::SlashSpec sl;
+				sl.model = "CurseOfAlduin\\fx\\arc_arcane.nif";
+				sl.from = from, sl.dir = dir, sl.speed = 1500.0f, sl.range = 2600.0f, sl.radius = 70.0f, sl.scale = 1.0f;
+				sl.bolt = true, sl.stopOnHit = true;
+				sl.damage = share * Director::RoundHealth() * gen::kRounds.hpScale;
+				sl.onHit = [](RE::Actor* a, bool) { if (a) Gun::ElemBurst(5, a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, 0.45f, 0.0f, 0.5f); };
+				Gun::Slash(sl);
+			} else if (a_kind == 1) {  // "Mana Void orb" - the orb (Noah: "Bolt C, bigger") flies nearly flat, bursts ("ORB BURST B") and drags the dead in
+				Gun::Lob("CurseOfAlduin\\fx\\arcane_orb.nif", from, dir * 1700.0f + RE::NiPoint3{ 0, 0, 60.0f }, 1.0f, [share](const RE::NiPoint3& at) {
+					Gun::QueueFx("CurseOfAlduin\\fx\\arcane_burst.nif", at, 1.0f, 0.0f, 2.0f, false);
+					Gun::BlastSound("lightmassive", at, 0.7f);
+					Gun::AreaHurt(at, 300.0f, share, "");
+					Gun::CycloneSpec cs;
+					cs.model = "CurseOfAlduin\\fx\\arcane_burst.nif";
+					cs.from = at, cs.fwd = { 0, 1, 0 }, cs.dist = 0.0f, cs.life = 1.4f, cs.size = 0.9f, cs.fec = -1, cs.share = share * 0.15f;
+					cs.burst = [share](const RE::NiPoint3& c) { Gun::AreaHurt(c, 260.0f, share * 0.6f, ""); };
+					Gun::ElemCyclone(std::move(cs));
+				}, 0.0f, 200.0f);
+			} else if (a_kind == 2) {  // "Lunar Tide" (Noah: "RING B") - a ring of arcane light bursts out round you and throws the dead back
+				const RE::NiPoint3 at = p->GetPosition();
+				Gun::QueueFx("CurseOfAlduin\\fx\\arcane_ring.nif", at, 1.0f, 0.0f, 2.0f, true);
+				Gun::BlastSound("lightmassive", at, 0.8f);
+				Gun::AreaHurt(at, 480.0f, share * 1.4f, "");
+				for (auto* f : NearFoes(at, 480.0f, 20)) Gun::Knock(f, 1.0f);
+			}
+		}
+	}
+	// (Noah: "Arcane blade, our own" - "Chain at III") the Spellsword's arcane rung: each blade hit bursts in arcane light, wider at
+	// II, and at III the burst leaps to two more of the dead (src/Events.cpp, the blade's hit)
+	bool ArcaneBladeHit(RE::Actor* a_target, RE::SpellItem* a_spell)
+	{
+		const int k = a_spell ? ArcaneKind(a_spell->GetFormID()) : -1;
+		if (k < 3 || !a_target) return false;
+		const int   tier = k - 2;
+		const float share = ArcaneShare(a_spell->GetFormID());
+		const RE::NiPoint3 at = a_target->GetPosition();
+		Gun::ElemBurst(5, at + RE::NiPoint3{ 0, 0, 70.0f }, tier >= 2 ? 0.8f : 0.5f, 0.0f, 0.5f);
+		Gun::AreaHurt(at, tier >= 2 ? 220.0f : 110.0f, share, "");
+		if (tier >= 3) {
+			int n = 0;
+			for (auto* f : NearFoes(at, 650.0f, 6)) {
+				if (f == a_target || f->IsDead() || n >= 2) continue;
+				++n;
+				Gun::LightningArc(at + RE::NiPoint3{ 0, 0, 70.0f }, f->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, 0.05f * n);
+				Gun::ElemBurst(5, f->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, 0.5f, 0.05f * n, 0.5f);
+				Gun::AreaHurt(f->GetPosition(), 90.0f, share * 0.7f, "");
+			}
+		}
+		return true;
+	}
 	bool ThrowFlask(RE::FormID a_spell);  // (below: the Alchemist's flasks)
 	void SummonBoneDragon();
 	void TickAlchemy(float a_delta);
 	bool OnCast(RE::FormID a_spell)
 	{
+		PatchArcane();
+		if (const int k = ArcaneKind(a_spell); k >= 0 && k < 3) { ArcaneCast(k, a_spell); return true; }
 		if (ThrowFlask(a_spell)) return true;
 		if (auto* horn = WyrmSpell(); horn && a_spell == horn->GetFormID()) {
 			SummonBoneDragon();
@@ -3442,7 +3549,7 @@ namespace bo3z::Classes
 				case coffer::kFrost: return 5;
 				case coffer::kShock: return 6;
 				case coffer::kSun: return 7;
-				case coffer::kBlood: return 8;
+				case coffer::kBlood: case coffer::kArcane: return 8;   // (Blood made Arcane: its look the blue-white one)
 				default: return 3;
 				}
 			}
@@ -3478,7 +3585,7 @@ namespace bo3z::Classes
 				{ 0x000D74, true, "frost" },                    // ss_frost (zzOverflowingIceBlue1)
 				{ 0x00184D, true, "lightning" },                // ss_shock
 				{ 0x010B53, true, "sunfire" },                  // ss_sun (its Dawnbreaker)
-				{ 0x000D70, true, "red" },                      // ss_blood (zzOverflowingRed1)
+				{ 0x00438D, true, "arcane white light" },       // ss_blood: now the Arcane blade (zzOverflowingmoon1)
 				{ 0x010B53, true, "sunfire" } };                // slayer (its Dawnbreaker)
 			auto* dh = RE::TESDataHandler::GetSingleton();
 			if (!dh->LookupModByName("VisualAnimatedEnchants.esp")) { logger::info("swords: Visual Animated Enchants is not installed - the looks keep their glow"); return; }

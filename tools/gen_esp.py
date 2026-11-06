@@ -137,6 +137,21 @@ for e, label, text in FLASKS:
         sub('MDOB', tsub('spel_firebolt', 'MDOB')), sub('ETYP', tsub('spel_firebolt', 'ETYP')),
         sub('DESC', z(text)),
         sub('SPIT', bytes(sp)), sub('EFID', struct.pack('<I', fid('MGEF', 'flaskcast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
+# (Noah, 2026-11-05: "Arcane / Spectral" in Blood's place, blue-white) the Destruction ladder's first three rungs and the
+# Spellsword's arcane blade: hand spells that only play the cast (cast_mgef) - src/Classes.cpp ArcaneCast does the rest
+ARCANE = [('bolt', 'Arcane Bolt', 'A bolt of blue-white arcane light.', 30), ('orb', 'Mana Void', 'An orb of the void: it bursts where it lands and drags the dead in.', 60),
+          ('tide', 'Lunar Tide', 'A ring of arcane light bursts out round you and throws the dead back.', 90),
+          ('blade1', 'Arcane Edge', 'Your blade bursts in arcane light on each hit.', 20), ('blade2', 'Arcane Brand', 'Your blade bursts in wide arcane light on each hit.', 30),
+          ('blade3', 'Arcane Cascade', 'Your blade bursts in arcane light on each hit, and the burst leaps to two more of the dead.', 40)]
+for key, label, text, cost in ARCANE:
+    cast_mgef('arcane_' + key, label, 1)
+    sp = bytearray(tsub('spel_firebolt', 'SPIT'))
+    struct.pack_into('<IIIfIIffI', sp, 0, cost, 0x1, 0, 0.0, 1, 0, 0.5, 0.0, 0)
+    recs['SPEL'].append(record('SPEL', fid('SPEL', 'arcane_' + key), [
+        sub('EDID', z('UN_Arcane_' + key)), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z(label)),
+        sub('MDOB', tsub('spel_firebolt', 'MDOB')), sub('ETYP', tsub('spel_firebolt', 'ETYP')), sub('DESC', z(text)),
+        sub('SPIT', bytes(sp)), sub('EFID', struct.pack('<I', fid('MGEF', 'arcane_' + key))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
+
 # (Noah: "I want the flasks to not use mana, and I want it to be an item that you actually throw, not a destruction spell")
 # each flask an item in your pack (a potion to Skyrim, so a favourite and a hotkey): used, it is thrown - src/Classes.cpp
 # sees it leave your pack, lobs it, and puts it back (an Alchemist's flasks never run out; a short breath between throws)
@@ -616,7 +631,7 @@ BV_COL = {   # fill, edge, spark keys (bright, mid, dark)
     'ss_frost': ((120, 200, 255), (190, 235, 255), ((240, 250, 255), (150, 215, 255), (60, 140, 230))),
     'ss_shock': ((150, 120, 255), (200, 190, 255), ((250, 245, 255), (175, 160, 255), (90, 70, 240))),
     'ss_sun':   ((255, 210, 80), (255, 235, 150), ((255, 252, 230), (255, 215, 90), (230, 150, 20))),
-    'ss_blood': ((140, 0, 10), (200, 20, 20), ((230, 90, 80), (170, 10, 15), (70, 0, 0))),
+    'ss_blood': ((120, 160, 255), (210, 230, 255), ((245, 250, 255), (170, 200, 255), (70, 110, 230))),   # (Blood made Arcane: blue-white)
     'slayer':   ((255, 190, 70), (255, 225, 140), ((255, 250, 220), (255, 190, 70), (220, 90, 20))),
 }
 for bkey, (fill, edge, keys) in BV_COL.items():
@@ -659,7 +674,7 @@ for bkey, (fill, edge, keys) in BV_COL.items():
 # (Noah: "make them required") Vibrant Weapons' own art (its files, read from the mod): the one-handed swords its sword art, the
 # Dragon Slayer its greatsword art - each look the element nearest its colour
 VW_ART = {k: 'vibrant weapons\\magic\\' + v + '.nif' for k, v in {'alch': 'ShockSwordR', 'carian': 'ShockSwordR', 'radiant': 'FrostSwordR', 'ss_none': 'FireSwordR',
-          'ss_fire': 'FireSwordR', 'ss_frost': 'FrostSwordR', 'ss_shock': 'ShockSwordR', 'ss_sun': 'FireSwordR', 'ss_blood': 'FireSwordR', 'slayer': 'FireGreatsword'}.items()}
+          'ss_fire': 'FireSwordR', 'ss_frost': 'FrostSwordR', 'ss_shock': 'ShockSwordR', 'ss_sun': 'FireSwordR', 'ss_blood': 'FrostSwordR', 'slayer': 'FireGreatsword'}.items()}
 # (Noah: "for the weapon effects around the swords in hand use the effects mod we downloaded for that" - "Both layered") each
 # look also wears Vibrant Weapons' art along the blade and a
 # small light of its colour: an ability of a light effect carrying the art, laid on you while the sword is in your hand

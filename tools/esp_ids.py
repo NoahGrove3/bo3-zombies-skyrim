@@ -67,6 +67,8 @@ def echo_ids(S):
     # (Noah: the wonders and Alduin's Bane floating in High Hrothgar's great hall, a fiery pillar for the Hall's rewards)
     ids += [('ACTI', 'hf_' + k) for k in ('gravecaller', 'frostbinder', 'wolfcrown', 'barrowhorn', 'bane', 'glow', 'glowtall', 'pillar')]
     ids += [('ACTI', 'hg_' + k) for k in ('gravecaller', 'frostbinder', 'wolfcrown', 'barrowhorn', 'bane')]   # (Noah: each one greyed out where it will float, until it's yours to take)
+    # (Noah, 2026-11-05: Blood made Arcane) the Destruction ladder's three spells of ours and the Spellsword's arcane blade
+    ids += [(k, 'arcane_' + n) for n in ('bolt', 'orb', 'tide', 'blade1', 'blade2', 'blade3') for k in ('MGEF', 'SPEL')]
     return ids
 def blasts():
     """Spell blasts: no-damage copies of Skyrim's explosions (tools/templates/expl/<name>.json)."""

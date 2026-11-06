@@ -430,6 +430,7 @@ namespace bo3z
 		RE::TESObjectWEAP* Riftblade();
 		RE::TESBoundObject* FlaskItem(int a_el);  // the Alchemist's flasks, items in the pack (0 fire 1 frost 2 shock 3 acid 4 holy water 5 bloodbloom 6 the Philosopher's Flask)
 		void               GiveFlask(int a_el);   // put in your pack
+		bool               ArcaneBladeHit(RE::Actor* a_target, RE::SpellItem* a_spell);   // the Spellsword's arcane rung on a blade hit (false: not one)
 		bool               Gilded(RE::Actor* a_a);    // turned to gold by the Philosopher's Flask (held fast, every blow twice as hard)
 		bool               FlaskInHand(bool a_left);  // a flask held, drawn, in that hand
 		int                FlaskElementInHand(bool a_left);  // which flask that hand holds (drawn or not): 0-6, -1 none

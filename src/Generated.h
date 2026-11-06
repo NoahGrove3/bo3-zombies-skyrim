@@ -1630,6 +1630,7 @@ namespace bo3z::gen
 	inline constexpr std::uint32_t kMuzzleLight = 0x8DC, kLanternLight = 0xD0F;
 	inline constexpr std::uint32_t kMadnessSword = 0xD1E, kLanternItem = 0xD20, kLanternSpell = 0xD23, kLanternEffect = 0xD22, kSetSwift = 0xD40;  // the Spellsword's blade; the belt lantern, its light
 	inline constexpr std::uint32_t kRiftblade = 0xD10;  // the Summoner dagger: Rift Stab
+	inline constexpr std::array<std::uint32_t, 6> kArcaneSpell{ 0xE6E, 0xE70, 0xE72, 0xE74, 0xE76, 0xE78 };  // (Blood made Arcane) bolt orb tide, the arcane blade I-III
 	inline constexpr std::uint32_t kMadEnch[3] = { 0xD26, 0xD29, 0xD2C };  // the Madness Sword's violet fire, brighter each tier
 	inline constexpr std::uint32_t kMadShader[3] = { 0xD24, 0xD27, 0xD2A };  // the Madness Sword's violet fire, drawn on the blade itself (src/Kit.cpp)
 	inline constexpr std::uint32_t kShadowburnShader = 0xE14;  // Shadowflame on its victim

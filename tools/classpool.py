@@ -37,7 +37,7 @@ LADDERS = [
     # rung the altar rolls now; the ladder is three rungs, all bolts
     ('destruction', 'shock', 'Shock', 'shock', [(SKY, 'Chain Lightning'), (APOC, 'Shock Nova'), (MYST, 'Finger of the Mountain')]),   # (Noah, 2026-11-05: Thunderbolt -> Apocalypse's Shock Nova)
     ('destruction', 'sun', 'Sun', 'sun', [(MYST, 'Solar Flare'), (MYST, 'Sunbeam'), (APOC, 'Forbidden Sun'), (MYST, 'Daybreak')]),   # (Noah: Radiant Sunbeam -> Apocalypse's Forbidden Sun)
-    ('destruction', 'blood', 'Blood', 'blood', [(MYST, 'Vampiric Bolt'), (MYST, 'Vampiric Blast'), (MYST, 'Vampiric Rune'), (MYST, 'Blood Lance')]),
+    ('destruction', 'blood', 'Arcane', 'arcane', [(OURS, 'Arcane Bolt'), (OURS, 'Mana Void'), (OURS, 'Lunar Tide'), (APOC, 'Apocalypse')]),
     # (the class review: every rune read as frost - the Elements trial counted one element, the seals missed them) each rung
     # its own element
     ('destruction', 'runes', 'Runes', 'frost', [(MYST, 'Greater Frost Rune'), (MYST, 'Greater Lightning Rune', 'shock'), (MYST, 'Greater Fire Rune', 'fire'), (MYST, 'Death Cloud', 'poison')]),
@@ -50,7 +50,7 @@ LADDERS = [
     ('spellsword', 'frost', 'Frost', 'frost', [(MYST, 'Chilling Touch'), (MYST, 'Icy Touch'), (MYST, 'Freezing Grasp')]),
     ('spellsword', 'shock', 'Shock', 'shock', [(MYST, 'Shocking Touch'), (MYST, 'Static Touch'), (MYST, 'Thundering Grasp')]),
     ('spellsword', 'sun', 'Sun', 'sun', [(MYST, 'Sunlight Touch'), (MYST, 'Radiant Touch'), (MYST, 'Searing Grasp')]),
-    ('spellsword', 'blood', 'Blood', 'blood', [(MYST, 'Vampiric Touch'), (MYST, 'Vampiric Grasp'), (MYST, 'Touch of Death')]),
+    ('spellsword', 'blood', 'Arcane', 'arcane', [(OURS, 'Arcane Edge'), (OURS, 'Arcane Brand'), (OURS, 'Arcane Cascade')]),   # (Noah: Blood made Arcane - "Arcane blade, our own")
     ('spellsword', 'poison', 'Poison', 'poison', [(MYST, 'Poisonous Touch'), (MYST, 'Venomous Touch'), (MYST, "Viper's Grasp")]),
     # (Noah: "keep the close range spells like the fire one for the spellsword") the sprays and point-blank blasts
     ('spellsword', 'fire_breath', 'Flame Breath', 'fire', [(MYST, 'Scorch'), (MYST, 'Greater Flames'), (MYST, 'Flame Tempest')]),
@@ -85,7 +85,7 @@ APPEND = {('destruction', 'shock'): [(APOC, 'Lightning Strike')], ('destruction'
 EXTRA.update({(APOC, 'Lightning Strike'): (0x002878, 361, False), (APOC, 'Ravaging Storm'): (0x15E728, 431, False),
               (APOC, 'Volcano'): (0x04733C, 636, False), (APOC, 'Flamestrike'): (0x02E0C0, 664, False),
               (APOC, 'Shock Nova'): (0x00186D, 375, False), (APOC, 'Forbidden Sun'): (0x044264, 610, False), (APOC, 'Inferno'): (0x022DAB, 180, False),
-              (APOC, 'Frost Nova'): (0x1347EE, 136, False), (APOC, 'Multivortex'): (0x1A4A4A, 200, False), (MYST, 'Cinder Storm'): (0x4B065B, 658, False)})
+              (APOC, 'Frost Nova'): (0x1347EE, 136, False), (APOC, 'Multivortex'): (0x1A4A4A, 200, False), (MYST, 'Cinder Storm'): (0x4B065B, 658, False), (APOC, 'Apocalypse'): (0x023316, 800, False)})
 PROCS = {(APOC, 'Ravaging Storm'): [0x15E725]}   # (Volcano and Flamestrike left the ladders)
 ELEMENTS = ['fire', 'frost', 'shock', 'poison', 'corrosion', 'sun', 'blood', 'arcane']  # (corrosion took disease's place: nothing used it)
 
@@ -100,8 +100,10 @@ def load():
         out[(SPRIG, x['name'])] = (int(x['fid'], 16), x['cost'], x['cast'] == 'concentration', 'Conjuration')
     import sys; sys.path.insert(0, str(ROOT / 'tools')); import esp_ids
     ids, _ = esp_ids.assign()
-    for key, name, cost in (('reanimate_1', 'Reanimate', 90), ('reanimate_2', 'Raise the Fallen', 140), ('reanimate_3', 'Army of the Grave', 200)):
-        out[(OURS, name)] = (ids[('SPEL', key)], cost, False, 'Conjuration')
+    for key, name, cost in (('reanimate_1', 'Reanimate', 90), ('reanimate_2', 'Raise the Fallen', 140), ('reanimate_3', 'Army of the Grave', 200),
+                            ('arcane_bolt', 'Arcane Bolt', 120), ('arcane_orb', 'Mana Void', 240), ('arcane_tide', 'Lunar Tide', 360),
+                            ('arcane_blade1', 'Arcane Edge', 80), ('arcane_blade2', 'Arcane Brand', 120), ('arcane_blade3', 'Arcane Cascade', 160)):
+        out[(OURS, name)] = (ids[('SPEL', key)], cost, False, 'Destruction' if key.startswith('arcane') else 'Conjuration')
     for n, (fid, cost) in VANILLA.items():
         out[(SKY, n)] = (fid, cost, False, 'Destruction')
     for key, (fid, cost, conc) in EXTRA.items():

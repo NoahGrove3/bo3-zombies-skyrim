@@ -1645,6 +1645,18 @@
   "ARTO:vw_slayer": "0xe69",
   "MGEF:vw_slayer": "0xe6a",
   "SPEL:vw_slayer": "0xe6b",
-  "EFSH:hallghost": "0xe6c"
+  "EFSH:hallghost": "0xe6c",
+  "MGEF:arcane_bolt": "0xe6d",
+  "SPEL:arcane_bolt": "0xe6e",
+  "MGEF:arcane_orb": "0xe6f",
+  "SPEL:arcane_orb": "0xe70",
+  "MGEF:arcane_tide": "0xe71",
+  "SPEL:arcane_tide": "0xe72",
+  "MGEF:arcane_blade1": "0xe73",
+  "SPEL:arcane_blade1": "0xe74",
+  "MGEF:arcane_blade2": "0xe75",
+  "SPEL:arcane_blade2": "0xe76",
+  "MGEF:arcane_blade3": "0xe77",
+  "SPEL:arcane_blade3": "0xe78"
  }
 }

@@ -223,6 +223,7 @@ o.append(f'\tinline constexpr std::uint32_t kClassChest = 0x{IDS[("CONT", "class
 o.append(f'\tinline constexpr std::uint32_t kMuzzleLight = 0x{IDS[("LIGH", "muzzle")]:03X}, kLanternLight = 0x{IDS[("LIGH", "lantern")]:03X};')
 o.append(f'\tinline constexpr std::uint32_t kMadnessSword = 0x{IDS[("WEAP", "madness")]:03X}, kLanternItem = 0x{IDS[("ARMO", "lantern")]:03X}, kLanternSpell = 0x{IDS[("SPEL", "lanternlight")]:03X}, kLanternEffect = 0x{IDS[("MGEF", "lanternlight")]:03X}, kSetSwift = 0x{IDS[("SPEL", "set_swift")]:03X};  // the Spellsword\'s blade; the belt lantern, its light')
 o.append(f'\tinline constexpr std::uint32_t kRiftblade = 0x{IDS[("WEAP", "riftblade")]:03X};  // the Summoner dagger: Rift Stab')
+o.append('\tinline constexpr std::array<std::uint32_t, 6> kArcaneSpell{ ' + ', '.join(f'0x{IDS[("SPEL", "arcane_" + n)]:03X}' for n in ('bolt', 'orb', 'tide', 'blade1', 'blade2', 'blade3')) + ' };  // (Blood made Arcane) bolt orb tide, the arcane blade I-III')
 o.append('\tinline constexpr std::uint32_t kMadEnch[3] = { ' + ', '.join(f'0x{IDS[("ENCH", f"madglow{n}")]:03X}' for n in (1, 2, 3)) + ' };  // the Madness Sword\'s violet fire, brighter each tier')
 o.append('\tinline constexpr std::uint32_t kMadShader[3] = { ' + ', '.join(f'0x{IDS[("EFSH", f"madshader{n}")]:03X}' for n in (1, 2, 3)) + ' };  // the Madness Sword\'s violet fire, drawn on the blade itself (src/Kit.cpp)')
 o.append('\tinline constexpr std::uint32_t kShadowburnShader = 0x' + f'{IDS[("EFSH", "shadowburn")]:03X};  // Shadowflame on its victim')

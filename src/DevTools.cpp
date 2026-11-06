@@ -626,6 +626,26 @@ namespace bo3z
 					if (auto* em = RE::ActorEquipManager::GetSingleton()) em->EquipSpell(player, sp, RE::TESForm::LookupByID<RE::BGSEquipSlot>(hand == "l" ? 0x013F43 : 0x013F42));
 				}
 				logger::info("dev: arequip {} -> {} [{:08X}]", i, sp ? sp->GetName() : "none", sp ? sp->GetFormID() : 0);
+			} else if (cmd == "fxlist" && player) {  // fxlist: every effect shader and art on you (the blade's glow hunt), and your blade's enchantment
+				std::string out;
+				RE::ProcessLists::GetSingleton()->ForEachShaderEffect([&](RE::ShaderReferenceEffect* e) {
+					if (e && e->target.get().get() == player) out += fmt::format("[shader {} {:08X} worn {}] ", e->effectData ? e->effectData->GetFormEditorID() : "?", e->effectData ? e->effectData->GetFormID() : 0, e->wornObject ? e->wornObject->GetName() : "-");
+					return RE::BSContainer::ForEachResult::kContinue;
+				});
+				RE::ProcessLists::GetSingleton()->ForEachModelEffect([&](RE::ModelReferenceEffect* e) {
+					if (e && e->target.get().get() == player) out += fmt::format("[art {:08X} {}] ", e->artObject ? e->artObject->GetFormID() : 0, e->artObject ? e->artObject->model.c_str() : "?");
+					return RE::BSContainer::ForEachResult::kContinue;
+				});
+				auto* w = player->GetEquippedObject(false);
+				auto* wp = w ? w->As<RE::TESObjectWEAP>() : nullptr;
+				std::string ench = wp && wp->formEnchanting ? fmt::format("{} {:08X}", wp->formEnchanting->GetName(), wp->formEnchanting->GetFormID()) : "none";
+				if (auto* inv = player->GetInventoryChanges(); inv && inv->entryList && w) {
+					for (auto* e : *inv->entryList) {
+						if (!e || e->object != w || !e->extraLists) continue;
+						for (auto* x : *e->extraLists) if (x) if (auto* xe = x->GetByType<RE::ExtraEnchantment>(); xe && xe->enchantment) ench += fmt::format(" | extra {} {:08X}", xe->enchantment->GetName(), xe->enchantment->GetFormID());
+					}
+				}
+				logger::info("dev: fxlist - weapon {} enchantment {} | {}", w ? w->GetName() : "none", ench, out);
 			} else if (cmd == "arclean" && player) {  // the spells arequip taught taken back
 				int n = 0;
 				for (auto* sp : DevAddedSpells()) if (sp && player->HasSpell(sp)) player->RemoveSpell(sp), ++n;
