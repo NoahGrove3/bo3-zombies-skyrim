@@ -606,12 +606,22 @@ def nahkriin(texonly=False):
         end = pts[-1]
         for k, (dy, curl) in enumerate(((-0.45, 0.0), (0.0, 0.0), (0.45, 0.0))):
             talon(M, 'bronze', end + np.array([0, dy, 0]), (side * 0.6, dy * 0.8, 1.0), (-side * 0.9, dy * 0.3, 0.4), 3.4 - 0.5 * abs(k - 1), 0.32)
-    M.add('Bronze', 'bronze', *lathe([(1.6, 1.15), (2.0, 1.75), (2.6, 2.0), (3.6, 2.0), (4.2, 1.6), (4.5, 1.1), (4.6, 0.0)], 32))
+    M.add('Bronze', 'bronze', *lathe([(1.6, 1.15), (2.0, 1.75), (2.6, 2.0), (3.6, 2.0), (4.0, 1.9), (4.3, 1.4), (4.4, 0.0)], 32))
+    # (Noah: "make sure the blade itself connects to the handle cleanly") the socket's mouth: a bronze lip shaped round the
+    # blade's footprint - a stadium as wide and deep as the blade's root - the blade standing up out of it
+    a = np.linspace(0, 2 * np.pi, 97)
+    hw, hd = 3.05, 0.95
+    lip = np.stack([np.clip(np.cos(a) * 1.25, -1, 1) * hw, np.sin(a) * hd, np.full_like(a, 4.75)], -1)
+    M.add('Bronze', 'bronze', *rod(lip, 0.42, 12))
+    plate = np.stack([np.clip(np.cos(a) * 1.25, -1, 1) * hw, np.sin(a) * hd], -1)
+    for zz, sh in ((4.35, 1.0), (4.0, 0.82)):
+        ring = np.column_stack([plate * sh, np.full(len(a), zz)])
+        M.add('Bronze', 'bronze', *rod(ring, 0.38, 10))
     # four talons from the collar gripping the blade's root
     for k in range(4):
         a = math.pi / 4 + k * math.pi / 2
         d = np.array([math.cos(a), math.sin(a) * 0.55, 0.0])
-        talon(M, 'bronze', np.array([d[0] * 1.5, d[1] * 1.5, 4.3]), d * 0.5 + np.array([0, 0, 1.0]), -d * 0.6 + np.array([0, 0, 1.0]), 3.6, 0.36)
+        talon(M, 'bronze', np.array([d[0] * 2.6, d[1] * 1.4, 4.8]), d * 0.4 + np.array([0, 0, 1.0]), -d * 0.7 + np.array([0, 0, 1.0]), 3.4, 0.36)
     # the grip: black leather, three bronze bands
     grip_wrap(M, 'leather', -7.6, 1.5, 0.86, 0.85)
     for z in (-7.4, -3.0, 1.4):
@@ -627,7 +637,7 @@ def nahkriin(texonly=False):
         talon(M, 'bronze', np.array([d[0] * 0.9, d[1] * 0.9, -9.0]), d * 0.8 + np.array([0, 0, -0.6]), -d + np.array([0, 0, -0.9]), 3.2, 0.3)
     # ---- the blade: all effect, no steel
     fx = Fx()
-    L0, LEN = 4.2, 50.0
+    L0, LEN = 3.4, 50.8   # (the blade rises from inside the socket: no gap where it meets the hilt)
     def blade_fx(name, opts, width, thick, scale_v, nx=11, ns=60, z0=L0, length=LEN):
         W = Mesh()
         blade(W, 'x', z0, length, width, thick, tip=0.26, seed=5, uv=(0, 1, 0, scale_v), ns=ns, nx=nx)
@@ -648,7 +658,7 @@ def nahkriin(texonly=False):
         fx.mesh(f'{nm} tex={runes} color=0.7,0.88,1,1 scale=2.4 blend=add', V, N, UV, F)
     fx.sheath('MistA', f'tex={FX["swirl"]} color=0.82,0.9,1,0.5 scale=1.3 blend=add falloff=1 uscroll=3 vscroll=4.5', 4.0, 56.0, 3.6, 2.4, 18, 12, 3.0)
     fx.sheath('MistB', f'tex={FX["swirl"]} color=0.78,0.88,1,0.32 scale=1.0 blend=add falloff=1 uscroll=-5 vscroll=6', 6.0, 60.0, 5.6, 4.4, 18, 12, 2.0)
-    fx.card('RootGlow', FX['glow'], (0, 0, 5.0), 5.0, '0.65,0.85,1,0.6', 1.2)
+    fx.card('RootGlow', FX['glow'], (0, 0, 5.2), 5.5, '0.65,0.85,1,0.65', 1.3)
     fx.card('RootCore', FX['core'], (0, 0, 5.0), 2.4, '0.75,0.9,1,1', 1.8, (4, 4, 6, 0))
     fx.card('StoneGlow', FX['glow'], tuple(sc), 3.0, '0.7,0.88,1,0.55', 1.0)
     # its own textures: the mist (soft wisps streaming along v, tiling) and the glyph strip
