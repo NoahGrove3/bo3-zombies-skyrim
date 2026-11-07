@@ -220,6 +220,7 @@ for name, hx in T['weap_daedricdagger']['subs']:
     elif name in ('MODT', 'EITM', 'EAMT'): continue
     elif name == 'DESC': b = z("The Summoner's wonder: a dragon's horn bound in silver. Attack to blow it: a violet wyrm flies in and burns the dead within 30 m of you for 90 seconds. It can be blown again a minute after the wyrm departs.")
     elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_wyrmhorn'))
+    elif name in ('TNAM', 'INAM', 'NAM9', 'NAM8'): b = struct.pack('<I', 0)   # (Noah: "it also has dagger sounds") none of a dagger's
     elif name == 'DATA': b = struct.pack('<IfH', 0, 2.0, 0)
     subs.append(sub(name, b))
 recs['WEAP'].append(record('WEAP', fid('WEAP', 'wyrmhorn'), subs))

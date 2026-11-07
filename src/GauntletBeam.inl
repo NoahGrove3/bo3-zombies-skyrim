@@ -108,7 +108,7 @@
 			}
 			g_gb.fill[e] = std::max(0.0f, g_gb.fill[e] - a_delta / kGbVial);
 			RE::NiPoint3 from, to;
-			if (Gun::GauntletBeam(e, kGbWidth, from, to)) {
+			if (Gun::GauntletBeam(e, -1.0f, from, to)) {   // (the beam itself is the Staff of Magnus's, from the staff: ours only finds where it strikes)
 				if (e != g_gb.lastEl) {
 					static constexpr const char* kSnd[6] = { "fireball", "frost", "runeshock", "poisongas", "light", "lightmassive" };
 					Gun::BlastSound(kSnd[e], from, 0.7f);

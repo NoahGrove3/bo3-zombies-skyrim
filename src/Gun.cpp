@@ -2986,8 +2986,12 @@ namespace bo3z
 			auto* hand = root->GetObjectByName(HandBone(L, "hand"));
 			auto* lip = root->GetObjectByName("HornLip");
 			if (!ua || !fa || !hand) return;
-			// the mark: a hand's breadth before the mouth and below it (the horn runs back from the fist to the lips), nudged
-			RE::NiPoint3 target = mouth + f * 10.0f - u * 5.0f + g_hornFix;
+			// (Noah: "the horn calling animation is also very broken" - held overhand across the fist, mouthpiece left, bell
+			// right) the fist out before the face and off to its own side, so the horn runs from the lips across to it and
+			// the bell beyond - the view clear between; nudged by the error fed back
+			RE::NiPoint3 r = first ? RE::NiPoint3{ cw.rotate.entry[0][0], cw.rotate.entry[1][0], cw.rotate.entry[2][0] } : RE::NiPoint3{ std::cos(a_player->GetAngleZ()), -std::sin(a_player->GetAngleZ()), 0.0f };
+			r.Unitize();
+			RE::NiPoint3 target = mouth + f * 12.0f + r * (L ? -12.0f : 12.0f) - u * 3.0f + g_hornFix;
 			{   // the elbow bent to reach it
 				const RE::NiPoint3 v1 = fa->world.translate - ua->world.translate, v2 = hand->world.translate - fa->world.translate;
 				const float l1 = v1.Length(), l2 = v2.Length();
@@ -3257,7 +3261,7 @@ namespace bo3z
 			RE::NiPoint3 to = hit <= 1.0f ? (eye + f * 40.0f) + (farPt - (eye + f * 40.0f)) * hit : farPt;
 			// (from the palm: no wall between it and the hand's own reach)
 			a_from = palm, a_to = to;
-			Props::GBeamLay(a_el, palm, to, a_width);
+			if (a_width > 0.0f) Props::GBeamLay(a_el, palm, to, a_width);   // (none drawn: the staff's own beam shows)
 			return true;
 		}
 		void GauntletBeamOff() { Props::GBeamOff(); }
@@ -5355,6 +5359,215 @@ namespace bo3z
 		}
 
 		void FangHit(RE::Actor* a_target, bool a_power) { Props::FangHit(a_target, a_power); }
+		// ---- (Noah: "all 10 of the weapons from the priests act as normal weapons please make sure they actually have their
+		// abilities") the Dragon Priests' weapons (docs/DRAGON_PRIEST_WEAPONS.md): every hit carries the priest's theme, and a
+		// power attack (for the two bows: every sixth arrow that strikes) looses his signature. Their strength sits between the
+		// Echo Altar's weapons and the class wonders: shares of one of the night's dead's whole health
+		namespace
+		{
+			int PriestOf(RE::FormID a_src)
+			{
+				auto* dh = RE::TESDataHandler::GetSingleton();
+				for (int i = 0; i < static_cast<int>(gen::kCityBosses.size()); ++i) {
+					if (dh && dh->LookupFormID(gen::kCityBosses[i].weapon, gen::kPlugin) == a_src) return i;
+				}
+				return -1;
+			}
+			// a value changed on one of the dead for a while, then given back
+			void ForAWhile(RE::Actor* a, RE::ActorValue a_av, float a_delta, float a_secs)
+			{
+				if (!a || a->IsDead()) return;
+				a->AsActorValueOwner()->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, a_av, a_delta);
+				Tasks::Later(a_secs, [h = a->GetHandle(), a_av, a_delta]() { if (auto x = h.get()) x->AsActorValueOwner()->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, a_av, -a_delta); });
+			}
+			void Sleep(RE::Actor* a, float a_secs)   // (Vokun) laid down asleep: paralysed where they stand
+			{
+				if (!a || a->IsDead()) return;
+				a->AsActorValueOwner()->SetActorValue(RE::ActorValue::kParalysis, 1.0f);
+				Tasks::Later(a_secs, [h = a->GetHandle()]() { if (auto x = h.get(); x && !x->IsDead()) x->AsActorValueOwner()->SetActorValue(RE::ActorValue::kParalysis, 0.0f); });
+			}
+			std::unordered_map<RE::FormID, std::chrono::steady_clock::time_point> g_frozen, g_poisoned;   // (Zahkriisos', Rahgot's marks)
+			bool Marked(std::unordered_map<RE::FormID, std::chrono::steady_clock::time_point>& a_m, RE::Actor* a)
+			{
+				auto it = a_m.find(a->GetFormID());
+				return it != a_m.end() && it->second > std::chrono::steady_clock::now();
+			}
+			void Mark(std::unordered_map<RE::FormID, std::chrono::steady_clock::time_point>& a_m, RE::Actor* a, float a_secs)
+			{
+				if (a_m.size() > 400) a_m.clear();
+				a_m[a->GetFormID()] = std::chrono::steady_clock::now() + std::chrono::milliseconds(static_cast<int>(a_secs * 1000));
+			}
+			std::array<int, 10> g_arrows{};   // (the bows: arrows struck toward the sixth)
+			std::array<std::chrono::steady_clock::time_point, 10> g_lastProc{};
+			RE::NiPoint3 Chest(RE::Actor* a) { return a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }; }
+			// drawn toward a point over a second (Vahlok's chains)
+			void Drag(RE::Actor* a, RE::NiPoint3 a_to)
+			{
+				for (int k = 1; k <= 10; ++k) {
+					Tasks::Later(0.1f * static_cast<float>(k), [h = a->GetHandle(), a_to]() {
+						auto x = h.get();
+						if (!x || x->IsDead()) return;
+						RE::NiPoint3 at = x->GetPosition(), d = a_to - at;
+						d.z = 0;
+						const float L = d.Length();
+						if (L < 160.0f) return;
+						x->SetPosition(at + d * (std::min(L - 150.0f, 90.0f) / L), true);
+					});
+				}
+			}
+		}
+		void PriestHit(RE::Actor* a_t, RE::FormID a_src, bool a_power)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p || !a_t || a_t == p || !Director::IsFoe(a_t)) return;
+			const int w = PriestOf(a_src);
+			if (w < 0) return;
+			const bool bow = w == 0 || w == 8;
+			const auto now = std::chrono::steady_clock::now();
+			if (now - g_lastProc[w] < std::chrono::milliseconds(bow ? 50 : 250)) return;   // (one swing, one proc)
+			g_lastProc[w] = now;
+			const float whole = Director::RoundHealth() * gen::kRounds.hpScale;
+			bool heavy = a_power;
+			if (bow && ++g_arrows[w] >= 6) g_arrows[w] = 0, heavy = true;
+			const auto tp = a_t->GetPosition(), pp = p->GetPosition();
+			RE::NiPoint3 fwd{ std::sin(p->GetAngleZ()), std::cos(p->GetAngleZ()), 0.0f };
+			switch (w) {
+			case 0:   // Vahlok's Jailor's Bow: bound in place; the sixth arrow - spectral chains drag a group to you
+				ForAWhile(a_t, RE::ActorValue::kSpeedMult, -95.0f, 2.5f);
+				ElemBurst(6, Chest(a_t), 0.4f, 0.0f, 0.5f);
+				if (heavy) {
+					for (auto* f : Foes(tp, 650.0f)) {
+						LightningArc(Chest(f), pp + RE::NiPoint3{ 0, 0, 80.0f }, 0.0f);
+						Drag(f, pp);
+						ForAWhile(f, RE::ActorValue::kSpeedMult, -95.0f, 2.0f);
+					}
+					BlastSound("lightmassive", tp, 0.8f);
+				}
+				break;
+			case 1:   // Nahkriin's Mistblade: blinded (slowed, their blows weak); heavy - a fog where they wander lost
+				ForAWhile(a_t, RE::ActorValue::kSpeedMult, -45.0f, 3.0f);
+				ForAWhile(a_t, RE::ActorValue::kAttackDamageMult, -0.5f, 3.0f);
+				Motes(3, tp, 0.5f, 2.0f);
+				if (heavy) {
+					for (auto* f : Foes(tp, 600.0f)) {
+						ForAWhile(f, RE::ActorValue::kSpeedMult, -60.0f, 6.0f);
+						ForAWhile(f, RE::ActorValue::kAttackDamageMult, -0.6f, 6.0f);
+						f->StopCombat();
+					}
+					Motes(3, tp, 2.2f, 6.0f);
+					ElemBurst(3, tp, 1.4f, 0.0f, 1.0f);
+				}
+				break;
+			case 2: {   // Volsung's Windcutter: a wind slash flies on through the line; heavy - a dash through them
+				const auto from = pp + RE::NiPoint3{ 0, 0, 80.0f };
+				LineHurt(from, from + fwd * 650.0f, 60.0f, 0.3f);
+				ElemBurst(3, from + fwd * 400.0f, 0.6f, 0.0f, 0.5f);
+				if (heavy) {
+					const RE::NiPoint3 eye = pp + RE::NiPoint3{ 0, 0, 90.0f };
+					const float hit = Spellcraft::WorldHit(eye, eye + fwd * 520.0f);
+					const float d = std::max(0.0f, (hit <= 1.0f ? hit * 520.0f : 520.0f) - 60.0f);
+					LineHurt(eye, eye + fwd * d, 90.0f, 1.2f);
+					p->SetPosition(pp + fwd * d, true);
+					ElemBurst(3, pp + fwd * (d * 0.5f), 1.2f, 0.0f, 0.6f);
+				}
+				break;
+			}
+			case 3:   // Zahkriisos' Glacier Greatsword: frozen and slowed; heavy - the frozen round you shatter
+				ForAWhile(a_t, RE::ActorValue::kSpeedMult, -50.0f, 3.0f);
+				Mark(g_frozen, a_t, 4.0f);
+				ElemBurst(1, Chest(a_t), 0.5f, 0.0f, 0.5f);
+				if (heavy) {
+					for (auto* f : Foes(pp, 600.0f)) {
+						if (!Marked(g_frozen, f) && f != a_t) continue;
+						AreaHurt(f->GetPosition(), 140.0f, 1.6f, "");
+						ElemBurst(1, Chest(f), 1.0f, 0.0f, 0.6f);
+						g_frozen.erase(f->GetFormID());
+					}
+					BlastSound("frost", pp, 0.9f);
+				}
+				break;
+			case 4: {   // Otar's Storm Blade: lightning leaps to two more; heavy - lightning arcs out all round you
+				int n = 0;
+				for (auto* f : Foes(tp, 450.0f)) {
+					if (f == a_t || n >= 2) continue;
+					LightningArc(Chest(a_t), Chest(f), 0.05f * static_cast<float>(n++));
+					AreaHurt(f->GetPosition(), 80.0f, 0.3f, "");
+				}
+				if (heavy) {
+					int k = 0;
+					for (auto* f : Foes(pp, 650.0f)) {
+						LightningArc(pp + RE::NiPoint3{ 0, 0, 90.0f }, Chest(f), 0.03f * static_cast<float>(k++));
+						AreaHurt(f->GetPosition(), 90.0f, 1.0f, "");
+						Knock(f, 0.5f);
+					}
+					BlastSound("runeshock", pp, 0.9f);
+				}
+				break;
+			}
+			case 5:   // Rahgot's Sacrifice Knife: poisoned - and the poison passes on to the next; heavy - the poisoned burst
+				Burn(a_t, whole * 0.05f, 4.0f);
+				Mark(g_poisoned, a_t, 6.0f);
+				Tasks::Later(2.0f, [h = a_t->GetHandle(), whole]() {
+					auto x = h.get();
+					if (!x) return;
+					for (auto* f : Foes(x->GetPosition(), 400.0f)) {
+						if (f == x.get() || Marked(g_poisoned, f)) continue;
+						Burn(f, whole * 0.04f, 4.0f), Mark(g_poisoned, f, 6.0f);
+						break;
+					}
+				});
+				if (heavy) {
+					for (auto* f : Foes(pp, 700.0f)) {
+						if (!Marked(g_poisoned, f) && f != a_t) continue;
+						AreaHurt(f->GetPosition(), 180.0f, 1.2f, "");
+						ElemBurst(5, Chest(f), 0.8f, 0.0f, 0.6f);
+						g_poisoned.erase(f->GetFormID());
+					}
+					BlastSound("poisongas", pp, 0.8f);
+				}
+				break;
+			case 6: {   // Krosis' Grief Blade: each hit heals you; heavy - a wail that weakens all near
+				auto* av = p->AsActorValueOwner();
+				av->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kDamage, RE::ActorValue::kHealth, std::max(4.0f, av->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.03f));
+				if (heavy) {
+					for (auto* f : Foes(pp, 700.0f)) {
+						ForAWhile(f, RE::ActorValue::kAttackDamageMult, -0.4f, 8.0f);
+						ForAWhile(f, RE::ActorValue::kSpeedMult, -30.0f, 8.0f);
+						ForAWhile(f, RE::ActorValue::kDamageResist, -150.0f, 8.0f);
+					}
+					ElemBurst(4, pp + RE::NiPoint3{ 0, 0, 60.0f }, 1.6f, 0.0f, 0.8f);
+					BlastSound("light", pp, 0.9f);
+				}
+				break;
+			}
+			case 7:   // Hevnoraak's Sealbreaker: armour shattered; heavy - a shockwave through the ground
+				ForAWhile(a_t, RE::ActorValue::kDamageResist, -200.0f, 8.0f);
+				if (heavy) {
+					AreaHurt(pp, 520.0f, 1.4f, "");
+					for (auto* f : Foes(pp, 520.0f)) Knock(f, 0.9f);
+					MeteorImpact(pp, false, 0.8f);
+				}
+				break;
+			case 8:   // Vokun's Dreamer's Bow: put to sleep; the sixth arrow - a whole group asleep
+				Sleep(a_t, 3.0f);
+				Motes(6, tp, 0.5f, 2.0f);
+				if (heavy) {
+					for (auto* f : Foes(tp, 600.0f)) Sleep(f, 5.0f);
+					ElemBurst(6, tp, 1.4f, 0.0f, 1.0f);
+				}
+				break;
+			case 9:   // Morokei's Arcane Maul: magic bursts where it strikes; heavy - a magicka shockwave
+				AreaHurt(tp, 160.0f, 0.35f, "");
+				ElemBurst(6, Chest(a_t), 0.6f, 0.0f, 0.5f);
+				if (heavy) {
+					AreaHurt(pp, 600.0f, 1.5f, "");
+					QueueFx("CurseOfAlduin\\fx\\arcane_ring.nif", pp, 1.2f, 0.0f, 2.0f, true);
+					p->AsActorValueOwner()->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kDamage, RE::ActorValue::kMagicka, 40.0f);
+				}
+				break;
+			default: break;
+			}
+		}
 		void StormHit(RE::Actor* a_target)
 		{
 			if (a_target && !g_stormBusy && g_storm.charges > 0 && !a_target->IsDead() && a_target != RE::PlayerCharacter::GetSingleton()) {

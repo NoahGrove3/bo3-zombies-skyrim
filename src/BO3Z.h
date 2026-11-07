@@ -791,6 +791,7 @@ namespace bo3z
 		void                  LearnShout(int a_shout);
 		int                   ShoutOfSpell(RE::FormID a_spell, int& a_level);
 		void                  StormHit(RE::Actor* a_target);
+		void                  PriestHit(RE::Actor* a_target, RE::FormID a_source, bool a_power);  // a Dragon Priest's weapon struck it: its theme, and on a power attack (a bow's sixth arrow) its signature
 		void                  FangHit(RE::Actor* a_target, bool a_power);  // Alduin's Fang struck it (Stage 5)   // a blow you landed: Stormblast's charge goes off on it
 		void                  Shout(int a_shout, int a_level);
 		bool                  Owns(int a_gun);

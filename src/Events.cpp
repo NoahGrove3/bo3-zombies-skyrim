@@ -911,6 +911,7 @@ namespace bo3z
 					if (auto* t = a_event->target->As<RE::Actor>(); t && Classes::IsRiftblade(a_event->source)) Classes::RiftHit(t);
 					if (auto* t = a_event->target->As<RE::Actor>(); t && a_event->source) Kit::OnPlayerHit(t, RE::TESForm::LookupByID(a_event->source));  // (the altar rework: the item's Infusion)
 					if (auto* t = a_event->target->As<RE::Actor>()) Classes::NoteHit(t, a_event->source, a_event->flags.any(RE::TESHitEvent::Flag::kPowerAttack));
+					if (auto* t = a_event->target->As<RE::Actor>(); t && a_event->source) Gun::PriestHit(t, a_event->source, a_event->flags.any(RE::TESHitEvent::Flag::kPowerAttack));  // (the Dragon Priests' weapons)
 					auto* src = a_event->source ? RE::TESForm::LookupByID(a_event->source) : nullptr;
 					const bool spellHit = src && src->As<RE::MagicItem>();  // (the charge's own lightning never sets off another charge)
 					if (auto* t = a_event->target->As<RE::Actor>(); t && !spellHit && Director::IsFoe(t)) {

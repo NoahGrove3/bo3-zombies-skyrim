@@ -1035,6 +1035,26 @@ namespace bo3z::Classes
 		if (!p || !dh) return;
 		if (static int purge = 0; ++purge % 3 == 0 && p->Is3DLoaded() && !ItemMenusOpen()) Purge();  // (the audit: never under the Magic menu)
 		if (!g_mergeDone && p->Is3DLoaded() && !ItemMenusOpen() && Forms::IntroDone()) MergeStashes();   // (an older save's class stashes back into your pack)
+		// (Noah: "the mutagen staff should cast like the staff of magnus" - "Same cast and beam") its enchantment's effect
+		// takes the Staff of Magnus's beam: aimed, its projectile and its casting and hit art - the vials, their elements
+		// and the damage stay ours (GauntletBeam.inl)
+		if (static bool beamed = false; !beamed) {
+			auto* mut = dh->LookupForm<RE::TESObjectWEAP>(gen::kFlaskItem[6], gen::kPlugin);
+			auto* mg = Magnus();
+			auto* me = mut && mut->formEnchanting && !mut->formEnchanting->effects.empty() && mut->formEnchanting->effects[0] ? mut->formEnchanting->effects[0]->baseEffect : nullptr;
+			auto* src = mg && mg->formEnchanting && !mg->formEnchanting->effects.empty() && mg->formEnchanting->effects[0] ? mg->formEnchanting->effects[0]->baseEffect : nullptr;
+			if (me && src) {
+				me->data.delivery = RE::MagicSystem::Delivery::kAimed;
+				me->data.castingType = RE::MagicSystem::CastingType::kConcentration;
+				me->data.projectileBase = src->data.projectileBase;
+				me->data.castingArt = src->data.castingArt;
+				me->data.hitEffectArt = src->data.hitEffectArt;
+				me->data.castingLight = src->data.castingLight;
+				me->data.effectShader = src->data.effectShader;
+				logger::info("alchemist: the Mutagen Staff casts the Staff of Magnus's beam ({})", src->GetFullName());
+			}
+			beamed = true;
+		}
 		TuneCorrosion();
 		TuneSpellswordGear();
 		TickArmour();
@@ -2055,8 +2075,8 @@ namespace bo3z::Classes
 					if (flat.Length() > 4500.0f && g_wh.blow < 0.0f && breathT < -4.0f) {  // (left far behind: at your side at once - not while it flies in)
 						const float yaw = p->GetAngleZ() + 1.2f;
 						a->SetPosition(me + RE::NiPoint3{ std::sin(yaw) * 400.0f, std::cos(yaw) * 400.0f, 250.0f }, true);
-					} else if (flat.Length() > 2100.0f) {  // (Noah: a 30 m leash - past it, drawn back toward you)
-						const RE::NiPoint3 want = me + flat * (1900.0f / flat.Length()) + RE::NiPoint3{ 0, 0, std::clamp(at.z - me.z, 80.0f, 600.0f) };
+					} else if (flat.Length() > 3500.0f) {  // (Noah: "the leash on the dragon should be 50m") past it, drawn back toward you
+						const RE::NiPoint3 want = me + flat * (3300.0f / flat.Length()) + RE::NiPoint3{ 0, 0, std::clamp(at.z - me.z, 80.0f, 600.0f) };
 						RE::NiPoint3 step = want - at;
 						if (const float d = step.Length(); d > 10.0f) a->SetPosition(at + step * std::min(1.0f, 220.0f * dt / d), true);  // (gently: a hard pull fought its flight)
 					}
@@ -2064,7 +2084,7 @@ namespace bo3z::Classes
 					// (Noah: "cast green fire breath not ice breath") its own shouts held back (the frost, the drain, the
 					// Soul Cairn's summons): its breath is the green grave-fire below
 					if (auto* pr = a->GetActorRuntimeData().currentProcess; pr && pr->high) pr->high->voiceRecoveryTime = 1.0e6f;
-					const auto foes = NearFoes(me, 2100.0f, 1);
+					const auto foes = NearFoes(me, 3500.0f, 1);
 					if (!foes.empty() && breathT <= 0) {
 						breathT = 1.2f;
 						SafeCombat(a.get(), foes[0]);
@@ -3530,7 +3550,9 @@ namespace bo3z::Classes
 		PatchLookArt();
 		int key = SwordClass(a_w) >= 0 ? LookKey(SwordClass(a_w)) : -1;
 		if (a_w && a_w == Slayer()) key = 9;
-		if (key < 0 || key == 3 || a_tier < 1) return nullptr;   // (Base: the bare sword; the Spellbound Blade with no spell in the other hand bare too)
+		// (Noah: "the static red effect is still on the spellbound blade I want that removed") the Spellbound Blade wears no
+		// look at all - other mods dress any fire enchantment in their own red art, whatever ours carries
+		if (key < 0 || (key >= 3 && key <= 8) || a_tier < 1) return nullptr;
 		return RE::TESDataHandler::GetSingleton()->LookupForm<RE::EnchantmentItem>(gen::kBladeViz[key][std::clamp(a_tier, 1, 3) - 1], gen::kPlugin);
 	}
 	// a swing of a class sword (any swing, hit or miss - WonderProps hears it)

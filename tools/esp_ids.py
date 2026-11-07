@@ -14,16 +14,16 @@ BLADE_VIZ = ('alch', 'carian', 'radiant', 'ss_none', 'ss_fire', 'ss_frost', 'ss_
 # (docs/DRAGON_PRIEST_WEAPONS.md; models: tools/priestweapons.py, tools/priestbows.py): town -> key, name, model, kind,
 # damage, its line in the inventory
 PRIEST_WEAPONS = {
-    'Riverwood': ('vahlok', "Jailor's Bow", 'vahlok_jailorsbow', 'bow', 30, "Vahlok the Jailor's bow, bound in iron, a ghost's chains wound round its limbs."),
-    'Whiterun': ('nahkriin', 'Mistblade', 'nahkriin_mistblade', 'sword', 26, "Nahkriin's blade of pale mist, the Dragon tongue burning down its length."),
-    'Solitude': ('volsung', 'Windcutter', 'volsung_windcutter', 'sword', 26, "Volsung's sabre, light as the wind over Volskygge's peaks."),
-    'Windhelm': ('zahkriisos', 'Glacier Greatsword', 'zahkriisos_greatsword', 'greatsword', 38, "Zahkriisos' greatsword of glacier ice grown over an iron core."),
-    'Markarth': ('otar', 'Storm Blade', 'otar_stormblade', 'sword', 26, "Otar the Mad's sword of living lightning."),
-    'Riften': ('rahgot', 'Sacrifice Knife', 'rahgot_dagger', 'dagger', 20, "Rahgot's ritual knife of black obsidian, its spine cut with poison runes."),
-    'Falkreath': ('krosis', 'Grief Blade', 'krosis_griefblade', 'sword', 26, "Krosis' sword, weeping light for a thousand years of mourning."),
-    'Morthal': ('hevnoraak', 'Sealbreaker', 'hevnoraak_sealbreaker', 'battleaxe', 40, "Hevnoraak's battleaxe, its bit cut from the cracked seal of his own tomb."),
-    'Dawnstar': ('vokun', "Dreamer's Bow", 'vokun_dreamersbow', 'bow', 30, "Vokun's bow of twisted black wood, cradling an orb of dream-smoke."),
-    'Winterhold': ('morokei', 'Arcane Maul', 'morokei_maul', 'warhammer', 42, "Morokei's maul: a cluster of crystal floating in steel rings, the Dragon tongue circling it."),
+    'Riverwood': ('vahlok', "Jailor's Bow", 'vahlok_jailorsbow', 'bow', 30, "Vahlok the Jailor's bow. Every arrow that strikes binds its target in place. Every sixth arrow that strikes looses spectral chains that drag the dead around it to you."),
+    'Whiterun': ('nahkriin', 'Mistblade', 'nahkriin_mistblade', 'sword', 26, "Nahkriin's blade of pale mist. Every hit blinds: the foe slows and its blows weaken. Power attack: a fog where the dead around wander lost, slowed and weakened."),
+    'Solitude': ('volsung', 'Windcutter', 'volsung_windcutter', 'sword', 26, "Volsung's sabre. Every hit sends a wind slash on through the dead ahead. Power attack: you dash forward through them, cutting all in your path."),
+    'Windhelm': ('zahkriisos', 'Glacier Greatsword', 'zahkriisos_greatsword', 'greatsword', 38, "Zahkriisos' greatsword of glacier ice. Every hit freezes and slows. Power attack: every frozen foe around you shatters."),
+    'Markarth': ('otar', 'Storm Blade', 'otar_stormblade', 'sword', 26, "Otar the Mad's storm-steel sword. Every hit leaps as lightning to two more of the dead. Power attack: lightning arcs out to all around you."),
+    'Riften': ('rahgot', 'Sacrifice Knife', 'rahgot_dagger', 'dagger', 20, "Rahgot's ritual knife of black obsidian. Every hit poisons, and the poison passes on to the next foe. Power attack: every poisoned foe around you bursts."),
+    'Falkreath': ('krosis', 'Grief Blade', 'krosis_griefblade', 'sword', 26, "Krosis' sword, weeping light. Every hit heals you. Power attack: a wail that weakens all the dead around you, their blows feebler and their bodies easier to hurt."),
+    'Morthal': ('hevnoraak', 'Sealbreaker', 'hevnoraak_sealbreaker', 'battleaxe', 40, "Hevnoraak's battleaxe, cut from his tomb's cracked seal. Every hit shatters armour. Power attack: a shockwave through the ground that hurts and staggers all around you."),
+    'Dawnstar': ('vokun', "Dreamer's Bow", 'vokun_dreamersbow', 'bow', 30, "Vokun's bow of twisted black wood. Every arrow that strikes puts its target to sleep. Every sixth arrow that strikes puts a whole group to sleep."),
+    'Winterhold': ('morokei', 'Arcane Maul', 'morokei_maul', 'warhammer', 42, "Morokei's maul of floating crystal. Every hit bursts with magic. Power attack: a magicka shockwave around you that also restores your magicka."),
 }
 def sheets():
     return {json.load(open(p))['sheet']: json.load(open(p)) for p in sorted((ROOT / 'sheets').glob('*.json'))}

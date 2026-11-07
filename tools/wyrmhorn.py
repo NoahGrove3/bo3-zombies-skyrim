@@ -274,6 +274,13 @@ def build(tex, lip):
         band_at(M, t, w, lift, 'beaded' if t > 0.5 else 'band')
     lipp, gemtop, gemup = mouthpiece(M)
     bell_rim(M)
+    # (Noah: "it should be held overhand with the mouth piece on the left and the bell on the right") turned across the
+    # fist: its length from the hand's left (the mouthpiece) to its right (the bell), gripped at its middle
+    mid = centre(0.5)
+    def rot(P): P = np.asarray(P, float); return np.stack([P[..., 1], -P[..., 0], P[..., 2]], -1)
+    sh = rot(mid)
+    M.groups = [(gn, m, rot(V) - sh, rot(N), UV, F) for gn, m, V, N, UV, F in M.groups]
+    lipp, gemtop, gemup = rot(lipp) - sh, rot(gemtop) - sh, rot(gemup)
     merged = {}
     for gname, m, V, N, UV, F in M.groups:
         if m not in merged: merged[m] = [gname, m, [], [], [], [], 0]
