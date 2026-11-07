@@ -1347,7 +1347,7 @@ namespace bo3z
 		void  Revert();
 		void  DevAll();                          // dev: every class's whole kit at its highest tier, every relic
 		void  DevBase();                         // dev: every class's whole kit owned, at Base
-		void  DevTestKit();                      // the test kit's: every class's sword, flasks and robes at Tier III
+		void  DevTestKit();                      // the test kit: every class's whole kit at Tier III
 		bool  Loaded();                           // this save carries the rework's record
 		void PriestDrop(int a_town);  // (Noah: "all players receive the weapon") a city's Dragon Priest slain: his weapon to you, and the card
 	}

@@ -4482,7 +4482,7 @@ namespace bo3z
 		}
 
 		bool g_kitPending = false;
-		constexpr float kKitVersion = 6.0f;  // (raised whenever the kit gains something: test characters get the new things on load)
+		constexpr float kKitVersion = 7.0f;  // (raised whenever the kit gains something: test characters get the new things on load)
 		// (Noah: every spell from my mods that imbues a weapon or does direct damage, to choose the Echo Altar's from)
 		// every castable spell of a mod (not the base game's own) with a damaging effect on health, or one that imbues a
 		// weapon; each named for its element first ("Fire: ...") so the Magic menu lists them by element. The names are
@@ -4626,10 +4626,14 @@ namespace bo3z
 			if (auto* sl = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kSlayerWeap, gen::kPlugin); sl && p->GetItemCount(sl) <= 0) {
 				p->AddObjectToContainer(sl, nullptr, 1, nullptr);  // the Dragon Slayer greatsword
 			}
+			// (Noah: "including all the wonders and boss weapons") the ten Dragon Priests' weapons
+			for (const auto& b : gen::kCityBosses) {
+				if (auto* w = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(b.weapon, gen::kPlugin); w && p->GetItemCount(w) <= 0) p->AddObjectToContainer(w, nullptr, 1, nullptr);
+			}
 			if (const int have = Points::Get(); have < 150000) {
 				Points::Refund(150000 - have);
 			}
-			Hud::Banner(fmt::format("TEST KIT: the Echo Altar's {} spells, the four class swords and every flask (Tier III), the Dragon Slayer, the Staff of Magnus, the Philosopher's Flask, the four class robes, Alduin's Bane, the glider, 150,000 Cursed Essence", spells), 8.0f);
+			Hud::Banner(fmt::format("TEST KIT: the Echo Altar's {} spells, every class's spells, weapons, flasks and robes (Tier III), the four wonders, the ten Dragon Priest weapons, Alduin's Bane, the glider, 150,000 Cursed Essence", spells), 8.0f);
 			std::string list;
 			for (auto& [el, c] : byEl) list += fmt::format("{} {}, ", el, c);
 			logger::info("testkit: {} altar spells ({}) - {} others taken away; bows {}, essence {}", spells, list, removed, Bows::Count(), Points::Get());

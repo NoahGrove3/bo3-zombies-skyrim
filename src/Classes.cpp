@@ -3,8 +3,9 @@
 
 // The four classes (Noah, the classes overhaul): Summoner, Destruction, Ranger, Spellsword. A new character picks one
 // on a full-screen picker the moment it is out of the character creator; the pick hands over the class's starter kit.
-// Any Echo Altar can switch class for septims: the class you leave keeps its spells and how far they have climbed
-// (they come back when you return to it), the class you take up gets its kit the first time.
+// Any Echo Altar can switch class for 50,000 Cursed Essence. (Noah: "one inventory for each player so a player can mix
+// and match") everything you carry - weapons, armour, spells - stays with you; a class's own powers (the horn, the
+// Mutagen Staff, the flasks) answer only to that class. The class you take up gets its kit the first time.
 // Co-save 'CLAS': [class+1] then, per class, [kit given][n] and n x [spell index, level].
 namespace bo3z::Classes
 {
@@ -86,7 +87,6 @@ namespace bo3z::Classes
 		l.t = a_t->GetFormID(), l.at = now;
 		return true;
 	}
-		int ElemCrossbowIndex(const RE::TESForm* a_obj) { for (int e = 0; e < 3; ++e) if (a_obj && a_obj == ElemCrossbow(e)) return e; return -1; }
 		RE::TESAmmo*       ElemBolts(int a_e);
 		int                BoltCap(int a_level);
 		void GiveItem(RE::PlayerCharacter* a_p, RE::TESForm* a_form, int a_count, bool a_equip)
@@ -381,27 +381,6 @@ namespace bo3z::Classes
 		// materials should be shared") a class's own: its weapons, ammunition, armour and clothing, scrolls and spell tomes.
 		// Shared by every class: gold, potions, food, ingredients and crafting materials, keys, quest items, books and notes,
 		// the night's relics (our plugin's own pieces, the Belt Lantern among them), and your underwear
-		bool ClassGear(RE::TESBoundObject* a_obj, const RE::InventoryEntryData* a_entry)
-		{
-			if (!a_obj || (a_entry && a_entry->IsQuestObject())) return false;
-			const auto t = a_obj->GetFormType();
-			if (t == RE::FormType::Book) {
-				auto* bk = a_obj->As<RE::TESObjectBOOK>();
-				if (!bk || !bk->TeachesSpell()) return false;
-			} else if (t != RE::FormType::Weapon && t != RE::FormType::Armor && t != RE::FormType::Ammo && t != RE::FormType::Scroll) {
-				return false;
-			}
-			if (a_obj == Underwear()) return false;  // (worn by every class)
-			if (auto* f = a_obj->GetFile(0); f && std::string_view(f->GetFilename()) == "Paragliding.esp") return false;  // (Noah: "the dragon glider shared on all classes")
-			// our own plugin's pieces are the night's rewards (Alduin's Bane, the hall's relics), kept by every class - but the
-			// class weapons it makes (wands, tomes, bows, the Conjurer's Staff) belong to their class
-			// (the audit: the Ranger's altar bows and the Subsuming Vortex followed you into every class) they are class gear too
-			auto* dh = RE::TESDataHandler::GetSingleton();
-			const bool vortex = dh && (a_obj == dh->LookupForm(gen::kVortexWeap, gen::kPlugin) || a_obj == dh->LookupForm(gen::kVortexAmmo, gen::kPlugin));
-			const bool blade = dh && (a_obj == dh->LookupForm(gen::kRiftblade, gen::kPlugin) || a_obj == dh->LookupForm(gen::kMadnessSword, gen::kPlugin) || a_obj == dh->LookupForm(gen::kAlchKnife, gen::kPlugin));
-			if (auto* f = a_obj->GetFile(0); f && std::string_view(f->GetFilename()) == gen::kPlugin && Forms::GunIndexOf(a_obj) < 0 && Bows::IndexOf(a_obj) < 0 && !vortex && ElemCrossbowIndex(a_obj) < 0 && !blade) return false;  // (Noah: the Ranger's Ember / Rime / Storm Crossbows went into every class)
-			return true;
-		}
 		// (Noah: "I switched from Summoner to Spellsword and still kept all of my Summoner stuff") a class's things wait in its
 		// own hidden chest; should the chest not be had, they are held in the co-save instead (the item and its count), so a
 		// switch always takes them off you
@@ -432,153 +411,59 @@ namespace bo3z::Classes
 			logger::info("classes: {}'s chest made ({:08X})", Name(a_cls), ref->GetFormID());
 			return ref.get();
 		}
-		// everything the class you leave was carrying of its own (above) into its chest; what it had on, and its weapon slots,
-		// noted
-		void StashGear(int a_cls)
+		// (Noah: "make each class use one inventory for each player so a player can mix and match their setup" - "Keep
+		// everything"; old saves: "Move into inventory") a class change no longer puts anything away: weapons, armour and
+		// spells all stay with you. What older saves put away for another class (its chest, what the save held for it, its
+		// altar spells and their levels, the altar's other spells, other spells, its blessings) comes back into your pack
+		bool g_mergeDone = false;
+		void MergeStashes()
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
-			if (!p || a_cls < 0 || a_cls >= 4) return;
-			auto* chest = ChestOf(a_cls, true);
-			g_wornStash[a_cls].clear();
-			for (int s = 0; s < 3; ++s) g_slotStash[a_cls][s] = Save::GetSlot(s), Save::SetSlot(s, {});
-			struct Move { RE::TESBoundObject* obj; std::int32_t count; RE::ExtraDataList* x; };
-			std::vector<Move> moves;
-			for (auto& [obj, e] : p->GetInventory()) {
-				if (!obj || e.first <= 0 || !ClassGear(obj, e.second.get())) continue;
-				if (e.second && e.second->IsWorn()) g_wornStash[a_cls].push_back(obj->GetFormID());
-				std::int32_t left = e.first;
-				if (e.second && e.second->extraLists) {
-					for (auto* x : *e.second->extraLists) {
-						if (!x || left <= 0) continue;
-						const std::int32_t c = std::max<std::int32_t>(1, x->GetCount());
-						moves.push_back({ obj, std::min(c, left), x });
-						left -= std::min(c, left);
-					}
-				}
-				if (left > 0) moves.push_back({ obj, left, nullptr });
-			}
-			int items = 0;
-			for (auto& m : moves) {
-				items += m.count;
-				if (chest) {
-					p->RemoveItem(m.obj, m.count, RE::ITEM_REMOVE_REASON::kStoreInContainer, m.x, chest);
-				} else {
-					p->RemoveItem(m.obj, m.count, RE::ITEM_REMOVE_REASON::kRemove, m.x, nullptr);
-					g_held[a_cls].push_back({ m.obj->GetFormID(), m.count });
-				}
-			}
-			logger::info("classes: {}'s gear put away ({} stacks, {} items, {})", Name(a_cls), moves.size(), items, chest ? "in its chest" : "held in the save");
-		}
-		// a class you come back to: its chest (and anything held for it in the save) emptied back into your pack, its pieces
-		// back on, its slots back
-		bool RestoreGear(int a_cls)
-		{
-			auto* p = RE::PlayerCharacter::GetSingleton();
-			if (!p || a_cls < 0 || a_cls >= 4) return false;
-			auto* chest = ChestOf(a_cls, false);
-			struct Move { RE::TESBoundObject* obj; std::int32_t count; RE::ExtraDataList* x; };
-			std::vector<Move> moves;
-			if (chest) {
-				for (auto& [obj, e] : chest->GetInventory()) {
-					if (!obj || e.first <= 0) continue;
-					std::int32_t left = e.first;
-					if (e.second && e.second->extraLists) {
-						for (auto* x : *e.second->extraLists) {
-							if (!x || left <= 0) continue;
-							const std::int32_t c = std::max<std::int32_t>(1, x->GetCount());
-							moves.push_back({ obj, std::min(c, left), x });
-							left -= std::min(c, left);
+			if (!p || !p->Is3DLoaded() || !p->GetParentCell()) return;
+			g_mergeDone = true;
+			int items = 0, spells = 0;
+			for (int c = 0; c < 4; ++c) {
+				if (auto* chest = ChestOf(c, false)) {
+					struct Move { RE::TESBoundObject* obj; std::int32_t count; RE::ExtraDataList* x; };
+					std::vector<Move> moves;
+					for (auto& [obj, e] : chest->GetInventory()) {
+						if (!obj || e.first <= 0) continue;
+						std::int32_t left = e.first;
+						if (e.second && e.second->extraLists) {
+							for (auto* x : *e.second->extraLists) {
+								if (!x || left <= 0) continue;
+								const std::int32_t n = std::max<std::int32_t>(1, x->GetCount());
+								moves.push_back({ obj, std::min(n, left), x });
+								left -= std::min(n, left);
+							}
 						}
+						if (left > 0) moves.push_back({ obj, left, nullptr });
 					}
-					if (left > 0) moves.push_back({ obj, left, nullptr });
+					for (auto& m : moves) chest->RemoveItem(m.obj, m.count, RE::ITEM_REMOVE_REASON::kStoreInContainer, m.x, p), items += m.count;
 				}
-				for (auto& m : moves) chest->RemoveItem(m.obj, m.count, RE::ITEM_REMOVE_REASON::kStoreInContainer, m.x, p);
-			}
-			int held = 0;
-			for (auto [id, n] : g_held[a_cls]) {
-				if (auto* o = RE::TESForm::LookupByID<RE::TESBoundObject>(id); o && n > 0) p->AddObjectToContainer(o, nullptr, n, nullptr), held += n;
-			}
-			g_held[a_cls].clear();
-			for (int s = 0; s < 3; ++s) Save::SetSlot(s, g_slotStash[a_cls][s]);
-			if (auto* em = RE::ActorEquipManager::GetSingleton()) {
-				for (auto id : g_wornStash[a_cls]) {
-					auto* o = RE::TESForm::LookupByID<RE::TESBoundObject>(id);
-					if (o && (o->IsArmor() || o->GetFormType() == RE::FormType::Ammo || (o->IsWeapon() && Forms::GunIndexOf(o) < 0)) && p->GetItemCount(o) > 0) em->EquipObject(p, o, nullptr, 1, nullptr, false, false, false, true);
+				for (auto [id, n] : g_held[c]) {
+					if (auto* o = RE::TESForm::LookupByID<RE::TESBoundObject>(id); o && n > 0) p->AddObjectToContainer(o, nullptr, n, nullptr), items += n;
 				}
+				g_held[c].clear();
+				for (auto [i, lv] : g_stash[c]) {
+					if (!Arcana::Known(i)) Arcana::Give(i, false), ++spells;
+					Arcana::SetLevel(i, std::max(lv, Arcana::Level(i)));
+				}
+				g_stash[c].clear();
+				for (auto id : g_extra[c]) if (auto* sp = RE::TESForm::LookupByID<RE::SpellItem>(id); sp && !p->HasSpell(sp)) p->AddSpell(sp), ++spells;
+				for (auto id : g_spellStash[c]) if (auto* sp = RE::TESForm::LookupByID<RE::SpellItem>(id); sp && !p->HasSpell(sp)) p->AddSpell(sp), ++spells;
+				g_spellStash[c].clear();
+				if (!g_perkStash[c].empty()) Perks::GiveBack(g_perkStash[c]), g_perkStash[c].clear();
+				g_wornStash[c].clear();
 			}
-			logger::info("classes: {}'s gear taken back out ({} stacks from its chest, {} items from the save)", Name(a_cls), moves.size(), held);
-			return true;
+			if (items || spells) logger::info("classes: one inventory - {} items and {} spells put away for other classes are back in your pack", items, spells);
 		}
-
-		// the class's spells off you (kept for when you come back to it), the new class's back on
 		void Swap(int a_from, int a_to)
 		{
-			// (Noah: "when switching from spellsword to another class, the orange rune from the hand casting animation gets
-			// stuck on my hand") a spell in a hand is put down properly before the class's spells are taken: its cast
-			// stopped and the spell unequipped, so its hand art (the Spellsword's rune) goes with it - taking the spell
-			// away while it was held left its art behind
-			if (a_from != a_to) {
-				if (auto* p = RE::PlayerCharacter::GetSingleton()) {
-					auto* em = RE::ActorEquipManager::GetSingleton();
-					for (bool left : { true, false }) {
-						auto* sp = p->GetEquippedObject(left) ? p->GetEquippedObject(left)->As<RE::SpellItem>() : nullptr;
-						if (!sp) continue;
-						if (auto* mc = p->GetMagicCaster(left ? RE::MagicSystem::CastingSource::kLeftHand : RE::MagicSystem::CastingSource::kRightHand)) mc->InterruptCast(false);
-						if (em) em->UnequipObject(p, sp, nullptr, 1, nullptr, false, true, false, true);
-						logger::info("classes: {} put down from the {} hand", sp->GetName(), left ? "left" : "right");
-					}
-				}
-			}
 			if (a_from == coffer::kSummoner && a_to != coffer::kSummoner) DismissSummons();
-			if (a_from >= 0 && a_from < 4 && a_from != a_to) StashGear(a_from), g_perkStash[a_from] = Perks::TakeAll();
-			if (a_from >= 0 && a_from < 4) {
-				g_stash[a_from].clear();
-				for (int i : Arcana::Carried(-1)) {  // (every altar spell you hold goes with the class you leave - g_class is already the new one)
-					g_stash[a_from].push_back({ i, Arcana::Level(i) });
-				}
-				for (auto [i, lv] : g_stash[a_from]) Arcana::Forget(i);
-				// (the audit) the altar's other spells it taught this class go with it
-				if (a_from != a_to) {
-					if (auto* p = RE::PlayerCharacter::GetSingleton()) {
-						for (auto id : g_extra[a_from]) if (auto* sp = RE::TESForm::LookupByID<RE::SpellItem>(id)) p->RemoveSpell(sp);
-						// (Noah: "magic" goes with its class too) every other spell you had learned as this class (from a tome,
-						// another mod's gift) - spells only: your race's powers, abilities and shouts stay with you
-						g_spellStash[a_from].clear();
-						std::vector<RE::SpellItem*> other;
-						for (auto* sp : p->GetActorRuntimeData().addedSpells) {
-							if (!sp || sp->GetSpellType() != RE::MagicSystem::SpellType::kSpell || Arcana::IndexOf(sp) >= 0) continue;
-							if (std::find(g_extra[a_from].begin(), g_extra[a_from].end(), sp->GetFormID()) != g_extra[a_from].end()) continue;
-							other.push_back(sp);
-						}
-						for (auto* sp : other) g_spellStash[a_from].push_back(sp->GetFormID()), p->RemoveSpell(sp);
-						if (!other.empty()) logger::info("classes: {} of {}'s other spells put away", other.size(), Name(a_from));
-					}
-				}
-			}
-			if (a_to >= 0 && a_to < 4 && a_from != a_to) {
-				if (auto* p = RE::PlayerCharacter::GetSingleton()) {
-					for (auto id : g_extra[a_to]) if (auto* sp = RE::TESForm::LookupByID<RE::SpellItem>(id)) p->AddSpell(sp);
-					for (auto id : g_spellStash[a_to]) if (auto* sp = RE::TESForm::LookupByID<RE::SpellItem>(id)) p->AddSpell(sp);
-					g_spellStash[a_to].clear();
-				}
-			}
-			if (!g_kit[a_to]) {
-				GiveKit(a_to);
-			} else {
-				RestoreGear(a_to);
-				if (!g_perkStash[a_to].empty()) Perks::GiveBack(g_perkStash[a_to]), g_perkStash[a_to].clear();
-				// (the class review: hands came back swapped - and the Spellsword's blade knocked out of its right) the stash is
-				// kept left hand first: it goes back there, the next to the right, the rest to the book; the Spellsword's right
-				// hand is its blade's, so its others wait in the book
-				int n = 0;
-				for (auto [i, lv] : g_stash[a_to]) {
-					if (n == 0) GiveSpell(i, true);
-					else if (n == 1 && a_to != coffer::kSpellsword) GiveSpell(i, false);
-					else Arcana::Give(i, false);
-					Arcana::SetLevel(i, lv);
-					++n;
-				}
-			}
+			if (a_to >= 0 && a_to < 4 && !g_kit[a_to]) GiveKit(a_to);   // (a class's starter kit the first time - added to what you carry)
+			MergeStashes();
+		}
 		}
 	}
 
@@ -734,7 +619,7 @@ namespace bo3z::Classes
 	int  Selected() { return g_sel.load(); }
 	bool Switching() { return g_switching.load(); }
 	std::string_view Name(int a_cls) { return a_cls >= 0 && a_cls < 4 ? coffer::kClassName[a_cls] : "None"; }
-	int  SwitchCost() { return 2500; }
+	int  SwitchCost() { return 50000; }   // (Noah: "I want to make the change class 50,000 cursed essence so people cant just flip through them")
 
 	void OpenPicker(bool a_switch)
 	{
@@ -1150,6 +1035,7 @@ namespace bo3z::Classes
 		auto* dh = RE::TESDataHandler::GetSingleton();
 		if (!p || !dh) return;
 		if (static int purge = 0; ++purge % 3 == 0 && p->Is3DLoaded() && !ItemMenusOpen()) Purge();  // (the audit: never under the Magic menu)
+		if (!g_mergeDone && p->Is3DLoaded() && !ItemMenusOpen() && Forms::IntroDone()) MergeStashes();   // (an older save's class stashes back into your pack)
 		TuneCorrosion();
 		TuneSpellswordGear();
 		TickArmour();
@@ -1870,11 +1756,11 @@ namespace bo3z::Classes
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (!p) return;
-		if (auto* m = Magnus(); m && p->GetItemCount(m) <= 0) GiveItem(p, m, 1, true);
+		if (auto* m = Magnus(); m && p->GetItemCount(m) <= 0) GiveItem(p, m, 1, false);
 		GiveFlask(6);
-		g_wStep[coffer::kDestruction] = kWonderTaken;
-		g_wStep[coffer::kAlchemist] = kWonderTaken;
-		logger::info("testkit: the Staff of Magnus and the Philosopher's Flask");
+		if (auto* h = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kWyrmHorn, gen::kPlugin); h && p->GetItemCount(h) <= 0) GiveItem(p, h, 1, false);   // (the Summoner's: the Horn of the Violet Wyrm)
+		for (int c = 0; c < 4; ++c) g_wStep[c] = kWonderTaken;   // (every class's wonder: the Dragon Slayer is given beside the kit)
+		logger::info("testkit: the four wonders - the Horn of the Violet Wyrm, the Staff of Magnus, the Mutagen Staff, the Dragon Slayer");
 	}
 	void DevGiveWonder(int a_cls)
 	{
@@ -2939,6 +2825,7 @@ namespace bo3z::Classes
 		for (auto& e : g_extra) e.clear();
 		for (auto& e : g_spellStash) e.clear();
 		for (auto& e : g_held) e.clear();
+		g_mergeDone = false;
 		g_lanternGiven = false;
 		g_xbow.clear();
 		if (a_v.empty()) return;
@@ -4140,6 +4027,7 @@ namespace bo3z::Classes
 	{
 		const int el = FlaskHeld(a_left);
 		if (el < 0 || Gun::Throwing()) return;
+		if (el != 6 && g_class.load() != coffer::kAlchemist) { Hud::QuestBanner("Only an Alchemist can throw the flasks", 2.0f); return; }   // (Noah: one inventory - "carry but class-locked")
 		if (el == 6 && g_class.load() != coffer::kAlchemist) { Hud::QuestBanner("The Mutagen Staff answers only to an Alchemist", 2.5f)   /* (Noah: "it won't let me throw it" - and nothing said why: always shown) */; return; }
 		if (el == 6) { GauntletPress(a_left); return; }   // (Noah: the Mutagen Gauntlet's beam - held, not thrown)
 		float& cool = el == 6 ? g_philCool : g_flaskCool;

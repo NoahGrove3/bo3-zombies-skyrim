@@ -3234,7 +3234,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const ImU32 cc = cls < 0 ? IM_COL32(255, 210, 120, 255) : kParch;
 					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, cc, cls < 0 ? std::string("CHOOSE YOUR CLASS") : "CLASS: " + Upper(std::string(Classes::Name(cls))));
 					Txt(dl, g_body, 17 * k, { L + 36 * k, y + 32 * k }, IM_COL32(196, 182, 160, 235),
-						cls < 0 ? std::string("Summoner, Destruction, Alchemist or Spellsword - free, your first path") : std::string("Change class - each keeps its own spells and progress"));
+						cls < 0 ? std::string("Summoner, Destruction, Alchemist or Spellsword - free, your first path") : std::string("Change class - 50,000 Cursed Essence; your gear and spells stay with you"));
 					if (cls >= 0) price(y + 2 * k, Classes::SwitchCost(), s.points >= Classes::SwitchCost());
 					y += 64 * k;
 					Divider(dl, cx, y, w * 0.30f, k, 0.6f);

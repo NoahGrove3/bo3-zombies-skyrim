@@ -1332,43 +1332,16 @@ namespace bo3z::Kit
 	// (Noah: "update the test kit with the new items") the test kit's share of the classes: every class's crystal sword and
 	// flasks at Tier III (the arcs, the heavy attack's burst, its own power - all of it to try at once) and every class's Black
 	// Mage robes in its own colours, Tier III - the spell ladders left to the kit's own altar spells
-	void DevTestKit()
+	// (Noah: "update the test kit with all weapons, spells, and armor for each class") every class's whole kit - its
+	// spell ladders' top spells, bows, crossbows, sword, flasks and robes - at Legendary (Tier III) for the test kit, or
+	// at the last Ascend for the dev command
+	void DevGiveAll(int kTop);
+	void DevTestKit() { DevGiveAll(3); }
+	void DevAll() { DevGiveAll(kMaxTier); }
+	void DevGiveAll(int kTop)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (!p) return;
-		int n = 0;
-		for (int c = 0; c < 4; ++c) {
-			const auto defs = Defs(c);
-			auto&      st = g_cls[c];
-			for (int i = 0; i < static_cast<int>(defs.size()) && i < kMaxItems; ++i) {
-				const auto& d = defs[i];
-				if (d.at == kGone) continue;
-				switch (d.kind) {
-				case Kind::Bomb:
-				case Kind::Blade:
-					st.owned |= 1u << i;
-					st.tier[i] = 3;
-					Grant(c, i, false);
-					++n;
-					break;
-				case Kind::Armour:
-					st.owned |= 1u << i;
-					st.tier[i] = 3;
-					Classes::GiveArmourSet(c, 3, false);
-					++n;
-					break;
-				default: break;
-				}
-			}
-		}
-		SyncWeapons(false);
-		logger::info("testkit: every class's sword, flasks and robes at Tier III ({} items)", n);
-	}
-	void DevAll()
-	{
-		auto* p = RE::PlayerCharacter::GetSingleton();
-		if (!p) return;
-		constexpr int kTop = kMaxTier;
 		int n = 0;
 		for (int c = 0; c < 4; ++c) {
 			const auto defs = Defs(c);
@@ -1386,7 +1359,7 @@ namespace bo3z::Kit
 					}
 					if (top < 0 || !Arcana::Spell(top)) break;
 					if (!Arcana::Known(top)) Arcana::Give(top, false);
-					Arcana::SetLevel(top, kTop - Arcana::TierOfRung(top));
+					Arcana::SetLevel(top, std::max(0, kTop - Arcana::TierOfRung(top)));
 					++n;
 					break;
 				}
@@ -1395,7 +1368,7 @@ namespace bo3z::Kit
 					if (b < 0) break;
 					if (auto* w = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kBows[b].weap, gen::kPlugin); w && p->GetItemCount(w) <= 0) p->AddObjectToContainer(w, nullptr, 1, nullptr);
 					Bows::SetLevel(b, 3);
-					st.tier[i] = static_cast<std::uint8_t>(kTop - 3);
+					st.tier[i] = static_cast<std::uint8_t>(std::max(0, kTop - 3));
 					++n;
 					break;
 				}
@@ -1404,7 +1377,7 @@ namespace bo3z::Kit
 					if (!w) break;
 					if (p->GetItemCount(w) <= 0) Classes::GiveGear(w, 1, false);
 					Classes::SetCrossbowLevel(w, 3);
-					st.tier[i] = static_cast<std::uint8_t>(kTop - 3);
+					st.tier[i] = static_cast<std::uint8_t>(std::max(0, kTop - 3));
 					++n;
 					break;
 				}
@@ -1424,6 +1397,6 @@ namespace bo3z::Kit
 		}
 		Classes::RestockWonder();  // (the crossbows' bolts, the Vortex's arrows)
 		SyncWeapons(false);
-		logger::info("dev: everything from every class - {} kit items at tier {}, every relic", n, kTop);
+		logger::info("dev: everything from every class - {} kit items at tier {}", n, kTop);
 	}
 }
