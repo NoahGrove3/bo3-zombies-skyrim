@@ -30,12 +30,11 @@ rng = np.random.default_rng(777)
 
 
 # ================================================================== shapes
-def blade(M, mat, y0, length, width, thick, tip=0.22, fuller=0.0, jag=0.0, seed=0, uv=(0, 1, 0, 1), name='Blade', curve=0.0):
+def blade(M, mat, y0, length, width, thick, tip=0.22, fuller=0.0, jag=0.0, seed=0, uv=(0, 1, 0, 1), name='Blade', curve=0.0, ns=120, nx=17):
     """a blade along +Z from z=y0: its half width w(s) (s 0 at the guard, 1 at the point), a lens cross-section thinning to
     sharp edges, an optional fuller groove down its middle (0..1 of its length), optional crystal jags along the edges.
     UV: u across (0..1 left to right), v along (0 at the guard), into the given window of the sheet"""
     r = np.random.default_rng(seed)
-    ns, nx = 120, 17
     S = np.linspace(0, 1, ns)
     jagged = np.zeros(ns)
     if jag:
@@ -274,11 +273,13 @@ def blade_tex(name, steel_rgb, edge_rgb=None, glow_rgb=None, script=True, patter
         spec = np.clip(230 - 120 * frost, 0, 255)
         glow = np.clip(cracks * 0.8 + centre * 0.35 * (0.6 + 0.4 * warp), 0, 1)
     else:
-        if pattern == 'folded':
+        if pattern == 'mist':   # (fog in the steel: soft cloudy layers drifting along the blade)
+            layers = np.clip(0.5 + 0.9 * (tileable(S, S, 1.6, 520 + seed, aniso=(0.35, 1.0)) - 0.5) + 0.4 * (warp - 0.5), 0, 1)
+        elif pattern == 'folded':
             layers = np.sin((u * 14 + 1.1 * warp + 0.5 * streak + v * 3) * 2 * np.pi * 2) * 0.5 + 0.5
         else:
             layers = streak
-        lum = 0.78 + 0.07 * (layers - 0.5) + 0.06 * (fine - 0.5) + 0.3 * edge - 0.14 * centre
+        lum = 0.78 + (0.22 if pattern == 'mist' else 0.07) * (layers - 0.5) + 0.06 * (fine - 0.5) + 0.3 * edge - 0.14 * centre
         col = np.array(steel_rgb, np.float32) * lum[..., None]
         if edge_rgb is not None:
             col = col * (1 - 0.5 * edge[..., None]) + np.array(edge_rgb) * 0.5 * edge[..., None]
@@ -290,15 +291,18 @@ def blade_tex(name, steel_rgb, edge_rgb=None, glow_rgb=None, script=True, patter
         # (down the blade's middle: glyphs set one under another along v)
         im = Image.new('L', (S, S), 0); dr = ImageDraw.Draw(im)
         r = np.random.default_rng(510 + seed)
-        y = S * 0.08
-        while y < S * 0.72:
+        y = S * 0.1
+        while y < S * 0.7:   # (each glyph about a finger's width on the blade: three claw strokes and a dot)
             cx = S * 0.5
-            for k in range(r.integers(2, 4)):
-                a = r.choice([-1, 0, 1]) * 0.55 + r.random() * 0.2
-                ox = (k - 1) * 14
-                l = 30 + 16 * r.random()
-                dr.line([(cx + ox - math.sin(a) * l * 0.5, y - math.cos(a) * l * 0.5), (cx + ox + math.sin(a) * l * 0.5, y + math.cos(a) * l * 0.5)], fill=255, width=5)
-            y += 58
+            n = r.integers(2, 4)
+            for k in range(n):
+                a = r.choice([-1, 0, 1]) * 0.5 + (r.random() - 0.5) * 0.25
+                ox = (k - (n - 1) / 2) * 70
+                l = 150 + 70 * r.random()
+                dr.line([(cx + ox - math.sin(a) * l * 0.5, y - math.cos(a) * l * 0.5), (cx + ox + math.sin(a) * l * 0.5, y + math.cos(a) * l * 0.5)], fill=255, width=20)
+            if r.random() < 0.5:
+                dr.ellipse([cx - 14, y + 115, cx + 14, y + 143], fill=255)
+            y += 260
         m = np.asarray(im.filter(ImageFilter.GaussianBlur(1.2)), np.float32) / 255
         col = col * (1 - 0.65 * m[..., None]) + np.array([24, 22, 22]) * 0.65 * m[..., None]
         h = h - 1.0 * m
@@ -430,83 +434,189 @@ def zahkriisos(texonly=False):
     return finish(M, 'zahkriisos_greatsword', mats, fx.L, 'WeaponBack')
 
 
+def place(M, src, R=np.eye(3), t=(0, 0, 0)):
+    """another mesh's parts turned by R and moved by t, added to M"""
+    t = np.asarray(t, float)
+    for gname, m, V, N, UV, F in src.groups:
+        M.add(gname, m, np.asarray(V) @ R.T + t, np.asarray(N) @ R.T, UV, F)
+
+
+def rotm(axis, ang):
+    axis = unit(np.asarray(axis, float)); x, y, z = axis; c, s_ = math.cos(ang), math.sin(ang); C = 1 - c
+    return np.array([[c + x * x * C, x * y * C - z * s_, x * z * C + y * s_], [y * x * C + z * s_, c + y * y * C, y * z * C - x * s_], [z * x * C - y * s_, z * y * C + x * s_, c + z * z * C]])
+
+
+VAHLOK_LINKS, VAHLOK_PITCH = 9, 1.75
+
+
 def vahlok(texonly=False):
-    """(Vahlok the Jailor - "Chain flail") a jailor's flail: an iron haft wrapped in leather, capped with a shackle; a
-    length of heavy prison chain; a spiked iron ball girdled by a manacle. Spectral chains glimmering along the real one."""
+    """(Vahlok the Jailor - "Chain flail"; Noah: "Have the chain actually connect to the ball ... make it look more ghostly
+    not just a normal chain flail, and chain to move like one I don't want it to be stiff") a jailor's flail: an iron haft
+    wrapped in leather, capped with a shackle; from it a chain and a spiked ball that are a ghost of iron - spectral,
+    half-seen, glowing cold green-blue - the ball hung from the last link by an eye of its own.
+
+    The chain moves: each link hangs on its own node (VahlokLink0 .. 8, each under the one before; VahlokBall under the
+    last), so src/Classes.cpp swings them as a chain under gravity and the weapon's own motion. At rest they droop in an
+    arc."""
     iD, iN = metal_tex('vahlok_iron', (88, 86, 84), rust=0.55, dark=0.75, seed=12)
     lD, lN = leather_tex('vahlok_leather', (52, 34, 26), seed=13)
     M = Mesh()
-    # the haft
     M.add('Iron', 'iron', *lathe([(-9.0, 0.0), (-9.0, 0.9), (-8.4, 1.2), (-7.8, 1.0), (-7.6, 0.78)] + [(z, 0.74) for z in np.linspace(-7.5, 14.0, 6)] + [(14.2, 0.95), (15.0, 1.05), (15.6, 0.9)], 24))
     grip_wrap(M, 'leather', -7.4, 3.0, 0.8, 0.9)
     for z in (3.3, 8.0, 12.5):
         M.add('Iron', 'iron', *lathe([(z - 0.4, 0.76), (z - 0.3, 0.95), (z + 0.3, 0.95), (z + 0.4, 0.76)], 20))
-    # the shackle on its top: a U of iron through which the chain hangs
     sh = [np.array([math.sin(a) * 1.3, 0.0, 15.6 + 1.6 * (1 - math.cos(a)) * 0.8]) for a in np.linspace(-math.pi / 2, math.pi / 2, 14)]
     sh = [np.array([-1.3, 0, 15.4])] + sh + [np.array([1.3, 0, 15.4])]
     M.add('Iron', 'iron', *rod(np.array(sh), 0.32, 10))
-    M.add('Iron', 'iron', *rod(np.array([(-1.7, 0, 16.6), (1.7, 0, 16.6)]), 0.3, 10))   # (the pin)
-    # the chain: links along a hanging curve, alternating their turn
-    top = np.array([0.0, 0.0, 16.6])
-    nlinks = 9
-    pts = []
-    for k in range(nlinks):
-        s = (k + 0.5) / nlinks
-        pts.append(top + np.array([7.0 * math.sin(s * math.pi / 2), 0.0, 2.6 * math.sin(math.pi * s) - 6.5 * s * s]))
-    pts = np.array(pts)
-    for k in range(nlinks):
-        a = pts[k - 1] if k else top
-        b = pts[k]
-        d = unit(b - a)
-        perp = unit(np.cross(d, [0, 1.0, 0])) if k % 2 == 0 else np.array([0, 1.0, 0])
-        V, N, UV, F = torus((a + b) / 2, 0.75, 0.24, perp, 20, 8, stretch=1.6, long=d)
-        M.add('Chain', 'iron', V, N, UV, F)
-    # the ball: spiked iron, a manacle round its middle
-    bc = pts[-1] + unit(pts[-1] - pts[-2]) * 3.6
-    prof = [(bc[2] - 2.7 * math.cos(a), 2.7 * math.sin(a)) for a in np.linspace(0, math.pi, 22)]
-    P, N, UV, F = g.lathe_z(np.array(prof), bc[0], bc[1], 30, 0, 1, 0, 1)
-    M.add('Ball', 'iron', P, N, UV * [2 * math.pi * 2.7 / TILE, math.pi * 2.7 / TILE] + rng.random(2), F)
-    spikes(M, 'iron', bc, 2.5, 14, 2.3, 0.55, seed=5)
-    a = np.linspace(0, 2 * np.pi, 49)
-    band = np.stack([bc[0] + 2.85 * np.cos(a), bc[1] + 2.85 * np.sin(a), np.full_like(a, bc[2])], -1)
-    M.add('Iron', 'iron', *rod(band, 0.35, 10))
-    M.add('Iron', 'iron', *box(bc + np.array([2.95, 0, 0]), 0.35, 0.9, 0.9))   # (the manacle's lock)
+    M.add('Iron', 'iron', *rod(np.array([(-1.7, 0, 16.6), (1.7, 0, 16.6)]), 0.3, 10))
     fx = Fx()
-    # the spectral chain: a ghostly glow running down the chain
-    path = g.spline(np.vstack([top, pts, bc]), 40)
-    P, N, UV, F = g.tube(path, 0.9, 8, vrange=(0, 3))
-    fx.mesh(f'SpectralChain tex={FX["pulse"]} color=0.45,0.95,0.85,0.8 scale=2.0 blend=add vscroll=1.6', P, N, UV, F)
-    fx.card('BallGlow', FX['glow'], bc, 6.0, '0.4,0.9,0.8,0.35', 0.9)
+    ghost = f'tex=CurseOfAlduin\\priests\\vahlok_iron_d.dds color=0.55,1,0.9,0.85 scale=1.5 blend=alpha falloff=1'
+    glow = f'tex={FX["swirl"]} color=0.35,1,0.85,0.7 scale=1.6 blend=add falloff=1 uscroll=3 vscroll=5'
+    # the links: each on its node (its pivot where it hangs from the one before), the chain's rest an arc out and down
+    top = np.array([0.0, 0.0, 16.6])
+    dirs = []
+    for k in range(VAHLOK_LINKS):
+        s = (k + 0.5) / VAHLOK_LINKS
+        dirs.append(unit(np.array([math.cos(s * 2.0) * 1.0, 0.0, 0.55 - 1.6 * s])))
+    parent, at = 'VahlokFlail', top
+    for k in range(VAHLOK_LINKS):
+        name = f'VahlokLink{k}'
+        off = at if k == 0 else dirs[k - 1] * VAHLOK_PITCH
+        fx.L.append(f'node {name} {parent} {off[0]:.4f} {off[1]:.4f} {off[2]:.4f}')
+        d = dirs[k]
+        perp = unit(np.cross(d, [0, 1.0, 0])) if k % 2 == 0 else np.array([0, 1.0, 0])
+        V, N, UV, F = torus(d * VAHLOK_PITCH * 0.5, 0.62, 0.21, perp, 18, 8, stretch=1.55, long=d)
+        fx.mesh(f'LinkGhost{k} {ghost} parent={name}', V, N, UV * 2.0, F)
+        V2, N2, UV2, F2 = torus(d * VAHLOK_PITCH * 0.5, 0.62, 0.34, perp, 14, 6, stretch=1.55, long=d)
+        fx.mesh(f'LinkGlow{k} {glow} parent={name}', V2, N2, UV2, F2)
+        parent, at = name, None
+    # the ball, under the last link: an eye ring the last link passes through, the spiked ball beneath it
+    d = dirs[-1]
+    off = d * VAHLOK_PITCH
+    fx.L.append(f'node VahlokBall {parent} {off[0]:.4f} {off[1]:.4f} {off[2]:.4f}')
+    eye_c = d * 0.35
+    V, N, UV, F = torus(eye_c, 0.55, 0.22, np.array([0, 1.0, 0]) if VAHLOK_LINKS % 2 else unit(np.cross(d, [0, 1.0, 0])), 16, 8, 1.0, long=d)
+    fx.mesh(f'BallEye {ghost} parent=VahlokBall', V, N, UV * 2.0, F)
+    bc = d * 3.4
+    V, F = g.sphere(bc, 2.6, 30, 16)
+    fx.mesh(f'BallGhost {ghost} parent=VahlokBall', [p for p, uu, vv, n in V], [n for p, uu, vv, n in V], [(uu * 3, vv * 1.5) for p, uu, vv, n in V], F)
+    V, F = g.sphere(bc, 3.0, 26, 13)
+    fx.mesh(f'BallGlow {glow} parent=VahlokBall', [p for p, uu, vv, n in V], [n for p, uu, vv, n in V], [(uu, vv) for p, uu, vv, n in V], F)
+    k = np.arange(14) + 0.5
+    phi = np.arccos(1 - 2 * k / 14); th = np.pi * (1 + 5 ** 0.5) * k
+    sV, sN, sUV, sF = [], [], [], []
+    for i in range(14):
+        sd = np.array([math.sin(phi[i]) * math.cos(th[i]), math.sin(phi[i]) * math.sin(th[i]), math.cos(phi[i])])
+        P, Nn, UV, F = g.axis_lathe([(2.3, 0.55), (2.9, 0.42), (3.9, 0.15), (4.6, 0.0)], bc, sd, 8)
+        base = len(sV); sV += list(P); sN += list(Nn); sUV += list(UV); sF += [tuple(np.asarray(f) + base) for f in F]
+    fx.mesh(f'BallSpikes {ghost} parent=VahlokBall', sV, sN, sUV, sF)
+    fx.card('BallCore', FX['core'], bc, 2.2, '0.45,1,0.85,1', 1.8, (4, 4, 8, 0))
+    fx.card('BallHalo', FX['glow'], bc, 6.5, '0.35,1,0.8,0.4', 0.9)
+    # (the haft's shackle breathing the same cold light)
+    fx.card('ShackleGlow', FX['glow'], (0, 0, 16.4), 3.2, '0.35,1,0.8,0.45', 0.9)
+    # (the ghost's own wisps drifting up off the ball)
+    fx.L.append(f'shape BallWisps tex={FX["swirl"]} color=0.4,1,0.85,0.45 scale=1.2 blend=add falloff=1 uscroll=2 vscroll=5 parent=VahlokBall')
+    nu, nv = 18, 6
+    for i2 in range(nv + 1):
+        s2 = i2 / nv
+        for j in range(nu + 1):
+            a = 2 * math.pi * j / nu
+            r = 2.8 + 1.2 * s2
+            p = bc + np.array([r * math.cos(a), r * math.sin(a), -1.0 + 6.0 * s2])
+            fx.L.append(f'v {p[0]:.4f} {p[1]:.4f} {p[2]:.4f} {j / nu * 2:.4f} {s2:.4f} 1 1 1 {math.sin(math.pi * s2) ** 1.3 * 0.8:.3f}')
+            fx.L.append(f'n {math.cos(a):.4f} {math.sin(a):.4f} 0')
+    for i2 in range(nv):
+        for j in range(nu):
+            a = i2 * (nu + 1) + j; b = a + 1; c = a + nu + 1; dd = c + 1
+            fx.L += [f't {a} {c} {b}', f't {b} {c} {dd}']
     mats = {'iron': f'diffuse={iD} normal={iN} spec=1.1 gloss=55 alpha=0 doublesided=0',
             'leather': f'diffuse={lD} normal={lN} spec=0.4 gloss=20 alpha=0 doublesided=0'}
-    return finish(M, 'vahlok_flail', mats, fx.L, 'WeaponMace')
+    return finish(M, 'vahlok_flail', mats, fx.L, 'WeaponMace', root='VahlokFlail')
+
+
+def mask_plate(c, fwd, up, w, h, depth, n=22):
+    """a Dragon Priest's mask in relief: an oval plate bulged forward, a brow ridge across it, two eye slits sunk into it,
+    a crest rising from the brow. Returns (V, N, UV, F) facing fwd"""
+    fwd = unit(np.asarray(fwd, float)); up = unit(np.asarray(up, float) - fwd * (np.asarray(up, float) @ fwd)); rt = np.cross(up, fwd)
+    V = np.zeros((n + 1, n + 1, 3)); UV = np.zeros((n + 1, n + 1, 2))
+    for i in range(n + 1):
+        for j in range(n + 1):
+            x = -1 + 2 * j / n; y = -1 + 2 * i / n
+            rr = x * x + y * y
+            if rr > 1: x, y = x / math.sqrt(rr), y / math.sqrt(rr); rr = 1
+            bulge = (1 - rr) ** 0.5
+            brow = 0.45 * math.exp(-((y - 0.22 - 0.25 * abs(x)) / 0.1) ** 2) * (1 - x * x)
+            eyes = -0.7 * math.exp(-(((abs(x) - 0.4) / 0.2) ** 2 + ((y - 0.02 - 0.12 * abs(x)) / 0.05) ** 2))
+            ridge = 0.3 * math.exp(-((x / 0.07) ** 2)) * (y > 0.25)
+            cheek = -0.15 * math.exp(-(((abs(x) - 0.45) / 0.12) ** 2 + ((y + 0.4) / 0.25) ** 2))
+            z = depth * (bulge + brow + eyes + ridge + cheek)
+            V[i, j] = c + rt * x * w + up * y * h + fwd * z
+            UV[i, j] = (0.5 + 0.5 * x, 0.5 + 0.5 * y)
+    dx = np.gradient(V, axis=1); dy = np.gradient(V, axis=0)
+    N = unit(np.cross(dx, dy))
+    N = N * np.where((N @ fwd)[..., None] < 0, -1, 1)
+    F = np.array(grid_faces(n + 1, n + 1))
+    fn = np.cross(V.reshape(-1, 3)[F[:, 1]] - V.reshape(-1, 3)[F[:, 0]], V.reshape(-1, 3)[F[:, 2]] - V.reshape(-1, 3)[F[:, 0]])
+    flip = (fn @ fwd) < 0
+    F[flip] = F[flip][:, [0, 2, 1]]
+    return V.reshape(-1, 3), N.reshape(-1, 3), UV.reshape(-1, 2) * 0.35 + rng.random(2), F
 
 
 def nahkriin(texonly=False):
-    """(Nahkriin, Warden of Skuldafn - "Mistblade sword") a long, slender sword of pale silvered steel, a fuller down its
-    length etched with the warden's script; a guard of two swept wings; a grip of grey leather; a pommel set with a
-    milky stone. Mist pours from its edges and drifts up off it."""
-    bD, bN, bG = blade_tex('nahk_blade', (196, 200, 206), edge_rgb=(235, 238, 242), glow_rgb=(170, 200, 230), script=True, pattern='folded', seed=21)
-    sD, sN = metal_tex('nahk_silver', (182, 182, 180), rust=0.0, dark=0.45, seed=22)
-    lD, lN = leather_tex('nahk_leather', (70, 66, 64), seed=23)
+    """(Nahkriin, Warden of Skuldafn - "Mistblade sword"; Noah: "Fancier guard", "Glowing script", "needs the most work to
+    elevate and match the dragon priest") a warden's longsword: a broad blade of pale mist-steel - cloudy grey-blue
+    layers in it like fog - its ridge running to the point, dragon-script cut down its fuller and glowing the pale blue
+    of Sovngarde's mist; at its root a silver collar ringed with script. The guard is the Warden's mask: a Dragon
+    Priest's face in silver on both sides, a crest of horns rising from its brow along the blade's root, and three
+    tiers of feathered silver wings sweeping up from it on either side. A grip of grey leather bound in silver wire; a
+    pommel of a second, smaller mask crowned with a pale stone. Mist pours off the blade and drifts up from the wings."""
+    bD, bN, bG = blade_tex('nahk_blade', (176, 186, 198), edge_rgb=(232, 238, 246), glow_rgb=(150, 205, 255), script=True, pattern='mist', seed=21)
+    sD, sN = metal_tex('nahk_silver', (186, 188, 192), rust=0.0, dark=0.6, etch=None, seed=22)
+    lD, lN = leather_tex('nahk_leather', (62, 60, 64), seed=23)
     M = Mesh()
-    blade(M, 'blade', 3.6, 47.0, 4.2, 0.95, tip=0.2, fuller=0.75, seed=31)
-    # the guard: two wings swept toward the blade
+    blade(M, 'blade', 4.6, 48.0, 5.2, 1.15, tip=0.24, fuller=0.72, seed=31)
+    # the collar at the blade's root: silver, a band of script
+    M.add('Silver', 'silver', *lathe([(3.2, 1.2), (3.5, 1.65), (4.4, 1.7), (4.8, 1.3), (5.0, 0.0)], 32))
+    # the mask on both faces of the guard's heart, a block behind them
+    M.add('Silver', 'silver', *box(np.array([0, 0, 2.6]), 1.9, 0.95, 1.5))
+    for fy in (1, -1):
+        M.add('Mask', 'silver', *mask_plate(np.array([0, fy * 0.85, 2.7]), (0, fy, 0), (0, 0, 1), 1.75, 2.1, 0.55))
+        # the crest: horns rising from the brow, along the blade's root
+        for hx in (-0.7, 0.7):
+            pts = [np.array([hx * (1 - 0.6 * s), fy * (0.95 - 0.3 * s), 3.9 + 4.8 * s ** 1.2]) for s in np.linspace(0, 1, 12)]
+            M.add('Silver', 'silver', *rod(np.array(pts), np.linspace(0.32, 0.05, 12), 8))
+    # the wings: three tiers of feathered silver blades a side, sweeping out and up
     for side in (-1, 1):
-        pts = [np.array([side * (0.8 + 5.2 * s), 0.0, 3.0 + 3.4 * s ** 2.2]) for s in np.linspace(0, 1, 16)]
-        M.add('Guard', 'silver', *rod(np.array(pts), np.linspace(0.7, 0.2, 16), 12))
-        pts = [np.array([side * (0.8 + 3.6 * s), 0.0, 2.6 + 1.6 * s ** 2.0]) for s in np.linspace(0, 1, 12)]
-        M.add('Guard', 'silver', *rod(np.array(pts), np.linspace(0.42, 0.12, 12), 10))   # (a lesser wing under it)
-    M.add('Guard', 'silver', *box(np.array([0, 0, 3.0]), 1.4, 0.75, 0.8))
-    grip_wrap(M, 'leather', -6.8, 2.2, 0.82, 0.85)
-    M.add('Silver', 'silver', *lathe([(2.2, 0.88), (2.5, 1.1), (2.8, 1.1), (3.0, 0.9)], 20))
-    M.add('Silver', 'silver', *lathe([(-6.8, 0.88), (-7.0, 1.0), (-7.4, 0.95), (-8.0, 1.25), (-8.8, 1.45), (-9.6, 1.25), (-10.2, 0.7), (-10.4, 0.0)], 24))
+        for tier, (L, wd, ang, z0) in enumerate(((9.5, 1.7, 1.12, 2.6), (7.8, 1.45, 1.4, 2.0), (6.0, 1.2, 1.7, 1.4))):
+            W = Mesh()
+            blade(W, 'silver', 0.0, L, wd, 0.42, tip=0.5, seed=40 + tier, uv=(0.1, 0.4, 0.1, 0.6), name='Wing', curve=0.18, ns=28, nx=9)
+            R = rotm((0, 1, 0), side * -ang) @ (rotm((0, 0, 1), math.pi) if side < 0 else np.eye(3))
+            place(M, W, R, (side * 1.7, 0.0, z0))
+        # a ridge rod along the top wing's leading edge
+        pts = [np.array([side * (1.7 + 9.2 * s * math.sin(1.12)), 0, 2.6 + 9.2 * s * math.cos(1.12) + 1.4 * s * s]) for s in np.linspace(0, 1, 10)]
+        M.add('Silver', 'silver', *rod(np.array(pts), np.linspace(0.28, 0.08, 10), 8))
+    # the grip: grey leather under silver wire wound the other way
+    grip_wrap(M, 'leather', -7.4, 1.2, 0.86, 0.85)
+    nr = 160; zz = np.linspace(-7.3, 1.1, nr)
+    wire = np.stack([0.95 * np.cos(-zz / 0.85 * 2 * np.pi), 0.95 * np.sin(-zz / 0.85 * 2 * np.pi), zz], -1)
+    M.add('Silver', 'silver', *rod(wire, 0.08, 6))
+    M.add('Silver', 'silver', *lathe([(1.1, 0.9), (1.3, 1.25), (1.8, 1.4), (1.95, 1.0)], 24))
+    # the pommel: a little mask a side, a pale stone crowning it
+    M.add('Silver', 'silver', *lathe([(-7.4, 0.92), (-7.7, 1.15), (-8.1, 1.0), (-8.6, 1.5), (-9.9, 1.55), (-10.6, 1.0), (-10.9, 0.0)], 28))
+    for fy in (1, -1):
+        M.add('Mask', 'silver', *mask_plate(np.array([0, fy * 1.25, -9.2]), (0, fy, 0), (0, 0, 1), 1.05, 1.25, 0.32))
+    stone = [(-11.6 + 0.75 - 0.75 * math.cos(a), 0.75 * math.sin(a)) for a in np.linspace(0, math.pi, 14)]
+    M.add('Stone', 'stone', *lathe(stone, 20, uvs=(1, 1, 0, 0)))
     fx = Fx()
-    fx.sheath('MistA', f'tex={FX["swirl"]} color=0.85,0.9,0.95,0.55 scale=1.2 blend=add falloff=1 uscroll=3 vscroll=4.5', 3.0, 52.0, 3.0, 2.0, 18, 12, 3.0)
-    fx.sheath('MistB', f'tex={FX["swirl"]} color=0.8,0.85,0.95,0.35 scale=1.0 blend=add falloff=1 uscroll=-5 vscroll=6', 6.0, 56.0, 5.0, 4.0, 18, 12, 2.0)
-    fx.card('PommelGlow', FX['glow'], (0, 0, -8.6), 3.0, '0.8,0.85,1,0.4', 0.8)
-    mats = {'blade': f'diffuse={bD} normal={bN} glow={bG} emit=0.8,0.85,0.95 emitmult=0.6 spec=2.2 gloss=140 alpha=0 doublesided=0',
-            'silver': f'diffuse={sD} normal={sN} spec=1.6 gloss=90 alpha=0 doublesided=0',
+    fx.sheath('MistA', f'tex={FX["swirl"]} color=0.82,0.9,1,0.55 scale=1.3 blend=add falloff=1 uscroll=3 vscroll=4.5', 4.0, 55.0, 3.4, 2.2, 18, 12, 3.0)
+    fx.sheath('MistB', f'tex={FX["swirl"]} color=0.75,0.85,1,0.35 scale=1.0 blend=add falloff=1 uscroll=-5 vscroll=6', 6.0, 58.0, 5.4, 4.2, 18, 12, 2.0)
+    fx.sheath('WingMist', f'tex={FX["swirl"]} color=0.8,0.88,1,0.4 scale=1.1 blend=add falloff=1 uscroll=2 vscroll=5', 0.5, 12.0, 8.0, 10.0, 22, 8, 1.5)
+    fx.card('MaskEyes', FX['core'], (0, 0, 2.8), 1.6, '0.6,0.85,1,1', 1.8, (4, 4, 6, 0))
+    fx.card('StoneGlow', FX['glow'], (0, 0, -11.0), 2.6, '0.75,0.88,1,0.55', 1.0)
+    stD = save(np.dstack([np.full((256, 256), 205.0), np.full((256, 256), 222.0), np.full((256, 256), 240.0)]) * (0.85 + 0.15 * tileable(256, 256, 1.0, 66)[..., None]), 'nahk_stone_d.dds')
+    mats = {'blade': f'diffuse={bD} normal={bN} glow={bG} emit=0.65,0.85,1 emitmult=1.8 spec=2.3 gloss=150 alpha=0 doublesided=0',
+            'silver': f'diffuse={sD} normal={sN} spec=1.7 gloss=95 alpha=0 doublesided=0',
+            'stone': f'diffuse={stD} normal={sN} glow={stD} emit=0.8,0.9,1 emitmult=0.8 spec=2.5 gloss=200 alpha=0 doublesided=0',
             'leather': f'diffuse={lD} normal={lN} spec=0.4 gloss=20 alpha=0 doublesided=0'}
     return finish(M, 'nahkriin_mistblade', mats, fx.L, 'WeaponSword')
 
