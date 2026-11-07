@@ -978,9 +978,12 @@ namespace bo3z
 				}
 				for (auto* sp : drop) list->RemoveSpell(sp);
 				std::vector<RE::TESShout*> gone;
+				// (Noah: "i dont want any shout enemies either") at night no one but the dragons shouts: every shout taken
+				const bool dragon = a_actor->HasKeywordString("ActorTypeDragon");
 				for (std::uint32_t i = 0; list->shouts && i < list->numShouts; ++i) {
 					auto* sh = list->shouts[i];
 					if (!sh) continue;
+					if (!dragon) { gone.push_back(sh); continue; }
 					bool disarm = false;
 					for (auto& v : sh->variations) disarm |= HasArchetype(v.spell, RE::EffectSetting::Archetype::kDisarm);
 					if (disarm) gone.push_back(sh);
