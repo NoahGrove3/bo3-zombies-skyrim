@@ -761,6 +761,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 		}
 
+		ImVec2 Cursor(ImVec2);
+		void   DrawPingCursor(ImDrawList* a_dl, ImVec2 a_tip, float k, float a_now, bool a_always);
 		// (the classes overhaul) the class picker: four cards across the screen, the chosen one lit in its colour
 		void DrawClassPicker(ImDrawList* dl, ImVec2 size, float k, float now)
 		{
@@ -774,40 +776,107 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				  "Your kit grows at the altar: each flask and the sword to Legendary", "The Shadowflame Sword, the Fire Flask, the Alchemist's Verdant Robes" },
 				{ "SPELLSWORD", "A Vigilant of Stendarr", IM_COL32(120, 180, 255, 255), "Steel in one hand, a spell in the other", "A one-handed blade and touch spells - and the Vigilants' relic spells",
 				  "Your kit grows at the altar: the blade and each spell to Legendary", "The Spellbound Blade, Burning Touch, the Spellsword's Azure Robes" } };
+			// (Noah: "the background for each class a photo of a character from the modded loading screens ... the selected box
+			// to grow bigger when hovering over it and hide the text unless it's being hovered ... smooth like the echo alter
+			// nav animations") each card wears a Lore-Based Loading Screens painting (read from the player's own install, never
+			// shipped): the Conjurer, the Destruction mage's fire orb, the Alchemist, the Battlemage. The card in focus - under
+			// the mouse, or chosen by keys / pad - eases wider and taller, its words fading in over a darkened foot; the others
+			// ease back to the painting and their name
+			static constexpr const wchar_t* kPic[4] = { L"Data\\Textures\\loreloadscreens\\MagicConjurer.dds", L"Data\\Textures\\loreloadscreens\\MagicSchoolDestruction.dds",
+				L"Data\\Textures\\loreloadscreens\\SkillAlchemyAlchemist.dds", L"Data\\Textures\\loreloadscreens\\MagicBattlemage.dds" };
+			static constexpr float kFocusX[4] = { 0.44f, 0.50f, 0.50f, 0.42f };   // where in each painting its figure stands
+			static ID3D11ShaderResourceView* pic[4]{};
+			static bool tried = false;
+			if (!tried && g_device) {
+				tried = true;
+				for (int i = 0; i < 4; ++i) {
+					if (FAILED(DirectX::CreateDDSTextureFromFile(g_device, kPic[i], nullptr, &pic[i]))) pic[i] = nullptr;
+					logger::info("hud: class card {} painting {}", i, pic[i] ? "loaded" : "missing (Lore-Based Loading Screens) - a plain card");
+				}
+			}
 			dl->AddRectFilled({ 0, 0 }, size, IM_COL32(4, 4, 8, 215));
 			TxtC(dl, g_title, 46 * k, size.x * 0.5f, size.y * 0.12f, kParch, Classes::Switching() ? "CHANGE YOUR PATH" : "CHOOSE YOUR PATH", 3 * k, Fade(kGold, 0.6f));
-			const std::string sub = Classes::Switching() ? "Switching costs " + Num(Classes::SwitchCost()) + " Cursed Essence. Each class keeps its own spells and progress."
+			const std::string sub = Classes::Switching() ? "Switching costs " + Num(Classes::SwitchCost()) + " Cursed Essence. Your gear and spells stay with you."
 			                                             : "Each player picks their own path. Duplicates are allowed.";
 			TxtC(dl, g_body, 20 * k, size.x * 0.5f, size.y * 0.12f + 58 * k, IM_COL32(210, 200, 180, 230), sub);
-			const float cw = 330 * k, ch = 430 * k, gap = 26 * k;
-			const float x0 = size.x * 0.5f - (cw * 4 + gap * 3) * 0.5f, y0 = size.y * 0.5f - ch * 0.5f + 20 * k;
-			const int   sel = Classes::Selected(), cur = Classes::Get();
+			const float small = 296 * k, big = 432 * k, gap = 26 * k, chS = 400 * k, chB = 480 * k;
+			const float total = small * 3 + big + gap * 3;
+			const float x0 = size.x * 0.5f - total * 0.5f, cy0 = size.y * 0.5f + 20 * k;
+			const int   cur = Classes::Get();
+			static ImVec2 lastMouse{ -1, -1 };
+			static float  ease[4] = { 0, 0, 0, 0 };
+			static float  shownAt = -100.0f;
+			if (now - shownAt > 0.5f) for (int i = 0; i < 4; ++i) ease[i] = i == Classes::Selected() ? 1.0f : 0.0f;   // (just opened: no slide in)
+			shownAt = now;
+			const ImVec2 m = Cursor(size);
+			const bool   moved = lastMouse.x >= 0 && m.x >= 0 && std::abs(m.x - lastMouse.x) + std::abs(m.y - lastMouse.y) > 0.5f;
+			lastMouse = m;
+			const float dt = std::clamp(ImGui::GetIO().DeltaTime, 0.0f, 0.1f);
+			// the layout from the eased weights, so the cards never jump: they slide as the focus moves
+			float wsum = 0;
+			for (const float e : ease) wsum += e;
+			const float norm = 1.0f / std::max(1.0f, wsum);
+			float xs[5];
+			xs[0] = x0 + (big - small) * std::max(0.0f, 1.0f - wsum) * 0.5f;
+			for (int i = 0; i < 4; ++i) xs[i + 1] = xs[i] + small + (big - small) * ease[i] * norm + gap;
+			// the mouse: the card under it takes the focus (keys and pad move it too)
+			if (moved && !g_padLast) {
+				for (int i = 0; i < 4; ++i) {
+					const float h = chS + (chB - chS) * ease[i] * norm;
+					if (m.x >= xs[i] && m.x <= xs[i + 1] - gap && m.y >= cy0 - h * 0.5f && m.y <= cy0 + h * 0.5f) Classes::Hover(i);
+				}
+			}
+			const int   sel = Classes::Selected();
+			const float rate = 1.0f - std::exp(-dt * 11.0f);   // (the altar's own easing pace)
+			for (int i = 0; i < 4; ++i) ease[i] += ((i == sel ? 1.0f : 0.0f) - ease[i]) * rate;
 			for (int i = 0; i < 4; ++i) {
-				const Card& c = kCards[i];
-				const bool  on = i == sel;
-				const float lift = on ? (6 + 2 * std::sin(now * 3.0f)) * k : 0.0f;
-				const ImVec2 a{ x0 + i * (cw + gap), y0 - lift }, b{ a.x + cw, a.y + ch };
-				Panel(dl, a, b, k, on ? 1.0f : 0.75f);
-				if (on) {
-					dl->AddRect({ a.x - 3 * k, a.y - 3 * k }, { b.x + 3 * k, b.y + 3 * k }, Fade(c.col, 0.9f), 10 * k, 0, 2.5f * k);
-					dl->AddRectFilledMultiColor(a, { b.x, a.y + 90 * k }, Fade(c.col, 0.28f), Fade(c.col, 0.28f), Fade(c.col, 0.0f), Fade(c.col, 0.0f));
+				const Card&  c = kCards[i];
+				const float  e = std::clamp(ease[i] * norm, 0.0f, 1.0f), eo = EaseOut(e);
+				const float  w = xs[i + 1] - xs[i] - gap, ch = chS + (chB - chS) * e;
+				const ImVec2 a{ xs[i], cy0 - ch * 0.5f }, b{ a.x + w, a.y + ch };
+				Panel(dl, a, b, k, 0.75f + 0.25f * e);
+				if (pic[i]) {   // the painting, cropped to the card round its figure (the picture is the middle 2048 x 1152 of its texture)
+					const float v0 = 448.0f / 2048.0f, v1 = 1600.0f / 2048.0f, picAsp = 2048.0f / 1152.0f, asp = w / ch;
+					const float uw = std::min(1.0f, asp / picAsp);
+					const float u0 = std::clamp(kFocusX[i] - uw * 0.5f, 0.0f, 1.0f - uw);
+					const int   lit = static_cast<int>(140 + 115 * eo);
+					dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(pic[i])), a, b, { u0, v0 }, { u0 + uw, v1 }, IM_COL32(lit, lit, lit, 255));
+					// the foot darkened under the words (deeper as they fade in); the top shaded for the name
+					// (a shade that is solid under the words, so they read over the brightest painting)
+					const float fy = a.y + ch * (0.70f - 0.40f * eo), fy2 = a.y + ch * (1.0f - 0.46f * eo);
+					const int   fa = static_cast<int>(150 + 90 * eo);
+					dl->AddRectFilledMultiColor({ a.x, fy }, { b.x, fy2 }, IM_COL32(6, 5, 5, 0), IM_COL32(6, 5, 5, 0), IM_COL32(6, 5, 5, fa), IM_COL32(6, 5, 5, fa));
+					if (fy2 < b.y) dl->AddRectFilled({ a.x, fy2 }, b, IM_COL32(6, 5, 5, fa));
+					dl->AddRectFilledMultiColor(a, { b.x, a.y + 110 * k }, IM_COL32(6, 5, 5, 200), IM_COL32(6, 5, 5, 200), IM_COL32(6, 5, 5, 0), IM_COL32(6, 5, 5, 0));
+					dl->AddRect(a, b, Fade(IM_COL32(196, 170, 112, 255), 0.35f + 0.4f * e), 0, 0, 1.0f * k);
+				}
+				if (e > 0.01f) {
+					dl->AddRect({ a.x - 3 * k, a.y - 3 * k }, { b.x + 3 * k, b.y + 3 * k }, Fade(c.col, 0.9f * eo), 10 * k, 0, 2.5f * k);
+					dl->AddRectFilledMultiColor(a, { b.x, a.y + 90 * k }, Fade(c.col, 0.28f * eo), Fade(c.col, 0.28f * eo), Fade(c.col, 0.0f), Fade(c.col, 0.0f));
 				}
 				const float cx = (a.x + b.x) * 0.5f;
+				// always: its number and name (every card still told apart); the rest only on the card in focus
 				TxtC(dl, g_body, 16 * k, cx, a.y + 18 * k, Fade(c.col, 0.9f), std::to_string(i + 1));
-				TxtC(dl, g_title, 30 * k, cx, a.y + 38 * k, on ? IM_COL32(255, 248, 232, 255) : kParch, c.name, on ? 2.5f * k : 0, Fade(c.col, 0.8f));
-				TxtC(dl, g_body, 14 * k, cx, a.y + 72 * k, Fade(c.col, 0.85f), c.lore);  // (the story: where each class learned its craft)
-				TxtWrap(dl, g_body, 18 * k, { a.x + 22 * k, a.y + 96 * k }, IM_COL32(236, 226, 206, 245), c.tag, cw - 44 * k, 2);
-				float y = a.y + 154 * k;
-				const auto sec = [&](const char* h, const char* t) {
-					Txt(dl, g_body, 14 * k, { a.x + 22 * k, y }, Fade(c.col, 0.95f), h);
-					const int n = TxtWrap(dl, g_body, 16 * k, { a.x + 22 * k, y + 20 * k }, IM_COL32(205, 196, 178, 235), t, cw - 44 * k, 3);
-					y += 28 * k + n * 20 * k;
-				};
-				sec("FIGHTS WITH", c.arms);
-				sec("GROWS BY", c.grow);
-				sec("STARTS WITH", c.kit);
-				if (i == cur) TxtC(dl, g_body, 15 * k, cx, b.y - 30 * k, IM_COL32(255, 210, 110, 255), "YOUR CLASS");
+				TxtC(dl, g_title, (28 + 4 * eo) * k, cx, a.y + 38 * k, e > 0.5f ? IM_COL32(255, 248, 232, 255) : kParch, c.name, 2.5f * k * eo, Fade(c.col, 0.8f));
+				if (const float ta = std::clamp((eo - 0.35f) / 0.65f, 0.0f, 1.0f); ta > 0.01f) {   // (the words wait for the card to open)
+					const float tw = w - 44 * k;
+					float y = b.y - 292 * k + (1.0f - ta) * 18 * k;   // (the words rise into place as they fade in)
+					TxtC(dl, g_body, 14 * k, cx, a.y + 74 * k, Fade(c.col, 0.85f * ta), c.lore);
+					TxtWrap(dl, g_body, 18 * k, { a.x + 22 * k, y }, Fade(IM_COL32(236, 226, 206, 245), ta), c.tag, tw, 2);
+					y += 50 * k;
+					const auto sec = [&](const char* h, const char* t) {
+						Txt(dl, g_body, 14 * k, { a.x + 22 * k, y }, Fade(c.col, 0.95f * ta), h);
+						const int n = TxtWrap(dl, g_body, 16 * k, { a.x + 22 * k, y + 20 * k }, Fade(IM_COL32(205, 196, 178, 235), ta), t, tw, 3);
+						y += 28 * k + n * 20 * k;
+					};
+					sec("FIGHTS WITH", c.arms);
+					sec("GROWS BY", c.grow);
+					sec("STARTS WITH", c.kit);
+				}
+				if (i == cur) TxtC(dl, g_body, 15 * k, cx, a.y + 74 * k + (eo > 0.35f ? 20 * k : 0.0f), IM_COL32(255, 210, 110, 255), "YOUR CLASS");
 			}
+			if (!g_padLast && m.x >= 0) DrawPingCursor(dl, m, k, now, false);
+			const float ch = chB, y0 = cy0 - ch * 0.5f;
 			const std::string hint = g_padLast ? (Classes::Switching() ? "D-pad  choose      A  take this path      B  keep yours" : "D-pad  choose      A  take this path      B  not yet")
 			                                   : (Classes::Switching() ? "1-4 or Left / Right  choose      Enter  take this path      Esc  keep yours" : "1-4 or Left / Right  choose      Enter  take this path      Esc  not yet");
 			TxtC(dl, g_body, 19 * k, size.x * 0.5f, y0 + ch + 40 * k, IM_COL32(230, 220, 200, 240), hint);
