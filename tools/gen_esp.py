@@ -223,6 +223,36 @@ for name, hx in T['weap_daedricdagger']['subs']:
     elif name == 'DATA': b = struct.pack('<IfH', 0, 2.0, 0)
     subs.append(sub(name, b))
 recs['WEAP'].append(record('WEAP', fid('WEAP', 'wyrmhorn'), subs))
+# (Noah: "the 10 priest drop weapons") each Dragon Priest's weapon (esp_ids.PRIEST_WEAPONS): Skyrim's own swings for
+# its kind - one-handed blades on the dagger's record with a sword's swings, two-handers on the draugr greatsword's
+# with a greatsword's or a battleaxe's / warhammer's, the bows on the longbow's (their models stand on the bow rig)
+from esp_ids import PRIEST_WEAPONS
+PW_KIND = {   # template, animation type, speed, reach, weight, its keywords (WeapType*, VendorItemWeapon)
+    'sword': ('weap_daedricdagger', 1, 1.0, 1.0, 12.0, (0x01E711, 0x08F958)),
+    'dagger': ('weap_daedricdagger', 2, 1.3, 0.7, 5.0, (0x01E713, 0x08F958)),
+    'greatsword': ('weap_draugr_gs', 5, 0.75, 1.3, 18.0, (0x06D931, 0x08F958)),
+    'battleaxe': ('weap_draugr_gs', 6, 0.7, 1.3, 24.0, (0x06D932, 0x08F958)),
+    'warhammer': ('weap_draugr_gs', 6, 0.65, 1.3, 26.0, (0x06D930, 0x08F958)),
+    'bow': ('weap_longbow', 7, 1.0, 1.0, 10.0, (0x01E715, 0x08F958)),
+}
+for _town, (pk, plabel, pmodel, pkind, pdmg, ptext) in PRIEST_WEAPONS.items():
+    tmpl, anim, spd, reach, wt, kws = PW_KIND[pkind]
+    subs = []
+    for name, hx in T[tmpl]['subs']:
+        b = bytearray(bytes.fromhex(hx))
+        if name == 'EDID': b = z('UN_Priest_' + pk)
+        elif name == 'FULL': b = z(plabel)
+        elif name == 'MODL': b = z('CurseOfAlduin\\priests\\' + pmodel + '.nif')
+        elif name in ('MODT', 'EITM', 'EAMT'): continue
+        elif name == 'KSIZ': b = struct.pack('<I', len(kws))
+        elif name == 'KWDA': b = struct.pack(f'<{len(kws)}I', *kws)
+        elif name == 'DESC': b = z(ptext)
+        elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_priest_' + pk))
+        elif name == 'DATA': b = struct.pack('<IfH', 0, wt, pdmg)
+        elif name == 'DNAM':
+            if pkind != 'bow': b[0] = anim; struct.pack_into('<ff', b, 4, spd, reach)
+        subs.append(sub(name, bytes(b)))
+    recs['WEAP'].append(record('WEAP', fid('WEAP', 'priest_' + pk), subs))
 # (Noah: the Summoner's new wonder, "Horn of the Violet Wyrm: an undead bone dragon that lands and fights beside you") a hand spell
 # at 100 magicka: src/Classes.cpp calls the dragon up itself (Skyrim's skeletal dragon) and keeps it on the ground
 sp = bytearray(tsub('spel_firebolt', 'SPIT'))

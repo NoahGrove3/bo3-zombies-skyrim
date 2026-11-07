@@ -33,7 +33,7 @@ namespace bo3z::Net
 		using u64 = std::uint64_t;
 		constexpr int kChannel = 7;
 		constexpr std::uint8_t kVersion = 2;  // (2: a player's wonder field is the class wonders won, as bits)
-		enum : std::uint8_t { kHello = 1, kState = 2, kPowerUp = 3, kCurse = 4, kPlayer = 5, kRevive = 6, kStats = 7, kEgg = 8, kAltar = 9, kClass = 10, kWord = 11 };
+		enum : std::uint8_t { kHello = 1, kState = 2, kPowerUp = 3, kCurse = 4, kPlayer = 5, kRevive = 6, kStats = 7, kEgg = 8, kAltar = 9, kClass = 10, kWord = 11, kPriest = 12 };
 #ifndef UN_BUILD
 #	define UN_BUILD "dev"
 #endif
@@ -520,6 +520,12 @@ namespace bo3z::Net
 							Tasks::Add([who, cls] { Kit::HeardClass(who, cls); });
 						}
 						break;
+					case kPriest:  // (Noah: "all players receive the weapon") a Dragon Priest fell in the host's game
+						if (sz >= 2 && d[1] < 16) {
+							const int town = d[1];
+							Tasks::Add([town] { Kit::PriestDrop(town); });
+						}
+						break;
 					case kEgg:
 						if (sz >= 2) {
 							const int town = d[1];
@@ -708,6 +714,12 @@ namespace bo3z::Net
 			return;
 		}
 		const std::uint8_t m[2]{ kEgg, static_cast<std::uint8_t>(a_town) };
+		ToAll(m, 2, true);
+	}
+	void PriestSlain(int a_town)
+	{
+		if (!g_lobby || a_town < 0 || a_town > 15) return;
+		const std::uint8_t m[2]{ kPriest, static_cast<std::uint8_t>(a_town) };
 		ToAll(m, 2, true);
 	}
 	void TellWord(int a_w)

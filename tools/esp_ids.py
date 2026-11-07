@@ -10,6 +10,21 @@ CLASS_ARMOUR = ('summoner', 'destruction', 'alchemist', 'spellsword')   # (Noah:
 CLASS_PIECES = ('robes', 'hood', 'wraps', 'boots')
 CLASS_ARMAS = ('01413D', '014141', '014142', '014C0A', '018766', '018767', '014140')
 BLADE_VIZ = ('alch', 'carian', 'radiant', 'ss_none', 'ss_fire', 'ss_frost', 'ss_shock', 'ss_sun', 'ss_blood', 'slayer')
+# (Noah: "the 10 priest drop weapons ... all players receive the weapon") each city's Dragon Priest drops his weapon
+# (docs/DRAGON_PRIEST_WEAPONS.md; models: tools/priestweapons.py, tools/priestbows.py): town -> key, name, model, kind,
+# damage, its line in the inventory
+PRIEST_WEAPONS = {
+    'Riverwood': ('vahlok', "Jailor's Bow", 'vahlok_jailorsbow', 'bow', 30, "Vahlok the Jailor's bow, bound in iron, a ghost's chains wound round its limbs."),
+    'Whiterun': ('nahkriin', 'Mistblade', 'nahkriin_mistblade', 'sword', 26, "Nahkriin's blade of pale mist, the Dragon tongue burning down its length."),
+    'Solitude': ('volsung', 'Windcutter', 'volsung_windcutter', 'sword', 26, "Volsung's sabre, light as the wind over Volskygge's peaks."),
+    'Windhelm': ('zahkriisos', 'Glacier Greatsword', 'zahkriisos_greatsword', 'greatsword', 38, "Zahkriisos' greatsword of glacier ice grown over an iron core."),
+    'Markarth': ('otar', 'Storm Blade', 'otar_stormblade', 'sword', 26, "Otar the Mad's sword of living lightning."),
+    'Riften': ('rahgot', 'Sacrifice Knife', 'rahgot_dagger', 'dagger', 20, "Rahgot's ritual knife of black obsidian, its spine cut with poison runes."),
+    'Falkreath': ('krosis', 'Grief Blade', 'krosis_griefblade', 'sword', 26, "Krosis' sword, weeping light for a thousand years of mourning."),
+    'Morthal': ('hevnoraak', 'Sealbreaker', 'hevnoraak_sealbreaker', 'battleaxe', 40, "Hevnoraak's battleaxe, its bit cut from the cracked seal of his own tomb."),
+    'Dawnstar': ('vokun', "Dreamer's Bow", 'vokun_dreamersbow', 'bow', 30, "Vokun's bow of twisted black wood, cradling an orb of dream-smoke."),
+    'Winterhold': ('morokei', 'Arcane Maul', 'morokei_maul', 'warhammer', 42, "Morokei's maul: a cluster of crystal floating in steel rings, the Dragon tongue circling it."),
+}
 def sheets():
     return {json.load(open(p))['sheet']: json.load(open(p)) for p in sorted((ROOT / 'sheets').glob('*.json'))}
 def assign(S=None, write=False):
@@ -70,6 +85,7 @@ def echo_ids(S):
     # (Noah, 2026-11-05: Blood made Arcane) the Destruction ladder's three spells of ours and the Spellsword's arcane blade
     ids += [(k, 'arcane_' + n) for n in ('bolt', 'orb', 'tide', 'blade1', 'blade2', 'blade3') for k in ('MGEF', 'SPEL')]
     ids += [('MGEF', 'mutagencast'), ('ENCH', 'mutagenstaff')]
+    ids += [('WEAP', 'priest_' + v[0]) for v in PRIEST_WEAPONS.values()]   # (Noah: the Dragon Priests' drops)
     ids += [('WEAP', 'wyrmhorn')]   # (Noah: the Horn of the Violet Wyrm - "Held in hand")   # (Noah: the Mutagen Gauntlet made a staff: its beam held as Skyrim's staff cast)
     return ids
 def blasts():
@@ -102,6 +118,8 @@ def dressing(S):
     records[('STAT', '1st_vortex')] = {'model': 'CurseOfAlduin\\bow\\vortex.nif', 'color': '', 'radius': 0}
     for _e in ('fire', 'frost', 'shock', 'poison', 'sun', 'blood', 'philosopher'):   # (Noah: the flasks held in the hand)
         records[('STAT', '1st_flask_' + _e)] = {'model': 'CurseOfAlduin\\alchemist\\mutagen_staff.nif' if _e == 'philosopher' else 'CurseOfAlduin\\alchemist\\flask_' + _e + '_held.nif', 'color': '', 'radius': 0}
+    for _t, (_k, _n, _m, _kind, _d, _x) in PRIEST_WEAPONS.items():   # (the Dragon Priests' weapons, held)
+        records[('STAT', '1st_priest_' + _k)] = {'model': 'CurseOfAlduin\\priests\\' + _m + '.nif', 'color': '', 'radius': 0}
     records[('STAT', '1st_wyrmhorn')] = {'model': 'CurseOfAlduin\\summoner\\wyrm_horn.nif', 'color': '', 'radius': 0}   # (Noah: the Horn of the Violet Wyrm, held)
     records[('STAT', '1st_slayer')] = {'model': 'Light Greatswords\\akaviri\\LightGreatsword.nif', 'color': '', 'radius': 0}        # (Noah) the Dragon Slayer: the Ayleid Crystal Saber
     records[('STAT', '1st_mace')] = {'model': 'Light Greatswords\\daedric\\LightGreatsword.nif', 'color': '', 'radius': 0}  # (Noah) the Alchemist's Shadowflame Sword: Kv's purple crystal sword

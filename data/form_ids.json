@@ -1661,6 +1661,26 @@
   "MGEF:mutagencast": "0xe79",
   "ENCH:mutagenstaff": "0xe7a",
   "STAT:1st_wyrmhorn": "0xe7b",
-  "WEAP:wyrmhorn": "0xe7c"
+  "WEAP:wyrmhorn": "0xe7c",
+  "STAT:1st_priest_vahlok": "0xe7d",
+  "STAT:1st_priest_nahkriin": "0xe7e",
+  "STAT:1st_priest_volsung": "0xe7f",
+  "STAT:1st_priest_zahkriisos": "0xe80",
+  "STAT:1st_priest_otar": "0xe81",
+  "STAT:1st_priest_rahgot": "0xe82",
+  "STAT:1st_priest_krosis": "0xe83",
+  "STAT:1st_priest_hevnoraak": "0xe84",
+  "STAT:1st_priest_vokun": "0xe85",
+  "STAT:1st_priest_morokei": "0xe86",
+  "WEAP:priest_vahlok": "0xe87",
+  "WEAP:priest_nahkriin": "0xe88",
+  "WEAP:priest_volsung": "0xe89",
+  "WEAP:priest_zahkriisos": "0xe8a",
+  "WEAP:priest_otar": "0xe8b",
+  "WEAP:priest_rahgot": "0xe8c",
+  "WEAP:priest_krosis": "0xe8d",
+  "WEAP:priest_hevnoraak": "0xe8e",
+  "WEAP:priest_vokun": "0xe8f",
+  "WEAP:priest_morokei": "0xe90"
  }
 }

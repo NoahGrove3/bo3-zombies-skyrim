@@ -1033,6 +1033,21 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				for (std::size_t i = 0; i < ls.size(); ++i) TxtC(dl, g_title, px, cx, y + static_cast<float>(i) * lh, Fade(kParch, a), ls[i], 0.0f, 0);
 				below = bot + 14 * k;
 			}
+			// (Noah: "a text pop up in the same design ... (\"The Priest's Name\" has been slain. Then under it \"weapon name\"
+			// received.)") the slain priest in gold over a divider, the weapon received under it, on the HUD's own dark panel
+			if (s.slainTime > 0 && !s.slainTitle.empty()) {
+				const float a = std::min({ 1.0f, s.slainTime / 0.8f, std::max(0.0f, s.slainTotal - s.slainTime) / 0.35f });
+				const float pop = 1.0f + 0.06f * std::max(0.0f, 1.0f - (s.slainTotal - s.slainTime) / 0.35f);
+				const float t1 = 30 * k * pop, t2 = 21 * k;
+				const std::string head = Upper(s.slainTitle);
+				const float tw = std::max(Measure(g_title, t1, head).x, Measure(g_title, t2, s.slainLine).x);
+				const float w = std::min(size.x * 0.92f, tw + 120 * k), cx = size.x * 0.5f, y0 = size.y * 0.24f;
+				const ImVec2 A{ cx - w * 0.5f, y0 }, B{ cx + w * 0.5f, y0 + 112 * k };
+				Panel(dl, A, B, k, 0.9f * a);
+				TxtC(dl, g_title, t1, cx, A.y + 16 * k, Fade(kGold, a), head, 2 * k, Fade(IM_COL32(0, 0, 0, 255), a));
+				Divider(dl, cx, A.y + 60 * k, w * 0.32f, k, a);
+				TxtC(dl, g_title, t2, cx, A.y + 72 * k, Fade(kParch, a), s.slainLine, 1.5f * k, Fade(IM_COL32(0, 0, 0, 255), a));
+			}
 			if (s.loreTime > 0 && !s.loreText.empty() && !s.perkMenu) {
 				const float a = std::min({ 1.0f, s.loreTime / 0.6f, std::max(0.0f, s.loreTotal - s.loreTime) / 0.4f });
 				const float w = std::min(size.x * 0.9f, 760 * k), x0 = size.x * 0.5f - w * 0.5f, px = 18 * k;
@@ -6074,6 +6089,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				if (g_drewHud) {
 					g_state.bannerTime = std::max(0.0f, g_state.bannerTime - dt);
 					if (!g_state.perkMenu) g_state.loreTime = std::max(0.0f, g_state.loreTime - dt);
+					g_state.slainTime = std::max(0.0f, g_state.slainTime - dt);
 				}
 				g_drewHud = false;
 				if (g_state.bannerTime <= 0 && !g_bannerQ.empty()) {
@@ -6892,6 +6908,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			std::scoped_lock l(g_lock);
 			g_bannerQ.clear(), g_loreQ.clear();
 			g_state.banner.clear(), g_state.loreTitle.clear(), g_state.loreText.clear();
+			g_state.slainTime = 0;
 			g_state.bannerTime = g_state.bannerTotal = g_state.loreTime = g_state.loreTotal = 0;
 		}
 		// (Noah: "hide the one time pop ups from the Curse of Alduin") the cards can be switched off - kept off across restarts
@@ -6923,6 +6940,13 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				g_state.loreTime = g_state.loreTotal = 0;
 			}
 			logger::info("hud: one-time cards {}", a_on ? "on" : "off");
+		}
+		void Slain(std::string a_title, std::string a_line, float a_seconds)
+		{
+			std::scoped_lock l(g_lock);
+			g_state.slainTitle = std::move(a_title);
+			g_state.slainLine = std::move(a_line);
+			g_state.slainTime = g_state.slainTotal = std::clamp(a_seconds, 3.0f, 12.0f);
 		}
 		void Lore(std::string a_title, std::string a_text, float a_seconds)
 		{

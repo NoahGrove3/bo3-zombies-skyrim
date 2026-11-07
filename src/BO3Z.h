@@ -356,6 +356,7 @@ namespace bo3z
 		void        TellWord(int a_w);      // (host) a word silenced: the party's games silence it too
 		void        AltarBusy(int a_town, bool a_on);  // our roll holds that altar (one roller at a time)
 		void        EggDone(int a_town);  // a hidden quest finished: the party near that altar shares it
+		void        PriestSlain(int a_town);  // (host) a city's Dragon Priest fell: every game in the party receives his weapon
 		std::vector<int> TakeRemotePowerUps();
 	}
 
@@ -1170,6 +1171,8 @@ namespace bo3z
 			int         questStep{ 0 };
 			std::string sanctuary;         // in a freed city at night: its name
 			std::string loreTitle, loreText;
+			std::string slainTitle, slainLine;  // (Noah) a Dragon Priest slain: "<name> has been slain" / "<weapon> received"
+			float       slainTime{ 0 }, slainTotal{ 0 };
 			float       loreTime{ 0 }, loreTotal{ 0 };
 			// (Noah: no Word Walls) the altar's heart-stone teaching its city's Thu'um: the three words rise from its runes one by one
 			std::string revealW[3], revealT[3], revealName;
@@ -1254,6 +1257,7 @@ namespace bo3z
 		void        Say(std::string a_who, std::string a_line, float a_seconds = 4.5f);  // a townsperson's words, as a subtitle
 		void        Essence(const RE::NiPoint3& a_at);  // a kill's essence flies from the body to your count
 		void        Lore(std::string a_title, std::string a_text, float a_seconds = 14.0f);
+		void        Slain(std::string a_title, std::string a_line, float a_seconds = 7.0f);  // a Dragon Priest's fall and his weapon received (never switched off)
 		void        SetPopups(bool a_on);  // the one-time cards on or off (kept across restarts)
 		void        ClearMessages();  // the Banner, the Lore card and their queues emptied (a load)
 		void        WordReveal(int a_shout);
@@ -1345,5 +1349,6 @@ namespace bo3z
 		void  DevBase();                         // dev: every class's whole kit owned, at Base
 		void  DevTestKit();                      // the test kit's: every class's sword, flasks and robes at Tier III
 		bool  Loaded();                           // this save carries the rework's record
+		void PriestDrop(int a_town);  // (Noah: "all players receive the weapon") a city's Dragon Priest slain: his weapon to you, and the card
 	}
 }

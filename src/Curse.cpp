@@ -887,6 +887,8 @@ namespace bo3z
 				Forms::Play(gen::Sound::quest_step);
 				g_pendingLift = a_town;
 				Kit::OnPriestSlain();  // (Noah: the Dragon Priest's relic)
+				Kit::PriestDrop(a_town);  // (Noah: his weapon - to you, and to everyone in the party)
+				Net::PriestSlain(a_town);
 				// (the audit: the kill lived only in memory - a save and load raised the Priest again) kept in the city's own
 				// value: the Boss state with its progress 1 means "fallen, the night's last wave still to go"
 				St fs = Get(a_town);

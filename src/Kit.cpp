@@ -880,6 +880,22 @@ namespace bo3z::Kit
 	}
 	int  RelicTokens() { return g_tokens; }
 	// (Noah: "remove all the relics that drop from the Dragon Priest ... the Dragon Priest should drop 3,000 essence instead")
+	// (Noah: "the drop should be all players receive the weapon seen from the pickup notification on the bottom right like
+	// all other items, and a text pop up ... (\"The Priests Name\" has been slain. Then under it \"weapon name\"
+	// received.)") the host's kill reaches every game in the party (Net::PriestSlain); each takes the weapon as any item
+	// is picked up (Forms::Give), once - it is kept for the run - and shows the card
+	void PriestDrop(int a_town)
+	{
+		if (a_town < 0 || a_town >= static_cast<int>(gen::kCityBosses.size())) return;
+		const auto& b = gen::kCityBosses[a_town];
+		auto* dh = RE::TESDataHandler::GetSingleton();
+		auto* w = dh ? dh->LookupForm<RE::TESObjectWEAP>(b.weapon, gen::kPlugin) : nullptr;
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (!w || !p) { logger::warn("kit: {}'s weapon not found ({:03X})", b.name, b.weapon); return; }
+		if (p->GetItemCount(w) <= 0) Forms::Give(p, w, 1);
+		Hud::Slain(fmt::format("{} has been slain", b.name), fmt::format("{} received", b.weaponName), 7.0f);
+		logger::info("kit: {} slain - {} received", b.name, b.weaponName);
+	}
 	void OnPriestSlain()
 	{
 		Points::Add(3000);

@@ -276,11 +276,12 @@ for r in CU['trials']:
 o.append('\t} };')
 o.append('\tenum TrialId : int { ' + ', '.join(f'kTrial_{r["id"]} = {i}' for i, r in enumerate(CU['trials'])) + ' };')
 enemyIds = {r['id'] for r in S['enemies']['rows']}
-o.append('\tstruct CityBoss { std::string_view name, row, text; float health; };  // each city\'s Dragon Priest, the fourth step (health: in a zombie\'s night health)')
+o.append('\tstruct CityBoss { std::string_view name, row, text; float health; std::uint32_t weapon; std::string_view weaponName; };  // each city\'s Dragon Priest, the fourth step (health: in a zombie\'s night health); weapon: his drop (local id)')
 o.append(f'\tinline constexpr std::array<CityBoss, {len(towns)}> kCityBosses{{ {{')
 for t in towns:
     bo = CU['bosses'][t]; assert bo['row'] in enemyIds, (t, bo['row'])
-    o.append(f'\t\tCityBoss{{ {cs(bo["name"])}, {cs(bo["row"])}, {cs(bo["text"])}, {F(bo["health"])} }},')
+    _pw = esp_ids.PRIEST_WEAPONS[t]
+    o.append(f'\t\tCityBoss{{ {cs(bo["name"])}, {cs(bo["row"])}, {cs(bo["text"])}, {F(bo["health"])}, 0x{IDS[("WEAP", "priest_" + _pw[0])]:03X}, {cs(_pw[1])} }},')
 o.append('\t} };')
 o.append(f'\tinline constexpr std::uint32_t kCurseIntroGlobal = 0x{IDS[("GLOB", "curse_intro")]:03X}, kStandLayoutGlobal = 0x{IDS[("GLOB", "stand_layout")]:03X}, kDirgeBook = 0x{IDS[("BOOK", "dirge")]:03X}, kGuideBook = 0x{IDS[("BOOK", "guide")]:03X};')
 o.append(f'\tinline constexpr std::string_view kCursePrologueTitle = {cs(CU["prologueTitle"])}, kCursePrologue = {cs(CU["prologue"])}, kCurseLiftedBanner = {cs(CU["liftedBanner"])}, kCurseLiftedText = {cs(CU["liftedText"])}, kCurseFreedAll = {cs(CU["freedAll"])};')
