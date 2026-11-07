@@ -5528,7 +5528,7 @@ namespace bo3z
 				break;
 			case 6: {   // Krosis' Grief Blade: each hit heals you; heavy - a wail that weakens all near
 				auto* av = p->AsActorValueOwner();
-				av->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kDamage, RE::ActorValue::kHealth, std::max(4.0f, av->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.03f));
+				av->RestoreActorValue(RE::ActorValue::kHealth, std::max(4.0f, av->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.03f));
 				if (heavy) {
 					for (auto* f : Foes(pp, 700.0f)) {
 						ForAWhile(f, RE::ActorValue::kAttackDamageMult, -0.4f, 8.0f);
@@ -5562,7 +5562,7 @@ namespace bo3z
 				if (heavy) {
 					AreaHurt(pp, 600.0f, 1.5f, "");
 					QueueFx("CurseOfAlduin\\fx\\arcane_ring.nif", pp, 1.2f, 0.0f, 2.0f, true);
-					p->AsActorValueOwner()->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kDamage, RE::ActorValue::kMagicka, 40.0f);
+					p->AsActorValueOwner()->RestoreActorValue(RE::ActorValue::kMagicka, 40.0f);
 				}
 				break;
 			default: break;
