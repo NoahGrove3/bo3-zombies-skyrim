@@ -1379,6 +1379,8 @@ namespace bo3z
 			std::string     name;
 			float           maxHp{ 1 };
 			bool            slainTonight{ false };
+			int             phase{ 0 };      // (Noah: the three dragons and the Echo of Alduin - "Enrage phases") 1 below half, 2 below a quarter
+			float           rain{ 0 };       // seconds to its next fire rain (phase 1 and 2)
 		} g_champ;
 		// the mini-boss down: a wonder part for you - the next one you're missing - and the same for everyone in the party
 		// (each game gives its own: NetFollow sees the host's count go up); all the parts already found: a reforge's worth
@@ -1399,10 +1401,59 @@ namespace bo3z
 		// (Noah: the boss's wonder part was lost when its body crumbled before you reached it) its death is heard the moment
 		// it falls, and the reward is yours then - straight to you, wherever the body goes
 		bool g_champDying = false;
+		float g_champTickDt = 0.0f;  // (the frame's seconds, for the bearers' phases)
 		// (Noah: "the dragon priest would spawn as the final enemy of the night that the trials were completed") the night's
 		// last wave down with a city's trials done: the dawn waits for its Dragon Priest, who rises then; his fall brings it
 		bool  g_priestHold = false;
 		float g_priestHoldT = 0;
+		// (Noah: "I want the final 3 dragons and Alduin's echo to be the hardest in the entire game" - "Enrage phases"): the
+		// word-bearers (the three dragons, the Echo of Alduin: champions of no city) rage at half health and again at a
+		// quarter - faster, harder hitting - and bring fire raining round the party; at the last, the dead rise round you too
+		void TickBearerPhases(RE::Actor* a_c, float a_delta)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!a_c || !p || g_champ.town != -1 || a_c->IsDead()) return;
+			auto*       av = a_c->AsActorValueOwner();
+			const float frac = av->GetActorValue(RE::ActorValue::kHealth) / std::max(1.0f, g_champ.maxHp);
+			const int   want = frac <= 0.25f ? 2 : frac <= 0.5f ? 1 : 0;
+			std::string up = g_champ.name;
+			for (auto& ch : up) ch = static_cast<char>(std::toupper(static_cast<unsigned char>(ch)));
+			while (g_champ.phase < want) {
+				++g_champ.phase;
+				const bool last = g_champ.phase == 2;
+				av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kSpeedMult, last ? 20.0f : 25.0f);
+				av->SetActorValue(RE::ActorValue::kAttackDamageMult, av->GetActorValue(RE::ActorValue::kAttackDamageMult) * (last ? 1.25f : 1.3f));
+				Forms::PlayAt(gen::Sound::champ_enrage, a_c);
+				Undead::CueFor(a_c, Undead::kCueRoar, 1.4f);
+				if (Settings::ScreenShake()) RE::ShakeCamera(last ? 0.9f : 0.6f, p->GetPosition(), 1.6f);
+				Hud::Banner(up + (last ? " MAKES ITS LAST STAND" : " IS ENRAGED"), 4.0f);
+				g_champ.rain = last ? 2.0f : 4.0f;
+				if (last) {   // the dead called up round the party
+					const auto pp = p->GetPosition();
+					for (int i = 0; i < 6 && static_cast<int>(g_alive.size()) < R.maxAlive; ++i) {
+						const float a = i * 2.0f * RE::NI_PI / 6.0f;
+						RE::NiPoint3 at{ pp.x + std::sin(a) * 450.0f, pp.y + std::cos(a) * 450.0f, pp.z + 40.0f };
+						SpawnOne(p, 0, &at);
+					}
+				}
+				logger::info("champion: {} phase {} ({:.0f}% health)", g_champ.name, g_champ.phase, frac * 100.0f);
+			}
+			// the fire rain: burning stars round the player, each marking the ground a moment before it lands
+			if (g_champ.phase > 0 && (g_champ.rain -= a_delta) <= 0) {
+				const bool last = g_champ.phase == 2;
+				const auto pp = p->GetPosition();
+				const int  n = last ? 10 : 7;
+				for (int k = 0; k < n; ++k) {
+					const float a = Uniform(0.0f, 6.2832f), r = k == 0 ? 0.0f : Uniform(120.0f, 600.0f);
+					const auto  at = OnGround(pp + RE::NiPoint3{ std::cos(a) * r, std::sin(a) * r, 0 });
+					Gun::FxBlast("dragonfire", at + RE::NiPoint3{ 0, 0, 10 }, 0.05f + 0.1f * k);
+					g_hazards.push_back({ at, 1.3f + 0.12f * k, 160.0f, gen::boss::eruptionDamage * (last ? 1.3f : 1.0f), "fireball", false });
+				}
+				Hud::Banner("Fire rains from the sky!", 1.6f);
+				Audio::AtPoint(gen::Sound::boss_quake, pp, 1.3f, 0.7f);
+				g_champ.rain = last ? 7.0f : 10.0f;
+			}
+		}
 		void TickChampion()
 		{
 			auto c = g_champ.handle.get();
@@ -1410,6 +1461,7 @@ namespace bo3z
 			if (!c && !died) {
 				return;
 			}
+			if (!died) TickBearerPhases(c.get(), g_champTickDt);
 			if (died) {
 				g_champDying = false;
 				Points::Add(1000);
@@ -5593,6 +5645,7 @@ namespace bo3z
 				TickReach(player, a_delta);
 				TickFrenzy(player, a_delta);
 				TickBoss(player, a_delta);
+				g_champTickDt = a_delta;
 				TickChampion();
 				TickElites(player, a_delta);
 				TickVolatiles(player, a_delta);

@@ -238,18 +238,18 @@
     "bearer": {
      "row": "wyrm_slen",
      "name": "Slenvahrin, the Flesh-Wyrm",
-     "health": 18.0,
+     "health": 35.0,
      "scale": 1.0
     },
     "waves": [
-     8,
      10,
-     12
+     12,
+     14
     ],
     "elites": [
-     1,
-     1,
-     2
+     2,
+     2,
+     3
     ],
     "wake": "SLEN. The ground shakes under the Reach. Slenvahrin, the dragon who carried Alduin's first word, circles the cult's old shrine - and the barrow-dead around it grow new flesh to meet you.",
     "silenced": "Slenvahrin crashes onto the shrine and burns away to bone. SLEN is silenced: the strength Alduin poured into the dead now runs in you.",
@@ -269,20 +269,20 @@
     "bearer": {
      "row": "wyrm_tiid",
      "name": "Tiidrah, the Time-Wyrm",
-     "health": 21.0,
+     "health": 40.0,
      "scale": 1.0
     },
     "waves": [
-     10,
      12,
      14,
-     16
+     16,
+     18
     ],
     "elites": [
-     1,
      2,
-     2,
-     3
+     3,
+     3,
+     4
     ],
     "wake": "TIID. Under Labyrinthian, the great tomb of Bromjunaar, the dragon cult laid its dead by the thousand. Tiidrah, keeper of the second word, gives them back the years the grave took - and every one of them hears it.",
     "silenced": "Tiidrah falls across the courtyard of Bromjunaar. TIID is silenced: the time the dead stole is yours now.",
@@ -302,18 +302,18 @@
     "bearer": {
      "row": "wyrm_vo",
      "name": "Vonahlok, the Undoing",
-     "health": 24.0,
+     "health": 45.0,
      "scale": 1.0
     },
     "waves": [
-     10,
      12,
-     14
+     14,
+     16
     ],
     "elites": [
-     2,
-     2,
-     3
+     3,
+     3,
+     4
     ],
     "wake": "VO. On the frozen peak of Mount Anthor, Vonahlok - the Undoing - keeps the last of Alduin's words. Where it flies, death itself comes undone, and the dead of the Pale climb the mountain to its call.",
     "silenced": "Vonahlok's shout dies on the wind over Mount Anthor. VO is silenced: the Undoing has undone its last.",
@@ -333,20 +333,20 @@
     "bearer": {
      "row": "echo_alduin",
      "name": "The Echo of Alduin",
-     "health": 40.0,
+     "health": 80.0,
      "scale": 1.0
     },
     "waves": [
-     10,
      12,
      14,
-     16
+     16,
+     18
     ],
     "elites": [
-     2,
-     2,
      3,
-     3
+     3,
+     4,
+     4
     ],
     "wake": "The three words are silent, and only their maker is left. On the summit of the Throat of the World, where the Tongues once cast Alduin out of time, his echo still circles - and the dead of all Skyrim answer it one last time. Climb the mountain at night and end the curse.",
     "silenced": "The Echo of Alduin breaks apart over the summit and its voice is gone from the world. The Curse of Alduin is broken: the dead of Skyrim sleep, and the nights are only nights again.",
