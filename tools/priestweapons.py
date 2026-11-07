@@ -193,7 +193,9 @@ def metal_tex(name, base_rgb, rust=0.0, dark=0.0, etch=None, seed=0):
     scr = np.asarray(sc, np.float32) / 255
     pits = np.clip((tileable(S, S, 0.35, 306 + seed) - 0.78) * 6, 0, 1)
     low = np.clip((0.45 - (0.5 * hammer + 0.5 * big)) * 3, 0, 1)
-    h = 0.35 * hammer + 0.25 * brushed + 0.15 * fine - 0.35 * scr - 0.6 * pits
+    dents = np.tile(np.clip(g.cells(256, 60, 307 + seed)[0] / 26.0, 0, 1), (8, 8))   # (big old dents and wear)
+    grit = tileable(S, S, 0.3, 308 + seed)
+    h = 0.45 * hammer + 0.5 * dents + 0.15 * brushed + 0.3 * fine + 0.25 * grit - 0.35 * scr - 0.8 * pits
     lum = 0.8 + 0.2 * (brushed - 0.5) + 0.25 * (big - 0.5) + 0.15 * hammer + 0.2 * scr
     col = np.array(base_rgb, np.float32) * lum[..., None]
     if dark:
@@ -203,9 +205,13 @@ def metal_tex(name, base_rgb, rust=0.0, dark=0.0, etch=None, seed=0):
     if etch is not None:
         col = col * (1 - 0.55 * etch[..., None]) + np.array([30, 28, 26]) * 0.55 * etch[..., None]
         h = h - 0.9 * etch
+    grime = np.clip(low * 0.8 + (1 - dents) * 0.3 + pits, 0, 1) * (0.6 + 0.4 * mid)
+    col = col * (1 - 0.45 * grime[..., None]) + np.array([26, 22, 18]) * 0.45 * grime[..., None]
+    col = col * (0.92 + 0.16 * (grit[..., None] - 0.5))
     D = save(col, name + '_d.dds')
-    nrm = height_to_normal(gaussian_filter(h, 0.8), 6.5)
-    spec = np.clip(170 + 50 * (hammer - 0.5) + 50 * scr - 150 * rmask - 90 * dark * low - (80 * etch if etch is not None else 0), 0, 255)
+    nrm = height_to_normal(gaussian_filter(h, 0.7), 11.0)
+    # (Noah: "too smooth and shiny") a dull, worn sheen: only the rubbed high places and fresh scratches catch the light
+    spec = np.clip(70 + 45 * (hammer - 0.5) + 70 * scr * (1 - grime) - 60 * grime - 60 * rmask - (50 * etch if etch is not None else 0), 0, 255)
     N = save(np.dstack([nrm, spec]), name + '_n.dds', True)
     return D, N
 
@@ -222,8 +228,8 @@ def leather_tex(name, base_rgb=(58, 34, 24), seed=0):
     lum = 0.8 + 0.3 * (big - 0.5) + 0.12 * (fine - 0.5) + 0.12 * peb - 0.35 * cr
     col = np.array(base_rgb, np.float32) * lum[..., None]
     D = save(col, name + '_d.dds')
-    nrm = height_to_normal(gaussian_filter(0.5 * peb + 0.25 * fine - 0.8 * cr, 0.6), 5.0)
-    spec = np.clip(45 + 50 * peb + 40 * big - 30 * cr, 0, 255)
+    nrm = height_to_normal(gaussian_filter(0.6 * peb + 0.35 * fine - 1.0 * cr, 0.5), 9.0)
+    spec = np.clip(28 + 30 * peb + 25 * big - 25 * cr, 0, 255)
     N = save(np.dstack([nrm, spec]), name + '_n.dds', True)
     return D, N
 
@@ -318,8 +324,28 @@ def blade_tex(name, steel_rgb, edge_rgb=None, glow_rgb=None, script=True, patter
 
 
 # ================================================================== the build
+ROUGH = {'iron': 0.045, 'bronze': 0.04, 'leather': 0.03}
+
+
+def roughen(M, seed=0):
+    """(Noah: "their surfaces are too smooth") the metal and leather pushed in and out along their normals by a little
+    smooth noise - forged and cast, not turned on a lathe"""
+    r = np.random.default_rng(900 + seed)
+    waves = [(unit(r.normal(size=3)) * f, r.random() * 6.28, a) for f, a in ((0.9, 1.0), (1.9, 0.55), (4.3, 0.3), (8.7, 0.15))]
+    out = []
+    for gname, m, V, N, UV, F in M.groups:
+        amp = ROUGH.get(m, 0.0)
+        if amp:
+            V = np.asarray(V, float); N = np.asarray(N, float)
+            n = sum(a * np.sin(V @ k + ph) for k, ph, a in waves) / 2.0
+            V = V + N * (amp * n)[:, None]
+        out.append((gname, m, V, N, UV, F))
+    M.groups = out
+
+
 def finish(M, name, mats, fx_lines=None, prn='WeaponSword', root=None):
     """join each material's parts, turn Z up to +Y, write it (modelconv), its effects (fxwrite), its Prn"""
+    roughen(M, len(name))
     merged = {}
     for gname, m, V, N, UV, F in M.groups:
         if m not in merged: merged[m] = [gname, m, [], [], [], [], 0]
@@ -402,7 +428,7 @@ def zahkriisos(texonly=False):
     for side in (-1, 1):   # (crystal shards jutting from the block's faces)
         for k in range(4):
             c = np.array([(k - 1.5) * 2.2, side * 1.2, 5.4 + 0.3 * (k % 2)])
-            P, N, UV, F = g.axis_lathe([(0, 0.55), (1.0, 0.35), (1.9 + 0.4 * (k % 2), 0.0)], c, unit(np.array([0.2 * (k - 1.5), side, 0.5])), 6)
+            P, N, UV, F = g.axis_lathe([(-0.3, 0.6), (1.1, 0.42), (2.6 + 0.6 * (k % 2), 0.0)], c, unit(np.array([0.25 * (k - 1.5), side * 0.55, 1.0])), 6)
             M.add('Guard', 'icesolid', P, N, UV * [0.3, 0.3] + [0.35, 0.5], F)
     for side in (-1, 1):
         for k, (ang, L, r) in enumerate(((0.35, 8.5, 0.75), (0.95, 6.0, 0.6), (-0.15, 5.0, 0.55))):
@@ -429,8 +455,8 @@ def zahkriisos(texonly=False):
     fx.card('GuardCore', FX['core'], (0, 0, 5.6), 3.2, '0.6,0.85,1,1', 1.4, (4, 4, 6, 0))
     mats = {'ice': f'diffuse={bD} normal={bN} glow={bG} emit=0.6,0.85,1 emitmult=1.6 spec=2.6 gloss=160 alpha=0 doublesided=0',
             'icesolid': f'diffuse={bD} normal={bN} glow={bG} emit=0.6,0.85,1 emitmult=1.2 spec=2.4 gloss=150 alpha=0 doublesided=0',
-            'iron': f'diffuse={iD} normal={iN} spec=1.2 gloss=60 alpha=0 doublesided=0',
-            'leather': f'diffuse={lD} normal={lN} spec=0.4 gloss=20 alpha=0 doublesided=0'}
+            'iron': f'diffuse={iD} normal={iN} spec=0.55 gloss=24 alpha=0 doublesided=0',
+            'leather': f'diffuse={lD} normal={lN} spec=0.2 gloss=12 alpha=0 doublesided=0'}
     return finish(M, 'zahkriisos_greatsword', mats, fx.L, 'WeaponBack')
 
 
@@ -529,8 +555,8 @@ def vahlok(texonly=False):
         for j in range(nu):
             a = i2 * (nu + 1) + j; b = a + 1; c = a + nu + 1; dd = c + 1
             fx.L += [f't {a} {c} {b}', f't {b} {c} {dd}']
-    mats = {'iron': f'diffuse={iD} normal={iN} spec=1.1 gloss=55 alpha=0 doublesided=0',
-            'leather': f'diffuse={lD} normal={lN} spec=0.4 gloss=20 alpha=0 doublesided=0'}
+    mats = {'iron': f'diffuse={iD} normal={iN} spec=0.55 gloss=24 alpha=0 doublesided=0',
+            'leather': f'diffuse={lD} normal={lN} spec=0.2 gloss=12 alpha=0 doublesided=0'}
     return finish(M, 'vahlok_flail', mats, fx.L, 'WeaponMace', root='VahlokFlail')
 
 
@@ -681,9 +707,9 @@ def nahkriin(texonly=False):
     glow = np.asarray(im.filter(ImageFilter.GaussianBlur(9.0)), np.float32)
     save(np.dstack([np.full(rn.shape + (3,), 255.0), np.clip(rn + glow * 0.8, 0, 255)]), 'nahk_runes.dds', True)
     stD = save(np.dstack([np.full((256, 256), 205.0), np.full((256, 256), 222.0), np.full((256, 256), 240.0)]) * (0.85 + 0.15 * tileable(256, 256, 1.0, 66)[..., None]), 'nahk_stone_d.dds')
-    mats = {'bronze': f'diffuse={bD} normal={bN} spec=1.3 gloss=60 alpha=0 doublesided=0',
+    mats = {'bronze': f'diffuse={bD} normal={bN} spec=0.65 gloss=26 alpha=0 doublesided=0',
             'stone': f'diffuse={stD} normal={bN} glow={stD} emit=0.8,0.9,1 emitmult=1.2 spec=2.5 gloss=200 alpha=0 doublesided=0',
-            'leather': f'diffuse={lD} normal={lN} spec=0.35 gloss=18 alpha=0 doublesided=0'}
+            'leather': f'diffuse={lD} normal={lN} spec=0.2 gloss=12 alpha=0 doublesided=0'}
     return finish(M, 'nahkriin_mistblade', mats, fx.L, 'WeaponSword')
 
 
