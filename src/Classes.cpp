@@ -3530,11 +3530,14 @@ namespace bo3z::Classes
 					if (auto* m = dh->LookupForm<RE::EffectSetting>(gen::kBladeVizFx[k][t], gen::kPlugin)) {
 						// (Noah: "remove the red effect ... it looks better with just the elemental effects from the mod" - "Both") the
 						// Spellbound Blade's looks (3-8) wear the mod's element art alone, no glow over the blade
-						if (k >= 3 && k <= 8) m->data.enchantShader = nullptr;
+						// (Noah: "I want the blade to show the element of the spell in my other hand") the element looks (4-8) wear the
+						// mod's element shader and art again; the bare look (3) none - the static red was our own dark-red Madfire
+						// (Props::TickMad), gone now
+						if (k == 3) m->data.enchantShader = nullptr;
 						else if (from->data.enchantShader) m->data.enchantShader = from->data.enchantShader;
 						// (Noah: "the red glow on the blade removed") the mod's animated art stayed on the Spellbound Blade, glowing
 						// red whatever its element, after its spell was gone: its looks keep Vibrant Weapons' element art alone
-						if (k >= 3 && k <= 8) m->data.enchantEffectArt = nullptr;
+						if (k == 3) m->data.enchantEffectArt = nullptr;
 						else if (from->data.enchantEffectArt) m->data.enchantEffectArt = from->data.enchantEffectArt;
 						++n;
 					}
@@ -3551,7 +3554,8 @@ namespace bo3z::Classes
 		if (a_w && a_w == Slayer()) key = 9;
 		// (Noah: "the static red effect is still on the spellbound blade I want that removed") the Spellbound Blade wears no
 		// look at all - other mods dress any fire enchantment in their own red art, whatever ours carries
-		if (key < 0 || (key >= 3 && key <= 8) || a_tier < 1) return nullptr;
+		// (Noah: "I want the blade to show the element of the spell in my other hand") its element looks back; bare-handed, none
+		if (key < 0 || key == 3 || a_tier < 1) return nullptr;
 		return RE::TESDataHandler::GetSingleton()->LookupForm<RE::EnchantmentItem>(gen::kBladeViz[key][std::clamp(a_tier, 1, 3) - 1], gen::kPlugin);
 	}
 	// a swing of a class sword (any swing, hit or miss - WonderProps hears it)

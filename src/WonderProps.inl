@@ -37,7 +37,10 @@ namespace Props
 	void TickMad()
 	{
 		auto*     p = RE::PlayerCharacter::GetSingleton();
-		const int t = p ? Kit::MadTier() : -1;
+		// (Noah: "the static red effect is something you created ... I want the blade to show the element of the spell in my other
+		// hand") the dark-red Madfire is never laid on the blade now - its element look (Classes::BladeLook) is all it wears;
+		// a saved game's fire is taken off
+		const int t = -1;
 		const int look = t < 0 ? -1 : std::min(t, 3);
 		for (int b = 0; b < 2; ++b) {
 			auto& m = g_mad[b];
