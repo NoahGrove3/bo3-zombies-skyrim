@@ -1049,7 +1049,6 @@ namespace bo3z::Classes
 				me->data.projectileBase = src->data.projectileBase;
 				me->data.castingArt = src->data.castingArt;
 				me->data.hitEffectArt = src->data.hitEffectArt;
-				me->data.castingLight = src->data.castingLight;
 				me->data.effectShader = src->data.effectShader;
 				logger::info("alchemist: the Mutagen Staff casts the Staff of Magnus's beam ({})", src->GetFullName());
 			}
