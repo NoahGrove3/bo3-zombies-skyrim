@@ -16,7 +16,7 @@ Noah's design (Nov 2026). Each of the ten Dragon Priests drops its own weapon th
 | Nahkriin, Warden of Skuldafn | Whiterun | Mistblade sword (pale blade trailing mist) | Blinds them | A fog where enemies wander lost |
 | Volsung of Volskygge | Solitude | Windcutter swords (twin light swords) | Wind slashes | Dash through enemies |
 | Zahkriisos the Frost-Priest | Windhelm | Glacier greatsword (ice) | Freeze-slow | Shatters frozen enemies around you |
-| Otar the Mad | Markarth | Torment whip (barbed, lightning) | Chain shock | Lashes a full circle |
+| Otar the Mad | Markarth | Storm blade (a sword of living lightning) | Chain shock | Lightning arcs out in a full circle |
 | Rahgot of Forelhost | Riften | Martyr's dagger (ritual) | Poison that spreads to the next enemy | Poisoned enemies burst |
 | Krosis of Shearpoint | Falkreath | Grief blade (a sword that weeps light) | Heals you | A wail that weakens all nearby |
 | Hevnoraak of Valthume | Morthal | Sealbreaker hammer (warhammer) | Shatters armour | Shockwave through the ground |

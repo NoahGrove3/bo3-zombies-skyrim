@@ -30,11 +30,14 @@ rng = np.random.default_rng(777)
 
 
 # ================================================================== shapes
-def blade(M, mat, y0, length, width, thick, tip=0.22, fuller=0.0, jag=0.0, seed=0, uv=(0, 1, 0, 1), name='Blade', curve=0.0, ns=120, nx=17, runes=None):
+def blade(M, mat, y0, length, width, thick, tip=0.22, fuller=0.0, jag=0.0, seed=0, uv=(0, 1, 0, 1), name='Blade', curve=0.0, ns=120, nx=17, runes=None, single=0.0):
     """a blade along +Z from z=y0: its half width w(s) (s 0 at the guard, 1 at the point), a lens cross-section thinning to
     sharp edges, an optional fuller groove down its middle (0..1 of its length), optional crystal jags along the edges.
-    UV: u across (0..1 left to right), v along (0 at the guard), into the given window of the sheet"""
+    UV: u across (0..1 left to right), v along (0 at the guard), into the given window of the sheet. single (0..1): a
+    single-edged blade instead - a thick spine at -x, a flat slab thinning toward +x, then a ground bevel (this fraction
+    of the width) down to a keen edge, and a sharp point"""
     if runes: nx = max(nx, 29)
+    if single: nx = max(nx, 41)
     r = np.random.default_rng(seed)
     S = np.linspace(0, 1, ns)
     jagged = np.zeros(ns)
@@ -49,6 +52,7 @@ def blade(M, mat, y0, length, width, thick, tip=0.22, fuller=0.0, jag=0.0, seed=
     def half(s):
         body = width * 0.5 * (1.0 - 0.18 * s)
         pt = np.clip((1.0 - s) / tip, 0, 1) if tip > 0 else 1.0
+        if single: return body * np.clip(pt, 0, 1) ** 0.72   # (a keen point, not a rounded one)
         return body * np.sqrt(np.clip(pt * (2 - pt), 0, 1))
     X = np.linspace(-1, 1, nx)
     V = np.zeros((2, ns, nx, 3)); N = np.zeros_like(V); UV = np.zeros((2, ns, nx, 2))
@@ -57,6 +61,10 @@ def blade(M, mat, y0, length, width, thick, tip=0.22, fuller=0.0, jag=0.0, seed=
         t = thick * (1.0 - 0.45 * s) * 0.5
         for j, x in enumerate(X):
             prof = (1 - abs(x) ** 2.2) ** 0.75
+            if single:   # (spine -> slab -> the bevel's shoulder -> the edge)
+                tt = (x + 1) / 2; b = single
+                prof = (1 - 0.3 * tt / (1 - b)) if tt < 1 - b else 0.7 * ((1 - tt) / b) ** 1.15
+                prof = prof * math.sqrt(min(1.0, tt / 0.05 + 0.25)) + 0.02
             fz = 0.0
             if fuller and s < fuller:
                 fw = runes[1] * 1.15 if runes else 0.18   # (with script: a broad flat channel the letters are cut into)
@@ -73,8 +81,9 @@ def blade(M, mat, y0, length, width, thick, tip=0.22, fuller=0.0, jag=0.0, seed=
         else: n = n * np.where((n[..., 1:2] > 0), -1, 1)
         N[side] = n
     if runes:   # (Noah: "etched into the blade") the script's strip: the same surface, its middle third, lifted a hair
-        rmat, rw, s0, s1, cell = runes   # (material, its half width as a fraction of the blade's, along s0..s1, a glyph's length in units)
-        js = [j for j, x in enumerate(X) if abs(x) <= rw + 1e-6]
+        rmat, rw, s0, s1, cell = runes[:5]   # (material, its half width as a fraction of the blade's, along s0..s1, a glyph's length in units)
+        rc = runes[5] if len(runes) > 5 else 0.0   # (its centre across the blade)
+        js = [j for j, x in enumerate(X) if abs(x - rc) <= rw + 1e-6]
         i0 = int(s0 * (ns - 1)); i1 = int(s1 * (ns - 1))
         for side in range(2):
             Vs = V[side, i0:i1 + 1][:, js] + N[side, i0:i1 + 1][:, js] * 0.012
@@ -919,9 +928,10 @@ OTAR_BONES = 10
 
 
 def otar(texonly=False):
-    """(Otar the Mad - "Torment whip"; Noah: "the whip looks terrible but the handle isn't bad", "A lash of lightning") a
-    cruel whip's haft of blackened iron bound in black leather, a spiked guard and a pommel of three hooks; its lash is
-    lightning alone, loosed from the haft's mouth (OtarLashRoot) as you swing"""
+    """(Otar the Mad - Noah: "the whip looks terrible but the handle isn't bad", then "let's just make it a sword made
+    out of animated lightning") a storm blade: the whip's haft of blackened iron bound in black leather, its crown of
+    iron spikes now the guard, a pommel of three hooks; out of the haft's mouth a sword's blade of living lightning -
+    crossed sheets of bolts flickering frame by frame inside a pale violet blade of light, sparks crawling up it"""
     iD, iN = metal_tex('otar_iron', (70, 68, 70), rust=0.35, dark=0.9, seed=91)
     lD, lN = leather_tex('otar_leather', (26, 22, 24), seed=92)
     M = Mesh()
@@ -936,17 +946,67 @@ def otar(texonly=False):
         a = 2 * math.pi * k / 3
         d = np.array([math.cos(a), math.sin(a), 0.0])
         talon(M, 'iron', np.array([d[0] * 0.6, d[1] * 0.6, -6.0]), d + np.array([0, 0, -0.6]), -d * 0.5 + np.array([0, 0, 0.6]), 2.6, 0.3)
-    # (Noah: "A lash of lightning") no lash of hide: a crackling bolt whips out of the haft's mouth as you swing and
-    # follows the swing (src/Classes.cpp, from OtarLashRoot); at rest the mouth spits sparks and a short tongue of light
+    # the blade: no metal - a sword's shape of light with bolts crackling through it (flipbooks), sparks round it
     fx = Fx()
-    fx.L.append('node OtarLashRoot OtarWhip 0 0 9.8')
-    fx.card('MouthSpark', FX['core'], (0, 0, 9.9), 1.6, '0.72,0.6,1,1', 2.4, (4, 4, 16, 0))
-    fx.card('MouthHalo', FX['glow'], (0, 0, 10.2), 3.6, '0.6,0.5,1,0.5', 1.0)
-    fx.sheath('Tongue', f'tex={FX["pulse"]} color=0.7,0.6,1,0.9 scale=2.6 blend=add uscroll=13 vscroll=6', 9.6, 13.5, 0.55, 0.05, 10, 6, 2.0)
-    fx.sheath('Crackle', f'tex={FX["swirl"]} color=0.6,0.55,1,0.5 scale=1.8 blend=add falloff=1 uscroll=11 vscroll=8', 7.5, 12.5, 1.6, 0.8, 14, 6, 1.5)
+    Z0, L, HW = 9.4, 32.0, 1.55
+    def bladeshape(s_): return HW * (1 - 0.15 * s_) * np.sqrt(np.clip(np.clip((1 - s_) / 0.2, 0, 1) * (2 - np.clip((1 - s_) / 0.2, 0, 1)), 0, 1))
+    for k, (ax, wmul, ph, col, fps) in enumerate((((1, 0), 1.6, 0.0, '0.85,0.8,1,1', 14), ((0, 1), 1.6, 0.31, '0.85,0.8,1,1', 17),
+                                                 ((0.7, 0.7), 2.2, 0.57, '0.55,0.45,1,0.7', 11), ((0.7, -0.7), 2.2, 0.13, '0.55,0.45,1,0.7', 12))):
+        V, N, UV, F = [], [], [], []
+        ns_ = 24
+        for i2 in range(ns_ + 1):
+            s_ = i2 / ns_; w_ = bladeshape(s_) * wmul + 0.15
+            for sd in (-1, 1):
+                V.append((ax[0] * w_ * sd, ax[1] * w_ * sd, Z0 + L * s_)); N.append((-ax[1], ax[0], 0.0)); UV.append(((sd + 1) / 2, 1 - s_))
+        for i2 in range(ns_):
+            a0 = 2 * i2; F += [(a0, a0 + 1, a0 + 2), (a0 + 1, a0 + 3, a0 + 2), (a0, a0 + 2, a0 + 1), (a0 + 1, a0 + 2, a0 + 3)]
+        fx.mesh(f'Bolts{k} tex=CurseOfAlduin\\priests\\otar_bolts.dds color={col} scale=2.6 blend=add flip=4x2 fps={fps} phase={ph}', V, N, UV, F)
+    # the blade's body of light: a flat lens of a blade, glowing, its light pulsing up it
+    V, N, UV, F = [], [], [], []
+    ns_, nx_ = 30, 9
+    for i2 in range(ns_ + 1):
+        s_ = i2 / ns_; w_ = bladeshape(s_)
+        for side in (1, -1):
+            for j2 in range(nx_):
+                x_ = -1 + 2 * j2 / (nx_ - 1)
+                V.append((x_ * w_, side * 0.32 * (1 - x_ * x_) * (1 - 0.5 * s_), Z0 + L * s_)); N.append((0.0, float(side), 0.0)); UV.append(((x_ + 1) / 2, s_ * 3))
+    for i2 in range(ns_):
+        for side in range(2):
+            for j2 in range(nx_ - 1):
+                a0 = (i2 * 2 + side) * nx_ + j2; b0 = ((i2 + 1) * 2 + side) * nx_ + j2
+                F += [(a0, b0, a0 + 1), (a0 + 1, b0, b0 + 1)] if side == 0 else [(a0, a0 + 1, b0), (a0 + 1, b0 + 1, b0)]
+    fx.mesh(f'BladeLight tex={FX["pulse"]} color=0.6,0.5,1,0.75 scale=1.8 blend=add vscroll=4', V, N, UV, F)
+    fx.mesh(f'BladeCore tex={FX["swirl"]} color=0.9,0.85,1,0.6 scale=2.2 blend=add falloff=1 uscroll=9 vscroll=7', [(x * 0.45, y * 0.6, z) for x, y, z in V], N, UV, F)
+    fx.sheath('Sparks', f'tex={FX["motes"]} color=0.7,0.6,1,0.9 scale=2.0 blend=add uscroll=7 vscroll=-12', Z0, Z0 + L, 2.4, 1.0, 16, 10, 3.0)
+    fx.card('MouthSpark', FX['core'], (0, 0, Z0 + 0.3), 1.8, '0.8,0.7,1,1', 2.6, (4, 4, 18, 0))
+    fx.card('MouthHalo', FX['glow'], (0, 0, Z0 + 1.0), 4.5, '0.6,0.5,1,0.55', 1.1)
+    fx.card('TipSpark', FX['core'], (0, 0, Z0 + L), 1.2, '0.85,0.8,1,1', 2.2, (4, 4, 22, 0.4))
+    # the bolts' flipbook: 8 frames (4x2) of a forked bolt running the blade's length, white on black (add blend)
+    CW, CH = 256, 1024
+    atlas = np.zeros((CH * 2, CW * 4), np.float32)
+    r = np.random.default_rng(93)
+    for fr in range(8):
+        im = Image.new('L', (CW, CH), 0); dr = ImageDraw.Draw(im)
+        def jag(x0, y0, x1, y1, n, amp):
+            pts = [(x0, y0)]
+            for t in np.linspace(0, 1, n)[1:-1]:
+                pts.append((x0 + (x1 - x0) * t + r.normal() * amp, y0 + (y1 - y0) * t + r.normal() * amp * 0.3))
+            pts.append((x1, y1)); return pts
+        main = jag(CW / 2 + r.normal() * 10, 0, CW / 2 + r.normal() * 10, CH, 34, 22)
+        dr.line(main, fill=255, width=5)
+        for _ in range(r.integers(3, 6)):   # (forks off the main bolt)
+            k0 = r.integers(2, len(main) - 6); x0, y0 = main[k0]
+            x1 = np.clip(x0 + r.choice([-1, 1]) * r.uniform(40, 110), 6, CW - 6); y1 = y0 + r.uniform(60, 200)
+            dr.line(jag(x0, y0, x1, y1, 9, 10), fill=190, width=2)
+        a = np.asarray(im, np.float32) / 255
+        a = np.clip(a + gaussian_filter(a, 4) * 1.6 + gaussian_filter(a, 14) * 1.2, 0, 1)
+        a = a * np.clip(np.minimum(np.arange(CW) + 0.5, CW - np.arange(CW) - 0.5) / 30, 0, 1)[None, :]
+        cy, cx = divmod(fr, 4)
+        atlas[cy * CH:(cy + 1) * CH, cx * CW:(cx + 1) * CW] = a
+    save(np.dstack([atlas * 255] * 3), 'otar_bolts.dds')
     mats = {'iron': f'diffuse={iD} normal={iN} spec=0.5 gloss=22 alpha=0 doublesided=0',
             'leather': f'diffuse={lD} normal={lN} spec=0.2 gloss=12 alpha=0 doublesided=0'}
-    return finish(M, 'otar_whip', mats, fx.L, 'WeaponSword', root='OtarWhip')
+    return finish(M, 'otar_stormblade', mats, fx.L, 'WeaponSword', root='OtarStormblade')
 
 
 def rahgot(texonly=False):
@@ -960,11 +1020,18 @@ def rahgot(texonly=False):
     v, u = (np.mgrid[0:S, 0:S].astype(np.float32) + 0.5) / S
     # obsidian: near-black glass, conchoidal ripples, the knapped scallops along the edge
     rip = tileable(S, S, 1.0, 151, aniso=(1.0, 0.35)); fine = tileable(S, S, 0.5, 152)
-    scal = np.abs(np.sin((v * 34 + 0.3 * rip) * math.pi)) ** 0.5 * np.clip((u - 0.55) / 0.45, 0, 1)
-    col = np.array([22, 22, 26], np.float32) * (0.8 + 0.5 * (rip[..., None] - 0.5)) + np.array([30, 36, 34]) * scal[..., None] * 0.6
-    h = 0.5 * rip + 0.2 * fine + 0.7 * scal
+    # the bevel (u past 0.68): ground and polished, fine grind lines along it, a bright line at its shoulder and a
+    # glassy, faintly translucent keen edge
+    grind = tileable(S, S, 0.3, 153, aniso=(0.02, 1.0))
+    bev = np.clip((u - 0.68) / 0.02, 0, 1)
+    shoulder = np.exp(-((u - 0.68) / 0.006) ** 2)
+    keen = np.clip((u - 0.955) / 0.045, 0, 1) ** 1.5
+    col = np.array([22, 22, 26], np.float32) * (0.8 + 0.5 * (rip[..., None] - 0.5))
+    col = col * (1 - bev[..., None]) + (np.array([40, 42, 48]) * (0.85 + 0.3 * (grind[..., None] - 0.5))) * bev[..., None]
+    col = col + np.array([120, 125, 135]) * shoulder[..., None] * 0.8 + np.array([70, 96, 84]) * keen[..., None]
+    h = (0.5 * rip + 0.2 * fine) * (1 - bev) + 0.12 * grind * bev
     bD = save(col, 'rahg_obsidian_d.dds')
-    bN = save(np.dstack([height_to_normal(gaussian_filter(h, 0.7), 7.0), np.clip(200 + 40 * scal, 0, 255)]), 'rahg_obsidian_n.dds', True)
+    bN = save(np.dstack([height_to_normal(gaussian_filter(h, 0.7), 6.0), np.clip(170 + 60 * bev + 25 * shoulder, 0, 255)]), 'rahg_obsidian_n.dds', True)
     rD, rN, rG = glyph_strip('rahg_runes', (30, 32, 34), glow_rgb=(110, 255, 80), seed=153)
     gD, gN = metal_tex('rahg_gold', (190, 152, 66), dark=0.5, seed=154)
     # bone: yellowed ivory, its grain running along the hilt, pores, hairline age-cracks, browned in the low places
@@ -980,10 +1047,10 @@ def rahgot(texonly=False):
     M = Mesh()
     # the blade: broad, curving toward the point, the edge on the outside of the curve; built as a blade, then bent
     W = Mesh()
-    blade(W, 'obsidian', 2.0, 15.5, 4.4, 0.9, tip=0.35, seed=156, ns=80, nx=15, runes=('runes', 0.3, 0.06, 0.8, 22.0))
+    # (Noah: "should look sharper like it has a blade edge") single-edged: a thick spine carrying the script, a ground
+    # bevel down to a keen glassy edge on the outside of the curve, and a needle point
+    blade(W, 'obsidian', 2.0, 15.5, 4.4, 1.0, tip=0.42, seed=156, ns=90, curve=0.26, single=0.32, runes=('runes', 0.24, 0.06, 0.78, 20.0, -0.38))
     for gname, m, V, N, UV, F in W.groups:
-        V = np.asarray(V).copy(); s_ = np.clip((V[:, 2] - 2.0) / 15.5, 0, 1)
-        V[:, 0] = V[:, 0] - 1.1 * V[:, 0] * 0 + 4.0 * s_ ** 2.0 - 0.9 * (V[:, 0] < 0) * s_ * 0   # (the whole blade sweeps toward its edge)
         M.add(gname, m, V, N, UV, F)
     # the guard: a gold bar whose ends sweep forward like fangs
     M.add('Gold', 'gold', *superbox(np.array([0, 0, 1.6]), 1.5, 0.75, 0.55, 4.0, 22, 10))
@@ -1003,7 +1070,7 @@ def rahgot(texonly=False):
         talon(M, 'gold', np.array([d[0] * 0.55, d[1] * 0.55, -5.6]), d * 0.6 + np.array([0, 0, -0.8]), -d * 0.9 + np.array([0, 0, -0.6]), 1.9, 0.2)
     fx = Fx()
     fx.sheath('PoisonHaze', f'tex={FX["swirl"]} color=0.4,0.9,0.25,0.35 scale=1.2 blend=add falloff=1 uscroll=2 vscroll=3', 1.5, 19.0, 3.0, 2.0, 16, 10, 2.0)
-    fx.card('TipBead', FX['core'], (4.0, 0, 17.3), 0.7, '0.45,1,0.25,1', 2.0, (4, 4, 10, 0))
+    fx.card('TipBead', FX['core'], (0.26 * 15.5, 0, 17.5), 0.7, '0.45,1,0.25,1', 2.0, (4, 4, 10, 0))
     fx.card('StoneGlow', FX['glow'], tuple(sc), 1.8, '0.45,1,0.3,0.5', 1.0)
     stD = save(np.dstack([np.full((256, 256), 70.0), np.full((256, 256), 190.0), np.full((256, 256), 60.0)]) * (0.8 + 0.2 * tileable(256, 256, 1.0, 157)[..., None]), 'rahg_stone_d.dds')
     mats = {'obsidian': f'diffuse={bD} normal={bN} spec=2.4 gloss=170 alpha=0 doublesided=0',
