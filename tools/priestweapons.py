@@ -562,62 +562,118 @@ def mask_plate(c, fwd, up, w, h, depth, n=22):
     return V.reshape(-1, 3), N.reshape(-1, 3), UV.reshape(-1, 2) * 0.35 + rng.random(2), F
 
 
+def knotwork(S, cells=8, band=0.11, seed=0):
+    """a tiling Nordic knotwork: two families of diagonal bands woven over and under each other, their edges cut deep
+    (0..1 the grooves)"""
+    v, u = (np.mgrid[0:S, 0:S].astype(np.float32) + 0.5) / S
+    a = (u + v) * cells; b = (u - v) * cells
+    da = np.abs((a % 1.0) - 0.5); db = np.abs((b % 1.0) - 0.5)
+    onA = da < band * 2; onB = db < band * 2
+    over = ((np.floor(a) + np.floor(b)) % 2) == 0           # (which band passes over at each crossing)
+    edgeA = np.exp(-((da - band * 2) / 0.012) ** 2); edgeB = np.exp(-((db - band * 2) / 0.012) ** 2)
+    groove = np.where(onA & onB, np.where(over, edgeA, edgeB), np.maximum(edgeA * ~onB, edgeB * ~onA))
+    field = (~onA & ~onB).astype(np.float32) * 0.55          # (the ground between the bands cut back)
+    return np.clip(groove + field, 0, 1)
+
+
+def talon(M, mat, base, d1, d2, length, r0, seg=14):
+    """a claw: from base out along d1, curling toward d2, tapering to a point"""
+    d1 = unit(np.asarray(d1, float)); d2 = unit(np.asarray(d2, float))
+    pts = []
+    p = np.asarray(base, float)
+    for k in range(seg):
+        s = k / (seg - 1)
+        d = unit(d1 * (1 - s) + d2 * s)
+        pts.append(p.copy()); p = p + d * length / (seg - 1)
+    M.add('Talon', mat, *rod(np.array(pts), r0 * (1 - np.linspace(0, 1, seg)) ** 0.8 + 0.02, 10))
+
+
 def nahkriin(texonly=False):
-    """(Nahkriin, Warden of Skuldafn - "Mistblade sword"; Noah: "Fancier guard", "Glowing script", "needs the most work to
-    elevate and match the dragon priest") a warden's longsword: a broad blade of pale mist-steel - cloudy grey-blue
-    layers in it like fog - its ridge running to the point, dragon-script cut down its fuller and glowing the pale blue
-    of Sovngarde's mist; at its root a silver collar ringed with script. The guard is the Warden's mask: a Dragon
-    Priest's face in silver on both sides, a crest of horns rising from its brow along the blade's root, and three
-    tiers of feathered silver wings sweeping up from it on either side. A grip of grey leather bound in silver wire; a
-    pommel of a second, smaller mask crowned with a pale stone. Mist pours off the blade and drifts up from the wings."""
-    bD, bN, bG = blade_tex('nahk_blade', (176, 186, 198), edge_rgb=(232, 238, 246), glow_rgb=(150, 205, 255), script=True, pattern='mist', seed=21)
-    sD, sN = metal_tex('nahk_silver', (186, 188, 192), rust=0.0, dark=0.6, etch=None, seed=22)
-    lD, lN = leather_tex('nahk_leather', (62, 60, 64), seed=23)
+    """(Nahkriin, Warden of Skuldafn - "Mistblade sword"; Noah: "redo the whole blade design" - "Ethereal ghost blade",
+    "Dragon Priest motif", "Pale blue-white") a blade of solid mist and pale light: no steel at all - a shape of fog
+    held as a blade, brightest down its heart, see-through toward its edges, mist flowing up through it and pouring
+    off it, a line of dragon-script hanging lit inside it. Its hilt is the only thing of it that is solid: ancient dark
+    bronze carved all over in knotwork, a guard whose ends curl into claws, four talons rising from its collar to grip
+    the blade's root, a grip of black leather bound in bronze, and a pommel of three talons clutching a pale stone."""
+    etch = knotwork(2048, 5, 0.1, 61)
+    bD, bN = metal_tex('nahk_bronze', (104, 84, 58), rust=0.0, dark=0.85, etch=etch, seed=62)
+    lD, lN = leather_tex('nahk_leather', (34, 30, 30), seed=63)
     M = Mesh()
-    blade(M, 'blade', 4.6, 48.0, 5.2, 1.15, tip=0.24, fuller=0.72, seed=31)
-    # the collar at the blade's root: silver, a band of script
-    M.add('Silver', 'silver', *lathe([(3.2, 1.2), (3.5, 1.65), (4.4, 1.7), (4.8, 1.3), (5.0, 0.0)], 32))
-    # the mask on both faces of the guard's heart, a block behind them
-    M.add('Silver', 'silver', *box(np.array([0, 0, 2.6]), 1.9, 0.95, 1.5))
-    for fy in (1, -1):
-        M.add('Mask', 'silver', *mask_plate(np.array([0, fy * 0.85, 2.7]), (0, fy, 0), (0, 0, 1), 1.75, 2.1, 0.55))
-        # the crest: horns rising from the brow, along the blade's root
-        for hx in (-0.7, 0.7):
-            pts = [np.array([hx * (1 - 0.6 * s), fy * (0.95 - 0.3 * s), 3.9 + 4.8 * s ** 1.2]) for s in np.linspace(0, 1, 12)]
-            M.add('Silver', 'silver', *rod(np.array(pts), np.linspace(0.32, 0.05, 12), 8))
-    # the wings: three tiers of feathered silver blades a side, sweeping out and up
+    # the guard: a heavy bar, thick at its middle, its two ends sweeping out and curling up into claws
     for side in (-1, 1):
-        for tier, (L, wd, ang, z0) in enumerate(((9.5, 1.7, 1.12, 2.6), (7.8, 1.45, 1.4, 2.0), (6.0, 1.2, 1.7, 1.4))):
-            W = Mesh()
-            blade(W, 'silver', 0.0, L, wd, 0.42, tip=0.5, seed=40 + tier, uv=(0.1, 0.4, 0.1, 0.6), name='Wing', curve=0.18, ns=28, nx=9)
-            R = rotm((0, 1, 0), side * -ang) @ (rotm((0, 0, 1), math.pi) if side < 0 else np.eye(3))
-            place(M, W, R, (side * 1.7, 0.0, z0))
-        # a ridge rod along the top wing's leading edge
-        pts = [np.array([side * (1.7 + 9.2 * s * math.sin(1.12)), 0, 2.6 + 9.2 * s * math.cos(1.12) + 1.4 * s * s]) for s in np.linspace(0, 1, 10)]
-        M.add('Silver', 'silver', *rod(np.array(pts), np.linspace(0.28, 0.08, 10), 8))
-    # the grip: grey leather under silver wire wound the other way
-    grip_wrap(M, 'leather', -7.4, 1.2, 0.86, 0.85)
-    nr = 160; zz = np.linspace(-7.3, 1.1, nr)
-    wire = np.stack([0.95 * np.cos(-zz / 0.85 * 2 * np.pi), 0.95 * np.sin(-zz / 0.85 * 2 * np.pi), zz], -1)
-    M.add('Silver', 'silver', *rod(wire, 0.08, 6))
-    M.add('Silver', 'silver', *lathe([(1.1, 0.9), (1.3, 1.25), (1.8, 1.4), (1.95, 1.0)], 24))
-    # the pommel: a little mask a side, a pale stone crowning it
-    M.add('Silver', 'silver', *lathe([(-7.4, 0.92), (-7.7, 1.15), (-8.1, 1.0), (-8.6, 1.5), (-9.9, 1.55), (-10.6, 1.0), (-10.9, 0.0)], 28))
-    for fy in (1, -1):
-        M.add('Mask', 'silver', *mask_plate(np.array([0, fy * 1.25, -9.2]), (0, fy, 0), (0, 0, 1), 1.05, 1.25, 0.32))
-    stone = [(-11.6 + 0.75 - 0.75 * math.cos(a), 0.75 * math.sin(a)) for a in np.linspace(0, math.pi, 14)]
-    M.add('Stone', 'stone', *lathe(stone, 20, uvs=(1, 1, 0, 0)))
+        pts = [np.array([side * 6.2 * s, 0.0, 3.0 + 1.4 * s ** 2.5]) for s in np.linspace(0, 1, 16)]
+        M.add('Bronze', 'bronze', *rod(np.array(pts), np.linspace(1.05, 0.55, 16), 14))
+        end = pts[-1]
+        for k, (dy, curl) in enumerate(((-0.45, 0.0), (0.0, 0.0), (0.45, 0.0))):
+            talon(M, 'bronze', end + np.array([0, dy, 0]), (side * 0.6, dy * 0.8, 1.0), (-side * 0.9, dy * 0.3, 0.4), 3.4 - 0.5 * abs(k - 1), 0.32)
+    M.add('Bronze', 'bronze', *lathe([(1.6, 1.15), (2.0, 1.75), (2.6, 2.0), (3.6, 2.0), (4.2, 1.6), (4.5, 1.1), (4.6, 0.0)], 32))
+    # four talons from the collar gripping the blade's root
+    for k in range(4):
+        a = math.pi / 4 + k * math.pi / 2
+        d = np.array([math.cos(a), math.sin(a) * 0.55, 0.0])
+        talon(M, 'bronze', np.array([d[0] * 1.5, d[1] * 1.5, 4.3]), d * 0.5 + np.array([0, 0, 1.0]), -d * 0.6 + np.array([0, 0, 1.0]), 3.6, 0.36)
+    # the grip: black leather, three bronze bands
+    grip_wrap(M, 'leather', -7.6, 1.5, 0.86, 0.85)
+    for z in (-7.4, -3.0, 1.4):
+        M.add('Bronze', 'bronze', *lathe([(z - 0.45, 0.9), (z - 0.3, 1.12), (z + 0.3, 1.12), (z + 0.45, 0.9)], 24))
+    # the pommel: a knotted bronze cup and three talons clutching a pale stone
+    M.add('Bronze', 'bronze', *lathe([(-7.8, 0.0), (-7.8, 0.95), (-8.4, 1.35), (-9.0, 1.2), (-9.2, 0.0)], 28))
+    sc = np.array([0, 0, -10.3])
+    stone = [(sc[2] - 1.05 * math.cos(a), 1.05 * math.sin(a)) for a in np.linspace(0, math.pi, 16)]
+    M.add('Stone', 'stone', *lathe(stone, 22, uvs=(1, 1, 0, 0)))
+    for k in range(3):
+        a = 2 * math.pi * k / 3
+        d = np.array([math.cos(a), math.sin(a), 0.0])
+        talon(M, 'bronze', np.array([d[0] * 0.9, d[1] * 0.9, -9.0]), d * 0.8 + np.array([0, 0, -0.6]), -d + np.array([0, 0, -0.9]), 3.2, 0.3)
+    # ---- the blade: all effect, no steel
     fx = Fx()
-    fx.sheath('MistA', f'tex={FX["swirl"]} color=0.82,0.9,1,0.55 scale=1.3 blend=add falloff=1 uscroll=3 vscroll=4.5', 4.0, 55.0, 3.4, 2.2, 18, 12, 3.0)
-    fx.sheath('MistB', f'tex={FX["swirl"]} color=0.75,0.85,1,0.35 scale=1.0 blend=add falloff=1 uscroll=-5 vscroll=6', 6.0, 58.0, 5.4, 4.2, 18, 12, 2.0)
-    fx.sheath('WingMist', f'tex={FX["swirl"]} color=0.8,0.88,1,0.4 scale=1.1 blend=add falloff=1 uscroll=2 vscroll=5', 0.5, 12.0, 8.0, 10.0, 22, 8, 1.5)
-    fx.card('MaskEyes', FX['core'], (0, 0, 2.8), 1.6, '0.6,0.85,1,1', 1.8, (4, 4, 6, 0))
-    fx.card('StoneGlow', FX['glow'], (0, 0, -11.0), 2.6, '0.75,0.88,1,0.55', 1.0)
+    L0, LEN = 4.2, 50.0
+    def blade_fx(name, opts, width, thick, scale_v, nx=11, ns=60, z0=L0, length=LEN):
+        W = Mesh()
+        blade(W, 'x', z0, length, width, thick, tip=0.26, seed=5, uv=(0, 1, 0, scale_v), ns=ns, nx=nx)
+        for gname, m, V, N, UV, F in W.groups:
+            fx.mesh(f'{name} {opts}', V, N, UV, F)
+    mist = 'CurseOfAlduin\\priests\\nahk_mist.dds'
+    blade_fx('BladeBody', f'tex={mist} color=0.82,0.9,1,0.75 scale=1.4 blend=alpha falloff=1 vscroll=2.2', 5.6, 1.4, 4.0)
+    blade_fx('BladeHeart', f'tex={FX["swirl"]} color=0.75,0.88,1,1 scale=2.2 blend=add falloff=1 uscroll=2.6 vscroll=3.5', 2.8, 1.0, 3.0, z0=L0 + 0.5, length=LEN - 2.0)
+    blade_fx('BladeHalo', f'tex={FX["glow"]} color=0.6,0.8,1,0.5 scale=1.0 blend=add rim=1', 7.4, 2.2, 1.0, nx=9, ns=30)
+    # the script: a strip of glyphs lit inside the blade, seen from both faces
+    runes = 'CurseOfAlduin\\priests\\nahk_runes.dds'
+    for fy, nm in ((1, 'RunesA'), (-1, 'RunesB')):
+        V, N, UV, F = [], [], [], []
+        for i2, z in enumerate(np.linspace(L0 + 2.0, L0 + LEN * 0.78, 2)):
+            for x in (-0.75, 0.75):
+                V.append((x, 0.02 * fy, z)); N.append((0, fy, 0)); UV.append((0.5 + x / 1.5, i2 * 1.0))
+        F = [(0, 2, 1), (1, 2, 3)] if fy > 0 else [(0, 1, 2), (1, 3, 2)]
+        fx.mesh(f'{nm} tex={runes} color=0.7,0.88,1,1 scale=2.4 blend=add', V, N, UV, F)
+    fx.sheath('MistA', f'tex={FX["swirl"]} color=0.82,0.9,1,0.5 scale=1.3 blend=add falloff=1 uscroll=3 vscroll=4.5', 4.0, 56.0, 3.6, 2.4, 18, 12, 3.0)
+    fx.sheath('MistB', f'tex={FX["swirl"]} color=0.78,0.88,1,0.32 scale=1.0 blend=add falloff=1 uscroll=-5 vscroll=6', 6.0, 60.0, 5.6, 4.4, 18, 12, 2.0)
+    fx.card('RootGlow', FX['glow'], (0, 0, 5.0), 5.0, '0.65,0.85,1,0.6', 1.2)
+    fx.card('RootCore', FX['core'], (0, 0, 5.0), 2.4, '0.75,0.9,1,1', 1.8, (4, 4, 6, 0))
+    fx.card('StoneGlow', FX['glow'], tuple(sc), 3.0, '0.7,0.88,1,0.55', 1.0)
+    # its own textures: the mist (soft wisps streaming along v, tiling) and the glyph strip
+    S = 1024
+    w1 = tileable(S, S, 1.4, 71, aniso=(0.25, 1.0)); w2 = tileable(S, S, 0.8, 72, aniso=(0.4, 1.0))
+    mistv = np.clip(0.45 + 0.8 * (w1 - 0.5) + 0.35 * (w2 - 0.5), 0.05, 1.0)
+    save(np.dstack([np.full((S, S, 3), 255.0) * (0.85 + 0.15 * mistv[..., None]), mistv * 255]), 'nahk_mist.dds', True)
+    im = Image.new('L', (256, 2048), 0); dr = ImageDraw.Draw(im); r = np.random.default_rng(73)
+    y = 90
+    while y < 2000:
+        n = r.integers(2, 4)
+        for k in range(n):
+            a = r.choice([-1, 0, 1]) * 0.5 + (r.random() - 0.5) * 0.25
+            ox = 128 + (k - (n - 1) / 2) * 46
+            l = 100 + 50 * r.random()
+            dr.line([(ox - math.sin(a) * l * 0.5, y - math.cos(a) * l * 0.5), (ox + math.sin(a) * l * 0.5, y + math.cos(a) * l * 0.5)], fill=255, width=13)
+        if r.random() < 0.5: dr.ellipse([118, y + 80, 138, y + 100], fill=255)
+        y += 180
+    rn = np.asarray(im.filter(ImageFilter.GaussianBlur(2.0)), np.float32)
+    glow = np.asarray(im.filter(ImageFilter.GaussianBlur(9.0)), np.float32)
+    save(np.dstack([np.full(rn.shape + (3,), 255.0), np.clip(rn + glow * 0.8, 0, 255)]), 'nahk_runes.dds', True)
     stD = save(np.dstack([np.full((256, 256), 205.0), np.full((256, 256), 222.0), np.full((256, 256), 240.0)]) * (0.85 + 0.15 * tileable(256, 256, 1.0, 66)[..., None]), 'nahk_stone_d.dds')
-    mats = {'blade': f'diffuse={bD} normal={bN} glow={bG} emit=0.65,0.85,1 emitmult=1.8 spec=2.3 gloss=150 alpha=0 doublesided=0',
-            'silver': f'diffuse={sD} normal={sN} spec=1.7 gloss=95 alpha=0 doublesided=0',
-            'stone': f'diffuse={stD} normal={sN} glow={stD} emit=0.8,0.9,1 emitmult=0.8 spec=2.5 gloss=200 alpha=0 doublesided=0',
-            'leather': f'diffuse={lD} normal={lN} spec=0.4 gloss=20 alpha=0 doublesided=0'}
+    mats = {'bronze': f'diffuse={bD} normal={bN} spec=1.3 gloss=60 alpha=0 doublesided=0',
+            'stone': f'diffuse={stD} normal={bN} glow={stD} emit=0.8,0.9,1 emitmult=1.2 spec=2.5 gloss=200 alpha=0 doublesided=0',
+            'leather': f'diffuse={lD} normal={lN} spec=0.35 gloss=18 alpha=0 doublesided=0'}
     return finish(M, 'nahkriin_mistblade', mats, fx.L, 'WeaponSword')
 
 
