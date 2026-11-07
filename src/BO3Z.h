@@ -804,7 +804,7 @@ namespace bo3z
 		void                  FxFrom(RE::BGSExplosion* a_src, const RE::NiPoint3& a_at, float a_scale);  // any mod's burst, quieted (look only), at a_scale
 		RE::BGSExplosion*     Quiet(RE::BGSExplosion* a_src);  // that burst's quiet copy (no damage, no knockdown, no tint)
 		void                  AreaHurt(const RE::NiPoint3& a_at, float a_radius, float a_share, std::string_view a_blast);
-		void                  Burn(RE::Actor* a_target, float a_perSecond, float a_seconds);  // damage over time
+		void                  Burn(RE::Actor* a_target, float a_perSecond, float a_seconds, int a_fec = 0);  // damage over time (a_fec: the element its kill dies in - 0 fire, 3 poison, -1 none)
 		// (the class swords) a crescent flying out from a swing, cutting through every one of the dead it passes (share: of one
 		// of the night's dead's health); its angle, where it flies; and the Summoner's circling blades of light
 		struct SlashSpec { std::string model; RE::NiPoint3 from, dir; float roll = 0, speed = 1700, range = 1500, radius = 110, share = 0.3f, scale = 1.0f, damage = 0; bool sideways = false, stopOnHit = false, bolt = false;  /* bolt: a spell bolt - its full size the whole way (no crescent's growing) */ float flingKill = 0; int fec = -1;  /* the element its kills die by (FEC) */ std::function<void(RE::Actor*, bool)> onHit; };  // (flingKill: a blow that kills throws the body that hard)

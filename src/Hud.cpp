@@ -859,7 +859,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				TxtC(dl, g_body, 16 * k, cx, a.y + 18 * k, Fade(c.col, 0.9f), std::to_string(i + 1));
 				TxtC(dl, g_title, (28 + 4 * eo) * k, cx, a.y + 38 * k, e > 0.5f ? IM_COL32(255, 248, 232, 255) : kParch, c.name, 2.5f * k * eo, Fade(c.col, 0.8f));
 				if (const float ta = std::clamp((eo - 0.35f) / 0.65f, 0.0f, 1.0f); ta > 0.01f) {   // (the words wait for the card to open)
-					const float tw = w - 44 * k;
+					// (Noah: "when moving from one class to another the text looks weird like it expands with more text for a split
+					// second") the words are laid out once at the open card's width and never re-wrapped as it grows or shrinks -
+					// only clipped to the card while it is still opening
+					const float tw = cwB - 44 * k;
+					dl->PushClipRect(a, b, true);
 					float y = b.y - 292 * k + (1.0f - ta) * 18 * k;   // (the words rise into place as they fade in)
 					TxtC(dl, g_body, 14 * k, cx, a.y + 74 * k, Fade(c.col, 0.85f * ta), c.lore);
 					TxtWrap(dl, g_body, 18 * k, { a.x + 22 * k, y }, Fade(IM_COL32(236, 226, 206, 245), ta), c.tag, tw, 2);
@@ -872,6 +876,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					sec("FIGHTS WITH", c.arms);
 					sec("GROWS BY", c.grow);
 					sec("STARTS WITH", c.kit);
+					dl->PopClipRect();
 				}
 				if (i == cur) TxtC(dl, g_body, 15 * k, cx, a.y + 74 * k + (eo > 0.35f ? 20 * k : 0.0f), IM_COL32(255, 210, 110, 255), "YOUR CLASS");
 			}

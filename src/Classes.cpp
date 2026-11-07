@@ -478,7 +478,7 @@ namespace bo3z::Classes
 	{
 		constexpr int kWonderSteps = 3, kWonderOpensAt = 6;  // (g_wStep: 0 shut, 1-3 its quest open, 4 won and taken up, 5 won - waiting on its pedestal)
 		constexpr int kWonderTaken = kWonderSteps + 1, kWonderWaiting = kWonderSteps + 2;
-		constexpr const char* kWonderName[4] = { "Horn of the Violet Wyrm", "Staff of Magnus", "Mutagen Staff", "Dragon Slayer" };  // (Noah: the Summoner's, Destruction's and the Alchemist's remade)
+		constexpr const char* kWonderName[4] = { "Call of the Violet Wyrm", "Staff of Magnus", "Mutagen Staff", "Dragon Slayer" };  // (Noah: the Summoner's, Destruction's and the Alchemist's remade)
 		std::array<std::uint8_t, 4>  g_wStep{};    // per class: 0 not open, 1..3 the step under way, 4 earned
 		std::array<std::uint16_t, 4> g_wKills{};
 		std::array<std::uint32_t, 4> g_wTowns{};   // cities where a step was done (bits)
@@ -575,9 +575,8 @@ namespace bo3z::Classes
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			if (!p) return;
 			switch (a_cls) {
-			case coffer::kSummoner:   // (Noah: the Horn of the Violet Wyrm "Held in hand")
-				if (auto* sp = WyrmSpell(); sp && p->HasSpell(sp)) p->RemoveSpell(sp);
-				if (auto* dh = RE::TESDataHandler::GetSingleton()) GiveItem(p, dh->LookupForm<RE::TESObjectWEAP>(gen::kWyrmHorn, gen::kPlugin), 1, true);
+			case coffer::kSummoner:   // (Noah: "lets just make it a summon spell") the Call of the Violet Wyrm, a spell
+				if (auto* sp = WyrmSpell(); sp && !p->HasSpell(sp)) p->AddSpell(sp);
 				break;
 			case coffer::kDestruction:
 				GiveItem(p, Magnus(), 1, true);
@@ -592,7 +591,7 @@ namespace bo3z::Classes
 		g_wStep[a_cls] = kWonderTaken;
 			Forms::Play(gen::Sound::shout_learned);
 			static constexpr const char* kText[4] = {
-				"A dragon's horn bound in silver, a violet gem in its mouthpiece. Hold it and attack to blow it: a violet wyrm flies in and burns the dead within 30 m of you for 90 seconds, circling, strafing and hovering to breathe on crowds. The horn rests a minute after the wyrm departs. Once the three dragons fall, a second, smaller wyrm answers with it.",
+				"A summoning spell, learned. Cast it and a violet wyrm flies in and burns the dead within 50 m of you for 90 seconds, circling and strafing. When it departs the call rests for a minute. Once the three dragons fall, a wyrmling answers beside it.",
 				"The Staff of Magnus. Hold its beam on the dead: it drains them and feeds your magicka, and erupts where it ends. Hold it two seconds or more and the eruption leaves an orb of searing light that pulses on everything round it. Once the three dragons fall it burns hotter still.",
 				"The Mutagen Staff. A staff whose glass orb is fed by six vials of the elements. Hold attack to loose a beam from the orb: it pierces every one of the dead in its path, pouring each vial in turn for five seconds - fire, frost, lightning, acid, holy light and the void. Let go and the emptied vials refill; empty all six and they must refill completely. Once the three dragons fall, the beam burns stronger.",
 				"The Akaviri dragon slayer, two tiers above your blade. Every hit carries the last Spellsword spell you held. Once the three dragons fall it grows stronger again, and a power attack looses that spell on the dead round you." };
@@ -1038,6 +1037,22 @@ namespace bo3z::Classes
 		// (Noah: "the mutagen staff should cast like the staff of magnus" - "Same cast and beam") its enchantment's effect
 		// takes the Staff of Magnus's beam: aimed, its projectile and its casting and hit art - the vials, their elements
 		// and the damage stay ours (GauntletBeam.inl)
+		// (Noah: "lets just make it a summon spell") the Call of the Violet Wyrm casts as a Conjuration spell: Skyrim's
+		// Conjure Familiar's hand glow and sounds, in the Conjuration school
+		if (static bool conj = false; !conj) {
+			conj = true;
+			auto* sp = WyrmSpell();
+			auto* me = sp && !sp->effects.empty() && sp->effects[0] ? sp->effects[0]->baseEffect : nullptr;
+			auto* fam = RE::TESForm::LookupByID<RE::SpellItem>(0x000640B6);   // Conjure Familiar
+			auto* src = fam && !fam->effects.empty() && fam->effects[0] ? fam->effects[0]->baseEffect : nullptr;
+			if (me && src) {
+				me->data.associatedSkill = RE::ActorValue::kConjuration;
+				me->data.castingArt = src->data.castingArt;
+				me->data.castingSoundLevel = src->data.castingSoundLevel;
+				me->effectSounds = src->effectSounds;
+				logger::info("summoner: the Call of the Violet Wyrm casts as {}", src->GetFullName());
+			}
+		}
 		if (static bool beamed = false; !beamed) {
 			auto* mut = dh->LookupForm<RE::TESObjectWEAP>(gen::kFlaskItem[6], gen::kPlugin);
 			auto* mg = Magnus();
@@ -1776,9 +1791,9 @@ namespace bo3z::Classes
 		if (!p) return;
 		if (auto* m = Magnus(); m && p->GetItemCount(m) <= 0) GiveItem(p, m, 1, false);
 		GiveFlask(6);
-		if (auto* h = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kWyrmHorn, gen::kPlugin); h && p->GetItemCount(h) <= 0) GiveItem(p, h, 1, false);   // (the Summoner's: the Horn of the Violet Wyrm)
+		if (auto* sp = WyrmSpell(); sp && !p->HasSpell(sp)) p->AddSpell(sp);   // (the Summoner's: the Call of the Violet Wyrm, a spell)
 		for (int c = 0; c < 4; ++c) g_wStep[c] = kWonderTaken;   // (every class's wonder: the Dragon Slayer is given beside the kit)
-		logger::info("testkit: the four wonders - the Horn of the Violet Wyrm, the Staff of Magnus, the Mutagen Staff, the Dragon Slayer");
+		logger::info("testkit: the four wonders - the Call of the Violet Wyrm, the Staff of Magnus, the Mutagen Staff, the Dragon Slayer");
 	}
 	void DevGiveWonder(int a_cls)
 	{
@@ -1788,7 +1803,8 @@ namespace bo3z::Classes
 		auto* em = RE::ActorEquipManager::GetSingleton();
 		auto* dh = RE::TESDataHandler::GetSingleton();
 		RE::TESBoundObject* w = a_cls == coffer::kDestruction ? static_cast<RE::TESBoundObject*>(Magnus()) : a_cls == coffer::kSpellsword ? static_cast<RE::TESBoundObject*>(Slayer())
-		                      : a_cls == coffer::kSummoner && dh ? static_cast<RE::TESBoundObject*>(dh->LookupForm<RE::TESObjectWEAP>(gen::kWyrmHorn, gen::kPlugin)) : nullptr;
+		                      : nullptr;
+		(void)dh;
 		if (p && em && w) em->EquipObject(p, w);
 		logger::info("dev: wonder {} given", kWonderName[a_cls]);
 	}
@@ -1820,7 +1836,7 @@ namespace bo3z::Classes
 			return true;
 		}
 		if (g_wStep[a_cls] == kWonderTaken && p) {  // (lost from the pack, or a new copy wanted: given again)
-			const bool have = a_cls == coffer::kSummoner ? [&] { auto* dh = RE::TESDataHandler::GetSingleton(); auto* h = dh ? dh->LookupForm<RE::TESObjectWEAP>(gen::kWyrmHorn, gen::kPlugin) : nullptr; return h && p->GetItemCount(h) > 0; }() : a_cls == coffer::kDestruction ? (Magnus() && p->GetItemCount(Magnus()) > 0)
+			const bool have = a_cls == coffer::kSummoner ? (WyrmSpell() && p->HasSpell(WyrmSpell())) : a_cls == coffer::kDestruction ? (Magnus() && p->GetItemCount(Magnus()) > 0)
 			                : a_cls == coffer::kAlchemist ? (FlaskItem(6) && p->GetItemCount(FlaskItem(6)) > 0) : (Slayer() && p->GetItemCount(Slayer()) > 0);
 			if (!have) {
 				// (the audit: a dropped bow or blade was given again for free - copies without end) a lost weapon is made
@@ -2080,6 +2096,22 @@ namespace bo3z::Classes
 						if (const float d = step.Length(); d > 10.0f) a->SetPosition(at + step * std::min(1.0f, 220.0f * dt / d), true);  // (gently: a hard pull fought its flight)
 					}
 					if (auto t = a->GetActorRuntimeData().currentCombatTarget.get(); t && Director::PlayerSide(t.get(), p)) a->StopCombat();  // (never on you or a friend)
+					// (Noah: "the dragon gets stuck in the air") hanging in one spot for 4 s (or more): it is carried round to a new
+					// place on its circle about you and set on the nearest of the dead again, so its flight starts afresh
+					{
+						static RE::NiPoint3 lastAt[2]{};
+						static float        stillT[2]{};
+						if (at.GetDistance(lastAt[wi]) < 120.0f * dt) stillT[wi] += dt; else stillT[wi] = 0.0f;
+						lastAt[wi] = at;
+						if (stillT[wi] > 4.0f && g_wh.blow < 0.0f && at.z - me.z > 250.0f) {   // (up in the air: one standing on the ground to fight is left be)
+							stillT[wi] = 0.0f;
+							const float yaw = std::atan2(flat.x, flat.y) + 1.4f;
+							a->SetPosition(me + RE::NiPoint3{ std::sin(yaw) * 1500.0f, std::cos(yaw) * 1500.0f, 700.0f }, true);
+							a->StopCombat();
+							if (const auto near = NearFoes(me, 3500.0f, 1); !near.empty()) SafeCombat(a.get(), near[0]);
+							logger::info("horn: the wyrm hung in the air 4 s - moved on round its circle");
+						}
+					}
 					// (Noah: "cast green fire breath not ice breath") its own shouts held back (the frost, the drain, the
 					// Soul Cairn's summons): its breath is the green grave-fire below
 					if (auto* pr = a->GetActorRuntimeData().currentProcess; pr && pr->high) pr->high->voiceRecoveryTime = 1.0e6f;
@@ -2096,7 +2128,10 @@ namespace bo3z::Classes
 						// (Noah: "the dragon's breath needs to look like dragon flames from the actual dragon, not the particle
 						// effects") Skyrim's own dragon fire breath (VoiceDragonFire01), breathed from its jaws at the foe
 						static auto* breath = RE::TESForm::LookupByID<RE::SpellItem>(0x000252C2);
-						if (auto* c = breath ? a->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant) : nullptr) {
+						// (Noah: "the dragon sound fx are also too loud") Skyrim's roaring breath only every third time (each 3.6 s) -
+						// its burn on the dead still every 1.2 s
+						static int breaths[2]{};
+						if (auto* c = breath && breaths[wi]++ % 3 == 0 ? a->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant) : nullptr) {
 							a->SetHeading(std::atan2(tgt.x - at.x, tgt.y - at.y));
 							c->CastSpellImmediate(breath, false, foes[0], 1.0f, false, 0.0f, a.get());
 						}
@@ -2584,7 +2619,7 @@ namespace bo3z::Classes
 		if (const int k = ArcaneKind(a_spell); k >= 0 && k < 3) { ArcaneCast(k, a_spell); return true; }
 		if (ThrowFlask(a_spell)) return true;
 		if (auto* horn = WyrmSpell(); horn && a_spell == horn->GetFormID()) {
-			SummonBoneDragon();
+			WyrmCast();   // (the Call of the Violet Wyrm: WyrmHorn.inl)
 			return true;
 		}
 		auto* tome = TomeSpell();

@@ -307,7 +307,7 @@ DOV = [
 ]
 
 
-def glyph_strip(name, steel_rgb, glow_rgb=None, n=16, seed=0, W=256, cell_h=256):
+def glyph_strip(name, steel_rgb, glow_rgb=None, n=16, seed=0, W=256, cell_h=256, lit=None):
     """a strip of the Dragon tongue's letters (W wide, n letters, one under another), cut into steel: V-grooves with
     bright polished lips and dark grime in their beds, for blade(runes=...): its colour (with alpha: only the letters),
     its normal (the grooves' walls, spec in alpha) and, with glow_rgb, the letters' light"""
@@ -341,6 +341,8 @@ def glyph_strip(name, steel_rgb, glow_rgb=None, n=16, seed=0, W=256, cell_h=256)
     col = steel[None, None, :] * (1 - 0.75 * dep[..., None]) + np.array([20, 18, 16]) * 0.0
     col = col * (1 - 0.4 * m[..., None]) + np.array([30, 26, 22]) * 0.4 * m[..., None]
     col = col + np.array([60, 60, 62]) * lip[..., None]
+    if lit is not None:   # (letters filled with light: their own bright colour, not dark grime - seen even where the glow map is dim)
+        col = col * (1 - m[..., None]) + np.array(lit, np.float32)[None, None, :] * m[..., None]
     alpha = np.clip(m * 1.05 + lip * 0.9, 0, 1) * 255
     D = save(np.dstack([col, alpha]), name + '_d.dds', True)
     h = -dep * 1.6 + lip * 0.25
@@ -472,7 +474,8 @@ def roughen(M, seed=0):
 # too small") each weapon sized and set in the hand as Skyrim's are (measured from Kv's crystal swords and the Light
 # Greatswords: the grip top - the guard's underside - 4 units above the origin, grips about 1.2 thick): per weapon the
 # top of its grip as built, and its scale
-FIT = {'zahkriisos_greatsword': (3.6, 1.3), 'nahkriin_mistblade': (1.5, 1.4), 'volsung_windcutter': (1.7, 1.6),
+# (Noah: "the glacier greatsword's hilt still clips into my players right hand") its guard raised 3 units clear of the upper hand
+FIT = {'zahkriisos_greatsword': (1.2, 1.3), 'nahkriin_mistblade': (1.5, 1.4), 'volsung_windcutter': (1.7, 1.6),
        'otar_stormblade': (8.0, 1.4), 'rahgot_dagger': (0.6, 1.75), 'krosis_griefblade': (1.5, 1.5),
        'hevnoraak_sealbreaker': (12.0, 1.15), 'morokei_maul': (12.0, 1.15)}
 
@@ -1028,7 +1031,8 @@ def rahgot(texonly=False):
     h = (0.5 * rip + 0.2 * fine) * (1 - bev) + 0.12 * grind * bev
     bD = save(col, 'rahg_obsidian_d.dds')
     bN = save(np.dstack([height_to_normal(gaussian_filter(h, 0.7), 6.0), np.clip(170 + 60 * bev + 25 * shoulder, 0, 255)]), 'rahg_obsidian_n.dds', True)
-    rD, rN, rG = glyph_strip('rahg_runes', (30, 32, 34), glow_rgb=(110, 255, 80), seed=153)
+    # (Noah: "the dragon text on the blade should be glowing green, right now I can barely see the text") the letters lit bright poison green
+    rD, rN, rG = glyph_strip('rahg_runes', (40, 44, 40), glow_rgb=(120, 255, 90), seed=153, lit=(120, 255, 90))
     gD, gN = metal_tex('rahg_gold', (190, 152, 66), dark=0.5, seed=154)
     # bone: yellowed ivory, its grain running along the hilt, pores, hairline age-cracks, browned in the low places
     S2 = 2048
@@ -1074,7 +1078,7 @@ def rahgot(texonly=False):
     fx.card('StoneGlow', FX['glow'], tuple(sc), 1.8, '0.45,1,0.3,0.5', 1.0)
     stD = save(np.dstack([np.full((256, 256), 70.0), np.full((256, 256), 190.0), np.full((256, 256), 60.0)]) * (0.8 + 0.2 * tileable(256, 256, 1.0, 157)[..., None]), 'rahg_stone_d.dds')
     mats = {'obsidian': f'diffuse={bD} normal={bN} spec=2.4 gloss=170 alpha=0 doublesided=0',
-            'runes': f'diffuse={rD} normal={rN} glow={rG} emit=0.45,1,0.3 emitmult=2.0 spec=1.0 gloss=80 alpha=blend doublesided=0',
+            'runes': f'diffuse={rD} normal={rN} glow={rG} emit=0.4,1,0.25 emitmult=5.0 spec=1.0 gloss=80 alpha=blend doublesided=0',
             'gold': f'diffuse={gD} normal={gN} spec=0.9 gloss=34 alpha=0 doublesided=0',
             'bone': f'diffuse={boneD} normal={boneN} spec=0.3 gloss=16 alpha=0 doublesided=0',
             'stone': f'diffuse={stD} normal={gN} glow={stD} emit=0.45,1,0.3 emitmult=1.0 spec=2.5 gloss=200 alpha=0 doublesided=0'}

@@ -4,9 +4,9 @@
  "wonders": [
   {
    "id": "gravecaller",
-   "label": "Horn of the Violet Wyrm",
+   "label": "Call of the Violet Wyrm",
    "color": "9CFF6A",
-   "text": "A dragon's horn bound in silver, a violet gem in its mouthpiece. Hold it and attack to blow it: a violet wyrm flies in and burns the dead within 30 m of you for 90 seconds, circling, strafing and hovering to breathe on crowds. The horn rests a minute after the wyrm departs. Once the three dragons fall, a second, smaller wyrm answers with it.",
+   "text": "A summoning spell. Cast it and a violet wyrm flies in and burns the dead within 50 m of you for 90 seconds, circling and strafing. The call rests a minute after the wyrm departs. Once the three dragons fall, a second, smaller wyrm answers with it.",
    "cls": "Summoner"
   },
   {

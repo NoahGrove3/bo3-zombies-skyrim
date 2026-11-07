@@ -145,6 +145,38 @@ namespace bo3z
 		}
 	}
 
+	namespace
+	{
+		// (Noah: "a glitch that doesnt let me attack or draw my weapons but they appear in hand ... when using dragon updraft
+		// shout then landing and I cant use my weapons until i unequip and equip again") after a glide lands (or a stuck landing
+		// is forced back to standing) the hands' weapons are taken off and put back - as unequipping and equipping does - and
+		// drawn again if they were out, so the animation and the hands agree once more
+		void ResyncHands(RE::PlayerCharacter* a_p)
+		{
+			if (!a_p) return;
+			Tasks::Later(0.35f, []() {
+				auto* p = RE::PlayerCharacter::GetSingleton();
+				auto* em = RE::ActorEquipManager::GetSingleton();
+				if (!p || !em || p->IsDead()) return;
+				const bool drawn = p->AsActorState()->IsWeaponDrawn();
+				auto* r = p->GetEquippedObject(false);
+				auto* l = p->GetEquippedObject(true);
+				auto* rs = RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F42);
+				auto* ls = RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F43);
+				auto* rw = r ? r->As<RE::TESObjectWEAP>() : nullptr;
+				auto* lw = l ? l->As<RE::TESObjectWEAP>() : nullptr;
+				if (!rw && !lw) return;
+				const bool two = rw && rw == lw;
+				if (rw) em->UnequipObject(p, rw, nullptr, 1, two ? nullptr : rs, false, false, false, true);
+				if (lw && !two) em->UnequipObject(p, lw, nullptr, 1, ls, false, false, false, true);
+				if (rw) em->EquipObject(p, rw, nullptr, 1, two ? nullptr : rs, false, false, false, true);
+				if (lw && !two) em->EquipObject(p, lw, nullptr, 1, ls, false, false, false, true);
+				if (drawn) Tasks::Later(0.25f, []() { if (auto* q = RE::PlayerCharacter::GetSingleton(); q && !q->IsDead()) q->DrawWeaponMagicHands(true); });
+				logger::info("land: the hands' weapons put back after the glide ({}{})", rw ? rw->GetName() : "", lw && !two ? " + left" : "");
+			});
+		}
+	}
+
 	namespace Movement
 	{
 		// Skyrim's Paraglider: everyone carries the glider (Paragliding.esp's "Paraglider", local 0x802) - its own way
@@ -3019,6 +3051,7 @@ namespace bo3z
 				cc->fallTime = 0.0f;
 				cc->flags.reset(RE::CHARACTER_FLAGS::kJumping);
 				if (!a_p->IsAttacking()) a_p->NotifyAnimationGraph("IdleForceDefaultState");
+				ResyncHands(a_p);
 				logger::info("land: still stuck - its animation set back to standing");
 			}
 		}
@@ -3030,6 +3063,16 @@ namespace bo3z
 				return;
 			}
 			ChaseTick(player, a_delta);
+			{   // (the Updraft's landing: once back on the ground after its flight, the hands put right - ResyncHands)
+				static float air = 0;
+				static bool  armed = false;
+				if (g_updraftAge < 60.0f && !OnGround(player)) {
+					if ((air += a_delta) > 0.8f) armed = true;
+				} else if (OnGround(player)) {
+					air = 0;
+					if (armed) armed = false, ResyncHands(player);
+				}
+			}
 			if (g_shadowT > 0 && (g_shadowT -= a_delta) <= 0) {
 				player->AsActorValueOwner()->SetActorValue(RE::ActorValue::kInvisibility, 0.0f);
 			}

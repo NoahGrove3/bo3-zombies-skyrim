@@ -94,6 +94,24 @@
 		g_wh.blow = 0.0f, g_wh.left = a_left, g_wh.sounded = g_wh.called = false;
 	}
 
+	// (Noah: "lets just make it a summon spell so this is easy") the Call of the Violet Wyrm: cast, the wyrm (and at
+	// Legendary its wyrmling) answers at once - the horn's rules kept (one at a time, a minute's rest after it departs); a
+	// cast that can't be answered has its magicka given back
+	void WyrmCast()
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (!p) return;
+		auto refund = [p]() { if (auto* sp = WyrmSpell()) p->AsActorValueOwner()->RestoreActorValue(RE::ActorValue::kMagicka, sp->CalculateMagickaCost(p)); };
+		if (g_class.load() != coffer::kSummoner) { refund(); Hud::QuestBanner("The Call of the Violet Wyrm answers only to a Summoner", 2.0f); return; }
+		if (g_wh.aloft) { refund(); Hud::QuestBanner("The Violet Wyrm is already aloft", 1.5f); return; }
+		if (g_wh.cool > 0.0f) { refund(); Hud::QuestBanner(fmt::format("The call rests ({:.0f} s)", std::ceil(g_wh.cool)), 1.5f); return; }
+		g_wh.called = true;
+		CallWyrm(0);
+		if (AfterSovngarde()) CallWyrm(1);
+		g_wh.aloft = true;
+		Hud::Banner("THE VIOLET WYRM ANSWERS", 3.0f);
+	}
+
 	void TickHorn(float a_delta)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
@@ -137,13 +155,13 @@
 			g_wh.cool = 0.0f;
 			Hud::QuestBanner("The Horn of the Violet Wyrm can be blown again", 2.0f);
 		}
-		// (old saves: the horn was a spell - it becomes the horn in your pack)
+		// (a save with the horn: it becomes the spell - the horn taken from your pack, the Call learned)
 		if ((g_wh.check -= a_delta) <= 0.0f) {
 			g_wh.check = 3.0f;
-			if (auto* sp = WyrmSpell(); sp && p->HasSpell(sp)) {
-				p->RemoveSpell(sp);
-				if (auto* h = Horn(); h && p->GetItemCount(h) <= 0) GiveItem(p, h, 1, true);
-				logger::info("horn: the old spell made the horn");
+			if (auto* h = Horn(); h && p->GetItemCount(h) > 0 && !ItemMenusOpen()) {
+				p->RemoveItem(h, p->GetItemCount(h), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+				if (auto* sp = WyrmSpell(); sp && !p->HasSpell(sp)) p->AddSpell(sp);
+				logger::info("horn: the horn made the Call of the Violet Wyrm (a spell)");
 			}
 		}
 	}

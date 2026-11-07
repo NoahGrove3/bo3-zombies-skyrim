@@ -86,6 +86,7 @@ def echo_ids(S):
     ids += [(k, 'arcane_' + n) for n in ('bolt', 'orb', 'tide', 'blade1', 'blade2', 'blade3') for k in ('MGEF', 'SPEL')]
     ids += [('MGEF', 'mutagencast'), ('ENCH', 'mutagenstaff')]
     ids += [('WEAP', 'priest_' + v[0]) for v in PRIEST_WEAPONS.values()]   # (Noah: the Dragon Priests' drops)
+    ids += [('MGEF', 'wyrmcall')]   # (Noah: the Violet Wyrm made a summon spell: its cast's effect)
     ids += [('WEAP', 'wyrmhorn')]   # (Noah: the Horn of the Violet Wyrm - "Held in hand")   # (Noah: the Mutagen Gauntlet made a staff: its beam held as Skyrim's staff cast)
     return ids
 def blasts():

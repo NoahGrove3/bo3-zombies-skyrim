@@ -35,12 +35,13 @@ TOOLS = g.TOOLS
 ELS, ELC = g.ELS, g.ELC
 
 # the staff's stations along its axis (Z here, +Y in the game): the foot, the grip at 0, the head
-FOOT, SHAFT_TOP = -34.0, 59.0
+# (Noah: "the mutagen staff should be shorter") 102 units long made 78: the foot 14 nearer the hand, the head 10 lower
+FOOT, SHAFT_TOP = -20.0, 49.0
 # (Noah: "the staff head ... simpler with more detailed textures ... the vials to be on the staff shaft right under the head")
-VIAL_R, VIAL_Z = 0.6, (46.2, 52.0)    # the vials stand round the shaft just under the head, strapped to it
+VIAL_R, VIAL_Z = 0.6, (36.2, 42.0)    # the vials stand round the shaft just under the head, strapped to it
 VIAL_RING = 1.62                      # their axis, out from the staff's
-SOCKET = (57.5, 62.6)                 # the brass socket the orb sits in, on the shaft's top
-ORB_C, ORB_R = 65.4, 2.75
+SOCKET = (47.5, 52.6)                 # the brass socket the orb sits in, on the shaft's top
+ORB_C, ORB_R = 55.4, 2.75
 TOP = ORB_C + ORB_R
 
 
@@ -96,7 +97,7 @@ def bands(M):
     f0 = FOOT
     shoe = [(f0 - 1.2, 0.0), (f0 - 1.0, 0.25), (f0, 0.7), (f0 + 1.2, 1.12), (f0 + 2.4, 1.18), (f0 + 2.7, 1.08), (f0 + 2.8, 0.9)]
     M.add('Brass', 'brass', *blathe(shoe, 32))
-    for k, zc in enumerate((-20.0, -10.5, 11.5, 28.0, 40.0)):
+    for k, zc in enumerate((-12.0, -6.0, 11.5, 22.0, 31.0)):
         r = float(shaft_r(zc))
         w = 0.6 if k in (1, 2) else 0.45
         prof = [(zc - w - 0.1, r - 0.02), (zc - w, r + 0.12), (zc - w * 0.4, r + 0.2), (zc, r + 0.16), (zc + w * 0.4, r + 0.2), (zc + w, r + 0.12), (zc + w + 0.1, r - 0.02)]

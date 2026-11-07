@@ -2758,6 +2758,9 @@ namespace bo3z
 		float g_gauntCurl = 0.0f, g_gauntOpen = 0.0f;
 		void PoseGauntletHand(RE::PlayerCharacter* a_player, float a_delta)
 		{
+			// (Noah: "the mutagen staff should ... cast like a staff with a beam not like a hand spell") the gauntlet's open hand
+			// and push are gone: the staff is held and cast by Skyrim's own staff animation
+			if (constexpr bool kStaff = true; kStaff) return;
 			{
 				const auto& gs = Props::g_gs;
 				const float curl = gs.phase == 1 && gs.t < 0.5f ? 1.0f : 0.0f, open = gs.phase == 2 || (gs.phase == 1 && gs.t >= 0.5f) ? 1.0f : 0.0f;
@@ -2847,6 +2850,7 @@ namespace bo3z
 		}
 		void PoseGauntletBeam(RE::PlayerCharacter* a_player, float a_delta)
 		{
+			if (constexpr bool kStaff = true; kStaff) return;   // (the staff: Skyrim's staff cast, not the gauntlet's push)
 			const auto& gs = Props::g_gs;
 			const bool on = gs.phase == 1 || gs.phase == 2;
 			g_gbW = std::clamp(g_gbW + (on ? 1.0f : -1.0f) * a_delta * (on ? 7.0f : 4.0f), 0.0f, 1.0f);
@@ -3237,9 +3241,9 @@ namespace bo3z
 		}
 		// (the class perks: Ember Heart) the night's dead round a point lose a share of a whole zombie's health
 		// (Noah: the Alchemist's Shadowflame mace) a burn: a_perSecond of damage for a_seconds, the Gun's own damage-over-time
-		void  Burn(RE::Actor* a_target, float a_perSecond, float a_seconds)
+		void  Burn(RE::Actor* a_target, float a_perSecond, float a_seconds, int a_fec)
 		{
-			if (a_target && !a_target->IsDead() && a_perSecond > 0 && a_seconds > 0) g_dots.push_back({ a_target->GetHandle(), a_perSecond, a_seconds, 0 });
+			if (a_target && !a_target->IsDead() && a_perSecond > 0 && a_seconds > 0) g_dots.push_back({ a_target->GetHandle(), a_perSecond, a_seconds, a_fec });
 		}
 		void  SkyFall(const RE::NiPoint3& a_at) { Props::SkyFireball(a_at); }  // (a burning star from the sky onto a point)
 
@@ -5431,6 +5435,15 @@ namespace bo3z
 			if (bow && ++g_arrows[w] >= 6) g_arrows[w] = 0, heavy = true;
 			const auto tp = a_t->GetPosition(), pp = p->GetPosition();
 			RE::NiPoint3 fwd{ std::sin(p->GetAngleZ()), std::cos(p->GetAngleZ()), 0.0f };
+			// (Noah: "all 10 of the dragon priest weapons still act as normal weapons") every hit shows its power plainly: its
+			// element bursting on the one struck, with its sound - the quieter work (slows, poison, sleep) is then seen to land
+			struct HitLook { int elem; float scale; const char* sound; };
+			static constexpr HitLook kLook[10] = { { 6, 1.0f, "lightmassive" }, { 3, 1.1f, "light" }, { 3, 1.0f, "light" }, { 1, 1.1f, "frost" }, { 2, 1.0f, "runeshock" },
+				{ 5, 1.0f, "poisongas" }, { 6, 0.9f, "light" }, { 4, 1.1f, "runeshock" }, { 6, 1.0f, "light" }, { 6, 1.2f, "lightmassive" } };
+			ElemBurst(kLook[w].elem, Chest(a_t), kLook[w].scale * (heavy ? 1.6f : 1.0f), 0.0f, 0.6f);
+			BlastSound(kLook[w].sound, tp, heavy ? 0.9f : 0.45f);
+			if (w == 0 || w == 6) LightningArc(pp + RE::NiPoint3{ 0, 0, 80.0f }, Chest(a_t), 0.0f);   // (the Jailor's chain; the Grief Blade drinking your foe)
+			if (static int told = 0; told++ < 40) logger::info("priest weapon: {} struck {}{}", gen::kCityBosses[w].weaponName, a_t->GetName(), heavy ? " (heavy)" : "");
 			switch (w) {
 			case 0:   // Vahlok's Jailor's Bow: bound in place; the sixth arrow - spectral chains drag a group to you
 				ForAWhile(a_t, RE::ActorValue::kSpeedMult, -95.0f, 2.5f);
@@ -5505,14 +5518,15 @@ namespace bo3z
 				break;
 			}
 			case 5:   // Rahgot's Sacrifice Knife: poisoned - and the poison passes on to the next; heavy - the poisoned burst
-				Burn(a_t, whole * 0.05f, 4.0f);
+				// (Noah: "killing enemies with the sacrifice knife they would explode into fire") its poison kills in poison, not fire
+				Burn(a_t, whole * 0.05f, 4.0f, 3);
 				Mark(g_poisoned, a_t, 6.0f);
 				Tasks::Later(2.0f, [h = a_t->GetHandle(), whole]() {
 					auto x = h.get();
 					if (!x) return;
 					for (auto* f : Foes(x->GetPosition(), 400.0f)) {
 						if (f == x.get() || Marked(g_poisoned, f)) continue;
-						Burn(f, whole * 0.04f, 4.0f), Mark(g_poisoned, f, 6.0f);
+						Burn(f, whole * 0.04f, 4.0f, 3), Mark(g_poisoned, f, 6.0f);
 						break;
 					}
 				});
