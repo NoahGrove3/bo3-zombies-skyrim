@@ -2108,7 +2108,7 @@ namespace bo3z::Classes
 							const float yaw = std::atan2(flat.x, flat.y) + 1.4f;
 							a->SetPosition(me + RE::NiPoint3{ std::sin(yaw) * 1500.0f, std::cos(yaw) * 1500.0f, 700.0f }, true);
 							a->StopCombat();
-							if (const auto near = NearFoes(me, 3500.0f, 1); !near.empty()) SafeCombat(a.get(), near[0]);
+							if (const auto nf = NearFoes(me, 3500.0f, 1); !nf.empty()) SafeCombat(a.get(), nf[0]);
 							logger::info("horn: the wyrm hung in the air 4 s - moved on round its circle");
 						}
 					}
