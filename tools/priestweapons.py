@@ -64,7 +64,7 @@ def blade(M, mat, y0, length, width, thick, tip=0.22, fuller=0.0, jag=0.0, seed=
             if single:   # (spine -> slab -> the bevel's shoulder -> the edge)
                 tt = (x + 1) / 2; b = single
                 prof = (1 - 0.3 * tt / (1 - b)) if tt < 1 - b else 0.7 * ((1 - tt) / b) ** 1.15
-                prof = prof * math.sqrt(min(1.0, tt / 0.05 + 0.25)) + 0.02
+                prof = prof * math.sqrt(min(1.0, tt / 0.05 + 0.25)) + 0.02 * (1 - tt)
             fz = 0.0
             if fuller and s < fuller:
                 fw = runes[1] * 1.15 if runes else 0.18   # (with script: a broad flat channel the letters are cut into)
@@ -98,6 +98,25 @@ def blade(M, mat, y0, length, width, thick, tip=0.22, fuller=0.0, jag=0.0, seed=
             flip = (fn * Nn[F].mean(1)).sum(1) < 0
             F[flip] = F[flip][:, [0, 2, 1]]
             M.add('Runes', rmat, P, Nn, UVs.reshape(-1, 2), F)
+    # (Noah: "I can also see in between the 2 blade faces ... it should look and feel like a real dagger") the two faces
+    # closed where they meet: a strip down each edge (the spine of a single-edged blade is a real back), over the point and
+    # across the base
+    ring = [(i, 0) for i in range(ns)] + [(ns - 1, j) for j in range(1, nx)] + [(i, nx - 1) for i in range(ns - 2, -1, -1)] + [(0, j) for j in range(nx - 2, 0, -1)] + [(0, 0)]
+    P0 = np.array([V[0, i, j] for i, j in ring]); P1 = np.array([V[1, i, j] for i, j in ring])
+    U0 = np.array([UV[0, i, j] for i, j in ring])
+    Pe = np.concatenate([P0, P1]); Ue = np.concatenate([U0, U0])
+    out = Pe.copy(); out[:, 1] = 0
+    mid = np.array([[np.interp(p[2], V[0, :, nx // 2, 2], V[0, :, nx // 2, 0]), 0, p[2]] for p in Pe])
+    Ne = unit(out - mid + 1e-6)
+    m = len(ring); Fe = []
+    for k in range(m - 1):
+        a0, b0, c0, d0 = k, k + 1, m + k, m + k + 1
+        Fe += [(a0, b0, c0), (b0, d0, c0)]
+    Fe = np.array(Fe)
+    fn = np.cross(Pe[Fe[:, 1]] - Pe[Fe[:, 0]], Pe[Fe[:, 2]] - Pe[Fe[:, 0]])
+    flip = (fn * Ne[Fe].mean(1)).sum(1) < 0
+    Fe[flip] = Fe[flip][:, [0, 2, 1]]
+    M.add(name, mat, Pe, Ne, Ue, Fe)
     for side in range(2):
         F = np.array(grid_faces(ns, nx))
         if side == 1: F = F[:, [0, 2, 1]]
@@ -449,9 +468,52 @@ def roughen(M, seed=0):
     M.groups = out
 
 
+# (Noah: "most all of the priest weapons sit awkward in the players hand either clipping into the hilt or the weapon being
+# too small") each weapon sized and set in the hand as Skyrim's are (measured from Kv's crystal swords and the Light
+# Greatswords: the grip top - the guard's underside - 4 units above the origin, grips about 1.2 thick): per weapon the
+# top of its grip as built, and its scale
+FIT = {'zahkriisos_greatsword': (3.6, 1.3), 'nahkriin_mistblade': (1.5, 1.4), 'volsung_windcutter': (1.7, 1.6),
+       'otar_stormblade': (8.0, 1.4), 'rahgot_dagger': (0.6, 1.75), 'krosis_griefblade': (1.5, 1.5),
+       'hevnoraak_sealbreaker': (12.0, 1.15), 'morokei_maul': (12.0, 1.15)}
+
+
+def fit_lines(L, top, sc, root):
+    """the effects' lines moved as the model is: points in the weapon's own space (top-shifted and scaled), points in a
+    node's or a card's own space only scaled"""
+    out = []; own = False; card = False
+    def full(x, y, z): return x * sc, y * sc, (z - top) * sc + 4.0
+    for l in L:
+        p = l.split(' ')
+        if p[0] == 'shape':
+            card = any(w.startswith('billboard=') and w != 'billboard=0' for w in p)
+            own = any(w.startswith('parent=') for w in p)
+            for i, w in enumerate(p):
+                if w.startswith('at='):
+                    x, y, z = full(*(float(q) for q in w[3:].split(',')))
+                    p[i] = f'at={x:.3f},{y:.3f},{z:.3f}'
+            out.append(' '.join(p)); continue
+        if p[0] == 'node':
+            x, y, z = float(p[3]), float(p[4]), float(p[5])
+            x, y, z = full(x, y, z) if p[2] == root else (x * sc, y * sc, z * sc)
+            p[3], p[4], p[5] = f'{x:.4f}', f'{y:.4f}', f'{z:.4f}'
+            out.append(' '.join(p)); continue
+        if p[0] == 'v' and len(p) >= 4:
+            x, y, z = float(p[1]), float(p[2]), float(p[3])
+            x, y, z = (x * sc, y * sc, z * sc) if (card or own) else full(x, y, z)
+            p[1], p[2], p[3] = f'{x:.4f}', f'{y:.4f}', f'{z:.4f}'
+            out.append(' '.join(p)); continue
+        out.append(l)
+    return out
+
+
 def finish(M, name, mats, fx_lines=None, prn='WeaponSword', root=None):
     """join each material's parts, turn Z up to +Y, write it (modelconv), its effects (fxwrite), its Prn"""
     roughen(M, len(name))
+    rootname = root or ''.join(w.capitalize() for w in name.split('_'))
+    if name in FIT:
+        top, sc = FIT[name]
+        M.groups = [(gn, m, (np.asarray(V, float) - [0, 0, top]) * sc + [0, 0, 4.0], N, UV, F) for gn, m, V, N, UV, F in M.groups]
+        if fx_lines: fx_lines = fit_lines(fx_lines, top, sc, rootname)
     merged = {}
     for gname, m, V, N, UV, F in M.groups:
         if m not in merged: merged[m] = [gname, m, [], [], [], [], 0]
@@ -466,7 +528,6 @@ def finish(M, name, mats, fx_lines=None, prn='WeaponSword', root=None):
     r = subprocess.run([str(TOOLS / 'modelconv'), str(WORK / f'{name}.job')], capture_output=True, text=True)
     if r.returncode: print(r.stdout, r.stderr); raise SystemExit('modelconv failed')
     import throwdagger; throwdagger.WORK.mkdir(parents=True, exist_ok=True)
-    rootname = root or ''.join(w.capitalize() for w in name.split('_'))
     rename_root(static, rootname)
     MESHDIR.mkdir(parents=True, exist_ok=True)
     nif = MESHDIR / f'{name}.nif'
@@ -842,26 +903,34 @@ def volsung(texonly=False):
 
 def otar(texonly=False):
     """(Otar the Mad - Noah: "the whip looks terrible but the handle isn't bad", then "let's just make it a sword made
-    out of animated lightning", "the lightning needs to take the shape of a blade and hilt") a storm blade: the whip's
-    grip of blackened iron bound in black leather, a pommel of three hooks; out of its mouth a sword drawn in living
-    lightning - bolts tracing both edges to a sharp point and down its middle, a crossguard of bolts, all flickering
-    frame by frame around a pale violet blade of light, sparks crawling up it"""
+    out of animated lightning", then "Steel + lightning edges") a storm blade: a grip of blackened iron bound in black
+    leather, a pommel of three hooks, a crossguard of black iron, and a blade of dark storm-steel with lightning crackling
+    along its edges, down its fuller and along the guard, sparks crawling up it"""
     iD, iN = metal_tex('otar_iron', (70, 68, 70), rust=0.35, dark=0.9, seed=91)
     lD, lN = leather_tex('otar_leather', (26, 22, 24), seed=92)
     M = Mesh()
     M.add('Iron', 'iron', *lathe([(-6.0, 0.0), (-6.0, 0.95), (-5.6, 1.1), (-5.3, 0.85)] + [(z, 0.8) for z in np.linspace(-5.2, 7.5, 5)] + [(7.6, 1.0), (8.4, 1.2), (8.8, 0.7), (9.6, 0.45)], 24))
-    grip_wrap(M, 'leather', -5.0, 4.0, 0.85, 0.75)
+    grip_wrap(M, 'leather', -5.0, 8.0, 0.85, 0.75)
     for k in range(3):
         a = 2 * math.pi * k / 3
         d = np.array([math.cos(a), math.sin(a), 0.0])
         talon(M, 'iron', np.array([d[0] * 0.6, d[1] * 0.6, -6.0]), d + np.array([0, 0, -0.6]), -d * 0.5 + np.array([0, 0, 0.6]), 2.6, 0.3)
-    # (Noah: "the lightning needs to take the shape of a blade and hilt" - "Blade + guard in lightning") the iron grip
-    # kept; out of its mouth the sword is drawn in lightning: a bolt running each edge to the point, one down the
-    # middle, and a crossguard of bolts - each a ribbon flickering frame by frame (flipbooks), around a blade of light
+    # (Noah: "the stormblade needs another model redesign" - "Steel + lightning edges") a real blade of dark storm-steel,
+    # a fuller down its middle, out of the iron grip's mouth under a crossguard of black iron; lightning crackles along
+    # both its edges to the point, down the fuller and along the guard - ribbons flickering frame by frame (flipbooks)
     fx = Fx()
-    Z0, L, HW = 9.6, 32.0, 1.7
-    def bladeshape(s_):
-        return HW * (1 - 0.12 * s_) * np.clip((1 - s_) / 0.16, 0, 1) ** 0.85   # (straight edges, then a sharp point)
+    Z0, L, HW = 9.2, 32.0, 1.75
+    bD, bN, _bg = blade_tex('otar_blade', (62, 64, 74), edge_rgb=(196, 200, 214), script=False, pattern='folded', seed=94)
+    blade(M, 'blade', Z0, L, HW * 2, 0.78, tip=0.18, fuller=0.78, seed=95)
+    def bladeshape(s_):   # (blade()'s own half width, for the bolts)
+        body = HW * (1.0 - 0.18 * s_)
+        pt = np.clip((1.0 - s_) / 0.18, 0, 1)
+        return body * np.sqrt(np.clip(pt * (2 - pt), 0, 1))
+    # the crossguard: a bar of black iron, its ends swept up into points, a boss over the blade's root
+    M.add('Iron', 'iron', *superbox(np.array([0, 0, 9.0]), 4.6, 0.75, 0.55, 5.0, 28, 10))
+    M.add('Iron', 'iron', *superbox(np.array([0, 0, 9.2]), 1.5, 1.05, 0.95, 3.0, 18, 10))
+    for sd in (-1, 1):
+        talon(M, 'iron', np.array([sd * 4.3, 0, 9.1]), (sd, 0, 0.5), (sd * 0.2, 0, 1), 2.6, 0.45)
     def ribbon(name, pts, width, tex, col, fps, ph, sc=2.8):
         """a bolt along pts: two crossed strips (one flat in the blade's plane, one across it), the flipbook's v along"""
         pts = np.asarray(pts, float); n = len(pts)
@@ -879,38 +948,17 @@ def otar(texonly=False):
             for i2 in range(n - 1):
                 a0 = b0 + 2 * i2; F += [(a0, a0 + 1, a0 + 2), (a0 + 1, a0 + 3, a0 + 2), (a0, a0 + 2, a0 + 1), (a0 + 1, a0 + 2, a0 + 3)]
         fx.mesh(f'{name} tex=CurseOfAlduin\\priests\\{tex}.dds color={col} scale={sc} blend=add flip=4x2 fps={fps} phase={ph}', V, N, UV, F)
-    S_ = np.linspace(0, 1, 40)
-    for k, sd in enumerate((-1, 1)):   # (the two edges, meeting at the point)
-        pts = [(sd * bladeshape(s_), 0.0, Z0 + L * s_) for s_ in S_] + [(0.0, 0.0, Z0 + L + 0.6)]
-        ribbon(f'EdgeBolt{k}', pts, 1.0, 'otar_edge', '0.9,0.85,1,1', 15 + 3 * k, 0.21 * k)
-        ribbon(f'EdgeHaze{k}', pts, 1.5, 'otar_bolts', '0.5,0.4,1,0.6', 9 + k, 0.5 + 0.2 * k, 2.0)
-    ribbon('RidgeBolt', [(0.0, 0.0, Z0 + L * s_ * 0.94) for s_ in S_], np.linspace(0.9, 0.3, 40), 'otar_bolts', '0.8,0.75,1,0.9', 13, 0.37)
-    # the crossguard: bolts out from the mouth each way, curling up at their ends
-    for k, sd in enumerate((-1, 1)):
-        gp_ = [(sd * (0.3 + 5.4 * t), 0.0, Z0 - 0.1 + 1.0 * t ** 3) for t in np.linspace(0, 1, 18)]
-        ribbon(f'GuardBolt{k}', gp_, 0.95, 'otar_edge', '0.9,0.85,1,1', 16 + 2 * k, 0.6 + 0.15 * k)
-        ribbon(f'GuardHaze{k}', gp_, 1.2, 'otar_bolts', '0.5,0.4,1,0.55', 10 + k, 0.1 + 0.3 * k, 2.0)
-    fx.card('GuardEndA', FX['core'], (-5.5, 0, Z0 + 1.2), 0.9, '0.85,0.8,1,1', 2.2, (4, 4, 20, 0.2))
-    fx.card('GuardEndB', FX['core'], (5.5, 0, Z0 + 1.2), 0.9, '0.85,0.8,1,1', 2.2, (4, 4, 20, 0.7))
-    # the blade's body of light: a flat lens of a blade, glowing, its light pulsing up it
-    V, N, UV, F = [], [], [], []
-    ns_, nx_ = 30, 9
-    for i2 in range(ns_ + 1):
-        s_ = i2 / ns_; w_ = bladeshape(s_)
-        for side in (1, -1):
-            for j2 in range(nx_):
-                x_ = -1 + 2 * j2 / (nx_ - 1)
-                V.append((x_ * w_, side * 0.32 * (1 - x_ * x_) * (1 - 0.5 * s_), Z0 + L * s_)); N.append((0.0, float(side), 0.0)); UV.append(((x_ + 1) / 2, s_ * 3))
-    for i2 in range(ns_):
-        for side in range(2):
-            for j2 in range(nx_ - 1):
-                a0 = (i2 * 2 + side) * nx_ + j2; b0 = ((i2 + 1) * 2 + side) * nx_ + j2
-                F += [(a0, b0, a0 + 1), (a0 + 1, b0, b0 + 1)] if side == 0 else [(a0, a0 + 1, b0), (a0 + 1, b0 + 1, b0)]
-    fx.mesh(f'BladeLight tex={FX["pulse"]} color=0.5,0.42,1,0.45 scale=1.5 blend=add vscroll=4', V, N, UV, F)
-    fx.mesh(f'BladeCore tex={FX["swirl"]} color=0.8,0.75,1,0.35 scale=1.8 blend=add falloff=1 uscroll=9 vscroll=7', [(x * 0.6, y * 0.6, z) for x, y, z in V], N, UV, F)
+    S_ = np.linspace(0.02, 1, 40)
+    for k, sd in enumerate((-1, 1)):   # (along both edges, meeting at the point)
+        pts = [(sd * (bladeshape(s_) + 0.12), 0.0, Z0 + L * s_) for s_ in S_] + [(0.0, 0.0, Z0 + L + 0.5)]
+        ribbon(f'EdgeBolt{k}', pts, 0.75, 'otar_edge', '0.85,0.8,1,1', 15 + 3 * k, 0.21 * k)
+        ribbon(f'EdgeHaze{k}', pts, 1.3, 'otar_bolts', '0.5,0.4,1,0.5', 9 + k, 0.5 + 0.2 * k, 2.0)
+    ribbon('RidgeBolt', [(0.0, 0.0, Z0 + L * s_ * 0.76) for s_ in S_], np.linspace(0.7, 0.35, 40), 'otar_edge', '0.8,0.75,1,0.9', 13, 0.37)
+    for k, sd in enumerate((-1, 1)):   # (along the guard)
+        gp_ = [(sd * (1.4 + 3.4 * t), 0.0, 9.0 + 0.9 * t ** 3) for t in np.linspace(0, 1, 16)]
+        ribbon(f'GuardBolt{k}', gp_, 0.6, 'otar_edge', '0.85,0.8,1,1', 16 + 2 * k, 0.6 + 0.15 * k)
     fx.sheath('Sparks', f'tex={FX["motes"]} color=0.7,0.6,1,0.9 scale=2.0 blend=add uscroll=7 vscroll=-12', Z0, Z0 + L, 2.4, 1.0, 16, 10, 3.0)
-    fx.card('MouthSpark', FX['core'], (0, 0, Z0 + 0.3), 1.8, '0.8,0.7,1,1', 2.6, (4, 4, 18, 0))
-    fx.card('MouthHalo', FX['glow'], (0, 0, Z0 + 1.0), 4.5, '0.6,0.5,1,0.55', 1.1)
+    fx.card('GuardHalo', FX['glow'], (0, 0, 9.4), 3.5, '0.6,0.5,1,0.4', 1.0)
     fx.card('TipSpark', FX['core'], (0, 0, Z0 + L), 1.2, '0.85,0.8,1,1', 2.2, (4, 4, 22, 0.4))
     # the bolts' flipbook: 8 frames (4x2) of a forked bolt running the blade's length, white on black (add blend)
     CW, CH = 256, 1024
@@ -952,6 +1000,7 @@ def otar(texonly=False):
         atlas[cy * CH:(cy + 1) * CH, cx * CW:(cx + 1) * CW] = a_
     save(np.dstack([atlas * 255] * 3), 'otar_edge.dds')
     mats = {'iron': f'diffuse={iD} normal={iN} spec=0.5 gloss=22 alpha=0 doublesided=0',
+            'blade': f'diffuse={bD} normal={bN} spec=1.6 gloss=90 alpha=0 doublesided=0',
             'leather': f'diffuse={lD} normal={lN} spec=0.2 gloss=12 alpha=0 doublesided=0'}
     return finish(M, 'otar_stormblade', mats, fx.L, 'WeaponSword', root='OtarStormblade')
 
@@ -997,8 +1046,11 @@ def rahgot(texonly=False):
     # (Noah: "should look sharper like it has a blade edge", then "the blade edge is on the wrong side of the blade and
     # the blade is too wide for the hilt") single-edged: a thick spine carrying the script on the outside of the curve,
     # a ground bevel down to a keen glassy edge on its inside, a needle point; no wider than the guard
-    blade(W, 'obsidian', 2.0, 15.5, 2.9, 0.85, tip=0.42, seed=156, ns=90, curve=-0.2, single=0.32, runes=('runes', 0.24, 0.06, 0.78, 15.0, -0.38))
-    for gname, m, V, N, UV, F in W.groups:
+    blade(W, 'obsidian', 2.0, 17.0, 2.9, 0.85, tip=0.42, seed=156, ns=90, curve=-0.2, single=0.32, runes=('runes', 0.24, 0.06, 0.78, 15.0, -0.38))
+    for gname, m, V, N, UV, F in W.groups:   # (Noah: "the blade is facing the wrong way") mirrored: its edge to the front
+        V = np.asarray(V, float) * [-1, 1, 1]; N = np.asarray(N, float) * [-1, 1, 1]; F = np.asarray(F)[:, [0, 2, 1]]
+        UV = np.asarray(UV, float).copy()
+        if m == 'runes': UV[:, 0] = 1 - UV[:, 0]   # (the letters read the right way round)
         M.add(gname, m, V, N, UV, F)
     # the guard: a gold bar whose ends sweep forward like fangs
     M.add('Gold', 'gold', *superbox(np.array([0, 0, 1.6]), 1.5, 0.75, 0.55, 4.0, 22, 10))
@@ -1018,7 +1070,7 @@ def rahgot(texonly=False):
         talon(M, 'gold', np.array([d[0] * 0.55, d[1] * 0.55, -5.6]), d * 0.6 + np.array([0, 0, -0.8]), -d * 0.9 + np.array([0, 0, -0.6]), 1.9, 0.2)
     fx = Fx()
     fx.sheath('PoisonHaze', f'tex={FX["swirl"]} color=0.4,0.9,0.25,0.35 scale=1.2 blend=add falloff=1 uscroll=2 vscroll=3', 1.5, 19.0, 2.3, 1.6, 16, 10, 2.0)
-    fx.card('TipBead', FX['core'], (-0.2 * 15.5, 0, 17.5), 0.7, '0.45,1,0.25,1', 2.0, (4, 4, 10, 0))
+    fx.card('TipBead', FX['core'], (0.2 * 17.0, 0, 19.0), 0.7, '0.45,1,0.25,1', 2.0, (4, 4, 10, 0))
     fx.card('StoneGlow', FX['glow'], tuple(sc), 1.8, '0.45,1,0.3,0.5', 1.0)
     stD = save(np.dstack([np.full((256, 256), 70.0), np.full((256, 256), 190.0), np.full((256, 256), 60.0)]) * (0.8 + 0.2 * tileable(256, 256, 1.0, 157)[..., None]), 'rahg_stone_d.dds')
     mats = {'obsidian': f'diffuse={bD} normal={bN} spec=2.4 gloss=170 alpha=0 doublesided=0',
@@ -1211,6 +1263,15 @@ def hevnoraak(texonly=False):
             'seal': f'diffuse={sD} normal={sN} glow={sG} emit=0.5,0.95,0.45 emitmult=2.2 spec=0.3 gloss=14 alpha=blend doublesided=0',
             'oak': f'diffuse={wD} normal={wN} spec=0.25 gloss=14 alpha=0 doublesided=0',
             'leather': f'diffuse={lD} normal={lN} spec=0.2 gloss=12 alpha=0 doublesided=0'}
+    # (Noah: "spell breaker is also facing the wrong way") the bit turned to the front: everything mirrored across the haft
+    mir = []
+    for gn, m, V, N, UV, F in M.groups:
+        UV = np.asarray(UV, float).copy()
+        if m == 'seal': UV[:, 0] = 1 - UV[:, 0]
+        mir.append((gn, m, np.asarray(V, float) * [-1, 1, 1], np.asarray(N, float) * [-1, 1, 1], UV, np.asarray(F)[:, [0, 2, 1]]))
+    M.groups = mir
+    fx.L = [' '.join([l.split(' ')[0]] + [f'{-float(l.split(" ")[1]):.4f}'] + l.split(' ')[2:]) if l.startswith('v ') else l for l in fx.L]
+    fx.L = [l.replace('at=8.4', 'at=-8.4') for l in fx.L]
     return finish(M, 'hevnoraak_sealbreaker', mats, fx.L, 'WeaponBack')   # (a battleaxe: on the back)
 
 
