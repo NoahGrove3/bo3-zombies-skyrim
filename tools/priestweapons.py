@@ -254,7 +254,7 @@ def script_mask(S, rows, seed, density=0.6, size=28, width=4):
     return np.asarray(im.filter(ImageFilter.GaussianBlur(1.0)), np.float32) / 255
 
 
-def blade_tex(name, steel_rgb, edge_rgb=None, glow_rgb=None, script=True, pattern='folded', seed=0, ice=False):
+def blade_tex(name, steel_rgb, edge_rgb=None, glow_rgb=None, script=True, pattern='folded', seed=0, ice=False, mask=None, mask_rgb=None):
     """2048 blade sheet: u across (the edges at 0 and 1), v along (the guard at 0): the steel's own grain (folded layers
     or plain), a polished bevel at each edge, the fuller darker, a line of dragon-script etched down the middle; for ice:
     pale blue depths with cracks and frosted edges. Optional glow (the script and cracks lit)"""
@@ -290,7 +290,7 @@ def blade_tex(name, steel_rgb, edge_rgb=None, glow_rgb=None, script=True, patter
         if edge_rgb is not None:
             col = col * (1 - 0.5 * edge[..., None]) + np.array(edge_rgb) * 0.5 * edge[..., None]
         h = 0.2 * layers + 0.15 * fine + 0.4 * edge
-        spec = np.clip(170 + 70 * edge - 40 * centre + 20 * layers, 0, 255)
+        spec = np.clip(125 + 80 * edge - 40 * centre + 20 * layers - 35 * np.clip((fine - 0.55) * 4, 0, 1), 0, 255)
         glow = np.zeros((S, S), np.float32)
     if script:
         m = script_mask(S, [(0.43, 0.57, 0.08 + 0.1 * k, 0.16 + 0.1 * k) for k in range(0)] , seed)
@@ -314,8 +314,13 @@ def blade_tex(name, steel_rgb, edge_rgb=None, glow_rgb=None, script=True, patter
         h = h - 1.0 * m
         spec = spec - 100 * m
         if glow_rgb is not None: glow = np.maximum(glow, m)
+    if mask is not None:   # (channels cut into the blade, filled with its light: poison, tears)
+        col = col * (1 - 0.8 * mask[..., None]) + np.array(mask_rgb, np.float32) * 0.8 * mask[..., None]
+        h = h - 0.8 * mask
+        spec = spec - 60 * mask
+        glow = np.maximum(glow, mask)
     D = save(col, name + '_d.dds')
-    nrm = height_to_normal(gaussian_filter(h, 0.8), 5.0)
+    nrm = height_to_normal(gaussian_filter(h, 0.8), 6.0)
     N = save(np.dstack([nrm, np.clip(spec, 0, 255)]), name + '_n.dds', True)
     G = None
     if glow_rgb is not None:
@@ -324,7 +329,7 @@ def blade_tex(name, steel_rgb, edge_rgb=None, glow_rgb=None, script=True, patter
 
 
 # ================================================================== the build
-ROUGH = {'iron': 0.045, 'bronze': 0.04, 'leather': 0.03}
+ROUGH = {'iron': 0.045, 'bronze': 0.04, 'leather': 0.03, 'steel': 0.04, 'silver': 0.03, 'oak': 0.05, 'wood': 0.05, 'bone': 0.035, 'stone': 0.07}
 
 
 def roughen(M, seed=0):
@@ -713,7 +718,376 @@ def nahkriin(texonly=False):
     return finish(M, 'nahkriin_mistblade', mats, fx.L, 'WeaponSword')
 
 
-WEAPONS = {'zahkriisos': zahkriisos, 'vahlok': vahlok, 'nahkriin': nahkriin}
+def grow(M, since, centre, k, lift=0.0):
+    """the parts added since index `since` scaled by k about centre (and raised by lift): a head made bigger whole"""
+    c = np.asarray(centre, float)
+    out = []
+    for i, (gname, m, V, N, UV, F) in enumerate(M.groups):
+        if i >= since:
+            V = (np.asarray(V) - c) * k + c + np.array([0, 0, lift])
+            UV = np.asarray(UV) * k
+        out.append((gname, m, V, N, UV, F))
+    M.groups = out
+
+
+def superbox(c, ex, ey, ez, p=6.0, nu=40, nv=20, R=np.eye(3)):
+    """a block with softened edges (a superellipsoid): half sizes ex, ey, ez, its roundness p (bigger: squarer)"""
+    V, N, UV = [], [], []
+    def sgnpow(x, e): return np.sign(x) * np.abs(x) ** e
+    e = 2.0 / p
+    for i in range(nv + 1):
+        ph = -math.pi / 2 + math.pi * i / nv
+        for j in range(nu + 1):
+            th = -math.pi + 2 * math.pi * j / nu
+            x = sgnpow(math.cos(ph), e) * sgnpow(math.cos(th), e)
+            y = sgnpow(math.cos(ph), e) * sgnpow(math.sin(th), e)
+            z = sgnpow(math.sin(ph), e)
+            V.append(np.array([x * ex, y * ey, z * ez]))
+            N.append(np.array([sgnpow(math.cos(ph), 2 - e) * sgnpow(math.cos(th), 2 - e) / ex, sgnpow(math.cos(ph), 2 - e) * sgnpow(math.sin(th), 2 - e) / ey, sgnpow(math.sin(ph), 2 - e) / ez]))
+            UV.append((j / nu * 2 * (ex + ey) * 2 / TILE, i / nv * 2 * ez * 2 / TILE))
+    V = np.array(V) @ R.T + c; N = unit(np.array(N) @ R.T)
+    F = np.array(grid_faces(nv + 1, nu + 1))
+    fn = np.cross(V[F[:, 1]] - V[F[:, 0]], V[F[:, 2]] - V[F[:, 0]])
+    flip = (fn * N[F].mean(1)).sum(1) < 0
+    F[flip] = F[flip][:, [0, 2, 1]]
+    return V, N, np.array(UV) + rng.random(2), F
+
+
+def sheet_runes(S, n, seed, size=150, width=16, glow=True):
+    """a tiling sheet of scattered dragon-script glyphs (0..1), for runes cut over a hammer's faces"""
+    im = Image.new('L', (S, S), 0); dr = ImageDraw.Draw(im); r = np.random.default_rng(seed)
+    cols = int(S / (size * 1.6)); rows = int(S / (size * 1.6))
+    for a in range(cols):
+        for b in range(rows):
+            if r.random() > n: continue
+            cx = (a + 0.5) * S / cols; cy = (b + 0.5) * S / rows
+            k3 = r.integers(2, 4)
+            for k in range(k3):
+                ang = r.choice([-1, 0, 1]) * 0.5 + (r.random() - 0.5) * 0.25
+                ox = (k - (k3 - 1) / 2) * size * 0.32
+                l = size * (0.6 + 0.3 * r.random())
+                dr.line([(cx + ox - math.sin(ang) * l * 0.5, cy - math.cos(ang) * l * 0.5), (cx + ox + math.sin(ang) * l * 0.5, cy + math.cos(ang) * l * 0.5)], fill=255, width=width)
+    return np.asarray(im.filter(ImageFilter.GaussianBlur(1.5)), np.float32) / 255
+
+
+def glow_tex(name, rgb, mask, blur=3.0):
+    return save(np.array(rgb, np.float32) * np.clip(gaussian_filter(mask, blur) * 1.4 + mask * 0.6, 0, 1)[..., None], name)
+
+
+def skinned_lash(fx, name, opts, pts, radius, bones, parent, barbs=0, seed=0):
+    """a tube along pts skinned to bones (nodes at points along it, under parent): each ring to its nearest two bones"""
+    pts = np.asarray(pts, float)
+    P, N, UV, F = g.tube(pts, radius, 8, vrange=(0, len(pts) / 6.0))
+    nb = len(bones)
+    L = np.concatenate([[0], np.cumsum(np.linalg.norm(np.diff(pts, axis=0), axis=1))])
+    tpos = L / L[-1]
+    fx.L.append(f'shape {name} {opts} parent={parent} skin={",".join(bones)}')
+    ring = len(P) // len(pts)
+    for i in range(len(P)):
+        t = tpos[i // ring] * (nb - 1)
+        b0 = int(min(nb - 2, math.floor(t))); w1 = t - b0
+        fx.L.append(f'v {P[i][0]:.4f} {P[i][1]:.4f} {P[i][2]:.4f} {UV[i][0]:.4f} {UV[i][1]:.4f} 1 1 1 1')
+        fx.L.append(f'n {N[i][0]:.4f} {N[i][1]:.4f} {N[i][2]:.4f}')
+        fx.L.append(f'w {b0} {1 - w1:.4f} {b0 + 1} {w1:.4f}')
+    for a, b, c in F:
+        fx.L.append(f't {a} {b} {c}')
+
+
+def volsung(texonly=False):
+    """(Volsung of Volskygge - "Windcutter swords", twin light swords) a slender curved sabre - wielded one in each hand -
+    of pale blue-grey steel, a long fuller swept along its back like a gust, script cut into it glowing faint sky-blue;
+    a bronze guard of three swept-back feathered curls; a grip of blue-grey leather; a pommel curling into a spiral like
+    a turning wind. Gusts swirl round the blade and streak off its edge."""
+    bD, bN, bG = blade_tex('vols_blade', (170, 182, 196), edge_rgb=(225, 232, 242), glow_rgb=(160, 210, 255), script=True, pattern='mist', seed=81)
+    etch = knotwork(2048, 6, 0.09, 82)
+    zD, zN = metal_tex('vols_bronze', (112, 92, 62), dark=0.8, etch=etch, seed=83)
+    lD, lN = leather_tex('vols_leather', (58, 64, 74), seed=84)
+    M = Mesh()
+    blade(M, 'blade', 2.8, 40.0, 3.3, 0.8, tip=0.28, fuller=0.8, seed=85, curve=0.06)
+    # the guard: a small bronze block and three feathered curls swept back each side
+    M.add('Bronze', 'bronze', *superbox(np.array([0, 0, 2.3]), 1.4, 0.8, 0.75, 4.0, 24, 12))
+    for side in (-1, 1):
+        for k, (L, up) in enumerate(((6.8, 0.8), (5.4, 1.8), (4.0, 2.6))):
+            pts = [np.array([side * (1.2 + L * s), 0.0, 2.3 - 1.4 * s * s + up * s * s * 0.5]) for s in np.linspace(0, 1, 14)]
+            pts = [p + np.array([0, 0, -k * 0.35]) for p in pts]
+            curl = [pts[-1] + np.array([side * 0.5 * math.cos(a), 0, 0.5 * math.sin(a) + 0.5]) for a in np.linspace(-math.pi / 2, math.pi * 0.9, 10)]
+            M.add('Bronze', 'bronze', *rod(np.array(pts + curl[1:]), np.linspace(0.42 - 0.07 * k, 0.1, len(pts) + len(curl) - 1), 10))
+    grip_wrap(M, 'leather', -5.6, 1.7, 0.72, 0.8)
+    M.add('Bronze', 'bronze', *lathe([(1.6, 0.78), (1.8, 0.98), (2.0, 0.9)], 20))
+    M.add('Bronze', 'bronze', *lathe([(-5.6, 0.78), (-5.8, 0.98), (-6.1, 0.82), (-6.3, 0.0)], 20))
+    spiral = [np.array([1.3 * (1 - t / 9) * math.cos(t) * 0.9, 0.0, -7.2 + 1.3 * (1 - t / 9) * math.sin(t)]) for t in np.linspace(0, 9, 40)]
+    M.add('Bronze', 'bronze', *rod(np.array([np.array([0, 0, -6.2])] + spiral), np.linspace(0.42, 0.14, 41), 10))
+    fx = Fx()
+    fx.sheath('Gust', f'tex={FX["swirl"]} color=0.85,0.92,1,0.45 scale=1.3 blend=add falloff=1 uscroll=12 vscroll=2.5', 2.5, 44.0, 2.8, 1.8, 18, 12, 2.0)
+    fx.sheath('GustStreaks', f'tex={FX["motes"]} color=0.9,0.95,1,0.6 scale=1.5 blend=add uscroll=16 vscroll=-4', 3.0, 44.0, 3.8, 2.6, 22, 10, 3.0)
+    mats = {'blade': f'diffuse={bD} normal={bN} glow={bG} emit=0.6,0.8,1 emitmult=0.9 spec=1.8 gloss=110 alpha=0 doublesided=0',
+            'bronze': f'diffuse={zD} normal={zN} spec=0.65 gloss=26 alpha=0 doublesided=0',
+            'leather': f'diffuse={lD} normal={lN} spec=0.2 gloss=12 alpha=0 doublesided=0'}
+    return finish(M, 'volsung_windcutter', mats, fx.L, 'WeaponSword')
+
+
+OTAR_BONES = 10
+
+
+def otar(texonly=False):
+    """(Otar the Mad - "Torment whip", barbed, lightning) a cruel whip: a short haft of blackened iron bound in black
+    leather, a spiked guard and a pommel of three hooks; its lash a tapering braid of black hide studded with iron barbs,
+    lightning forever crawling along it. The lash is skinned to ten nodes (OtarLash0..9 under OtarWhip) so
+    src/Classes.cpp can crack it: at rest it curls out and down from the haft."""
+    iD, iN = metal_tex('otar_iron', (70, 68, 70), rust=0.35, dark=0.9, seed=91)
+    lD, lN = leather_tex('otar_leather', (26, 22, 24), seed=92)
+    M = Mesh()
+    M.add('Iron', 'iron', *lathe([(-6.0, 0.0), (-6.0, 0.95), (-5.6, 1.1), (-5.3, 0.85)] + [(z, 0.8) for z in np.linspace(-5.2, 7.5, 5)] + [(7.6, 1.0), (8.4, 1.2), (8.8, 0.7), (9.6, 0.45)], 24))
+    grip_wrap(M, 'leather', -5.0, 4.0, 0.85, 0.75)
+    for k in range(6):   # (the guard: iron spikes splayed round the haft's top)
+        a = 2 * math.pi * k / 6
+        d = np.array([math.cos(a), math.sin(a), 0.35])
+        P, N, UV, F = g.axis_lathe([(0, 0.32), (1.2, 0.2), (2.4, 0.0)], np.array([0, 0, 7.8]), unit(d), 8)
+        M.add('Iron', 'iron', P, N, UV * [0.3, 0.4] + rng.random(2), F)
+    for k in range(3):
+        a = 2 * math.pi * k / 3
+        d = np.array([math.cos(a), math.sin(a), 0.0])
+        talon(M, 'iron', np.array([d[0] * 0.6, d[1] * 0.6, -6.0]), d + np.array([0, 0, -0.6]), -d * 0.5 + np.array([0, 0, 0.6]), 2.6, 0.3)
+    fx = Fx()
+    # the lash: rest curve out and down, bones along it
+    top = np.array([0.0, 0.0, 9.6])
+    pts = [top + np.array([22.0 * math.sin(s * 1.6) + 4.0 * math.sin(s * 9.0) * s, 2.5 * math.sin(s * 7.0) * s, 5.0 * math.sin(math.pi * s * 0.6) - 40.0 * s * s]) for s in np.linspace(0, 1, 110)]
+    pts = np.array(pts)
+    bones = [f'OtarLash{k}' for k in range(OTAR_BONES)]
+    bp = [pts[int(round(k * (len(pts) - 1) / (OTAR_BONES - 1)))] for k in range(OTAR_BONES)]
+    for k, b in enumerate(bones):
+        fx.L.append(f'node {b} OtarWhip {bp[k][0]:.4f} {bp[k][1]:.4f} {bp[k][2]:.4f}')
+    rad = 0.36 * (1 - np.linspace(0, 1, len(pts))) ** 0.8 + 0.05
+    skinned_lash(fx, 'Lash', f'tex=CurseOfAlduin\\priests\\otar_leather_d.dds color=0.45,0.42,0.5,1 scale=1.0 blend=alpha', pts, rad, bones, 'OtarWhip')
+    skinned_lash(fx, 'LashSpark', f'tex={FX["pulse"]} color=0.7,0.6,1,1 scale=2.6 blend=add vscroll=3.5', pts, rad * 1.8 + 0.1, bones, 'OtarWhip')
+    skinned_lash(fx, 'LashCrackle', f'tex={FX["swirl"]} color=0.6,0.55,1,0.8 scale=2.0 blend=add falloff=1 uscroll=9 vscroll=7', pts, rad * 2.6 + 0.2, bones, 'OtarWhip')
+    fx.card('HaftSpark', FX['core'], (0, 0, 9.4), 1.8, '0.7,0.6,1,1', 2.0, (4, 4, 14, 0))
+    mats = {'iron': f'diffuse={iD} normal={iN} spec=0.5 gloss=22 alpha=0 doublesided=0',
+            'leather': f'diffuse={lD} normal={lN} spec=0.2 gloss=12 alpha=0 doublesided=0'}
+    return finish(M, 'otar_whip', mats, fx.L, 'WeaponSword', root='OtarWhip')
+
+
+def rahgot(texonly=False):
+    """(Rahgot of Forelhost - "Martyr's dagger", ritual) a ritual dagger: a wavy blade of green-black steel, two channels
+    cut along it filled with glowing poison; a guard of two serpents biting at the blade's root; a grip of bone bound in
+    blackened bronze; a pommel of a glass vial of the same poison in a bronze cage. Poison drips from its point and a
+    green haze clings to it."""
+    S = 2048
+    v, u = (np.mgrid[0:S, 0:S].astype(np.float32) + 0.5) / S
+    chan = np.exp(-((np.abs(u - 0.5) - 0.13 - 0.02 * np.sin(v * 40)) / 0.025) ** 2) * (v < 0.85) * (v > 0.05)
+    bD, bN, bG = blade_tex('rahg_blade', (70, 82, 74), edge_rgb=(150, 165, 150), glow_rgb=(120, 255, 90), script=False, pattern='folded', seed=101, mask=chan, mask_rgb=(110, 230, 70))
+    zD, zN = metal_tex('rahg_bronze', (84, 70, 50), dark=0.9, rust=0.1, seed=102)
+    boneD, boneN = metal_tex('rahg_bone', (196, 186, 160), dark=0.4, seed=103)
+    M = Mesh()
+    # the blade: a wavy kris
+    W = Mesh()
+    blade(W, 'blade', 2.2, 17.0, 2.8, 0.7, tip=0.3, seed=104, ns=90, nx=13)
+    for gname, m, V, N, UV, F in W.groups:
+        V = np.asarray(V).copy(); s_ = (V[:, 2] - 2.2) / 17.0
+        V[:, 0] += 0.45 * np.sin(s_ * 2 * math.pi * 3.5) * np.clip(1 - s_, 0.2, 1)
+        M.add(gname, m, V, N, UV, F)
+    # the guard: two serpents
+    for side in (-1, 1):
+        pts = [np.array([side * (0.6 + 2.6 * math.sin(t)), 0.25 * math.sin(t * 3), 1.6 + 1.6 * (1 - math.cos(t)) * 0.6]) for t in np.linspace(0, math.pi * 0.8, 20)]
+        M.add('Bronze', 'bronze', *rod(np.array(pts), np.linspace(0.45, 0.3, 20), 10))
+        hc = pts[-1] + np.array([-side * 0.3, 0, 0.4])
+        M.add('Bronze', 'bronze', *superbox(hc, 0.55, 0.38, 0.4, 3.0, 16, 8))
+        for fy in (-1, 1):
+            talon(M, 'bronze', hc + np.array([-side * 0.4, fy * 0.15, -0.2]), (-side, 0, -0.4), (-side * 0.2, 0, -1), 0.9, 0.1)
+    M.add('Bronze', 'bronze', *superbox(np.array([0, 0, 1.7]), 1.0, 0.6, 0.55, 3.5, 20, 10))
+    M.add('Bone', 'bone', *lathe([(1.3, 0.62), (0.4, 0.66)] + [(z, 0.62 + 0.05 * math.sin(z * 5)) for z in np.linspace(0.2, -4.8, 12)] + [(-5.0, 0.66)], 24))
+    for z in (-1.0, -3.4):
+        M.add('Bronze', 'bronze', *lathe([(z - 0.3, 0.66), (z - 0.2, 0.82), (z + 0.2, 0.82), (z + 0.3, 0.66)], 20))
+    M.add('Bronze', 'bronze', *lathe([(-5.0, 0.7), (-5.3, 0.95), (-5.5, 0.9), (-5.55, 0.0)], 20))
+    vial = [(-5.5, 0.55), (-5.8, 0.6), (-6.6, 0.68), (-7.4, 0.62), (-7.7, 0.4), (-7.8, 0.0)]
+    M.add('Glass', 'glass', *lathe(vial, 20, uvs=(1, 1, 0, 0)))
+    for k in range(4):
+        a = math.pi / 4 + k * math.pi / 2
+        pts = [np.array([0.72 * math.cos(a), 0.72 * math.sin(a), z]) for z in np.linspace(-5.5, -7.7, 6)]
+        M.add('Bronze', 'bronze', *rod(np.array(pts), 0.09, 6))
+    fx = Fx()
+    V, F = g.sphere(np.array([0, 0, -6.6]), 0.55, 16, 8)
+    fx.mesh(f'VialPoison tex={FX["swirl"]} color=0.4,1,0.2,1 scale=2.0 blend=add falloff=1 uscroll=3 vscroll=2', [p for p, uu, vv, n in V], [n for p, uu, vv, n in V], [(uu, vv) for p, uu, vv, n in V], F)
+    fx.sheath('PoisonHaze', f'tex={FX["swirl"]} color=0.4,0.9,0.25,0.4 scale=1.2 blend=add falloff=1 uscroll=2 vscroll=3', 1.5, 21.0, 2.2, 1.4, 16, 10, 2.0)
+    fx.sheath('Drips', f'tex={FX["motes"]} color=0.45,1,0.2,0.9 scale=1.8 blend=add vscroll=-5', 10.0, 22.0, 0.6, 0.4, 10, 8, 2.0)
+    fx.card('TipDrop', FX['core'], (0, 0, 19.0), 0.8, '0.45,1,0.2,1', 2.0, (4, 4, 10, 0))
+    gD = save(np.dstack([np.full((256, 256), 160.0), np.full((256, 256), 200.0), np.full((256, 256), 150.0), np.full((256, 256), 70.0)]), 'rahg_glass_d.dds', True)
+    mats = {'blade': f'diffuse={bD} normal={bN} glow={bG} emit=0.45,1,0.25 emitmult=1.6 spec=1.5 gloss=90 alpha=0 doublesided=0',
+            'bronze': f'diffuse={zD} normal={zN} spec=0.55 gloss=24 alpha=0 doublesided=0',
+            'bone': f'diffuse={boneD} normal={boneN} spec=0.3 gloss=16 alpha=0 doublesided=0',
+            'glass': f'diffuse={gD} normal={zN} spec=2.4 gloss=180 alpha=blend doublesided=1'}
+    return finish(M, 'rahgot_dagger', mats, fx.L, 'WeaponDagger')
+
+
+def krosis(texonly=False):
+    """(Krosis of Shearpoint - "Grief blade", a sword that weeps light) a mourner's sword of dark, smoke-grey steel; down
+    each face a line of tear-shaped hollows inlaid with silver, light welling in them and running down the blade; a
+    guard of silver branches drooping like a willow's; a grip of black leather bound with silver wire; a pommel of a
+    pale crystal teardrop. Drops of light fall from it."""
+    S = 2048
+    v, u = (np.mgrid[0:S, 0:S].astype(np.float32) + 0.5) / S
+    tears = np.zeros((S, S), np.float32)
+    for k in range(9):
+        vc = 0.1 + 0.075 * k
+        for uc in (0.36, 0.64):
+            du = (u - uc) / 0.03; dv = (v - vc) / 0.04
+            r = np.sqrt(du ** 2 + np.where(dv > 0, dv * 0.6, dv * 1.2) ** 2)
+            tears = np.maximum(tears, np.clip(1.2 - r, 0, 1) ** 0.5)
+    trail = np.exp(-((np.minimum(np.abs(u - 0.36), np.abs(u - 0.64))) / 0.006) ** 2) * (v < 0.78) * (v > 0.08) * 0.6
+    mask = np.clip(tears + trail, 0, 1)
+    bD, bN, bG = blade_tex('kros_blade', (92, 96, 104), edge_rgb=(170, 176, 186), glow_rgb=(255, 236, 190), script=False, pattern='folded', seed=111, mask=mask, mask_rgb=(240, 225, 190))
+    sD, sN = metal_tex('kros_silver', (176, 176, 180), dark=0.65, seed=112)
+    lD, lN = leather_tex('kros_leather', (30, 28, 30), seed=113)
+    M = Mesh()
+    blade(M, 'blade', 2.6, 44.0, 4.0, 0.95, tip=0.22, fuller=0.0, seed=114)
+    M.add('Silver', 'silver', *superbox(np.array([0, 0, 2.2]), 1.6, 0.8, 0.7, 4.0, 24, 12))
+    for side in (-1, 1):   # (the willow: branches arching out and drooping, thinning to tips)
+        for k, (reach, droop) in enumerate(((5.6, 4.2), (4.4, 3.6), (3.2, 2.6))):
+            pts = [np.array([side * (1.2 + reach * s), (k - 1) * 0.3, 2.4 + 1.4 * math.sin(math.pi * s * 0.6) - droop * s ** 2.4]) for s in np.linspace(0, 1, 16)]
+            M.add('Silver', 'silver', *rod(np.array(pts), np.linspace(0.38, 0.06, 16), 8))
+            for q in (0.5, 0.75):   # (leaves: little drooping twigs)
+                i0 = int(q * 15)
+                twig = [pts[i0] + np.array([side * 0.3 * s, 0, -1.2 * s]) for s in np.linspace(0, 1, 5)]
+                M.add('Silver', 'silver', *rod(np.array(twig), np.linspace(0.12, 0.03, 5), 6))
+    grip_wrap(M, 'leather', -6.6, 1.5, 0.78, 0.8)
+    nr = 140; zz = np.linspace(-6.5, 1.4, nr)
+    wire = np.stack([0.86 * np.cos(-zz / 0.8 * 2 * np.pi), 0.86 * np.sin(-zz / 0.8 * 2 * np.pi), zz], -1)
+    M.add('Silver', 'silver', *rod(wire, 0.07, 6))
+    M.add('Silver', 'silver', *lathe([(1.5, 0.8), (1.7, 1.05), (1.9, 0.95)], 20))
+    M.add('Silver', 'silver', *lathe([(-6.6, 0.8), (-6.85, 1.05), (-7.1, 0.85), (-7.2, 0.0)], 20))
+    tear = [(-7.0, 0.0), (-7.1, 0.45), (-7.6, 0.85), (-8.3, 1.0), (-9.0, 0.85), (-9.5, 0.45), (-9.7, 0.0)]
+    M.add('Crystal', 'crystal', *lathe(tear, 18, uvs=(1, 1, 0, 0)))
+    fx = Fx()
+    fx.sheath('Tears', f'tex={FX["motes"]} color=1,0.93,0.75,0.9 scale=1.8 blend=add vscroll=-3.5', 3.0, 46.0, 2.4, 1.8, 14, 10, 4.0)
+    fx.sheath('Grieflight', f'tex={FX["swirl"]} color=1,0.92,0.75,0.3 scale=1.1 blend=add falloff=1 uscroll=2 vscroll=-2', 2.5, 46.0, 3.0, 2.2, 16, 10, 2.0)
+    fx.card('CrystalGlow', FX['glow'], (0, 0, -8.3), 2.6, '1,0.94,0.8,0.55', 1.0)
+    cD = save(np.dstack([np.full((256, 256), 240.0), np.full((256, 256), 232.0), np.full((256, 256), 214.0)]) * (0.85 + 0.15 * tileable(256, 256, 1.0, 115)[..., None]), 'kros_crystal_d.dds')
+    mats = {'blade': f'diffuse={bD} normal={bN} glow={bG} emit=1,0.92,0.75 emitmult=1.8 spec=1.5 gloss=90 alpha=0 doublesided=0',
+            'silver': f'diffuse={sD} normal={sN} spec=0.75 gloss=30 alpha=0 doublesided=0',
+            'crystal': f'diffuse={cD} normal={sN} glow={cD} emit=1,0.94,0.8 emitmult=1.0 spec=2.5 gloss=200 alpha=0 doublesided=0',
+            'leather': f'diffuse={lD} normal={lN} spec=0.2 gloss=12 alpha=0 doublesided=0'}
+    return finish(M, 'krosis_griefblade', mats, fx.L, 'WeaponSword')
+
+
+def hevnoraak(texonly=False):
+    """(Hevnoraak of Valthume - "Sealbreaker hammer", warhammer) a two-handed warhammer: a great block of blackened
+    iron for a head, one face flat and cut with a cracked sealing-rune that glows sickly marsh-green through its
+    cracks, the other drawn out into a heavy beak; bands of broken chain hanging from it; iron langets down a haft of
+    black bog-oak bound in leather and iron. Marsh fog curls about the head."""
+    rn = sheet_runes(2048, 0.55, 121, 170, 18)
+    iD, iN = metal_tex('hevn_iron', (68, 70, 66), rust=0.45, dark=0.9, etch=rn * 0.7, seed=122)
+    wD, wN = ms.wood_tex() if False else metal_tex('hevn_oak', (42, 34, 28), dark=0.6, seed=123)
+    lD, lN = leather_tex('hevn_leather', (40, 34, 28), seed=124)
+    hG = glow_tex('hevn_iron_g.dds', (120, 220, 110), rn * 0.7)
+    M = Mesh()
+    # the haft
+    M.add('Oak', 'oak', *lathe([(-22.0, 0.0), (-22.0, 1.05), (-21.6, 1.2)] + [(z, 1.05 - 0.004 * z) for z in np.linspace(-21.0, 44.0, 10)] + [(44.5, 1.0)], 24))
+    grip_wrap(M, 'leather', -18.0, -4.0, 1.12, 1.15)
+    grip_wrap(M, 'leather', 4.0, 12.0, 1.1, 1.15)
+    for z in (-22.3, -18.4, -3.6, 3.6, 12.4):
+        M.add('Iron', 'iron', *lathe([(z - 0.5, 1.12), (z - 0.35, 1.38), (z + 0.35, 1.38), (z + 0.5, 1.12)], 24))
+    for fy in (1, -1):   # (langets: iron strips down the haft under the head)
+        M.add('Iron', 'iron', *superbox(np.array([0, fy * 1.05, 36.0]), 0.55, 0.18, 7.0, 6.0, 12, 10))
+    # the head (built at its old size, then made half again as big: a two-hander's)
+    hc = np.array([0.0, 0.0, 46.0])
+    head0 = len(M.groups)
+    M.add('Iron', 'iron', *superbox(hc, 5.2, 3.0, 3.4, 5.0, 44, 22))
+    M.add('Iron', 'iron', *superbox(hc + np.array([-5.5, 0, 0]), 0.7, 3.3, 3.7, 6.0, 20, 10))   # (the striking face's rim)
+    beak = [(0.0, 3.0), (1.5, 2.4), (3.5, 1.5), (6.0, 0.6), (7.2, 0.0)]
+    P, N, UV, F = g.axis_lathe(beak, hc + np.array([4.8, 0, 0]), np.array([1.0, 0, -0.35]), 10)
+    M.add('Iron', 'iron', P, N, UV * [0.8, 1.2] + rng.random(2), F)
+    M.add('Iron', 'iron', *superbox(hc + np.array([0, 0, 3.8]), 1.3, 1.3, 0.8, 4.0, 16, 8))
+    # broken chains hanging from its sides
+    for side in (-1, 1):
+        for k in range(4):
+            c = hc + np.array([-1.5 + 1.0 * (k % 2), side * 3.2, -2.0 - k * 1.3])
+            V, N, UV, F = torus(c, 0.5, 0.17, np.array([1.0, 0, 0]) if k % 2 else np.array([0, 1.0, 0]), 16, 6, stretch=1.5, long=(0, 0, 1))
+            M.add('Iron', 'iron', V, N, UV, F)
+    grow(M, head0, hc, 1.6, 2.0)
+    hc = hc + np.array([0, 0, 2.0])
+    fx = Fx()
+    fx.sheath('MarshFog', f'tex={FX["swirl"]} color=0.55,0.75,0.5,0.4 scale=1.1 blend=add falloff=1 uscroll=2 vscroll=1.5', 37.0, 60.0, 12.0, 9.5, 22, 8, 1.2)
+    fx.card('SealGlow', FX['glow'], tuple(hc + np.array([-10.0, 0, 0])), 7.5, '0.45,0.9,0.4,0.4', 1.0)
+    mats = {'iron': f'diffuse={iD} normal={iN} glow={hG} emit=0.5,0.95,0.45 emitmult=1.2 spec=0.5 gloss=22 alpha=0 doublesided=0',
+            'oak': f'diffuse={wD} normal={wN} spec=0.25 gloss=14 alpha=0 doublesided=0',
+            'leather': f'diffuse={lD} normal={lN} spec=0.2 gloss=12 alpha=0 doublesided=0'}
+    return finish(M, 'hevnoraak_sealbreaker', mats, fx.L, 'WeaponBack')
+
+
+def vokun(texonly=False):
+    """(Vokun of High Gate - "Dreamer's staff") a staff of black twisted wood, two stems wound round each other; at its
+    head a crescent moon of dark silver cradling an orb of violet dream-smoke; silver bands down it; a silver foot.
+    Dream smoke pours from the orb and trails down the staff in slow curls."""
+    sD, sN = metal_tex('voku_silver', (150, 146, 160), dark=0.75, seed=131)
+    wD, wN = metal_tex('voku_wood', (34, 28, 34), dark=0.5, seed=132)
+    M = Mesh()
+    for k in range(2):   # (two stems twisted round each other)
+        ph = math.pi * k
+        pts = [np.array([0.45 * math.cos(z * 0.25 + ph), 0.45 * math.sin(z * 0.25 + ph), z]) for z in np.linspace(-34.0, 56.0, 160)]
+        M.add('Wood', 'wood', *rod(np.array(pts), 0.62, 10))
+    for z in (-30.0, -8.0, 12.0, 34.0, 52.0):
+        M.add('Silver', 'silver', *lathe([(z - 0.6, 1.0), (z - 0.4, 1.28), (z + 0.4, 1.28), (z + 0.6, 1.0)], 24))
+    M.add('Silver', 'silver', *lathe([(-36.0, 0.0), (-35.6, 0.6), (-34.4, 1.15), (-33.4, 1.1)], 20))
+    M.add('Silver', 'silver', *lathe([(55.0, 1.1), (56.0, 1.5), (57.2, 1.6), (57.6, 1.2), (57.7, 0.0)], 24))
+    # the crescent: an arc of silver rising either side, its horns curling in over the orb
+    oc = np.array([0, 0, 64.5])
+    arc = [oc + np.array([6.2 * math.sin(a), 0.0, -6.2 * math.cos(a)]) for a in np.linspace(-2.45, 2.45, 44)]
+    M.add('Silver', 'silver', *rod(np.array(arc), 1.25 * (1 - np.abs(np.linspace(-1, 1, 44)) ** 2) * 0.85 + 0.2, 12))
+    M.add('Silver', 'silver', *rod(np.array([np.array([0, 0, 57.5]), oc + np.array([0, 0, -6.2])]), 0.85, 12))
+    fx = Fx()
+    V, F = g.sphere(oc, 3.9, 30, 15)
+    fx.mesh(f'DreamOrb tex={FX["swirl"]} color=0.6,0.35,1,1 scale=2.2 blend=add falloff=1 uscroll=1.5 vscroll=2.5', [p for p, uu, vv, n in V], [n for p, uu, vv, n in V], [(uu, vv) for p, uu, vv, n in V], F)
+    V, F = g.sphere(oc, 2.8, 24, 12)
+    fx.mesh(f'DreamCore tex={FX["swirl"]} color=0.8,0.6,1,1 scale=2.0 blend=add falloff=1 uscroll=-2.5 vscroll=-3.5', [p for p, uu, vv, n in V], [n for p, uu, vv, n in V], [(uu * 2, vv) for p, uu, vv, n in V], F)
+    fx.card('OrbCore', FX['core'], oc, 3.6, '0.75,0.55,1,1', 2.0, (4, 4, 7, 0))
+    fx.card('OrbHalo', FX['glow'], oc, 9.5, '0.55,0.3,1,0.45', 0.9)
+    fx.sheath('DreamSmoke', f'tex={FX["swirl"]} color=0.5,0.3,0.85,0.4 scale=1.2 blend=add falloff=1 uscroll=1.2 vscroll=-1.6', 30.0, 66.0, 2.2, 4.6, 18, 12, 2.0)
+    mats = {'silver': f'diffuse={sD} normal={sN} spec=0.7 gloss=28 alpha=0 doublesided=0',
+            'wood': f'diffuse={wD} normal={wN} spec=0.25 gloss=14 alpha=0 doublesided=0'}
+    return finish(M, 'vokun_dreamstaff', mats, fx.L, 'WeaponStaff')
+
+
+def morokei(texonly=False):
+    """(Morokei of Labyrinthian - "Arcane maul", runed warhammer) a two-handed maul: a great head of grey stone bound in
+    dark steel, every face of it cut with runes that glow arcane blue, a blue crystal set in each end; the haft of dark
+    steel wound with rune-bands and leather. Magicka swirls slowly round the head."""
+    rn = sheet_runes(2048, 0.7, 141, 140, 16)
+    stD, stN = metal_tex('moro_stone', (110, 112, 118), dark=0.7, etch=rn, seed=142)
+    stG = glow_tex('moro_stone_g.dds', (110, 180, 255), rn)
+    iD, iN = metal_tex('moro_steel', (74, 78, 86), dark=0.85, seed=143)
+    lD, lN = leather_tex('moro_leather', (36, 34, 40), seed=144)
+    M = Mesh()
+    M.add('Steel', 'steel', *lathe([(-22.0, 0.0), (-22.0, 1.0), (-21.4, 1.25)] + [(z, 0.98) for z in np.linspace(-21.0, 44.0, 10)] + [(44.5, 1.1)], 24))
+    grip_wrap(M, 'leather', -18.0, -3.0, 1.06, 1.15)
+    grip_wrap(M, 'leather', 3.5, 12.0, 1.06, 1.15)
+    for z in (-22.3, -18.4, -2.6, 3.0, 12.4, 20.0, 28.0, 36.0):
+        M.add('Steel', 'steel', *lathe([(z - 0.55, 1.05), (z - 0.4, 1.35), (z + 0.4, 1.35), (z + 0.55, 1.05)], 24))
+    hc = np.array([0.0, 0.0, 47.0])
+    head0 = len(M.groups)
+    M.add('Stone', 'stone', *superbox(hc, 6.6, 3.6, 3.6, 4.2, 48, 24))
+    for sx in (-1, 1):   # (steel straps round the head, and a crystal set in each end)
+        M.add('Steel', 'steel', *superbox(hc + np.array([sx * 3.6, 0, 0]), 0.6, 3.85, 3.85, 6.0, 20, 10))
+        M.add('Steel', 'steel', *superbox(hc + np.array([sx * 6.4, 0, 0]), 0.5, 2.6, 2.6, 5.0, 20, 10))
+        P, N, UV, F = g.axis_lathe([(0.0, 1.5), (0.9, 1.3), (1.9, 0.6), (2.5, 0.0)], hc + np.array([sx * 6.7, 0, 0]), np.array([sx, 0, 0]), 6)
+        M.add('Crystal', 'crystal', P, N, UV * [0.3, 0.3], F)
+    M.add('Steel', 'steel', *superbox(hc + np.array([0, 0, -4.0]), 1.8, 1.8, 0.9, 4.0, 16, 8))
+    grow(M, head0, hc, 1.55, 2.5)
+    hc = hc + np.array([0, 0, 2.5])
+    fx = Fx()
+    fx.sheath('Magicka', f'tex={FX["swirl"]} color=0.45,0.7,1,0.45 scale=1.3 blend=add falloff=1 uscroll=4 vscroll=1.8', 40.0, 59.0, 12.5, 11.0, 24, 8, 1.2)
+    fx.sheath('MagickaMotes', f'tex={FX["motes"]} color=0.5,0.75,1,0.8 scale=1.6 blend=add uscroll=6 vscroll=-3', 39.0, 61.0, 14.0, 12.0, 26, 8, 2.0)
+    for sx in (-1, 1):
+        fx.card(f'CrystalGlow{"L" if sx < 0 else "R"}', FX['glow'], tuple(hc + np.array([sx * 13.0, 0, 0])), 5.5, '0.5,0.75,1,0.6', 1.1)
+    cD = save(np.dstack([np.full((256, 256), 120.0), np.full((256, 256), 180.0), np.full((256, 256), 250.0)]) * (0.8 + 0.2 * tileable(256, 256, 1.0, 145)[..., None]), 'moro_crystal_d.dds')
+    mats = {'stone': f'diffuse={stD} normal={stN} glow={stG} emit=0.45,0.7,1 emitmult=1.8 spec=0.35 gloss=18 alpha=0 doublesided=0',
+            'steel': f'diffuse={iD} normal={iN} spec=0.55 gloss=24 alpha=0 doublesided=0',
+            'crystal': f'diffuse={cD} normal={iN} glow={cD} emit=0.5,0.75,1 emitmult=1.4 spec=2.5 gloss=200 alpha=0 doublesided=0',
+            'leather': f'diffuse={lD} normal={lN} spec=0.2 gloss=12 alpha=0 doublesided=0'}
+    return finish(M, 'morokei_maul', mats, fx.L, 'WeaponBack')
+
+
+WEAPONS = {'zahkriisos': zahkriisos, 'vahlok': vahlok, 'nahkriin': nahkriin, 'volsung': volsung, 'otar': otar, 'rahgot': rahgot,
+           'krosis': krosis, 'hevnoraak': hevnoraak, 'vokun': vokun, 'morokei': morokei}
 
 if __name__ == '__main__':
     WORK.mkdir(parents=True, exist_ok=True)
