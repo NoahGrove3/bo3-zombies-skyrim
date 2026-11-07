@@ -4195,6 +4195,8 @@ namespace bo3z
 			std::function<void(RE::Actor*)> touch; std::function<void(const RE::NiPoint3&)> burst; std::unordered_set<RE::FormID> seen;
 			float size = 1.0f; int fec = 0; bool dragons = false, noPull = false;   // (its size; how its dead die; twice the harm to dragons)
 			float trail = 0;   // (the time to the next of what it leaves burning on the ground behind it)
+			bool  follow = false, push = false;   // (on you the whole while; the dead thrown out, not drawn in)
+			std::unordered_map<RE::FormID, float> thrown;   // (push: when each was last thrown)
 		};
 		std::vector<Cyclone> g_cyclones;
 		void FireCyclone(const RE::NiPoint3& a_from, const RE::NiPoint3& a_fwd, float a_dist, float a_life, float a_share,
@@ -4209,7 +4211,8 @@ namespace bo3z
 			if (g_cyclones.size() > 4) return;
 			Cyclone c{ WorldFx(a_s.model), a_s.from, a_s.fwd, a_s.from, a_s.dist, std::max(0.3f, a_s.life), a_s.share };
 			c.touch = std::move(a_s.touch), c.burst = std::move(a_s.burst);
-			c.size = std::max(0.1f, a_s.size), c.fec = a_s.fec, c.dragons = a_s.dragons, c.noPull = a_s.noPull;
+			c.size = std::max(0.1f, a_s.size), c.fec = a_s.fec, c.dragons = a_s.dragons, c.noPull = a_s.noPull || a_s.push;
+			c.follow = a_s.follow, c.push = a_s.push;
 			if (c.fx.ok) g_cyclones.push_back(std::move(c));
 			else logger::warn("cyclone: {} has no look", a_s.model);
 		}
@@ -4223,6 +4226,7 @@ namespace bo3z
 				c.t += a_delta;
 				const float f = std::min(1.0f, c.t / c.life), go = 1.0f - std::pow(1.0f - f, 1.6f);
 				c.at = c.from + c.fwd * (c.dist * go);
+				if (c.follow) if (auto* pl = RE::PlayerCharacter::GetSingleton()) c.at = pl->GetPosition();
 				if (float land = 0; RE::TES::GetSingleton()->GetLandHeight(c.at, land) && std::abs(land - c.at.z) < 160.0f) c.at.z = land;
 				if (world) {
 					RE::NiMatrix3 spin;
@@ -4232,7 +4236,7 @@ namespace bo3z
 				}
 				// (Noah: "hyper realistic ... in the element") the ground it passes over left burning in its element - Skyrim's own real
 				// fire, frost, light (fxmap.ini cyclone_<element>_trail.nif), every third of a second
-				if ((c.trail -= a_delta) <= 0) {
+				if (!c.follow && (c.trail -= a_delta) <= 0) {
 					c.trail = 0.33f;
 					static std::unordered_map<std::string, std::string> trails;
 					auto [it, fresh] = trails.try_emplace(c.fx.model);
@@ -4252,6 +4256,13 @@ namespace bo3z
 					if (d > 55.0f && !c.noPull) {   // (dragged in, harder the nearer)
 						pos += to * (std::min(d - 45.0f, 560.0f * (1.0f + 1.5f * (1.0f - d / pull)) * a_delta) / d);
 						a->SetPosition(pos, true);
+					}
+					if (c.push) {   // (a tornado turned outward: each that comes near thrown off it - again if it comes back after a second)
+						if (auto it = c.thrown.find(a->GetFormID()); (it == c.thrown.end() || c.t - it->second > 1.0f) && d < pull) {
+							c.thrown[a->GetFormID()] = c.t;
+							if (c.touch) c.touch(a);
+						}
+						continue;
 					}
 					if (d < 260.0f * c.size && c.seen.insert(a->GetFormID()).second && c.touch) c.touch(a);
 				}

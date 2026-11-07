@@ -564,8 +564,21 @@ namespace Props
 		const bool  killed = Damage(a_z, base * BaneMult() * (a_power ? 2.0f : 1.0f), false, true);
 		if (killed && p) BaneKilled(p);
 		if (!p) return;
-		// (Noah: "Alduin's Bane - the same moves for any class") every class: the wind slash from each swing (BaneWind), the souls
 		(void)cls, (void)at;
+		// (Noah: "Each light attack hit landed on an enemy should call a meteor from the sky and land on where the enemy was
+		// struck" - "Meteor only", "Large") every light blow that lands calls one of the great meteors (the 20 souls' rain's size)
+		// down on the one struck, chasing it; where it lands the dead round it are struck hard (the heavy: BaneWind's tornado)
+		if (!a_power && !killed) {
+			Gun::MeteorAt(a_z, false, 1.2f, [](const RE::NiPoint3& hit) {
+				Gun::MeteorImpact(hit, false, 0.9f);
+				g_zones.push_back({ 4, hit, 260.0f, 0.15f, 0.0f, FangBase() * BaneMult() * 1.5f, 0, false, 0 });
+			});
+		} else if (!a_power) {
+			Gun::Meteor(at, false, 1.2f, [](const RE::NiPoint3& hit) {   // (the one struck already dead: the meteor still falls where it stood)
+				Gun::MeteorImpact(hit, false, 0.9f);
+				g_zones.push_back({ 4, hit, 260.0f, 0.15f, 0.0f, FangBase() * BaneMult() * 1.5f, 0, false, 0 });
+			});
+		}
 	}
 	// the Ranger's wind slash: a crescent of wind down the line from every swing - hit or not - that hurls the dead far away
 	// (Noah: "for Alduin's Bane and the Dragon Slayer, their light attacks should be a close-range area of damage, and the
@@ -596,52 +609,28 @@ namespace Props
 		const auto now = std::chrono::steady_clock::now();
 		if (now - last < std::chrono::milliseconds(200)) return;   // (one swing heard from both bodies)
 		last = now;
-		if (!a_power) {
-			const RE::NiPoint3 dir = Gun::SwingDir();
-			Gun::SlashSpec sl;
-			sl.model = "CurseOfAlduin\\fx\\arc_bane.nif";
-			sl.from = Gun::SwingFrom();
-			sl.dir = dir;
-			sl.roll = Gun::SwingRoll(dir);
-			sl.speed = 1800.0f, sl.range = 1800.0f, sl.radius = 150.0f, sl.scale = 1.3f;
-			sl.damage = FangBase() * BaneMult();   // (Noah: "the same damage as the swords light attack") its own light blow (FangHit)
-			sl.flingKill = 20.0f;                  // (the ones it kills go flying - the Bane's far)
-			sl.onHit = [](RE::Actor* a, bool killed) {
-				auto* pl = RE::PlayerCharacter::GetSingleton();
-				// (Noah: "there is a delay with the wind animation. Enemies fly away before the wind explosion goes off") the wind
-				// bursts on each one it strikes, the moment it strikes - as they're thrown, not after
-				if (a) Gun::ElemBurst(3, a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, 0.45f, 0.0f, 0.4f);
-				if (a && pl && killed) BaneKilled(pl);
-			};
-			Gun::Slash(sl);
-			return;
-		}
-		// (Noah: "Dragon shout blast" - "a huge Unrelenting Force shockwave in a cone, flinging all the dead far away") the heavy
-		// swing: the Thu'um itself - Skyrim's Unrelenting Force wave, huge, tearing down the line before you and throwing every
-		// one of the dead it meets far away
-		{
-			const RE::NiPoint3 dir = Gun::SwingDir();
-			Gun::SlashSpec sl;
-			sl.model = "CurseOfAlduin\\fx\\bane_shout.nif";
-			sl.from = Gun::SwingFrom();
-			sl.dir = dir;
-			sl.roll = 0.0f;
-			sl.speed = 2400.0f, sl.range = 1500.0f, sl.radius = 340.0f, sl.scale = 1.6f;
-			sl.share = 0.0f, sl.damage = FangBase() * BaneMult() * 2.4f;
-			sl.flingKill = 26.0f;
-			const RE::NiPoint3 me = p->GetPosition();
-			sl.onHit = [me](RE::Actor* a, bool killed) {
-				auto* pl = RE::PlayerCharacter::GetSingleton();
-				if (!a) return;
-				if (!killed) Spellcraft::Fling(a, me - RE::NiPoint3{ 0, 0, 80.0f }, 18.0f);   // (the living thrown too)
-				else if (pl) BaneKilled(pl);
-			};
-			Gun::Slash(sl);
-			Gun::FxBlast("shoutarea", p->GetPosition() + dir * 120.0f);
-			Gun::BlastSound("shoutarea", p->GetPosition(), 1.0f);
-			logger::info("swords: Alduin's Bane - the Thu'um");
-			return;
-		}
+		if (!a_power) return;   // (Noah: the light attack is the meteor on each hit - FangHit; no slash)
+		// (Noah: "Heavy attack should be a bright white tornado that flings enemies away instead of sucking them in. The reverse
+		// effects of a tornado" - "Around you") a power attack raises a white whirlwind on you for 5 s: every one of the dead that
+		// comes near is thrown far off it (again if it comes back), struck as it goes, and those in its heart hurt each beat
+		Gun::CycloneSpec cs;
+		cs.model = "CurseOfAlduin\\fx\\cyclone_bane.nif";
+		cs.from = p->GetPosition(), cs.fwd = { 0, 1, 0 };
+		cs.dist = 0.0f, cs.life = 5.0f, cs.size = 1.0f;
+		cs.share = 0.03f;
+		cs.fec = -1;
+		cs.follow = true, cs.push = true;
+		cs.touch = [](RE::Actor* a) {
+			auto* pl = RE::PlayerCharacter::GetSingleton();
+			if (!a || !pl || a->IsDead()) return;
+			Gun::ElemBurst(4, a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, 0.5f, 0.0f, 0.4f);
+			const bool killed = Damage(a, FangBase() * BaneMult() * 1.2f, false, false, true);
+			Spellcraft::Fling(a, pl->GetPosition() - RE::NiPoint3{ 0, 0, 80.0f }, killed ? 26.0f : 20.0f);
+			if (killed) BaneKilled(pl);
+		};
+		Gun::ElemCyclone(std::move(cs));
+		Gun::BlastSound("lightmassive", p->GetPosition(), 0.7f);
+		logger::info("bane: the white whirlwind");
 	}
 	// (Noah: "the dragon slayer sword ... is supposed to send lightning slashes similar to Alduin's Bane but not as strong in
 	// damage") the Spellsword's wonder: every swing looses a crescent of lightning down the line - a power attack a wider,

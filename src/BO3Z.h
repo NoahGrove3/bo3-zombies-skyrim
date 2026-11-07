@@ -827,6 +827,7 @@ namespace bo3z
 		{
 			std::string model; RE::NiPoint3 from, fwd; float dist, life, share, size = 1.0f; int fec = 0; bool dragons = false; bool noPull = false;   /* (a blizzard: it stands, it doesn't drag the dead in) */
 			std::function<void(RE::Actor*)> touch; std::function<void(const RE::NiPoint3&)> burst;
+			bool follow = false, push = false;   /* (Alduin's Bane: it spins on you, and throws the dead out rather than drawing them in) */
 		};
 		void                  ElemCyclone(CycloneSpec a_s);
 		// (Noah: the Mutagen Gauntlet "shoot a beam coming from the palm/glass ball while holding attack") its state, set by
