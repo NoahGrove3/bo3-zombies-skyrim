@@ -799,8 +799,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			const std::string sub = Classes::Switching() ? "Switching costs " + Num(Classes::SwitchCost()) + " Cursed Essence. Your gear and spells stay with you."
 			                                             : "Each player picks their own path. Duplicates are allowed.";
 			TxtC(dl, g_body, 20 * k, size.x * 0.5f, size.y * 0.12f + 58 * k, IM_COL32(210, 200, 180, 230), sub);
-			const float small = 296 * k, big = 432 * k, gap = 26 * k, chS = 400 * k, chB = 480 * k;
-			const float total = small * 3 + big + gap * 3;
+			const float cwS = 296 * k, cwB = 432 * k, gap = 26 * k, chS = 400 * k, chB = 480 * k;
+			const float total = cwS * 3 + cwB + gap * 3;
 			const float x0 = size.x * 0.5f - total * 0.5f, cy0 = size.y * 0.5f + 20 * k;
 			const int   cur = Classes::Get();
 			static ImVec2 lastMouse{ -1, -1 };
@@ -817,8 +817,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			for (const float e : ease) wsum += e;
 			const float norm = 1.0f / std::max(1.0f, wsum);
 			float xs[5];
-			xs[0] = x0 + (big - small) * std::max(0.0f, 1.0f - wsum) * 0.5f;
-			for (int i = 0; i < 4; ++i) xs[i + 1] = xs[i] + small + (big - small) * ease[i] * norm + gap;
+			xs[0] = x0 + (cwB - cwS) * std::max(0.0f, 1.0f - wsum) * 0.5f;
+			for (int i = 0; i < 4; ++i) xs[i + 1] = xs[i] + cwS + (cwB - cwS) * ease[i] * norm + gap;
 			// the mouse: the card under it takes the focus (keys and pad move it too)
 			if (moved && !g_padLast) {
 				for (int i = 0; i < 4; ++i) {
@@ -876,10 +876,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				if (i == cur) TxtC(dl, g_body, 15 * k, cx, a.y + 74 * k + (eo > 0.35f ? 20 * k : 0.0f), IM_COL32(255, 210, 110, 255), "YOUR CLASS");
 			}
 			if (!g_padLast && m.x >= 0) DrawPingCursor(dl, m, k, now, false);
-			const float ch = chB, y0 = cy0 - ch * 0.5f;
-			const std::string hint = g_padLast ? (Classes::Switching() ? "D-pad  choose      A  take this path      B  keep yours" : "D-pad  choose      A  take this path      B  not yet")
-			                                   : (Classes::Switching() ? "1-4 or Left / Right  choose      Enter  take this path      Esc  keep yours" : "1-4 or Left / Right  choose      Enter  take this path      Esc  not yet");
-			TxtC(dl, g_body, 19 * k, size.x * 0.5f, y0 + ch + 40 * k, IM_COL32(230, 220, 200, 240), hint);
+			// (Noah: "remove the control directions under the classes") no key hints under the cards
 		}
 
 
