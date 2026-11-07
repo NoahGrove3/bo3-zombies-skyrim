@@ -464,7 +464,6 @@ namespace bo3z::Classes
 			if (a_to >= 0 && a_to < 4 && !g_kit[a_to]) GiveKit(a_to);   // (a class's starter kit the first time - added to what you carry)
 			MergeStashes();
 		}
-		}
 	}
 
 	// ---- (Noah: each class its own wonder weapon, mid and end game) never rolled: (Noah: "make the wonders harder to
