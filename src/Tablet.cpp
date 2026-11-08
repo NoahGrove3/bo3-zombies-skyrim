@@ -124,8 +124,8 @@ namespace bo3z::Tablet
 			auto* right = RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F42);
 			for (const bool left : { false, true }) {   // whatever the hands held goes back to the pack
 				if (auto* o = p->GetEquippedObject(left)) {
-					if (auto* sp = o->As<RE::SpellItem>()) em->UnEquipSpell(p, sp, left ? 0 : 1);
-					else if (auto* b = o->As<RE::TESBoundObject>()) em->UnequipObject(p, b, nullptr, 1, nullptr, false, true, false, true);
+					// (a spell in hand is simply replaced by what is equipped over it)
+					if (auto* b = o->As<RE::TESBoundObject>()) em->UnequipObject(p, b, nullptr, 1, nullptr, false, true, false, true);
 				}
 			}
 			if (auto* sp = f->As<RE::SpellItem>()) {
