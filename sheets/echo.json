@@ -18,9 +18,9 @@
   },
   {
    "id": "wolfcrown",
-   "label": "Mutagen Gauntlet",
+   "label": "Mutagen Staff",
    "color": "FFD24A",
-   "text": "A flask of molten gold. Where it shatters a gold cloud hangs: the dead inside are gilded and torn apart, and each one that dies in it drops extra Cursed Essence. Wider and longer once the three dragons fall.",
+   "text": "The Mutagen Staff. Its orb is fed by six vials of the elements: hold attack to loose a beam that pierces the dead, pouring each vial in turn for 5 seconds; let go and the emptied vials refill.",
    "cls": "Alchemist"
   },
   {

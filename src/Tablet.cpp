@@ -360,6 +360,7 @@ namespace bo3z::Tablet
 		const auto now = std::chrono::steady_clock::now();
 		if (now - last < std::chrono::milliseconds(150)) return;   // (one swing cutting several: one use)
 		last = now;
+		if (Gun::TestKitOn()) return;   // (the test kit's: they never wear)
 		if (--g_uses <= 0) Break(); else Rename(g_held, g_uses);
 	}
 	void CastPower();
@@ -373,6 +374,7 @@ namespace bo3z::Tablet
 		else if (t == 5) if (auto* w = f->As<RE::TESObjectWEAP>(); w && w->formEnchanting && w->formEnchanting->GetFormID() == a_spell) mine = true;
 		if (!mine) return;
 		CastPower();
+		if (Gun::TestKitOn()) return;   // (the test kit's: they never wear)
 		if (--g_uses <= 0) Break(); else Rename(g_held, g_uses);
 	}
 
@@ -586,10 +588,30 @@ namespace bo3z::Tablet
 	// (Noah: "on death") falling takes it
 	void OnFell()
 	{
-		if (g_held < 0) return;
+		if (g_held < 0 || Gun::TestKitOn()) return;   // (the test kit keeps them)
 		TakeAway(g_held);
 		Hud::Banner(std::string(gen::kTabletWeapons[g_held].label) + " is lost", 3.0f);
 		g_held = -1, g_uses = 0;
+	}
+	// (Noah: the test kit - "include the tablet items") every donated weapon in your pack (the Codex learned), 200 of the
+	// bows' arrows; equip one to try it (Tick)
+	void DevKit()
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (!p) return;
+		int n = 0;
+		for (int i = 0; i < static_cast<int>(gen::kTabletWeapons.size()); ++i) {
+			auto* f = FormOf(i);
+			if (!f) continue;
+			Rename(i, gen::kTabletWeapons[i].uses);
+			if (auto* sp = f->As<RE::SpellItem>()) { if (!p->HasSpell(sp)) p->AddSpell(sp); }
+			else if (auto* b = f->As<RE::TESBoundObject>(); b && p->GetItemCount(b) <= 0) p->AddObjectToContainer(b, nullptr, 1, nullptr);
+			++n;
+		}
+		if (auto* ar = Forms::Ours(gen::kTabletArrow) ? Forms::Ours(gen::kTabletArrow)->As<RE::TESBoundObject>() : nullptr; ar && p->GetItemCount(ar) < 200) {
+			p->AddObjectToContainer(ar, nullptr, 200 - p->GetItemCount(ar), nullptr);
+		}
+		logger::info("testkit: the Tablet's {} donated weapons", n);
 	}
 	bool IsTablet(const RE::TESForm* a_w) { return a_w && g_held >= 0 && FormOf(g_held) == a_w; }
 	bool IsTabletSpell(const RE::TESForm* a_f)
@@ -661,8 +683,31 @@ namespace bo3z::Tablet
 		}
 		if (ref && ref->Is3DLoaded() && ref->GetPosition().GetDistance(p->GetPosition()) < 6000.0f) Animate(ref, a_delta);
 		TickBook(p);
+		// (Noah: the test kit has every donated weapon) whichever of them you equip is the one carried - its power, the Codex
+		// on your palm, the fists' gloves - at its full uses, never wearing
+		if (Gun::TestKitOn() && !ItemMenusOpen()) {
+			for (int i = 0; i < static_cast<int>(gen::kTabletWeapons.size()); ++i) {
+				auto* f = FormOf(i);
+				if (!f || i == g_held || (p->GetEquippedObject(false) != f && p->GetEquippedObject(true) != f)) continue;
+				if (g_held >= 0) {   // (the one before: its gloves off, the weapon kept)
+					if (auto* gl = GlovesOf(g_held); gl && p->GetItemCount(gl) > 0) p->RemoveItem(gl, p->GetItemCount(gl), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+				}
+				g_held = i, g_uses = gen::kTabletWeapons[i].uses;
+				Rename(i, g_uses);
+				if (auto* gl = GlovesOf(i)) {
+					Forms::Give(p, gl, 1);
+					if (auto* em = RE::ActorEquipManager::GetSingleton()) em->EquipObject(p, gl, nullptr, 1, nullptr, false, false, false, true);
+				}
+				break;
+			}
+			if (g_held >= 0 && gen::kTabletWeapons[g_held].type == 4) {   // (its arrows kept full)
+				if (auto* ar = Forms::Ours(gen::kTabletArrow) ? Forms::Ours(gen::kTabletArrow)->As<RE::TESBoundObject>() : nullptr; ar && p->GetItemCount(ar) < 20) {
+					p->AddObjectToContainer(ar, nullptr, gen::kTabletWeapons[g_held].uses, nullptr);
+				}
+			}
+		}
 		// a donated bow's uses are its arrows; a weapon you no longer have (sold, dropped, a load) is let go
-		if (g_held >= 0) {
+		if (g_held >= 0 && !Gun::TestKitOn()) {
 			auto* f = FormOf(g_held);
 			if (gen::kTabletWeapons[g_held].type == 4) {
 				auto* ar = Forms::Ours(gen::kTabletArrow) ? Forms::Ours(gen::kTabletArrow)->As<RE::TESBoundObject>() : nullptr;

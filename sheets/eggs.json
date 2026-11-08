@@ -7,7 +7,7 @@
    "cls": "summoner",
    "title": "The Wyrm's Calling",
    "reward": "wonder",
-   "rewardText": "The Greybeards call you to High Hrothgar: the Horn of the Spectral Wyrm waits on its pedestal in the Reliquary.",
+   "rewardText": "The Greybeards call you to High Hrothgar: the Call of the Violet Wyrm waits in the great hall.",
    "steps": [
     {
      "type": "touch",
@@ -121,7 +121,7 @@
    "cls": "destruction",
    "title": "The Six Fires",
    "reward": "wonder",
-   "rewardText": "The Greybeards call you to High Hrothgar: the Tome of the Six Fires waits on its pedestal in the Reliquary.",
+   "rewardText": "The Greybeards call you to High Hrothgar: the Staff of Magnus waits in the great hall.",
    "steps": [
     {
      "type": "touch",
@@ -235,7 +235,7 @@
    "cls": "ranger",
    "title": "The Philosopher's Stone",
    "reward": "wonder",
-   "rewardText": "The Greybeards call you to High Hrothgar: the Mutagen Gauntlet waits on its pedestal in the Reliquary.",
+   "rewardText": "The Greybeards call you to High Hrothgar: the Mutagen Staff waits in the great hall.",
    "steps": [
     {
      "type": "touch",
@@ -349,7 +349,7 @@
    "cls": "spellsword",
    "title": "The Slayer's Oath",
    "reward": "wonder",
-   "rewardText": "The Greybeards call you to High Hrothgar: Dragon Slayer waits on its pedestal in the Reliquary.",
+   "rewardText": "The Greybeards call you to High Hrothgar: the Dragon Slayer waits in the great hall.",
    "steps": [
     {
      "type": "kills",
