@@ -1184,7 +1184,7 @@ namespace bo3z::gen
 	inline constexpr int kPerk_spellbinder = 17;
 	inline constexpr int kPerk_spellguard = 18;
 	inline constexpr std::array<std::string_view, 19> kPerkDesc{ { "+50 maximum health.", "+50 maximum magicka.", "You move 15% faster.", "Elites and mini-bosses give twice the Cursed Essence.", "Below 25% health, you take 25% less damage.", "+15% Cursed Essence from kills.", "Your shouts recharge 25% faster.", "You can have one more summon out at a time.", "Your summons deal 25% more damage.", "When one of your summons dies it explodes, hurting the enemies around it.", "Every 3rd Destruction spell you cast is free.", "Enemies you kill with Destruction spells explode, hurting the enemies around them.", "Your magicka refills 40% faster.", "Your flasks' bursts reach 25% wider.", "You throw your flasks 25% faster.", "Enemies hit by one of your flasks take 15% more damage for 5 seconds.", "Each melee hit you land on an enemy heals you 5% of your maximum health.", "The spell carried on your blade hits 25% harder.", "Blocking costs no stamina." } };
-	inline constexpr int kMaxPerks = 9;
+	inline constexpr int kMaxPerks = 5;
 	inline constexpr std::array<int, 19> kPerkClass{ { -1, -1, -1, -1, -1, -1, -1, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3 } };  // the class a perk belongs to (-1: every class)
 	inline constexpr std::string_view kText_mode = "The Curse of Alduin";
 	inline constexpr std::string_view kText_tagline = "Every night the dead rise. Every night, more of them.";

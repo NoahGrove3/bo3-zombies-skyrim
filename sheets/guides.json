@@ -40,7 +40,7 @@
       "<b>Bonebinder's Brew</b> - your summons have 30% more health and deal 30% more damage.",
       "<b>Soul-Tether Wine</b> - each time one of your summons kills an enemy, you heal 3% of your maximum health.",
       "<b>Conjurer's Command Mead</b> - one more summon slot (up to 4).",
-      "Up to nine perks at once, 3,000 each. They stay through death; a taken perk can be refunded at the altar for half."
+      "Up to five perks at once, 3,000 each. They stay through death; a taken perk can be refunded at the altar for half."
      ]
     },
     {
@@ -83,7 +83,7 @@
       "<b>Ember Heart Ale</b> - Destruction kills burst and hurt the dead nearby.",
       "<b>Arcanist's Focus Tea</b> - Destruction spells cost 25% less magicka.",
       "<b>Mana-Siphon Draught</b> - each Destruction kill gives back 4% magicka.",
-      "Up to nine perks at once, 3,000 each. They stay through death; a taken perk can be refunded at the altar for half."
+      "Up to five perks at once, 3,000 each. They stay through death; a taken perk can be refunded at the altar for half."
      ]
     },
     {
@@ -128,7 +128,7 @@
       "<b>Volatile Tincture</b> - your flasks' bursts reach 25% wider.",
       "<b>Quickhand Elixir</b> - you throw your flasks 25% faster.",
       "<b>Philter of Iron Skin</b> - the dead hurt you 20% less.",
-      "Up to nine perks at once, 3,000 each. They stay through death; a taken perk can be refunded at the altar for half."
+      "Up to five perks at once, 3,000 each. They stay through death; a taken perk can be refunded at the altar for half."
      ]
     },
     {
@@ -171,7 +171,7 @@
       "<b>Bladesong Mead</b> - each melee hit heals you 1.5%.",
       "<b>Spellbinder's Draught</b> - melee kills give back 6% magicka.",
       "<b>Steel-Wind Ale</b> - melee swings 15% faster.",
-      "Up to nine perks at once, 3,000 each. They stay through death; a taken perk can be refunded at the altar for half."
+      "Up to five perks at once, 3,000 each. They stay through death; a taken perk can be refunded at the altar for half."
      ]
     },
     {

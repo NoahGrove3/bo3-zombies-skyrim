@@ -151,13 +151,14 @@ namespace bo3z
 			return true;
 		}
 
-		// (Noah: "the perks as well for classes when switching to another class") a class you leave keeps its brews: they
-		// come off you (what they added taken back) and are handed back when you play that class again
+		// (Noah: "the perks as well for classes when switching to another class"; "the universal perks should stay when
+		// switching classes") a class you leave keeps its own brews: they come off you and are handed back when you play that
+		// class again; the shared brews stay on you
 		std::vector<std::uint8_t> TakeAll()
 		{
 			std::vector<std::uint8_t> v(gen::kPerks.size(), 0);
 			for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) {
-				if (N(i) <= 0) continue;
+				if (N(i) <= 0 || gen::kPerkClass[i] < 0) continue;
 				Apply(i, -1);
 				Save::SetPerkStacks(i, 0);
 				v[i] = 1;

@@ -1846,7 +1846,7 @@ namespace bo3z
 				Perks::Refund(perk);
 				return;
 			}
-			int held = 0;  // (Noah: "make 9 the max amount of perks to hold at once")
+			int held = 0;  // (Noah: "change the perk limit to 5")
 			for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) {
 				held += Save::PerkStacks(i) > 0 ? 1 : 0;
 			}
