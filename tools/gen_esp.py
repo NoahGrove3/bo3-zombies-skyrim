@@ -241,6 +241,55 @@ for _town, (pk, plabel, pmodel, pkind, pdmg, ptext) in PRIEST_WEAPONS.items():
             if pkind != 'bow': b[0] = anim; struct.pack_into('<ff', b, 4, spd, reach)
         subs.append(sub(name, bytes(b)))
     recs['WEAP'].append(record('WEAP', fid('WEAP', 'priest_' + pk), subs))
+# (Noah: the Tablet of Mysteries) its donated weapons (sheet: tablet): Skyrim's own swings for each kind; the fists a hand-to-
+# hand weapon (punches, nothing in the hand); the staffs on the staff's record (their casts are ours); the Codex a hand
+# spell (its casts are ours, src/Tablet.cpp); the bows' arrows are their uses. Lost if you fall.
+TB_KIND = dict(PW_KIND, mace=('weap_daedricmace', 4, 0.9, 1.0, 14.0, (0x01E714, 0x08F958)), fists=('weap_daedricdagger', 0, 1.0, 0.7, 1.0, (0x01E712,)),
+               staff=('weap_staff', 8, 1.0, 1.0, 8.0, (0x01E716, 0x08F958)))
+for w in S['tablet']['rows']:
+    if w['type'] == 'book': continue
+    tmpl, anim, spd, reach, wt, kws = TB_KIND[w['type']]
+    desc = w['power'] + ' ' + w['owner'] + ' Donated to the Tablet of Mysteries. Worn with use, and lost if you fall.'
+    subs = []
+    for name, hx in T[tmpl]['subs']:
+        b = bytearray(bytes.fromhex(hx))
+        if name == 'EDID': b = z('UN_Tablet_' + w['id'])
+        elif name == 'FULL': b = z(w['label'])
+        elif name == 'MODL':
+            if not w['model']: continue
+            b = z(w['model'])
+        elif name in ('MODT', 'EAMT', 'BIDS', 'BAMT', 'INAM'): continue
+        elif name == 'EITM' and w['type'] != 'staff': continue
+        elif name == 'KSIZ': b = struct.pack('<I', len(kws))
+        elif name == 'KWDA': b = struct.pack(f'<{len(kws)}I', *kws)
+        elif name == 'DESC': b = z(desc)
+        elif name == 'WNAM': continue
+        elif name == 'DATA': b = struct.pack('<IfH', 0, wt, 20)
+        elif name == 'DNAM':
+            if w['type'] not in ('bow', 'staff'): b[0] = anim; struct.pack_into('<ff', b, 4, spd, reach)
+        subs.append(sub(name, bytes(b)))
+    recs['WEAP'].append(record('WEAP', fid('WEAP', 'tab_' + w['id']), subs))
+pd = bytearray(tsub('proj_arrow', 'DATA'))
+recs['PROJ'].append(record('PROJ', fid('PROJ', 'tab_arrow'), [
+    sub('EDID', z('UN_TabletArrowProj')), sub('OBND', tsub('proj_arrow', 'OBND')), sub('FULL', z('Donated Arrow')),
+    sub('MODL', z('Weapons\\Iron\\IronArrowProjectile.nif')), sub('DATA', bytes(pd)), sub('NAM1', b'\0'), sub('VNAM', tsub('proj_arrow', 'VNAM'))]))
+recs['AMMO'].append(record('AMMO', fid('AMMO', 'tab_arrow'), [
+    sub('EDID', z('UN_TabletArrow')), sub('OBND', tsub('ammo_iron', 'OBND')), sub('FULL', z('Donated Arrow')),
+    sub('MODL', z('Weapons\\Iron\\IronArrow.nif')), sub('YNAM', tsub('ammo_iron', 'YNAM')), sub('ZNAM', tsub('ammo_iron', 'ZNAM')),
+    sub('KSIZ', tsub('ammo_iron', 'KSIZ')), sub('KWDA', tsub('ammo_iron', 'KWDA')), sub('DATA', struct.pack('<IIfIf', fid('PROJ', 'tab_arrow'), 0x4, 12.0, 0, 0.0))]))
+for w in S['tablet']['rows']:
+    if w['type'] != 'book': continue
+    md = bytearray(tsub('mgef_firebolt', 'DATA'))
+    recs['MGEF'].append(record('MGEF', fid('MGEF', 'tab_' + w['id']), [
+        sub('EDID', z('UN_TabletMgef_' + w['id'])), sub('FULL', z(w['label'])), sub('MDOB', tsub('mgef_firebolt', 'MDOB')), sub('DATA', bytes(md)),
+        sub('DNAM', z(''))]))
+    sp = bytearray(tsub('spel_firebolt', 'SPIT'))
+    struct.pack_into('<I', sp, 0, 0)   # (no magicka: its pages are its cost)
+    recs['SPEL'].append(record('SPEL', fid('SPEL', 'tab_' + w['id']), [
+        sub('EDID', z('UN_Tablet_' + w['id'])), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z(w['label'])),
+        sub('MDOB', tsub('spel_firebolt', 'MDOB')), sub('ETYP', tsub('spel_firebolt', 'ETYP')),
+        sub('DESC', z(w['power'] + ' ' + w['owner'] + ' Donated to the Tablet of Mysteries. Worn with use, and lost if you fall.')),
+        sub('SPIT', bytes(sp)), sub('EFID', struct.pack('<I', fid('MGEF', 'tab_' + w['id']))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 # (Noah: the Summoner's new wonder, "Horn of the Violet Wyrm: an undead bone dragon that lands and fights beside you") a hand spell
 # at 100 magicka: src/Classes.cpp calls the dragon up itself (Skyrim's skeletal dragon) and keeps it on the ground
 sp = bytearray(tsub('spel_firebolt', 'SPIT'))

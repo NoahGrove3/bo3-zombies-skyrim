@@ -783,6 +783,14 @@ namespace bo3z
 		std::vector<std::uint8_t> State();             // (saved with the altars' rolls)
 		void SetState(const std::uint8_t* a_v, std::size_t a_n);
 		void Dev(std::string_view a_what, int a_town);
+		// the donated weapon you carry
+		void  OnHit(RE::FormID a_source);              // your blow landed (melee and fists: a use)
+		void  OnCast(RE::FormID a_spell);              // your cast (staffs and the Codex: a use)
+		void  OnFell();                                // (lost if you fall)
+		bool  IsTablet(const RE::TESForm* a_w);        // the donated weapon you carry?
+		bool  IsTabletSpell(const RE::TESForm* a_f);   // its spell (a staff's enchantment, the Codex)?
+		float Share();                                 // its blow's share of the night's health: one or two tiers over your sword
+		float Wear();                                  // its uses left 0..1 (-1: none carried)
 	}
 
 	namespace Shops
@@ -1039,6 +1047,8 @@ namespace bo3z
 			std::vector<std::array<float, 3>> freedAltars;  // the freed cities' Echo Altar map icons (world x, y, z): gold on the world map
 			bool                  tabletOn{ false };   // the Tablet of Mysteries: where it stands (its map icon)
 			std::array<float, 3>  tabletAt{};
+			float                 tabletWear{ -1.0f }; // the donated weapon's uses left 0..1 (-1: none) - its durability bar
+			std::string           tabletName;
 			int         trialDone{ 0 }, trialActive{ 0 }, trialSel{ 0 };
 			std::array<std::string, 5> trialDesc;
 			std::string trialCity, trialBoss, trialBossLine, trialLock;  // (trialLock: why the altar's trials are shut)

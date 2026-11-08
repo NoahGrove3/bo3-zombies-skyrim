@@ -86,6 +86,11 @@ def echo_ids(S):
     ids += [(k, 'arcane_' + n) for n in ('bolt', 'orb', 'tide', 'blade1', 'blade2', 'blade3') for k in ('MGEF', 'SPEL')]
     ids += [('MGEF', 'mutagencast'), ('ENCH', 'mutagenstaff')]
     ids += [('WEAP', 'priest_' + v[0]) for v in PRIEST_WEAPONS.values()]   # (Noah: the Dragon Priests' drops)
+    # (Noah: the Tablet of Mysteries) its donated weapons: a weapon each (the Codex: a hand spell and its effect), the bows'
+    # arrows, and the model shown rising out of the tablet
+    TB = S.get('tablet', {}).get('rows', [])
+    ids += [('WEAP', 'tab_' + w['id']) for w in TB if w['type'] != 'book'] + [(k, 'tab_' + w['id']) for w in TB if w['type'] == 'book' for k in ('SPEL', 'MGEF')]
+    ids += [('AMMO', 'tab_arrow'), ('PROJ', 'tab_arrow')]
     ids += [('MGEF', 'wyrmcall')]   # (Noah: the Violet Wyrm made a summon spell: its cast's effect)
     ids += [('WEAP', 'wyrmhorn')]   # (Noah: the Horn of the Violet Wyrm - "Held in hand")   # (Noah: the Mutagen Gauntlet made a staff: its beam held as Skyrim's staff cast)
     return ids
@@ -136,4 +141,6 @@ def dressing(S):
     records[('STAT', 'dragon_away')] = {'model': 'CurseOfAlduin\\fx\\dragon_away.nif', 'color': '', 'radius': 0}  # the glider's dragon, flying off
     records[('STAT', 'whirlwind')] = {'model': 'CurseOfAlduin\\fx\\whirlwind.nif', 'color': '', 'radius': 0}  # Bond II's Updraft shout: the whirlwind round you
     records[('STAT', 'rise_fx')] = {'model': S['dressing']['show']['riseFxModel'], 'color': '', 'radius': 0}
+    for w in S.get('tablet', {}).get('rows', []):   # (the Tablet of Mysteries: each weapon's model, shown rising out of it)
+        if w['model']: records[('STAT', 'tabshow_' + w['id'])] = {'model': w['model'], 'color': '', 'radius': 0}
     return records, pieces

@@ -1,0 +1,137 @@
+{
+  "sheet": "tablet",
+  "about": "(Noah) the Tablet of Mysteries' donated weapons (docs/TABLET_OF_MYSTERIES.md): worn = one tier above your class sword, battered = two; uses = hits / arrows / casts before it breaks; lost if you fall. model: a placeholder (Skyrim's own) until its own is made.",
+  "columns": [
+    "id",
+    "label",
+    "grade",
+    "type",
+    "uses",
+    "model",
+    "power",
+    "owner"
+  ],
+  "rows": [
+    {
+      "id": "stormknuckles",
+      "label": "Stormbound Knuckles",
+      "grade": "worn",
+      "type": "fists",
+      "uses": 350,
+      "model": "",
+      "power": "Brass knuckles wrapped round cracked storm gems. Every punch arcs lightning to 2 more of the dead; a heavy punch slams the ground in a ring of shock.",
+      "owner": "Left by a pit-fighter from Windhelm who never lost a bout.",
+      "verify": []
+    },
+    {
+      "id": "gravebell",
+      "label": "Gravebell Mace",
+      "grade": "worn",
+      "type": "mace",
+      "uses": 300,
+      "model": "Weapons\\Iron\\IronMace.nif",
+      "power": "A cracked temple bell on an iron pole. Every 5th hit tolls it, stunning the dead within 5 m.",
+      "owner": "Taken from a ruined temple of Arkay.",
+      "verify": []
+    },
+    {
+      "id": "saltrice",
+      "label": "Saltrice Sickle",
+      "grade": "worn",
+      "type": "dagger",
+      "uses": 320,
+      "model": "Weapons\\Iron\\IronDagger.nif",
+      "power": "A farmer's sickle crusted in salt. The dead it cuts take 30% more from everything for 4 seconds.",
+      "owner": "Left by a farmer from Rorikstead who held his field for nine nights.",
+      "verify": []
+    },
+    {
+      "id": "riverstone",
+      "label": "Riverstone Axe",
+      "grade": "worn",
+      "type": "battleaxe",
+      "uses": 240,
+      "model": "Weapons\\Iron\\IronBattleAxe.nif",
+      "power": "A waterlogged axe, its haft swollen and green. Its hits knock the dead back; a heavy attack splits the ground in a line before you.",
+      "owner": "Dragged out of the White River.",
+      "verify": []
+    },
+    {
+      "id": "rattlebone",
+      "label": "Rattlebone Bow",
+      "grade": "worn",
+      "type": "bow",
+      "uses": 200,
+      "model": "Weapons\\Hunting\\HuntingBow.nif",
+      "power": "Strung with sinew and old bones. Every arrow bounces on to a second of the dead.",
+      "owner": "Its owner's name is scratched off the grip.",
+      "verify": []
+    },
+    {
+      "id": "lanternwick",
+      "label": "Lanternwick Staff",
+      "grade": "worn",
+      "type": "staff",
+      "uses": 90,
+      "model": "Weapons\\Staff\\StaffDestructionTemplate.nif",
+      "power": "A cracked lantern on a stick. It throws an orb of lantern-light that pulls the dead in, then bursts.",
+      "owner": "Carried by a lamplighter of Riften until the lamps went out.",
+      "verify": []
+    },
+    {
+      "id": "emberclaw",
+      "label": "Emberclaw Wraps",
+      "grade": "battered",
+      "type": "fists",
+      "uses": 160,
+      "model": "",
+      "power": "Charred hand-wraps with coals sewn in. Punches set the dead burning; every 4th punch throws a fireball.",
+      "owner": "Unwound from the hands of a burned monk.",
+      "verify": []
+    },
+    {
+      "id": "eclipse",
+      "label": "Eclipse Edge",
+      "grade": "battered",
+      "type": "greatsword",
+      "uses": 120,
+      "model": "Weapons\\Steel\\SteelGreatsword.nif",
+      "power": "A greatsword of a sun half and a moon half. Light slashes alternate the two; a heavy attack calls a 6-second eclipse that blinds and slows the dead.",
+      "owner": "Its last bearer saw the sun go out over Sky Haven.",
+      "verify": []
+    },
+    {
+      "id": "wanderstar",
+      "label": "The Wandering Star",
+      "grade": "battered",
+      "type": "staff",
+      "uses": 40,
+      "model": "Weapons\\Staff\\StaffDestructionTemplate.nif",
+      "power": "A dim star caught in a cage on a staff. Each cast lets it out to bounce between up to 8 of the dead.",
+      "owner": "Found at the bottom of the College's collapsed well.",
+      "verify": []
+    },
+    {
+      "id": "whisperwood",
+      "label": "Whisperwood Longbow",
+      "grade": "battered",
+      "type": "bow",
+      "uses": 80,
+      "model": "Weapons\\Hunting\\HuntingBow.nif",
+      "power": "A bow still sprouting leaves. Its arrows root the dead where they stand, and you heal a little for each one held.",
+      "owner": "Grown, not made, by a Spriggan's keeper.",
+      "verify": []
+    },
+    {
+      "id": "codex",
+      "label": "The Unwritten Codex",
+      "grade": "battered",
+      "type": "book",
+      "uses": 30,
+      "model": "",
+      "power": "A spell book with no author. Each cast flips to a chapter - Fire, Frost, Storm or Void - and its glyphs lift off the page into the spell; every 10th cast is a chapter's end: all four at once.",
+      "owner": "No one remembers who left it. The pages remember everyone.",
+      "verify": []
+    }
+  ]
+}

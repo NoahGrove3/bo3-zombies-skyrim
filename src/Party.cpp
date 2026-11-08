@@ -251,6 +251,7 @@ namespace bo3z::Party
 		void SoloFall(RE::PlayerCharacter* p)
 		{
 			FallControls(true);
+			Tablet::OnFell();   // (Noah: the donated weapon is lost if you fall)
 			p->NotifyAnimationGraph("BleedoutStart");
 			Collapse(p);
 			g_soloT = 0.0f, g_soloPressed = false, ++g_fallGen;
@@ -480,6 +481,7 @@ namespace bo3z::Party
 		const float hp = av->GetActorValue(RE::ActorValue::kHealth);
 		if (g_life == Life::Alive && (hp <= 1.0f || p->AsActorState()->IsBleedingOut())) {
 			g_life = Life::Down, g_left = kDownSeconds;
+			Tablet::OnFell();   // (Noah: the donated weapon is lost if you fall)
 			// ("YOU ARE DOWN" is on the screen itself)
 			logger::info("party: down");
 		}
@@ -491,6 +493,7 @@ namespace bo3z::Party
 			}
 			if (g_life == Life::Down && (g_left -= a_delta) <= 0) {
 				g_life = Life::Dead;
+				Tablet::OnFell();
 				// ("YOU DIED" is on the screen itself)
 				logger::info("party: dead (spectating)");
 			}

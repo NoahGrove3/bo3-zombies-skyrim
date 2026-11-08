@@ -283,10 +283,18 @@ for r in SC:
     o.append(f'\t\tSpellcraftDef{{ {cs(r["id"])}, {cs(r["name"])}, 0x{r["color"]}, 0x{r["accent"]}, {STYLES.index(r["style"])}, {TAPS.index(r["tap"])}, {F(r["speed"])}, {F(r["radius"])}, {F(r["damage"])}, {r["count"]}, {F(r["spread"])}, {r["pierce"]}, {F(r["homing"])}, {EFFECTS.index(r["effect"])}, {ULTS.index(r["ult"])}, {cs(r["ultName"])}, {F(r["ultDamage"])}, {F(r["ultRadius"])}, {cs(r["text"])}, 0x{IDS[("ARTO", "fx_" + r["id"] + "_hand")]:03X}, 0x{IDS[("STAT", "fx_" + r["id"] + "_orb")]:03X} }},')
 o.append('\t} };')
 o.append(f'\tinline constexpr std::uint32_t kArtIceShell = 0x{IDS[("ARTO", "fx_iceshell")]:03X}, kArtRoots = 0x{IDS[("ARTO", "fx_roots")]:03X}, kArtBurn = 0x{IDS[("ARTO", "fx_burn")]:03X}, kArtPoison = 0x{IDS[("ARTO", "fx_poison")]:03X}, kArtPortal = 0x{IDS[("ARTO", "fx_portal")]:03X}, kArtPortalBig = 0x{IDS[("ARTO", "fx_portal_big")]:03X};  // status looks on the struck')
-# the Echo Altar's bows (sheet: bows): src/Gun.cpp Bows
-BW = S['bows']['rows']
 EL8 = ['fire', 'frost', 'shock', 'poison', 'disease', 'sun', 'blood', 'arcane']
 SCID = [r['id'] for r in S['spellcraft']['rows']]
+TBW = S['tablet']['rows']
+o.append('\tstruct TabletWeapon { std::string_view id, label; bool battered; int type, uses; std::uint32_t form, show; };  // type: 0 fists 1 mace 2 dagger 3 battleaxe 4 bow 5 staff 6 greatsword 7 book')
+_TBT = ['fists', 'mace', 'dagger', 'battleaxe', 'bow', 'staff', 'greatsword', 'book']
+o.append(f'\tinline constexpr std::array<TabletWeapon, {len(TBW)}> kTabletWeapons{{ {{')
+for w in TBW:
+    form = IDS[('SPEL' if w['type'] == 'book' else 'WEAP', 'tab_' + w['id'])]
+    show = IDS.get(('STAT', 'tabshow_' + w['id']), 0)
+    o.append(f'\t\tTabletWeapon{{ {cs(w["id"])}, {cs(w["label"])}, {str(w["grade"] == "battered").lower()}, {_TBT.index(w["type"])}, {w["uses"]}, 0x{form:03X}, 0x{show:03X} }},')
+o.append('\t} };')
+o.append(f'\tinline constexpr std::uint32_t kTabletArrow = 0x{IDS[("AMMO", "tab_arrow")]:03X};')
 # Stage 2 (sheet: echo): src/Echo.cpp
 EC = S['echo']
 WIDS = [w['id'] for w in EC['wonders']]

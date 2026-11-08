@@ -1206,6 +1206,7 @@ namespace bo3z::Classes
 	// tiers. (Noah: "the sword slashes ... should do the same damage as the swords light attack that grows through the tiers")
 	float BladeShare(const RE::TESObjectWEAP* a_w)
 	{
+		if (Tablet::IsTablet(a_w)) return Tablet::Share();   // (the Tablet's donated weapons: one or two tiers over your sword, nothing else)
 		const int gear = AltarGearUpgrades(a_w);
 		float share = gen::kShareMelee * (gear >= 0 ? UpgradeMult(gear) : 1.0f);
 		// (the class audit: the Spellsword's blade, single-target, trailed every other class) its blade a half again; a

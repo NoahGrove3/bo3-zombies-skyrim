@@ -899,6 +899,7 @@ namespace bo3z
 					if (auto* t = a_event->target->As<RE::Actor>(); t && Classes::IsRiftblade(a_event->source)) Classes::RiftHit(t);
 					if (auto* t = a_event->target->As<RE::Actor>(); t && a_event->source) Kit::OnPlayerHit(t, RE::TESForm::LookupByID(a_event->source));  // (the Spellsword set's magicka)
 					if (auto* t = a_event->target->As<RE::Actor>()) Classes::NoteHit(t, a_event->source, a_event->flags.any(RE::TESHitEvent::Flag::kPowerAttack));
+					if (a_event->source && !a_event->projectile) Tablet::OnHit(a_event->source);  // (a donated weapon's use)
 					if (auto* t = a_event->target->As<RE::Actor>(); t && a_event->source) Gun::PriestHit(t, a_event->source, a_event->flags.any(RE::TESHitEvent::Flag::kPowerAttack));  // (the Dragon Priests' weapons)
 					auto* src = a_event->source ? RE::TESForm::LookupByID(a_event->source) : nullptr;
 					const bool spellHit = src && src->As<RE::MagicItem>();  // (the charge's own lightning never sets off another charge)
@@ -964,6 +965,8 @@ namespace bo3z
 							float share = gen::kShareSpell;
 							if (auto* w = src->As<RE::TESObjectWEAP>()) {
 								share = Classes::BladeShare(w);  // (Noah: the one upgrade curve) an altar spell-weapon by its steel
+							} else if (Tablet::IsTabletSpell(src)) {
+								share = Tablet::Share();  // (a donated staff's or the Codex's cast)
 							} else if (src->Is(RE::FormType::Spell)) {
 								if (auto* sp = src->As<RE::SpellItem>(); sp && sp->GetCastingType() == RE::MagicSystem::CastingType::kConcentration) share *= 0.25f;  // (a stream or a wall lands many times a second - as CofferHit)
 							}
@@ -1075,6 +1078,7 @@ namespace bo3z
 					}
 					Compass::OnCast(a_event->spell);
 					Classes::NoteCast(a_event->spell);
+					Tablet::OnCast(a_event->spell);  // (a donated staff's or the Codex's use)
 					if (Classes::OnCast(a_event->spell)) {
 						// (the Tome of the Six Fires)
 					} else if (Director::DanceOfDeath(a_event->spell)) {

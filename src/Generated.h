@@ -1521,6 +1521,21 @@ namespace bo3z::gen
 		SpellcraftDef{ "barrowhorn", "Horn of the Dragon Priests", 0xFFC45C, 0xFFF3D6, 8, 3, 1600.0f, 60.0f, 560.0f, 1, 0.0f, 5, 0.0f, 6, 13, "The War-Host Charges", 1600.0f, 110.0f, "A war-cry that hurls the dead back in a wave. Charged: the old war-host of the barrows charges down the line in front of you.", 0xC6E, 0xC6F },
 	} };
 	inline constexpr std::uint32_t kArtIceShell = 0xBC0, kArtRoots = 0xBC1, kArtBurn = 0xBC2, kArtPoison = 0xBC3, kArtPortal = 0xCB2, kArtPortalBig = 0xCB5;  // status looks on the struck
+	struct TabletWeapon { std::string_view id, label; bool battered; int type, uses; std::uint32_t form, show; };  // type: 0 fists 1 mace 2 dagger 3 battleaxe 4 bow 5 staff 6 greatsword 7 book
+	inline constexpr std::array<TabletWeapon, 11> kTabletWeapons{ {
+		TabletWeapon{ "stormknuckles", "Stormbound Knuckles", false, 0, 350, 0xEBD, 0x000 },
+		TabletWeapon{ "gravebell", "Gravebell Mace", false, 1, 300, 0xEBE, 0xEB5 },
+		TabletWeapon{ "saltrice", "Saltrice Sickle", false, 2, 320, 0xEBF, 0xEB6 },
+		TabletWeapon{ "riverstone", "Riverstone Axe", false, 3, 240, 0xEC0, 0xEB7 },
+		TabletWeapon{ "rattlebone", "Rattlebone Bow", false, 4, 200, 0xEC1, 0xEB8 },
+		TabletWeapon{ "lanternwick", "Lanternwick Staff", false, 5, 90, 0xEC2, 0xEB9 },
+		TabletWeapon{ "emberclaw", "Emberclaw Wraps", true, 0, 160, 0xEC3, 0x000 },
+		TabletWeapon{ "eclipse", "Eclipse Edge", true, 6, 120, 0xEC4, 0xEBA },
+		TabletWeapon{ "wanderstar", "The Wandering Star", true, 5, 40, 0xEC5, 0xEBB },
+		TabletWeapon{ "whisperwood", "Whisperwood Longbow", true, 4, 80, 0xEC6, 0xEBC },
+		TabletWeapon{ "codex", "The Unwritten Codex", true, 7, 30, 0xEC7, 0x000 },
+	} };
+	inline constexpr std::uint32_t kTabletArrow = 0xEC9;
 	struct EchoWonder { std::string_view id, label, text; std::uint32_t color, pedestal, gem; };
 	inline constexpr std::array<EchoWonder, 4> kEchoWonders{ {
 		EchoWonder{ "gravecaller", "Call of the Violet Wyrm", "A summoning spell. Cast it and a violet wyrm flies in and burns the dead within 50 m of you for 90 seconds, circling and strafing. The call rests a minute after the wyrm departs. Once the three dragons fall, a second, smaller wyrm answers with it.", 0x9CFF6A, 0xC44, 0xC4A },

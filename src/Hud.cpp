@@ -2255,6 +2255,22 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					card(0, { a.x, a.y - 60 * k }, { b.x, b.y - 60 * k });
 				}
 			}
+			// (Noah: "displayed as item durability like in Minecraft") the Tablet's donated weapon: its uses left as a bar
+			// under the hand cards - green, yellow as it wears, red near the end - blinking in its last tenth
+			if (!Hud::kEdgeHud && s.tabletWear >= 0.0f) {
+				const float  f = std::clamp(s.tabletWear, 0.0f, 1.0f);
+				const ImVec2 a{ size.x - 400 * k, size.y - 98 * k }, b{ size.x - 40 * k, size.y - 88 * k };
+				const ImU32  col = f > 0.5f ? IM_COL32(static_cast<int>(255 * (1.0f - f) * 2), 220, 60, 255) : IM_COL32(235, static_cast<int>(220 * f * 2), 40, 255);
+				const float  blink = f < 0.1f ? 0.55f + 0.45f * std::sin(static_cast<float>(ImGui::GetTime()) * 9.0f) : 1.0f;
+				dl->AddRectFilled({ a.x - 2 * k, a.y - 2 * k }, { b.x + 2 * k, b.y + 2 * k }, IM_COL32(0, 0, 0, 200));
+				dl->AddRectFilled(a, b, IM_COL32(40, 30, 24, 220));
+				dl->AddRectFilled(a, { a.x + (b.x - a.x) * f, b.y }, Fade(col, blink));
+				for (int seg = 1; seg < 13; ++seg) {   // (its blocky notches)
+					const float x = a.x + (b.x - a.x) * seg / 13.0f;
+					dl->AddLine({ x, a.y }, { x, b.y }, IM_COL32(0, 0, 0, 150), 1.5f * k);
+				}
+				Txt(dl, g_body, 12 * k, { a.x, b.y + 3 * k }, Fade(kParch, 0.8f), (s.tabletName + "  -  " + std::to_string(static_cast<int>(std::ceil(f * 100))) + "%").c_str());
+			}
 			if (s.hitTime > 0) {
 				const ImVec2 c{ size.x * 0.5f, size.y * 0.5f };
 				const float  a = 6 * k, b = (14 + 6 * (0.2f - s.hitTime) * 5) * k;
