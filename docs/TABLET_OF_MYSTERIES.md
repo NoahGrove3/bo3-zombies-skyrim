@@ -69,4 +69,12 @@ Battered (+2 tiers):
   Casting: the book snaps open, its pages flip on their own, glyphs and embers rise off them, a spell circle forms in the
   air before it; at its last use it burns to ash in the hand.
 
-Fists: gauntlets that power the bare-hand punch (Skyrim's own punch animations) with our hit effects on top.
+Fists: (Noah: "real hand wraps or elemental brass knuckles") gloves worn in the hands' slot while held, skinned to the
+hand and finger bones so they close with the fist (tools/tabletgloves.py); whatever gloves you wore go back on after.
+
+## Built (2026-11-08)
+- Models: tools/tabletweapons.py (4K, Nordic runes and knotwork, a dull worn finish), the gloves tools/tabletgloves.py;
+  the Codex hangs open on the right palm while it is the spell in that hand.
+- Powers: src/Tablet.cpp OnStrike / CastPower. The Eclipse's "blind" is a 6 s hold (the dead frozen in place), on a
+  10 s cooldown; the Stormbound slam and the Riverstone split have a 1 s cooldown. The staffs and the Codex cast nothing
+  of Skyrim's own: their effects are all ours.
