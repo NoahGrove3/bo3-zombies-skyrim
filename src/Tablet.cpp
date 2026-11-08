@@ -545,7 +545,7 @@ namespace bo3z::Tablet
 			if (p) {
 				auto* av = p->AsActorValueOwner();
 				const float mx = av->GetPermanentActorValue(RE::ActorValue::kHealth);
-				p->AsActorValueOwner()->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kDamage, RE::ActorValue::kHealth, mx * 0.02f);
+				av->RestoreActorValue(RE::ActorValue::kHealth, mx * 0.02f);
 			}
 		}
 	}
