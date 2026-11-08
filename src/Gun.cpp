@@ -1334,6 +1334,63 @@ namespace bo3z
 		{
 			void Tornado(int a_kind, const RE::NiPoint3& a_at, RE::NiPoint3 a_dir, float a_seconds, float a_damage, bool a_chase, int a_row);
 		}
+		// ---- lingering blows on the ground (the meteors' strikes, the Thu'um's shadow and singularity) and the frozen
+		struct Zone
+		{
+			int          kind;  // 4 a strike (once), 5 Shadow Step's shadow, 6 Arcane Singularity
+			RE::NiPoint3 at;
+			float        r, left, tick, dmg, fx;
+			bool         hunt;
+			float        crush;  // 5 / 6: seconds until it bursts (then it ends)
+		};
+		std::vector<Zone> g_zones;
+		std::unordered_map<RE::FormID, float> g_frozenUntil;  // frozen solid until (seconds on g_zoneClock)
+		float g_zoneClock = 0;
+		void FreezeSolid(RE::Actor* a, float a_s)
+		{
+			g_frozenUntil[a->GetFormID()] = g_zoneClock + a_s;
+			Director::Web(a->GetPosition(), 45.0f, a_s, 97.0f, true);
+		}
+		void PullTo(const RE::NiPoint3& c, float r, float strength)
+		{
+			for (auto* f : Foes(c, r)) {
+				RE::NiPoint3 off = f->GetPosition() - c; off.z = 0;
+				if (off.Length() > 90.0f) Spellcraft::Fling(f, c, -strength);
+			}
+		}
+		void TickZones(float a_delta)
+		{
+			g_zoneClock += a_delta;
+			if (g_frozenUntil.size() > 64) std::erase_if(g_frozenUntil, [](const auto& e) { return e.second < g_zoneClock; });
+			for (auto& z : g_zones) {
+				z.left -= a_delta;
+				z.fx -= a_delta;
+				const bool tick = (z.tick -= a_delta) <= 0;
+				switch (z.kind) {
+				case 4:  // a meteor's strike: once
+					if (tick && z.tick > -1.0f) {
+						z.tick = -100.0f;
+						Blast(BlastIndex("firestorm"), z.at + RE::NiPoint3{ 0, 0, 20.0f }, 0.0f, z.r > 300.0f ? 1.0f : 0.6f);
+						for (auto* f : Foes(z.at, z.r)) { if (!Damage(f, z.dmg, false, false, true)) Stagger(f, 0.8f); }
+						z.left = 0;
+					}
+					break;
+				case 5:  // Shadow Step's shadow: draws the dead to it, then bursts
+				case 6:  // Arcane Singularity: pulls them in, then detonates
+					z.crush -= a_delta;
+					if (z.fx <= 0) { z.fx = 0.35f; Blast(BlastIndex(z.kind == 5 ? "dark" : "constellation"), z.at + RE::NiPoint3{ 0, 0, 50.0f }, 0.0f, 0.45f); }
+					if (tick) { z.tick = 0.3f; PullTo(z.at, z.r, z.kind == 5 ? 0.9f : 1.5f); }
+					if (z.crush <= 0) {
+						Blast(BlastIndex(z.kind == 5 ? "darkmassive" : "lightmassive"), z.at + RE::NiPoint3{ 0, 0, 50.0f }, 0.0f, 0.9f);
+						for (auto* f : Foes(z.at, 340.0f)) { if (!Damage(f, z.dmg, false, false, true)) Stagger(f, 1.0f); }
+						z.left = 0;
+					}
+					break;
+				default: z.left = 0; break;
+				}
+			}
+			std::erase_if(g_zones, [](const Zone& z) { return z.left <= 0; });
+		}
 #include "WonderProps.inl"
 
 		// (Noah: "an underhand throwing animation"; "realistic throwing animations and sound fx") a flask thrown underhand, the
@@ -3056,8 +3113,7 @@ namespace bo3z
 			for (auto& r : g_grows) r.fx.Detach();
 			for (auto& c : g_cyclones) c.fx.Detach();
 			g_slashes.clear(), g_grows.clear(), g_cyclones.clear();
-			g_hexed.clear(), g_doomed.clear(), g_plagued.clear();
-			g_zones.clear(), g_chill.clear(), g_frozenUntil.clear();
+			g_zones.clear(), g_frozenUntil.clear();
 			Props::g_twisters.clear();
 			g_storm.charges = 0;
 		}
@@ -3556,6 +3612,7 @@ namespace bo3z
 			TickStorm(a_delta);
 			Props::TickGauntlet(a_delta);
 			Props::TickFang(a_delta);
+			TickZones(a_delta);
 			static bool hooked = false;
 			if (!hooked) {
 				REL::Relocation<std::uintptr_t> ab{ RE::VTABLE_AttackBlockHandler[0] };
