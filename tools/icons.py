@@ -137,6 +137,11 @@ DRAW = {'splitshot': splitshot, 'bonebinder': bonebinder, 'soultether': soulteth
         'siphon': siphon, 'eagleeye': eagleeye, 'dawnwatch': dawnwatch, 'bladesong': bladesong, 'spellbind': spellbind, 'steelwind': steelwind,
         'fletcher': fletcher, 'trollshide': trollshide, 'quicksilver': quicksilver, 'twinstrike': twinstrike, 'hearthfire': hearthfire,
         'windrunner': windrunner, 'hawkeye': hawkeye, 'mammoth': mammoth, 'frostbite': frostbite, 'stormcrown': stormcrown}
+# (Noah: the brews remade, permanent) the new brews wear the nearest of the sigils above
+DRAW.update({'wellspring': mammoth, 'stormrunner': windrunner, 'bountyhunter': eagleeye, 'laststand': dawnwatch, 'giltongue': arcanist,
+             'dragonsblood': hearthfire, 'packleader': command, 'gravefury': bonebinder, 'boneburst': twinstrike, 'overflow': quicksilver,
+             'emberecho': emberheart, 'manafont': hawkeye, 'volatile': splitshot, 'quickhand': steelwind, 'catalyst': siphon,
+             'spellbinder': spellbind, 'spellguard': frostbite})
 
 def medallion(color, glyph):
     """Dark fantasy medallion: hammered black iron, a bronze rim chased with knotwork dots, the perk's sigil cut

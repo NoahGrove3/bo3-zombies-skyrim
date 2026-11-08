@@ -464,7 +464,7 @@ namespace bo3z::Kit
 				return was + " - " + (t + 1 <= 3 ? std::string(TierLabel(t + 1)) : "Ascend " + std::to_string(t + 1 - 3)) + ", free";
 			}
 		}
-		const int pts = 5000 + 1000 * std::max(0, a_night);
+		const int pts = static_cast<int>(std::lround((5000 + 1000 * std::max(0, a_night)) * Perks::MiniBossEssenceMult()));  // (Bounty Hunter's Ale: twice)
 		Points::Add(pts);
 		return fmt::format("{} Cursed Essence", pts);
 	}

@@ -1110,7 +1110,7 @@ namespace bo3z::Classes
 			auto*       held = p->GetEquippedObject(false);
 			auto*       wp = held ? held->As<RE::TESObjectWEAP>() : nullptr;
 			const bool  ranged = IsRangerWeapon(wp);
-			const float want = ranged ? Settings::DrawSpeed() * Perks::DrawSpeedMult() : Settings::MeleeSpeed() * Perks::SwingSpeedMult();
+			const float want = ranged ? Settings::DrawSpeed() : Settings::MeleeSpeed();
 			if (std::abs(av->GetBaseActorValue(RE::ActorValue::kWeaponSpeedMult) - want) > 0.01f) av->SetBaseActorValue(RE::ActorValue::kWeaponSpeedMult, want);
 			if (std::abs(av->GetBaseActorValue(RE::ActorValue::kLeftWeaponSpeedMultiply) - want) > 0.01f) av->SetBaseActorValue(RE::ActorValue::kLeftWeaponSpeedMultiply, want);
 		}  // (Noah: still there before the class was chosen - from the first moment now)
@@ -1140,7 +1140,7 @@ namespace bo3z::Classes
 			// (Noah: "make the max minions 4, which include the starting 2 slots, the perk that increases it by 1 slot, and the
 			// summoner armor upgrade") 2, the Mead one more, the robes' Tier II one more - no more from freed cities
 			cap = 2;
-			if (Save::PerkStacks(gen::kPerk_command) > 0) ++cap;  // (the Conjurer's Command Mead)
+			if (Perks::Live(gen::kPerk_packleader)) ++cap;  // (Pack Leader Mead)
 			if (Kit::ArmourTier(coffer::kSummoner) >= 2) ++cap;   // (the Arcane Conjurer's robes, Tier II)
 		}
 		for (int n = 2; n <= 8; ++n) {
@@ -2004,13 +2004,6 @@ namespace bo3z::Classes
 							s->StopCombat();  // (its quarry ran past your 20 m: let it go)
 						}
 					}
-					if (Perks::SummonMight() && mighty.insert(s->GetFormID()).second) {
-						auto*       sav = s->AsActorValueOwner();
-						const float more = gen::kPerks[gen::kPerk_bonebinder].value - 1.0f;
-						sav->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kHealth, sav->GetPermanentActorValue(RE::ActorValue::kHealth) * more);
-						sav->RestoreActorValue(RE::ActorValue::kHealth, 1.0e6f);
-						(void)more;  // (its might shows in the share it lands: src/Events.cpp)
-					}
 					auto cur = s->GetActorRuntimeData().currentCombatTarget.get();
 					// (Noah: "a staff that when attacks hit a target the summons focus that enemy until they're dead or a
 					// different enemy is targeted") the marked one first
@@ -2866,6 +2859,7 @@ namespace bo3z::Classes
 			const float r = FlaskRadius(t) * (f.child ? 0.6f : 1.0f);
 			const float share = FlaskShare(t) * (f.child ? 0.5f : 1.0f);
 			Gun::QueueFx("CurseOfAlduin\\fx\\flask_glass.nif", a_at + RE::NiPoint3{ 0, 0, 10.0f }, f.child ? 0.5f : 0.8f, 0.0f, 1.0f, false);
+			for (auto* fo : NearFoes(a_at, r, 24)) Perks::Catalyze(fo);  // (Catalyst Philter: those it catches take more for a while)
 			FlaskBlast(f.el, t, a_at, (f.child ? 0.6f : 1.0f) * 1.0f * (r / 230.0f), share, r);
 			if (f.child) return;
 			if (f.el == 5) {  // (Noah: the Bloodbloom made the Voidglass Flask - "Mana Void pull") Apocalypse's Mana Void: the dead round it

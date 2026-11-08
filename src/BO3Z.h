@@ -800,35 +800,35 @@ namespace bo3z
 	namespace Perks
 	{
 		void OnEffect(RE::FormID a_mgef);
-		bool Grant(int a_perk);    // bought: applied at once (one at a time)
-		void LoseAll();            // death takes them all
-		std::vector<std::uint8_t> TakeAll();                         // (a class left) its blessings off you, per perk its stacks
+		bool Grant(int a_perk);    // bought: applied at once (one of each)
+		bool Refund(int a_perk);   // given back at the altar: off you, half its price back
+		std::vector<std::uint8_t> TakeAll();                         // (a class left) its brews off you
 		void                      GiveBack(const std::vector<std::uint8_t>& a_stacks);  // (a class taken up again) back on
 		void OnZombieHit(RE::Actor* a_zombie);  // a round zombie hit the player
 		float SinceZombieHit(RE::FormID a_zombie);  // seconds since this one's blow last landed (large: never)
-		void OnCast(int a_shots);  // Stormcrown
 		void Tick();
-		bool SelfRevive();         // Quick Revive held: a killing blow is a fall instead
+		bool SelfRevive();         // just risen: a killing blow is caught for a moment
 		void SelfHit();            // your own spell hit you: what it took is given back
 		void RearmAfterLoad();     // a moment after a load: the first-person hands rebuilt
 		void DamagePlayer(float a_amount);
-		void Dodged(float a_seconds);  // a dodge: the night's blows miss you this long  // the night's blows on the player (a killing one caught by the tonic / the party's fall)
-		float ManaMult();          // magicka cost (tomes)
-		float RegenMult();  // magicka returns faster (Hawkeye, stacked)
-		float ChargeMult();        // Quicksilver: charge time and cooldown of signature moves (x)
-		float FireDelayMult();
-		float DamageMult();
-		float HeadMult();
-		std::vector<int> Menu();          // the altar's perks for your class: the shared ones, then your class's
+		void Dodged(float a_seconds);  // a dodge: the night's blows miss you this long
+		float ManaMult();          // magicka cost
+		float RegenMult();         // magicka returns faster (Mana Font Draught)
+		std::vector<int> Menu();          // the altar's brews for your class: your class's, then the shared ones
 		int   MenuAt(int a_pos);
-		bool  Live(int a_perk);           // carried, and (a class perk) you are of its class
-		float DrawSpeedMult();            // Eagle-Eye Draught
+		bool  Live(int a_perk);           // carried, and (a class brew) you are of its class
 		float FlaskCostMult();            // (the Alchemist) Quickhand Elixir
 		float FlaskRadiusMult();          // (the Alchemist) Volatile Tincture
-		float SwingSpeedMult();           // Steel-Wind Ale
-		float WardMult();                 // Dawnwatch Tonic (bow or crossbow in hand)
-		bool  SummonMight();              // Bonebinder's Brew
-		void  OnClassKill(int a_how, RE::Actor* a_dying);  // 0 summon, 1 Destruction spell, 2 bow/crossbow, 3 melee
+		bool  SummonMight();              // Grave Fury Wine
+		float SummonMightMult();
+		float BladeSpellMult();           // Spellbinder's Draught: the blade's spell harder
+		float KillEssenceMult(RE::Actor* a_dying);  // Gilded Tongue Tonic, Bounty Hunter's Ale
+		float MiniBossEssenceMult();      // Bounty Hunter's Ale
+		void  Catalyze(RE::Actor* a_target);   // Catalyst Philter: a flask's burst caught it
+		float TakenMult(RE::Actor* a_target);  // ... and it takes more for a while
+		void  OnSummonDied(RE::Actor* a_summon);  // Bone Burst Brew
+		void  OnDestructionCast(RE::SpellItem* a_spell);  // Overflow Tea
+		void  OnClassKill(int a_how, RE::Actor* a_dying);  // 0 summon, 1 Destruction spell, 3 melee
 		void  OnMeleeHit();               // Bladesong Mead
 	}
 

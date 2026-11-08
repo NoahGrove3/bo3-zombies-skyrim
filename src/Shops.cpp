@@ -1842,11 +1842,11 @@ namespace bo3z
 			if (perk < 0 || perk >= static_cast<int>(gen::kPerks.size())) {
 				return;
 			}
-			if (Save::PerkStacks(perk) > 0) {  // one of each draught a life
-				Hud::Banner(std::string("You already carry ") + std::string(gen::kPerks[perk].label), 2.5f);
+			if (Save::PerkStacks(perk) > 0) {  // (Noah: "the option to refund perks at 50% return") a taken brew: given back
+				Perks::Refund(perk);
 				return;
 			}
-			int held = 0;  // (Noah: every draught can be held at once - the limit is the whole list)
+			int held = 0;  // (Noah: "make 9 the max amount of perks to hold at once")
 			for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) {
 				held += Save::PerkStacks(i) > 0 ? 1 : 0;
 			}

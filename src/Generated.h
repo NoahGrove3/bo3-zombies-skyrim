@@ -1143,53 +1143,49 @@ namespace bo3z::gen
 	inline constexpr int kSpell_look_turnundead = 30;
 	inline constexpr int kSpell_look_deadthrall = 31;
 	struct PerkDef { std::string_view id, label; int cost, effect; float value; std::uint32_t mgefId, alchId; };
-	inline constexpr std::array<PerkDef, 21> kPerks{ {
-		PerkDef{ "trollshide", "Troll's Hide Mead", 3200, 0, 100.0f, 0x800, 0x820 },
-		PerkDef{ "quicksilver", "Quicksilver Draught", 3900, 1, 0.6f, 0x801, 0x821 },
-		PerkDef{ "twinstrike", "Twin Strike Ale", 2600, 2, 1.25f, 0x802, 0x822 },
-		PerkDef{ "hearthfire", "Hearthfire Tonic", 600, 3, 1.0f, 0x803, 0x823 },
-		PerkDef{ "windrunner", "Windrunner Brew", 2600, 4, 27.0f, 0x804, 0x824 },
-		PerkDef{ "hawkeye", "Hawkeye Tincture", 2000, 5, 1.3f, 0x805, 0x825 },
-		PerkDef{ "mammoth", "Mammoth Back Porter", 5200, 6, 3.0f, 0x806, 0x826 },
-		PerkDef{ "frostbite", "Frostbite Venom", 5200, 7, 4.0f, 0x827, 0x82B },
-		PerkDef{ "stormcrown", "Stormcrown Cider", 2600, 8, 500.0f, 0x828, 0x82C },
-		PerkDef{ "fletcher", "Volatile Tincture", 2000, 9, 1.25f, 0xCB3, 0xCB4 },
-		PerkDef{ "bonebinder", "Bonebinder's Brew", 3200, 10, 1.3f, 0xCB8, 0xCC3 },
-		PerkDef{ "soultether", "Soul-Tether Wine", 2600, 11, 0.03f, 0xCB9, 0xCC4 },
-		PerkDef{ "command", "Conjurer's Command Mead", 4600, 12, 1.0f, 0xCBA, 0xCC5 },
-		PerkDef{ "emberheart", "Ember Heart Ale", 3900, 13, 0.2f, 0xCBB, 0xCC6 },
-		PerkDef{ "arcanist", "Arcanist's Focus Tea", 3200, 14, 25.0f, 0xCBC, 0xCC7 },
-		PerkDef{ "siphon", "Mana-Siphon Draught", 2600, 15, 0.04f, 0xCBD, 0xCC8 },
-		PerkDef{ "eagleeye", "Quickhand Elixir", 3200, 16, 0.75f, 0xCBE, 0xCC9 },
-		PerkDef{ "dawnwatch", "Philter of Iron Skin", 3900, 17, 0.2f, 0xCBF, 0xCCA },
-		PerkDef{ "bladesong", "Bladesong Mead", 3200, 18, 0.015f, 0xCC0, 0xCCB },
-		PerkDef{ "spellbind", "Spellbinder's Draught", 2600, 19, 0.06f, 0xCC1, 0xCCC },
-		PerkDef{ "steelwind", "Steel-Wind Ale", 3900, 20, 1.15f, 0xCC2, 0xCCD },
+	inline constexpr std::array<PerkDef, 19> kPerks{ {
+		PerkDef{ "trollshide", "Troll's Hide Mead", 3000, 0, 50.0f, 0x800, 0x820 },
+		PerkDef{ "wellspring", "Wellspring Draught", 3000, 1, 50.0f, 0xE92, 0xEA3 },
+		PerkDef{ "stormrunner", "Stormrunner Brew", 3000, 2, 15.0f, 0xE93, 0xEA4 },
+		PerkDef{ "bountyhunter", "Bounty Hunter's Ale", 3000, 3, 2.0f, 0xE94, 0xEA5 },
+		PerkDef{ "laststand", "Last Stand Ale", 3000, 4, 0.25f, 0xE95, 0xEA6 },
+		PerkDef{ "giltongue", "Gilded Tongue Tonic", 3000, 5, 1.15f, 0xE96, 0xEA7 },
+		PerkDef{ "dragonsblood", "Dragonsblood Cider", 3000, 6, 0.25f, 0xE97, 0xEA8 },
+		PerkDef{ "packleader", "Pack Leader Mead", 3000, 7, 1.0f, 0xE98, 0xEA9 },
+		PerkDef{ "gravefury", "Grave Fury Wine", 3000, 8, 1.25f, 0xE99, 0xEAA },
+		PerkDef{ "boneburst", "Bone Burst Brew", 3000, 9, 0.5f, 0xE9A, 0xEAB },
+		PerkDef{ "overflow", "Overflow Tea", 3000, 10, 3.0f, 0xE9B, 0xEAC },
+		PerkDef{ "emberecho", "Ember Echo Ale", 3000, 11, 0.2f, 0xE9C, 0xEAD },
+		PerkDef{ "manafont", "Mana Font Draught", 3000, 12, 1.4f, 0xE9D, 0xEAE },
+		PerkDef{ "volatile", "Volatile Tincture", 3000, 13, 1.25f, 0xE9E, 0xEAF },
+		PerkDef{ "quickhand", "Quickhand Elixir", 3000, 14, 0.75f, 0xE9F, 0xEB0 },
+		PerkDef{ "catalyst", "Catalyst Philter", 3000, 15, 1.15f, 0xEA0, 0xEB1 },
+		PerkDef{ "bladesong", "Bladesong Mead", 3000, 16, 0.05f, 0xCC0, 0xCCB },
+		PerkDef{ "spellbinder", "Spellbinder's Draught", 3000, 17, 1.25f, 0xEA1, 0xEB2 },
+		PerkDef{ "spellguard", "Spellguard Ale", 3000, 18, 1.0f, 0xEA2, 0xEB3 },
 	} };
 	inline constexpr int kPerk_trollshide = 0;
-	inline constexpr int kPerk_quicksilver = 1;
-	inline constexpr int kPerk_twinstrike = 2;
-	inline constexpr int kPerk_hearthfire = 3;
-	inline constexpr int kPerk_windrunner = 4;
-	inline constexpr int kPerk_hawkeye = 5;
-	inline constexpr int kPerk_mammoth = 6;
-	inline constexpr int kPerk_frostbite = 7;
-	inline constexpr int kPerk_stormcrown = 8;
-	inline constexpr int kPerk_fletcher = 9;
-	inline constexpr int kPerk_bonebinder = 10;
-	inline constexpr int kPerk_soultether = 11;
-	inline constexpr int kPerk_command = 12;
-	inline constexpr int kPerk_emberheart = 13;
-	inline constexpr int kPerk_arcanist = 14;
-	inline constexpr int kPerk_siphon = 15;
-	inline constexpr int kPerk_eagleeye = 16;
-	inline constexpr int kPerk_dawnwatch = 17;
-	inline constexpr int kPerk_bladesong = 18;
-	inline constexpr int kPerk_spellbind = 19;
-	inline constexpr int kPerk_steelwind = 20;
-	inline constexpr std::array<std::string_view, 21> kPerkDesc{ { "+100 maximum health.", "Your spells cost 15% less magicka.", "Your spells deal 25% more damage.", "Saves you from one death: instead of dying, you get back up - but the save spends every perk you carry, this tonic too.", "You move 30% faster and your stamina refills 30% faster.", "Your magicka refills 30% faster.", "+50 maximum magicka.", "When an enemy hits you, frost webs burst out and slow every enemy nearby.", "Every 12th spell you cast sends out a lightning burst around you.", "Your flasks' bursts reach 25% wider.", "Your summons have 30% more health and deal 30% more damage.", "Each time one of your summons kills an enemy, you heal 3% of your maximum health.", "You can have one more summon out at a time (up to 4).", "Enemies you kill with Destruction spells explode, hurting the enemies around them.", "Destruction spells cost 25% less magicka.", "Each kill with a Destruction spell gives you back 4% of your magicka.", "You throw your flasks 25% faster.", "Enemies' hits do 20% less damage to you.", "Each melee hit you land on an enemy heals you 1.5% of your maximum health.", "Each melee kill gives you back 6% of your magicka.", "Your melee attacks are 15% faster." } };
-	inline constexpr int kMaxPerks = 12;
-	inline constexpr std::array<int, 21> kPerkClass{ { -1, -1, -1, -1, -1, -1, -1, -1, -1, 2, 0, 0, 0, 1, 1, 1, 2, 2, 3, 3, 3 } };  // the class a perk belongs to (-1: every class)
+	inline constexpr int kPerk_wellspring = 1;
+	inline constexpr int kPerk_stormrunner = 2;
+	inline constexpr int kPerk_bountyhunter = 3;
+	inline constexpr int kPerk_laststand = 4;
+	inline constexpr int kPerk_giltongue = 5;
+	inline constexpr int kPerk_dragonsblood = 6;
+	inline constexpr int kPerk_packleader = 7;
+	inline constexpr int kPerk_gravefury = 8;
+	inline constexpr int kPerk_boneburst = 9;
+	inline constexpr int kPerk_overflow = 10;
+	inline constexpr int kPerk_emberecho = 11;
+	inline constexpr int kPerk_manafont = 12;
+	inline constexpr int kPerk_volatile = 13;
+	inline constexpr int kPerk_quickhand = 14;
+	inline constexpr int kPerk_catalyst = 15;
+	inline constexpr int kPerk_bladesong = 16;
+	inline constexpr int kPerk_spellbinder = 17;
+	inline constexpr int kPerk_spellguard = 18;
+	inline constexpr std::array<std::string_view, 19> kPerkDesc{ { "+50 maximum health.", "+50 maximum magicka.", "You move 15% faster.", "Elites and mini-bosses give twice the Cursed Essence.", "Below 25% health, you take 25% less damage.", "+15% Cursed Essence from kills.", "Your shouts recharge 25% faster.", "You can have one more summon out at a time.", "Your summons deal 25% more damage.", "When one of your summons dies it explodes, hurting the enemies around it.", "Every 3rd Destruction spell you cast is free.", "Enemies you kill with Destruction spells explode, hurting the enemies around them.", "Your magicka refills 40% faster.", "Your flasks' bursts reach 25% wider.", "You throw your flasks 25% faster.", "Enemies hit by one of your flasks take 15% more damage for 5 seconds.", "Each melee hit you land on an enemy heals you 5% of your maximum health.", "The spell carried on your blade hits 25% harder.", "Blocking costs no stamina." } };
+	inline constexpr int kMaxPerks = 9;
+	inline constexpr std::array<int, 19> kPerkClass{ { -1, -1, -1, -1, -1, -1, -1, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3 } };  // the class a perk belongs to (-1: every class)
 	inline constexpr std::string_view kText_mode = "The Curse of Alduin";
 	inline constexpr std::string_view kText_tagline = "Every night the dead rise. Every night, more of them.";
 	inline constexpr std::string_view kText_box = "The Echo Altar";
@@ -1235,7 +1231,7 @@ namespace bo3z::gen
 	inline constexpr std::array<std::uint32_t, 3> kDanceWords{ { 0xCF1, 0xCF3, 0xCF5 } }, kDanceSpells{ { 0xCF2, 0xCF4, 0xCF6 } };
 	inline constexpr float kSkullScale = 0.3f;
 	inline constexpr float kShowRise = 45.0f, kShowSpin = 4.2f, kShowOffer = 12.0f;
-	inline constexpr std::array<std::uint32_t, 21> kPerkColor{ { 0xD02020FF, 0x30C040FF, 0xE0A020FF, 0x3070F0FF, 0xF0D840FF, 0xB0B8C0FF, 0x7AA040FF, 0x9040E0FF, 0x40D0F0FF, 0x6FBF4AFF, 0x9A6BFFFF, 0xC070E0FF, 0x7A50D0FF, 0xFF7A30FF, 0x5090FFFF, 0x40B8E0FF, 0xC8D870FF, 0xE8C060FF, 0xE05050FF, 0x60A0FFFF, 0xA0C8E8FF } };
+	inline constexpr std::array<std::uint32_t, 19> kPerkColor{ { 0xD02020FF, 0x3A6BFFFF, 0x8FE0FFFF, 0xE0B040FF, 0xA01818FF, 0xFFD24AFF, 0xC04020FF, 0x9A6BFFFF, 0x7A4BDFFF, 0xD8D0C0FF, 0xFF8A30FF, 0xFF5A20FF, 0x4A8BFFFF, 0x7CFF3CFF, 0xB0FF70FF, 0x50D0A0FF, 0xB4C8FFFF, 0x6080FFFF, 0xC0C8D8FF } };
 	inline constexpr std::array<std::string_view, 10> kTowns{ { "Riverwood", "Whiterun", "Solitude", "Windhelm", "Markarth", "Riften", "Falkreath", "Morthal", "Dawnstar", "Winterhold" } };
 	struct SlotDef { float x, y, faceDeg; };
 	inline constexpr std::array<SlotDef, 8> kSlots{ { SlotDef{ 0.0f, 0.0f, 0.0f }, SlotDef{ 175.0f, 0.0f, 90.0f }, SlotDef{ 0.0f, 0.0f, 180.0f }, SlotDef{ 0.0f, 175.0f, 0.0f }, SlotDef{ -200.0f, -120.0f, 180.0f }, SlotDef{ 200.0f, -120.0f, 180.0f }, SlotDef{ 0.0f, -150.0f, 180.0f }, SlotDef{ -175.0f, 0.0f, 270.0f } } };

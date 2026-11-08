@@ -390,7 +390,7 @@ namespace bo3z
 			const auto  tid = a_target->GetFormID();
 			// (the difficulty reaches the night's dead through their health alone - Settings::UndeadHealthMult; Skyrim's
 			// own enemies take our scripted blows scaled by it here, as Skyrim scales yours)
-			float       damage = a_bo3Damage * Eggs::DamageMult() * (Director::IsRoundUndead(a_target) ? 1.0f : Difficulty::Dealt()) / gen::kRounds.hpScale;
+			float       damage = a_bo3Damage * Eggs::DamageMult() * Perks::TakenMult(a_target) * (Director::IsRoundUndead(a_target) ? 1.0f : Difficulty::Dealt()) / gen::kRounds.hpScale;  // (Catalyst Philter)
 			if (!Director::IsRoundUndead(a_target)) {
 				// Skyrim's own enemies (bandits, draugr, dragons) are tuned to the player's level, not to the night: our
 				// weapons hit them like gear of your level would (half strength at level 1, full at 25, 1.5x at 50+).

@@ -3,7 +3,7 @@
 // Co-op life and death (only while in a party with friends; alone, Skyrim's own death and reload stand):
 //   down     at zero health you fall (Skyrim's bleedout) instead of dying, for 30 seconds
 //   revive   a teammate who stands by you and holds Activate (E / pad A) for 3 seconds brings you back up
-//   dead     if nobody does, death takes your blessings and you watch the living (Left / Right arrows, or the
+//   dead     if nobody does, you watch the living (Left / Right arrows, or the
 //            mouse buttons, switch who) until a shrine's rite is completed or dawn comes; then you rise again
 //   wiped    if every player in the party is dead at once, everyone's game loads its most recent save
 // Every player tells the others where they stand four times a second (Net carries it, kPlayer); a revive is a
@@ -276,7 +276,6 @@ namespace bo3z::Party
 		}
 		void SoloRise(RE::PlayerCharacter* p)
 		{
-			Perks::LoseAll();  // (the cost: every blessing)
 			Director::RestartWave();
 			Director::NormalTime();
 			auto& f = p->GetActorRuntimeData().boolFlags;
@@ -343,7 +342,7 @@ namespace bo3z::Party
 			auto*       av = p->AsActorValueOwner();
 			const float hp = av->GetActorValue(RE::ActorValue::kHealth);
 			if (g_soloT < 0.0f) {
-				// (Helgen's own hold, the Hearthfire Tonic and its grace see to a fall themselves)
+				// (Helgen's own hold, and the grace after rising, see to a fall themselves)
 				if (!Save::Flag(Save::kFlagMoved) || Perks::SelfRevive()) return;
 				if (hp <= 1.0f || p->AsActorState()->IsBleedingOut()) SoloFall(p);
 				return;
@@ -492,7 +491,6 @@ namespace bo3z::Party
 			}
 			if (g_life == Life::Down && (g_left -= a_delta) <= 0) {
 				g_life = Life::Dead;
-				Perks::LoseAll();  // death takes every blessing
 				// ("YOU DIED" is on the screen itself)
 				logger::info("party: dead (spectating)");
 			}

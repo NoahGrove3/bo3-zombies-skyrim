@@ -573,7 +573,9 @@ namespace bo3z
 					auto*       cell = player->GetParentCell();
 					logger::info("death: the player died (killer {:08X} {}, at {:.0f},{:.0f},{:.0f} in {}, level {}, hp max {:.0f})", k ? k->GetFormID() : 0, k ? k->GetName() : "none",
 						p.x, p.y, p.z, cell ? cell->GetFormEditorID() : "?", player->GetLevel(), player->AsActorValueOwner()->GetPermanentActorValue(RE::ActorValue::kHealth));
-					Perks::LoseAll();  // death takes every blessing
+				}
+				if (dying && dying != player && Classes::IsOwnSummon(dying)) {
+					Perks::OnSummonDied(dying);  // (Bone Burst Brew)
 				}
 				if (dying) {
 					Director::OnDying(dying);
@@ -603,13 +605,13 @@ namespace bo3z
 						Points::Add(gen::kPoints_kill);
 					} else if (killer && ((killer->IsCommandedActor() && killer->GetCommandingActor().get() == player) || Classes::IsOwnSummon(killer) || Echo::IsAlly(killer))) {
 						// (the audit: since a summon's kill became the summon's, it paid nothing) your summons' and allies' kills pay
-						Points::Add(gen::kPoints_kill);
+						Points::Add(static_cast<int>(std::lround(gen::kPoints_kill * Perks::KillEssenceMult(dying))));
 						Hud::Essence(dying->GetPosition());
 					}
 					return RE::BSEventNotifyControl::kContinue;  // dawn, followers, guards: no points
 				}
 				const auto [gun, head] = Gun::RecentHit(dying->GetFormID());
-				Points::Add(gun ? (head ? gen::kPoints_headshot_kill : gen::kPoints_kill) : gen::kPoints_melee_kill);
+				Points::Add(static_cast<int>(std::lround((gun ? (head ? gen::kPoints_headshot_kill : gen::kPoints_kill) : gen::kPoints_melee_kill) * Perks::KillEssenceMult(dying))));
 				Hud::Essence(dying->GetPosition());
 				Stats::OnKill(dying, gun, head, !gun, false, dying->GetPosition().GetDistance(player->GetPosition()));
 				return RE::BSEventNotifyControl::kContinue;
@@ -728,7 +730,7 @@ namespace bo3z
 			auto* player = a_by ? a_by : RE::PlayerCharacter::GetSingleton();
 			auto* av = a_actor->AsActorValueOwner();
 			if (Undead::IsDancing(a_actor)) a_damage *= 1.5f;  // (the Dance Of Death: half again as hard)
-			a_damage *= Director::TakenMult(a_actor) * Kit::ArmorAscendMult() * Echo::SetDamageMult();  // (a brute dazed or berserk; your armor's Ascends; the First Dragonborn's Regalia)
+			a_damage *= Director::TakenMult(a_actor) * Kit::ArmorAscendMult() * Echo::SetDamageMult() * Perks::TakenMult(a_actor);  // (Catalyst Philter)  // (a brute dazed or berserk; your armor's Ascends; the First Dragonborn's Regalia)
 			av->DamageActorValue(RE::ActorValue::kHealth, a_damage);
 			if (av->GetActorValue(RE::ActorValue::kHealth) <= 0) {
 				// (the stability audit: a kill from inside the hit event - one per magic effect, mid-apply - can tear down the
@@ -836,7 +838,7 @@ namespace bo3z
 			}
 			// (Noah: the one upgrade curve) its rung and its Ascends are its upgrades
 			const int   ups = Arcana::Ups(a_index);  // (the altar rework: its tier on the one curve)
-			const float grow = UpgradeMult(ups) * (1.0f + 0.25f * Save::PerkStacks(gen::kPerk_twinstrike)) * (0.7f + 0.3f * Arcana::Power());
+			const float grow = UpgradeMult(ups) * (0.7f + 0.3f * Arcana::Power());
 			// (Noah's plan, Destruction) dual-casting one element: the same spell in both hands hits a third harder
 			const auto  hands = Arcana::Hands();
 			const float twin = (Classes::Get() == 1 && hands[0] == a_index && hands[1] == a_index ? 1.35f : 1.0f) * (std::chrono::steady_clock::now() < g_splitUntil ? 0.5f : 1.0f);
@@ -920,7 +922,7 @@ namespace bo3z
 								last = now;
 								if (g_rider.size() > 256) g_rider.clear();
 								g_rider[t->GetFormID()] = now;
-								if (!Classes::ArcaneBladeHit(t, sp)) Forms::CastOnce(player, sp, t, 1.0f, player);
+								if (!Classes::ArcaneBladeHit(t, sp)) Forms::CastOnce(player, sp, t, Perks::BladeSpellMult(), player);  // (Spellbinder's Draught: harder)
 								// (Noah: "remove twin resonance from the spellsword class") only the one spell rides the blade
 								static int told = 0;
 								if (told++ < 5) logger::info("spellsword: the blade struck with {}", sp->GetName());
@@ -963,7 +965,6 @@ namespace bo3z
 							if (auto* w = src->As<RE::TESObjectWEAP>()) {
 								share = Classes::BladeShare(w);  // (Noah: the one upgrade curve) an altar spell-weapon by its steel
 							} else if (src->Is(RE::FormType::Spell)) {
-								share *= 1.0f + 0.5f * Save::PerkStacks(gen::kPerk_twinstrike);
 								if (auto* sp = src->As<RE::SpellItem>(); sp && sp->GetCastingType() == RE::MagicSystem::CastingType::kConcentration) share *= 0.25f;  // (a stream or a wall lands many times a second - as CofferHit)
 							}
 							NoteStruck(z, false);
@@ -995,7 +996,7 @@ namespace bo3z
 							} else {
 								for (int i : Arcana::Carried()) if (Arcana::ClassOf(i) == 0) best = std::max(best, Arcana::RungOf(i)), asc = std::max(asc, Arcana::Level(i));
 							}
-							tierMult = 0.55f * UpgradeMult(std::max(0, best - 1) + std::max(0, asc)) * (Perks::SummonMight() ? gen::kPerks[gen::kPerk_bonebinder].value : 1.0f);  // (Noah: the one upgrade curve - rungs past the first and Ascends)  // (the Brew: its own half again, as it says)
+							tierMult = 0.55f * UpgradeMult(std::max(0, best - 1) + std::max(0, asc)) * Perks::SummonMightMult();  // (Noah: the one upgrade curve - rungs past the first and Ascends)  // (the Brew: its own half again, as it says)
 						}
 						// (Noah: "summons are too strong") a summon lands its share at most once every 0.7 s, however fast it bites
 						// or how many bolts it throws, and that share is a third of a blade's at the first rung
@@ -1021,12 +1022,10 @@ namespace bo3z
 						const int   row = Director::EnemyRow(z);
 						const bool  big = Director::IsBoss(z) || Director::IsElite(z) || (row >= 0 && gen::kEnemies[row].kind == 1);
 						auto*       sav = sm->AsActorValueOwner();
-						// (the Summoner review: every summon fell in a dozen blows whatever its rung, and the Brew's health counted for
-						// nothing) a higher pact takes its blows better, and Bonebinder's Brew's half again of health is real
+						// (the Summoner review: every summon fell in a dozen blows whatever its rung) a higher pact takes its blows better
 						int best = 1;
 						for (int i : Arcana::Carried()) if (Arcana::ClassOf(i) == 0) best = std::max(best, Arcana::RungOf(i));
-						const float might = Perks::SummonMight() ? gen::kPerks[gen::kPerk_bonebinder].value : 1.0f;
-						const float hurt = sav->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.08f / (1.0f + 0.35f * static_cast<float>(best - 1)) / might * (big ? 2.0f : 1.0f) * Settings::UndeadDamageMult() *
+						const float hurt = sav->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.08f / (1.0f + 0.35f * static_cast<float>(best - 1)) * (big ? 2.0f : 1.0f) * Settings::UndeadDamageMult() *
 						                   (Kit::ArmourTier(0) >= 1 && Classes::Get() == 0 ? 0.8f : 1.0f);  // (the Arcane Conjurer's robes, Tier I: your summons take a fifth less)
 						sav->DamageActorValue(RE::ActorValue::kHealth, hurt);
 						if (sav->GetActorValue(RE::ActorValue::kHealth) <= 0 && !sm->IsDead()) {
@@ -1087,8 +1086,7 @@ namespace bo3z
 					} else if (const int sh = Gun::ShoutOfSpell(a_event->spell, level); sh >= 0) {
 						Gun::Shout(sh, level);
 					} else if (Arcana::IndexOf(RE::TESForm::LookupByID(a_event->spell)) >= 0) {
-						static int casts = 0;
-						Perks::OnCast(++casts);  // Stormcrown counts the Coffer's spells
+						Perks::OnDestructionCast(RE::TESForm::LookupByID<RE::SpellItem>(a_event->spell));  // (Overflow Tea)
 						SplitCast(RE::TESForm::LookupByID<RE::SpellItem>(a_event->spell));
 					}
 				}

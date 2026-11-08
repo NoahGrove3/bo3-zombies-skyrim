@@ -3206,7 +3206,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const auto perkMenu = Perks::Menu();
 				int perksOwned = 0;
 				for (int q : perkMenu) perksOwned += s.perkStacks[q] > 0 ? 1 : 0;
-				if (section(212, "PERKS", fmt::format("{} of {} taken", perksOwned, perkMenu.size()), false)) {
+				if (section(212, "PERKS", fmt::format("{} of {} held", perksOwned, gen::kMaxPerks), false)) {
 					const auto& menu = perkMenu;  // (Noah: each class its own perks) the shared draughts, then your class's
 					const int  n = std::max(1, static_cast<int>(menu.size()));
 					const int  owned = perksOwned;
@@ -3214,9 +3214,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const auto& p = gen::kPerks[sel];
 					const int  have = s.perkStacks[sel];
 					focusRow(3, y - 6 * k, y + 36 * k + std::min(44 * k, (Rr - L) / n - 4 * k) + 12 * k + 72 * k);
-					bullet({ L, y + 2 * k }, 3, s.points >= p.cost && have == 0);
+					bullet({ L, y + 2 * k }, 3, have > 0 || (s.points >= p.cost && owned < gen::kMaxPerks));
 					Txt(dl, g_title, 19 * k, { L + 36 * k, y + 3 * k }, kParch, "TAKE A PERK");
-					const std::string rule = owned >= n ? "every perk taken - death takes them all" : "one of each a life - death takes them all";
+					const std::string rule = owned >= gen::kMaxPerks ? "all slots full - refund one to take another" : "kept through death - refund for half";
 					Txt(dl, g_body, 16 * k, { Rr - Measure(g_body, 16 * k, rule).x, y + 6 * k }, IM_COL32(170, 156, 132, 220), rule);
 					y += 36 * k;
 					const float d = std::min(44 * k, (Rr - L) / n - 4 * k), gap = ((Rr - L) - d * n) / std::max(1, n - 1);
@@ -3234,7 +3234,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						if (auto* icon = g_perkIcons[q]) {
 							const float r = d * 0.5f * (on ? 1.08f : 1.0f);
 							dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(icon)), { c.x - r, c.y - r }, { c.x + r, c.y + r }, { 0, 0 }, { 1, 1 }, IM_COL32(255, 255, 255, on ? 255 : 200));
-							if (drunk) {  // already taken this life: a gold tick on its rim
+							if (drunk) {  // taken: a gold tick on its rim
 								const ImVec2 t{ c.x + r * 0.72f, c.y + r * 0.62f };
 								dl->AddCircleFilled(t, 6.5f * k, IM_COL32(20, 14, 8, 230), 16);
 								dl->AddCircle(t, 6.5f * k, kGold, 16, 1.2f * k);
@@ -3245,6 +3245,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					}
 					y += d + 12 * k;
 					Txt(dl, g_title, 19 * k, { L, y }, IM_COL32(250, 236, 205, 255), std::string(p.label) + (gen::kPerkClass[sel] >= 0 ? "   (" + std::string(Classes::Name(gen::kPerkClass[sel])) + ")" : "") + (have > 0 ? "   - taken" : ""));
+					if (have > 0) Txt(dl, g_body, 16 * k, { Rr - Measure(g_body, 16 * k, "select to refund  +" + Num(p.cost / 2)).x, y + 4 * k }, kGold, "select to refund  +" + Num(p.cost / 2));
 					if (have == 0) {
 						price(y, p.cost, s.points >= p.cost);
 					}

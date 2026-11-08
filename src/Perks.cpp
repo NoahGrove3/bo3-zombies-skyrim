@@ -1,40 +1,54 @@
 #include "BO3Z.h"
 
-// Blessings (sheet: perks). Bought at the shrine, granted at once, as many of each as you can pay for (they stack),
-// all lost in death; effects live in code.
+// Brews (sheet: perks). Bought at the Echo Altar for a fixed price, one of each, up to nine at once; (Noah: "permanent
+// even through death") never lost in death; any can be refunded at the altar for half its price. Effects live in code.
 namespace bo3z
 {
 	namespace
 	{
-		bool Has(int a_perk) { return Save::HasPerk(a_perk); }
-		constexpr RE::ActorValue kSchoolCost[] = { RE::ActorValue::kAlterationModifier, RE::ActorValue::kConjurationModifier, RE::ActorValue::kDestructionModifier,
-			RE::ActorValue::kIllusionModifier, RE::ActorValue::kRestorationModifier };
-		constexpr RE::ActorValue kSchoolPower[] = { RE::ActorValue::kAlterationPowerModifier, RE::ActorValue::kConjurationPowerModifier, RE::ActorValue::kDestructionPowerModifier,
-			RE::ActorValue::kIllusionPowerModifier, RE::ActorValue::kRestorationPowerModifier };
 		int  N(int a_perk) { return Save::PerkStacks(a_perk); }
-		// a multiplier blessing taken n times: each adds its step again (a 1.25x twice is 1.5x; a 0.8x twice is 0.6x)
-		float Stack(int a_perk, float a_min = 0.2f, float a_max = 6.0f) { return std::clamp(1.0f + (gen::kPerks[a_perk].value - 1.0f) * N(a_perk), a_min, a_max); }
 		void Mod(RE::ActorValue a_av, float a_by)
 		{
 			RE::PlayerCharacter::GetSingleton()->AsActorValueOwner()->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, a_av, a_by);
 		}
+		// what a brew adds to you itself (the rest are read where they act): on (+1) or off (-1)
+		void Apply(int a_perk, int a_sign)
+		{
+			const auto& p = gen::kPerks[a_perk];
+			const float s = static_cast<float>(a_sign);
+			switch (p.effect) {
+			case 0:  // Troll's Hide: more health
+				// (the audit: a wounded switch took the health above it and could kill you at the altar) taken off, the wound is
+				// healed by as much as the cap drops first
+				if (a_sign < 0) {
+					if (auto* pl = RE::PlayerCharacter::GetSingleton()) pl->AsActorValueOwner()->RestoreActorValue(RE::ActorValue::kHealth, p.value);
+				}
+				Mod(RE::ActorValue::kHealth, s * p.value);
+				break;
+			case 1: Mod(RE::ActorValue::kMagicka, s * p.value); break;                  // Wellspring: more magicka
+			case 2: Mod(RE::ActorValue::kSpeedMult, s * p.value); break;                // Stormrunner: faster on foot
+			case 6: Mod(RE::ActorValue::kShoutRecoveryMult, -s * p.value); break;       // Dragonsblood: shouts recharge sooner
+			default: break;
+			}
+		}
+		std::unordered_map<RE::FormID, std::chrono::steady_clock::time_point> g_catalyzed;  // (Catalyst Philter) -> until
 	}
 
 	namespace Perks
 	{
-		float ManaMult() { return Echo::WearsRobes() ? 0.75f : 1.0f; }  // (Stage 5: the Robes of the First Dragonborn)  // (staffs and bows run on nothing; tomes keep their plain cost)
-		float RegenMult() { return (1.0f + 0.5f * N(gen::kPerk_hawkeye)) * (Echo::WordSilenced(2) ? 1.5f : 1.0f) * (Echo::WearsRobes() ? 1.25f : 1.0f); }  // (VO silenced: the curse undone)  // Hawkeye: clear sight, magicka back sooner
-		float ChargeMult() { return Stack(gen::kPerk_quicksilver); }
-		float FireDelayMult() { return std::max(0.3f, 1.0f - 0.25f * N(gen::kPerk_twinstrike)); }
-		float DamageMult() { return Stack(gen::kPerk_twinstrike) * (Echo::WordSilenced(0) ? 1.15f : 1.0f); }  // (SLEN silenced: flesh remade)
-		float HeadMult() { return Stack(gen::kPerk_hawkeye); }
+		float ManaMult() { return Echo::WearsRobes() ? 0.75f : 1.0f; }  // (Stage 5: the Robes of the First Dragonborn)
+		// a class brew counts only while you are of its class (a switch keeps it, asleep, until you come back)
+		bool Live(int a_perk) { return N(a_perk) > 0 && (gen::kPerkClass[a_perk] < 0 || gen::kPerkClass[a_perk] == Classes::Get()); }
+		float RegenMult()
+		{
+			return (Live(gen::kPerk_manafont) ? gen::kPerks[gen::kPerk_manafont].value : 1.0f) * (Echo::WordSilenced(2) ? 1.5f : 1.0f) * (Echo::WearsRobes() ? 1.25f : 1.0f);  // (VO silenced: the curse undone)
+		}
 
-		// (Noah: "each class should get its own perks") the altar's list: the shared draughts first, then your class's three
+		// (Noah: "each class should get its own perks") the altar's list: your class's first, then the shared brews
 		std::vector<int> Menu()
 		{
 			std::vector<int> out;
 			const int        cls = Classes::Get();
-			// (the altar's rework) your class's own first, then the shared draughts
 			for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) {
 				if (gen::kPerkClass[i] >= 0 && gen::kPerkClass[i] == cls) out.push_back(i);
 			}
@@ -48,33 +62,54 @@ namespace bo3z
 			const auto m = Menu();
 			return m.empty() ? -1 : m[std::clamp(a_pos, 0, static_cast<int>(m.size()) - 1)];
 		}
-		// a class perk counts only while you are of its class (a switch keeps it, asleep, until you come back or die)
-		bool Live(int a_perk) { return N(a_perk) > 0 && (gen::kPerkClass[a_perk] < 0 || gen::kPerkClass[a_perk] == Classes::Get()); }
-		// (Noah: the Ranger's perks became the Alchemist's) Quickhand Elixir: flasks cost less; Volatile Tincture: their bursts
-		// reach wider; Philter of Iron Skin: with a flask in hand the dead hurt you less
-		float DrawSpeedMult() { return 1.0f; }
-		float SwingSpeedMult() { return Live(gen::kPerk_steelwind) ? gen::kPerks[gen::kPerk_steelwind].value : 1.0f; }
-		float FlaskCostMult() { return Live(gen::kPerk_eagleeye) ? gen::kPerks[gen::kPerk_eagleeye].value : 1.0f; }
-		float FlaskRadiusMult() { return Live(gen::kPerk_fletcher) ? gen::kPerks[gen::kPerk_fletcher].value : 1.0f; }
-		float WardMult()  // (Philter of Iron Skin: an Alchemist takes less from the dead's blows)
+		float FlaskCostMult() { return Live(gen::kPerk_quickhand) ? gen::kPerks[gen::kPerk_quickhand].value : 1.0f; }
+		float FlaskRadiusMult() { return Live(gen::kPerk_volatile) ? gen::kPerks[gen::kPerk_volatile].value : 1.0f; }
+		bool  SummonMight() { return Live(gen::kPerk_gravefury); }
+		float SummonMightMult() { return SummonMight() ? gen::kPerks[gen::kPerk_gravefury].value : 1.0f; }
+		float BladeSpellMult() { return Live(gen::kPerk_spellbinder) ? gen::kPerks[gen::kPerk_spellbinder].value : 1.0f; }
+		// (Bounty Hunter's Ale, Gilded Tongue Tonic) a kill's Cursed Essence
+		float KillEssenceMult(RE::Actor* a_dying)
 		{
-			if (!Live(gen::kPerk_dawnwatch)) return 1.0f;
-			return 1.0f - gen::kPerks[gen::kPerk_dawnwatch].value;
+			float m = Live(gen::kPerk_giltongue) ? gen::kPerks[gen::kPerk_giltongue].value : 1.0f;
+			if (a_dying && Live(gen::kPerk_bountyhunter) && (Director::IsElite(a_dying) || Director::IsBoss(a_dying) || Director::IsGreat(a_dying))) m *= gen::kPerks[gen::kPerk_bountyhunter].value;
+			return m;
 		}
-		bool SummonMight() { return Live(gen::kPerk_bonebinder); }
-		// a kill: what your class's perks make of it (how: 0 your summon, 1 a Destruction spell, 2 bow or crossbow, 3 melee)
-		void OnClassKill(int a_how, RE::Actor* a_dying)
+		float MiniBossEssenceMult() { return Live(gen::kPerk_bountyhunter) ? gen::kPerks[gen::kPerk_bountyhunter].value : 1.0f; }
+		// (Catalyst Philter) a flask's burst marks those it catches: they take more for a few seconds
+		void Catalyze(RE::Actor* a_target)
+		{
+			if (!a_target || !Live(gen::kPerk_catalyst)) return;
+			if (g_catalyzed.size() > 300) g_catalyzed.clear();
+			g_catalyzed[a_target->GetFormID()] = std::chrono::steady_clock::now() + 5s;
+		}
+		float TakenMult(RE::Actor* a_target)
+		{
+			if (!a_target || g_catalyzed.empty()) return 1.0f;
+			auto it = g_catalyzed.find(a_target->GetFormID());
+			return it != g_catalyzed.end() && it->second > std::chrono::steady_clock::now() ? gen::kPerks[gen::kPerk_catalyst].value : 1.0f;
+		}
+		// (Bone Burst Brew) one of your summons fell: it bursts on the dead round it
+		void OnSummonDied(RE::Actor* a_summon)
+		{
+			if (!a_summon || !Live(gen::kPerk_boneburst)) return;
+			Gun::AreaHurt(a_summon->GetPosition() + RE::NiPoint3{ 0, 0, 50.0f }, 320.0f, gen::kPerks[gen::kPerk_boneburst].value, "dark");
+		}
+		// (Overflow Tea) every third Destruction spell you cast is free: its magicka given back
+		void OnDestructionCast(RE::SpellItem* a_spell)
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
-			if (!p) return;
-			auto* av = p->AsActorValueOwner();
-			auto give = [&](RE::ActorValue a_av, float a_share) { av->RestoreActorValue(a_av, av->GetPermanentActorValue(a_av) * a_share); };
-			if (a_how == 0 && Live(gen::kPerk_soultether)) give(RE::ActorValue::kHealth, gen::kPerks[gen::kPerk_soultether].value);
-			if (a_how == 1 && Live(gen::kPerk_siphon)) give(RE::ActorValue::kMagicka, gen::kPerks[gen::kPerk_siphon].value);
-			if (a_how == 1 && Live(gen::kPerk_emberheart) && a_dying) {
-				Gun::AreaHurt(a_dying->GetPosition() + RE::NiPoint3{ 0, 0, 50.0f }, 320.0f, gen::kPerks[gen::kPerk_emberheart].value, "fireball");
+			if (!p || !a_spell || !Live(gen::kPerk_overflow)) return;
+			if (a_spell->GetAssociatedSkill() != RE::ActorValue::kDestruction) return;
+			static int casts = 0;
+			if (++casts % std::max(1, static_cast<int>(gen::kPerks[gen::kPerk_overflow].value)) != 0) return;
+			p->AsActorValueOwner()->RestoreActorValue(RE::ActorValue::kMagicka, a_spell->CalculateMagickaCost(p));
+		}
+		// a kill: what your class's brews make of it (how: 0 your summon, 1 a Destruction spell, 3 melee)
+		void OnClassKill(int a_how, RE::Actor* a_dying)
+		{
+			if (a_how == 1 && Live(gen::kPerk_emberecho) && a_dying) {
+				Gun::AreaHurt(a_dying->GetPosition() + RE::NiPoint3{ 0, 0, 50.0f }, 320.0f, gen::kPerks[gen::kPerk_emberecho].value, "fireball");
 			}
-			if (a_how == 3 && Live(gen::kPerk_spellbind)) give(RE::ActorValue::kMagicka, gen::kPerks[gen::kPerk_spellbind].value);
 		}
 		// a melee blow you landed on one of the dead (the Spellsword's Bladesong)
 		void OnMeleeHit()
@@ -87,120 +122,66 @@ namespace bo3z
 			av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * gen::kPerks[gen::kPerk_bladesong].value);
 		}
 
-		// Buying a blessing applies it at once (no potion to drink). Each can be bought again and again: they stack.
+		// Buying a brew applies it at once (no potion to drink); one of each
 		bool Grant(int a_perk)
 		{
-			if (a_perk < 0 || a_perk >= static_cast<int>(gen::kPerks.size())) {
+			if (a_perk < 0 || a_perk >= static_cast<int>(gen::kPerks.size()) || N(a_perk) > 0) {
 				return false;
 			}
 			const auto& p = gen::kPerks[a_perk];
-			const int   n = N(a_perk) + 1;
-			Save::SetPerkStacks(a_perk, n);
-			switch (p.effect) {
-			case 0: Mod(RE::ActorValue::kHealth, p.value); break;                                     // Troll's Hide: more health each time
-			case 4: Mod(RE::ActorValue::kSpeedMult, p.value); Mod(RE::ActorValue::kStaminaRateMult, 30.0f); break;  // Windrunner: 30% faster on foot, stamina back 30% sooner
-			case 1:                                                                                     // Quicksilver: spells cost 15% less each (to 75%)
-				if (n <= 5) {
-					for (auto av : kSchoolCost) Mod(av, 15.0f);
-				}
-				break;
-			case 2: for (auto av : kSchoolPower) Mod(av, 50.0f); break;                                 // Twin Strike: spells 50% stronger each
-			case 6: Mod(RE::ActorValue::kMagicka, 50.0f); break;                                         // Mammoth Back: +50 magicka each
-			case 14: Mod(RE::ActorValue::kDestructionModifier, p.value); break;                          // Arcanist's Focus: Destruction costs less
-			default: break;
-			}
+			Save::SetPerkStacks(a_perk, 1);
+			Apply(a_perk, 1);
 			Forms::Play(gen::Sound::drink);
-			Hud::Banner(std::string(p.label) + (n > 1 ? "  x" + std::to_string(n) : ""), 3.0f);
-			logger::info("perk: {} granted (now x{})", p.id, n);
+			Hud::Banner(std::string(p.label), 3.0f);
+			logger::info("perk: {} granted", p.id);
+			return true;
+		}
+		// (Noah: "the option to refund perks at 50% return") a brew given back at the altar: off you, half its price back
+		bool Refund(int a_perk)
+		{
+			if (a_perk < 0 || a_perk >= static_cast<int>(gen::kPerks.size()) || N(a_perk) <= 0) return false;
+			const auto& p = gen::kPerks[a_perk];
+			Apply(a_perk, -1);
+			Save::SetPerkStacks(a_perk, 0);
+			const int back = p.cost / 2;
+			Points::Refund(back);
+			Forms::Play(gen::Sound::ui_close);
+			Hud::Banner(fmt::format("{} refunded  (+{})", p.label, Num(back)), 3.0f);
+			logger::info("perk: {} refunded ({})", p.id, back);
 			return true;
 		}
 
-		// Death takes every blessing (and what they added to you).
-		void LoseAll()
-		{
-			for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) {
-				const int n = N(i);
-				if (n <= 0) {
-					continue;
-				}
-				const auto& p = gen::kPerks[i];
-				switch (p.effect) {
-				case 0:
-					// (the audit: a wounded switch took the health above it and could kill you at the altar) the wound is
-					// healed by as much as the cap drops first
-					if (auto* pl = RE::PlayerCharacter::GetSingleton()) pl->AsActorValueOwner()->RestoreActorValue(RE::ActorValue::kHealth, p.value * n);
-					Mod(RE::ActorValue::kHealth, -p.value * n);
-					break;
-				case 4: Mod(RE::ActorValue::kSpeedMult, -p.value * n); Mod(RE::ActorValue::kStaminaRateMult, -30.0f * n); break;
-				case 1: for (auto av : kSchoolCost) Mod(av, -15.0f * std::min(n, 5)); break;
-				case 2: for (auto av : kSchoolPower) Mod(av, -50.0f * n); break;
-				case 6: Mod(RE::ActorValue::kMagicka, -50.0f * n); break;
-				case 14: Mod(RE::ActorValue::kDestructionModifier, -p.value * n); break;
-				default: break;
-				}
-				Save::SetPerkStacks(i, 0);
-				logger::info("perk: {} x{} lost in death", p.id, n);
-			}
-		}
-
-		// (Noah: "the perks as well for classes when switching to another class") a class you leave keeps its blessings:
-		// they come off you (what they added to you taken back) and are handed back when you play that class again
+		// (Noah: "the perks as well for classes when switching to another class") a class you leave keeps its brews: they
+		// come off you (what they added taken back) and are handed back when you play that class again
 		std::vector<std::uint8_t> TakeAll()
 		{
 			std::vector<std::uint8_t> v(gen::kPerks.size(), 0);
 			for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) {
-				const int n = N(i);
-				if (n <= 0) continue;
-				const auto& p = gen::kPerks[i];
-				switch (p.effect) {
-				case 0:
-					// (the audit: a wounded switch took the health above it and could kill you at the altar) the wound is
-					// healed by as much as the cap drops first
-					if (auto* pl = RE::PlayerCharacter::GetSingleton()) pl->AsActorValueOwner()->RestoreActorValue(RE::ActorValue::kHealth, p.value * n);
-					Mod(RE::ActorValue::kHealth, -p.value * n);
-					break;
-				case 4: Mod(RE::ActorValue::kSpeedMult, -p.value * n); Mod(RE::ActorValue::kStaminaRateMult, -30.0f * n); break;
-				case 1: for (auto av : kSchoolCost) Mod(av, -15.0f * std::min(n, 5)); break;
-				case 2: for (auto av : kSchoolPower) Mod(av, -50.0f * n); break;
-				case 6: Mod(RE::ActorValue::kMagicka, -50.0f * n); break;
-				case 14: Mod(RE::ActorValue::kDestructionModifier, -p.value * n); break;
-				default: break;
-				}
+				if (N(i) <= 0) continue;
+				Apply(i, -1);
 				Save::SetPerkStacks(i, 0);
-				v[i] = static_cast<std::uint8_t>(std::min(n, 255));
+				v[i] = 1;
 			}
-			logger::info("perk: the class's blessings put away");
+			logger::info("perk: the class's brews put away");
 			return v;
 		}
 		void GiveBack(const std::vector<std::uint8_t>& a_v)
 		{
 			for (int i = 0; i < static_cast<int>(std::min(a_v.size(), gen::kPerks.size())); ++i) {
-				const auto& p = gen::kPerks[i];
-				for (int k = 0; k < a_v[i]; ++k) {
-					const int n = N(i) + 1;
-					Save::SetPerkStacks(i, n);
-					switch (p.effect) {
-					case 0: Mod(RE::ActorValue::kHealth, p.value); break;
-					case 4: Mod(RE::ActorValue::kSpeedMult, p.value); Mod(RE::ActorValue::kStaminaRateMult, 30.0f); break;
-					case 1: if (n <= 5) for (auto av : kSchoolCost) Mod(av, 15.0f); break;
-					case 2: for (auto av : kSchoolPower) Mod(av, 50.0f); break;
-					case 6: Mod(RE::ActorValue::kMagicka, 50.0f); break;
-					case 14: Mod(RE::ActorValue::kDestructionModifier, p.value); break;
-					default: break;
-					}
-				}
+				if (a_v[i] == 0 || N(i) > 0) continue;
+				Save::SetPerkStacks(i, 1);
+				Apply(i, 1);
 			}
-			logger::info("perk: the class's blessings handed back");
+			logger::info("perk: the class's brews handed back");
 		}
 
-		// an old potion still in a pack (bought before blessings applied at once): drinking it grants it the same way
+		// an old potion still in a pack (bought before brews applied at once): drinking it grants it the same way
 		void OnEffect(RE::FormID a_mgef)
 		{
 			const int perk = Forms::PerkIndexOfEffect(a_mgef);
 			if (perk < 0) {
 				return;
 			}
-			logger::info("perk: drank {} (owned {:09b}, count {})", gen::kPerks[perk].id, Save::PerkBits(), Save::PerkCount());
 			Grant(perk);
 		}
 
@@ -273,7 +254,7 @@ namespace bo3z
 					auto*       lh = player->GetEquippedObject(true);
 					const bool  shield = lh && lh->Is(RE::FormType::Armor);
 					guard = shield ? 0.2f : 0.5f;
-					av->DamageActorValue(RE::ActorValue::kStamina, shield ? 12.0f : 18.0f);
+					if (!Live(gen::kPerk_spellguard)) av->DamageActorValue(RE::ActorValue::kStamina, shield ? 12.0f : 18.0f);  // (Spellguard Ale: blocking costs none)
 					static int told = 0;
 					if (told++ < 5) logger::info("hurt: blocked with {} - {:.0f}% of the blow taken", shield ? "a shield" : "a weapon", guard * 100.0f);
 				}
@@ -289,27 +270,13 @@ namespace bo3z
 				std::scoped_lock l(Hud::Lock());
 				Hud::Edit().hurtTime = 1.0f;
 			}
-			if (Has(gen::kPerk_frostbite)) {
-				Director::Web(player->GetPosition(), 350.0f + 60.0f * (N(gen::kPerk_frostbite) - 1), gen::kPerks[gen::kPerk_frostbite].value * N(gen::kPerk_frostbite), 60.0f, true);  // ice spikes show it
-			}
 		}
 
-		// Stormcrown: every 12th cast looses a lightning burst around you.
-		void OnCast(int a_shots)
-		{
-			const int n = N(gen::kPerk_stormcrown);
-			if (n > 0 && a_shots % std::max(3, 12 / n) == 0) {  // more crowns: the burst comes sooner
-				Director::Shock(RE::PlayerCharacter::GetSingleton()->GetPosition(), 320.0f, gen::kPerks[gen::kPerk_stormcrown].value * (1.0f + 0.25f * (n - 1)));
-			}
-		}
-
-		// Quick Revive: while you carry it, a killing blow drops you to your knees instead (Skyrim's bleedout - the
-		// player is held essential: src/Party.cpp), and you get straight back up at full health, once per draught.
-		// (after a revive: a few seconds when you cannot fall again, so you are surely back on your feet)
+		// (after rising: a few seconds when you cannot fall again, so you are surely back on your feet)
 		float g_grace = 0;
 		std::chrono::steady_clock::time_point g_dodgeUntil{};  // a dodge's i-frames
 		std::chrono::steady_clock::time_point g_last{};
-		bool SelfRevive() { return Has(gen::kPerk_hearthfire) || g_grace > 0; }
+		bool SelfRevive() { return g_grace > 0; }
 		void Stand(RE::PlayerCharacter* a_player)
 		{
 			auto* st = a_player->AsActorState();
@@ -409,36 +376,8 @@ namespace bo3z
 			logger::info("perk: revive - hands re-armed ({} / {})", g_handR ? g_handR->GetName() : "none", g_handL ? g_handL->GetName() : "none");
 		}
 
-		void Revive(RE::PlayerCharacter* a_player, bool a_falling)
-		{
-			// (Noah: after a revive the spells stopped doing damage) caught before the blow lands, you never fell: nothing
-			// is forced on the body (no bleedout ended, no animation reset, no re-equip) - only health given back. Risen
-			// from your knees: stood up, and the hands put back a moment later.
-			const bool down = a_falling || a_player->AsActorState()->IsBleedingOut();
-			if (down) {
-				g_handR = a_player->GetEquippedObject(false);
-				g_handL = a_player->GetEquippedObject(true);
-				if (auto* cam = RE::PlayerCamera::GetSingleton()) {
-					g_wasFirst = cam->IsInFirstPerson() || g_wasFirst;
-				}
-				g_rearm = 0.6f;
-			}
-			// (Noah: "if the revive perk saves my life and gets used, should remove any current perks I have. So I'll have to
-			// rebuy them") the save costs every blessing, the tonic with them - taken first, so you rise at the new full health
-			LoseAll();
-			auto* av = a_player->AsActorValueOwner();
-			const float max = av->GetPermanentActorValue(RE::ActorValue::kHealth);
-			av->RestoreActorValue(RE::ActorValue::kHealth, max);
-			if (down) {
-				Stand(a_player);
-			}
-			g_grace = 3.0f;
-			Director::Pause(2.0f);  // (the dead around you reel back a moment)
-			Hud::Banner("THE HEARTH CALLS YOU BACK - your perks are spent", 3.5f);
-			logger::info("perk: hearthfire revive used{}", a_falling ? " (from the ground)" : " (before the blow could land)");
-		}
-		// every wound the night deals the player goes through here: a blow that would kill you is caught - by the
-		// Hearthfire Tonic (you rise whole), in the moments after rising, or (in a party) by falling to your knees
+		// every wound the night deals the player goes through here: a blow that would kill you is caught in the moments
+		// after rising, or (in a party) by falling to your knees
 		void Dodged(float a_seconds) { g_dodgeUntil = std::chrono::steady_clock::now() + std::chrono::milliseconds(static_cast<int>(a_seconds * 1000)); }
 
 		struct HurtCheck { float hp = -1, t = 0; } g_hurtCheck;  // a blow's health, watched for a moment: put back by something?
@@ -458,12 +397,14 @@ namespace bo3z
 			if (Echo::WordSilenced(1)) {
 				a_amount *= 0.8f;  // (TIID silenced: borrowed time)
 			}
-			a_amount *= WardMult();  // (the Ranger's Dawnwatch Tonic)
 			Stats::OnHurt();
 			auto*       av = p->AsActorValueOwner();
 			// (the audit: a Gloomstalker's swipe took 91% on Legendary) no single blow of the night takes more than 45% of your health
 			a_amount = std::min(a_amount, 0.45f * av->GetPermanentActorValue(RE::ActorValue::kHealth));
 			const float hp = av->GetActorValue(RE::ActorValue::kHealth);
+			if (Live(gen::kPerk_laststand) && hp < gen::kPerks[gen::kPerk_laststand].value * av->GetPermanentActorValue(RE::ActorValue::kHealth)) {
+				a_amount *= 1.0f - gen::kPerks[gen::kPerk_laststand].value;  // (Last Stand Ale: low on health, every blow softer)
+			}
 			if (a_amount > 0.15f * av->GetPermanentActorValue(RE::ActorValue::kHealth)) {  // (hit feedback: a big blow is felt)
 				std::scoped_lock l(Hud::Lock());
 				Hud::Edit().kickT = 0.35f;
@@ -478,10 +419,6 @@ namespace bo3z
 				return;
 			}
 			if (g_grace > 0) {
-				return;
-			}
-			if (Has(gen::kPerk_hearthfire)) {
-				Revive(p, false);
 				return;
 			}
 			if (p->GetActorRuntimeData().boolFlags.any(RE::Actor::BOOL_FLAGS::kEssential)) {
@@ -550,12 +487,8 @@ namespace bo3z
 				}
 				return;
 			}
-			if (!Has(gen::kPerk_hearthfire)) {
-				return;
-			}
-			const bool falling = player->AsActorState()->IsBleedingOut();
-			if (max > 0 && (falling || av->GetActorValue(RE::ActorValue::kHealth) < max * 0.1f)) {
-				Revive(player, falling);
+			if (player->IsBlocking() && Live(gen::kPerk_spellguard)) {  // (Spellguard Ale: a raised guard never tires you)
+				av->RestoreActorValue(RE::ActorValue::kStamina, av->GetPermanentActorValue(RE::ActorValue::kStamina));
 			}
 		}
 	}
