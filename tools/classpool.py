@@ -40,7 +40,7 @@ LADDERS = [
     ('destruction', 'blood', 'Arcane', 'arcane', [(OURS, 'Arcane Bolt'), (OURS, 'Mana Void'), (OURS, 'Lunar Tide'), (APOC, 'Apocalypse')]),
     # (the class review: every rune read as frost - the Elements trial counted one element, the seals missed them) each rung
     # its own element
-    ('destruction', 'runes', 'Runes', 'frost', [(MYST, 'Greater Frost Rune'), (MYST, 'Greater Lightning Rune', 'shock'), (MYST, 'Greater Fire Rune', 'fire'), (MYST, 'Death Cloud', 'poison')]),
+    ('destruction', 'runes', 'Runes', 'frost', [(MYST, 'Greater Frost Rune'), (MYST, 'Greater Lightning Rune', 'shock'), (MYST, 'Greater Fire Rune', 'fire'), (MYST, 'Siphon Spirit', 'arcane')]),   # (Noah: Death Cloud -> Siphon Spirit: poison is the Alchemist's)
     ('summoner', 'beasts', 'Beasts', 'arcane', [(COTC, 'Conjure Wolf'), (COTC, 'Conjure Ice Wolf'), (COTC, 'Conjure Alpha Wolf'), (COTC, 'Conjure Werebear')]),
     ('summoner', 'dead', 'The Dead', 'arcane', [(MYST, 'Conjure Skeleton'), (COTC, 'Conjure Draugr Wight'), (COTC, 'Conjure Draugr Deathlord Warrior'), (COTC, 'Conjure Draugr Death Overlord')]),
     ('summoner', 'daedra', 'Daedra', 'arcane', [(COTC, 'Conjure Dremora'), (COTC, 'Conjure Dremora Archer'), (COTC, 'Conjure Dremora Mage'), (MYST, 'Conjure Dremora Warlock')]),
@@ -51,13 +51,12 @@ LADDERS = [
     ('spellsword', 'shock', 'Shock', 'shock', [(MYST, 'Shocking Touch'), (MYST, 'Static Touch'), (MYST, 'Thundering Grasp')]),
     ('spellsword', 'sun', 'Sun', 'sun', [(MYST, 'Sunlight Touch'), (MYST, 'Radiant Touch'), (MYST, 'Searing Grasp')]),
     ('spellsword', 'blood', 'Arcane', 'arcane', [(OURS, 'Arcane Edge'), (OURS, 'Arcane Brand'), (OURS, 'Arcane Cascade')]),   # (Noah: Blood made Arcane - "Arcane blade, our own")
-    ('spellsword', 'poison', 'Poison', 'poison', [(MYST, 'Poisonous Touch'), (MYST, 'Venomous Touch'), (MYST, "Viper's Grasp")]),
+    # (Noah: "Remove the group and leave the poison stuff to the alchemist class") no Poison touches
     # (Noah: "keep the close range spells like the fire one for the spellsword") the sprays and point-blank blasts
     ('spellsword', 'fire_breath', 'Flame Breath', 'fire', [(MYST, 'Scorch'), (MYST, 'Greater Flames'), (MYST, 'Flame Tempest')]),
     ('spellsword', 'frost_breath', 'Frost Breath', 'frost', [(MYST, 'Hoarfrost'), (MYST, 'Greater Frostbite'), (MYST, 'Flash Freeze')]),
     ('spellsword', 'shock_breath', 'Storm Breath', 'shock', [(MYST, 'Greater Sparks'), (MYST, 'Electrocute')]),
-    ('spellsword', 'poison_breath', 'Poison Breath', 'poison', [(MYST, 'Poison Spray'), (MYST, 'Miasma')]),
-    ('spellsword', 'blood_breath', 'Blood Breath', 'blood', [(MYST, 'Drain Life'), (MYST, 'Leech Life')]),
+    # (Noah: Poison Breath and Blood Breath - "Remove both")
     # (Noah, the altar rework: "remove the summoner magic damage starting spell - only the summons and the Riftblade")
     # Reanimate is gone from the pool (its records stay in the plugin, unused)
     # (Noah: "I want them all to be 7" - every class's Armory seven items) the Summoner's four more and Destruction's three
