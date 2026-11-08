@@ -44,7 +44,7 @@ jobs:
         run: cmake --preset release
       - name: Build
         run: |
-          cmake --build --preset release *> build.log
+          cmake --build --preset release -- -k 0 *> build.log   # (-k 0: every file's errors in one run)
           $code = $LASTEXITCODE
           Get-Content build.log -Tail 30
           if ($code -ne 0) {

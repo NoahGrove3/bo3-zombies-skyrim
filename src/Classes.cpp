@@ -1846,7 +1846,7 @@ namespace bo3z::Classes
 					auto       at = a->GetPosition();
 					RE::NiPoint3 flat = at - me;
 					flat.z = 0;
-					if (flat.Length() > 4500.0f && g_wh.blow < 0.0f && breathT < -4.0f) {  // (left far behind: at your side at once - not while it flies in)
+					if (flat.Length() > 4500.0f && breathT < -4.0f) {  // (left far behind: at your side at once - not while it flies in)
 						const float yaw = p->GetAngleZ() + 1.2f;
 						a->SetPosition(me + RE::NiPoint3{ std::sin(yaw) * 400.0f, std::cos(yaw) * 400.0f, 250.0f }, true);
 					} else if (flat.Length() > 3500.0f) {  // (Noah: "the leash on the dragon should be 50m") past it, drawn back toward you
@@ -1862,7 +1862,7 @@ namespace bo3z::Classes
 						static float        stillT[2]{};
 						if (at.GetDistance(lastAt[wi]) < 120.0f * dt) stillT[wi] += dt; else stillT[wi] = 0.0f;
 						lastAt[wi] = at;
-						if (stillT[wi] > 4.0f && g_wh.blow < 0.0f && at.z - me.z > 250.0f) {   // (up in the air: one standing on the ground to fight is left be)
+						if (stillT[wi] > 4.0f && at.z - me.z > 250.0f) {   // (up in the air: one standing on the ground to fight is left be)
 							stillT[wi] = 0.0f;
 							const float yaw = std::atan2(flat.x, flat.y) + 1.4f;
 							a->SetPosition(me + RE::NiPoint3{ std::sin(yaw) * 1500.0f, std::cos(yaw) * 1500.0f, 700.0f }, true);
