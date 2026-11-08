@@ -27,6 +27,20 @@
       ],
       "scale": 1.0,
       "retired": false
+    },
+    {
+      "id": "tablet",
+      "kind": "tablet",
+      "label": "Tablet of Mysteries",
+      "activateText": "Spin",
+      "model": "CurseOfAlduin\\tablet\\tablet.nif",
+      "cost": 1500,
+      "refs": "none",
+      "scale": 1.0,
+      "retired": false,
+      "verify": [
+        "model"
+      ]
     }
   ]
 }

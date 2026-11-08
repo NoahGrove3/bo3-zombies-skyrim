@@ -100,6 +100,96 @@
       "object": "objects:coffer",
       "slot": "layout:box",
       "verify": []
+    },
+    {
+      "id": "riverwood_tablet",
+      "town": "Riverwood",
+      "worldspace": "Tamriel",
+      "anchor": "0x0162A4",
+      "object": "objects:tablet",
+      "slot": "layout:forge",
+      "verify": []
+    },
+    {
+      "id": "whiterun_tablet",
+      "town": "Whiterun",
+      "worldspace": "Tamriel",
+      "anchor": "0x01B1F1",
+      "object": "objects:tablet",
+      "slot": "layout:forge",
+      "verify": []
+    },
+    {
+      "id": "solitude_tablet",
+      "town": "Solitude",
+      "worldspace": "Tamriel",
+      "anchor": "0x01C386",
+      "object": "objects:tablet",
+      "slot": "layout:forge",
+      "verify": []
+    },
+    {
+      "id": "windhelm_tablet",
+      "town": "Windhelm",
+      "worldspace": "Tamriel",
+      "anchor": "0x055FCB",
+      "object": "objects:tablet",
+      "slot": "layout:forge",
+      "verify": []
+    },
+    {
+      "id": "markarth_tablet",
+      "town": "Markarth",
+      "worldspace": "Tamriel",
+      "anchor": "0x01C389",
+      "object": "objects:tablet",
+      "slot": "layout:forge",
+      "verify": []
+    },
+    {
+      "id": "riften_tablet",
+      "town": "Riften",
+      "worldspace": "Tamriel",
+      "anchor": "0x042286",
+      "object": "objects:tablet",
+      "slot": "layout:forge",
+      "verify": []
+    },
+    {
+      "id": "falkreath_tablet",
+      "town": "Falkreath",
+      "worldspace": "Tamriel",
+      "anchor": "0x017760",
+      "object": "objects:tablet",
+      "slot": "layout:forge",
+      "verify": []
+    },
+    {
+      "id": "morthal_tablet",
+      "town": "Morthal",
+      "worldspace": "Tamriel",
+      "anchor": "0x0177B0",
+      "object": "objects:tablet",
+      "slot": "layout:forge",
+      "verify": []
+    },
+    {
+      "id": "dawnstar_tablet",
+      "town": "Dawnstar",
+      "worldspace": "Tamriel",
+      "anchor": "0x01773A",
+      "object": "objects:tablet",
+      "slot": "layout:forge",
+      "verify": []
+    },
+    {
+      "id": "winterhold_tablet",
+      "town": "Winterhold",
+      "worldspace": "Tamriel",
+      "anchor": "0x0177EF",
+      "object": "objects:tablet",
+      "slot": "layout:forge",
+      "verify": []
     }
   ]
 }

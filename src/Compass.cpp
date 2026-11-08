@@ -226,6 +226,10 @@ namespace bo3z::Compass
 					}
 				}
 			}
+			if (auto* tb = Tablet::Town() >= 0 ? Shops::Placed(Tablet::Town(), 7) : nullptr; tb && tb->GetWorldspace() == world) {
+				const float d = tb->GetPosition().GetDistance(me);
+				if (d < 40000.0f && d > 150.0f) marks.push_back({ bearing(tb->GetPosition()), d, 2, "Tablet of Mysteries" });
+			}
 		}
 		// (Noah: my map markers on the compass) the marker you placed on the map yourself: a quest-style mark there, and over
 		// the spot on the screen when it is in view

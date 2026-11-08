@@ -1196,8 +1196,9 @@ namespace bo3z::gen
 	inline constexpr std::string_view kText_round_word = "Night";
 	inline constexpr std::string_view kText_station_marker = "Echo Altar";
 	struct ObjectDef { std::string_view id, label; int kind, cost, ref; std::uint32_t actiId; float scale; bool retired; };
-	inline constexpr std::array<ObjectDef, 1> kObjects{ {
+	inline constexpr std::array<ObjectDef, 2> kObjects{ {
 		ObjectDef{ "coffer", "Echo Altar", 0, 950, -1, 0x807, 1.0f, false },
+		ObjectDef{ "tablet", "Tablet of Mysteries", 7, 1500, -1, 0xEB4, 1.0f, false },
 	} };
 	struct DressDef { int object; std::uint32_t formId; bool light; float x, y, z, scale, spin; bool freed, held; };  // held: only while the city is still cursed
 	inline constexpr std::array<DressDef, 18> kDress{ {
@@ -1370,7 +1371,7 @@ namespace bo3z::gen
 		ShoutDef{ "shatter", "Arcane Singularity", "A vortex pulls the dead together where you look, then detonates", 9, 0xA4C, { 0xA3D, 0xA3F, 0xA41 }, { 0xA3E, 0xA40, 0xA42 }, 0x7FD8FF, "SU", "GRAH", "DUN", 227, "", 0x000000, "", "Air", "Battle", "Grace" },
 	} };
 	struct LocationDef { int town; std::uint32_t anchor; int object; int slot; };
-	inline constexpr std::array<LocationDef, 10> kLocations{ {
+	inline constexpr std::array<LocationDef, 20> kLocations{ {
 		LocationDef{ 0, 0x0162A4, 0, 0 },
 		LocationDef{ 1, 0x01B1F1, 0, 0 },
 		LocationDef{ 2, 0x01C386, 0, 0 },
@@ -1381,6 +1382,16 @@ namespace bo3z::gen
 		LocationDef{ 7, 0x0177B0, 0, 0 },
 		LocationDef{ 8, 0x01773A, 0, 0 },
 		LocationDef{ 9, 0x0177EF, 0, 0 },
+		LocationDef{ 0, 0x0162A4, 1, 3 },
+		LocationDef{ 1, 0x01B1F1, 1, 3 },
+		LocationDef{ 2, 0x01C386, 1, 3 },
+		LocationDef{ 3, 0x055FCB, 1, 3 },
+		LocationDef{ 4, 0x01C389, 1, 3 },
+		LocationDef{ 5, 0x042286, 1, 3 },
+		LocationDef{ 6, 0x017760, 1, 3 },
+		LocationDef{ 7, 0x0177B0, 1, 3 },
+		LocationDef{ 8, 0x01773A, 1, 3 },
+		LocationDef{ 9, 0x0177EF, 1, 3 },
 	} };
 	inline constexpr float kRunBoost = -9.0f, kSprintBoost = 21.0f, kSlideSpeed = 720.0f, kSlideSeconds = 0.9f, kSlideBoost = 0.0f, kSlideJump = 1.0f, kAirControl = 520.0f, kAirMax = 0.0f, kSprintStamina = 0.2f, kJumpHeight = 1.2f;
 	inline constexpr float kStrafeSpeed = 0.97f, kBackSpeed = 0.85f, kGroundAccel = 14.0f, kTurnRate = 2.0f;

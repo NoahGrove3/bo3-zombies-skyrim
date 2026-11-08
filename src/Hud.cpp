@@ -3519,7 +3519,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		// without that plugin)
 		void DrawFreedOnMap(ImDrawList* a_dl, const Hud::State& a_s, ImVec2 a_size, float k, float a_now)
 		{
-			if (a_s.freedAltars.empty()) return;
+			if (a_s.freedAltars.empty() && !a_s.tabletOn) return;
 			auto* ui = RE::UI::GetSingleton();
 			auto  menu = ui ? ui->GetMenu<RE::MapMenu>() : RE::GPtr<RE::MapMenu>{};
 			auto* d2 = menu ? menu->GetRuntimeData2() : nullptr;
@@ -3550,6 +3550,23 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const ImVec2 uv0{ (kShrine % 8) / 8.0f, (kShrine / 8) / 8.0f }, uv1{ uv0.x + 0.125f, uv0.y + 0.125f };
 					const float  ir = r * 0.82f;
 					a_dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_mapIcons)), { c.x - ir, c.y - ir }, { c.x + ir, c.y + ir }, uv0, uv1, IM_COL32(255, 206, 96, 255));
+				}
+			}
+			// the Tablet of Mysteries: an arched tablet in an amber ring, beside its city's altar
+			if (a_s.tabletOn) {
+				float x = 0, y = 0, z = 0;
+				const auto& p = a_s.tabletAt;
+				if (cam->WorldPtToScreenPt3(RE::NiPoint3{ p[0], p[1], flat ? 180000.0f : p[2] }, x, y, z, 1e-5f) && z >= 0 && x > -0.05f && x < 1.05f && y > -0.05f && y < 1.05f) {
+					const ImVec2 c{ x * a_size.x + 26.0f * k, (1.0f - y) * a_size.y - 26.0f * k };   // (nudged off the altar's own icon)
+					const float  r = 13.0f * k;
+					a_dl->AddCircleFilled(c, r * 1.5f, IM_COL32(255, 150, 60, static_cast<int>(40 * pulse)), 32);
+					a_dl->AddCircleFilled(c, r * 1.05f, IM_COL32(30, 22, 16, 220), 32);
+					a_dl->AddCircle(c, r * 1.1f, IM_COL32(255, 170, 80, static_cast<int>(235 * pulse)), 32, 1.8f * k);
+					const float w = r * 0.5f, h = r * 0.62f;   // the tablet: an arch over an oblong
+					a_dl->PathArcTo({ c.x, c.y - h * 0.25f }, w, 3.14159f, 6.28318f, 16);
+					a_dl->PathLineTo({ c.x + w, c.y + h }); a_dl->PathLineTo({ c.x - w, c.y + h });
+					a_dl->PathFillConvex(IM_COL32(205, 196, 180, 255));
+					a_dl->AddCircle({ c.x, c.y + h * 0.15f }, w * 0.45f, IM_COL32(255, 150, 60, 255), 16, 1.4f * k);
 				}
 			}
 		}

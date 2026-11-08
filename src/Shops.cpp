@@ -1088,6 +1088,15 @@ namespace bo3z
 		void PlaceIfMissing(std::size_t a_index)
 		{
 			const auto& loc = gen::kLocations[a_index];
+			// (the Tablet of Mysteries stands at one freed city at a time: anywhere else it is taken away)
+			if (gen::kObjects[loc.object].kind == 7 && loc.town != Tablet::Town()) {
+				if (auto r = g_placed[a_index].get()) {
+					r->Disable(), r->SetDelete(true);
+					logger::info("shops: the tablet leaves {}", gen::kTowns[loc.town]);
+				}
+				g_placed[a_index] = {};
+				return;
+			}
 			if (auto ref = g_placed[a_index].get(); ref && !ref->IsDeleted()) {
 				// (Noah: "when I first open the door into a city the Echo Altar doesn't load in properly until I leave and
 				// come back") a station piece whose cell is up and in view but whose body never loaded is turned off and
@@ -2573,6 +2582,11 @@ namespace bo3z
 				h.altarFreed = false;
 				h.whispers.clear();
 				h.freedAltars.clear();
+				h.tabletOn = false;
+				if (auto* tb = Tablet::Town() >= 0 ? Placed(Tablet::Town(), 7) : nullptr) {
+					const auto p = tb->GetPosition();
+					h.tabletOn = true, h.tabletAt = { p.x, p.y, p.z };
+				}
 				for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) {  // (Noah: "make the map Echo Altar icons gold when freed")
 					if (!Curse::Freed(t)) continue;
 					if (auto r = g_markers[t].get()) {
@@ -2828,6 +2842,7 @@ namespace bo3z
 					BuyPerk(Perks::MenuAt(g_sel), a_ref);
 				}
 				break;
+			case 7: Tablet::OnActivate(a_ref); break;  // (the Tablet of Mysteries)
 			default: break;  // (the old ammo caches, wall buys, relic stands and the Atronach Reforge: gone)
 			}
 		}
@@ -2861,12 +2876,16 @@ namespace bo3z::Shops
 		std::vector<std::uint8_t> out(2 + kRollTowns * 2);
 		out[0] = static_cast<std::uint8_t>(g_rollNight & 0xFF), out[1] = static_cast<std::uint8_t>((g_rollNight >> 8) & 0xFF);
 		for (int t = 0; t < kRollTowns; ++t) out[2 + t] = g_spellRolls[t], out[2 + kRollTowns + t] = g_classRollsT[t];
+		const auto tb = Tablet::State();   // (the Tablet of Mysteries rides after them)
+		out.insert(out.end(), tb.begin(), tb.end());
 		return out;
 	}
 	void SetRollState(const std::vector<std::uint8_t>& a_s)
 	{
 		g_spellRolls.fill(0), g_classRollsT.fill(0), g_rollNight = -1;
-		if (a_s.size() != 2 + kRollTowns * 2) return;
+		constexpr std::size_t kBase = 2 + kRollTowns * 2;
+		Tablet::SetState(a_s.size() > kBase ? a_s.data() + kBase : nullptr, a_s.size() > kBase ? a_s.size() - kBase : 0);
+		if (a_s.size() < kBase) return;
 		g_rollNight = a_s[0] | (a_s[1] << 8);
 		for (int t = 0; t < kRollTowns; ++t) g_spellRolls[t] = a_s[2 + t], g_classRollsT[t] = a_s[2 + kRollTowns + t];
 	}

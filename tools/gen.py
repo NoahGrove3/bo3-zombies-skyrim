@@ -105,7 +105,7 @@ _PCLS = {'': -1, 'summoner': 0, 'destruction': 1, 'alchemist': 2, 'spellsword': 
 o.append(f'\tinline constexpr std::array<int, {len(P)}> kPerkClass{{ {{ {", ".join(str(_PCLS[p.get("cls", "")]) for p in P)} }} }};  // the class a perk belongs to (-1: every class)')
 C = S['crew']['rows']; passives = {'gun_damage_mult': 0, 'bonus_health': 1, 'knife_damage_mult': 2, 'box_cost': 3}
 for r in S['identity']['rows']: o.append(f'\tinline constexpr std::string_view kText_{r["id"]} = {cs(r["text"])};')
-O = S['objects']['rows']; kinds = {'box': 0, 'perk': 1, 'wallbuy': 2, 'ammo': 3, 'perkmenu': 4, 'forge': 5, 'relic': 6}
+O = S['objects']['rows']; kinds = {'box': 0, 'perk': 1, 'wallbuy': 2, 'ammo': 3, 'perkmenu': 4, 'forge': 5, 'relic': 6, 'tablet': 7}
 def refidx(r):
     if r == 'none': return -1
     sh, i = r.split(':'); rows = {'perks': P, 'weapons': W}[sh]

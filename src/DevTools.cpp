@@ -642,6 +642,11 @@ namespace bo3z
 			} else if (cmd == "quit") {  // the game closed to the desktop (so a new build can go in)
 				logger::info("dev: quitting to the desktop");
 				if (auto* m = RE::Main::GetSingleton()) m->quitGame = true;
+			} else if (cmd == "tablet") {  // tablet <roll|gold|town <n>>: the Tablet of Mysteries rolled now, or moved
+				std::string what;
+				int t = -1;
+				in >> what >> t;
+				Tablet::Dev(what, t);
 			} else if (cmd == "wonder") {  // wonder <class> <state 0-5>
 				int c = -1, st = 0;
 				in >> c >> st;

@@ -773,6 +773,18 @@ namespace bo3z
 		void Build();  // the class robes built from Black Mage Armor SE's files on this PC (once per recipe)
 	}
 
+	// (Noah: the mystery box) the Tablet of Mysteries: one freed city at a time; its roll animated on its model (Tablet.cpp)
+	namespace Tablet
+	{
+		int  Town();                                   // where it stands (-1: no city freed yet)
+		int  Price();                                  // a spin (or a repair) now
+		void OnActivate(RE::TESObjectREFR* a_ref);
+		void Tick(float a_delta);
+		std::vector<std::uint8_t> State();             // (saved with the altars' rolls)
+		void SetState(const std::uint8_t* a_v, std::size_t a_n);
+		void Dev(std::string_view a_what, int a_town);
+	}
+
 	namespace Shops
 	{
 		inline constexpr int kReelPass = 40;          // spells the roll's reel runs past before it stops on the one won
@@ -1025,6 +1037,8 @@ namespace bo3z
 			bool        trialsOn{ false };
 			bool        altarFreed{ false };  // (Noah: "Curse Lifted") this altar's city is freed
 			std::vector<std::array<float, 3>> freedAltars;  // the freed cities' Echo Altar map icons (world x, y, z): gold on the world map
+			bool                  tabletOn{ false };   // the Tablet of Mysteries: where it stands (its map icon)
+			std::array<float, 3>  tabletAt{};
 			int         trialDone{ 0 }, trialActive{ 0 }, trialSel{ 0 };
 			std::array<std::string, 5> trialDesc;
 			std::string trialCity, trialBoss, trialBossLine, trialLock;  // (trialLock: why the altar's trials are shut)

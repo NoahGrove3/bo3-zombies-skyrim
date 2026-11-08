@@ -1716,6 +1716,7 @@
   "ALCH:quickhand": "0xeb0",
   "ALCH:catalyst": "0xeb1",
   "ALCH:spellbinder": "0xeb2",
-  "ALCH:spellguard": "0xeb3"
+  "ALCH:spellguard": "0xeb3",
+  "ACTI:tablet": "0xeb4"
  }
 }
