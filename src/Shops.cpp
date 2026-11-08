@@ -35,25 +35,7 @@ namespace bo3z
 		RE::ObjectRefHandle                      g_orbAim;  // the shrine whose orb is in the crosshair (Activate opens it)
 		bool                                     g_humming = false;  // the shrine's hum is playing (a load stops every loop)
 
-		// The shrine's roll: it gathers power (Charging), every spell in the pool flickers over the crown, slowing
-		// (Spinning), then one is held there as a ball of light until you take it (Offering).
-		enum class Show { Idle, Charging, Spinning, Offering };
-		struct ShowState
-		{
-			Show                phase{ Show::Idle };
-			RE::ObjectRefHandle chest, display;
-			int                 gun{ -1 }, shown{ -1 };
-			float               t{ 0 }, step{ 0 };
-			bool                prize{ false };  // (Noah: a class row's win rolls too) the reel turns the class's spells, it lands on pz
-			Classes::Prize      pz;
-			std::vector<int>    reel;            // (the consistency pass) what the reel turns through - spell or bow ids, or the prize's names' places - empty: every one
-			int                 reelAt{ 0 };     // the won one's place in it
-		} g_show;
-		bool g_choosing = false;  // an offer waits in the altar's menu: take it (a spell: which of your two it replaces), roll again, or leave it
-		int  g_chooseFocus = 0;   // spells: 0 / 1 replace that one; bows and class wins: 0 take; 2 roll again; 3 leave it
-		constexpr float kChargeTime = 0.35f;  // (a breath before the first beam)
 		constexpr float kOrbZ = 300.0f;   // just over the altar's heart stone (its centre at z 175, its top ~266)
-		constexpr float kOrbScale = 1.6f;
 
 		RE::NiPoint3 Local(RE::TESObjectREFR* a_ref, float a_x, float a_y, float a_z)
 		{
@@ -178,21 +160,6 @@ namespace bo3z
 			}
 		}
 
-		// what the shrine shows of a spell: the spell itself, as Skyrim's Magic menu shows it (its first effect's
-		// display object - a fireball, a storm, a rune), else its element's emblem
-		RE::TESBoundObject* SpellShow(int a_index, bool* a_own = nullptr)
-		{
-			if (auto* sp = Arcana::Spell(a_index)) {
-				for (auto* e : sp->effects) {
-					if (e && e->baseEffect && e->baseEffect->menuDispObject) {
-						if (a_own) *a_own = false;
-						return e->baseEffect->menuDispObject;
-					}
-				}
-			}
-			if (a_own) *a_own = true;
-			return Forms::Ours(gen::kShowElement[Arcana::ElementOf(a_index)]);
-		}
 		// the heart stone's runes, k times their own light (its shader's emissive; the first value seen is its own)
 		RE::ObjectRefHandle g_glowHeart;
 		void HeartGlow(RE::TESObjectREFR* a_heart, float a_k)
@@ -241,33 +208,6 @@ namespace bo3z
 			const float floor = a.z + 74.0f * a_altar->GetScale();  // (the platform's top over the altar's origin: tools/echoaltar.py)
 			return std::hypot(q.x - a.x, q.y - a.y) < 215.0f * a_altar->GetScale() && q.z > floor - 70.0f && q.z < floor + 60.0f;
 		}
-		// (Noah: the real bows and spells roll by, with their names - not runes) what the roll shows over the heart stone:
-		// the spell's own display model (Skyrim's Magic menu one) or its element's emblem; a bow, the bow itself, upright
-		float g_showPitch = 0.0f;
-		void ShowModel(RE::TESBoundObject* a_base, float a_rise, float a_scale = -1.0f, float a_pitch = 0.0f)
-		{
-			auto chest = g_show.chest.get();
-			Remove(g_show.display);
-			if (!chest || !a_base) {
-				return;
-			}
-			auto ref = chest->PlaceObjectAtMe(a_base, false);
-			if (!ref) {
-				return;
-			}
-			g_showPitch = a_pitch;
-			ref->SetPosition(Local(chest.get(), 0, 0, kOrbZ * chest->GetScale() + a_rise));
-			ref->SetAngle({ a_pitch, 0, chest->GetAngleZ() + RE::NI_PI / 2 });
-			ref->SetScale(a_scale > 0 ? a_scale : kOrbScale);
-			g_show.display = ref->CreateRefHandle();
-		}
-		void ShowAt(int a_index, float a_rise, bool a_final)
-		{
-			bool own = true;
-			auto* m = SpellShow(a_index, &own);
-			ShowModel(m, a_rise, own ? -1.0f : (a_final ? 1.8f : 1.6f));
-		}
-
 		// Skyrim's own interface sounds (Skyrim.esm), for the altar's menu
 		namespace UiSnd
 		{
@@ -286,20 +226,8 @@ namespace bo3z
 
 	}
 
-	// the reel: where it stands at spin progress k (0..1) - eased so it slows to a stop on the target
-	float Shops::ReelPos(float a_k) { const float r = 1.0f - std::clamp(a_k, 0.0f, 1.0f); return Shops::kReelPass * (1.0f - r * r * r); }
-	int   Shops::ReelSpell(int a_target, float a_pos, int a_slot)
-	{
-		const bool list = !g_show.reel.empty();
-		const int  n = std::max(1, list ? static_cast<int>(g_show.reel.size()) : Arcana::Count());
-		const int  i = (list ? g_show.reelAt : a_target) - Shops::kReelPass + static_cast<int>(std::floor(a_pos)) + a_slot;
-		const int  w = ((i % n) + n) % n;
-		return list ? g_show.reel[w] : w;
-	}
-
 	namespace
 	{
-		int ReelFront(int a_target, float a_k) { return Shops::ReelSpell(a_target, Shops::ReelPos(a_k), 0); }
 
 		// ---- the roll's beams, in the world (Noah: hyper-realistic): Skyrim's own lightning bolt beam from each column's
 		// rune stone into the heart stone (UN_AltarBeamSpell: ShockBoltAim and its MAGShock02 impacts, harmless), cast
@@ -404,86 +332,6 @@ namespace bo3z
 			g_beamStruck = 0, g_beamRecast = {}, g_beams3D = false;
 		}
 
-		void TickShow(float a_delta)
-		{
-			if (g_show.phase == Show::Idle) {
-				return;
-			}
-			g_show.t += a_delta;
-			auto chest = g_show.chest.get();
-			if (!chest) {
-				Remove(g_show.display);
-				g_show.phase = Show::Idle;
-				return;
-			}
-			switch (g_show.phase) {
-			case Show::Charging:
-				if (g_show.t >= kChargeTime) {
-					g_show.t = 0;
-					g_show.step = 0;
-					g_show.phase = Show::Spinning;
-					Forms::PlayAt(gen::Sound::coffer_spin, chest.get());
-				}
-				break;
-			case Show::Spinning:
-				{
-					// the reel (drawn by the HUD as names over the heart stone, src/Hud.cpp): kReelPass spells go by, slowing
-					// like a wheel of fortune, while the six column stones beam into the heart one at a time; the sixth beam
-					// connecting stops it on the one won, and only then does the spell (or bow) itself appear
-					const float k = std::min(1.0f, g_show.t / gen::kShowSpin);
-					const int   front = ReelFront(g_show.gun, k);
-					g_show.step -= a_delta;
-					if (front != g_show.shown && g_show.step <= 0) {
-						g_show.shown = front;
-						g_show.step = 0.045f;
-						Forms::PlayAt(gen::Sound::coffer_spin, chest.get());
-					}
-					TickBeams(chest.get(), a_delta, k);  // (the stones strike the heart one by one: the sixth lands the roll)
-					if (g_show.t >= gen::kShowSpin) {
-						TickBeams(chest.get(), a_delta, 1.0f);
-						EndBeams();
-						g_show.t = 0;
-						g_show.shown = g_show.gun;
-						if (!g_show.prize) ShowAt(g_show.gun, gen::kShowRise, true);
-						Forms::PlayAt(gen::Sound::coffer_land, chest.get());
-						PlayUi(UiSnd::kLand, 0.8f);  // (a bright chord as it lands)
-						if (g_show.prize) {
-							Hud::Banner(g_show.pz.name + "  -  Activate the altar to take it", 4.0f);
-							g_show.phase = Show::Offering;
-							break;
-						}
-						Hud::Banner((Arcana::TierOf(g_show.gun) >= 3 ? std::string("LEGENDARY: ") : std::string()) + std::string(Arcana::Name(g_show.gun)) + "  -  Activate the altar to take it", 4.0f);
-						if (Arcana::TierOf(g_show.gun) >= 3) {
-							Forms::PlayAt(gen::Sound::champ_arrive, chest.get());  // (a legendary spell announces itself)
-						}
-						g_show.phase = Show::Offering;
-					}
-					break;
-				}
-			case Show::Offering:
-				if (auto d = g_show.display.get()) {
-					// (a loaded static never turns by its angle: its node is turned instead - slowly round, upright)
-					static float spin = 0;
-					spin += a_delta * 1.2f;
-					if (auto* node = d->Get3D()) {
-						node->local.rotate.SetEulerAnglesXYZ(g_showPitch, 0.0f, -(chest->GetAngleZ() + RE::NI_PI / 2 + spin));
-						RE::NiUpdateData ud;
-						node->Update(ud);
-					}
-					d->SetPosition(Local(chest.get(), 0, 0, kOrbZ * chest->GetScale() + gen::kShowRise + 4.0f * std::sin(g_show.t * 3.0f)));
-				}
-				if (g_choosing) {
-					g_show.t = std::min(g_show.t, gen::kShowOffer * 0.5f);  // (it waits while you choose)
-				}
-				if (g_show.t >= gen::kShowOffer) {
-					Remove(g_show.display);
-					Hud::Banner("The altar took it back.", 2.5f);
-					g_show.phase = Show::Idle;
-				}
-				break;
-			default: break;
-			}
-		}
 
 		int ActiveBoxTown()
 		{
@@ -1646,93 +1494,10 @@ namespace bo3z
 			return best;
 		}
 
-		// Take the offered spell (Activate on the shrine while it is held over the crown).
-		// (Noah: two of the altar's spells at a time - Skyrim's own spells don't count) a third won asks which of your two it
-		// replaces (that one is gone for good), or you leave it on the altar for half the roll back
-		int  g_lastRollCost = 0;
-		int  g_lastRollRow = 0;  // which roll made the offer (0 the first row, 6 the second / the Ranger's): "roll again" repeats it
 		bool g_menu = false;
 		RE::ObjectRefHandle g_menuRef;
-		void EndOffer()
-		{
-			Remove(g_show.display);
-			g_show.phase = Show::Idle;
-			g_choosing = false;
-		}
-		std::string OfferName()
-		{
-			return g_show.prize ? g_show.pz.name : std::string(Arcana::Name(g_show.gun));
-		}
-		// (Noah: "as the ranger I couldn't choose to reroll or take the rolled one - it would only replace what's in my hand")
-		// every offer is a choice in the altar's menu: take it, roll again, or leave it for half the roll back
-		void Choose(int a_slot)  // spells: 0/1 replace that spell; class wins: 0 take it; -1: leave it (half back)
-		{
-			if (!g_choosing || g_show.phase != Show::Offering) {
-				g_choosing = false;
-				return;
-			}
-			const auto have = Arcana::Carried();
-			if (a_slot < 0) {
-				const int back = g_lastRollCost / 2;
-				Points::Refund(back);
-				Forms::Play(gen::Sound::ui_close);
-				Hud::Banner(OfferName() + " left on the altar  (+" + std::to_string(back) + ")", 2.5f);
-				logger::info("shrine: left {} (refund {})", OfferName(), back);
-				EndOffer();
-				return;
-			}
-			if (g_show.prize) {
-				if (a_slot != 0) return;
-				if (g_show.pz.give) g_show.pz.give();
-				Forms::Play(gen::Sound::coffer_take);
-				logger::info("shrine: took {}", g_show.pz.name);
-				EndOffer();
-				return;
-			}
-			if (a_slot >= static_cast<int>(have.size())) {
-				return;
-			}
-			const int old = have[a_slot];
-			Arcana::Replace(old, g_show.gun);
-			Forms::Play(gen::Sound::coffer_take);
-			Hud::Banner(std::string(Arcana::Name(g_show.gun)) + " learned  -  " + std::string(Arcana::Name(old)) + " given back", 3.0f);
-			logger::info("shrine: took {} in place of {}", Arcana::Name(g_show.gun), Arcana::Name(old));
-			EndOffer();
-		}
-		bool TakeOffer(RE::TESObjectREFR* a_ref)
-		{
-			if (g_show.phase != Show::Offering || g_show.chest.get().get() != a_ref) {
-				return false;
-			}
-			if (g_show.prize || Arcana::Carried().size() >= Arcana::CarryCap()) {  // the choice, in the altar's menu (take / roll again / leave)
-				if (!g_choosing) {
-					g_choosing = true;
-					g_menu = true;
-					g_chooseFocus = 0;
-					g_menuRef = a_ref->CreateRefHandle();
-					Forms::Play(gen::Sound::ui_move);
-				}
-				return true;
-			}
-			Arcana::Give(g_show.gun, true);  // learned (in the Magic menu) and in your right hand
-			Forms::Play(gen::Sound::coffer_take);
-			Hud::Banner(std::string(Arcana::Name(g_show.gun)) + "  -  learned", 2.5f);
-			logger::info("shrine: took {}", Arcana::Name(g_show.gun));
-			EndOffer();
-			return true;
-		}
 
-		// (Noah: harder to grow too strong) each spell called costs a quarter more than the last, until the next night
-		// (Noah: each altar's price starts at its lowest, and goes back to what it was when you load a save) how many times
-		// each city's altar has been rolled tonight - spells and bows apart - kept in the co-save (Save 'ROLL')
-		constexpr int kRollTowns = 16;
-		std::array<std::uint8_t, kRollTowns> g_spellRolls{}, g_classRollsT{};
-		int g_rollNight = -1;
-		void RollNight()
-		{
-			const int night = Save::Get(gen::kAV_round);
-			if (night != g_rollNight) g_rollNight = night, g_spellRolls.fill(0), g_classRollsT.fill(0);
-		}
+		constexpr int kRollTowns = 16;   // (the co-save's old roll counts: their bytes kept, zero, so the Tablet's state after them reads as before)
 		int TownOfAltar(RE::TESObjectREFR* a_ref)
 		{
 			if (!a_ref) return -1;
@@ -1741,33 +1506,6 @@ namespace bo3z
 			}
 			return -1;
 		}
-		// (Noah: one roller at a time) a friend's roll at an altar holds it for everyone else until their reel is done
-		struct Busy { std::string who; std::chrono::steady_clock::time_point until; };
-		std::array<Busy, 16> g_busy{};
-		int g_myBusy = -1;  // the altar our own roll holds (told to the party)
-		bool BusyForMe(int a_town)
-		{
-			if (a_town < 0 || a_town >= 16 || g_busy[a_town].who.empty()) return false;
-			if (std::chrono::steady_clock::now() > g_busy[a_town].until) { g_busy[a_town].who.clear(); return false; }
-			Hud::Banner(g_busy[a_town].who + " is rolling at this altar - wait for their reel to stop", 2.0f);
-			return true;
-		}
-		int CurrentTown()
-		{
-			auto r = g_menuRef.get();
-			return TownOfAltar(r.get());
-		}
-		int RollBase()
-		{
-			return static_cast<int>(std::lround(gen::kObjects[0].cost * Director::PriceScale()));   // (the essence economy: 3% more a night after night 10)
-		}
-		int RollCost(int a_town = -2)
-		{
-			RollNight();
-			const int t = a_town == -2 ? CurrentTown() : a_town;
-			const int n = t >= 0 && t < kRollTowns ? g_spellRolls[t] : 0;
-			return static_cast<int>(std::lround(RollBase() * std::pow(1.25, n) / 10.0) * 10);
-		}
 		// (Noah) the altar's late rows open with the cities freed: the reforge at three, the Legendary roll at six
 		int FreedCount()
 		{
@@ -1775,66 +1513,8 @@ namespace bo3z
 			for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) n += Curse::Freed(t) ? 1 : 0;
 			return n;
 		}
-		constexpr int kForgeAt = 3, kLegendAt = 6;
-		int ClassRollCost(int a_town = -2)
-		{
-			RollNight();
-			const int t = a_town == -2 ? CurrentTown() : a_town;
-			const int n = t >= 0 && t < kRollTowns ? g_classRollsT[t] : 0;
-			return static_cast<int>(std::lround(RollBase() * std::pow(1.25, n) / 10.0) * 10);
-		}
-		// (Noah: no roll on the class rows) a class row's win turns on the altar like a spell: the reel runs the class's own
-		// spells (the stones strike the heart one by one), then lands on what was won, to be taken off the altar
-		void SpinPrize(RE::TESObjectREFR* a_ref, Classes::Prize a_pz)
-		{
-			g_show = {};
-			g_show.chest = a_ref->CreateRefHandle();
-			g_show.phase = Show::Charging;
-			g_show.prize = true;
-			g_show.pz = std::move(a_pz);
-			// (the consistency pass: it turned through your own spells and stopped on one that wasn't the prize) the reel turns
-			// through the prize's own pool and stops on it
-			if (g_show.pz.reel.empty()) g_show.pz.reel = { g_show.pz.name }, g_show.pz.at = 0;
-			g_show.pz.at = std::clamp(g_show.pz.at, 0, static_cast<int>(g_show.pz.reel.size()) - 1);
-			for (int i = 0; i < static_cast<int>(g_show.pz.reel.size()); ++i) g_show.reel.push_back(i);
-			g_show.reelAt = g_show.pz.at;
-			g_show.gun = g_show.pz.at;
-			Forms::PlayAt(gen::Sound::coffer_charge, a_ref);
-			logger::info("shrine: rolling {}", g_show.pz.name);
-		}
+		constexpr int kForgeAt = 3;
 
-		// Roll a spell: every spell you do not carry has the same chance.
-		void SpinBox(RE::TESObjectREFR* a_ref)
-		{
-			if (!a_ref || g_show.phase != Show::Idle) {
-				if (g_show.phase != Show::Idle) {
-					Hud::Banner("The altar is still turning", 1.5f);
-				}
-				return;
-			}
-			const int pick = Arcana::Roll();  // one of the Coffer's spells you don't know yet
-			if (pick < 0) {
-				Hud::Banner(Classes::Get() < 0 ? std::string("Choose your class at the top of the altar first") : Arcana::Count() ? "You carry every ladder of your path - raise them in your kit" : std::string("The altar is silent (the spell mods aren't installed)"), 3.0f);
-				return;
-			}
-			const int town = TownOfAltar(a_ref);
-			if (BusyForMe(town)) return;
-			const int cost = RollCost(town);
-			if (!Points::Spend(cost)) {
-				return;
-			}
-			g_lastRollCost = cost;
-			if (town >= 0) g_spellRolls[town] = static_cast<std::uint8_t>(std::min(250, g_spellRolls[town] + 1));
-			g_show = {};
-			g_show.chest = a_ref->CreateRefHandle();
-			g_show.phase = Show::Charging;
-			g_show.gun = pick;
-			g_show.reel = Arcana::ReelPool();  // (only your class's spells go by)
-			if (auto it = std::find(g_show.reel.begin(), g_show.reel.end(), pick); it != g_show.reel.end()) g_show.reelAt = static_cast<int>(it - g_show.reel.begin());
-			else g_show.reel.clear();
-			Forms::PlayAt(gen::Sound::coffer_charge, a_ref);
-			logger::info("shrine: rolling {} (of {})", Arcana::Name(pick), g_show.reel.size());
-		}
 
 		int                 g_sel = 0;
 		int                 g_trialSel = 0;  // the controller's pick among the altar's trials
@@ -1882,7 +1562,6 @@ namespace bo3z
 			g_best.fill({});
 			g_probe = {};
 			g_spinners.clear();
-			g_show = {};
 		}
 
 		RE::TESObjectREFR* Placed(int a_town, int a_kind)
@@ -2001,43 +1680,10 @@ namespace bo3z
 			const auto menuPerks = Perks::Menu();  // (Noah: each class its own perks) the shared draughts and your class's
 			const int  n = std::max(1, static_cast<int>(menuPerks.size()));
 			g_sel = std::clamp(g_sel, 0, n - 1);
-			bool wantReroll = false;  // (an offer's "roll again": done once the rolls below are in reach)
-			if (g_choosing) {  // the choice: 1 / X takes it (a spell: replaces the first), 2 / Y the second spell, R / Y rolls again, Backspace / B leaves it
-				const bool single = g_show.prize;
-				if (g_show.phase != Show::Offering) {
-					g_choosing = false;
-				} else if (dev == RE::INPUT_DEVICE::kKeyboard && !(code == 0x11 || code == 0xC8 || code == 0x1F || code == 0xD0 || code == 0x1E || code == 0xCB || code == 0x20 || code == 0xCD || code == 0x1C || code == 0x9C)) {
-					if (static_cast<int>(code) == Settings::Key(0)) Choose(0);
-					else if (static_cast<int>(code) == Settings::Key(1) && !single) Choose(1);
-					else if (code == 0x13 || (single && static_cast<int>(code) == Settings::Key(1))) wantReroll = true;  // R
-					else if (static_cast<int>(code) == Settings::Key(4) || code == 0x12) Choose(-1);
-					if (!wantReroll) return true;
-				} else if (dev == RE::INPUT_DEVICE::kGamepad && !(code == 0x0001 || code == 0x0002 || code == 0x0004 || code == 0x0008 || code == 0x1000)) {
-					if (code == 0x4000) Choose(0);
-					else if (code == 0x8000 && !single) Choose(1);
-					else if (code == 0x8000 && single) wantReroll = true;
-					else if (code == 0x2000) Choose(-1);
-					if (!wantReroll) return true;
-				}
-			}
 			// (Noah: "give the special ammo, outfit change and class change their own tabs instead of keybinds") - rows now
 			auto*      ref = g_menuRef.get().get();
 			auto act = [&](int a) {
-				if ((a == 0 || a == 6) && g_show.phase == Show::Idle) g_lastRollRow = a;
 				switch (a) {
-				case 0:
-					if (Classes::Get() < 0 && g_show.phase == Show::Idle) {
-						Hud::Banner("Choose your class at the top of the altar first", 2.5f);
-						break;
-					}
-					if (!TakeOffer(ref)) {
-						SpinBox(ref);
-						if (g_show.phase != Show::Idle) {  // (Noah: the box sits mid-screen now - it steps aside to watch the roll)
-							g_menu = false;
-							g_closedAt = std::chrono::steady_clock::now();
-						}
-					}
-					break;
 				case 1:
 					if (const int fc = FreedCount(); fc < kForgeAt && !Gun::TestKitOn()) {  // (Noah: the reforge opens once three altars are freed)
 						Hud::Banner("The altar's forge sleeps until three Echo Altars are freed (" + std::to_string(fc) + " of 3)", 3.0f);
@@ -2048,59 +1694,6 @@ namespace bo3z
 					}
 					break;
 				case 2: BuyPerk(Perks::MenuAt(g_sel), ref); break;
-				case 6:
-					if (!TakeOffer(ref)) {
-						// (the consistency pass) every class's row alike: never while the altar turns, never at an altar a friend is using
-						if (g_show.phase != Show::Idle) {
-							Hud::Banner("The altar is still turning", 1.5f);
-							break;
-						}
-						if (BusyForMe(TownOfAltar(ref))) break;
-						if (const int cls = Classes::Get(); cls == 3) {
-							// (the Spellsword's row: a spell-weapon or spellshield)
-							const int town = TownOfAltar(ref), cost = ClassRollCost(town);
-							Classes::Prize pz;
-							if (Points::Get() >= cost && ref && Classes::RollGear(cls, &pz)) {
-								Points::Spend(cost);
-								g_lastRollCost = cost;
-								if (town >= 0) g_classRollsT[town] = static_cast<std::uint8_t>(std::min(250, g_classRollsT[town] + 1));
-								SpinPrize(ref, std::move(pz));
-								g_menu = false, g_closedAt = std::chrono::steady_clock::now();
-							} else if (Points::Get() < cost) {
-								Hud::Banner("It costs " + Num(cost) + " Cursed Essence", 2.0f);
-							}
-							break;
-						} else if (cls == 1) {  // (Destruction's side-picks: its support spells)
-							const int town = TownOfAltar(ref), cost = ClassRollCost(town);
-							if (Points::Get() < cost) {
-								Hud::Banner("It costs " + Num(cost) + " Cursed Essence", 2.0f);
-							} else if (Classes::Prize pz; g_show.phase == Show::Idle && ref && Classes::RollSupport(&pz)) {
-								Points::Spend(cost);
-								g_lastRollCost = cost;
-								if (town >= 0) g_classRollsT[town] = static_cast<std::uint8_t>(std::min(250, g_classRollsT[town] + 1));
-								SpinPrize(ref, std::move(pz));
-								g_menu = false, g_closedAt = std::chrono::steady_clock::now();
-							}
-							break;
-						} else if (cls == 0) {  // (the Summoner's late Legendaries: heroes and armies)
-							const int town = TownOfAltar(ref), cost = ClassRollCost(town) * 2;
-							if (const int fc = FreedCount(); fc < kLegendAt && !Gun::TestKitOn()) {  // (Noah: no Legendary until six altars are freed)
-								Hud::Banner("A Hero's Pact waits until six cities are freed (" + std::to_string(fc) + " of 6)", 3.0f);
-							} else if (Points::Get() < cost) {
-								Hud::Banner("A Hero's Pact costs " + Num(cost) + " Cursed Essence", 2.0f);
-							} else if (Classes::Prize pz; g_show.phase == Show::Idle && ref && Classes::RollHero(&pz)) {
-								Points::Spend(cost);
-								g_lastRollCost = cost;
-								if (town >= 0) g_classRollsT[town] = static_cast<std::uint8_t>(std::min(250, g_classRollsT[town] + 1));  // (the audit: its price never rose)
-								SpinPrize(ref, std::move(pz));
-								g_menu = false, g_closedAt = std::chrono::steady_clock::now();
-							}
-							break;
-						} else if (cls < 0) {
-							Hud::Banner("Choose your class at the top of the altar first", 2.5f);
-						}
-					}
-					break;
 				case 7: Curse::StartTrial(ref ? TownOf(ref) : -1, g_trialSel); break;
 				case 4:
 					Forms::Play(gen::Sound::ui_close);
@@ -2118,50 +1711,7 @@ namespace bo3z
 			                                                                                                                                 : 0;
 			const int  side = (kb && code == 0xCB) || (pad && code == 0x0004) ? -1 : (kb && code == 0xCD) || (pad && code == 0x0008) ? 1 : 0;
 			const bool pick = (kb && (code == 0x1C || code == 0x9C)) || (pad && code == 0x1000) || (dev == RE::INPUT_DEVICE::kMouse && code == 0);  // (Noah: Enter or left click; A / X on a pad)
-			// roll again: the offer goes back (no refund) and the same roll turns once more, at its next price
-			const auto reroll = [&] {
-				const int row = g_lastRollRow;
-				const int cost = row == 6 ? ClassRollCost() * (Classes::Get() == 0 ? 2 : 1) : RollCost();
-				if (Points::Get() < cost) {  // (too few: the offer stays where it is)
-					Hud::Banner("Rolling again costs " + Num(cost) + " Cursed Essence", 2.0f);
-					PlayUi(UiSnd::kFail);
-					return;
-				}
-				EndOffer();
-				act(row);
-			};
-			if (wantReroll && g_choosing && g_show.phase == Show::Offering) {
-				PlayUi(UiSnd::kChoose);
-				reroll();
-				return true;
-			}
-			if (g_choosing && g_show.phase == Show::Offering && (nav || side || pick)) {
-				// the options: a spell - replace the first, replace the second, roll again, leave it; a bow or a class win -
-				// take it, roll again, leave it
-				std::vector<int> opts;
-				if (g_show.prize) opts = { 0, 2, 3 };
-				else {
-					opts = { 0 };
-					if (Arcana::Carried().size() > 1) opts.push_back(1);
-					if (Arcana::Carried().size() > 2) opts.push_back(4);  // (the Summoner's third spell can be given back too)
-					opts.push_back(2), opts.push_back(3);
-				}
-				auto at = std::find(opts.begin(), opts.end(), g_chooseFocus);
-				int  i = at == opts.end() ? 0 : static_cast<int>(at - opts.begin());
-				if (nav || side) {
-					i = (i + (nav ? nav : side) + static_cast<int>(opts.size())) % static_cast<int>(opts.size());
-					g_chooseFocus = opts[i];
-					PlayUi(UiSnd::kMove, 0.7f);
-				} else {
-					PlayUi(UiSnd::kChoose);
-					g_chooseFocus = opts[i];
-					if (g_chooseFocus == 3) Choose(-1);
-					else if (g_chooseFocus == 2) reroll();
-					else Choose(g_chooseFocus == 4 ? 2 : g_chooseFocus);
-				}
-				return true;
-			}
-			if (!g_choosing && (nav || side || pick)) {
+			if (nav || side || pick) {
 				auto* r = g_menuRef.get().get();
 				const int t = r ? TownOf(r) : -1;
 				// (Noah, the altar rework) the class; your kit (each item: its next upgrade); the Armory; then the brews, the
@@ -2231,7 +1781,6 @@ namespace bo3z
 					// (Noah: sounds for the altar's menu) a deep rune chime when something is done, a dull thud when it can't be
 					// (too few septims, nothing to reforge, a bond not yet open); leaving has its own soft whoosh
 					const int  pts0 = Points::Get();
-					const auto ph0 = g_show.phase;
 					const bool menu0 = g_menu;
 					const int  trial0 = g_trialSel;
 					bool       kitOk = false;
@@ -2242,13 +1791,9 @@ namespace bo3z
 					}
 					switch (g_focus) {
 					case kRowClass:
-						if (g_show.phase != Show::Idle) {
-							Hud::Banner("Wait for the altar to finish its roll", 2.0f);
-						} else {
-							g_menu = false;
-							g_closedAt = std::chrono::steady_clock::now();
-							Classes::OpenPicker(Classes::Get() >= 0);  // (the first is free; a change costs)
-						}
+						g_menu = false;
+						g_closedAt = std::chrono::steady_clock::now();
+						Classes::OpenPicker(Classes::Get() >= 0);  // (the first is free; a change costs)
 						break;
 					case kRowPerk: act(2); break;
 					case kRowShout: act(3); break;
@@ -2274,7 +1819,7 @@ namespace bo3z
 					(void)trial0;
 					if (g_focus == kRowLeave || (menu0 && !g_menu)) {
 						PlayUi(UiSnd::kLeave);
-					} else if (Points::Get() != pts0 || g_show.phase != ph0 || (g_focus >= kRowTrial && g_focus < kRowTrial + 5) || g_focus == kRowShout || g_focus == kRowOutfit) {
+					} else if (Points::Get() != pts0 || (g_focus >= kRowTrial && g_focus < kRowTrial + 5) || g_focus == kRowShout || g_focus == kRowOutfit) {
 						PlayUi(UiSnd::kChoose);
 					} else {
 						PlayUi(UiSnd::kFail);
@@ -2304,10 +1849,8 @@ namespace bo3z
 				switch (code) {
 				case 0xCB: g_sel = (g_sel + n - 1) % n; Forms::Play(gen::Sound::ui_move); return true;  // left arrow
 				case 0xCD: g_sel = (g_sel + 1) % n; Forms::Play(gen::Sound::ui_move); return true;      // right arrow
-				case 0x12:                                      // E (Activate): takes a waiting spell, else leaves
-					if (!TakeOffer(ref)) {
-						act(4);
-					}
+				case 0x12:                                      // E (Activate): leaves
+					act(4);
 					return true;
 				default: return false;
 				}
@@ -2355,16 +1898,13 @@ namespace bo3z
 					off = 0;
 				}
 			}
-			if (!g_menu) {
-				g_choosing = false;  // (walked away: the spell waits on the altar a while yet)
-			}
 			// the class picker opened from an altar (no class yet) closed: with a class chosen, that altar opens on its rows
 			if (g_pickAltar && !Classes::Open()) {
 				auto pr = g_pickAltar.get();
 				g_pickAltar.reset();
 				if (pr && Classes::Get() >= 0 && OnAltarBase(pr.get()) && !g_menu) {
 					g_menu = true;
-					g_focus = kRowClass, g_chooseFocus = 0, g_sel = 0;
+					g_focus = kRowClass, g_sel = 0;
 					g_menuRef = pr->CreateRefHandle();
 					PlayUi(UiSnd::kOpen, 0.6f);
 				}
@@ -2384,90 +1924,9 @@ namespace bo3z
 				auto& h = Hud::Edit();
 				h.perkMenu = g_menu;
 				h.perkSel = g_sel;
-				h.altarFocus = g_focus, h.chooseFocus = g_chooseFocus, h.altarOpen = g_open;
-				h.rollPhase = static_cast<int>(g_show.phase);
-				h.rollT = g_show.phase == Show::Charging ? std::min(1.0f, g_show.t / kChargeTime) : g_show.phase == Show::Spinning ? std::min(1.0f, g_show.t / gen::kShowSpin) : g_show.phase == Show::Offering ? std::min(1.0f, g_show.t / gen::kShowOffer) : 0.0f;
-				h.rollGun = g_show.phase == Show::Idle || g_show.phase == Show::Charging || g_show.shown < 0 ? -1 : Arcana::kIdBase + g_show.shown;
-				h.rollPrize = g_show.prize && g_show.phase == Show::Offering ? g_show.pz.name : std::string();
-				h.rollReelNames = g_show.prize && g_show.phase != Show::Idle ? g_show.pz.reel : std::vector<std::string>{};
-				h.rollReelKind = g_show.prize ? g_show.pz.kind : std::string();
-				h.rollPrizeLegend = g_show.prize && g_show.pz.legendary;
-				h.rollReel = g_show.phase != Show::Idle ? g_show.reel : std::vector<int>{}, h.rollReelAt = g_show.reelAt;
+				h.altarFocus = g_focus, h.altarOpen = g_open;
 				h.freedCount = FreedCount();
-				h.forgeAt = kForgeAt, h.legendAt = kLegendAt;
-				h.rollTarget = g_show.phase == Show::Spinning || g_show.phase == Show::Offering ? g_show.gun : -1;
-				h.rollCost = RollCost();
-				// where the shrine's crown is on the screen: the roll shows there too, over the crystal itself
-				h.rollOnScreen = false;
-				h.beamLit = 0, h.beamGrow = 0;
-				if (g_show.phase == Show::Idle || g_show.phase == Show::Offering) {
-					if (auto hr = g_glowHeart.get()) {
-						HeartGlow(hr.get(), 1.0f);  // (its runes back to their own light)
-					}
-					g_glowHeart = {};
-				}
-				if (auto chest = g_show.chest.get(); chest && g_show.phase != Show::Idle && g_show.phase != Show::Offering) {
-					// (the roll: the six column stones light beams into the heart stone one after another as it gathers, all
-					// six while it spins; the stone's runes burn brighter the faster it turns)
-					auto* cam = RE::Main::WorldRootCamera();
-					// (one at a time across the spin: beam q leaves its stone at q/6 of the way and strikes the heart at (q+1)/6)
-					const float kk = g_show.phase == Show::Spinning ? std::clamp(g_show.t / gen::kShowSpin, 0.0f, 1.0f) * 6.0f : -1.0f;
-					const float lit = kk < 0 ? 0.0f : std::min(6.0f, std::floor(kk) + 1.0f);
-					h.beamGrow = kk < 0 ? 0.0f : kk >= 6.0f ? 1.0f : kk - std::floor(kk);
-					RE::TESObjectREFR* heart = nullptr;
-					std::array<RE::TESObjectREFR*, 6> rocks{};
-					RE::TES::GetSingleton()->ForEachReferenceInRange(chest.get(), 420.0f, [&](RE::TESObjectREFR* r) {
-						if (!r || r->IsDisabled() || r->IsDeleted()) {
-							return RE::BSContainer::ForEachResult::kContinue;
-						}
-						auto* b = r->GetBaseObject();
-						if (b && (b == Forms::Ours(gen::kHeartStone) || b == Forms::Ours(gen::kHeartStoneLit))) {
-							heart = r;
-						}
-						for (int q = 0; q < 6; ++q) {
-							if (b && b == Forms::Ours(gen::kPillarRock[q])) rocks[q] = r;
-						}
-						return RE::BSContainer::ForEachResult::kContinue;
-					});
-					auto screen = [&](const RE::NiPoint3& a_p, float& x, float& y) {
-						float z = 0;
-						cam->WorldPtToScreenPt3(a_p, x, y, z, 1e-5f);
-						y = 1.0f - y;
-						return z > 0;
-					};
-					if (cam && heart) {
-						const auto hp = heart->Get3D() ? heart->Get3D()->world.translate : heart->GetPosition();
-						if (screen(hp, h.beamToX, h.beamToY)) {
-							for (int q = 0; q < 6; ++q) {
-								if (rocks[q] && q < static_cast<int>(lit) && !g_beams3D) {  // (drawn only if the world's beams can't fly)
-									const auto rp = rocks[q]->Get3D() ? rocks[q]->Get3D()->world.translate : rocks[q]->GetPosition();
-									if (screen(rp, h.beamFrom[q * 2], h.beamFrom[q * 2 + 1])) {
-										h.beamLit = q + 1;
-									}
-								}
-							}
-							if (h.beamLit < static_cast<int>(lit)) {
-								h.beamGrow = 1.0f;  // (the newest stone is off the screen: what shows is all struck)
-							}
-						}
-						// its runes: the stone's own glow, brighter the further the roll has gone
-						const float k = std::clamp(std::floor(std::max(0.0f, kk) + 1e-4f), 0.0f, 6.0f) / 6.0f;  // (a step brighter with each beam struck)
-						const float sinceStrike = kk >= 1.0f ? kk - std::floor(kk) : 1.0f;  // (each strike: the runes flare white-hot, then settle)
-						HeartGlow(heart, 1.0f + 2.5f * k + 4.0f * std::max(0.0f, 1.0f - sinceStrike * 5.0f));
-						g_glowHeart = heart->CreateRefHandle();
-					}
-				}
-				if (auto chest = g_show.chest.get(); chest && g_show.phase != Show::Idle) {
-					if (auto* cam = RE::Main::WorldRootCamera()) {
-						const auto at = Local(chest.get(), 0, 0, kOrbZ * chest->GetScale());
-						float x = 0, y = 0, z = 0;
-						cam->WorldPtToScreenPt3(at, x, y, z, 1e-5f);
-						if (z > 0 && x > 0 && x < 1 && y > 0 && y < 1) {
-							h.rollOnScreen = true, h.rollScreenX = x, h.rollScreenY = 1.0f - y;
-							h.rollDist = at.GetDistance(RE::PlayerCharacter::GetSingleton()->GetPosition());
-						}
-					}
-				}
+				h.forgeAt = kForgeAt;
 				h.pulseOn = false;
 				// (Noah: "the Echo Altar did not have the city being free animation" - its Dragon Priest fell 60 m away, as the clock
 				// leapt to dawn) the altar waits for you: its awakening plays once you're back within 25 m of it
@@ -2594,18 +2053,6 @@ namespace bo3z
 						h.freedAltars.push_back({ p.x, p.y, p.z });
 					}
 				}
-				h.chooseOn = g_choosing && g_show.phase == Show::Offering;
-				if (h.chooseOn) {
-					const auto have = Arcana::Carried();
-					h.chooseKind = g_show.prize ? 2 : 0;
-					h.chooseName = OfferName();
-					h.chooseReroll = g_lastRollRow == 6 ? ClassRollCost() * (Classes::Get() == 0 ? 2 : 1) : RollCost();
-					h.chooseNew = g_show.gun;
-					h.chooseA = have.size() > 0 ? have[0] : -1;
-					h.chooseB = have.size() > 1 ? have[1] : -1;
-					h.chooseC = have.size() > 2 ? have[2] : -1;
-					h.chooseRefund = g_lastRollCost / 2;
-				}
 				if (g_menu) {
 					if (auto r = g_menuRef.get()) {
 						const int t = TownOf(r.get());
@@ -2623,7 +2070,6 @@ namespace bo3z
 					}
 				}
 			}
-			auto rolling = g_show.phase == Show::Charging || g_show.phase == Show::Spinning ? g_show.chest.get() : RE::NiPointer<RE::TESObjectREFR>{};
 			static float clock = 0;
 			clock += a_delta;
 			RE::NiPoint3 camPos{}, orbAt{};
@@ -2636,7 +2082,7 @@ namespace bo3z
 				if (auto r = s.ref.get(); r && r->Is3DLoaded()) {
 					// the shrine's heart turns faster while it rolls (the crystal races, the shards whirl). Statics never move
 					// by their angle while loaded, so their 3D node is turned (and the rocks bob) directly.
-					const float boost = rolling && r->GetPosition().GetDistance(rolling->GetPosition()) < 400.0f ? (g_show.phase == Show::Charging ? 3.0f : 7.0f) : 1.0f;
+					const float boost = 1.0f;
 					auto* node = r->Get3D() ? r->Get3D()->AsNode() : nullptr;
 					if (!node) {
 						continue;
@@ -2757,16 +2203,6 @@ namespace bo3z
 					}
 				}
 			}
-			TickShow(a_delta);
-			{  // our roll holds the altar for the party while it turns (and lets go when it's done)
-				const int busy = g_show.phase != Show::Idle ? TownOfAltar(g_show.chest.get().get()) : -1;
-				static float resend = 0;
-				if (busy != g_myBusy || (busy >= 0 && (resend -= a_delta) <= 0)) {
-					if (g_myBusy >= 0 && busy != g_myBusy) Net::AltarBusy(g_myBusy, false);
-					if (busy >= 0) Net::AltarBusy(busy, true), resend = 5.0f;
-					g_myBusy = busy;
-				}
-			}
 			if (auto* pl = RE::PlayerCharacter::GetSingleton()) {
 				TickMarkers(pl, a_delta);
 			}
@@ -2811,14 +2247,11 @@ namespace bo3z
 					Hud::Banner("Step up onto the altar", 1.5f);
 					break;
 				}
-				if (TakeOffer(a_ref)) {
-					break;
-				}
 				if (g_menu && g_menuRef.get().get() == a_ref) {
 					Forms::Play(gen::Sound::ui_close);
 					g_menu = false;
 					g_closedAt = std::chrono::steady_clock::now();
-				} else if (Classes::Get() < 0 && g_show.phase == Show::Idle) {
+				} else if (Classes::Get() < 0) {
 					// (Noah: "for players who haven't chosen a class yet the echo altar UI should just be the class selection") the
 					// class picker alone; once a class is chosen the altar opens on that class's own rows (TickPickAltar)
 					g_pickAltar = a_ref->CreateRefHandle();
@@ -2826,7 +2259,7 @@ namespace bo3z
 					Classes::OpenPicker(false);
 				} else {
 					g_menu = true;
-					g_focus = kRowClass, g_chooseFocus = 0;
+					g_focus = kRowClass;
 					g_menuRef = a_ref->CreateRefHandle();
 					Forms::PlayAt(gen::Sound::coffer_open, a_ref);
 					PlayUi(UiSnd::kOpen, 0.6f);
@@ -2835,7 +2268,7 @@ namespace bo3z
 			case 1: BuyPerk(o.ref, a_ref); break;
 			case 4:
 				if (!g_menu) {
-					g_menu = true, g_sel = 0, g_focus = kRowClass, g_chooseFocus = 0;
+					g_menu = true, g_sel = 0, g_focus = kRowClass;
 					g_menuRef = a_ref->CreateRefHandle();
 					Forms::Play(gen::Sound::coffer_open);
 				} else {
@@ -2872,27 +2305,16 @@ namespace bo3z::Shops
 	}
 	std::vector<std::uint8_t> RollState()
 	{
-		RollNight();
-		std::vector<std::uint8_t> out(2 + kRollTowns * 2);
-		out[0] = static_cast<std::uint8_t>(g_rollNight & 0xFF), out[1] = static_cast<std::uint8_t>((g_rollNight >> 8) & 0xFF);
-		for (int t = 0; t < kRollTowns; ++t) out[2 + t] = g_spellRolls[t], out[2 + kRollTowns + t] = g_classRollsT[t];
-		const auto tb = Tablet::State();   // (the Tablet of Mysteries rides after them)
+		// (the altar no longer rolls: its old counts' bytes are written as zeros so a save reads the same) the Tablet of
+		// Mysteries' state after them
+		std::vector<std::uint8_t> out(2 + kRollTowns * 2, 0);
+		const auto tb = Tablet::State();
 		out.insert(out.end(), tb.begin(), tb.end());
 		return out;
 	}
 	void SetRollState(const std::vector<std::uint8_t>& a_s)
 	{
-		g_spellRolls.fill(0), g_classRollsT.fill(0), g_rollNight = -1;
 		constexpr std::size_t kBase = 2 + kRollTowns * 2;
 		Tablet::SetState(a_s.size() > kBase ? a_s.data() + kBase : nullptr, a_s.size() > kBase ? a_s.size() - kBase : 0);
-		if (a_s.size() < kBase) return;
-		g_rollNight = a_s[0] | (a_s[1] << 8);
-		for (int t = 0; t < kRollTowns; ++t) g_spellRolls[t] = a_s[2 + t], g_classRollsT[t] = a_s[2 + kRollTowns + t];
-	}
-	void HeardBusy(int a_town, const std::string& a_who, bool a_on)
-	{
-		if (a_town < 0 || a_town >= 16) return;
-		if (a_on) g_busy[a_town] = { a_who, std::chrono::steady_clock::now() + std::chrono::seconds(12) };
-		else g_busy[a_town].who.clear();
 	}
 }

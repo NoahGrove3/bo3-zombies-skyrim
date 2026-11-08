@@ -2774,99 +2774,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const std::uint32_t c = ArmsColor(g);
 				return IM_COL32((c >> 16) & 0xFF, (c >> 8) & 0xFF, c & 0xFF, static_cast<int>(255 * std::clamp(a, 0.0f, 1.0f)));
 			};
-			const auto rollOrb = [&](ImVec2 c, float R) {
-				// (Noah: hyper-realistic) a window of dark glass in a cold steel bezel, the altar's own heart stone turning
-				// inside it (the menu's renders of it), six rune studs round the rim; as each stone strikes the heart a bolt
-				// of blue lightning forks from its stud into the stone and stays crackling, the stone's light rising; when
-				// the sixth lands, a white flash and what it won in front of the stone
-				const OrbTex tx = MenuOrbTextures();
-				const auto   T = [](ID3D11ShaderResourceView* t) { return ImTextureID(reinterpret_cast<std::uintptr_t>(t)); };
-				const int    struck = s.rollPhase == 2 ? std::min(6, static_cast<int>(s.rollT * 6.0f + 1e-4f)) : s.rollPhase == 3 ? 6 : 0;
-				const float  power = struck / 6.0f;
-				// the glass: deep, darker at the rim (many soft discs: no banding)
-				for (int q = 0; q < 16; ++q) {
-					const float t = 1.0f - q / 16.0f;
-					dl->AddCircleFilled(c, R * t, IM_COL32(static_cast<int>(2 + 10 * (1 - t)), static_cast<int>(4 + 16 * (1 - t)), static_cast<int>(8 + 30 * (1 - t)), 40), 64);
-				}
-				dl->AddCircleFilled(c, R, IM_COL32(2, 3, 6, 120), 64);
-				// the heart stone, turning (faster while the altar rolls), its light swelling with every strike
-				if (tx.soft) {
-					const float g = R * (1.1f + 0.5f * power);
-					dl->AddImage(T(tx.soft), { c.x - g, c.y - g }, { c.x + g, c.y + g }, { 0, 0 }, { 1, 1 }, IM_COL32(70, 150, 255, static_cast<int>(60 + 150 * power)));
-				}
-				if (tx.crystal[0]) {
-					static float turn = 0;
-					turn += dt * (s.rollPhase == 2 ? 120.0f + 320.0f * s.rollT : 21.3f);  // (frames a second of 384: 18 s a turn at rest)
-					const int nF = tx.crystal[3] ? 384 : tx.crystal[1] ? 192 : 96;
-					const int f = static_cast<int>(turn) % nF, ff = f % 96;
-					const ImVec2 uv0{ (ff % 12) / 12.0f, (ff / 12) / 8.0f }, uv1{ uv0.x + 1.0f / 12.0f, uv0.y + 0.125f };
-					const float  hh = R * 1.55f, ww = hh * 320.0f / 480.0f;
-					const ImVec2 mid{ c.x, c.y + (0.5f - 0.56f) * hh * 2.0f * 0.5f };
-					dl->PushClipRect({ c.x - R, c.y - R }, { c.x + R, c.y + R }, true);
-					dl->AddImage(T(tx.crystal[f / 96] ? tx.crystal[f / 96] : tx.crystal[0]), { mid.x - ww * 0.5f, mid.y - hh * 0.5f }, { mid.x + ww * 0.5f, mid.y + hh * 0.5f }, uv0, uv1,
-						IM_COL32(static_cast<int>(200 + 55 * power), static_cast<int>(215 + 40 * power), 255, 255));
-					dl->PopClipRect();
-				}
-				// the bolts: from each struck stud into the stone - a forked, flickering line of blue-white light
-				const auto bolt = [&](ImVec2 a, ImVec2 b, int seed) {
-					constexpr int kSeg = 9;
-					const ImVec2  d{ b.x - a.x, b.y - a.y };
-					const float   len = std::sqrt(d.x * d.x + d.y * d.y);
-					if (len < 2) return;
-					const ImVec2 n{ -d.y / len, d.x / len };
-					const int    tick = static_cast<int>(now * 22.0f);  // (it re-forks some twenty times a second, as lightning does)
-					ImVec2       pts[kSeg + 1];
-					for (int j = 0; j <= kSeg; ++j) {
-						const float t = static_cast<float>(j) / kSeg;
-						const std::uint32_t h = static_cast<std::uint32_t>((tick * 73856093) ^ (seed * 19349663) ^ (j * 83492791));
-						const float jig = (j == 0 || j == kSeg) ? 0.0f : ((h % 1000) / 500.0f - 1.0f) * len * 0.09f * std::sin(t * 3.1416f);
-						pts[j] = { a.x + d.x * t + n.x * jig, a.y + d.y * t + n.y * jig };
-					}
-					for (int j = 0; j < kSeg; ++j) {
-						dl->AddLine(pts[j], pts[j + 1], IM_COL32(40, 110, 255, 60), 6.0f * k);
-						dl->AddLine(pts[j], pts[j + 1], IM_COL32(110, 190, 255, 150), 2.6f * k);
-						dl->AddLine(pts[j], pts[j + 1], IM_COL32(240, 250, 255, 255), 1.0f * k);
-					}
-				};
-				for (int q = 0; q < 6; ++q) {
-					const float  a = -RE::NI_PI / 2 + q * RE::NI_PI / 3.0f;
-					const ImVec2 p{ c.x + std::cos(a) * (R - 5 * k), c.y + std::sin(a) * (R - 5 * k) };
-					if (q < struck) {
-						bolt(p, { c.x, c.y - R * 0.05f }, q);
-					}
-				}
-				// the bezel: brushed steel - lit from above, dark below, a fine bright inner lip
-				for (int q = 0; q < 24; ++q) {
-					const float a0 = q * 6.2832f / 24, a1 = (q + 1) * 6.2832f / 24, lum = 0.5f + 0.5f * std::cos((a0 + a1) * 0.5f + 2.3f);
-					const int   v = static_cast<int>(50 + 150 * lum);
-					dl->PathArcTo(c, R + 2.5f * k, a0, a1 + 0.02f, 4);
-					dl->PathStroke(IM_COL32(v, v + 8, std::min(255, v + 22), 255), 0, 4.0f * k);
-				}
-				dl->AddCircle(c, R + 4.6f * k, IM_COL32(8, 10, 14, 255), 64, 1.2f * k);
-				dl->AddCircle(c, R, IM_COL32(150, 200, 255, 120), 64, 1.0f * k);
-				// the glass's reflection: a soft crescent of sky across the top
-				dl->PathArcTo(c, R * 0.82f, -2.6f, -0.55f, 24);
-				dl->PathStroke(IM_COL32(220, 235, 255, 26), 0, R * 0.22f);
-				// the rune studs: dark iron until struck, then burning blue
-				for (int q = 0; q < 6; ++q) {
-					const float  a = -RE::NI_PI / 2 + q * RE::NI_PI / 3.0f;
-					const ImVec2 p{ c.x + std::cos(a) * (R + 2.5f * k), c.y + std::sin(a) * (R + 2.5f * k) };
-					if (q < struck && tx.soft) {
-						const float g = 9 * k;
-						dl->AddImage(T(tx.soft), { p.x - g, p.y - g }, { p.x + g, p.y + g }, { 0, 0 }, { 1, 1 }, IM_COL32(110, 190, 255, 220));
-					}
-					dl->AddCircleFilled(p, 3.2f * k, q < struck ? IM_COL32(200, 235, 255, 255) : IM_COL32(40, 46, 56, 255), 12);
-					dl->AddCircle(p, 3.2f * k, IM_COL32(10, 12, 16, 255), 12, 1.0f * k);
-				}
-				if (s.rollPhase == 3 && s.rollGun >= 0) {
-					const float since = s.rollT * gen::kShowOffer;
-					if (since < 0.6f && tx.soft) {  // the landing's white flash
-						const float f = since / 0.6f, g = R * (1.0f + 1.5f * f);
-						dl->AddImage(T(tx.soft), { c.x - g, c.y - g }, { c.x + g, c.y + g }, { 0, 0 }, { 1, 1 }, IM_COL32(255, 255, 255, static_cast<int>(230 * (1.0f - f))));
-					}
-					if (s.rollPrize.empty()) DrawEmblem(dl, s.rollGun, c, R * 0.55f, std::min(1.0f, since / 0.3f), now);
-				}
-			};
 			const auto keyCap = [&](ImVec2 at, const std::string& key, bool live) {
 				if (g_padLast) {  // the controller's own button, not a letter
 					const std::string_view g = key == "\xE2\x86\x91" ? "DU" : key == "\xE2\x86\x93" ? "DD" : key == "\xE2\x86\x90" ? "DL" : key == "\xE2\x86\x92" ? "DR" : std::string_view(key);
@@ -2879,111 +2786,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				TxtC(dl, g_num, 17 * k, at.x + 13 * k, at.y + 3 * k, live ? kParch : IM_COL32(150, 140, 125, 255), key);
 			};
 			(void)keyCap;  // (the altar is driven by its focus now: Shops Row)
-			// the roll on the shrine itself, over its crown: the shrine gathers its light (a ring of runes drawn in), then a
-			// reel of the spells' emblems turns round the orb - fast, then slowing like a wheel of fortune, the name of the
-			// one in front under it - and stops on the one won (1 of every spell there is), which bursts into light and
-			// hangs there to be taken
-			// the roll's beams: from each column's rune stone into the heart stone, one after another as the altar gathers
-			// its power, all six while it turns - jagged, flickering threads of blue light with a bright core
-			if (s.beamLit > 0) {
-				const ImVec2 to{ s.beamToX * size.x, s.beamToY * size.y };
-				for (int q = 0; q < s.beamLit && q < 6; ++q) {
-					const ImVec2 from{ s.beamFrom[q * 2] * size.x, s.beamFrom[q * 2 + 1] * size.y };
-					// the newest beam is still on its way: it shoots out of its stone and races to the heart (eased in)
-					const bool   racing = q == s.beamLit - 1 && s.beamGrow < 1.0f;
-					const float  reach = racing ? std::min(1.0f, std::pow(std::clamp(s.beamGrow / 0.55f, 0.0f, 1.0f), 1.6f)) : 1.0f;
-					const ImVec2 full{ to.x - from.x, to.y - from.y };
-					const ImVec2 d{ full.x * reach, full.y * reach };
-					const float  len = std::sqrt(d.x * d.x + d.y * d.y);
-					if (len < 4.0f) continue;
-					const ImVec2 nrm{ -d.y / len, d.x / len };
-					constexpr int kSeg = 14;
-					ImVec2        pts[kSeg + 1];
-					const float   fl = 0.75f + 0.25f * std::sin(now * 23.0f + q * 1.7f);
-					for (int j = 0; j <= kSeg; ++j) {
-						const float t = static_cast<float>(j) / kSeg;
-						const float jig = (j == 0 || j == kSeg) ? 0.0f : std::sin(now * 31.0f + q * 3.1f + j * 2.3f) * std::sin(t * 3.1416f) * len * 0.035f;
-						pts[j] = { from.x + d.x * t + nrm.x * jig, from.y + d.y * t + nrm.y * jig };
-					}
-					for (int j = 0; j < kSeg; ++j) {
-						dl->AddLine(pts[j], pts[j + 1], IM_COL32(60, 140, 255, static_cast<int>(70 * fl)), 9.0f * k);
-						dl->AddLine(pts[j], pts[j + 1], IM_COL32(120, 200, 255, static_cast<int>(150 * fl)), 4.0f * k);
-						dl->AddLine(pts[j], pts[j + 1], IM_COL32(235, 248, 255, static_cast<int>(230 * fl)), 1.6f * k);
-					}
-					dl->AddCircleFilled(from, 7.0f * k, IM_COL32(150, 210, 255, static_cast<int>(150 * fl)), 16);
-					if (racing && reach < 1.0f) {  // its head: a bright bolt tip
-						const ImVec2 head{ from.x + d.x, from.y + d.y };
-						dl->AddCircleFilled(head, 9.0f * k, IM_COL32(120, 200, 255, 120), 16);
-						dl->AddCircleFilled(head, 4.0f * k, IM_COL32(240, 250, 255, 255), 12);
-					} else if (racing) {  // just struck: a ring flashes out from the heart
-						const float f = std::clamp((s.beamGrow - 0.55f) / 0.45f, 0.0f, 1.0f);
-						dl->AddCircle(to, (14.0f + 40.0f * f) * k, IM_COL32(170, 225, 255, static_cast<int>(220 * (1.0f - f))), 40, 3.0f * k);
-					}
-				}
-				const int struck = s.beamLit - (s.beamGrow < 0.55f ? 1 : 0);
-				if (struck > 0) {
-					dl->AddCircleFilled(to, (8.0f + 2.5f * struck) * k, IM_COL32(170, 220, 255, 60 + 15 * struck), 24);
-				}
-			}
-			// the roll over the heart stone: no orbits, no glow - the names roll by (each with what it is), slowing like a
-			// wheel, as the column stones strike the heart one by one; the sixth strike reveals the one won, in its colour
-			if (s.rollOnScreen && s.rollPhase >= 2) {
-				const ImVec2 c{ s.rollScreenX * size.x, s.rollScreenY * size.y };
-				const float  R = std::clamp(110.0f * 420.0f / std::max(200.0f, s.rollDist), 26.0f, 110.0f) * k;
-				const float  nameH = std::clamp(R / k * 0.30f, 22.0f, 34.0f) * k, typeH = nameH * 0.56f;
-				const float  cy = c.y + R * 1.1f;  // under the stone, clear of the beams
-				const int    base = Arcana::kIdBase;
-				if (s.rollPhase == 2 && s.rollTarget >= 0) {
-					// a slot reel: the name in front with its kind under it, the ones before and after sliding past above and
-					// below, fading out
-					const float pos = Shops::ReelPos(s.rollT), frac = pos - std::floor(pos);
-					const float rowH = nameH + typeH + 10 * k;
-					dl->PushClipRect({ c.x - 420 * k, cy - rowH * 1.5f }, { c.x + 420 * k, cy + rowH * 1.5f }, true);
-					for (int jj = -2; jj <= 2; ++jj) {
-						// (the reel's own list, copied over with the HUD's state - never read from the altar's while it changes)
-						const int   rid = [&] {
-							const bool list = !s.rollReel.empty();
-							const int  n = std::max(1, list ? static_cast<int>(s.rollReel.size()) : Arcana::Count());
-							const int  i = (list ? s.rollReelAt : s.rollTarget) - Shops::kReelPass + static_cast<int>(std::floor(pos)) + jj;
-							const int  w = ((i % n) + n) % n;
-							return list ? s.rollReel[w] : w;
-						}();
-						const int   id = base + rid;
-						const float off = (jj - frac) * rowH;  // (the slot slides up as the reel turns; at rest the front sits square in the window)
-						const float a = std::clamp(1.0f - std::abs(off) / (rowH * 1.4f), 0.0f, 1.0f);
-						if (a <= 0.01f) continue;
-						const float y = cy + off - (nameH + typeH) * 0.5f;
-						if (!s.rollReelNames.empty()) {  // (a class row's win: its own pool goes by, the kind under each)
-							const std::string& nm = s.rollReelNames[static_cast<std::size_t>(std::clamp(rid, 0, static_cast<int>(s.rollReelNames.size()) - 1))];
-							if (s.rollPrizeLegend) TxtGoldC(dl, g_title, nameH * (0.8f + 0.2f * a), c.x, y, nm, a);
-							else TxtC(dl, g_title, nameH * (0.8f + 0.2f * a), c.x, y, Fade(IM_COL32(236, 240, 255, 255), a), nm, 2 * k, IM_COL32(10, 20, 50, static_cast<int>(255 * a)));
-							TxtC(dl, g_body, typeH, c.x, y + nameH + 2 * k, Fade(kGold, a * 0.95f), s.rollReelKind, 1.5f * k, IM_COL32(0, 0, 0, static_cast<int>(255 * a)));
-							continue;
-						}
-						if (Legendary(id)) TxtGoldC(dl, g_title, nameH * (0.8f + 0.2f * a), c.x, y, ArmsName(id), a);
-						else TxtC(dl, g_title, nameH * (0.8f + 0.2f * a), c.x, y, Fade(IM_COL32(236, 240, 255, 255), a), ArmsName(id), 2 * k, IM_COL32(10, 20, 50, static_cast<int>(255 * a)));
-						TxtC(dl, g_body, typeH, c.x, y + nameH + 2 * k, Fade(spellCol(id, 1.0f), a * 0.95f), ArmsType(id), 1.5f * k, IM_COL32(0, 0, 0, static_cast<int>(255 * a)));
-					}
-					dl->PopClipRect();
-					const float hw = 200 * k;  // the window's edges: two thin rune-blue rules
-					dl->AddLine({ c.x - hw, cy - rowH * 0.5f }, { c.x + hw, cy - rowH * 0.5f }, Fade(kGold, 0.6f), 1.2f * k);
-					dl->AddLine({ c.x - hw, cy + rowH * 0.5f }, { c.x + hw, cy + rowH * 0.5f }, Fade(kGold, 0.6f), 1.2f * k);
-				} else if (s.rollPhase == 3 && s.rollGun >= 0) {
-					const float since = s.rollT * gen::kShowOffer, in = std::min(1.0f, since / 0.35f);
-					const ImU32 ec = s.rollPrize.empty() ? spellCol(s.rollGun, 1.0f) : kGold;
-					const bool  legend = s.rollPrize.empty() ? (s.rollGun >= Arcana::kIdBase && Arcana::TierOf(s.rollGun - Arcana::kIdBase) >= 3) : s.rollPrizeLegend;
-					const float y = cy - (nameH + typeH) * 0.5f;
-					const std::string rollName = s.rollPrize.empty() ? ArmsName(s.rollGun) : s.rollPrize, rollType = s.rollPrize.empty() ? ArmsType(s.rollGun) : (s.rollReelKind.empty() ? std::string("From the altar") : s.rollReelKind);
-					if (legend) {
-						TxtC(dl, g_title, nameH * 0.7f, c.x, y - nameH * 0.9f, Fade(IM_COL32(255, 222, 130, 255), in), "LEGENDARY", 2 * k, IM_COL32(120, 60, 0, static_cast<int>(255 * in)));
-					}
-					if (legend) TxtGoldC(dl, g_title, nameH * (1.25f - 0.15f * in), c.x, y, rollName, in);
-					else TxtC(dl, g_title, nameH * (1.25f - 0.15f * in), c.x, y, Fade(IM_COL32(250, 246, 235, 255), in), rollName, 2.5f * k, Fade(ec, in));
-					TxtC(dl, g_body, typeH, c.x, y + nameH * 1.15f + 2 * k, Fade(ec, in), rollType, 1.5f * k, IM_COL32(0, 0, 0, static_cast<int>(255 * in)));
-					const float th = nameH * 1.15f + typeH + 10 * k;
-					Divider(dl, c.x, y + th, std::max(60.0f * k, R * 0.9f), k);
-				}
-			}
 			if (s.perkMenu) {
 				const float w = 470 * k;
 				const bool  shout = s.shrineShout >= 0 && s.shrineShout < static_cast<int>(gen::kShouts.size());
@@ -2991,7 +2793,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				// the rows sliding to keep the one in focus in view
 				const float trialsH = (s.trialsOn ? 112 * k + 5 * 70 * k + 104 * k : 0.0f) + (s.whispers.empty() ? 0.0f : 56 * k + 46 * k * s.whispers.size());
 				static float measuredH = 0;  // (Noah: "five white dots under Leave the Altar" - the tops of the lines below it, cut by a short guess) the panel's real height, from the last frame
-				const float guessH = (shout ? 610 : 532) * k + 86 * k + 78 * k + 56 * k + (s.chooseOn ? 52 * k : 0.0f) + trialsH;
+				const float guessH = (shout ? 610 : 532) * k + 86 * k + 78 * k + 56 * k + trialsH;
 				const float contentH = measuredH > 0 ? measuredH + 40 * k : guessH;
 				const float h = std::min(contentH, size.y - 60 * k);
 				const ImVec2 a{ size.x * 0.5f - w * 0.5f, std::max(24 * k, size.y * 0.5f - h * 0.5f - 10 * k) }, b{ a.x + w, a.y + h };  // (Noah: centred, clear of the HUD)
@@ -3041,7 +2843,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const float L = a.x + 20 * k, Rr = b.x - 20 * k;
 				// (Noah: one way through the altar) the row in focus - D-pad / W S to move, A / Enter to take it
 				const auto focusRow = [&](int row, float y0, float y1) {
-					if (s.altarFocus != row || s.chooseOn) return;
+					if (s.altarFocus != row) return;
 					focusY0 = y0 + scroll, focusY1 = y1 + scroll;  // (in the content's own space)
 					const ImVec2 ra{ a.x + 10 * k, y0 }, rb{ b.x - 10 * k, y1 };
 					if (Hud::kEdgeHud) {  // (Edge UI) a soft gold wash fading to the right, a thin gold bar at its left
@@ -3056,7 +2858,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				};
 				const auto bullet = [&](ImVec2 at, int row, bool live) {  // where each row's key once was: a rune-diamond, lit in focus
 					const ImVec2 c{ at.x + 13 * k, at.y + 13 * k };
-					const bool   on = s.altarFocus == row && !s.chooseOn;
+					const bool   on = s.altarFocus == row;
 					const float  r = (on ? 8.0f : 6.0f) * k;
 					dl->AddQuadFilled({ c.x, c.y - r }, { c.x + r, c.y }, { c.x, c.y + r }, { c.x - r, c.y }, on ? kGold : live ? (Hud::kEdgeHud ? IM_COL32(170, 160, 140, 200) : IM_COL32(80, 130, 190, 230)) : IM_COL32(50, 55, 65, 200));
 				};
@@ -3086,7 +2888,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const float e = ease(openT[i]);
 					focusRow(id, y - 6 * k, y + 38 * k);
 					const ImVec2 c{ L + 13 * k, y + 14 * k };
-					const ImU32  cc = s.altarFocus == id && !s.chooseOn ? kGold : hot ? tint : IM_COL32(170, 160, 140, 220);
+					const ImU32  cc = s.altarFocus == id ? kGold : hot ? tint : IM_COL32(170, 160, 140, 220);
 					{  // the chevron turns from pointing right (shut) to pointing down (open) as the section opens
 						const float th = e * 1.5707963f, cs = std::cos(th), sn = std::sin(th);
 						const auto  rot = [&](float px, float py) { return ImVec2{ c.x + (px * cs - py * sn) * k, c.y + (px * sn + py * cs) * k }; };
@@ -3127,7 +2929,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					body.i = -1;
 				};
 				// [0] (Noah: "the class chooser built into the Echo Altar") your class - chosen here the first time, changed here after
-				if (!s.chooseOn) {
+				{
 					const int  cls = Classes::Get();
 					focusRow(30, y - 6 * k, y + 58 * k);
 					bullet({ L, y + 2 * k }, 30, true);
@@ -3349,7 +3151,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 				measuredH = y + scroll - a.y;
 				dl->PopClipRect();
-				if (s.altarFocus == 20 && !s.chooseOn) scrollGoal = std::max(0.0f, contentH - h);  // (Leave in focus: all the way down, the lines under it in view)
+				if (s.altarFocus == 20) scrollGoal = std::max(0.0f, contentH - h);  // (Leave in focus: all the way down, the lines under it in view)
 				// keep the row in focus in view (next frame)
 				// (focusY0/1: the focused row in the content's own space; on screen it stands at focusY - scroll)
 				if (focusY1 - scrollGoal > b.y - 30 * k) scrollGoal = focusY1 - (b.y - 30 * k);
@@ -3365,13 +3167,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 				// (Noah: "remove the controls on the bottom - it should be self-explanatory") no key line: the D-pad or W S moves, A / X,
 				// Enter or a left click selects
-			} else if (s.rollPhase > 0) {
-				// the roll with the menu closed: a small strip under the crosshair
-				const float R = 30 * k;
-				const ImVec2 c{ size.x * 0.5f - 90 * k, size.y * 0.5f + 150 * k };
-				rollOrb(c, R);
-				const std::string t = s.rollPhase == 1 ? "The altar gathers..." : s.rollPhase == 2 ? "The spells turn..." : (s.rollPrize.empty() ? ArmsName(s.rollGun) : s.rollPrize) + "  -  activate the altar to choose";
-				Txt(dl, g_title, 19 * k, { c.x + R + 12 * k, c.y - 12 * k }, s.rollPhase == 3 ? spellCol(s.rollGun, 1.0f) : kParch, t, 1.5f * k, IM_COL32(0, 0, 0, 255));
 			}
 		}
 

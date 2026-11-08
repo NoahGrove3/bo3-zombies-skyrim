@@ -42,22 +42,6 @@ namespace bo3z::Classes
 			p->AddSpell(a_sp);
 			if (const int c = g_class.load(); c >= 0 && c < 4 && std::find(g_extra[c].begin(), g_extra[c].end(), a_sp->GetFormID()) == g_extra[c].end()) g_extra[c].push_back(a_sp->GetFormID());
 		}
-		// (the consistency pass) a class prize's reel: up to a dozen of its pool's names, the won one among them
-		template <class T>
-		void FillReel(Classes::Prize* a_out, const std::vector<T*>& a_pool, T* a_pick, const char* a_kind, bool a_legend = false)
-		{
-			if (!a_out) return;
-			a_out->kind = a_kind, a_out->legendary = a_legend, a_out->reel.clear();
-			std::vector<T*> pool = a_pool;
-			static std::mt19937 rr{ std::random_device{}() };
-			std::shuffle(pool.begin(), pool.end(), rr);
-			if (pool.size() > 12) pool.resize(12);
-			if (std::find(pool.begin(), pool.end(), a_pick) == pool.end()) pool.back() = a_pick;
-			for (auto* x : pool) {
-				if (x == a_pick) a_out->at = static_cast<int>(a_out->reel.size());
-				a_out->reel.emplace_back(x && x->GetName() ? x->GetName() : "");
-			}
-		}
 		// a bow or a crossbow (Noah: "remove the crossbows with the bows" - OffhandBows is no longer part of the game)
 		bool IsRangerWeapon(const RE::TESObjectWEAP* a_w)
 		{
@@ -1215,83 +1199,6 @@ namespace bo3z::Classes
 		else if (Get() == 3 && gear >= 0 && a_w && a_w->IsTwoHandedSword()) share *= 1.6f;
 		return share;
 	}
-	bool RollGear(int a_cls, Prize* a_out)
-	{
-		auto* p = RE::PlayerCharacter::GetSingleton();
-		auto* dh = RE::TESDataHandler::GetSingleton();
-		if (!p || !dh) return false;
-		int freed = 0;
-		for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) freed += Curse::Freed(t) ? 1 : 0;
-		std::vector<RE::TESBoundObject*> pool;
-		std::unordered_set<std::string> held;
-		for (auto& [obj, data] : p->GetInventory()) if (obj && data.first > 0 && obj->GetName() && *obj->GetName()) held.insert(obj->GetName());
-		const auto from = [&](std::string_view a_plugin, auto* a_type) {
-			using T = std::remove_pointer_t<decltype(a_type)>;
-			for (auto* f : dh->GetFormArray<T>()) {
-				if (!f || !f->GetFile(0) || f->GetFile(0)->GetFilename() != a_plugin) continue;
-				const char* nm = f->GetName();
-				if (!nm || !*nm || MaterialTier(nm) > freed) continue;
-				if (p->GetItemCount(f) > 0 || held.contains(nm)) continue;  // (one by that name already yours: no second "Steel Spellsword")
-				if constexpr (std::is_same_v<T, RE::TESObjectARMO>) {
-					if (!f->IsShield()) continue;
-				}
-				if constexpr (std::is_same_v<T, RE::TESObjectWEAP>) {  // (Noah: the Spellsword's altar weapons are one-handed only)
-					if (a_cls == coffer::kSpellsword && !f->IsOneHandedSword() && !f->IsOneHandedDagger() && !f->IsOneHandedAxe() && !f->IsOneHandedMace()) continue;
-				}
-				pool.push_back(f);
-			}
-		};
-		if (a_cls == coffer::kSpellsword) {
-			from("Spellsword.esp", static_cast<RE::TESObjectWEAP*>(nullptr));
-			from("Spellsword.esp", static_cast<RE::TESObjectARMO*>(nullptr));
-			for (const auto& u : kTwoHanders) {
-				auto* w = dh->LookupForm<RE::TESObjectWEAP>(u.id, u.plugin);
-				if (!w || u.tier > freed || p->GetItemCount(w) > 0 || (w->GetName() && held.contains(w->GetName()))) continue;
-				pool.push_back(w);
-			}
-			// (one of each name: the blades that lost their " of ..." share theirs)
-			std::unordered_set<std::string> names;
-			std::erase_if(pool, [&](RE::TESBoundObject* f) { return !names.insert(f->GetName() ? f->GetName() : "").second; });
-		}
-		// (Noah: "a spell I can't even use - it costs too much mana") the Mysticism shells (Flame Shield and the rest) no longer come from this row
-		if (pool.empty()) {
-			Hud::Banner("The altar has nothing new for you until another city is freed", 3.0f);
-			return false;
-		}
-		static std::mt19937 rng{ std::random_device{}() };
-		auto* pick = pool[std::uniform_int_distribution<std::size_t>(0, pool.size() - 1)(rng)];
-		if (a_out) {
-			a_out->name = pick->GetName();
-			{
-				auto* pw = pick->As<RE::TESObjectWEAP>();
-				const bool legend = GearTier(pick) >= 6;
-				const bool two = pw && (pw->IsTwoHandedSword() || pw->IsTwoHandedAxe());
-				FillReel(a_out, pool, pick, legend ? (two ? "Legendary Greatweapon" : "Legendary Spell-weapon") : two ? "Unique Greatweapon" : pw ? "Spell-weapon" : "Spellshield", legend);
-			}
-			a_out->give = [pick, a_cls] {
-				auto* pl = RE::PlayerCharacter::GetSingleton();
-				if (!pl) return;
-				const auto had = pl->GetItemCount(pick);
-				pl->AddObjectToContainer(pick, nullptr, 1, nullptr);
-				// (Noah: "I collected two of the item") keep it to the one given - anything that doubled the add is taken back
-				Tasks::Later(1.5f, [pick, had] {
-					if (ItemMenusOpen()) return;  // (the audit: never with an item menu open - the extra stays)
-					auto* q = RE::PlayerCharacter::GetSingleton();
-					if (const auto extra = q ? q->GetItemCount(pick) - (had + 1) : 0; extra > 0) {
-						q->RemoveItem(pick, extra, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
-						logger::info("classes: altar gear came twice ({} extra taken back)", extra);
-					}
-				});
-				Hud::Banner(std::string(pick->GetName()) + "  -  in your pack", 4.0f);
-				logger::info("classes: altar gear {} ({})", pick->GetName(), Name(a_cls));
-			};
-			return true;
-		}
-		p->AddObjectToContainer(pick, nullptr, 1, nullptr);
-		Hud::Banner(std::string(pick->GetName()) + "  -  in your pack", 4.0f);
-		logger::info("classes: altar gear {} ({})", pick->GetName(), Name(a_cls));
-		return true;
-	}
 
 
 	// ---- (Noah: the class framework) the outfit picker: any outfit for any class, as a cosmetic. Each altar visit can
@@ -1381,32 +1288,6 @@ namespace bo3z::Classes
 			logger::info("classes: support relic {} costs {} (was {:.0f})", sp->GetName(), sp->data.costOverride, was);
 		}
 	}
-	// (Noah's plan, Destruction) its support spells come as the altar's side-pick, for this class only
-	bool RollSupport(Prize* a_out)
-	{
-		auto* p = RE::PlayerCharacter::GetSingleton();
-		if (!p) return false;
-		std::vector<RE::SpellItem*> pool;
-		for (auto id : kSupport) {
-			if (auto* sp = Myst(id); sp && !p->HasSpell(sp)) pool.push_back(sp);
-		}
-		if (pool.empty()) {
-			Hud::Banner("You know every support spell the altar holds", 2.5f);
-			return false;
-		}
-		static std::mt19937 rng{ std::random_device{}() };
-		auto* sp = pool[std::uniform_int_distribution<std::size_t>(0, pool.size() - 1)(rng)];
-		if (a_out) {
-			a_out->name = sp->GetName();
-			FillReel(a_out, pool, sp, "Support Spell");
-			a_out->give = [sp] { Learn(sp); Hud::Banner(std::string(sp->GetName()) + "  -  learned", 4.0f); logger::info("classes: support spell {}", sp->GetName()); };
-			return true;
-		}
-		Learn(sp);
-		Hud::Banner(std::string("Support spell learned: ") + sp->GetName(), 4.0f);
-		logger::info("classes: support spell {}", sp->GetName());
-		return true;
-	}
 
 
 	// (Noah's plan, the Spellsword) Imbue moves the held spell-weapon up a material - Steel, Orcish, Dwarven, Elven, Glass,
@@ -1475,38 +1356,6 @@ namespace bo3z::Classes
 		}
 	}
 
-	// (Noah's plan, the Summoner: Calling of the Conjurer's heroes and armies as late Legendaries) the altar's second row
-	// binds a hero or an army - (Noah: "keep the 6 free cities gate instead of both") its only gate is the altar's six
-	// freed cities (src/Shops.cpp), no Legendary family needed
-	bool RollHero(Prize* a_out)
-	{
-		auto* p = RE::PlayerCharacter::GetSingleton();
-		if (!p) return false;
-		constexpr int freed = 6;  // (the row opens at six freed altars: heroes and armies both answer)
-		static constexpr std::uint32_t kHeroes[] = { 0x019D7C, 0x0290A4, 0x0290A3, 0x0290A6, 0x0CB318, 0x103618, 0x019D66 };  // Ysgramor, Gormlaith, Felldir, Hakon, Miraak, Karstaag, the Ebony Warrior
-		static constexpr std::uint32_t kArmies[] = { 0x09370D, 0x0A2A1D, 0x0CB311, 0x0C61F9 };  // the Dragon Priest, Dwarven, Undead and Hero armies
-		std::vector<RE::SpellItem*> pool;
-		auto add = [&](std::uint32_t id) { if (auto* f = Lookup(id, "Calling of the Conjurer.esp"); f) if (auto* sp = f->As<RE::SpellItem>(); sp && !p->HasSpell(sp)) pool.push_back(sp); };
-		for (auto id : kHeroes) add(id);
-		if (freed >= 4) for (auto id : kArmies) add(id);
-		if (pool.empty()) {
-			Hud::Banner(freed >= 4 ? "Every hero and army already answers you" : "Every hero answers you - the armies wait for four free cities", 3.0f);
-			return false;
-		}
-		static std::mt19937 rng{ std::random_device{}() };
-		auto* sp = pool[std::uniform_int_distribution<std::size_t>(0, pool.size() - 1)(rng)];
-		if (a_out) {
-			a_out->name = sp->GetName();
-			FillReel(a_out, pool, sp, "Legendary Pact", true);
-			a_out->give = [sp] { Learn(sp); Forms::Play(gen::Sound::shout_learned); Hud::Banner(std::string(sp->GetName()) + " - a Hero's Pact, learned", 5.0f); logger::info("classes: hero pact {}", sp->GetName()); };
-			return true;
-		}
-		Learn(sp);
-		Forms::Play(gen::Sound::shout_learned);
-		Hud::Banner(std::string("A LEGENDARY PACT - ") + sp->GetName(), 5.0f);
-		logger::info("classes: hero pact {}", sp->GetName());
-		return true;
-	}
 
 	bool WonderOpen()
 	{

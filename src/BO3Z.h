@@ -326,7 +326,6 @@ namespace bo3z
 		std::vector<FriendGame> FriendsInParties();  // friends in Skyrim with a party open
 		void        TellClass(int a_cls);   // (the altar rework) your class, for the party's auras
 		void        TellWord(int a_w);      // (host) a word silenced: the party's games silence it too
-		void        AltarBusy(int a_town, bool a_on);  // our roll holds that altar (one roller at a time)
 		void        EggDone(int a_town);  // a hidden quest finished: the party near that altar shares it
 		void        PriestSlain(int a_town);  // (host) a city's Dragon Priest fell: every game in the party receives his weapon
 	}
@@ -371,8 +370,6 @@ namespace bo3z
 		void             Tick();                   // the Summoner's summon cap, once a second
 		// (Noah: the altar's rows keep their roll) what a class row won, given when it is taken off the altar after the roll
 		// a class row's win: its name, how it is given, and what the altar's reel turns through before landing on it (reel[at])
-		struct Prize { std::string name; std::function<void()> give; std::vector<std::string> reel; int at{ 0 }; std::string kind; bool legendary{ false }; };
-		bool             RollGear(int a_cls, Prize* a_out = nullptr);      // a Spellsword weapon or shield from the altar (material by freed cities)
 		void             OnKill(bool a_bySummon, RE::Actor* a_dying, RE::Actor* a_killer = nullptr);  // you (or your summon) killed a foe: what you hold trains, the wonder trial counts
 		void             NoteHit(RE::Actor* a_target, RE::FormID a_source, bool a_power);  // your blow (what killed it; the wonders' on-hit)
 		bool             OnCast(RE::FormID a_spell);   // the Tome of the Six Fires
@@ -433,9 +430,7 @@ namespace bo3z
 		std::vector<std::string> Progress(int& a_cls);  // the class guide's live page (paragraphs, <b> kept) and the class it is for
 		void             ImbueWeapon();                // the Spellsword's Imbue: the held spell-weapon one material up, its element kept
 		void             OnBlock(RE::Actor* a_attacker, bool a_spell);  // a blow blocked with a spellshield: reflect / stagger
-		bool             RollHero(Prize* a_out = nullptr);                   // the Summoner's late Legendaries: a hero or an army (needs a Legendary summon)
 		void             TameSupport();                // the support relics' magicka cost, cut to castable (data loaded)
-		bool             RollSupport(Prize* a_out = nullptr);                // Destruction's altar side-pick: Ash Cloud, Cinder Storm, Charged Nova or Symmetry
 		void             NextOutfit();                 // the altar's outfit picker: the next outfit (any class), worn
 		std::string      OutfitName();                 // the one worn from the picker ('' none yet)
 		int              Mastery(int a_index);     // kills its ladder has earned toward the next rung
@@ -455,7 +450,6 @@ namespace bo3z
 		std::vector<int>   Carried(int a_cls);           // the same, counting only that class's (-1: every one)
 		std::size_t        CarryCap();                   // spells you may carry: 2, the Summoner 3
 		bool               Rollable(int a_index);           // the altar still rolls it (the Spellsword: touches only)
-		std::vector<int>   ReelPool();                   // your class's base spells (what the altar's reel turns through)
 		void               Forget(int a_index);          // gone for good: unequipped, out of the Magic menu, reforging lost
 		void               Replace(int a_old, int a_new);  // the new spell in the old one's place (and hands)
 		RE::SpellItem*     Spell(int a_index);
@@ -463,7 +457,6 @@ namespace bo3z
 		int                IndexOfEffect(RE::FormID a_effect);  // the Coffer spell a magic effect belongs to (-1: none)
 		bool               Damages(int a_index);         // one of its own effects takes health
 		bool               Known(int a_index);
-		int                Roll();                       // a spell you don't know yet (-1: you know them all)
 		int                Next(int a_after);            // the next in the pool (the roll flickers through them)
 		void               Give(int a_index, bool a_equip);
 		void               GiveStarter();
@@ -804,13 +797,9 @@ namespace bo3z
 
 	namespace Shops
 	{
-		inline constexpr int kReelPass = 40;          // spells the roll's reel runs past before it stops on the one won
-		float ReelPos(float a_k);                      // where the reel stands at spin progress 0..1 (eased to a stop)
-		int   ReelSpell(int a_target, float a_pos, int a_slot);  // the spell in a slot of the reel (0 = the front)
 		void  BeforeLoad();  // a save is loading over this world: our hand-made map-marker records come off first
 		std::vector<std::uint8_t> RollState();                    // each altar's rolls tonight (the co-save)
 		void  SetRollState(const std::vector<std::uint8_t>& a_s);
-		void  HeardBusy(int a_town, const std::string& a_who, bool a_on);  // a friend's roll holds (or frees) that altar
 		void Tick(float a_delta);
 		void Reset();
 		void OnActivate(RE::TESObjectREFR* a_ref);
@@ -1029,15 +1018,9 @@ namespace bo3z
 			float       bossHp{ 0 };
 			bool        bossEnraged{ false };
 			int         perkSel{ 0 };
-			int         altarFocus{ 0 }, chooseFocus{ 0 };
+			int         altarFocus{ 0 };   // the altar's focused row (Shops Row)
 			int         altarOpen{ 210 };  // the Echo Altar's open section (210 kit, 211 Armory, 212 perks, 213 Thu'um and dragon, 214 trials, 215 whispers; 0 none)
-			// the roll's beams: from each column's rune stone into the heart stone (screen 0..1), how many are lit (0..6)
-			std::array<float, 12> beamFrom{};
-			float       beamToX{ 0 }, beamToY{ 0 };
-			int         beamLit{ 0 };
-			float       beamGrow{ 0 };  // how far the newest beam has reached from its stone toward the heart (0..1)  // the altar's focused row (Shops Row) and, a third spell won, the choice in focus
-			// the shrine: its roll (0 idle, 1 charging, 2 spinning, 3 offering), progress 0..1, the spell shown, the price; a Thu'um to learn there
-			int         rollPhase{ 0 }, rollGun{ -1 }, rollCost{ 0 }, shrineShout{ -1 };
+			int         shrineShout{ -1 };   // a Thu'um to learn at the altar
 			// (the altar rework) your kit and the Armory (Kit.cpp)
 			struct KitLine { int id{ 0 }; std::string name, info; int tier{ 0 }, asc{ 0 }, cost{ -1 }; bool can{ false }, carried{ true }; std::uint32_t color{ 0xC8B48C }; };
 			std::vector<KitLine> kitLines, armoryLines;
@@ -1045,12 +1028,8 @@ namespace bo3z
 			int         dragonBond{ 0 };   // the glider's dragon: its bond (0-3)
 			bool        bondLocked{ false };
 			std::vector<std::array<float, 3>> motes;  // (Noah: the dead give up their essence) screen x, y (0-1) where a kill fell, its age in seconds
-			int         freedCount{ 0 }, forgeAt{ 3 }, legendAt{ 6 };  // Echo Altars freed; the reforge and the Legendary roll open at these
+			int         freedCount{ 0 }, forgeAt{ 3 };  // Echo Altars freed; the reforge opens at this many
 			// the altar's trials (the city still held): which are done, the one under way, the controller's pick, each with tonight's numbers
-			bool        chooseOn{ false };   // the altar: a third spell won - which of your two does it replace?
-			int         chooseNew{ -1 }, chooseA{ -1 }, chooseB{ -1 }, chooseC{ -1 }, chooseRefund{ 0 };  // (Arcana indices; C: the Summoner's third)
-			int         chooseKind{ 0 }, chooseReroll{ 0 };  // the offer: 0 a spell, 2 a class win; what rolling again costs
-			std::string chooseName;                         // what is offered
 			bool        trialsOn{ false };
 			bool        altarFreed{ false };  // (Noah: "Curse Lifted") this altar's city is freed
 			std::vector<std::array<float, 3>> freedAltars;  // the freed cities' Echo Altar map icons (world x, y, z): gold on the world map
@@ -1061,20 +1040,10 @@ namespace bo3z
 			int         trialDone{ 0 }, trialActive{ 0 }, trialSel{ 0 };
 			std::array<std::string, 5> trialDesc;
 			std::string trialCity, trialBoss, trialBossLine, trialLock;  // (trialLock: why the altar's trials are shut)
-			std::string rollPrize;  // a class row's win, landed (its name over the altar in place of a spell's)
-			std::vector<std::string> rollReelNames;  // a class row's reel (its pool's names) while it turns
-			std::vector<int> rollReel;              // what the reel turns through (spell / bow ids, or places in rollReelNames); empty: all
-			int              rollReelAt{ 0 };
-			std::string rollReelKind;                // and what they are ("Spell-weapon", "Support Spell", ...)
-			bool        rollPrizeLegend{ false };
 			float       questTimer{ -1 };  // the trial under way: seconds left on its clock (-1 none)
 			bool        questWarn{ false };  // ...and it is in danger (time short, health low)
-			int         rollTarget{ -1 };              // the spell the roll will land on (Arcana index), for the reel
-			float       rollT{ 0 };
 			float       pulseT{ 0 }, pulseX{ 0.5f }, pulseY{ 0.5f };  // a freed shrine's wave (seconds left, its screen spot)
 			bool        pulseOn{ false };
-			bool        rollOnScreen{ false };          // the shrine's crown is in view: the roll is drawn over it
-			float       rollScreenX{ 0 }, rollScreenY{ 0 }, rollDist{ 0 };
 			int         nightEvent{ -1 };   // gen::kEvents index while it runs
 			std::string questCity, questTitle, questGoal;  // the city's current curse quest (empty = none)
 			float       questFrac{ 0 };

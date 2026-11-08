@@ -498,13 +498,7 @@ namespace bo3z::Net
 						}
 						break;
 					}
-					case kAltar:
-						if (sz >= 3) {
-							const int  town = d[1];
-							const bool on = d[2] != 0;
-							std::string who = A.GetFriendPersonaName(A.fr, from);
-							Tasks::Add([town, on, who] { Shops::HeardBusy(town, who.empty() ? std::string("A friend") : who, on); });
-						}
+					case kAltar:  // (an altar's roll held it for the party: the altar no longer rolls)
 						break;
 					case kWord:  // (the story audit: a party member never got the dragons or the Echo) the host's silenced words
 						if (!IsHost() && sz >= 3) {
@@ -687,14 +681,6 @@ namespace bo3z::Net
 		return out;
 	}
 
-	void AltarBusy(int a_town, bool a_on)
-	{
-		if (!g_lobby) {
-			return;
-		}
-		const std::uint8_t m[3]{ kAltar, static_cast<std::uint8_t>(a_town), static_cast<std::uint8_t>(a_on ? 1 : 0) };
-		ToAll(m, 3, true);
-	}
 	void EggDone(int a_town)
 	{
 		if (!g_lobby) {

@@ -313,40 +313,6 @@ namespace bo3z::Arcana
 		if (a_index < 0 || a_index >= static_cast<int>(coffer::kSpells.size())) return false;
 		return true;   // (the breath ladders are gone from the pool: every rung 1 may roll)
 	}
-	int Roll()
-	{
-		// (the classes overhaul) the altar rolls your class's base spells (each ladder's first rung) of ladders you
-		// don't carry yet; the Ranger rolls bows instead (Shops), so it gets none
-		const int cls = Classes::Get();
-		if (cls < 0 || cls == coffer::kAlchemist) {
-			return -1;
-		}
-		std::array<bool, coffer::kLadders> carried{};
-		for (int i = 0; i < static_cast<int>(g_spell.size()); ++i) {
-			if (g_spell[i] && Known(i)) carried[coffer::kSpells[i].ladder] = true;
-		}
-		std::vector<int> pool;
-		for (int i = 0; i < static_cast<int>(g_spell.size()); ++i) {
-			const auto& s = coffer::kSpells[i];
-			if (g_spell[i] && s.cls == cls && s.rung == 1 && !carried[s.ladder] && Rollable(i)) {
-				pool.push_back(i);
-			}
-		}
-		if (pool.empty()) {
-			return -1;
-		}
-		return pool[std::uniform_int_distribution<std::size_t>(0, pool.size() - 1)(g_rng)];
-	}
-	// (the reel) every base spell your class's altar can roll - the reel turns through these, never another class's
-	std::vector<int> ReelPool()
-	{
-		std::vector<int> out;
-		const int cls = Classes::Get();
-		for (int i = 0; i < static_cast<int>(g_spell.size()); ++i) {
-			if (g_spell[i] && coffer::kSpells[i].cls == cls && coffer::kSpells[i].rung == 1 && Rollable(i)) out.push_back(i);
-		}
-		return out;
-	}
 	int ClassOf(int a_index) { return a_index >= 0 && a_index < static_cast<int>(coffer::kSpells.size()) ? coffer::kSpells[a_index].cls : -1; }
 	int RungOf(int a_index) { return a_index >= 0 && a_index < static_cast<int>(coffer::kSpells.size()) ? coffer::kSpells[a_index].rung : 0; }
 	int Ups(int a_index) { return a_index >= 0 && a_index < static_cast<int>(coffer::kSpells.size()) ? RungTier(coffer::kSpells[a_index].rung, coffer::kSpells[a_index].rungs) + Level(a_index) : 0; }
