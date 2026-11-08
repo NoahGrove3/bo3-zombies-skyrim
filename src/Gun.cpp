@@ -1701,6 +1701,14 @@ namespace bo3z
 	namespace Gun
 	{
 		RE::NiPointer<RE::NiAVObject> LoadModel(const std::string& a_path) { return Spellcraft::LoadPath(a_path); }
+		// (the Tablet's donated weapons, src/Tablet.cpp) the zones' and the blows' own pieces, for others
+		std::vector<RE::Actor*> FoesNear(const RE::NiPoint3& a_at, float a_radius) { return Foes(a_at, a_radius); }
+		void HitShare(RE::Actor* a_target, float a_share) { if (a_target && !a_target->IsDead()) Damage(a_target, Director::RoundHealth() * gen::kRounds.hpScale * a_share, false, false, true); }
+		void Freeze(RE::Actor* a_target, float a_seconds) { if (a_target && !a_target->IsDead()) FreezeSolid(a_target, a_seconds); }
+		void Singularity(const RE::NiPoint3& a_at, float a_radius, float a_crush, float a_share, bool a_dark)
+		{
+			g_zones.push_back({ a_dark ? 5 : 6, a_at, a_radius, a_crush + 0.5f, 0.0f, Director::RoundHealth() * gen::kRounds.hpScale * a_share, 0.0f, false, a_crush });
+		}
 		void  FxBlast(std::string_view a_name, const RE::NiPoint3& a_at, float a_delay) { Blast(BlastIndex(a_name), a_at, a_delay, 0.6f); }
 		void  FxBlastSized(std::string_view a_name, const RE::NiPoint3& a_at, float a_scale) { Blast(BlastIndex(a_name), a_at, 0.0f, a_scale); }
 		void  FxFrom(RE::BGSExplosion* a_src, const RE::NiPoint3& a_at, float a_scale)

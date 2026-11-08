@@ -730,7 +730,7 @@ namespace bo3z
 			auto* player = a_by ? a_by : RE::PlayerCharacter::GetSingleton();
 			auto* av = a_actor->AsActorValueOwner();
 			if (Undead::IsDancing(a_actor)) a_damage *= 1.5f;  // (the Dance Of Death: half again as hard)
-			a_damage *= Director::TakenMult(a_actor) * Kit::ArmorAscendMult() * Echo::SetDamageMult() * Perks::TakenMult(a_actor);  // (Catalyst Philter)  // (a brute dazed or berserk; your armor's Ascends; the First Dragonborn's Regalia)
+			a_damage *= Director::TakenMult(a_actor) * Kit::ArmorAscendMult() * Echo::SetDamageMult() * Perks::TakenMult(a_actor) * Tablet::TakenMult(a_actor);  // (Catalyst Philter) (the Saltrice Sickle's salt)  // (a brute dazed or berserk; your armor's Ascends; the First Dragonborn's Regalia)
 			av->DamageActorValue(RE::ActorValue::kHealth, a_damage);
 			if (av->GetActorValue(RE::ActorValue::kHealth) <= 0) {
 				// (the stability audit: a kill from inside the hit event - one per magic effect, mid-apply - can tear down the
@@ -900,6 +900,7 @@ namespace bo3z
 					if (auto* t = a_event->target->As<RE::Actor>(); t && a_event->source) Kit::OnPlayerHit(t, RE::TESForm::LookupByID(a_event->source));  // (the Spellsword set's magicka)
 					if (auto* t = a_event->target->As<RE::Actor>()) Classes::NoteHit(t, a_event->source, a_event->flags.any(RE::TESHitEvent::Flag::kPowerAttack));
 					if (a_event->source && !a_event->projectile) Tablet::OnHit(a_event->source);  // (a donated weapon's use)
+					if (auto* t = a_event->target->As<RE::Actor>(); t && a_event->source) Tablet::OnStrike(t, a_event->source, a_event->flags.any(RE::TESHitEvent::Flag::kPowerAttack), a_event->projectile != 0);   // (its power)
 					if (auto* t = a_event->target->As<RE::Actor>(); t && a_event->source) Gun::PriestHit(t, a_event->source, a_event->flags.any(RE::TESHitEvent::Flag::kPowerAttack));  // (the Dragon Priests' weapons)
 					auto* src = a_event->source ? RE::TESForm::LookupByID(a_event->source) : nullptr;
 					const bool spellHit = src && src->As<RE::MagicItem>();  // (the charge's own lightning never sets off another charge)

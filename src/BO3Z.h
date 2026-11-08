@@ -691,6 +691,10 @@ namespace bo3z
 	namespace Gun
 	{
 		RE::NiPointer<RE::NiAVObject> LoadModel(const std::string& a_path);   // one of our models (a fresh copy), by its path under Meshes
+		std::vector<RE::Actor*> FoesNear(const RE::NiPoint3& a_at, float a_radius);   // the night's dead (and your other foes) round a point
+		void                  HitShare(RE::Actor* a_target, float a_share);           // a blow of a share of one of the night's dead's health
+		void                  Freeze(RE::Actor* a_target, float a_seconds);           // held fast (frozen solid, rooted)
+		void                  Singularity(const RE::NiPoint3& a_at, float a_radius, float a_crush, float a_share, bool a_dark);   // draws the dead in for a_crush seconds, then bursts (dark: the void's look; else light's)
 		void                  Tick(float a_delta);
 		void                  Reset();
 		void                  TestKit();  // dev: every mod's attack spell (named by element), every bow and shout, the glider, 150,000 septims
@@ -788,6 +792,8 @@ namespace bo3z
 		void  OnHit(RE::FormID a_source);              // your blow landed (melee and fists: a use)
 		void  OnCast(RE::FormID a_spell);              // your cast (staffs and the Codex: a use)
 		void  OnFell();                                // (lost if you fall)
+		void  OnStrike(RE::Actor* a_target, RE::FormID a_source, bool a_power, bool a_arrow);   // its power on a blow or an arrow
+		float TakenMult(RE::Actor* a_actor);           // (the Saltrice Sickle's salt: 30% more taken)
 		bool  IsTablet(const RE::TESForm* a_w);        // the donated weapon you carry?
 		bool  IsTabletSpell(const RE::TESForm* a_f);   // its spell (a staff's enchantment, the Codex)?
 		float Share();                                 // its blow's share of the night's health: one or two tiers over your sword

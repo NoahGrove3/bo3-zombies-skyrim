@@ -1746,6 +1746,8 @@
   "ARMA:tabglove_stormknuckles": "0xece",
   "ARMO:tabglove_stormknuckles": "0xecf",
   "ARMA:tabglove_emberclaw": "0xed0",
-  "ARMO:tabglove_emberclaw": "0xed1"
+  "ARMO:tabglove_emberclaw": "0xed1",
+  "MGEF:tabstaffcast": "0xed2",
+  "ENCH:tabstaff": "0xed3"
  }
 }

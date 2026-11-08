@@ -246,6 +246,13 @@ for _town, (pk, plabel, pmodel, pkind, pdmg, ptext) in PRIEST_WEAPONS.items():
 # spell (its casts are ours, src/Tablet.cpp); the bows' arrows are their uses. Lost if you fall.
 TB_KIND = dict(PW_KIND, mace=('weap_daedricmace', 4, 0.9, 1.0, 14.0, (0x01E714, 0x08F958)), fists=('weap_daedricdagger', 0, 1.0, 0.7, 1.0, (0x01E712,)),
                staff=('weap_staff', 8, 1.0, 1.0, 8.0, (0x01E716, 0x08F958)))
+# the donated staffs' enchantment: fire and forget, on yourself (nothing launched natively), a staff's, free - only so Skyrim
+# plays its staff cast; what it casts is ours (src/Tablet.cpp: the Lanternwick's orb, the Wandering Star)
+cast_mgef('tabstaffcast', 'Donated Staff', 1)
+recs['ENCH'].append(record('ENCH', fid('ENCH', 'tabstaff'), [
+    sub('EDID', z('UN_TabletStaffEnch')), sub('OBND', bytes(12)), sub('FULL', z('Donated Staff')),
+    sub('ENIT', struct.pack('<iIIiIIfII', 0, 0x1, 1, 3000, 0, 0x0C, 0.0, 0, 0)),
+    sub('EFID', struct.pack('<I', fid('MGEF', 'tabstaffcast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 for w in S['tablet']['rows']:
     if w['type'] == 'book': continue
     tmpl, anim, spd, reach, wt, kws = TB_KIND[w['type']]
@@ -259,7 +266,9 @@ for w in S['tablet']['rows']:
             if not w['model']: continue
             b = z(w['model'])
         elif name in ('MODT', 'EAMT', 'BIDS', 'BAMT', 'INAM'): continue
-        elif name == 'EITM' and w['type'] != 'staff': continue
+        elif name == 'EITM':
+            if w['type'] != 'staff': continue
+            b = struct.pack('<I', fid('ENCH', 'tabstaff'))   # (its cast is ours: the orb, the star)
         elif name == 'KSIZ': b = struct.pack('<I', len(kws))
         elif name == 'KWDA': b = struct.pack(f'<{len(kws)}I', *kws)
         elif name == 'DESC': b = z(desc)
@@ -295,11 +304,15 @@ recs['AMMO'].append(record('AMMO', fid('AMMO', 'tab_arrow'), [
 for w in S['tablet']['rows']:
     if w['type'] != 'book': continue
     md = bytearray(tsub('mgef_firebolt', 'DATA'))
+    # (its chapters are ours, src/Tablet.cpp: no firebolt) cast on yourself, fire and forget, no projectile, no burst, no
+    # fire in the hand or on the struck
+    for off, val in ((72, 0), (76, 0), (80, 1), (84, 0), (92, 0), (96, 0), (100, 0)): struct.pack_into('<I', md, off, val)
     recs['MGEF'].append(record('MGEF', fid('MGEF', 'tab_' + w['id']), [
         sub('EDID', z('UN_TabletMgef_' + w['id'])), sub('FULL', z(w['label'])), sub('MDOB', tsub('mgef_firebolt', 'MDOB')), sub('DATA', bytes(md)),
         sub('DNAM', z(''))]))
     sp = bytearray(tsub('spel_firebolt', 'SPIT'))
     struct.pack_into('<I', sp, 0, 0)   # (no magicka: its pages are its cost)
+    struct.pack_into('<II', sp, 16, 1, 0)   # (fire and forget, on yourself: the chapter goes where you aim, src/Tablet.cpp)
     recs['SPEL'].append(record('SPEL', fid('SPEL', 'tab_' + w['id']), [
         sub('EDID', z('UN_Tablet_' + w['id'])), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z(w['label'])),
         sub('MDOB', tsub('spel_firebolt', 'MDOB')), sub('ETYP', tsub('spel_firebolt', 'ETYP')),

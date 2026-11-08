@@ -361,6 +361,7 @@ namespace bo3z::Tablet
 		last = now;
 		if (--g_uses <= 0) Break(); else Rename(g_held, g_uses);
 	}
+	void CastPower();
 	void OnCast(RE::FormID a_spell)
 	{
 		auto* f = FormOf(g_held);
@@ -370,7 +371,216 @@ namespace bo3z::Tablet
 		if (t == 7) mine = f->GetFormID() == a_spell;
 		else if (t == 5) if (auto* w = f->As<RE::TESObjectWEAP>(); w && w->formEnchanting && w->formEnchanting->GetFormID() == a_spell) mine = true;
 		if (!mine) return;
+		CastPower();
 		if (--g_uses <= 0) Break(); else Rename(g_held, g_uses);
+	}
+
+	// ================================================================== the donated weapons' powers (Noah's picks; the
+	// design: docs/TABLET_OF_MYSTERIES.md). Each blow's share is the weapon's own (Share: one or two tiers over your class
+	// sword); what a power adds is a part of it
+	namespace
+	{
+		float g_pclock = 0;            // (seconds, for the powers' timers)
+		int   g_count = 0, g_countFor = -1;   // blows or casts with the weapon held (the bell's fifth, the wraps' fourth, the sun and moon by turns, the Codex's tenth)
+		float g_slamCool = 0, g_eclipseCool = 0, g_splitCool = 0;
+		std::unordered_map<RE::FormID, float> g_salt;   // (struck by the sickle: they take 30% more until then)
+		RE::NiPoint3 Mid(RE::Actor* a) { return a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }; }
+		std::vector<RE::Actor*> Others(RE::Actor* a_not, const RE::NiPoint3& a_at, float a_r, std::size_t a_n)
+		{
+			auto v = Gun::FoesNear(a_at, a_r);
+			std::erase_if(v, [&](RE::Actor* f) { return !f || f == a_not || f->IsDead(); });
+			std::sort(v.begin(), v.end(), [&](RE::Actor* x, RE::Actor* y) { return x->GetPosition().GetDistance(a_at) < y->GetPosition().GetDistance(a_at); });
+			if (v.size() > a_n) v.resize(a_n);
+			return v;
+		}
+		// where you aim: the one of the dead nearest your crosshair ahead (within a narrow cone), else a point ahead on the ground
+		RE::NiPoint3 AimPoint(RE::Actor** a_target)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			const RE::NiPoint3 from = Gun::SwingFrom(), dir = Gun::SwingDir();
+			RE::Actor* best = nullptr;
+			float bestA = 0.2f;   // (about 11 degrees)
+			for (auto* f : Gun::FoesNear(from + dir * 1500.0f, 1600.0f)) {
+				if (!f || f->IsDead()) continue;
+				RE::NiPoint3 d = Mid(f) - from;
+				const float l = d.Length();
+				if (l < 1.0f || l > 3000.0f) continue;
+				d = d * (1.0f / l);
+				const float a = std::acos(std::clamp(d.Dot(dir), -1.0f, 1.0f));
+				if (a < bestA) bestA = a, best = f;
+			}
+			if (a_target) *a_target = best;
+			if (best) return best->GetPosition();
+			RE::NiPoint3 at = from + dir * 1400.0f;
+			if (p) at.z = p->GetPosition().z;
+			return at;
+		}
+		// a bolt leaping from one of the dead to the next nearest not yet struck, up to a_n of them
+		void Chain(RE::Actor* a_first, const RE::NiPoint3& a_from, int a_n, float a_share, int a_elem)
+		{
+			std::vector<RE::Actor*> hit;
+			RE::NiPoint3 at = a_from;
+			RE::Actor* cur = a_first;
+			for (int k = 0; k < a_n && cur; ++k) {
+				Gun::LightningArc(at, Mid(cur), 0.07f * k);
+				Gun::ElemBurst(a_elem, Mid(cur), 0.45f, 0.07f * k, 0.6f);
+				Gun::HitShare(cur, a_share);
+				hit.push_back(cur);
+				at = Mid(cur);
+				RE::Actor* next = nullptr;
+				for (auto* f : Others(cur, cur->GetPosition(), 650.0f, 12)) {
+					if (std::find(hit.begin(), hit.end(), f) == hit.end()) { next = f; break; }
+				}
+				cur = next;
+			}
+		}
+		// (the Codex) each cast a random chapter; every tenth all four
+		void Chapter(int a_ch, float S)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			RE::Actor* t = nullptr;
+			const RE::NiPoint3 at = AimPoint(&t);
+			switch (a_ch) {
+			case 0:   // Fire: a meteor where you aim
+				Gun::Meteor(at, false, 1.0f, [S](const RE::NiPoint3& land) {
+					Gun::AreaHurt(land, 380.0f, S * 3.0f, "");
+					for (auto* f : Gun::FoesNear(land, 380.0f)) Gun::Burn(f, Director::RoundHealth() * S * 0.25f, 4.0f, 0);
+				});
+				break;
+			case 1: {   // Frost: a line of ice bursting out of the ground toward the target, freezing all it hits
+				const RE::NiPoint3 from = p ? p->GetPosition() : at;
+				RE::NiPoint3 d = at - from; d.z = 0;
+				const float l = std::max(1.0f, d.Length());
+				d = d * (1.0f / l);
+				const RE::NiPoint3 to = from + d * std::min(1100.0f, std::max(600.0f, l + 150.0f));
+				for (int k = 1; k <= 10; ++k) Gun::FxBlast("icevolley", from + (to - from) * (k / 10.0f), 0.05f * k);
+				for (auto* f : Gun::LineHurt(from + RE::NiPoint3{ 0, 0, 40.0f }, to + RE::NiPoint3{ 0, 0, 40.0f }, 120.0f, S * 2.0f)) Gun::Freeze(f, 3.0f);
+				break;
+			}
+			case 2:   // Storm: a bolt through up to 10 of the dead
+				if (!t) { auto v = Gun::FoesNear(at, 500.0f); if (!v.empty()) t = v.front(); }
+				Gun::FxBlast("shockmass", at);
+				Chain(t, Gun::SwingFrom(), 10, S * 2.0f, 2);
+				break;
+			default:  // Void: a black orb that pulls the dead together and crushes them
+				Gun::Singularity(at + RE::NiPoint3{ 0, 0, 60.0f }, 450.0f, 2.0f, S * 3.5f, true);
+				break;
+			}
+		}
+	}
+	float TakenMult(RE::Actor* a_actor)
+	{
+		if (!a_actor) return 1.0f;
+		const auto it = g_salt.find(a_actor->GetFormID());
+		return it != g_salt.end() && it->second > g_pclock ? 1.3f : 1.0f;
+	}
+	// a blow or an arrow of yours landed with the donated weapon in hand: its power
+	void OnStrike(RE::Actor* a_target, RE::FormID a_source, bool a_power, bool a_arrow)
+	{
+		auto* f = FormOf(g_held);
+		if (!a_target || !f || f->GetFormID() != a_source || !Director::IsFoe(a_target)) return;
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		const float S = Share();
+		const RE::NiPoint3 tp = a_target->GetPosition();
+		const std::string_view id = gen::kTabletWeapons[g_held].id;
+		if (g_countFor != g_held) g_countFor = g_held, g_count = 0;   // (a new weapon counts afresh)
+		++g_count;
+		if (id == "stormknuckles") {   // each punch arcs lightning to 2 more; a heavy punch slams the ground in a ring of shock
+			for (auto* o : Others(a_target, tp, 380.0f, 2)) { Gun::LightningArc(Mid(a_target), Mid(o), 0.0f); Gun::HitShare(o, S * 0.5f); }
+			if (a_power && g_slamCool <= 0 && p) {
+				g_slamCool = 1.0f;
+				Gun::Ring("shock", p->GetPosition(), 30.0f, 400.0f, 0.6f);
+				Gun::FxBlast("shockmass", p->GetPosition());
+				for (auto* o : Gun::FoesNear(p->GetPosition(), 400.0f)) { Gun::HitShare(o, S * 1.2f); Gun::Knock(o, 1.0f); }
+			}
+		} else if (id == "gravebell") {   // every fifth blow tolls it: the dead within 5 m stunned
+			if (g_count % 5 == 0) {
+				Gun::Ring("gold", tp, 30.0f, 360.0f, 0.7f);
+				Gun::FxBlast("turnundead", tp + RE::NiPoint3{ 0, 0, 40.0f });
+				if (p) Forms::PlayAt(gen::Sound::shout_toll, p);
+				for (auto* o : Gun::FoesNear(tp, 360.0f)) { Gun::Knock(o, 1.5f); Gun::Freeze(o, 1.5f); }
+			}
+		} else if (id == "saltrice") {   // the struck take 30% more from everything for 4 s
+			g_salt[a_target->GetFormID()] = g_pclock + 4.0f;
+			Gun::Motes(4, tp, 0.4f, 1.0f);
+		} else if (id == "riverstone") {   // hits knock the dead back; a heavy attack splits the ground in a line
+			Gun::Knock(a_target, 1.2f);
+			if (a_power && g_splitCool <= 0 && p) {
+				g_splitCool = 1.2f;
+				const RE::NiPoint3 from = p->GetPosition();
+				RE::NiPoint3 d = Gun::SwingDir(); d.z = 0;
+				if (d.Length() > 1e-3f) d = d * (1.0f / d.Length());
+				const RE::NiPoint3 to = from + d * 700.0f;
+				for (int k = 1; k <= 6; ++k) Gun::FxBlast("giantslam", from + (to - from) * (k / 6.0f), 0.05f * k);
+				for (auto* o : Gun::LineHurt(from + RE::NiPoint3{ 0, 0, 40.0f }, to + RE::NiPoint3{ 0, 0, 40.0f }, 110.0f, S * 1.5f)) Gun::Knock(o, 1.5f);
+			}
+		} else if (id == "rattlebone") {   // every arrow bounces to a second of the dead
+			for (auto* o : Others(a_target, tp, 650.0f, 1)) { Gun::LightningArc(Mid(a_target), Mid(o), 0.05f); Gun::FxBlast("priestsmall", Mid(o), 0.1f); Gun::HitShare(o, S); }
+		} else if (id == "emberclaw") {   // punches set the dead burning; every fourth throws a fireball
+			Gun::Burn(a_target, Director::RoundHealth() * S * 0.2f, 4.0f, 0);
+			if (g_count % 4 == 0) {
+				RE::Actor* t = nullptr;
+				const RE::NiPoint3 at = AimPoint(&t);
+				RE::NiPoint3 d = (t ? Mid(t) : at + RE::NiPoint3{ 0, 0, 60.0f }) - Gun::SwingFrom();
+				if (d.Length() > 1e-3f) d = d * (1.0f / d.Length());
+				Gun::Lob("CurseOfAlduin\\fx\\meteor_fire.nif", Gun::SwingFrom(), d * 1900.0f + RE::NiPoint3{ 0, 0, 50.0f }, 0.35f, [S](const RE::NiPoint3& land) {
+					Gun::AreaHurt(land, 280.0f, S * 1.5f, "fireball");
+					for (auto* o : Gun::FoesNear(land, 280.0f)) Gun::Burn(o, Director::RoundHealth() * S * 0.2f, 4.0f, 0);
+				}, 0.0f, 120.0f);
+			}
+		} else if (id == "eclipse") {   // light slashes by turns sun and moon; a heavy attack calls a 6 s eclipse
+			if (g_count % 2) { Gun::Burn(a_target, Director::RoundHealth() * S * 0.15f, 3.0f, 0); Gun::ElemBurst(4, Mid(a_target), 0.5f, 0.0f, 0.6f); }
+			else { Gun::Freeze(a_target, 0.8f); Gun::ElemBurst(1, Mid(a_target), 0.5f, 0.0f, 0.6f); }
+			if (a_power && g_eclipseCool <= 0 && p) {
+				g_eclipseCool = 10.0f;
+				Gun::FxBlast("darkmassive", p->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f });
+				Gun::Ring("purple", p->GetPosition(), 40.0f, 650.0f, 1.0f);
+				Hud::Banner("ECLIPSE", 1.5f);
+				for (auto* o : Gun::FoesNear(p->GetPosition(), 650.0f)) { Gun::Freeze(o, 6.0f); Gun::Knock(o, 0.6f); }
+			}
+		} else if (id == "whisperwood") {   // arrows root the dead; each held heals you a little
+			Gun::Freeze(a_target, 3.0f);
+			Gun::Puddle(3, tp, 0.4f, 3.0f);
+			if (p) {
+				auto* av = p->AsActorValueOwner();
+				const float mx = av->GetPermanentActorValue(RE::ActorValue::kHealth);
+				p->AsActorValueOwner()->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kDamage, RE::ActorValue::kHealth, mx * 0.02f);
+			}
+		}
+	}
+	// a donated staff's or the Codex's cast: what it casts (the use is counted in OnCast)
+	void CastPower()
+	{
+		if (g_held < 0) return;
+		const float S = Share();
+		const std::string_view id = gen::kTabletWeapons[g_held].id;
+		if (g_countFor != g_held) g_countFor = g_held, g_count = 0;
+		++g_count;
+		if (id == "lanternwick") {   // an orb that pulls the dead in, then bursts
+			RE::Actor* t = nullptr;
+			const RE::NiPoint3 at = AimPoint(&t);
+			RE::NiPoint3 d = (at + RE::NiPoint3{ 0, 0, 60.0f }) - Gun::SwingFrom();
+			if (d.Length() > 1e-3f) d = d * (1.0f / d.Length());
+			Gun::Lob("CurseOfAlduin\\fx\\lightorb.nif", Gun::SwingFrom(), d * 1500.0f + RE::NiPoint3{ 0, 0, 120.0f }, 0.8f, [S](const RE::NiPoint3& land) {
+				Gun::Singularity(land + RE::NiPoint3{ 0, 0, 50.0f }, 380.0f, 1.6f, S * 2.2f, false);
+			}, 4.0f, 500.0f);
+		} else if (id == "wanderstar") {   // a dim caged star that bounces between up to 8 of the dead
+			RE::Actor* t = nullptr;
+			const RE::NiPoint3 at = AimPoint(&t);
+			if (!t) { auto v = Gun::FoesNear(at, 600.0f); if (!v.empty()) t = v.front(); }
+			Gun::FxBlast("light", Gun::SwingFrom() + Gun::SwingDir() * 60.0f);
+			Chain(t, Gun::SwingFrom(), 8, S * 1.4f, 4);
+		} else if (id == "codex") {   // a random chapter; every tenth cast all four ("a chapter's end")
+			if (g_count % 10 == 0) {
+				Hud::Banner("THE CODEX'S CHAPTER ENDS", 2.0f);
+				for (int c = 0; c < 4; ++c) Chapter(c, S);
+			} else {
+				static const char* kName[4] = { "Fire", "Frost", "Storm", "Void" };
+				const int c = std::uniform_int_distribution<int>(0, 3)(g_rng);
+				Hud::Banner(std::string("The Codex turns to ") + kName[c], 1.2f);
+				Chapter(c, S);
+			}
+		}
 	}
 	// (Noah: "on death") falling takes it
 	void OnFell()
@@ -411,6 +621,9 @@ namespace bo3z::Tablet
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (!p) return;
+		g_pclock += a_delta;
+		g_slamCool -= a_delta, g_eclipseCool -= a_delta, g_splitCool -= a_delta;
+		if (g_salt.size() > 64) std::erase_if(g_salt, [](const auto& e) { return e.second < g_pclock; });
 		Night();
 		// where it stands: a freed city (chosen when the first is freed, and again should its city fall)
 		if ((g_town < 0 || !Curse::Freed(g_town)) && Freed() > 0) {
