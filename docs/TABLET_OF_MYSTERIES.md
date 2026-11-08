@@ -6,7 +6,7 @@ worn out - it has limited uses and is lost if you fall.
 ## Theme: "used and forgotten"
 - An old floating stone tablet, cracked and patched with iron straps and rusted rivets (Noah: no broken piece floating
   off it, no white patches; the pedestal in the tablet's own stone and manner).
-- Glyphs flicker unevenly like a failing lantern; candle stubs, old coins and notes from past owners in its cracks.
+- Glyphs flicker unevenly like a failing lantern; candle stubs and old coins on the pedestal.
 - 4K textures (stone, metal, emissive glyph layers).
 - Idle: slow bob and turn, uneven glyph glow, faint motes.
 - Roll (animated on the model, not an overlay): glyph rings grind round unevenly, sparks spit from the cracks, ghostly
