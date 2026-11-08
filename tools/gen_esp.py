@@ -269,6 +269,21 @@ for w in S['tablet']['rows']:
             if w['type'] not in ('bow', 'staff'): b[0] = anim; struct.pack_into('<ff', b, 4, spd, reach)
         subs.append(sub(name, bytes(b)))
     recs['WEAP'].append(record('WEAP', fid('WEAP', 'tab_' + w['id']), subs))
+# (Noah: "real hand wraps or elemental brass knuckles") the fists' gloves: worn in the hands' slot (33) with the weapon, on
+# every race the belt lantern's armour piece is, their first-person model the hands' own (tools/tabletgloves.py)
+LANTERN_RACES = '40370100 3a880800 41370100 3c880800 3d7a0900 42370100 3d880800 d87c0600 ba820a00 43370100 40880800 44370100 44880800 45370100 45880800 0a761000 46370100 94870800 47370100 b9820a00 48370100 46880800 49370100 84880800'
+for w in S['tablet']['rows']:
+    if not w.get('gloves'): continue
+    third, first = w['gloves']
+    recs['ARMA'].append(record('ARMA', fid('ARMA', 'tabglove_' + w['id']), [sub('EDID', z('UN_TabletGlovesAA_' + w['id'])), sub('BOD2', struct.pack('<II', 1 << 3, 2)),
+        sub('RNAM', struct.pack('<I', 0x19)), sub('DNAM', bytes.fromhex('0a0a00000000000000000000')),
+        sub('MOD2', z(third)), sub('MOD3', z(third)), sub('MOD4', z(first)), sub('MOD5', z(first))] +
+        [sub('MODL', bytes.fromhex(h)) for h in LANTERN_RACES.split()]))
+    recs['ARMO'].append(record('ARMO', fid('ARMO', 'tabglove_' + w['id']), [sub('EDID', z('UN_TabletGloves_' + w['id'])), sub('OBND', struct.pack('<6h', -6, -6, 0, 6, 6, 6)),
+        sub('FULL', z(w['label'])), sub('MOD2', z(w['show'])), sub('BOD2', struct.pack('<II', 1 << 3, 2)), sub('RNAM', struct.pack('<I', 0x19)),
+        sub('KSIZ', struct.pack('<I', 1)), sub('KWDA', struct.pack('<I', 0x08F95B)),   # (ArmorClothing)
+        sub('DESC', z(w['power'] + ' ' + w['owner'] + ' Donated to the Tablet of Mysteries. Worn with use, and lost if you fall.')),
+        sub('MODL', struct.pack('<I', fid('ARMA', 'tabglove_' + w['id']))), sub('DATA', struct.pack('<If', 0, 0.5)), sub('DNAM', struct.pack('<I', 0))]))
 pd = bytearray(tsub('proj_arrow', 'DATA'))
 recs['PROJ'].append(record('PROJ', fid('PROJ', 'tab_arrow'), [
     sub('EDID', z('UN_TabletArrowProj')), sub('OBND', tsub('proj_arrow', 'OBND')), sub('FULL', z('Donated Arrow')),

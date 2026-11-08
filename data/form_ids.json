@@ -1739,6 +1739,13 @@
   "SPEL:tab_codex": "0xec7",
   "MGEF:tab_codex": "0xec8",
   "AMMO:tab_arrow": "0xec9",
-  "PROJ:tab_arrow": "0xeca"
+  "PROJ:tab_arrow": "0xeca",
+  "STAT:tabshow_stormknuckles": "0xecb",
+  "STAT:tabshow_emberclaw": "0xecc",
+  "STAT:tabshow_codex": "0xecd",
+  "ARMA:tabglove_stormknuckles": "0xece",
+  "ARMO:tabglove_stormknuckles": "0xecf",
+  "ARMA:tabglove_emberclaw": "0xed0",
+  "ARMO:tabglove_emberclaw": "0xed1"
  }
 }

@@ -286,13 +286,14 @@ o.append(f'\tinline constexpr std::uint32_t kArtIceShell = 0x{IDS[("ARTO", "fx_i
 EL8 = ['fire', 'frost', 'shock', 'poison', 'disease', 'sun', 'blood', 'arcane']
 SCID = [r['id'] for r in S['spellcraft']['rows']]
 TBW = S['tablet']['rows']
-o.append('\tstruct TabletWeapon { std::string_view id, label; bool battered; int type, uses; std::uint32_t form, show; };  // type: 0 fists 1 mace 2 dagger 3 battleaxe 4 bow 5 staff 6 greatsword 7 book')
+o.append('\tstruct TabletWeapon { std::string_view id, label; bool battered; int type, uses; std::uint32_t form, show, gloves; };  // type: 0 fists 1 mace 2 dagger 3 battleaxe 4 bow 5 staff 6 greatsword 7 book')
 _TBT = ['fists', 'mace', 'dagger', 'battleaxe', 'bow', 'staff', 'greatsword', 'book']
 o.append(f'\tinline constexpr std::array<TabletWeapon, {len(TBW)}> kTabletWeapons{{ {{')
 for w in TBW:
     form = IDS[('SPEL' if w['type'] == 'book' else 'WEAP', 'tab_' + w['id'])]
     show = IDS.get(('STAT', 'tabshow_' + w['id']), 0)
-    o.append(f'\t\tTabletWeapon{{ {cs(w["id"])}, {cs(w["label"])}, {str(w["grade"] == "battered").lower()}, {_TBT.index(w["type"])}, {w["uses"]}, 0x{form:03X}, 0x{show:03X} }},')
+    gloves = IDS.get(('ARMO', 'tabglove_' + w['id']), 0)
+    o.append(f'\t\tTabletWeapon{{ {cs(w["id"])}, {cs(w["label"])}, {str(w["grade"] == "battered").lower()}, {_TBT.index(w["type"])}, {w["uses"]}, 0x{form:03X}, 0x{show:03X}, 0x{gloves:03X} }},')
 o.append('\t} };')
 o.append(f'\tinline constexpr std::uint32_t kTabletArrow = 0x{IDS[("AMMO", "tab_arrow")]:03X};')
 # Stage 2 (sheet: echo): src/Echo.cpp

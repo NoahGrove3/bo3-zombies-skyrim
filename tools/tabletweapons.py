@@ -28,7 +28,9 @@ pw.WORK = g.WORK = ROOT / 'build' / 'tabletweapons'
 FX = pw.FX
 # (as the priests' weapons were fitted in the hand: the grip's top (raw units) and the scale)
 pw.FIT.update({'gravebell': (1.0, 1.5), 'saltrice': (0.8, 1.75), 'riverstone': (12.0, 1.15), 'eclipse': (3.6, 1.3)})
-S = 2048
+S = 4096                 # (Noah: "4k textures")
+KQ = S / 2048            # (a 2K sheet's pixel sizes, made at 4K)
+pw.TEXSIZE = S
 
 
 # ================================================================== textures
@@ -52,14 +54,14 @@ def wood_tex(name, base_rgb, grey=0.0, cracks=0.6, seed=0):
         col = col * (1 - grey) + gl * grey
     D = save(col, name + '_d.dds')
     h = 0.35 * rings + 0.3 * fine + 0.25 * big - 1.2 * sp
-    N = save(np.dstack([height_to_normal(gaussian_filter(h, 0.6), 9.0), np.clip(30 + 25 * rings - 30 * sp, 0, 255)]), name + '_n.dds', True)
+    N = save(np.dstack([height_to_normal(gaussian_filter(h, 0.6 * KQ), 9.0 * KQ), np.clip(30 + 25 * rings - 30 * sp, 0, 255)]), name + '_n.dds', True)
     return D, N
 
 
-def bronze_tex(name, seed=0, crack=None):
-    """2048 tiling: old temple bronze - dull brown-gold, rubbed bright where struck, green verdigris in the low places;
-    an optional crack (an array 0..1) cut dark through it"""
-    D0, N0 = metal_tex(name + '_base', (150, 112, 62), rust=0.0, dark=0.5, seed=seed)
+def bronze_tex(name, seed=0, crack=None, etch=None):
+    """old temple bronze - dull brown-gold, rubbed bright where struck, green verdigris in the low places; an optional
+    crack (an array 0..1) cut dark through it; an optional etching (runes, knotwork) cut in"""
+    D0, N0 = metal_tex(name + '_base', (150, 112, 62), rust=0.0, dark=0.5, etch=etch, seed=seed)
     col = np.asarray(Image.open(g.WORK / (name + '_base_d.dds.png')).convert('RGB'), np.float32)
     nrm = np.asarray(Image.open(g.WORK / (name + '_base_n.dds.png')).convert('RGBA'), np.float32)
     patch = tileable(S, S, 1.4, 650 + seed); fine = tileable(S, S, 0.4, 651 + seed)
@@ -73,6 +75,19 @@ def bronze_tex(name, seed=0, crack=None):
     return save(col, name + '_d.dds'), save(nrm, name + '_n.dds', True)
 
 
+def carved_tex(name, base_rgb, seed=0):
+    """a wooden band carved with two rows of runes between scored lines (u round, v along: the rows across v)"""
+    D0, N0 = wood_tex(name + '_base', base_rgb, grey=0.1, cracks=0.3, seed=seed)
+    col = np.asarray(Image.open(g.WORK / (name + '_base_d.dds.png')).convert('RGB'), np.float32)
+    nrm = np.asarray(Image.open(g.WORK / (name + '_base_n.dds.png')).convert('RGBA'), np.float32)
+    m = np.rot90(rune_bands([0.3, 0.7], seed, h=int(S * 0.13)))   # (the rows running round the stick)
+    col = col * (1 - 0.6 * m[..., None]) + np.array([24, 18, 14]) * 0.6 * m[..., None]
+    gy, gx = np.gradient(gaussian_filter(-m, 2 * KQ))
+    nn = unit(np.stack([-gx * 30 * KQ, gy * 30 * KQ, np.ones_like(m)], -1)) * 0.5 + 0.5
+    nrm[..., :3] = nrm[..., :3] * (1 - m[..., None]) + nn * 255 * m[..., None]
+    return save(col, name + '_d.dds'), save(nrm, name + '_n.dds', True)
+
+
 def cloth_tex(name, base_rgb, seed=0):
     """2048 tiling: an old wrapping cloth - a plain weave, faded and stained, frayed thin places"""
     u, v = uvgrid()
@@ -82,7 +97,7 @@ def cloth_tex(name, base_rgb, seed=0):
     col = np.array(base_rgb, np.float32) * lum[..., None]
     col = col * (1 - 0.35 * np.clip((0.4 - stain) * 3, 0, 1)[..., None]) + np.array([40, 32, 24]) * 0.35 * np.clip((0.4 - stain) * 3, 0, 1)[..., None]
     D = save(col, name + '_d.dds')
-    N = save(np.dstack([height_to_normal(gaussian_filter(0.6 * weave + 0.3 * fine, 0.4), 5.0), np.full((S, S), 18.0)]), name + '_n.dds', True)
+    N = save(np.dstack([height_to_normal(gaussian_filter(0.6 * weave + 0.3 * fine, 0.4 * KQ), 5.0 * KQ), np.full((S, S), 18.0)]), name + '_n.dds', True)
     return D, N
 
 
@@ -94,23 +109,76 @@ def rope_tex(name, base_rgb=(122, 98, 66), seed=0):
     lum = 0.55 + 0.45 * strand ** 0.6 + 0.15 * (fib - 0.5) - 0.2 * np.clip(0.45 - dirt, 0, 1)
     col = np.array(base_rgb, np.float32) * lum[..., None]
     D = save(col, name + '_d.dds')
-    N = save(np.dstack([height_to_normal(gaussian_filter(strand + 0.2 * fib, 0.5), 7.0), np.full((S, S), 22.0)]), name + '_n.dds', True)
+    N = save(np.dstack([height_to_normal(gaussian_filter(strand + 0.2 * fib, 0.5 * KQ), 7.0 * KQ), np.full((S, S), 22.0)]), name + '_n.dds', True)
     return D, N
 
 
-def stone_tex(name, base_rgb, moss=0.0, seed=0):
+def stone_tex(name, base_rgb, moss=0.0, seed=0, runes=None):
     """2048 tiling: a river stone worn smooth - mottled grey-green, fine speckle, a pale quartz vein or two, moss low"""
     u, v = uvgrid()
     mott = tileable(S, S, 2.1, 680 + seed); spk = tileable(S, S, 0.2, 681 + seed); mid = tileable(S, S, 1.3, 682 + seed)
     vein = np.exp(-((tileable(S, S, 1.5, 683 + seed, aniso=(1.0, 0.3)) - 0.5) / 0.008) ** 2)
     lum = 0.75 + 0.3 * (mott - 0.5) + 0.1 * (spk - 0.5)
     col = np.array(base_rgb, np.float32) * lum[..., None] + np.array([60, 58, 52]) * 0.6 * vein[..., None]
+    rm = 0
+    if runes is not None:   # (a line of runes cut across it, weathered soft)
+        im = Image.new('L', (S, S), 0); dr = ImageDraw.Draw(im)
+        rune_row(dr, int(S * 0.08), int(S * 0.92), int(S * 0.44), int(S * 0.11), runes, int(S * 0.012))
+        rm = gaussian_filter(np.asarray(im, np.float32) / 255, 3 * KQ)
+        col = col * (1 - 0.55 * rm[..., None])
     if moss:
         m = np.clip((mid - 0.62) * 4, 0, 1) * moss
         col = col * (1 - m[..., None]) + np.array([52, 70, 34]) * (0.7 + 0.6 * spk[..., None]) * m[..., None]
     D = save(col, name + '_d.dds')
-    N = save(np.dstack([height_to_normal(gaussian_filter(0.4 * mott + 0.2 * spk + 0.3 * vein, 1.0), 4.0), np.clip(60 + 40 * mott - (80 * m if moss else 0), 0, 255)]), name + '_n.dds', True)
+    N = save(np.dstack([height_to_normal(gaussian_filter(0.4 * mott + 0.2 * spk + 0.3 * vein - 1.5 * rm, 1.0 * KQ), 4.0 * KQ), np.clip(60 + 40 * mott - (80 * m if moss else 0), 0, 255)]), name + '_n.dds', True)
     return D, N
+
+
+# (Noah: "fantastic Nordic design") the old Nords' runes: each a stave and its branches, in a box 0.6 wide, 1 tall
+RUNES = [
+    [(0, 0, 0, 1), (0, 0.15, 0.5, 0.0), (0, 0.4, 0.5, 0.25)],            # (wealth)
+    [(0, 0, 0, 1), (0, 0, 0.5, 0.3), (0.5, 0.3, 0.5, 1)],                  # (aurochs)
+    [(0, 0, 0, 1), (0, 0.25, 0.45, 0.5), (0.45, 0.5, 0, 0.75)],            # (thorn)
+    [(0, 0, 0, 1), (0, 0.0, 0.45, 0.3), (0, 0.3, 0.45, 0.6)],              # (god)
+    [(0, 0, 0, 1), (0, 0, 0.45, 0.25), (0.45, 0.25, 0, 0.5), (0, 0.5, 0.5, 1)],   # (ride)
+    [(0, 0, 0, 1), (0.5, 0, 0.5, 1), (0, 0.2, 0.5, 0.45)],                 # (hail)
+    [(0.25, 0, 0.25, 1), (0.0, 0.35, 0.5, 0.65)],                          # (need)
+    [(0.25, 0, 0.25, 1)],                                                  # (ice)
+    [(0.25, 0, 0.25, 1), (0.25, 0.35, 0.55, 0.0), (0.25, 0.35, -0.05, 0.0)],   # (elk)
+    [(0, 0, 0.5, 0.5), (0.5, 0.5, 0, 1), (0.5, 0, 0, 0.5), (0, 0.5, 0.5, 1)],  # (day)
+    [(0.25, 0, 0.25, 1), (0.25, 0, 0.0, 0.3), (0.25, 0, 0.5, 0.3)],        # (tyr)
+    [(0, 0, 0, 1), (0, 0, 0.45, 0.25), (0.45, 0.25, 0, 0.5), (0, 0.5, 0.45, 0.75), (0.45, 0.75, 0, 1)],   # (birch)
+    [(0, 1, 0, 0), (0, 0, 0.5, 0.35), (0.5, 0.35, 0.5, 1)],                # (horse)
+    [(0, 0, 0.5, 1), (0.5, 0, 0, 1), (0.25, 0.5, 0.25, 1)],                # (man)
+]
+
+
+def rune_row(dr, x0, x1, y, h, seed, width, fill=255):
+    """a row of runes along x from x0 to x1 at y (their tops), h tall"""
+    r = np.random.default_rng(seed)
+    x = x0
+    while x < x1 - h * 0.6:
+        for (a, b, c, d) in RUNES[r.integers(len(RUNES))]:
+            dr.line([(x + a * h, y + b * h), (x + c * h, y + d * h)], fill=fill, width=width)
+        x += h * (0.85 + 0.25 * r.random())
+        if r.random() < 0.12: x += h * 0.5   # (a word's end)
+
+
+def rune_bands(rows, seed, width=None, h=None):
+    """an S x S mask (0..1): rune rows at the given v positions (0..1, their middles), each between two scored lines"""
+    im = Image.new('L', (S, S), 0); dr = ImageDraw.Draw(im)
+    h = h or int(S * 0.045); width = width or max(2, int(h * 0.11))
+    for k, vc in enumerate(rows):
+        y = int(vc * S - h / 2)
+        rune_row(dr, -h, S + h, y, h, seed + k, width)
+        for yy in (y - int(h * 0.3), y + int(h * 1.3)):
+            dr.line([(0, yy), (S, yy)], fill=255, width=max(2, width // 2))
+    return gaussian_filter(np.asarray(im, np.float32) / 255, KQ * 0.8)
+
+
+def knot(seed=0, cells=6):
+    """(Nordic knotwork, tools/priestweapons.py) the bands woven over and under, cut into the metal"""
+    return pw.knotwork(S, cells, 0.1, seed)
 
 
 def crack_mask(seed, n=3, length=0.5):
@@ -119,19 +187,19 @@ def crack_mask(seed, n=3, length=0.5):
     for _ in range(n):
         x, y = r.random() * S, r.random() * S * 0.3
         a = math.pi / 2 + (r.random() - 0.5) * 0.6
-        w = 7
+        w = 7 * KQ
         for _k in range(int(60 * length)):
             a += (r.random() - 0.5) * 0.9
-            nx, ny = x + math.cos(a) * 22, y + math.sin(a) * 22
+            nx, ny = x + math.cos(a) * 22 * KQ, y + math.sin(a) * 22 * KQ
             dr.line([(x, y), (nx, ny)], fill=255, width=max(1, int(w)))
             if r.random() < 0.12:   # (a hairline branching off)
                 bx, by, ba = x, y, a + (r.random() - 0.5) * 2
                 for _q in range(6):
                     ba += (r.random() - 0.5) * 0.8
-                    ex, ey = bx + math.cos(ba) * 14, by + math.sin(ba) * 14
-                    dr.line([(bx, by), (ex, ey)], fill=200, width=2); bx, by = ex, ey
-            x, y = nx, ny; w = max(1.0, w * 0.985)
-    return gaussian_filter(np.asarray(im, np.float32) / 255, 1.0)
+                    ex, ey = bx + math.cos(ba) * 14 * KQ, by + math.sin(ba) * 14 * KQ
+                    dr.line([(bx, by), (ex, ey)], fill=200, width=int(2 * KQ)); bx, by = ex, ey
+            x, y = nx, ny; w = max(KQ, w * 0.985)
+    return gaussian_filter(np.asarray(im, np.float32) / 255, KQ)
 
 
 # ================================================================== shapes
@@ -192,24 +260,29 @@ def gravebell():
     green, a crack running up from its lip, hung mouth-down on an iron pole that runs up through its crown into an iron
     loop; its clapper still inside. The pole's grip is old leather, a strip of a priest's grey stole tied under the bell.
     A faint grave-dust drifts round the bell."""
-    cr = crack_mask(701, n=2, length=0.7)
-    bD, bN = bronze_tex('w_gravebell_bronze', seed=702, crack=cr)
-    iD, iN = metal_tex('w_gravebell_iron', (70, 70, 72), rust=0.5, dark=0.8, seed=703)
-    lD, lN = leather_tex('w_gravebell_leather', (48, 36, 28), seed=704)
-    cD, cN = cloth_tex('w_gravebell_cloth', (120, 118, 112), seed=705)
-    M = Mesh()
     hz = 19.0   # (the bell's lip)
-    # the pole
-    M.add('Iron', 'iron', *lathe([(-8.2, 0.0), (-8.2, 0.8), (-7.8, 0.9)] + [(z, 0.72 - 0.002 * z) for z in np.linspace(-7.4, hz + 9.5, 8)] + [(hz + 9.8, 0.0)], 20))
-    grip_wrap(M, 'leather', -7.2, 0.8, 0.8, 1.0)
-    for z in (-7.5, 1.0, 9.0):
-        M.add('Iron', 'iron', *lathe([(z - 0.35, 0.78), (z - 0.25, 1.0), (z + 0.25, 1.0), (z + 0.35, 0.78)], 20))
-    M.add('Iron', 'iron', *lathe([(-8.2, 0.0), (-8.2, 0.95), (-9.0, 1.2), (-9.8, 0.9), (-10.1, 0.0)], 20))   # (a knob of a pommel)
-    # the bell: a closed shell (inside wall, lip, outside wall over the crown), mouth down at hz
     out = [(hz, 4.35), (hz + 0.5, 4.2), (hz + 1.6, 3.55), (hz + 3.2, 3.05), (hz + 5.0, 2.9), (hz + 6.2, 2.85), (hz + 6.9, 2.55), (hz + 7.4, 1.6), (hz + 7.6, 0.0)]
     inn = [(hz + 7.0, 0.0), (hz + 6.8, 1.5), (hz + 6.2, 2.45), (hz + 5.0, 2.55), (hz + 3.2, 2.7), (hz + 1.6, 3.2), (hz + 0.4, 3.85), (hz, 3.95)]
     prof = inn + [(hz - 0.15, 4.12)] + out
-    M.add('Bell', 'bronze', *lathe(prof, 48))
+    pa = np.asarray(prof); L = np.concatenate([[0], np.cumsum(np.hypot(np.diff(pa[:, 0]), np.diff(pa[:, 1])))]); L /= L[-1]
+    vz = lambda z: float(np.interp(z, pa[len(inn) + 1:, 0], L[len(inn) + 1:]))   # (v of a height on the outside)
+    runes = rune_bands([vz(hz + 4.15), vz(hz + 2.0)], 704, h=int(S * 0.028))
+    cr = crack_mask(701, n=1, length=0.9)
+    cr = np.roll(cr, int(S * (vz(hz) - 0.05)), axis=0) * (np.mgrid[0:S, 0:S][0] / S > vz(hz) - 0.02)
+    bD, bN = bronze_tex('w_gravebell_bronze', seed=702, crack=cr, etch=runes)
+    iD, iN = metal_tex('w_gravebell_iron', (70, 70, 72), rust=0.5, dark=0.8, seed=703)
+    kD, kN = metal_tex('w_gravebell_knot', (78, 76, 74), rust=0.3, dark=0.9, etch=knot(705), seed=706)
+    lD, lN = leather_tex('w_gravebell_leather', (48, 36, 28), seed=704)
+    cD, cN = cloth_tex('w_gravebell_cloth', (120, 118, 112), seed=705)
+    M = Mesh()
+    # the pole
+    M.add('Iron', 'iron', *lathe([(-8.2, 0.0), (-8.2, 0.8), (-7.8, 0.9)] + [(z, 0.72 - 0.002 * z) for z in np.linspace(-7.4, hz + 9.5, 8)] + [(hz + 9.8, 0.0)], 20))
+    grip_wrap(M, 'leather', -7.2, 0.8, 0.8, 1.0)
+    for z, hh in ((-7.5, 0.35), (1.0, 0.6), (9.0, 1.1), (hz - 1.2, 0.8)):   # (knotworked iron collars)
+        M.add('Knot', 'knot', *lathe([(z - hh, 0.78), (z - hh + 0.1, 1.0), (z + hh - 0.1, 1.0), (z + hh, 0.78)], 24))
+    M.add('Iron', 'iron', *lathe([(-8.2, 0.0), (-8.2, 0.95), (-9.0, 1.2), (-9.8, 0.9), (-10.1, 0.0)], 20))   # (a knob of a pommel)
+    # the bell: a closed shell (inside wall, lip, outside wall over the crown), mouth down at hz
+    M.add('Bell', 'bronze', *lathe(prof, 64, uvs=(1, 1, 0, 0)))
     for z, rr in ((hz + 1.15, 3.78), (hz + 5.6, 2.98), (hz + 6.0, 2.98)):   # (the cast rings round it)
         M.add('Bell', 'bronze', *torus(np.array([0, 0, z]), rr, 0.14, (0, 0, 1), 64, 8))
     # the crown's iron strap and the loop on top
@@ -223,10 +296,11 @@ def gravebell():
     wrap_strips(M, 'cloth', hz - 3.0, hz - 0.6, 0.72, n=1, seed=706, width=0.8)
     fx = Fx()
     fx.sheath('GraveDust', f'tex={FX["motes"]} color=0.8,0.78,0.7,0.35 scale=1.4 blend=add uscroll=3 vscroll=-12', hz - 1.0, hz + 8.0, 5.4, 4.0, 22, 8, 2.0)
-    mats = {'bronze': f'diffuse={bD} normal={bN} spec=1.2 gloss=40 alpha=0 doublesided=1',
-            'iron': f'diffuse={iD} normal={iN} spec=0.5 gloss=22 alpha=0 doublesided=0',
-            'leather': f'diffuse={lD} normal={lN} spec=0.2 gloss=12 alpha=0 doublesided=0',
-            'cloth': f'diffuse={cD} normal={cN} spec=0.1 gloss=8 alpha=0 doublesided=1'}
+    mats = {'bronze': f'diffuse={bD} normal={bN} spec=0.60 gloss=24 alpha=0 doublesided=1',
+            'iron': f'diffuse={iD} normal={iN} spec=0.25 gloss=13 alpha=0 doublesided=0',
+            'knot': f'diffuse={kD} normal={kN} spec=0.3 gloss=16 alpha=0 doublesided=0',
+            'leather': f'diffuse={lD} normal={lN} spec=0.15 gloss=8 alpha=0 doublesided=0',
+            'cloth': f'diffuse={cD} normal={cN} spec=0.10 gloss=8 alpha=0 doublesided=1'}
     return pw.finish(M, 'gravebell', mats, fx.L, 'WeaponMace')
 
 
@@ -238,10 +312,11 @@ def saltrice():
     sD, sN, sG = blade_tex('w_saltrice_blade', (104, 106, 108), edge_rgb=(186, 190, 194), script=False, pattern='plain', seed=712, mask=crust * 0.75, mask_rgb=(150, 150, 146))
     wD, wN = wood_tex('w_saltrice_wood', (150, 124, 92), grey=0.3, seed=713)
     rD, rN = rope_tex('w_saltrice_twine', (138, 116, 82), seed=714)
-    bD, bN = metal_tex('w_saltrice_brass', (150, 120, 70), dark=0.6, seed=715)
+    bD, bN = metal_tex('w_saltrice_brass', (150, 120, 70), dark=0.6, etch=knot(717, 5), seed=715)
     M = Mesh()
     # the handle
-    M.add('Wood', 'wood', *lathe([(-5.6, 0.0), (-5.6, 0.62), (-5.2, 0.74), (-3.0, 0.7), (-1.0, 0.64), (0.2, 0.6), (0.6, 0.55)], 20))
+    M.add('Wood', 'wood', *lathe([(-5.2, 0.74), (-3.0, 0.7), (-1.0, 0.64), (0.2, 0.6), (0.6, 0.55)], 20))
+    M.add('Brass', 'brass', *lathe([(-5.2, 0.76), (-5.5, 0.86), (-6.1, 0.8), (-6.5, 0.5), (-6.7, 0.0)], 20))   # (its knotworked end cap)
     grip_wrap(M, 'twine', -4.2, -0.6, 0.72, 0.35)
     M.add('Brass', 'brass', *lathe([(0.3, 0.58), (0.45, 0.7), (1.4, 0.62), (1.6, 0.4), (1.6, 0.0)], 20))
     # the crescent: a single-edged blade along a curve, its keen edge on the inside of the curve
@@ -262,17 +337,18 @@ def saltrice():
         M.add('Brass', 'brass', *superbox(np.array([-0.2, sy * 0.3, 2.6]), 0.32, 0.12, 0.32, 2.2, 12, 6))
     fx = Fx()
     fx.sheath('SaltGlint', f'tex={FX["motes"]} color=0.95,0.95,0.9,0.4 scale=1.0 blend=add uscroll=2 vscroll=-3', 2.0, 14.5, 4.5, 3.5, 16, 8, 2.0)
-    mats = {'blade': f'diffuse={sD} normal={sN} spec=1.4 gloss=80 alpha=0 doublesided=0',
-            'wood': f'diffuse={wD} normal={wN} spec=0.3 gloss=16 alpha=0 doublesided=0',
-            'twine': f'diffuse={rD} normal={rN} spec=0.15 gloss=10 alpha=0 doublesided=0',
-            'brass': f'diffuse={bD} normal={bN} spec=1.0 gloss=40 alpha=0 doublesided=0'}
+    mats = {'blade': f'diffuse={sD} normal={sN} spec=0.70 gloss=48 alpha=0 doublesided=0',
+            'wood': f'diffuse={wD} normal={wN} spec=0.15 gloss=9 alpha=0 doublesided=0',
+            'twine': f'diffuse={rD} normal={rN} spec=0.15 gloss=8 alpha=0 doublesided=0',
+            'brass': f'diffuse={bD} normal={bN} spec=0.50 gloss=24 alpha=0 doublesided=0'}
     return pw.finish(M, 'saltrice', mats, fx.L, 'WeaponDagger')
 
 
 def riverstone():
     """(Riverstone Axe - "waterlogged") a woodsman's axe pulled out of a river: a grey-green river stone knapped to an edge
     and lashed into a split haft of driftwood with rope gone dark with water, moss in its seams; water still drips off it"""
-    sD, sN = stone_tex('w_riverstone_stone', (108, 116, 108), moss=0.6, seed=721)
+    sD, sN = stone_tex('w_riverstone_stone', (108, 116, 108), moss=0.6, seed=721, runes=724)
+    kD, kN = metal_tex('w_riverstone_knot', (74, 72, 70), rust=0.55, dark=0.85, etch=knot(726, 5), seed=727)
     wD, wN = wood_tex('w_riverstone_wood', (96, 84, 70), grey=0.75, seed=722)
     rD, rN = rope_tex('w_riverstone_rope', (84, 74, 56), seed=723)
     M = Mesh()
@@ -308,6 +384,8 @@ def riverstone():
     # the lashing: rope wound round the haft above and below the stone and crossed over its back
     for z in (hz - 4.6, hz - 3.8, hz + 3.8, hz + 4.6):
         M.add('Rope', 'rope', *torus(np.array([0.1, 0, z]), 1.35, 0.26, (0, 0, 1), 28, 8))
+    for z, hh in ((hz - 6.4, 0.7), (hz + 6.4, 0.7)):   # (iron bands either side of the lashing)
+        M.add('Knot', 'knot', *lathe([(z - hh, 1.22), (z - hh + 0.12, 1.45), (z + hh - 0.12, 1.45), (z + hh, 1.22)], 24, cx=0.25 * math.sin(z * 0.08)))
     for sy in (-1, 1):
         for k in range(2):
             a = np.linspace(-1, 1, 24)
@@ -315,9 +393,10 @@ def riverstone():
             M.add('Rope', 'rope', *rod(pts, 0.24, 8))
     fx = Fx()
     fx.sheath('Drips', f'tex={FX["motes"]} color=0.7,0.82,0.85,0.55 scale=1.2 blend=add vscroll=-14', hz - 7.0, hz + 6.0, 6.5, 6.0, 18, 8, 2.5)
-    mats = {'stone': f'diffuse={sD} normal={sN} spec=0.9 gloss=60 alpha=0 doublesided=0',
-            'wood': f'diffuse={wD} normal={wN} spec=0.35 gloss=18 alpha=0 doublesided=0',
-            'rope': f'diffuse={rD} normal={rN} spec=0.3 gloss=14 alpha=0 doublesided=0'}
+    mats = {'stone': f'diffuse={sD} normal={sN} spec=0.45 gloss=36 alpha=0 doublesided=0',
+            'wood': f'diffuse={wD} normal={wN} spec=0.17 gloss=10 alpha=0 doublesided=0',
+            'rope': f'diffuse={rD} normal={rN} spec=0.15 gloss=8 alpha=0 doublesided=0',
+            'knot': f'diffuse={kD} normal={kN} spec=0.3 gloss=16 alpha=0 doublesided=0'}
     return pw.finish(M, 'riverstone', mats, fx.L, 'WeaponBack')
 
 
@@ -326,7 +405,8 @@ def lanternwick():
     hook, from which a little iron lantern hangs on a chain - one pane cracked, one missing - a stub of candle still
     burning inside it. A traveller's rag tied at the grip."""
     wD, wN = wood_tex('w_lanternwick_wood', (70, 52, 40), grey=0.1, seed=731)
-    iD, iN = metal_tex('w_lanternwick_iron', (64, 62, 60), rust=0.55, dark=0.85, seed=732)
+    iD, iN = metal_tex('w_lanternwick_iron', (64, 62, 60), rust=0.55, dark=0.85, etch=knot(739, 7) * 0.8, seed=732)
+    cvD, cvN = carved_tex('w_lanternwick_carved', (70, 52, 40), 740)
     cD, cN = cloth_tex('w_lanternwick_rag', (126, 86, 58), seed=733)
     u, v = uvgrid()
     gl = np.dstack([np.full((S, S), 200.0), np.full((S, S), 178.0), np.full((S, S), 120.0)]) * (0.85 + 0.3 * tileable(S, S, 1.5, 734)[..., None])
@@ -350,6 +430,9 @@ def lanternwick():
     # the iron ferrule at the foot and a band where the hook starts
     M.add('Iron', 'iron', *lathe([(-20.6, 0.0), (-20.6, 0.8), (-17.8, 1.08), (-17.6, 0.98)], 18, cx=path[0][0], cy=path[0][1]))
     wrap_strips(M, 'rag', -3.0, 4.0, 0.95, n=2, seed=738, width=1.2)
+    band = np.array([p_ for p_ in path if 26.0 < p_[2] < 33.0])   # (a carved band of runes on the stick)
+    P_, N_, UV_, F_ = rod(band, 0.86 + 0.0 * band[:, 2], 24); UV_ = UV_ * [2.0, 1.0]
+    M.add('Carved', 'carved', P_, N_, UV_, F_)
     # the chain from the hook's tip and the lantern hanging from it
     hang = tip + np.array([0, 0, -0.4])
     for k in range(4):
@@ -374,11 +457,12 @@ def lanternwick():
     fx.card('Flame', FX['core'], tuple(fl), 0.9, '1,0.72,0.35,1', 2.2, (4, 4, 14, 0))
     fx.card('FlameGlow', FX['glow'], tuple(fl), 4.2, '1,0.62,0.28,0.55', 1.0)
     fx.card('LanternHalo', FX['glow'], tuple(lc), 9.0, '1,0.6,0.3,0.22', 1.0)
-    mats = {'wood': f'diffuse={wD} normal={wN} spec=0.3 gloss=16 alpha=0 doublesided=0',
-            'iron': f'diffuse={iD} normal={iN} spec=0.5 gloss=22 alpha=0 doublesided=0',
-            'rag': f'diffuse={cD} normal={cN} spec=0.1 gloss=8 alpha=0 doublesided=1',
+    mats = {'wood': f'diffuse={wD} normal={wN} spec=0.15 gloss=9 alpha=0 doublesided=0',
+            'iron': f'diffuse={iD} normal={iN} spec=0.25 gloss=13 alpha=0 doublesided=0',
+            'rag': f'diffuse={cD} normal={cN} spec=0.10 gloss=8 alpha=0 doublesided=1',
+            'carved': f'diffuse={cvD} normal={cvN} spec=0.15 gloss=9 alpha=0 doublesided=0',
             'glass': f'diffuse={gD} normal={iN} spec=2.0 gloss=150 alpha=blend doublesided=1',
-            'wax': f'diffuse={candle} normal={cN} glow={candle} emit=1,0.7,0.4 emitmult=0.35 spec=0.4 gloss=30 alpha=0 doublesided=0'}
+            'wax': f'diffuse={candle} normal={cN} glow={candle} emit=1,0.7,0.4 emitmult=0.35 spec=0.20 gloss=18 alpha=0 doublesided=0'}
     return pw.finish(M, 'lanternwick', mats, fx.L, 'WeaponStaff')
 
 
@@ -397,17 +481,28 @@ def eclipse():
     goldc = np.array([214, 166, 82], np.float32) * np.clip(lum, 0.4, 1.6)
     col = base * (1 - gold[..., None]) + goldc * gold[..., None]
     col = col * (1 - seam[..., None]) + np.array([250, 236, 200]) * seam[..., None]
+    im = Image.new('L', (S, S), 0); dr = ImageDraw.Draw(im)   # (runes down each half of the fuller)
+    for k, uc in enumerate((0.42, 0.58)):
+        x = int(uc * S); y = int(S * 0.06)
+        rr_ = np.random.default_rng(747 + k)
+        hh = int(S * 0.034)
+        while y < S * 0.62:
+            for (a, b, c, d) in RUNES[rr_.integers(len(RUNES))]:
+                dr.line([(x - hh * 0.3 + a * hh, y + b * hh), (x - hh * 0.3 + c * hh, y + d * hh)], fill=255, width=max(3, int(hh * 0.12)))
+            y += int(hh * 1.35)
+    rmask = gaussian_filter(np.asarray(im, np.float32) / 255, KQ)
+    col = col * (1 - 0.7 * rmask[..., None]) + np.array([20, 18, 16]) * 0.7 * rmask[..., None]
     nick = np.clip((tileable(S, S, 1.6, 746, aniso=(1.0, 0.25)) - 0.8) * 8, 0, 1) * np.clip(1 - np.minimum(u, 1 - u) / 0.06, 0, 1)   # (nicks along both edges)
     col = col * (1 - 0.6 * nick[..., None])
     bD = save(col, 'w_eclipse_blade_d.dds')
     edgeL = np.exp(-(u / 0.035) ** 2); edgeR = np.exp(-((1 - u) / 0.035) ** 2)
     glow = np.array([255, 196, 110]) * edgeL[..., None] + np.array([150, 180, 255]) * 0.8 * edgeR[..., None] + np.array([255, 230, 180]) * seam[..., None] * 0.7
     bG = save(glow * (1 - nick[..., None]), 'w_eclipse_blade_g.dds')
-    gD, gN = metal_tex('w_eclipse_gold', (196, 152, 70), dark=0.5, seed=742)
-    dD, dN = metal_tex('w_eclipse_dark', (58, 62, 76), dark=0.8, seed=743)
+    gD, gN = metal_tex('w_eclipse_gold', (180, 140, 66), dark=0.6, etch=knot(748, 6), seed=742)
+    dD, dN = metal_tex('w_eclipse_dark', (58, 62, 76), dark=0.8, etch=knot(749, 6), seed=743)
     lD, lN = leather_tex('w_eclipse_leather', (52, 36, 26), seed=744)
     M = Mesh()
-    blade(M, 'blade', 6.6, 60.0, 7.0, 1.35, tip=0.17, fuller=0.0, seed=745)
+    blade(M, 'blade', 6.6, 60.0, 7.0, 1.35, tip=0.17, fuller=0.6, seed=745)
     # the guard: a crescent moon (dark steel) lying across, a sun disc (gold) in its cradle with short rays
     a = np.linspace(-1.0, 1.0, 60)
     cres = np.stack([a * 7.0, np.zeros_like(a), 5.6 + 2.4 * a * a], -1)
@@ -424,21 +519,19 @@ def eclipse():
         M.add(m.capitalize(), m, *lathe([(z - 0.4, 1.14), (z - 0.3, 1.38), (z + 0.3, 1.38), (z + 0.4, 1.14)], 24))
     loose = [np.array([1.25 * math.cos(t), 1.25 * math.sin(t), -6.0 - 0.25 * t]) for t in np.linspace(0, 1.8, 10)] + [np.array([1.3 + 0.5 * s, 0.95, -6.6 - 3.5 * s]) for s in np.linspace(0.1, 1, 8)]
     M.add('Grip', 'leather', *rod(np.array(loose), 0.2, 6))
-    for side, m in ((1, 'gold'), (-1, 'dark')):
-        hemi = [(-11.6, 0.0), (-11.6, 1.0), (-12.4, 1.55), (-13.4, 1.6), (-14.2, 1.0), (-14.5, 0.0)]
-        P, N, UV, F = lathe(hemi, 24)
-        keep = (P[:, 0] * side) >= -1e-3
-        P = P.copy(); P[:, 0] = np.where(keep, P[:, 0], 0.0)
-        M.add(m.capitalize(), m, P, N, UV, F)
+    # (a Nordic pommel: a gold bar under three lobes - the middle lobe dark, the outer two gold)
+    M.add('Gold', 'gold', *superbox(np.array([0, 0, -12.0]), 2.3, 0.95, 0.55, 3.0, 24, 10))
+    for k, (x, m, hgt) in enumerate(((-1.55, 'gold', 1.05), (0.0, 'dark', 1.45), (1.55, 'gold', 1.05))):
+        M.add(m.capitalize(), m, *superbox(np.array([x, 0, -12.55 - hgt * 0.75]), 0.85 if k != 1 else 1.0, 0.9, hgt, 2.2, 20, 12))
     fx = Fx()
     fx.sheath('SunEdge', f'tex={FX["swirl"]} color=1,0.78,0.4,0.35 scale=1.2 blend=add falloff=1 uscroll=4 vscroll=2.5', 6.5, 66.0, 4.3, 2.2, 18, 12, 3.0)
     fx.card('SunGlow', FX['glow'], (0, 0, 5.7), 6.0, '1,0.76,0.35,0.5', 1.0)
     fx.card('SunCore', FX['core'], (0, 0, 5.7), 2.6, '1,0.82,0.45,1', 1.2, (4, 4, 6, 0))
     fx.card('MoonGlint', FX['glow'], (-7.0, 0, 8.0), 3.0, '0.6,0.7,1,0.45', 1.0)
-    mats = {'blade': f'diffuse={bD} normal={bN} glow={bG} emit=1,1,1 emitmult=1.4 spec=1.6 gloss=90 alpha=0 doublesided=0',
-            'gold': f'diffuse={gD} normal={gN} spec=1.2 gloss=50 alpha=0 doublesided=1',
-            'dark': f'diffuse={dD} normal={dN} spec=0.7 gloss=36 alpha=0 doublesided=0',
-            'leather': f'diffuse={lD} normal={lN} spec=0.2 gloss=12 alpha=0 doublesided=0'}
+    mats = {'blade': f'diffuse={bD} normal={bN} glow={bG} emit=1,1,1 emitmult=1.4 spec=0.80 gloss=54 alpha=0 doublesided=0',
+            'gold': f'diffuse={gD} normal={gN} spec=0.60 gloss=30 alpha=0 doublesided=1',
+            'dark': f'diffuse={dD} normal={dN} spec=0.35 gloss=21 alpha=0 doublesided=0',
+            'leather': f'diffuse={lD} normal={lN} spec=0.15 gloss=8 alpha=0 doublesided=0'}
     return pw.finish(M, 'eclipse', mats, fx.L, 'WeaponBack')
 
 
@@ -446,7 +539,7 @@ def wanderstar():
     """(The Wandering Star - "a dim caged star") a pilgrim's staff of pale ash wound with faded blue cloth, its head an old
     armillary of three bronze rings - one bent - caging a small star that has nearly burnt out, pulsing dim white-gold"""
     wD, wN = wood_tex('w_wanderstar_wood', (170, 150, 120), grey=0.45, seed=751)
-    bD, bN = bronze_tex('w_wanderstar_bronze', seed=752)
+    bD, bN = bronze_tex('w_wanderstar_bronze', seed=752, etch=np.rot90(rune_bands([0.5], 756, h=int(S * 0.2))))   # (runes running round the rings)
     cD, cN = cloth_tex('w_wanderstar_cloth', (70, 92, 128), seed=753)
     M = Mesh()
     zs = np.linspace(-20.0, 46.5, 36)
@@ -468,15 +561,16 @@ def wanderstar():
         n = unit(np.array(ax, float)); e1 = unit(np.cross(n, [0.1, 0.2, 1.0])); e2 = np.cross(n, e1)
         rr = R_ * (1 - bend * 0.18 * np.exp(-((a - 1.0) / 0.4) ** 2))   # (the third one bent in)
         ring = sc + (np.outer(np.cos(a) * rr, e1) + np.outer(np.sin(a) * rr, e2))
-        M.add('Bronze', 'bronze', *rod(ring, 0.17, 8))
+        P_, N_, UV_, F_ = rod(ring, 0.2, 10); UV_ = UV_ * [1.0, 9.0]
+        M.add('Bronze', 'bronze', P_, N_, UV_, F_)
     fx = Fx()
     fx.card('StarCore', FX['core'], tuple(sc), 1.3, '1,0.92,0.75,1', 1.4, (4, 4, 5, 0))
     fx.card('StarGlow', FX['glow'], tuple(sc), 5.5, '1,0.88,0.6,0.5', 1.0)
     fx.card('StarHalo', FX['glow'], tuple(sc), 11.0, '0.8,0.85,1,0.16', 1.0)
     fx.sheath('Stardust', f'tex={FX["motes"]} color=1,0.95,0.8,0.6 scale=1.5 blend=add uscroll=-4 vscroll=-6', 47.0, 57.5, 4.6, 3.6, 22, 8, 1.6)
-    mats = {'wood': f'diffuse={wD} normal={wN} spec=0.3 gloss=16 alpha=0 doublesided=0',
-            'bronze': f'diffuse={bD} normal={bN} spec=1.2 gloss=40 alpha=0 doublesided=0',
-            'cloth': f'diffuse={cD} normal={cN} spec=0.1 gloss=8 alpha=0 doublesided=1'}
+    mats = {'wood': f'diffuse={wD} normal={wN} spec=0.15 gloss=9 alpha=0 doublesided=0',
+            'bronze': f'diffuse={bD} normal={bN} spec=0.60 gloss=24 alpha=0 doublesided=0',
+            'cloth': f'diffuse={cD} normal={cN} spec=0.10 gloss=8 alpha=0 doublesided=1'}
     return pw.finish(M, 'wanderstar', mats, fx.L, 'WeaponStaff')
 
 
@@ -494,9 +588,11 @@ def bone_tex(name, seed=0):
     grime = np.clip((0.45 - mott) * 2.5, 0, 1)
     col = col * (1 - 0.5 * grime[..., None]) + np.array([96, 78, 56]) * 0.5 * grime[..., None]
     col = col * (1 - 0.75 * cr[..., None])
+    sc = np.rot90(rune_bands([0.5], 764 + seed, h=int(S * 0.16))) * 0.85   # (scrimshaw: runes scratched along it, inked dark)
+    col = col * (1 - 0.7 * sc[..., None]) + np.array([40, 30, 22]) * 0.7 * sc[..., None]
     D = save(col, name + '_d.dds')
-    h = 0.3 * mott + 0.25 * streak - 0.5 * np.clip((pore - 0.7) * 4, 0, 1) - 0.8 * cr
-    N = save(np.dstack([height_to_normal(gaussian_filter(h, 0.6), 7.0), np.clip(70 + 40 * mott - 60 * grime - 60 * cr, 0, 255)]), name + '_n.dds', True)
+    h = -0.6 * sc + 0.3 * mott + 0.25 * streak - 0.5 * np.clip((pore - 0.7) * 4, 0, 1) - 0.8 * cr
+    N = save(np.dstack([height_to_normal(gaussian_filter(h, 0.6 * KQ), 7.0 * KQ), np.clip(70 + 40 * mott - 60 * grime - 60 * cr, 0, 255)]), name + '_n.dds', True)
     return D, N
 
 
@@ -563,8 +659,8 @@ def rattlebone():
     for sy in (-1, 1):   # (bone spurs past the nocks)
         tip = pb.limb_line(sy * (pb.STRING_Y - 1.0), sy * (pb.STRING_Y + 4.2), 12)
         M.add('Bone', 'bone', *pb.sweep(tip, np.linspace(0.75, 0.12, 12), np.linspace(0.6, 0.1, 12), 12, 2.4))
-    mats = {'bone': f'diffuse={bD} normal={bN} spec=0.6 gloss=40', 'sinew': f'diffuse={sD} normal={sN} spec=0.3 gloss=16',
-            'string': f'diffuse={sD} normal={sN} spec=0.3 gloss=20'}
+    mats = {'bone': f'diffuse={bD} normal={bN} spec=0.30 gloss=24', 'sinew': f'diffuse={sD} normal={sN} spec=0.15 gloss=9',
+            'string': f'diffuse={sD} normal={sN} spec=0.15 gloss=12'}
     pb.write('rattlebone', M, mats)
 
 
@@ -628,9 +724,9 @@ def whisperwood():
             for j in range(nu):
                 a_ = i * (nu + 1) + j; b_ = a_ + 1; c_ = a_ + nu + 1; d_ = c_ + 1
                 fx += [f't {a_} {c_} {b_}', f't {b_} {c_} {d_}']
-    mats = {'bark': f'diffuse={wD} normal={wN} spec=0.25 gloss=14', 'vine': f'diffuse={vD} normal={vN} spec=0.3 gloss=18',
-            'leaf': f'diffuse={fD} normal={fN} spec=0.4 gloss=30 alpha=test doublesided=1', 'grip': f'diffuse={lD} normal={lN} spec=0.2 gloss=12',
-            'string': f'diffuse={lD} normal={lN} spec=0.3 gloss=20'}
+    mats = {'bark': f'diffuse={wD} normal={wN} spec=0.15 gloss=8', 'vine': f'diffuse={vD} normal={vN} spec=0.15 gloss=10',
+            'leaf': f'diffuse={fD} normal={fN} spec=0.20 gloss=18 alpha=test doublesided=1', 'grip': f'diffuse={lD} normal={lN} spec=0.15 gloss=8',
+            'string': f'diffuse={lD} normal={lN} spec=0.15 gloss=12'}
     pb.write('whisperwood', M, mats, fx)
 
 
@@ -776,8 +872,8 @@ def stormknuckles():
     for k, c in enumerate(gems):
         fx.card(f'Spark{k}', FX['core'], tuple(c), 0.9, '0.6,0.8,1,1', 2.4, (4, 4, 18, k * 3))
         fx.card(f'GemGlow{k}', FX['glow'], tuple(c), 2.2, '0.45,0.7,1,0.45', 1.0)
-    mats = {'brass': f'diffuse={bD} normal={bN} spec=1.4 gloss=60 alpha=0 doublesided=0',
-            'leather': f'diffuse={lD} normal={lN} spec=0.3 gloss=14 alpha=0 doublesided=1',
+    mats = {'brass': f'diffuse={bD} normal={bN} spec=0.70 gloss=36 alpha=0 doublesided=0',
+            'leather': f'diffuse={lD} normal={lN} spec=0.15 gloss=8 alpha=0 doublesided=1',
             'gem': f'diffuse={gD} normal={gN} glow={gG} emit=0.6,0.8,1 emitmult=2.4 spec=2.5 gloss=200 alpha=0 doublesided=0'}
     write_hand(M, 'stormknuckles', mats, fx.L, ['pulse Gem 1.4 3.6 0.7'])
 
@@ -795,7 +891,7 @@ def emberclaw():
     cl = tileable(W, W, 1.2, 822); cr = np.clip(1 - np.abs(tileable(W, W, 0.9, 823) - 0.5) / 0.05, 0, 1)
     coalD = save(np.array([30, 22, 18], np.float32) * (0.6 + 0.8 * cl[..., None]) + np.array([255, 110, 30]) * cr[..., None] * 0.9, 'w_emberclaw_coal_d.dds')
     coalG = save(np.array([255, 120, 30], np.float32) * (0.2 + 0.6 * cl[..., None] + cr[..., None]), 'w_emberclaw_coal_g.dds')
-    coalN = save(np.dstack([height_to_normal(gaussian_filter(cl - cr, 1.0), 6.0), np.full((W, W), 30.0)]), 'w_emberclaw_coal_n.dds', True)
+    coalN = save(np.dstack([height_to_normal(gaussian_filter(cl - cr, 1.0 * KQ), 6.0 * KQ), np.full((W, W), 30.0)]), 'w_emberclaw_coal_n.dds', True)
     M = Mesh()
     hand_wrap(M, 'wrap', -1.6, 7.9, 0.05, 1.05, 'Wrap', 3)
     hand_wrap(M, 'wrap', 0.8, 5.6, 0.22, 1.4, 'Wrap', 4)
@@ -809,15 +905,16 @@ def emberclaw():
     for k, c in enumerate(coals[:5]):
         fx.card(f'CoalGlow{k}', FX['glow'], tuple(c), 1.8, '1,0.5,0.15,0.5', 1.0)
     fx.sheath('Embers', f'tex={FX["motes"]} color=1,0.55,0.2,0.85 scale=1.6 blend=add uscroll=2 vscroll=-10', 0.0, 12.0, 4.6, 3.2, 18, 8, 2.0)
-    mats = {'wrap': f'diffuse={cD} normal={cN} spec=0.1 gloss=8 alpha=0 doublesided=1',
-            'coal': f'diffuse={coalD} normal={coalN} glow={coalG} emit=1,0.5,0.15 emitmult=2.0 spec=0.3 gloss=20 alpha=0 doublesided=0'}
+    mats = {'wrap': f'diffuse={cD} normal={cN} spec=0.10 gloss=8 alpha=0 doublesided=1',
+            'coal': f'diffuse={coalD} normal={coalN} glow={coalG} emit=1,0.5,0.15 emitmult=2.0 spec=0.15 gloss=12 alpha=0 doublesided=0'}
     write_hand(M, 'emberclaw', mats, fx.L, ['pulse Coal 0.8 2.8 1.6'])
 
 
 def paper_tex(name, seed=0):
     """2048: the open pages (left half u 0..0.5, right 0.5..1): old vellum, foxed and stained toward the edges, lines of
     the Codex's glyphs in dark ink - and its glow: the ink lit as the book wakes"""
-    u, v = uvgrid()
+    S = 2048
+    v, u = (np.mgrid[0:S, 0:S].astype(np.float32) + 0.5) / S
     fine = tileable(S, S, 0.5, 830 + seed); big = tileable(S, S, 2.0, 831 + seed)
     edge = np.clip(1 - np.minimum(np.minimum(u % 0.5, 0.5 - u % 0.5) / 0.06, np.minimum(v, 1 - v) / 0.06), 0, 1)
     col = np.array([206, 188, 150], np.float32) * (0.85 + 0.15 * (fine[..., None] - 0.5) + 0.12 * (big[..., None] - 0.5))
@@ -853,9 +950,9 @@ def paper_tex(name, seed=0):
                 x += w + int(12 + 30 * (r.random() < 0.18) * r.random() * 3)
     inkm = gaussian_filter(np.asarray(ink, np.float32) / 255, 1.2)
     col = col * (1 - 0.8 * inkm[..., None]) + np.array([30, 18, 14]) * 0.8 * inkm[..., None]
-    D = save(col, name + '_d.dds')
-    G = save(np.array([255, 170, 90], np.float32) * inkm[..., None] * 1.0, name + '_g.dds')
-    N = save(np.dstack([height_to_normal(gaussian_filter(0.3 * fine - 0.4 * inkm, 0.8), 3.0), np.full((S, S), 16.0)]), name + '_n.dds', True)
+    D = g.save(col, name + '_d.dds', False, 4096)
+    G = g.save(np.array([255, 170, 90], np.float32) * inkm[..., None] * 1.0, name + '_g.dds', False, 4096)
+    N = g.save(np.dstack([height_to_normal(gaussian_filter(0.3 * fine - 0.4 * inkm, 0.8), 3.0), np.full((S, S), 16.0)]), name + '_n.dds', True, 4096)
     return D, N, G
 
 
@@ -866,7 +963,10 @@ def codex():
     Codex's glyphs and a circle drawn on the right-hand page; a red ribbon hanging from its spine. Its pages turn on their
     own; its ink burns ember-bright; glyphs lift off it and a spell circle turns in the air before it."""
     lD, lN = leather_tex('w_codex_cover', (58, 22, 20), seed=840)
-    bD, bN = metal_tex('w_codex_brass', (170, 130, 64), dark=0.6, seed=841)
+    tool_ = knot(845, 4)   # (the boards tooled with knotwork, pressed dark into the leather)
+    cv = np.asarray(Image.open(g.WORK / 'w_codex_cover_d.dds.png').convert('RGB'), np.float32)
+    lD = save(cv * (1 - 0.45 * tool_[..., None]), 'w_codex_cover_d.dds')
+    bD, bN = metal_tex('w_codex_brass', (160, 122, 62), dark=0.7, etch=knot(846, 5), seed=841)
     pD, pN, pG = paper_tex('w_codex_page', seed=842)
     eD, eN = wood_tex('w_codex_edge', (196, 176, 140), grey=0.2, cracks=0.0, seed=843)   # (the page block's edge: fine lines)
     rD, rN = cloth_tex('w_codex_ribbon', (140, 26, 24), seed=844)
@@ -941,16 +1041,19 @@ def codex():
             a0 = j; b0 = j + 1; c0 = j + nu + 1; d0 = c0 + 1
             F_ += [(a0, b0, c0), (b0, d0, c0), (a0, c0, b0), (b0, c0, d0)]
         fx.mesh(f'SpellCircle{k} tex=CurseOfAlduin\\priests\\moro_runeband.dds color=1,0.65,0.35,{al} scale=2.6 blend=add uscroll={us}', V_, N_, UV_, F_)
-    mats = {'cover': f'diffuse={lD} normal={lN} spec=0.35 gloss=18 alpha=0 doublesided=0',
-            'brass': f'diffuse={bD} normal={bN} spec=1.3 gloss=50 alpha=0 doublesided=0',
-            'vellum': f'diffuse={pD} normal={pN} glow={pG} emit=1,0.65,0.35 emitmult=1.6 spec=0.15 gloss=10 alpha=0 doublesided=0',
-            'leaf': f'diffuse={pD} normal={pN} glow={pG} emit=1,0.65,0.35 emitmult=1.6 spec=0.15 gloss=10 alpha=0 doublesided=1',
-            'edge': f'diffuse={eD} normal={eN} spec=0.2 gloss=10 alpha=0 doublesided=0',
-            'ribbon': f'diffuse={rD} normal={rN} spec=0.2 gloss=12 alpha=0 doublesided=0'}
+    mats = {'cover': f'diffuse={lD} normal={lN} spec=0.17 gloss=10 alpha=0 doublesided=0',
+            'brass': f'diffuse={bD} normal={bN} spec=0.65 gloss=30 alpha=0 doublesided=0',
+            'vellum': f'diffuse={pD} normal={pN} glow={pG} emit=1,0.65,0.35 emitmult=1.6 spec=0.15 gloss=8 alpha=0 doublesided=0',
+            'leaf': f'diffuse={pD} normal={pN} glow={pG} emit=1,0.65,0.35 emitmult=1.6 spec=0.15 gloss=8 alpha=0 doublesided=1',
+            'edge': f'diffuse={eD} normal={eN} spec=0.15 gloss=8 alpha=0 doublesided=0',
+            'ribbon': f'diffuse={rD} normal={rN} spec=0.15 gloss=8 alpha=0 doublesided=0'}
     write_hand(M, 'codex', mats, fx.L, [f'flip Page {sp[0]:.3f} {sp[1] + 0.0:.3f} 0 0 0 -1 168 4.2', 'pulse Vellum 1.0 2.6 2.1', 'pulse Page 1.0 2.6 2.1'])
 
 
-WEAPONS.update({'rattlebone': rattlebone, 'whisperwood': whisperwood, 'stormknuckles': stormknuckles, 'emberclaw': emberclaw, 'codex': codex})
+WEAPONS.update({'rattlebone': rattlebone, 'whisperwood': whisperwood, 'codex': codex})
+# (Noah: "they look like paper thin rings instead of real hand wraps or elemental brass knuckles") the fist weapons are
+# gloves on the hands' own bones now: tools/tabletgloves.py. stormknuckles() and emberclaw() above are kept only as the
+# first try; nothing builds them
 
 if __name__ == '__main__':
     pw.WORK.mkdir(parents=True, exist_ok=True)

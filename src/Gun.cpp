@@ -1700,6 +1700,7 @@ namespace bo3z
 
 	namespace Gun
 	{
+		RE::NiPointer<RE::NiAVObject> LoadModel(const std::string& a_path) { return Spellcraft::LoadPath(a_path); }
 		void  FxBlast(std::string_view a_name, const RE::NiPoint3& a_at, float a_delay) { Blast(BlastIndex(a_name), a_at, a_delay, 0.6f); }
 		void  FxBlastSized(std::string_view a_name, const RE::NiPoint3& a_at, float a_scale) { Blast(BlastIndex(a_name), a_at, 0.0f, a_scale); }
 		void  FxFrom(RE::BGSExplosion* a_src, const RE::NiPoint3& a_at, float a_scale)

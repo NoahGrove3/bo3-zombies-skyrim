@@ -690,6 +690,7 @@ namespace bo3z
 
 	namespace Gun
 	{
+		RE::NiPointer<RE::NiAVObject> LoadModel(const std::string& a_path);   // one of our models (a fresh copy), by its path under Meshes
 		void                  Tick(float a_delta);
 		void                  Reset();
 		void                  TestKit();  // dev: every mod's attack spell (named by element), every bow and shout, the glider, 150,000 septims

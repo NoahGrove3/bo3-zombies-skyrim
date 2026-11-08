@@ -1,6 +1,6 @@
 {
   "sheet": "tablet",
-  "about": "(Noah) the Tablet of Mysteries' donated weapons (docs/TABLET_OF_MYSTERIES.md): worn = one tier above your class sword, battered = two; uses = hits / arrows / casts before it breaks; lost if you fall. model: a placeholder (Skyrim's own) until its own is made.",
+  "about": "(Noah) the Tablet of Mysteries' donated weapons (docs/TABLET_OF_MYSTERIES.md): worn = one tier above your class sword, battered = two; uses = hits / arrows / casts before it breaks; lost if you fall. model: the weapon's own (tools/tabletweapons.py; the fists have none - they are gloves, tools/tabletgloves.py); show: the model that rises out of the tablet's pool; gloves: the fists' gloves (first-person and third-person models).",
   "columns": [
     "id",
     "label",
@@ -9,7 +9,9 @@
     "uses",
     "model",
     "power",
-    "owner"
+    "owner",
+    "show",
+    "gloves"
   ],
   "rows": [
     {
@@ -21,7 +23,12 @@
       "model": "",
       "power": "Brass knuckles wrapped round cracked storm gems. Every punch arcs lightning to 2 more of the dead; a heavy punch slams the ground in a ring of shock.",
       "owner": "Left by a pit-fighter from Windhelm who never lost a bout.",
-      "verify": []
+      "verify": [],
+      "show": "CurseOfAlduin\\tablet\\stormknuckles_show.nif",
+      "gloves": [
+        "CurseOfAlduin\\tablet\\stormknuckles_gloves.nif",
+        "CurseOfAlduin\\tablet\\stormknuckles_gloves_1st.nif"
+      ]
     },
     {
       "id": "gravebell",
@@ -29,10 +36,12 @@
       "grade": "worn",
       "type": "mace",
       "uses": 300,
-      "model": "Weapons\\Iron\\IronMace.nif",
+      "model": "CurseOfAlduin\\tablet\\gravebell.nif",
       "power": "A cracked temple bell on an iron pole. Every 5th hit tolls it, stunning the dead within 5 m.",
       "owner": "Taken from a ruined temple of Arkay.",
-      "verify": []
+      "verify": [],
+      "show": "CurseOfAlduin\\tablet\\gravebell.nif",
+      "gloves": []
     },
     {
       "id": "saltrice",
@@ -40,10 +49,12 @@
       "grade": "worn",
       "type": "dagger",
       "uses": 320,
-      "model": "Weapons\\Iron\\IronDagger.nif",
+      "model": "CurseOfAlduin\\tablet\\saltrice.nif",
       "power": "A farmer's sickle crusted in salt. The dead it cuts take 30% more from everything for 4 seconds.",
       "owner": "Left by a farmer from Rorikstead who held his field for nine nights.",
-      "verify": []
+      "verify": [],
+      "show": "CurseOfAlduin\\tablet\\saltrice.nif",
+      "gloves": []
     },
     {
       "id": "riverstone",
@@ -51,10 +62,12 @@
       "grade": "worn",
       "type": "battleaxe",
       "uses": 240,
-      "model": "Weapons\\Iron\\IronBattleAxe.nif",
+      "model": "CurseOfAlduin\\tablet\\riverstone.nif",
       "power": "A waterlogged axe, its haft swollen and green. Its hits knock the dead back; a heavy attack splits the ground in a line before you.",
       "owner": "Dragged out of the White River.",
-      "verify": []
+      "verify": [],
+      "show": "CurseOfAlduin\\tablet\\riverstone.nif",
+      "gloves": []
     },
     {
       "id": "rattlebone",
@@ -62,10 +75,12 @@
       "grade": "worn",
       "type": "bow",
       "uses": 200,
-      "model": "Weapons\\Hunting\\HuntingBow.nif",
+      "model": "CurseOfAlduin\\tablet\\rattlebone.nif",
       "power": "Strung with sinew and old bones. Every arrow bounces on to a second of the dead.",
       "owner": "Its owner's name is scratched off the grip.",
-      "verify": []
+      "verify": [],
+      "show": "CurseOfAlduin\\tablet\\rattlebone.nif",
+      "gloves": []
     },
     {
       "id": "lanternwick",
@@ -73,10 +88,12 @@
       "grade": "worn",
       "type": "staff",
       "uses": 90,
-      "model": "Weapons\\Staff\\StaffDestructionTemplate.nif",
+      "model": "CurseOfAlduin\\tablet\\lanternwick.nif",
       "power": "A cracked lantern on a stick. It throws an orb of lantern-light that pulls the dead in, then bursts.",
       "owner": "Carried by a lamplighter of Riften until the lamps went out.",
-      "verify": []
+      "verify": [],
+      "show": "CurseOfAlduin\\tablet\\lanternwick.nif",
+      "gloves": []
     },
     {
       "id": "emberclaw",
@@ -87,7 +104,12 @@
       "model": "",
       "power": "Charred hand-wraps with coals sewn in. Punches set the dead burning; every 4th punch throws a fireball.",
       "owner": "Unwound from the hands of a burned monk.",
-      "verify": []
+      "verify": [],
+      "show": "CurseOfAlduin\\tablet\\emberclaw_show.nif",
+      "gloves": [
+        "CurseOfAlduin\\tablet\\emberclaw_gloves.nif",
+        "CurseOfAlduin\\tablet\\emberclaw_gloves_1st.nif"
+      ]
     },
     {
       "id": "eclipse",
@@ -95,10 +117,12 @@
       "grade": "battered",
       "type": "greatsword",
       "uses": 120,
-      "model": "Weapons\\Steel\\SteelGreatsword.nif",
+      "model": "CurseOfAlduin\\tablet\\eclipse.nif",
       "power": "A greatsword of a sun half and a moon half. Light slashes alternate the two; a heavy attack calls a 6-second eclipse that blinds and slows the dead.",
       "owner": "Its last bearer saw the sun go out over Sky Haven.",
-      "verify": []
+      "verify": [],
+      "show": "CurseOfAlduin\\tablet\\eclipse.nif",
+      "gloves": []
     },
     {
       "id": "wanderstar",
@@ -106,10 +130,12 @@
       "grade": "battered",
       "type": "staff",
       "uses": 40,
-      "model": "Weapons\\Staff\\StaffDestructionTemplate.nif",
+      "model": "CurseOfAlduin\\tablet\\wanderstar.nif",
       "power": "A dim star caught in a cage on a staff. Each cast lets it out to bounce between up to 8 of the dead.",
       "owner": "Found at the bottom of the College's collapsed well.",
-      "verify": []
+      "verify": [],
+      "show": "CurseOfAlduin\\tablet\\wanderstar.nif",
+      "gloves": []
     },
     {
       "id": "whisperwood",
@@ -117,10 +143,12 @@
       "grade": "battered",
       "type": "bow",
       "uses": 80,
-      "model": "Weapons\\Hunting\\HuntingBow.nif",
+      "model": "CurseOfAlduin\\tablet\\whisperwood.nif",
       "power": "A bow still sprouting leaves. Its arrows root the dead where they stand, and you heal a little for each one held.",
       "owner": "Grown, not made, by a Spriggan's keeper.",
-      "verify": []
+      "verify": [],
+      "show": "CurseOfAlduin\\tablet\\whisperwood.nif",
+      "gloves": []
     },
     {
       "id": "codex",
@@ -131,7 +159,9 @@
       "model": "",
       "power": "A spell book with no author. Each cast flips to a chapter - Fire, Frost, Storm or Void - and its glyphs lift off the page into the spell; every 10th cast is a chapter's end: all four at once.",
       "owner": "No one remembers who left it. The pages remember everyone.",
-      "verify": []
+      "verify": [],
+      "show": "CurseOfAlduin\\tablet\\codex_r.nif",
+      "gloves": []
     }
   ]
 }

@@ -94,11 +94,27 @@ namespace bo3z::Tablet
 			else if (auto* sp = f->As<RE::SpellItem>()) sp->fullName = nm;
 		}
 		// the donated weapon taken off you and out of your pack (and the bows' arrows)
+		// (Noah: "real hand wraps or elemental brass knuckles") the fists' gloves, worn in the hands' slot while they are held
+		// (tools/tabletgloves.py); whatever gloves you wore before put back on when they go
+		RE::FormID g_prevGloves = 0;
+		RE::TESObjectARMO* GlovesOf(int a_w)
+		{
+			if (a_w < 0 || a_w >= static_cast<int>(gen::kTabletWeapons.size()) || !gen::kTabletWeapons[a_w].gloves) return nullptr;
+			auto* f = Forms::Ours(gen::kTabletWeapons[a_w].gloves);
+			return f ? f->As<RE::TESObjectARMO>() : nullptr;
+		}
 		void TakeAway(int a_w)
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			auto* f = FormOf(a_w);
 			if (!p || !f) return;
+			if (auto* gl = GlovesOf(a_w); gl && p->GetItemCount(gl) > 0) {
+				p->RemoveItem(gl, p->GetItemCount(gl), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+				if (auto* prev = g_prevGloves ? RE::TESForm::LookupByID<RE::TESObjectARMO>(g_prevGloves) : nullptr; prev && p->GetItemCount(prev) > 0) {
+					if (auto* em = RE::ActorEquipManager::GetSingleton()) em->EquipObject(p, prev, nullptr, 1, nullptr, false, false, false, true);
+				}
+				g_prevGloves = 0;
+			}
 			if (auto* sp = f->As<RE::SpellItem>()) {
 				if (p->HasSpell(sp)) p->RemoveSpell(sp);
 			} else if (auto* b = f->As<RE::TESBoundObject>(); b && p->GetItemCount(b) > 0) {
@@ -134,6 +150,11 @@ namespace bo3z::Tablet
 			} else if (auto* b = f->As<RE::TESBoundObject>()) {
 				Forms::Give(p, b, 1);
 				em->EquipObject(p, b, nullptr, 1, d.type == 4 || d.type == 3 || d.type == 6 ? nullptr : right, false, false, false, true);
+				if (auto* gl = GlovesOf(a_w)) {   // (the fists: their gloves on)
+					if (auto* worn = p->GetWornArmor(RE::BGSBipedObjectForm::BipedObjectSlot::kHands); worn && worn != gl) g_prevGloves = worn->GetFormID();
+					Forms::Give(p, gl, 1);
+					em->EquipObject(p, gl, nullptr, 1, nullptr, false, false, false, true);
+				}
 				if (d.type == 4) {   // a bow: its uses are its arrows
 					if (auto* ar = Forms::Ours(gen::kTabletArrow) ? Forms::Ours(gen::kTabletArrow)->As<RE::TESBoundObject>() : nullptr) {
 						p->AddObjectToContainer(ar, nullptr, d.uses, nullptr);
@@ -143,6 +164,32 @@ namespace bo3z::Tablet
 			}
 			p->DrawWeaponMagicHands(true);
 			logger::info("tablet: {} taken ({} uses)", d.id, d.uses);
+		}
+		// (Noah: "an actual spell book in hand") the Codex open on your right palm while it is the spell in that hand, in the body
+		// you see and the other (tools/tabletweapons.py codex_r.nif, made in the hand bone's own frame)
+		RE::NiPointer<RE::NiAVObject> g_book[2];
+		void TickBook(RE::PlayerCharacter* a_p)
+		{
+			bool on = false;
+			if (g_held >= 0 && gen::kTabletWeapons[g_held].type == 7) {
+				auto* f = FormOf(g_held);
+				on = f && a_p->GetEquippedObject(false) == f;
+			}
+			for (int b = 0; b < 2; ++b) {
+				auto* root = a_p->Get3D(b == 1);
+				auto* hand = on && root ? root->GetObjectByName("NPC R Hand [RHnd]") : nullptr;
+				auto* node = hand ? hand->AsNode() : nullptr;
+				auto& bk = g_book[b];
+				if (!node) {
+					if (bk && bk->parent) bk->parent->DetachChild2(bk.get());
+					continue;
+				}
+				if (!bk) bk = Gun::LoadModel("CurseOfAlduin\\tablet\\codex_r.nif");
+				if (bk && bk->parent != node) {
+					if (bk->parent) bk->parent->DetachChild2(bk.get());
+					node->AttachChild(bk.get(), true);
+				}
+			}
 		}
 		void Break()
 		{
@@ -399,6 +446,7 @@ namespace bo3z::Tablet
 			if (g_phase == Phase::Offering) if (auto r = g_ref.get()) PoseShow(r.get(), std::clamp(g_t / 1.5f, 0.0f, 1.0f));
 		}
 		if (ref && ref->Is3DLoaded() && ref->GetPosition().GetDistance(p->GetPosition()) < 6000.0f) Animate(ref, a_delta);
+		TickBook(p);
 		// a donated bow's uses are its arrows; a weapon you no longer have (sold, dropped, a load) is let go
 		if (g_held >= 0) {
 			auto* f = FormOf(g_held);

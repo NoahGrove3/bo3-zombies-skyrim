@@ -91,6 +91,7 @@ def echo_ids(S):
     TB = S.get('tablet', {}).get('rows', [])
     ids += [('WEAP', 'tab_' + w['id']) for w in TB if w['type'] != 'book'] + [(k, 'tab_' + w['id']) for w in TB if w['type'] == 'book' for k in ('SPEL', 'MGEF')]
     ids += [('AMMO', 'tab_arrow'), ('PROJ', 'tab_arrow')]
+    ids += [(k, 'tabglove_' + w['id']) for w in TB if w.get('gloves') for k in ('ARMA', 'ARMO')]   # (the fists: gloves on the hands)
     ids += [('MGEF', 'wyrmcall')]   # (Noah: the Violet Wyrm made a summon spell: its cast's effect)
     ids += [('WEAP', 'wyrmhorn')]   # (Noah: the Horn of the Violet Wyrm - "Held in hand")   # (Noah: the Mutagen Gauntlet made a staff: its beam held as Skyrim's staff cast)
     return ids
@@ -142,5 +143,5 @@ def dressing(S):
     records[('STAT', 'whirlwind')] = {'model': 'CurseOfAlduin\\fx\\whirlwind.nif', 'color': '', 'radius': 0}  # Bond II's Updraft shout: the whirlwind round you
     records[('STAT', 'rise_fx')] = {'model': S['dressing']['show']['riseFxModel'], 'color': '', 'radius': 0}
     for w in S.get('tablet', {}).get('rows', []):   # (the Tablet of Mysteries: each weapon's model, shown rising out of it)
-        if w['model']: records[('STAT', 'tabshow_' + w['id'])] = {'model': w['model'], 'color': '', 'radius': 0}
+        if w.get('show') or w['model']: records[('STAT', 'tabshow_' + w['id'])] = {'model': w.get('show') or w['model'], 'color': '', 'radius': 0}
     return records, pieces

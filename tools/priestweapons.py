@@ -226,24 +226,24 @@ def save(arr, name, alpha=False):
 def metal_tex(name, base_rgb, rust=0.0, dark=0.0, etch=None, seed=0):
     """2048, tiling: worked metal - hammer marks, brushing, scratches, pitting; rust (0..1) blooming in the pits; dark (0..1)
     blackened oxide in the low places; optional etched pattern (an array in 0..1, tiling)"""
-    S = 2048
+    S = TEXSIZE; kq = S / 2048
     d1, d2 = g.cells(512, 700, 300 + seed)
-    hammer = np.tile(np.clip(d1 / 16.0, 0, 1), (4, 4))
+    hammer = np.tile(np.clip(d1 / 16.0, 0, 1), (S // 512, S // 512))
     brushed = tileable(S, S, 1.1, 301 + seed, aniso=(1.0, 0.05))
     fine = tileable(S, S, 0.5, 302 + seed)
     big = tileable(S, S, 2.3, 303 + seed)
     mid = tileable(S, S, 1.5, 304 + seed)
     sc = Image.new('L', (S, S), 0); dr = ImageDraw.Draw(sc)
     rr = np.random.default_rng(305 + seed)
-    for _ in range(2200):
-        x, y = rr.random(2) * S; a = rr.random() * math.pi; l = 6 + rr.random() ** 2 * 110
+    for _ in range(int(2200 * kq * kq)):
+        x, y = rr.random(2) * S; a = rr.random() * math.pi; l = (6 + rr.random() ** 2 * 110) * kq
         for ox in (-S, 0, S):
             for oy in (-S, 0, S):
-                dr.line([(x + ox, y + oy), (x + ox + math.cos(a) * l, y + oy + math.sin(a) * l)], fill=int(50 + 150 * rr.random()), width=1)
+                dr.line([(x + ox, y + oy), (x + ox + math.cos(a) * l, y + oy + math.sin(a) * l)], fill=int(50 + 150 * rr.random()), width=max(1, int(kq)))
     scr = np.asarray(sc, np.float32) / 255
     pits = np.clip((tileable(S, S, 0.35, 306 + seed) - 0.78) * 6, 0, 1)
     low = np.clip((0.45 - (0.5 * hammer + 0.5 * big)) * 3, 0, 1)
-    dents = np.tile(np.clip(g.cells(256, 60, 307 + seed)[0] / 26.0, 0, 1), (8, 8))   # (big old dents and wear)
+    dents = np.tile(np.clip(g.cells(256, 60, 307 + seed)[0] / 26.0, 0, 1), (S // 256, S // 256))   # (big old dents and wear)
     grit = tileable(S, S, 0.3, 308 + seed)
     h = 0.45 * hammer + 0.5 * dents + 0.15 * brushed + 0.3 * fine + 0.25 * grit - 0.35 * scr - 0.8 * pits
     lum = 0.8 + 0.2 * (brushed - 0.5) + 0.25 * (big - 0.5) + 0.15 * hammer + 0.2 * scr
@@ -259,7 +259,7 @@ def metal_tex(name, base_rgb, rust=0.0, dark=0.0, etch=None, seed=0):
     col = col * (1 - 0.45 * grime[..., None]) + np.array([26, 22, 18]) * 0.45 * grime[..., None]
     col = col * (0.92 + 0.16 * (grit[..., None] - 0.5))
     D = save(col, name + '_d.dds')
-    nrm = height_to_normal(gaussian_filter(h, 0.7), 11.0)
+    nrm = height_to_normal(gaussian_filter(h, 0.7 * kq), 11.0 * kq)
     # (Noah: "too smooth and shiny") a dull, worn sheen: only the rubbed high places and fresh scratches catch the light
     spec = np.clip(70 + 45 * (hammer - 0.5) + 70 * scr * (1 - grime) - 60 * grime - 60 * rmask - (50 * etch if etch is not None else 0), 0, 255)
     N = save(np.dstack([nrm, spec]), name + '_n.dds', True)
@@ -268,9 +268,9 @@ def metal_tex(name, base_rgb, rust=0.0, dark=0.0, etch=None, seed=0):
 
 def leather_tex(name, base_rgb=(58, 34, 24), seed=0):
     """2048 tiling: worn leather strap - pebbled grain, creases, burnished where held, pale stitch holes"""
-    S = 2048
+    S = TEXSIZE; kq = S / 2048
     d1, d2 = g.cells(512, 2400, 400 + seed)
-    peb = np.tile(np.clip((d2 - d1) / 6.0, 0, 1), (4, 4))
+    peb = np.tile(np.clip((d2 - d1) / 6.0, 0, 1), (S // 512, S // 512))
     fine = tileable(S, S, 0.5, 401 + seed)
     big = tileable(S, S, 2.0, 402 + seed)
     crease = tileable(S, S, 1.0, 403 + seed, aniso=(1.0, 0.2))
@@ -278,7 +278,7 @@ def leather_tex(name, base_rgb=(58, 34, 24), seed=0):
     lum = 0.8 + 0.3 * (big - 0.5) + 0.12 * (fine - 0.5) + 0.12 * peb - 0.35 * cr
     col = np.array(base_rgb, np.float32) * lum[..., None]
     D = save(col, name + '_d.dds')
-    nrm = height_to_normal(gaussian_filter(0.6 * peb + 0.35 * fine - 1.0 * cr, 0.5), 9.0)
+    nrm = height_to_normal(gaussian_filter(0.6 * peb + 0.35 * fine - 1.0 * cr, 0.5 * kq), 9.0 * kq)
     spec = np.clip(28 + 30 * peb + 25 * big - 25 * cr, 0, 255)
     N = save(np.dstack([nrm, spec]), name + '_n.dds', True)
     return D, N
@@ -380,7 +380,7 @@ def blade_tex(name, steel_rgb, edge_rgb=None, glow_rgb=None, script=True, patter
     """2048 blade sheet: u across (the edges at 0 and 1), v along (the guard at 0): the steel's own grain (folded layers
     or plain), a polished bevel at each edge, the fuller darker, a line of dragon-script etched down the middle; for ice:
     pale blue depths with cracks and frosted edges. Optional glow (the script and cracks lit)"""
-    S = 2048
+    S = TEXSIZE; kq = S / 2048
     v, u = (np.mgrid[0:S, 0:S].astype(np.float32) + 0.5) / S
     warp = tileable(S, S, 1.8, 500 + seed)
     fine = tileable(S, S, 0.5, 501 + seed)
@@ -442,7 +442,7 @@ def blade_tex(name, steel_rgb, edge_rgb=None, glow_rgb=None, script=True, patter
         spec = spec - 60 * mask
         glow = np.maximum(glow, mask)
     D = save(col, name + '_d.dds')
-    nrm = height_to_normal(gaussian_filter(h, 0.8), 6.0)
+    nrm = height_to_normal(gaussian_filter(h, 0.8 * kq), 6.0 * kq)
     N = save(np.dstack([nrm, np.clip(spec, 0, 255)]), name + '_n.dds', True)
     G = None
     if glow_rgb is not None:
@@ -451,6 +451,10 @@ def blade_tex(name, steel_rgb, edge_rgb=None, glow_rgb=None, script=True, patter
 
 
 # ================================================================== the build
+# (the tablet's weapons, tools/tabletweapons.py: "4k textures") the size metal_tex, leather_tex and blade_tex make their
+# sheets at; the priests' stay at 2048
+TEXSIZE = 2048
+
 ROUGH = {'iron': 0.045, 'bronze': 0.04, 'leather': 0.03, 'steel': 0.04, 'silver': 0.03, 'oak': 0.05, 'wood': 0.05, 'bone': 0.035, 'stone': 0.07}
 
 
