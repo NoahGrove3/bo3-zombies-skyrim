@@ -1,19 +1,14 @@
-	// ---- (Noah: the Horn of the Violet Wyrm - "Held in hand"; "have my character actually blow the horn with a horn sound
-	// then the dragon flies in and burns enemies within 30 meters of the player for 90s at a time"; "60 seconds" before it can
-	// be blown again; the wyrm "circles and strafes, hovering to breathe on big crowds"; Legendary: "Two dragons") the horn
-	// in your hand (tools/wyrmhorn.py): attack lifts it to your lips (Gun's pose, from g_wh.blow) and blows; the wyrm
-	// flies in from afar; 90 s on, it flies off and the horn rests 60 s. Included by Classes.cpp (its anonymous namespace).
+	// ---- (Noah: the Violet Wyrm - "the dragon flies in and burns enemies within 30 meters of the player for 90s at a time";
+	// "60 seconds" before it can be called again; Legendary: "Two dragons"; "lets just make it a summon spell") the Call of
+	// the Violet Wyrm. Included by Classes.cpp (its anonymous namespace).
 	struct WyrmHornState
 	{
-		float blow = -1.0f;      // (time into the blow; -1 none)
-		bool  left = false;
-		bool  sounded = false, called = false;
+		bool  called = false;
 		float cool = 0.0f;       // (the rest after the wyrm departs)
 		bool  aloft = false;     // (a wyrm called and not yet gone)
-		float check = 0.0f;
 	};
 	WyrmHornState g_wh;
-	constexpr float kWhSound = 0.55f, kWhCall = 1.35f, kWhEnd = 2.1f, kWhStay = 90.0f, kWhRest = 60.0f;
+	constexpr float kWhStay = 90.0f, kWhRest = 60.0f;
 	// the wyrm's body, set in game (dev: wyrmbase <plugin> <hex>) until Noah picks one from the recording
 	// (Noah: "I want to use a dragon from the [Diverse Dragons] mod, use a purple one" - "Aether + violet glow") the Aether
 	// Dragon, the collection's nearest to violet, wrapped in a violet glow (CallWyrm)
@@ -22,26 +17,6 @@
 	std::array<RE::ActorHandle, 2> g_wyrms{};
 	std::array<float, 2>           g_wyrmGlow{};   // (seconds to its glow's renewal)
 
-	// the horn's call: one of the installed sounds (dev: wyrmsound <plugin> <hex>) until Noah picks one from the recording
-	std::string g_hornSndPlugin;
-	RE::FormID  g_hornSnd = 0;
-	void HornSound(RE::Actor* a_at)
-	{
-		if (auto* f = g_hornSnd ? Lookup(g_hornSnd, g_hornSndPlugin) : nullptr) Audio::Game(f->GetFormID(), a_at, 1.0f);
-		else Audio::At(gen::Sound::shout_learned, a_at, 1.0f);
-	}
-	RE::TESObjectWEAP* Horn()
-	{
-		auto* dh = RE::TESDataHandler::GetSingleton();
-		return dh ? dh->LookupForm<RE::TESObjectWEAP>(gen::kWyrmHorn, gen::kPlugin) : nullptr;
-	}
-	bool HornHeldIn(bool a_left)
-	{
-		auto* p = RE::PlayerCharacter::GetSingleton();
-		auto* h = Horn();
-		auto* o = p && h ? p->GetEquippedObject(a_left) : nullptr;
-		return o && o == h;
-	}
 	bool WyrmAlive(const RE::ActorHandle& h)
 	{
 		auto a = h.get();
@@ -85,15 +60,6 @@
 		logger::info("horn: the {} called ({} {:06X})", a_idx ? "wyrmling" : "wyrm", g_wyrmPlugin, g_wyrmBase);
 	}
 
-	void HornPress(bool a_left)
-	{
-		if (g_class.load() != coffer::kSummoner) { Hud::QuestBanner("The Horn of the Violet Wyrm answers only to a Summoner", 2.0f); return; }
-		if (g_wh.blow >= 0.0f) return;
-		if (g_wh.aloft) { Hud::QuestBanner("The Violet Wyrm is already aloft", 1.5f); return; }
-		if (g_wh.cool > 0.0f) { Hud::QuestBanner(fmt::format("The horn rests ({:.0f} s)", std::ceil(g_wh.cool)), 1.5f); return; }
-		g_wh.blow = 0.0f, g_wh.left = a_left, g_wh.sounded = g_wh.called = false;
-	}
-
 	// (Noah: "lets just make it a summon spell so this is easy") the Call of the Violet Wyrm: cast, the wyrm (and at
 	// Legendary its wyrmling) answers at once - the horn's rules kept (one at a time, a minute's rest after it departs); a
 	// cast that can't be answered has its magicka given back
@@ -116,26 +82,6 @@
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (!p) return;
-		// the blow: the horn to your lips, its call, the wyrm(s) called, the arm down
-		if (g_wh.blow >= 0.0f) {
-			g_wh.blow += a_delta;
-			if (!HornHeldIn(g_wh.left) || p->IsDead()) g_wh.blow = -1.0f;
-			else {
-				if (!g_wh.sounded && g_wh.blow >= kWhSound) {
-					g_wh.sounded = true;
-					HornSound(p);
-				}
-				if (!g_wh.called && g_wh.blow >= kWhCall) {
-					g_wh.called = true;
-					CallWyrm(0);
-					if (AfterSovngarde()) CallWyrm(1);
-					g_wh.aloft = true;
-					Hud::Banner("THE VIOLET WYRM ANSWERS", 3.0f);
-				}
-				if (g_wh.blow >= kWhEnd) g_wh.blow = -1.0f;
-			}
-		}
-		Gun::SetHornBlow(g_wh.left, g_wh.blow);
 		// the wyrms' violet glow (the void bow's membrane), renewed while they fly
 		for (int i = 0; i < 2; ++i) {
 			auto w = g_wyrms[i].get();
@@ -146,22 +92,15 @@
 			}
 		}
 		// gone (its 90 s up, or slain): the horn rests a minute
-		if (g_wh.aloft && !WyrmAlive(g_wyrms[0]) && !WyrmAlive(g_wyrms[1]) && g_wh.called && g_wh.blow < 0.0f) {
+		if (g_wh.aloft && !WyrmAlive(g_wyrms[0]) && !WyrmAlive(g_wyrms[1]) && g_wh.called) {
 			g_wh.aloft = false;
 			g_wh.cool = kWhRest;
 			Hud::QuestBanner("The Violet Wyrm departs", 2.0f);
 		}
 		if (g_wh.cool > 0.0f && (g_wh.cool -= a_delta) <= 0.0f) {
 			g_wh.cool = 0.0f;
-			Hud::QuestBanner("The Horn of the Violet Wyrm can be blown again", 2.0f);
+			Hud::QuestBanner("The Violet Wyrm can be called again", 2.0f);
 		}
-		// (a save with the horn: it becomes the spell - the horn taken from your pack, the Call learned)
-		if ((g_wh.check -= a_delta) <= 0.0f) {
-			g_wh.check = 3.0f;
-			if (auto* h = Horn(); h && p->GetItemCount(h) > 0 && !ItemMenusOpen()) {
-				p->RemoveItem(h, p->GetItemCount(h), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
-				if (auto* sp = WyrmSpell(); sp && !p->HasSpell(sp)) p->AddSpell(sp);
-				logger::info("horn: the horn made the Call of the Violet Wyrm (a spell)");
-			}
+	}
 		}
 	}

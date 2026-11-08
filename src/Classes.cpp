@@ -16,15 +16,14 @@ namespace bo3z::Classes
 		std::atomic<int>  g_sel{ 0 };
 		std::atomic<bool> g_switching{ false };
 		std::array<bool, 4>                                    g_kit{};
-		int                                                    g_staffLevel = 0;  // (Noah) the Conjurer's Staff's reforges at the altar, 0..3
 		std::array<std::vector<std::pair<int, int>>, 4>        g_stash;  // the spells a class you left carried (index, level)
 		// (Noah: "switching classes - my items should stay in the correct class, almost like an inventory swap, saveable") each
 		// class's gear waits in its own hidden chest (a persistent, disabled container) while another class is played
 		std::array<RE::FormID, 4>                              g_chest{};      // per class: its chest's reference (0 none yet)
-		std::array<std::array<Save::Slot, 3>, 4>               g_slotStash{};  // per class: its three weapon slots
+		struct OldSlot { int gun = -1, clip = 0, reserve = 0, level = 0; };  // (an older save's weapon slots: read and dropped)
+		std::array<std::array<OldSlot, 3>, 4>                  g_slotStash{};  // per class: its three weapon slots (none now)
 		std::array<std::vector<RE::FormID>, 4>                 g_wornStash;    // per class: what it had on / in hand
 		std::array<std::vector<std::uint8_t>, 4>               g_perkStash;    // per class: its altar blessings' stacks
-		std::unordered_map<RE::FormID, std::pair<std::uint8_t, std::uint16_t>> g_xbow;  // (the classes' growth) a crossbow's reforges and its kills toward the next
 		std::array<std::vector<RE::FormID>, 4>                 g_extra;        // (the audit) per class: the altar's other spells it was taught (shells, support, pacts, wonders)
 		std::uint8_t                                           g_guide = 0;    // (the guided first night) which of its cards have been shown (bits)
 		std::chrono::steady_clock::time_point                  g_closedAt{};
@@ -72,7 +71,6 @@ namespace bo3z::Classes
 			}
 			return -1;
 		}
-		RE::TESObjectWEAP* ElemCrossbow(int a_e);  // (the Ranger's elemental crossbows: below)
 	// (Noah: "the Dremora's voice lines kept repeating over and over just before the crash") every StartCombat is a new
 	// combat bark: a summon is sent at a foe at most once in 2 s, and at the same foe again only after 8 s
 	static bool SummonMayEngage(RE::Actor* a_s, RE::Actor* a_t)
@@ -87,8 +85,6 @@ namespace bo3z::Classes
 		l.t = a_t->GetFormID(), l.at = now;
 		return true;
 	}
-		RE::TESAmmo*       ElemBolts(int a_e);
-		int                BoltCap(int a_level);
 		void GiveItem(RE::PlayerCharacter* a_p, RE::TESForm* a_form, int a_count, bool a_equip)
 		{
 			auto* obj = a_form ? a_form->As<RE::TESBoundObject>() : nullptr;
@@ -133,12 +129,6 @@ namespace bo3z::Classes
 			}
 		}
 
-		int ConjurerStaff()
-		{
-			for (int i = 0; i < static_cast<int>(gen::kGuns.size()); ++i) if (gen::kGuns[i].id == "gravecaller") return i;
-			return -1;
-		}
-		bool g_staffChecked = false;
 		// (the Conjurer's Staff is gone: Corrosion took its work) Mysticism's Armoreater burst, drawn round a Corrosion bolt's hit
 		// (Noah: "the Corrosion impact is way too big and I don't want it to shake my screen - it should be the size of the
 		// area damage") its own bolts' bursts: Mysticism's (an area of 75 feet, a jolt on the camera) made quiet - no damage,
@@ -487,42 +477,9 @@ namespace bo3z::Classes
 		std::unordered_map<RE::FormID, std::chrono::steady_clock::time_point> g_lastBlade;  // a foe -> when your blade last struck it
 		std::unordered_map<RE::FormID, std::chrono::steady_clock::time_point> g_flaskMark;  // (the Alchemist) a foe -> when a flask's burst last caught it
 		bool FlaskMarked(RE::Actor* a) { auto it = g_flaskMark.find(a->GetFormID()); return it != g_flaskMark.end() && std::chrono::steady_clock::now() - it->second < std::chrono::milliseconds(1500); }
-		std::uint16_t g_boltKills = 0;
-		std::array<std::uint16_t, 16> g_bowMastery{};  // (Noah: "make the ranger class also need kills") each altar bow's kills toward its next tier  // (the Ranger's crossbow mastery) kills with a crossbow: fire bolts at 25, ice at 60, shock at 120
-		// (Noah) the Ranger's elemental crossbows (Ember, Rime, Storm) and their bolts: Faction Crossbows' Dawnguard bolts
-		// of that element. A crossbow's quiver holds 40 bolts, 20 more for each reforge
-		RE::TESObjectWEAP* ElemCrossbow(int a_e)
-		{
-			return a_e >= 0 && a_e < 3 ? RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kElemCrossbows[a_e], gen::kPlugin) : nullptr;
-		}
-		RE::TESAmmo* ElemBolts(int)
-		{
-			return nullptr;   // (Noah: "remove the crossbows with the bows" - Faction Crossbows' bolts are no longer part of the game)
-		}
-		int  BoltCap(int a_level) { return 40 + 20 * std::max(0, a_level); }
-		int  CrossbowLevelImpl(const RE::TESForm* a_w);
-		int TopUpBolts(int)
-		{
-			auto* p = RE::PlayerCharacter::GetSingleton();
-			if (!p) return 0;
-			int n = 0;
-			for (int e = 0; e < 3; ++e) {
-				auto* w = ElemCrossbow(e);
-				auto* b = ElemBolts(e);
-				if (!w || !b || p->GetItemCount(w) <= 0) continue;
-				const int cap = BoltCap(CrossbowLevelImpl(w));
-				if (const int have = p->GetItemCount(b); have < cap) {
-					p->AddObjectToContainer(b, nullptr, cap - have, nullptr);
-					++n;
-				}
-			}
-			return n;
-		}
-		float g_tomeCool = 0, g_bladeCool = 0, g_vortexCool = 0;
+		float g_tomeCool = 0, g_bladeCool = 0;
 		float g_tomeHold = 0;  // (the Six Fires: their spells held at the top tier until it runs out)
 		std::vector<std::pair<int, int>> g_tomeHeld;  // a spell and the level it had
-		struct VortexArrowState { RE::NiPoint3 last; bool done, hit; bool seen = false; };
-		std::unordered_map<RE::FormID, VortexArrowState> g_vortexArrows;  // the Subsuming Vortex's arrows in flight
 
 		int FreedCount()
 		{
@@ -534,21 +491,9 @@ namespace bo3z::Classes
 		RE::SpellItem* WyrmSpell() { auto* dh = RE::TESDataHandler::GetSingleton(); return dh ? dh->LookupForm<RE::SpellItem>(gen::kBoneHorn, gen::kPlugin) : nullptr; }  // (the Bone-Throne Horn)
 		RE::TESObjectWEAP* Magnus() { auto* f = Lookup(0x035369, "Skyrim.esm"); return f ? f->As<RE::TESObjectWEAP>() : nullptr; }  // (Destruction's wonder: Skyrim's own Staff of Magnus)
 		RE::SpellItem* TomeSpell() { auto* dh = RE::TESDataHandler::GetSingleton(); return dh ? dh->LookupForm<RE::SpellItem>(gen::kWonderTomeSpell, gen::kPlugin) : nullptr; }
-		RE::TESObjectWEAP* Vortex() { auto* dh = RE::TESDataHandler::GetSingleton(); return dh ? dh->LookupForm<RE::TESObjectWEAP>(gen::kVortexWeap, gen::kPlugin) : nullptr; }
-		RE::TESAmmo* VortexArrow() { auto* dh = RE::TESDataHandler::GetSingleton(); return dh ? dh->LookupForm<RE::TESAmmo>(gen::kVortexAmmo, gen::kPlugin) : nullptr; }
 		RE::TESObjectWEAP* Slayer() { auto* f = Lookup(gen::kSlayerWeap, gen::kPlugin); return f ? f->As<RE::TESObjectWEAP>() : nullptr; }  // (our own one-handed sword: the Ayleid Crystal Saber)
 		RE::SpellItem* Myst(std::uint32_t a_id) { auto* f = Lookup(a_id, "MysticismMagic.esp"); return f ? f->As<RE::SpellItem>() : nullptr; }
 
-		// (the Subsuming Vortex) a hole where an arrow came down - one a moment, however fast you loose
-		void OpenVortex(const RE::NiPoint3& a_at, bool a_onHit)
-		{
-			if (a_onHit) {
-				for (auto& [id, a] : g_vortexArrows) if (!a.done) { a.done = true, a.hit = true; break; }  // (the arrow that struck: no second hole where it falls)
-			}
-			if (g_vortexCool > 0) return;
-			g_vortexCool = 0.6f;
-			Gun::BlackHole(a_at, AfterSovngarde());
-		}
 		// the horn's dragon: a minute mid-game, after Sovngarde until it falls
 		void TuneWyrm() {}  // (the Bone-Throne Horn is our own spell: its cost and cast set in the plugin)
 		void CastFrom(RE::Actor* a_from, RE::SpellItem* a_sp, RE::Actor* a_at)
@@ -704,7 +649,6 @@ namespace bo3z::Classes
 	void SlayerKill();
 	void OnKill(bool a_bySummon, RE::Actor* a_dying, RE::Actor* a_killer)
 	{
-		Kit::OnKill(a_dying);  // (the altar rework: on-kill Infusions, the Legendary Riftblade's thralls)
 		// (the class guide: the Summoner alone lent the party nothing) a Summoner in your party: each of your kills heals you 2%
 		if (g_class.load() != coffer::kSummoner && Kit::PartyHas(coffer::kSummoner)) {
 			if (auto* p = RE::PlayerCharacter::GetSingleton(); p && !p->IsDead()) {
@@ -717,30 +661,15 @@ namespace bo3z::Classes
 		if (a_dying && !a_bySummon) if (auto it = g_lastHit.find(a_dying->GetFormID()); it != g_lastHit.end() && Slayer() && it->second == Slayer()->GetFormID()) SlayerKill();
 		// the wonder trial: what made the kill
 		if (const int c = g_class.load(); c >= 0) {
-			int& how = killHow;  // 0 summon, 1 destruction spell, 2 bow or crossbow, 3 melee
+			int& how = killHow;  // 0 summon, 1 destruction spell, 2 a flask (the Alchemist), 3 melee
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			RE::TESForm* src = nullptr;
 			if (a_dying) {
 				if (auto it = g_lastHit.find(a_dying->GetFormID()); it != g_lastHit.end()) src = RE::TESForm::LookupByID(it->second);
 			}
-			// (the Ranger review: an altar bow's tier II/III strikes are Mysticism spells - its kills read as a Battle-mage's) the
-			// bow in your hands made them
-			const bool bowSpell = Bows::Held() >= 0 && src && src->As<RE::MagicItem>() && Arcana::IndexOf(src) < 0;
 			if (a_bySummon) how = 0;
-			else if (auto* mi = src && !bowSpell ? src->As<RE::MagicItem>() : nullptr) how = (mi->GetAssociatedSkill() == RE::ActorValue::kDestruction || (Arcana::IndexOf(src) >= 0 && Arcana::ClassOf(Arcana::IndexOf(src)) == coffer::kDestruction)) ? 1 : -1;
-			else if (auto* w = src && !bowSpell ? src->As<RE::TESObjectWEAP>() : nullptr) {
-				how = IsRangerWeapon(w) ? 2 : 3;  // (OffhandBows' one-hand crossbows are staves to Skyrim)
-				if (how == 2 && !w->IsBow() && Bows::IndexOf(w) < 0 && (FreedCount() >= 3 || Gun::TestKitOn())) {
-					auto& x = g_xbow[w->GetFormID()];
-					x.second = static_cast<std::uint16_t>(std::min(60000, x.second + 1));
-				}
-				if (const int b = Bows::IndexOf(w); b >= 0 && b < static_cast<int>(g_bowMastery.size()) && (FreedCount() >= 3 || Gun::TestKitOn())) g_bowMastery[b] = static_cast<std::uint16_t>(std::min(60000, g_bowMastery[b] + 1));
-				if (w->IsCrossbow() && c == coffer::kAlchemist && g_boltKills < 60000) ++g_boltKills;  // (the elemental crossbows bring their own bolts now)
-			}
-			else if (const int b = Bows::Held(); b >= 0) {  // (the altar's bows strike with our own shots)
-				how = 2;
-				if (b < static_cast<int>(g_bowMastery.size()) && (FreedCount() >= 3 || Gun::TestKitOn())) g_bowMastery[b] = static_cast<std::uint16_t>(std::min(60000, g_bowMastery[b] + 1));
-			}
+			else if (auto* mi = src ? src->As<RE::MagicItem>() : nullptr) how = (mi->GetAssociatedSkill() == RE::ActorValue::kDestruction || (Arcana::IndexOf(src) >= 0 && Arcana::ClassOf(Arcana::IndexOf(src)) == coffer::kDestruction)) ? 1 : -1;
+			else if (auto* w = src ? src->As<RE::TESObjectWEAP>() : nullptr) how = IsRangerWeapon(w) ? -1 : 3;  // (a bow or crossbow of Skyrim's: no class's kill)
 			else if (p) {
 				for (int h : Arcana::Hands()) if (h >= 0 && Arcana::ClassOf(h) == coffer::kDestruction) how = 1;
 			}
@@ -798,9 +727,6 @@ namespace bo3z::Classes
 		}
 		if (a_dying) g_powerHit.erase(a_dying->GetFormID());
 	}
-	int BowMastery(int a_bow) { return a_bow >= 0 && a_bow < static_cast<int>(g_bowMastery.size()) ? g_bowMastery[a_bow] : 0; }
-	int BowMasteryNeed(int a_bow) { const int lv = Bows::Level(a_bow); return lv <= 0 ? 25 : lv == 1 ? 60 : 120; }
-	void SpendBowMastery(int a_bow) { if (a_bow >= 0 && a_bow < static_cast<int>(g_bowMastery.size())) g_bowMastery[a_bow] = 0; }
 	int Mastery(int a_index) { return a_index >= 0 && a_index < static_cast<int>(coffer::kSpells.size()) ? g_mastery[coffer::kSpells[a_index].ladder] : 0; }
 	// kills a ladder needs before its next rung can be raised: 25 to rung 2, 60 to rung 3, 120 to the Legendary
 	// (the consistency pass: a short ladder's Legendary came after 25 kills and 5,000) the Legendary rung always asks the most
@@ -854,67 +780,6 @@ namespace bo3z::Classes
 		}
 		return -1;
 	}
-	// ---- (the classes' growth) a crossbow reforged at the altar: three times, a quarter more each, on its own kills
-	int CrossbowLevel(const RE::TESForm* a_w) { if (!a_w) return 0; auto it = g_xbow.find(a_w->GetFormID()); return it == g_xbow.end() ? 0 : it->second.first; }
-	namespace { int CrossbowLevelImpl(const RE::TESForm* a_w) { return CrossbowLevel(a_w); } }
-	int CrossbowElement(const RE::TESForm* a_w)
-	{
-		if (!a_w) return -1;
-		for (int e = 0; e < 3; ++e) if (a_w == ElemCrossbow(e)) return e;
-		return -1;
-	}
-	RE::TESAmmo* CrossbowBolts(int a_e) { return ElemBolts(a_e); }
-	int          CrossbowQuiver(int a_level) { return BoltCap(a_level); }
-	// (Noah: "one crossbow and one bow at a time - the Storm Crossbow should have replaced my fire one and its bolts")
-	// every elemental crossbow but this one goes back, with its bolts
-	void KeepOnlyCrossbow(int a_keep)
-	{
-		auto* p = RE::PlayerCharacter::GetSingleton();
-		auto* em = RE::ActorEquipManager::GetSingleton();
-		if (!p) return;
-		for (int e = 0; e < 3; ++e) {
-			if (e == a_keep) continue;
-			auto* w = ElemCrossbow(e);
-			auto* b = ElemBolts(e);
-			if (w && p->GetItemCount(w) > 0) {
-				for (bool left : { false, true }) if (em && p->GetEquippedObject(left) == w) em->UnequipObject(p, w, nullptr, 1, nullptr, false, false, false, true);
-				p->RemoveItem(w, p->GetItemCount(w), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
-				logger::info("classes: {} given back - one crossbow at a time", w->GetName());
-			}
-			if (b && p->GetItemCount(b) > 0) {
-				if (em && p->GetCurrentAmmo() == b) em->UnequipObject(p, b, nullptr, 1, nullptr, false, false, false, true);
-				p->RemoveItem(b, p->GetItemCount(b), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
-			}
-		}
-	}
-	RE::TESObjectWEAP* HeldCrossbow()
-	{
-		auto* p = RE::PlayerCharacter::GetSingleton();
-		for (bool left : { false, true }) {
-			auto* o = p ? p->GetEquippedObject(left) : nullptr;
-			if (auto* w = o ? o->As<RE::TESObjectWEAP>() : nullptr; w && IsRangerWeapon(w) && !w->IsBow() && Bows::IndexOf(w) < 0) return w;
-		}
-		return nullptr;
-	}
-	int ReforgeCrossbow(int a_freed, bool& a_spent)
-	{
-		a_spent = false;
-		auto* w = HeldCrossbow();
-		if (!w) return -1;  // (none in hand)
-		auto& x = g_xbow[w->GetFormID()];
-		const std::string name = w->GetName() ? w->GetName() : "Crossbow";
-		if (x.first >= gen::kForgeMax) { Hud::Banner(name + " cannot hold more power", 2.5f); return 0; }
-		const int need = x.first == 0 ? 25 : x.first == 1 ? 60 : 120;
-		if (x.first + 1 >= 3 && a_freed < 6 && !Gun::TestKitOn()) { Hud::Banner(name + "'s last reforge waits until six Echo Altars are freed (" + std::to_string(a_freed) + " of 6)", 3.0f); return 0; }
-		if (x.second < need) { Hud::Banner(name + ": " + std::to_string(x.second) + " / " + std::to_string(need) + " kills with it before it can be reforged", 3.0f); return 0; }
-		if (!Points::Spend(gen::kForgeCost[x.first])) return 0;
-		x.second = 0, ++x.first;
-		a_spent = true;
-		TopUpBolts(0);
-		Hud::Banner(name + " reforged  " + std::string(x.first, '|') + (CrossbowElement(w) >= 0 ? fmt::format("  - harder bolts, a bigger blast, a quiver of {}", BoltCap(x.first)) : std::string("  - its bolts strike harder")), 4.0f);
-		logger::info("forge: crossbow {} -> level {}", name, x.first);
-		return 1;
-	}
 	int MasteryNeed(int a_index)
 	{
 		const int next = Arcana::NextRung(a_index);
@@ -927,10 +792,7 @@ namespace bo3z::Classes
 		if (a_index >= 0 && a_index < static_cast<int>(coffer::kSpells.size())) g_mastery[coffer::kSpells[a_index].ladder] = 0;
 	}
 
-	// (the Summoner's command) how many summons you may hold: 1, then 2 / 3 / 4 as its ladders climb (each rung raised
-	// past the first counts): our hidden perks set Skyrim's commanded-actor limit
 	namespace { std::mutex g_lineLock; std::string g_line; std::vector<std::string> g_progress; int g_progressCls = -1; }
-	std::string BoltLine();
 	std::string WonderLineNow();
 	// (Noah: "a guide book for each class that tracks progression") the class guide's live page: built here once a second
 	// (the game's own thread), read by the Codex when the book is open
@@ -981,19 +843,6 @@ namespace bo3z::Classes
 			out.push_back("Hold a different element in each hand: the Trial of the Elements wants kills with two elements or more.");
 			break;
 		case coffer::kAlchemist:
-			{
-				const int b = Bows::Carried();
-				if (b < 0) {
-					out.push_back("You carry no elemental bow - call one at an Echo Altar.");
-				} else if (Bows::Level(b) >= 3) {
-					out.push_back(fmt::format("<b>Your bow: {}</b>, tier 3 of 3 - {}: <b>fully reforged</b>. Quiver: 200 arrows, growing back one every 2 s.", Bows::Name(b), Bows::TierName(b, 3)));
-				} else {
-					const int have = std::min(BowMastery(b), BowMasteryNeed(b)), need = BowMasteryNeed(b);
-					out.push_back(fmt::format("<b>Your bow: {}</b>, tier {} of 3 - {}. Kills toward tier {} ({}): {} / {}{}", Bows::Name(b), Bows::Level(b), Bows::TierName(b, Bows::Level(b)),
-						Bows::Level(b) + 1, Bows::TierName(b, Bows::Level(b) + 1), have, need, have >= need ? " - ready: reforge it at an altar" : freed < 3 ? " (kills count once the forge opens)" : ""));
-				}
-				out.push_back(BoltLine() + ".");
-			}
 			break;
 		case coffer::kSpellsword:
 			{
@@ -1110,39 +959,6 @@ namespace bo3z::Classes
 		}
 		auto* uiN = RE::UI::GetSingleton();
 		const bool menus = !uiN || uiN->GameIsPaused() || uiN->IsMenuOpen(RE::InventoryMenu::MENU_NAME) || uiN->IsMenuOpen(RE::FavoritesMenu::MENU_NAME) || uiN->IsMenuOpen(RE::ContainerMenu::MENU_NAME) || uiN->IsMenuOpen(RE::BarterMenu::MENU_NAME);
-		// (Noah: "remove the crossbows from the ranger class entirely") the elemental crossbows and their bolts are taken
-		// away from any character that still carries them
-		if (!menus && p->Is3DLoaded()) {
-			for (int e = 0; e < 3; ++e) {
-				for (RE::TESBoundObject* o : { static_cast<RE::TESBoundObject*>(ElemCrossbow(e)), static_cast<RE::TESBoundObject*>(ElemBolts(e)) }) {
-					if (!o || p->GetItemCount(o) <= 0) continue;
-					if (auto* em = RE::ActorEquipManager::GetSingleton()) em->UnequipObject(p, o, nullptr, 1, nullptr, false, false, false, true);
-					p->RemoveItem(o, p->GetItemCount(o), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
-					logger::info("classes: {} taken away (the Ranger's crossbows are retired)", o->GetName());
-				}
-			}
-		}
-		// (one crossbow at a time) more than one carried from before: the one in hand stays, else the last of them
-		if (!menus) {
-			int owned = 0, keep = -1;
-			for (int e = 0; e < 3; ++e) if (auto* w = ElemCrossbow(e); w && p->GetItemCount(w) > 0) ++owned, keep = e;
-			if (owned > 1) {
-				if (const int h = CrossbowElement(HeldCrossbow()); h >= 0) keep = h;
-				KeepOnlyCrossbow(keep);
-			}
-		}
-		// (Noah) an elemental crossbow in hand nocks its own element's bolts
-		// (Noah: the game crashed switching bolts in the inventory) never while a menu is open, and never over bolts you
-		// chose yourself: only when what is nocked isn't a bolt at all
-		if (auto* w = HeldCrossbow(); w && p->Is3DLoaded() && !menus) {
-			if (const int e = CrossbowElement(w); e >= 0) {
-				auto* want = ElemBolts(e);
-				auto* cur = p->GetCurrentAmmo();
-				if (want && p->GetItemCount(want) > 0 && (!cur || !cur->IsBolt())) {
-					if (auto* em = RE::ActorEquipManager::GetSingleton()) em->EquipObject(p, want, nullptr, 1, nullptr, false, false, false, true);
-				}
-			}
-		}
 		// (Noah: "all the weapons with enchantments shouldn't need a soul gem to recharge") what you hold never runs dry
 		{
 			auto* av = p->AsActorValueOwner();
@@ -1280,30 +1096,6 @@ namespace bo3z::Classes
 				} else if (!fighting && hs.round >= 1 && (g_guide & 4) && !(g_guide & 16)) {
 					card(4, "DAWN", "The dead crumble at first light. Spend your Cursed Essence, then rest until dusk - every night is harder than the last.");
 				}
-			}
-		}
-		// (Noah: the staff is gone) a Summoner from before learns Corrosion in its place (the staff itself is the Echo's Void
-		// Staff, the same weapon - it is never taken: the audit found that took the wonder from whoever held it)
-		if (!g_staffChecked && p->Is3DLoaded()) {
-			g_staffChecked = true;
-			if (g_class.load() == coffer::kSummoner && g_kit[coffer::kSummoner]) {
-				bool knows = false;
-				for (int i = 0; i < static_cast<int>(coffer::kSpells.size()); ++i) {
-					if (coffer::kSpells[i].cls == coffer::kSummoner && std::string_view(coffer::kSpells[i].ladderLabel) == "Reanimate" && Arcana::Spell(i) && p->HasSpell(Arcana::Spell(i))) knows = true;
-				}
-				if (!knows) GiveSpell(Rung1(coffer::kSummoner, "Reanimate"), false);
-				// (Noah: Reanimate in Corrosion's place) Mysticism's old Corrosion bolts are taken back
-				auto* dh0 = RE::TESDataHandler::GetSingleton();
-				for (std::uint32_t id : { 0x29C8ABu, 0x2A19B9u, 0x9E9213u }) {
-					if (auto* old = dh0 ? dh0->LookupForm<RE::SpellItem>(id, "MysticismMagic.esp") : nullptr; old && p->HasSpell(old)) p->RemoveSpell(old);
-				}
-				// (Noah: the Summoner's enchanted dagger) a Summoner from before is given the Riftblade
-				if (auto* rift = dh0 ? dh0->LookupForm<RE::TESBoundObject>(gen::kRiftblade, gen::kPlugin) : nullptr; rift && p->GetItemCount(rift) <= 0) GiveItem(p, rift, 1, false);
-			} else if (g_kit[coffer::kSummoner]) {
-				// (the audit) a Summoner waiting in its stash gets Corrosion there, for when you come back to it
-				auto& st = g_stash[coffer::kSummoner];
-				const bool has = std::any_of(st.begin(), st.end(), [](const auto& e) { return e.first >= 0 && e.first < static_cast<int>(coffer::kSpells.size()) && std::string_view(coffer::kSpells[e.first].ladderLabel) == "Reanimate"; });
-				if (!has && Rung1(coffer::kSummoner, "Reanimate") >= 0) st.insert(st.begin(), { Rung1(coffer::kSummoner, "Reanimate"), 0 });
 			}
 		}
 		// (Noah: no movement-blocking hits) the night's dead never stagger you: the Steady perk (Mod Incoming Stagger x0)
@@ -1459,11 +1251,6 @@ namespace bo3z::Classes
 			// (one of each name: the blades that lost their " of ..." share theirs)
 			std::unordered_set<std::string> names;
 			std::erase_if(pool, [&](RE::TESBoundObject* f) { return !names.insert(f->GetName() ? f->GetName() : "").second; });
-		} else if (a_cls == coffer::kAlchemist) {
-			// (Noah: the crossbows retired) the altar no longer hands out the elemental crossbows
-			// (Noah: "the wristbow broke my crossbow, doesn't work properly, and does 45 frost") OffhandBows' one-hand
-			// crossbows are staves to Skyrim: one in the off hand can't be held with the Ranger's two-handed bows and
-			// crossbows, and it fires on enchantment charge - the altar no longer gives them
 		}
 		// (Noah: "a spell I can't even use - it costs too much mana") the Mysticism shells (Flame Shield and the rest) no longer come from this row
 		if (pool.empty()) {
@@ -1478,23 +1265,13 @@ namespace bo3z::Classes
 				auto* pw = pick->As<RE::TESObjectWEAP>();
 				const bool legend = GearTier(pick) >= 6;
 				const bool two = pw && (pw->IsTwoHandedSword() || pw->IsTwoHandedAxe());
-				FillReel(a_out, pool, pick, a_cls == coffer::kAlchemist ? "Crossbow" : legend ? (two ? "Legendary Greatweapon" : "Legendary Spell-weapon") : two ? "Unique Greatweapon" : pw ? "Spell-weapon" : "Spellshield", legend);
+				FillReel(a_out, pool, pick, legend ? (two ? "Legendary Greatweapon" : "Legendary Spell-weapon") : two ? "Unique Greatweapon" : pw ? "Spell-weapon" : "Spellshield", legend);
 			}
 			a_out->give = [pick, a_cls] {
 				auto* pl = RE::PlayerCharacter::GetSingleton();
 				if (!pl) return;
 				const auto had = pl->GetItemCount(pick);
-				const int  xe = CrossbowElement(pick);
-				if (xe >= 0) KeepOnlyCrossbow(xe);  // (the old crossbow and its bolts go back)
 				pl->AddObjectToContainer(pick, nullptr, 1, nullptr);
-				if (xe >= 0) {
-					TopUpBolts(0);
-					if (auto* em = RE::ActorEquipManager::GetSingleton()) {
-						em->EquipObject(pl, pick, nullptr, 1, nullptr, false, false, false, true);
-						if (auto* b = ElemBolts(xe); b && pl->GetItemCount(b) > 0) em->EquipObject(pl, b, nullptr, 1, nullptr, false, false, false, true);
-					}
-				}
-				if (auto* w = pick->As<RE::TESObjectWEAP>(); IsRangerWeapon(w) && !w->IsBow()) Bows::Restock();
 				// (Noah: "I collected two of the item") keep it to the one given - anything that doubled the add is taken back
 				Tasks::Later(1.5f, [pick, had] {
 					if (ItemMenusOpen()) return;  // (the audit: never with an item menu open - the extra stays)
@@ -1510,7 +1287,6 @@ namespace bo3z::Classes
 			return true;
 		}
 		p->AddObjectToContainer(pick, nullptr, 1, nullptr);
-		if (auto* w = pick->As<RE::TESObjectWEAP>(); IsRangerWeapon(w) && !w->IsBow()) Bows::Restock();  // (a crossbow comes with its bolts)
 		Hud::Banner(std::string(pick->GetName()) + "  -  in your pack", 4.0f);
 		logger::info("classes: altar gear {} ({})", pick->GetName(), Name(a_cls));
 		return true;
@@ -1631,23 +1407,6 @@ namespace bo3z::Classes
 		return true;
 	}
 
-	std::string BoltLine()
-	{
-		if (g_class.load() != coffer::kAlchemist) return {};
-		std::string out;
-		static constexpr const char* kName[3] = { "Ember", "Rime", "Storm" };
-		auto* p = RE::PlayerCharacter::GetSingleton();
-		for (int e = 0; e < 3; ++e) {
-			auto* w = ElemCrossbow(e);
-			if (!w || !p || p->GetItemCount(w) <= 0) continue;
-			auto it = g_xbow.find(w->GetFormID());
-			const int lv = it == g_xbow.end() ? 0 : it->second.first, kills = it == g_xbow.end() ? 0 : it->second.second;
-			const int need = lv == 0 ? 25 : lv == 1 ? 60 : 120;
-			out += (out.empty() ? "" : "; ") + fmt::format("{} Crossbow {} (quiver {}{})", kName[e], lv == 0 ? std::string("unforged") : "reforged " + std::string(lv, '|'), BoltCap(lv),
-				lv >= 3 ? std::string(", fully reforged") : fmt::format(", {} of {} kills to the next", kills, need));
-		}
-		return out.empty() ? std::string("Crossbows: the Ember, Rime and Storm Crossbows wait at the Echo Altar") : out;
-	}
 
 	// (Noah's plan, the Spellsword) Imbue moves the held spell-weapon up a material - Steel, Orcish, Dwarven, Elven, Glass,
 	// Ebony, Daedric - keeping its kind and, where that material has it, its element
@@ -2384,30 +2143,6 @@ namespace bo3z::Classes
 		if (p->GetItemCount(uw) <= 0) p->AddObjectToContainer(uw, nullptr, 1, nullptr);
 		em->EquipObject(p, uw, nullptr, 1, nullptr, false, false, false, true);
 	}
-	void ConjurerStaffHit(RE::Actor* a_target, RE::FormID a_source)
-	{
-		// (Noah: the staff's work is Corrosion's now) one of Corrosion's bolts struck: its rung sets the burst
-		int level = -1;
-		for (int k = 0; k < static_cast<int>(coffer::kSpells.size()); ++k) {
-			if (std::string_view(coffer::kSpells[k].ladderLabel) != "Reanimate" || coffer::kSpells[k].cls != coffer::kSummoner) continue;
-			if (auto* sp = Arcana::Spell(k); sp && sp->GetFormID() == a_source) level = coffer::kSpells[k].rung - 1;
-		}
-		if (level < 0 || !a_target) return;
-		static std::chrono::steady_clock::time_point last{};
-		const auto now = std::chrono::steady_clock::now();
-		if (now - last < std::chrono::milliseconds(200)) return;  // (one bolt, one burst)
-		last = now;
-		// (Noah: "Reanimate - a dark bolt; any undead it kills rises for 20 s as your thrall") the bolt strikes what it hit
-		// (two fifths of one of the dead's health at first, on the one upgrade curve each rung), marks it for your summons,
-		// and if that blow kills one of the night's dead it rises again on your side (TickThralls)
-		const int   tier = level >= 2 ? 3 : level;
-		const float share = 0.4f * UpgradeMult(tier);
-		const auto  at = a_target->GetPosition();
-		const bool  undead = Director::IsRoundUndead(a_target) && !Director::IsBoss(a_target);
-		Gun::AreaHurt(at, 70.0f, share, "");
-		if (Director::IsFoe(a_target) && !a_target->IsDead()) g_summonMarks = { a_target->GetHandle() };
-		if (undead) g_pendingThrall.push_back({ a_target->GetHandle(), 0.6f, level });
-	}
 	// (Noah: "an enchanted dagger with a special ability" - Rift Stab) every fifth strike of the Riftblade on one of the night's
 	// foes tears a small rift there: a Flame Atronach steps out and fights for you for 10 s (two at most)
 	void RiftHit(RE::Actor* a_target)
@@ -2461,11 +2196,6 @@ namespace bo3z::Classes
 	{
 		static auto* w = RE::TESDataHandler::GetSingleton()->LookupForm(gen::kRiftblade, gen::kPlugin);
 		return w && w->GetFormID() == a_source;
-	}
-	void MarkForSummons(RE::Actor* a_target)
-	{
-		if (!a_target || a_target->IsDead()) return;
-		g_summonMarks = { a_target->GetHandle() };
 	}
 	bool IsOwnSummon(RE::Actor* a_actor)
 	{
@@ -2611,7 +2341,6 @@ namespace bo3z::Classes
 		return true;
 	}
 	bool ThrowFlask(RE::FormID a_spell);  // (below: the Alchemist's flasks)
-	void SummonBoneDragon();
 	void TickAlchemy(float a_delta);
 	bool OnCast(RE::FormID a_spell)
 	{
@@ -2662,23 +2391,11 @@ namespace bo3z::Classes
 		return true;
 	}
 
-	int RestockWonder()
-	{
-		auto* p = RE::PlayerCharacter::GetSingleton();
-		auto* bow = Vortex();
-		auto* ar = VortexArrow();
-		int n = TopUpBolts(20);  // (crossbow mastery's elemental bolts)
-		if (!p || !bow || !ar || p->GetItemCount(bow) <= 0) return n;
-		const int have = p->GetItemCount(ar);
-		if (have >= 60) return n;
-		p->AddObjectToContainer(ar, nullptr, 999 - have, nullptr);  // (Noah: no "arrows received" every few shots - a deep quiver, filled seldom)
-		return n + 1;
-	}
 
-	// every frame: cooldowns, and where the Subsuming Vortex's arrows come down
+	// every frame: the spells' costs, the summons, the flasks, the Staff of Magnus, cooldowns
 	void TickFast(float a_delta)
 	{
-		// every other spell you know (relics, heroes and armies, tomes, other mods' spells): its cost on the same curve,
+		// every other spell you know (heroes and armies, tomes, other mods' spells): its cost on the same curve,
 		// worked from its own first cost (kept, so it is never drawn in twice)
 		if (static float costT = 0; (costT -= a_delta) <= 0) {
 			costT = 2.0f;
@@ -2690,10 +2407,8 @@ namespace bo3z::Classes
 					if (sp == WyrmSpell() || sp == TomeSpell()) continue;  // (the wonders: 100, as Noah set them)
 					auto [it, fresh] = base.try_emplace(sp, 0.0f);
 					if (fresh) it->second = sp->CalculateMagickaCost(nullptr);
-					// a relic's (a hero's pact, a support spell, a Vigilant's) by its own tier on the one cost; the rest drawn in
-					const int rt = Kit::TierOfSpell(sp);
-					if (rt < 0 && it->second <= 50.0f) continue;
-					const int want = rt >= 0 ? TierSpellCost(rt) : CapSpellCost(it->second);
+					if (it->second <= 50.0f) continue;
+					const int want = CapSpellCost(it->second);
 					if (!sp->data.flags.all(RE::SpellItem::SpellFlag::kCostOverride) || sp->data.costOverride != want) {
 						sp->data.costOverride = want;
 						sp->data.flags.set(RE::SpellItem::SpellFlag::kCostOverride);
@@ -2711,43 +2426,6 @@ namespace bo3z::Classes
 			g_tomeHeld.clear();
 		}
 		g_bladeCool = std::max(0.0f, g_bladeCool - a_delta);
-		g_vortexCool = std::max(0.0f, g_vortexCool - a_delta);
-		auto* bow = Vortex();
-		auto* p = RE::PlayerCharacter::GetSingleton();
-		auto* mgr = RE::Projectile::Manager::GetSingleton();
-		if (!bow || !p || !mgr || p->GetItemCount(bow) <= 0) {
-			g_vortexArrows.clear();
-			return;
-		}
-		// each arrow of ours in flight: where it is; one that stops, or is gone, came down there - a hole opens
-		std::unordered_map<RE::FormID, std::pair<RE::NiPoint3, float>> now;
-		{
-			RE::BSSpinLockGuard lock(mgr->projectileLock);
-			for (auto* list : { &mgr->limited, &mgr->unlimited }) {
-				for (auto& h : *list) {
-					auto pr = h.get();
-					if (!pr || pr->IsDeleted()) continue;
-					auto& rd = pr->GetProjectileRuntimeData();
-					if (rd.weaponSource == bow && rd.shooter.get().get() == p) now[pr->GetFormID()] = { pr->GetPosition(), rd.linearVelocity.Length() };
-				}
-			}
-		}
-		for (auto& [id, a] : g_vortexArrows) {
-			auto it = now.find(id);
-			const bool gone = it == now.end();
-			// (Noah: "even if I'm shooting it at the floor, I should still see the magical ability of it go off") an arrow
-			// stuck in the ground keeps its flight speed on paper: one that has stopped moving has landed
-			const bool still = !gone && a.seen && (it->second.first - a.last).Length() < 3.0f && !RE::UI::GetSingleton()->GameIsPaused();
-			if (!a.done && (gone || it->second.second < 60.0f || still)) {
-				a.done = true;
-				if (!a.hit) OpenVortex(gone ? a.last : it->second.first, false);
-			}
-			if (!gone) a.last = it->second.first, a.seen = true;
-		}
-		std::erase_if(g_vortexArrows, [&](const auto& e) { return !now.contains(e.first); });
-		for (auto& [id, pv] : now) {
-			if (!g_vortexArrows.contains(id)) g_vortexArrows[id] = { pv.first, false, false };
-		}
 	}
 
 	bool OnButton(const RE::ButtonEvent* a_b)
@@ -2808,13 +2486,7 @@ namespace bo3z::Classes
 			v.push_back(static_cast<std::uint8_t>(g_wKills[c] & 0xFF)), v.push_back(static_cast<std::uint8_t>(g_wKills[c] >> 8));
 			for (int b = 0; b < 4; ++b) v.push_back(static_cast<std::uint8_t>(g_wTowns[c] >> (8 * b)));
 		}
-		v.push_back(0xA2);  // crossbow mastery: [kills u16]
-		v.push_back(static_cast<std::uint8_t>(g_boltKills & 0xFF)), v.push_back(static_cast<std::uint8_t>(g_boltKills >> 8));
-		v.push_back(0xA3);  // the altar bows' kills: [n] then n x u16
-		v.push_back(static_cast<std::uint8_t>(g_bowMastery.size()));
-		for (auto m : g_bowMastery) v.push_back(static_cast<std::uint8_t>(m & 0xFF)), v.push_back(static_cast<std::uint8_t>(m >> 8));
-		v.push_back(0xA4);  // the Conjurer's Staff's reforges
-		v.push_back(static_cast<std::uint8_t>(g_staffLevel));
+		// (0xA2-0xA4, 0xA9: the old crossbows', bows' and Conjurer's Staff's records - no longer written; an older save's are read past)
 		v.push_back(0xA5);  // each class's chest, slots and worn pieces: per class [chest u32][3 x (gun i16, clip i16, reserve i16, level u8)][n u8][n x u32]
 		auto u32 = [&](std::uint32_t x) { for (int b = 0; b < 4; ++b) v.push_back(static_cast<std::uint8_t>(x >> (8 * b))); };
 		auto i16 = [&](int x) { const auto u = static_cast<std::uint16_t>(static_cast<std::int16_t>(std::clamp(x, -32768, 32767))); v.push_back(static_cast<std::uint8_t>(u & 0xFF)), v.push_back(static_cast<std::uint8_t>(u >> 8)); };
@@ -2832,16 +2504,6 @@ namespace bo3z::Classes
 			const auto n = std::min<std::size_t>(g_perkStash[c].size(), 255);
 			v.push_back(static_cast<std::uint8_t>(n));
 			for (std::size_t i = 0; i < n; ++i) v.push_back(g_perkStash[c][i]);
-		}
-		v.push_back(0xA9);  // the crossbows' reforges: [n u8][n x (u32 form, u8 level, u16 kills)]
-		{
-			const auto n = std::min<std::size_t>(g_xbow.size(), 255);
-			v.push_back(static_cast<std::uint8_t>(n));
-			std::size_t k = 0;
-			for (auto& [id, x] : g_xbow) {
-				if (k++ >= n) break;
-				u32(id), v.push_back(x.first), v.push_back(static_cast<std::uint8_t>(x.second & 0xFF)), v.push_back(static_cast<std::uint8_t>(x.second >> 8));
-			}
 		}
 		v.push_back(0xA8);  // each class's other altar spells: per class [n u8][n x u32]
 		for (int c = 0; c < 4; ++c) {
@@ -2867,12 +2529,12 @@ namespace bo3z::Classes
 	}
 	void SetState(const std::vector<std::uint8_t>& a_v)
 	{
-		g_class = -1, g_kit.fill(false), g_staffLevel = 0;
-		g_wStep.fill(0), g_wKills.fill(0), g_wTowns.fill(0), g_lastHit.clear(), g_boltKills = 0;
+		g_class = -1, g_kit.fill(false);
+		g_wStep.fill(0), g_wKills.fill(0), g_wTowns.fill(0), g_lastHit.clear();
 		for (auto& s : g_stash) s.clear();
 		// (the audit: a new game kept the last game's chests, stashes and guide - its first class switch moved your gear
 		// into an unrelated reference) all of it cleared before anything is read
-		g_chest.fill(0), g_slotStash = {}, g_guide = 0, g_bowMastery.fill(0);
+		g_chest.fill(0), g_slotStash = {}, g_guide = 0;
 		for (auto& w : g_wornStash) w.clear();
 		for (auto& ps : g_perkStash) ps.clear();
 		for (auto& e : g_extra) e.clear();
@@ -2880,7 +2542,6 @@ namespace bo3z::Classes
 		for (auto& e : g_held) e.clear();
 		g_mergeDone = false;
 		g_lanternGiven = false;
-		g_xbow.clear();
 		if (a_v.empty()) return;
 		g_class = static_cast<int>(a_v[0]) - 1;
 		if (g_class < -1 || g_class > 3) g_class = -1;  // (the audit: a corrupt co-save indexed the four-class arrays)
@@ -2910,20 +2571,10 @@ namespace bo3z::Classes
 				g_wTowns[c] = a_v[k + 3] | (a_v[k + 4] << 8) | (a_v[k + 5] << 16) | (static_cast<std::uint32_t>(a_v[k + 6]) << 24);
 			}
 		}
-		if (k < a_v.size() && a_v[k] == 0xA2 && k + 3 <= a_v.size()) {
-			g_boltKills = static_cast<std::uint16_t>(a_v[k + 1] | (a_v[k + 2] << 8));
-			k += 3;
-		}
-		g_bowMastery.fill(0);
-		if (k + 1 < a_v.size() && a_v[k] == 0xA3) {
-			const int n = a_v[k + 1];
-			k += 2;
-			for (int b = 0; b < n && k + 2 <= a_v.size(); ++b, k += 2) {
-				if (b < static_cast<int>(g_bowMastery.size())) g_bowMastery[b] = static_cast<std::uint16_t>(a_v[k] | (a_v[k + 1] << 8));
-			}
-		}
-		g_staffLevel = 0;
-		if (k + 1 < a_v.size() && a_v[k] == 0xA4) g_staffLevel = std::min<int>(a_v[k + 1], gen::kForgeMax), k += 2;
+		// (the old crossbows', bows' and Conjurer's Staff's records in an older save: read past)
+		if (k < a_v.size() && a_v[k] == 0xA2 && k + 3 <= a_v.size()) k += 3;
+		if (k + 1 < a_v.size() && a_v[k] == 0xA3) k += 2 + 2 * static_cast<std::size_t>(a_v[k + 1]);
+		if (k + 1 < a_v.size() && a_v[k] == 0xA4) k += 2;
 		g_chest.fill(0);
 		for (auto& c : g_slotStash) c.fill({});
 		for (auto& w : g_wornStash) w.clear();
@@ -2964,8 +2615,7 @@ namespace bo3z::Classes
 			++k;
 			const int n = k < a_v.size() ? a_v[k++] : 0;
 			for (int i = 0; i < n && k + 7 <= a_v.size(); ++i, k += 7) {
-				const RE::FormID id = a_v[k] | (a_v[k + 1] << 8) | (a_v[k + 2] << 16) | (static_cast<std::uint32_t>(a_v[k + 3]) << 24);
-				g_xbow[id] = { a_v[k + 4], static_cast<std::uint16_t>(a_v[k + 5] | (a_v[k + 6] << 8)) };
+				// (an older save's crossbow reforges: read past)
 			}
 		}
 		if (k < a_v.size() && a_v[k] == 0xA8) {
@@ -2998,32 +2648,10 @@ namespace bo3z::Classes
 	void Revert()
 	{
 		SetState({});
-		g_open = false, g_mastery.fill(0), g_staffChecked = false;
-		g_summonMarks.clear(), g_pendingSummon.clear(), g_ownSummons.clear(), g_thralls.clear(), g_pendingThrall.clear(), g_lastBlade.clear(), g_powerHit.clear(), g_vortexArrows.clear();
+		g_open = false, g_mastery.fill(0);
+		g_summonMarks.clear(), g_pendingSummon.clear(), g_ownSummons.clear(), g_thralls.clear(), g_pendingThrall.clear(), g_lastBlade.clear(), g_powerHit.clear();
 	}
 
-	// ---- (the altar rework) what Kit.cpp builds a class's kit from ----
-	RE::TESObjectWEAP* CrossbowForm(int a_elem) { return a_elem >= 0 && a_elem < 3 ? ElemCrossbow(a_elem) : nullptr; }
-	void TakeCrossbow(int a_elem)
-	{
-		auto* p = RE::PlayerCharacter::GetSingleton();
-		auto* w = CrossbowForm(a_elem);
-		if (!p || !w || ItemMenusOpen()) return;
-		KeepOnlyCrossbow(a_elem);
-		if (p->GetItemCount(w) <= 0) GiveItem(p, w, 1, false);
-		if (auto* b = ElemBolts(a_elem)) {
-			const int want = BoltCap(std::clamp(CrossbowLevel(w), 0, 3)), have = p->GetItemCount(b);
-			if (have < want) GiveItem(p, b, want - have, false);
-			GiveItem(p, b, 0, true);
-		}
-		GiveItem(p, w, 0, true);
-	}
-	void SetCrossbowLevel(const RE::TESForm* a_w, int a_level)
-	{
-		if (!a_w) return;
-		g_xbow[a_w->GetFormID()].first = static_cast<std::uint8_t>(std::clamp(a_level, 0, 3));
-		TopUpBolts(0);
-	}
 	void GiveGear(RE::TESForm* a_form, int a_count, bool a_equip)
 	{
 		if (auto* p = RE::PlayerCharacter::GetSingleton(); p && a_form) GiveItem(p, a_form, a_count, a_equip);
@@ -3363,68 +2991,9 @@ namespace bo3z::Classes
 		auto it = g_gildedUntil.find(a_a->GetFormID());
 		return it != g_gildedUntil.end() && std::chrono::steady_clock::now() < it->second;
 	}
-	// the Bone-Throne Horn: Skyrim's skeletal dragon (Labyrinthian's) raised at your side, on your side, kept from flight
-	void SummonBoneDragon()
-	{
-		auto* p = RE::PlayerCharacter::GetSingleton();
-		// (Noah: "it only stays in one position, it doesn't fly around or walk") Labyrinthian's skeletal dragon is made to stay
-		// grounded in its courtyard: Durnehviir as Dawnguard summons him - the undead dragon that circles you in the air and
-		// dives on your foes - is the body now (Labyrinthian's only if Dawnguard's is missing)
-		// (Noah: "the dragon summon ... is literally Alduin - make it one of the dragons from our mods") Diverse Dragons
-		// Collection's Necromantic Dragon (its script-free copy: no soul to absorb, no dragon quest hooks), Durnehviir only
-		// if that mod is missing
-		RE::TESForm* base = nullptr;
-		for (RE::FormID id : { 0x09D80Au, 0x09D809u }) {
-			if (base = Lookup(id, "DiverseDragonsCollectionSE.esp"); base && base->As<RE::TESNPC>()) break;
-			base = nullptr;
-		}
-		if (!base) base = Lookup(0x00C71A, "Dawnguard.esm");
-		if (!base || !base->As<RE::TESNPC>()) base = Lookup(0x09192C, "Skyrim.esm");
-		auto* npc = base ? base->As<RE::TESNPC>() : nullptr;
-		if (!p || !npc || !p->GetParentCell()) { logger::warn("classes: the bone dragon not called (npc {})", npc != nullptr); return; }
-		if (auto old = g_boneDragon.get(); old && !old->IsDead()) {  // (one at a time: the old one crumbles)
-			Gun::ElemBurst(7, old->GetPosition(), 2.0f, 0.0f, 1.0f);
-			Console(old.get(), "SetPlayerTeammate 0");
-			old->Disable(), old->SetDelete(true);
-		}
-		auto ref = p->PlaceObjectAtMe(npc, false);
-		auto* a = ref ? ref->As<RE::Actor>() : nullptr;
-		if (!a) { logger::warn("classes: the bone dragon not placed"); return; }
-		const float yaw = p->GetAngleZ() + 0.9f;
-		const RE::NiPoint3 at = p->GetPosition() + RE::NiPoint3{ std::sin(yaw) * 450.0f, std::cos(yaw) * 450.0f, 20.0f };
-		a->SetPosition(at, true);
-		if (auto* fac = Director::UndeadFactionForm()) a->RemoveFromFaction(fac);
-		if (auto* pf = PlayerFaction()) a->AddToFaction(pf, 0);
-		Console(a, "SetPlayerTeammate 1");
-		a->SetDisplayName("Violet Wyrm", true);
-		// (Noah: "the dragon I spawned also spoke with me, and it gave me the Saltair shout") a dragon's talk from another mod:
-		// yours can't be spoken to
-		a->SetActivationBlocked(true);
-		auto* av = a->AsActorValueOwner();
-		const float hp = Director::RoundHealth() * gen::kRounds.hpScale * 30.0f;
-		av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kHealth, std::max(0.0f, hp - av->GetPermanentActorValue(RE::ActorValue::kHealth)));
-		// (Noah: "make the dragon a quarter of the size ... with the ability to fly around within 15 meters of the player") a
-		// little dragon: a quarter of its size, free to fly - TickSummons keeps it within 15 m of you
-		a->SetScale(0.25f);
-		// (Noah: "make the movement speed of it a lot slower so it doesn't glitch out") a third of a dragon's pace in the air
-		// and on the ground; the carry-weight nudge makes the engine take the new speed now
-		av->SetActorValue(RE::ActorValue::kSpeedMult, 35.0f);
-		av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, 0.1f);
-		av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, -0.1f);
-		g_boneDragon = a->GetHandle();
-		g_ownSummons.push_back({ a->GetHandle(), AfterSovngarde() ? 3600.0f : 60.0f });
-		Gun::ElemBurst(7, at, 3.0f, 0.0f, 1.4f);
-		Gun::FxBlast("dark", at + RE::NiPoint3{ 0, 0, 60.0f });
-		Hud::Banner("THE BONE-THRONE DRAGON RISES", 3.0f);
-		logger::info("classes: the Bone-Throne dragon called up");
-	}
-	bool HornInHand(bool a_left) { auto* p = RE::PlayerCharacter::GetSingleton(); return p && p->AsActorState()->IsWeaponDrawn() && HornHeldIn(a_left); }
-	bool HornHeld(bool a_left) { return HornHeldIn(a_left); }
-	void HornAttack(bool a_left) { HornPress(a_left); }
 	void DevWyrm(std::string_view a_what, std::string_view a_plugin, RE::FormID a_id)
 	{
 		if (a_what == "base") g_wyrmPlugin = a_plugin, g_wyrmBase = a_id;
-		else if (a_what == "sound") g_hornSndPlugin = a_plugin, g_hornSnd = a_id;
 		else if (a_what == "play") { if (auto* f = Lookup(a_id, a_plugin)) Audio::Game(f->GetFormID(), RE::PlayerCharacter::GetSingleton(), 1.0f); }
 		else if (a_what == "call") { g_wh.cool = 0; g_wh.aloft = false; CallWyrm(0); if (a_id) CallWyrm(1); g_wh.aloft = true; g_wh.called = true; }
 		logger::info("dev: wyrm {} {} {:06X}", a_what, a_plugin, a_id);
@@ -3476,7 +3045,6 @@ namespace bo3z::Classes
 			return -1;
 		}
 	}
-	void DevHorn() { SummonBoneDragon(); }
 	// ---- the class swords (Noah: "base should be the sword with no special effects or abilities yet. tier 1 sends out arc
 	// slashes from the blade ... that pierce enemies, swing in the color of the sword, on light attack swings. Tier 2 should give
 	// the heavy attack an AOE attack, and tier 3 should have a unique ability per class that matches the classes build")
@@ -4061,7 +3629,6 @@ namespace bo3z::Classes
 
 	bool FlaskSwingBlocked(bool a_left)
 	{
-		if (HornHeldIn(a_left)) return true;   // (the horn: never a dagger's swing - the blow is ours)
 		const int el = FlaskHeld(a_left);
 		if (el < 0 || el == 6) return false;   // (the Mutagen Staff: Skyrim's staff cast plays)
 		// (Noah: "my character is still making swing grunt sounds when throwing") Skyrim's own swing never plays with a flask in

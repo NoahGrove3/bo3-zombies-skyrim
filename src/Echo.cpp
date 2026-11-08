@@ -945,19 +945,12 @@ namespace bo3z
 		}
 
 		float g_slow = 0;
-		// (the story's overhaul) once: the retired staffs and the Broken Words pages leave your pack
+		// (the story's overhaul) once: the Broken Words pages leave your pack
 		void CleanUp(RE::PlayerCharacter* a_p)
 		{
 			if (Flag(kFlagCleaned)) return;
 			SetFlag(kFlagCleaned, true);
 			int n = 0;
-			for (int i = 0; i < static_cast<int>(gen::kGuns.size()); ++i) {
-				if (Gun::IsStaffWonder(i) && Gun::Owns(i)) {
-					Gun::TakeAway(i);
-					if (auto* wp = Forms::Gun(i); wp && a_p->GetItemCount(wp) > 0) a_p->RemoveItem(wp, a_p->GetItemCount(wp), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
-					++n;
-				}
-			}
 			for (int t = 0; t < kTownCount; ++t) {
 				if (auto* book = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectBOOK>(gen::kEchoPages[t], gen::kPlugin); book && a_p->GetItemCount(book) > 0) {
 					a_p->RemoveItem(book, a_p->GetItemCount(book), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
@@ -965,7 +958,7 @@ namespace bo3z
 				}
 			}
 			Write(gen::kRitualStand, 0);
-			if (n) logger::info("echo: {} retired staffs and pages taken back", n);
+			if (n) logger::info("echo: {} pages taken back", n);
 		}
 	}
 

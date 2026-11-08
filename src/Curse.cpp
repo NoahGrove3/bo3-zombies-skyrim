@@ -295,16 +295,6 @@ namespace bo3z
 			return -1;
 		}
 
-		int Relic(int a_town)
-		{
-			for (int i = 0; i < static_cast<int>(gen::kGuns.size()); ++i) {
-				if (gen::kGuns[i].relicTown == a_town && !gen::kGuns[i].retired) {
-					return i;
-				}
-			}
-			return -1;
-		}
-
 		// what each trial asks tonight, in a line (the altar's menu and the trial's HUD line)
 		std::string Ask(int a_trial)
 		{
@@ -638,51 +628,6 @@ namespace bo3z
 	namespace Curse
 	{
 		int  ZoneTown() { return g_zone; }
-		int  RelicOf(int a_town) { return a_town >= 0 ? Relic(a_town) : -1; }
-
-		void ClaimRelic(int a_town)
-		{
-			if (const int sh = a_town >= 0 ? ShoutOf(a_town) : -1; sh >= 0) {
-				const std::string name(gen::kShouts[sh].label);
-				if (!Get(a_town).freed) {
-					Hud::Banner(name + " sleeps here until the Echo Altar of " + std::string(gen::kTowns[a_town]) + " wakes", 3.5f);
-					return;
-				}
-				if (Gun::KnowsShout(sh)) {
-					Hud::Banner("You already know " + name, 2.5f);
-					return;
-				}
-				// (Noah: no Word Walls) the runes cut into the altar's heart-stone are the words: they burn out of the rock
-				// one by one and sink into you, as a Word Wall's would
-				Gun::LearnShout(sh);
-				Forms::Play(gen::Sound::shout_learned);
-				Hud::WordReveal(sh);
-				Note("The runes of the heart-stone give up their words: " + name + "  (" + std::string(gen::kShouts[sh].w1) + " " + std::string(gen::kShouts[sh].w2) + " " + std::string(gen::kShouts[sh].w3) + ") - equip it in the Magic menu", 9.0f);
-				logger::info("curse: {} learned at {}", gen::kShouts[sh].id, gen::kTowns[a_town]);
-				return;
-			}
-			const int relic = a_town >= 0 ? Relic(a_town) : -1;
-			if (relic < 0) {
-				return;
-			}
-			const std::string name(gen::kGuns[relic].label);
-			if (!Get(a_town).freed) {
-				Hud::Banner(name + " waits until the Echo Altar of " + std::string(gen::kTowns[a_town]) + " wakes", 3.5f);
-				if (GiveBook(RE::PlayerCharacter::GetSingleton())) {
-					Note("The Curse of Alduin is back in your pack", 5.0f);
-				}
-				return;
-			}
-			if (Gun::Owns(relic)) {
-				Hud::Banner("You already carry " + name, 2.5f);
-				Gun::Give(relic);  // (puts it in your hands)
-				return;
-			}
-			Gun::Give(relic);
-			Forms::Play(gen::Sound::buy);
-			Hud::QuestBanner(name + " RECLAIMED", 3.0f);
-			logger::info("curse: {} reclaimed at {}", gen::kGuns[relic].id, gen::kTowns[a_town]);
-		}
 		int ClaimableShout(int a_town)
 		{
 			const int sh = a_town >= 0 ? ShoutOf(a_town) : -1;

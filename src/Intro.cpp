@@ -131,7 +131,6 @@ namespace bo3z
 			}
 		}
 
-		bool CrewScreenOpen() { return false; }
 		// (Noah: "the race menu still opens a second time") the game's Tick never sees the creator - it runs paused - so the
 		// menu's own open/close tells it: a creator Skyrim opens at Riverwood's gate is ours (none follows); one opened in
 		// Helgen before the move is closed (it opens at the gate)
@@ -161,7 +160,7 @@ namespace bo3z
 		{
 			static int dbg = 0;
 			if (dbg++ % 1800 == 0) {
-				logger::info("intro: {} moved={} crew={}", Forms::IntroDebug(), Save::Flag(Save::kFlagMoved), Save::Crew());
+				logger::info("intro: {} moved={}", Forms::IntroDebug(), Save::Flag(Save::kFlagMoved));
 			}
 			auto* player = RE::PlayerCharacter::GetSingleton();
 			auto* intro = Forms::IntroQuest();
@@ -448,44 +447,36 @@ namespace bo3z
 			// (Noah: "the class pop-up came at the end of the cave, not when I left it") only out under the sky
 			const bool outside = player->GetParentCell() && !player->GetParentCell()->IsInteriorCell() && !ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME);
 			if (Save::Flag(Save::kFlagMoved) && Forms::IntroDone() && !Save::Flag(Save::kFlagStarted) && outside) {
-				if (Save::Crew() >= 0) {
-					Save::SetCrew(-1);  // older saves: drop the crew character
-				} else {
-					// (Noah: "I should start with nothing but the Curse of Alduin lore book, and what comes with my race") whatever
-					// the quick start and other mods put in the pack goes (quest items and the underwear stay); the lore book
-					// follows at once (src/Curse.cpp), the race's powers are spells and stay
-					if (FreshQuickstartGame(player) && Classes::Get() < 0) {  // (never the class kit)
-						auto* dirge = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectBOOK>(gen::kDirgeBook, gen::kPlugin);
-						auto* under = Classes::Underwear();
-						int   gone = 0;
-						// (Noah: "when I first spawn in with nothing it thinks I'm holding an axe") the quick start's axe is
-						// taken out of the hands properly first - sheathed, unequipped - so the hands' animation forgets it
-						auto* em = RE::ActorEquipManager::GetSingleton();
-						if (player->AsActorState()->IsWeaponDrawn()) player->DrawWeaponMagicHands(false);
-						for (bool left : { false, true }) {
-							if (auto* eq = player->GetEquippedObject(left); eq && em) {
-								if (auto* b = eq->As<RE::TESBoundObject>()) em->UnequipObject(player, b, nullptr, 1, nullptr, false, true, false, true);
-							}
+				// (Noah: "I should start with nothing but the Curse of Alduin lore book, and what comes with my race") whatever
+				// the quick start and other mods put in the pack goes (quest items and the underwear stay); the lore book
+				// follows at once (src/Curse.cpp), the race's powers are spells and stay
+				if (FreshQuickstartGame(player) && Classes::Get() < 0) {  // (never the class kit)
+					auto* dirge = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectBOOK>(gen::kDirgeBook, gen::kPlugin);
+					auto* under = Classes::Underwear();
+					int   gone = 0;
+					// (Noah: "when I first spawn in with nothing it thinks I'm holding an axe") the quick start's axe is
+					// taken out of the hands properly first - sheathed, unequipped - so the hands' animation forgets it
+					auto* em = RE::ActorEquipManager::GetSingleton();
+					if (player->AsActorState()->IsWeaponDrawn()) player->DrawWeaponMagicHands(false);
+					for (bool left : { false, true }) {
+						if (auto* eq = player->GetEquippedObject(left); eq && em) {
+							if (auto* b = eq->As<RE::TESBoundObject>()) em->UnequipObject(player, b, nullptr, 1, nullptr, false, true, false, true);
 						}
-						for (auto& [obj, data] : player->GetInventory()) {
-							if (!obj || data.first <= 0 || obj == dirge || obj == under) continue;
-							if (data.second && data.second->IsQuestObject()) continue;
-							player->RemoveItem(obj, data.first, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
-							gone += data.first;
-						}
-						logger::info("intro: the new character's pack emptied ({} items) - the lore book and the race's own powers only", gone);
-						g_emptyHandsFor = 6.0f;  // (and for a few seconds the hands are told they hold nothing: TickEmptyHands)
 					}
-					Arcana::GiveStarter();  // the Coffer's spells replaced the old ones: a new character starts with one of them
-					Gun::TestKitIfFlagged();  // (Noah's test characters: CurseOfAlduin-testkit.flag beside the log)
+					for (auto& [obj, data] : player->GetInventory()) {
+						if (!obj || data.first <= 0 || obj == dirge || obj == under) continue;
+						if (data.second && data.second->IsQuestObject()) continue;
+						player->RemoveItem(obj, data.first, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+						gone += data.first;
+					}
+					logger::info("intro: the new character's pack emptied ({} items) - the lore book and the race's own powers only", gone);
+					g_emptyHandsFor = 6.0f;  // (and for a few seconds the hands are told they hold nothing: TickEmptyHands)
 				}
+				Arcana::GiveStarter();  // the Coffer's spells replaced the old ones: a new character starts with one of them
+				Gun::TestKitIfFlagged();  // (Noah's test characters: CurseOfAlduin-testkit.flag beside the log)
 				Save::SetFlag(Save::kFlagStarted, true);
-				logger::info("intro: started (no crew screen)");
+				logger::info("intro: started");
 			}
-			std::scoped_lock l(Hud::Lock());
-			auto& h = Hud::Edit();
-			h.crewScreen = false;
-			h.crew = -1;
 		}
 
 		// while the intro film plays every key is its own: Space / Enter / E / pad A held skips it

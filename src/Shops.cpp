@@ -8,7 +8,6 @@ namespace bo3z
 	namespace
 	{
 		std::array<RE::ObjectRefHandle, gen::kLocations.size()> g_placed{};
-		std::mt19937 g_rng{ std::random_device{}() };
 		float        g_scan = 0;
 
 		// Dressing (giant bottles, glows, beams, lights) and the pieces that turn.
@@ -45,7 +44,6 @@ namespace bo3z
 			RE::ObjectRefHandle chest, display;
 			int                 gun{ -1 }, shown{ -1 };
 			float               t{ 0 }, step{ 0 };
-			bool                bow{ false };  // the bow wheel (gun/shown: Bows indices)
 			bool                prize{ false };  // (Noah: a class row's win rolls too) the reel turns the class's spells, it lands on pz
 			Classes::Prize      pz;
 			std::vector<int>    reel;            // (the consistency pass) what the reel turns through - spell or bow ids, or the prize's names' places - empty: every one
@@ -245,14 +243,6 @@ namespace bo3z
 		}
 		// (Noah: the real bows and spells roll by, with their names - not runes) what the roll shows over the heart stone:
 		// the spell's own display model (Skyrim's Magic menu one) or its element's emblem; a bow, the bow itself, upright
-		RE::TESBoundObject* ShowBase(int a_index, bool a_bow, bool* a_own)
-		{
-			if (a_bow) {
-				*a_own = false;
-				return a_index >= 0 && a_index < static_cast<int>(gen::kBowShowStat.size()) ? Forms::Ours(gen::kBowShowStat[a_index]) : nullptr;
-			}
-			return SpellShow(a_index, a_own);
-		}
 		float g_showPitch = 0.0f;
 		void ShowModel(RE::TESBoundObject* a_base, float a_rise, float a_scale = -1.0f, float a_pitch = 0.0f)
 		{
@@ -274,12 +264,8 @@ namespace bo3z
 		void ShowAt(int a_index, float a_rise, bool a_final)
 		{
 			bool own = true;
-			auto* m = ShowBase(a_index, g_show.bow, &own);
-			if (g_show.bow) {
-				ShowModel(m, a_rise, a_final ? 1.15f : 1.0f, -RE::NI_PI / 2);  // (a bow stood on end, its string toward you)
-			} else {
-				ShowModel(m, a_rise, own ? -1.0f : (a_final ? 1.8f : 1.6f));
-			}
+			auto* m = SpellShow(a_index, &own);
+			ShowModel(m, a_rise, own ? -1.0f : (a_final ? 1.8f : 1.6f));
 		}
 
 		// Skyrim's own interface sounds (Skyrim.esm), for the altar's menu
@@ -305,7 +291,7 @@ namespace bo3z
 	int   Shops::ReelSpell(int a_target, float a_pos, int a_slot)
 	{
 		const bool list = !g_show.reel.empty();
-		const int  n = std::max(1, list ? static_cast<int>(g_show.reel.size()) : g_show.bow ? Bows::Count() : Arcana::Count());
+		const int  n = std::max(1, list ? static_cast<int>(g_show.reel.size()) : Arcana::Count());
 		const int  i = (list ? g_show.reelAt : a_target) - Shops::kReelPass + static_cast<int>(std::floor(a_pos)) + a_slot;
 		const int  w = ((i % n) + n) % n;
 		return list ? g_show.reel[w] : w;
@@ -314,17 +300,6 @@ namespace bo3z
 	namespace
 	{
 		int ReelFront(int a_target, float a_k) { return Shops::ReelSpell(a_target, Shops::ReelPos(a_k), 0); }
-
-		std::vector<int> RollPool()
-		{
-			std::vector<int> pool;
-			for (int i = 0; i < static_cast<int>(gen::kGuns.size()); ++i) {
-				if (gen::kGuns[i].boxWeight > 0 && !gen::kGuns[i].retired) {
-					pool.push_back(i);
-				}
-			}
-			return pool;
-		}
 
 		// ---- the roll's beams, in the world (Noah: hyper-realistic): Skyrim's own lightning bolt beam from each column's
 		// rune stone into the heart stone (UN_AltarBeamSpell: ShockBoltAim and its MAGShock02 impacts, harmless), cast
@@ -474,11 +449,6 @@ namespace bo3z
 						PlayUi(UiSnd::kLand, 0.8f);  // (a bright chord as it lands)
 						if (g_show.prize) {
 							Hud::Banner(g_show.pz.name + "  -  Activate the altar to take it", 4.0f);
-							g_show.phase = Show::Offering;
-							break;
-						}
-						if (g_show.bow) {
-							Hud::Banner(std::string(Bows::Name(g_show.gun)) + "  -  Activate the altar to take it" + (Bows::Carried() >= 0 ? " (your " + std::string(Bows::Name(Bows::Carried())) + " goes back)" : std::string()), 4.0f);
 							g_show.phase = Show::Offering;
 							break;
 						}
@@ -1682,11 +1652,11 @@ namespace bo3z
 		}
 		std::string OfferName()
 		{
-			return g_show.prize ? g_show.pz.name : g_show.bow ? std::string(Bows::Name(g_show.gun)) : std::string(Arcana::Name(g_show.gun));
+			return g_show.prize ? g_show.pz.name : std::string(Arcana::Name(g_show.gun));
 		}
 		// (Noah: "as the ranger I couldn't choose to reroll or take the rolled one - it would only replace what's in my hand")
 		// every offer is a choice in the altar's menu: take it, roll again, or leave it for half the roll back
-		void Choose(int a_slot)  // spells: 0/1 replace that spell; bows and class wins: 0 take it; -1: leave it (half back)
+		void Choose(int a_slot)  // spells: 0/1 replace that spell; class wins: 0 take it; -1: leave it (half back)
 		{
 			if (!g_choosing || g_show.phase != Show::Offering) {
 				g_choosing = false;
@@ -1702,19 +1672,11 @@ namespace bo3z
 				EndOffer();
 				return;
 			}
-			if (g_show.prize || g_show.bow) {
+			if (g_show.prize) {
 				if (a_slot != 0) return;
-				if (g_show.prize) {
-					if (g_show.pz.give) g_show.pz.give();
-					Forms::Play(gen::Sound::coffer_take);
-					logger::info("shrine: took {}", g_show.pz.name);
-				} else {
-					const int old = Bows::Carried();
-					Bows::Give(g_show.gun);
-					Forms::Play(gen::Sound::coffer_take);
-					Hud::Banner(std::string(Bows::Name(g_show.gun)) + "  -  in your hands" + (old >= 0 && old != g_show.gun ? "  (" + std::string(Bows::Name(old)) + " given back)" : std::string()), 3.0f);
-					logger::info("shrine: took the bow {}", Bows::Name(g_show.gun));
-				}
+				if (g_show.pz.give) g_show.pz.give();
+				Forms::Play(gen::Sound::coffer_take);
+				logger::info("shrine: took {}", g_show.pz.name);
 				EndOffer();
 				return;
 			}
@@ -1733,7 +1695,7 @@ namespace bo3z
 			if (g_show.phase != Show::Offering || g_show.chest.get().get() != a_ref) {
 				return false;
 			}
-			if (g_show.prize || g_show.bow || Arcana::Carried().size() >= Arcana::CarryCap()) {  // the choice, in the altar's menu (take / roll again / leave)
+			if (g_show.prize || Arcana::Carried().size() >= Arcana::CarryCap()) {  // the choice, in the altar's menu (take / roll again / leave)
 				if (!g_choosing) {
 					g_choosing = true;
 					g_menu = true;
@@ -1755,12 +1717,12 @@ namespace bo3z
 		// (Noah: each altar's price starts at its lowest, and goes back to what it was when you load a save) how many times
 		// each city's altar has been rolled tonight - spells and bows apart - kept in the co-save (Save 'ROLL')
 		constexpr int kRollTowns = 16;
-		std::array<std::uint8_t, kRollTowns> g_spellRolls{}, g_bowRollsT{};
+		std::array<std::uint8_t, kRollTowns> g_spellRolls{}, g_classRollsT{};
 		int g_rollNight = -1;
 		void RollNight()
 		{
 			const int night = Save::Get(gen::kAV_round);
-			if (night != g_rollNight) g_rollNight = night, g_spellRolls.fill(0), g_bowRollsT.fill(0);
+			if (night != g_rollNight) g_rollNight = night, g_spellRolls.fill(0), g_classRollsT.fill(0);
 		}
 		int TownOfAltar(RE::TESObjectREFR* a_ref)
 		{
@@ -1788,15 +1750,14 @@ namespace bo3z
 		}
 		int RollBase()
 		{
-			const int crew = Save::Crew();
-			return crew >= 0 && gen::kCrew[crew].passive == 3 ? static_cast<int>(gen::kCrew[crew].value) : gen::kObjects[0].cost;
+			return gen::kObjects[0].cost;
 		}
 		int RollCost(int a_town = -2)
 		{
 			RollNight();
 			const int t = a_town == -2 ? CurrentTown() : a_town;
 			const int n = t >= 0 && t < kRollTowns ? g_spellRolls[t] : 0;
-			return PowerUps::FireSale() ? 10 : static_cast<int>(std::lround(RollBase() * std::pow(1.25, n) / 10.0) * 10);
+			return static_cast<int>(std::lround(RollBase() * std::pow(1.25, n) / 10.0) * 10);
 		}
 		// (Noah) the altar's late rows open with the cities freed: the reforge at three, the Legendary roll at six
 		int FreedCount()
@@ -1806,43 +1767,13 @@ namespace bo3z
 			return n;
 		}
 		constexpr int kForgeAt = 3, kLegendAt = 6;
-		int BowRollCost(int a_town = -2)
+		int ClassRollCost(int a_town = -2)
 		{
 			RollNight();
 			const int t = a_town == -2 ? CurrentTown() : a_town;
-			const int n = t >= 0 && t < kRollTowns ? g_bowRollsT[t] : 0;
-			return PowerUps::FireSale() ? 10 : static_cast<int>(std::lround(RollBase() * std::pow(1.25, n) / 10.0) * 10);
+			const int n = t >= 0 && t < kRollTowns ? g_classRollsT[t] : 0;
+			return static_cast<int>(std::lround(RollBase() * std::pow(1.25, n) / 10.0) * 10);
 		}
-		void SpinBow(RE::TESObjectREFR* a_ref)
-		{
-			if (!a_ref || g_show.phase != Show::Idle) {
-				if (g_show.phase != Show::Idle) {
-					Hud::Banner("The altar is still turning", 1.5f);
-				}
-				return;
-			}
-			const int pick = Bows::Roll();
-			if (pick < 0) {
-				Hud::Banner("The altar has no other bow for you yet", 2.5f);
-				return;
-			}
-			const int town = TownOfAltar(a_ref);
-			if (BusyForMe(town)) return;
-			const int cost = BowRollCost(town);
-			if (!Points::Spend(cost)) {
-				return;
-			}
-			g_lastRollCost = cost;
-			if (town >= 0) g_bowRollsT[town] = static_cast<std::uint8_t>(std::min(250, g_bowRollsT[town] + 1));
-			g_show = {};
-			g_show.bow = true;
-			g_show.chest = a_ref->CreateRefHandle();
-			g_show.phase = Show::Charging;
-			g_show.gun = pick;
-			Forms::PlayAt(gen::Sound::coffer_charge, a_ref);
-			logger::info("shrine: rolling the bow {}", Bows::Name(pick));
-		}
-
 		// (Noah: no roll on the class rows) a class row's win turns on the altar like a spell: the reel runs the class's own
 		// spells (the stones strike the heart one by one), then lands on what was won, to be taken off the altar
 		void SpinPrize(RE::TESObjectREFR* a_ref, Classes::Prize a_pz)
@@ -1899,7 +1830,7 @@ namespace bo3z
 		int                 g_sel = 0;
 		int                 g_trialSel = 0;  // the controller's pick among the altar's trials
 		// (Noah: one way to drive the altar) a focus moved up and down its rows - D-pad or W/S - and A / Enter to take it
-		enum Row { kRowSpell = 0, kRowBow, kRowForge, kRowPerk, kRowShout, kRowBond, kRowTrial = 10, kRowLeave = 20, kRowClass = 30, kRowOutfit, kRowInfuse = 32, kRowRelic = 33 };  // (the altar rework: Kit rows are 40.. your kit, 100.. the Armory)
+		enum Row { kRowSpell = 0, kRowBow, kRowForge, kRowPerk, kRowShout, kRowBond, kRowTrial = 10, kRowLeave = 20, kRowClass = 30, kRowOutfit };  // (the altar rework: Kit rows are 40.. your kit, 100.. the Armory)
 		int g_focus = kRowClass;
 		// (Noah: "different sections that show a drop down of what's in that section") the one section open (0: none)
 		enum Sec { kSecKit = 210, kSecArmory = 211, kSecPerks = 212, kSecVoice = 213, kSecTrials = 214, kSecWhispers = 215, kSecGlider = 216 };
@@ -1928,47 +1859,6 @@ namespace bo3z
 			}
 			Forms::PlayAt(Forms::Brew(perk), a_ref);
 			Perks::Grant(perk);  // at once: no potion to drink
-		}
-
-		void BuyAmmo(const gen::ObjectDef& a_obj)
-		{
-			std::vector<int> owned;
-			for (int i = 0; i < static_cast<int>(gen::kGuns.size()); ++i) {
-				if (Gun::Owns(i)) {
-					owned.push_back(i);
-				}
-			}
-			if (owned.empty()) {
-				Hud::Banner("No weapons to restock", 2.0f);
-				return;
-			}
-			if (!Points::Spend(a_obj.cost)) {
-				return;
-			}
-			for (int g : owned) {
-				Gun::RefillAmmo(g);
-			}
-			Forms::Play(gen::Sound::reload_mag);
-			Hud::Banner("All ammo restocked", 2.0f);
-		}
-
-		void BuyWall(const gen::ObjectDef& a_obj)
-		{
-			const int   gun = a_obj.ref;
-			const auto& g = gen::kGuns[gun];
-			if (Gun::Owns(gun)) {
-				if (Points::Spend(g.ammoCost)) {
-					Gun::RefillAmmo(gun);
-					Forms::Play(gen::Sound::buy);
-					Hud::Banner(std::string(g.label) + " ammo", 2.0f);
-				}
-				return;
-			}
-			if (Points::Spend(g.wallBuyCost)) {
-				Gun::Give(gun);
-				Forms::Play(gen::Sound::buy);
-				Hud::Banner(std::string(g.label), 2.0f);
-			}
 		}
 	}
 
@@ -2061,7 +1951,6 @@ namespace bo3z
 		}
 		// (a key that closed the menu is still eaten a moment after, so Activate does not open it again behind you)
 		std::chrono::steady_clock::time_point g_closedAt{};
-		int g_specialSel = 0;  // the special ammo the altar shows (Q / R3 picks, R / Y buys)
 		bool MenuEats(RE::InputEvent* a_event)
 		{
 			auto* b = a_event ? a_event->AsButtonEvent() : nullptr;
@@ -2105,7 +1994,7 @@ namespace bo3z
 			g_sel = std::clamp(g_sel, 0, n - 1);
 			bool wantReroll = false;  // (an offer's "roll again": done once the rolls below are in reach)
 			if (g_choosing) {  // the choice: 1 / X takes it (a spell: replaces the first), 2 / Y the second spell, R / Y rolls again, Backspace / B leaves it
-				const bool single = g_show.bow || g_show.prize;
+				const bool single = g_show.prize;
 				if (g_show.phase != Show::Offering) {
 					g_choosing = false;
 				} else if (dev == RE::INPUT_DEVICE::kKeyboard && !(code == 0x11 || code == 0xC8 || code == 0x1F || code == 0xD0 || code == 0x1E || code == 0xCB || code == 0x20 || code == 0xCD || code == 0x1C || code == 0x9C)) {
@@ -2133,8 +2022,7 @@ namespace bo3z
 						break;
 					}
 					if (!TakeOffer(ref)) {
-						if (Classes::Get() == 2) SpinBow(ref);  // (the Ranger's roll is the bow wheel)
-						else SpinBox(ref);
+						SpinBox(ref);
 						if (g_show.phase != Show::Idle) {  // (Noah: the box sits mid-screen now - it steps aside to watch the roll)
 							g_menu = false;
 							g_closedAt = std::chrono::steady_clock::now();
@@ -2151,7 +2039,6 @@ namespace bo3z
 					}
 					break;
 				case 2: BuyPerk(Perks::MenuAt(g_sel), ref); break;
-				case 3: Curse::ClaimRelic(ref ? TownOf(ref) : -1); break;
 				case 6:
 					if (!TakeOffer(ref)) {
 						// (the consistency pass) every class's row alike: never while the altar turns, never at an altar a friend is using
@@ -2160,36 +2047,34 @@ namespace bo3z
 							break;
 						}
 						if (BusyForMe(TownOfAltar(ref))) break;
-						if (const int cls = Classes::Get(); cls == 3 || (cls == 2 && std::uniform_int_distribution<int>(0, 9)(g_rng) < 4)) {
-							// (the Spellsword's row: a spell-weapon or spellshield; the Ranger's: four times in ten a crossbow)
-							const int town = TownOfAltar(ref), cost = BowRollCost(town);
+						if (const int cls = Classes::Get(); cls == 3) {
+							// (the Spellsword's row: a spell-weapon or spellshield)
+							const int town = TownOfAltar(ref), cost = ClassRollCost(town);
 							Classes::Prize pz;
 							if (Points::Get() >= cost && ref && Classes::RollGear(cls, &pz)) {
 								Points::Spend(cost);
 								g_lastRollCost = cost;
-								if (town >= 0) g_bowRollsT[town] = static_cast<std::uint8_t>(std::min(250, g_bowRollsT[town] + 1));
+								if (town >= 0) g_classRollsT[town] = static_cast<std::uint8_t>(std::min(250, g_classRollsT[town] + 1));
 								SpinPrize(ref, std::move(pz));
 								g_menu = false, g_closedAt = std::chrono::steady_clock::now();
 							} else if (Points::Get() < cost) {
 								Hud::Banner("It costs " + Num(cost) + " Cursed Essence", 2.0f);
-							} else if (cls == 2) {
-								SpinBow(ref);  // (no crossbow left to give: the bows turn instead)
 							}
 							break;
 						} else if (cls == 1) {  // (Destruction's side-picks: its support spells)
-							const int town = TownOfAltar(ref), cost = BowRollCost(town);
+							const int town = TownOfAltar(ref), cost = ClassRollCost(town);
 							if (Points::Get() < cost) {
 								Hud::Banner("It costs " + Num(cost) + " Cursed Essence", 2.0f);
 							} else if (Classes::Prize pz; g_show.phase == Show::Idle && ref && Classes::RollSupport(&pz)) {
 								Points::Spend(cost);
 								g_lastRollCost = cost;
-								if (town >= 0) g_bowRollsT[town] = static_cast<std::uint8_t>(std::min(250, g_bowRollsT[town] + 1));
+								if (town >= 0) g_classRollsT[town] = static_cast<std::uint8_t>(std::min(250, g_classRollsT[town] + 1));
 								SpinPrize(ref, std::move(pz));
 								g_menu = false, g_closedAt = std::chrono::steady_clock::now();
 							}
 							break;
 						} else if (cls == 0) {  // (the Summoner's late Legendaries: heroes and armies)
-							const int town = TownOfAltar(ref), cost = BowRollCost(town) * 2;
+							const int town = TownOfAltar(ref), cost = ClassRollCost(town) * 2;
 							if (const int fc = FreedCount(); fc < kLegendAt && !Gun::TestKitOn()) {  // (Noah: no Legendary until six altars are freed)
 								Hud::Banner("A Hero's Pact waits until six cities are freed (" + std::to_string(fc) + " of 6)", 3.0f);
 							} else if (Points::Get() < cost) {
@@ -2197,19 +2082,13 @@ namespace bo3z
 							} else if (Classes::Prize pz; g_show.phase == Show::Idle && ref && Classes::RollHero(&pz)) {
 								Points::Spend(cost);
 								g_lastRollCost = cost;
-								if (town >= 0) g_bowRollsT[town] = static_cast<std::uint8_t>(std::min(250, g_bowRollsT[town] + 1));  // (the audit: its price never rose)
+								if (town >= 0) g_classRollsT[town] = static_cast<std::uint8_t>(std::min(250, g_classRollsT[town] + 1));  // (the audit: its price never rose)
 								SpinPrize(ref, std::move(pz));
 								g_menu = false, g_closedAt = std::chrono::steady_clock::now();
 							}
 							break;
-						} else if (cls != 2) {
+						} else if (cls < 0) {
 							Hud::Banner("Choose your class at the top of the altar first", 2.5f);
-							break;
-						}
-						SpinBow(ref);
-						if (g_show.phase != Show::Idle) {  // (Noah: the box sits mid-screen now - it steps aside to watch the roll)
-							g_menu = false;
-							g_closedAt = std::chrono::steady_clock::now();
 						}
 					}
 					break;
@@ -2233,7 +2112,7 @@ namespace bo3z
 			// roll again: the offer goes back (no refund) and the same roll turns once more, at its next price
 			const auto reroll = [&] {
 				const int row = g_lastRollRow;
-				const int cost = row == 6 ? BowRollCost() * (Classes::Get() == 0 ? 2 : 1) : (Classes::Get() == 2 ? BowRollCost() : RollCost());
+				const int cost = row == 6 ? ClassRollCost() * (Classes::Get() == 0 ? 2 : 1) : RollCost();
 				if (Points::Get() < cost) {  // (too few: the offer stays where it is)
 					Hud::Banner("Rolling again costs " + Num(cost) + " Cursed Essence", 2.0f);
 					PlayUi(UiSnd::kFail);
@@ -2251,7 +2130,7 @@ namespace bo3z
 				// the options: a spell - replace the first, replace the second, roll again, leave it; a bow or a class win -
 				// take it, roll again, leave it
 				std::vector<int> opts;
-				if (g_show.bow || g_show.prize) opts = { 0, 2, 3 };
+				if (g_show.prize) opts = { 0, 2, 3 };
 				else {
 					opts = { 0 };
 					if (Arcana::Carried().size() > 1) opts.push_back(1);
@@ -2276,12 +2155,10 @@ namespace bo3z
 			if (!g_choosing && (nav || side || pick)) {
 				auto* r = g_menuRef.get().get();
 				const int t = r ? TownOf(r) : -1;
-				// (Noah: "the echo altar changes depending on which class the player is using") the Ranger has one roll - bows
-				// and crossbows both - the other classes their roll and their second wheel
-				// (Noah, the altar rework) the class; your kit (each item: its next upgrade); the Armory; the Infusion; a
-				// Dragon Priest's relic when one waits; then the brews, the Thu'um, the dragon, the trials
+				// (Noah, the altar rework) the class; your kit (each item: its next upgrade); the Armory; then the brews, the
+				// Thu'um, the dragon, the trials
 				// (Noah: "redesign the Echo Altar UI so it's easier to navigate without having to scroll as much") sections, one
-				// open at a time: the class, a waiting relic, then the kit, the Armory, the perks, the Thu'um and dragon, the trials,
+				// open at a time: the class, then the kit, the Armory, the perks, the Thu'um and dragon, the trials,
 				// the whispers - each a header that opens to its rows - and leave
 				std::vector<int> rows{ kRowClass };  // (Noah: the class is chosen and changed at the altar)
 				const auto sectionOf = [](int id) {
@@ -2294,7 +2171,6 @@ namespace bo3z
 					return 0;
 				};
 				if (Classes::Get() >= 0) {
-					if (Kit::RelicTokens() > 0) rows.push_back(kRowRelic);
 					const auto kit = Kit::Rows();  // (Noah: "remove the infusion entirely")
 					rows.push_back(kSecKit);
 					if (g_open == kSecKit) for (int id : kit) if (id < 100) rows.push_back(id);
@@ -2338,10 +2214,6 @@ namespace bo3z
 				} else if (side) {
 					if (g_focus == kRowPerk) {
 						g_sel = (g_sel + side + n) % n;
-					} else if (g_focus == kRowInfuse) {
-						Kit::InfuseSide(side);  // left / right: which item the Infusion is set on
-					} else if (g_focus == kRowRelic) {
-						Kit::RelicSide(side);   // left / right: which of the two relics
 					} else if (sectionOf(g_focus) && side < 0) {
 						g_focus = sectionOf(g_focus);  // (left: back up to its header)
 					}
@@ -2369,8 +2241,6 @@ namespace bo3z
 							Classes::OpenPicker(Classes::Get() >= 0);  // (the first is free; a change costs)
 						}
 						break;
-					case kRowInfuse: kitOk = Kit::Infuse(); break;
-					case kRowRelic: kitOk = Kit::TakeRelic(); if (kitOk && Kit::RelicTokens() <= 0) g_focus = kSecKit, g_open = kSecKit; break;
 					case kRowPerk: act(2); break;
 					case kRowShout: act(3); break;
 					case kRowBond: act(5); break;
@@ -2388,7 +2258,7 @@ namespace bo3z
 						PlayUi(UiSnd::kChoose);
 						return true;
 					}
-					if (g_focus >= 40 || g_focus == kRowInfuse || g_focus == kRowRelic) {
+					if (g_focus >= 40) {
 						PlayUi(UiSnd::kFail);
 						return true;
 					}
@@ -2508,17 +2378,14 @@ namespace bo3z
 				h.altarFocus = g_focus, h.chooseFocus = g_chooseFocus, h.altarOpen = g_open;
 				h.rollPhase = static_cast<int>(g_show.phase);
 				h.rollT = g_show.phase == Show::Charging ? std::min(1.0f, g_show.t / kChargeTime) : g_show.phase == Show::Spinning ? std::min(1.0f, g_show.t / gen::kShowSpin) : g_show.phase == Show::Offering ? std::min(1.0f, g_show.t / gen::kShowOffer) : 0.0f;
-				h.rollGun = g_show.phase == Show::Idle || g_show.phase == Show::Charging || g_show.shown < 0 ? -1 : (g_show.bow ? Bows::kIdBase : Arcana::kIdBase) + g_show.shown;
-				h.rollBow = g_show.bow && g_show.phase != Show::Idle;
+				h.rollGun = g_show.phase == Show::Idle || g_show.phase == Show::Charging || g_show.shown < 0 ? -1 : Arcana::kIdBase + g_show.shown;
 				h.rollPrize = g_show.prize && g_show.phase == Show::Offering ? g_show.pz.name : std::string();
 				h.rollReelNames = g_show.prize && g_show.phase != Show::Idle ? g_show.pz.reel : std::vector<std::string>{};
 				h.rollReelKind = g_show.prize ? g_show.pz.kind : std::string();
 				h.rollPrizeLegend = g_show.prize && g_show.pz.legendary;
 				h.rollReel = g_show.phase != Show::Idle ? g_show.reel : std::vector<int>{}, h.rollReelAt = g_show.reelAt;
-				h.bowRollCost = BowRollCost() * (Classes::Get() == 0 ? 2 : 1);  // (Noah: the hero's pact shown at what it really costs)
 				h.freedCount = FreedCount();
 				h.forgeAt = kForgeAt, h.legendAt = kLegendAt;
-				h.bowCarried = Bows::Carried();
 				h.rollTarget = g_show.phase == Show::Spinning || g_show.phase == Show::Offering ? g_show.gun : -1;
 				h.rollCost = RollCost();
 				// where the shrine's crown is on the screen: the roll shows there too, over the crystal itself
@@ -2698,8 +2565,7 @@ namespace bo3z
 					g_pulse.reset();
 				}
 				h.shrineShout = -1;
-				h.specialSel = g_specialSel, h.specialKind = Bows::SpecialKind(), h.specialLeft = Bows::SpecialLeft();
-				if (g_menu) Kit::Fill(h);  // (the altar rework: your kit, the Armory, the Infusion, the relic - only with the altar open)
+				if (g_menu) Kit::Fill(h);  // (the altar rework: your kit and the Armory - only with the altar open)
 				h.dragonBond = Save::DragonBond();
 				h.bondLocked = Movement::BondLocked();
 				h.trialsOn = false;
@@ -2717,10 +2583,9 @@ namespace bo3z
 				h.chooseOn = g_choosing && g_show.phase == Show::Offering;
 				if (h.chooseOn) {
 					const auto have = Arcana::Carried();
-					h.chooseKind = g_show.prize ? 2 : g_show.bow ? 1 : 0;
+					h.chooseKind = g_show.prize ? 2 : 0;
 					h.chooseName = OfferName();
-					h.chooseOld = g_show.bow && Bows::Carried() >= 0 && Bows::Carried() != g_show.gun ? std::string(Bows::Name(Bows::Carried())) : std::string();
-					h.chooseReroll = g_lastRollRow == 6 ? BowRollCost() * (Classes::Get() == 0 ? 2 : 1) : (Classes::Get() == 2 ? BowRollCost() : RollCost());
+					h.chooseReroll = g_lastRollRow == 6 ? ClassRollCost() * (Classes::Get() == 0 ? 2 : 1) : RollCost();
 					h.chooseNew = g_show.gun;
 					h.chooseA = have.size() > 0 ? have[0] : -1;
 					h.chooseB = have.size() > 1 ? have[1] : -1;
@@ -2963,16 +2828,7 @@ namespace bo3z
 					BuyPerk(Perks::MenuAt(g_sel), a_ref);
 				}
 				break;
-			case 3: BuyAmmo(o); break;
-			case 6:
-				Curse::ClaimRelic(TownOf(a_ref));
-				break;
-			case 5:
-				if (Gun::Reforge()) {
-					Forms::PlayAt(gen::Sound::forge_upgrade, a_ref);
-				}
-				break;
-			default: BuyWall(o); break;
+			default: break;  // (the old ammo caches, wall buys, relic stands and the Atronach Reforge: gone)
 			}
 		}
 	}
@@ -3004,15 +2860,15 @@ namespace bo3z::Shops
 		RollNight();
 		std::vector<std::uint8_t> out(2 + kRollTowns * 2);
 		out[0] = static_cast<std::uint8_t>(g_rollNight & 0xFF), out[1] = static_cast<std::uint8_t>((g_rollNight >> 8) & 0xFF);
-		for (int t = 0; t < kRollTowns; ++t) out[2 + t] = g_spellRolls[t], out[2 + kRollTowns + t] = g_bowRollsT[t];
+		for (int t = 0; t < kRollTowns; ++t) out[2 + t] = g_spellRolls[t], out[2 + kRollTowns + t] = g_classRollsT[t];
 		return out;
 	}
 	void SetRollState(const std::vector<std::uint8_t>& a_s)
 	{
-		g_spellRolls.fill(0), g_bowRollsT.fill(0), g_rollNight = -1;
+		g_spellRolls.fill(0), g_classRollsT.fill(0), g_rollNight = -1;
 		if (a_s.size() != 2 + kRollTowns * 2) return;
 		g_rollNight = a_s[0] | (a_s[1] << 8);
-		for (int t = 0; t < kRollTowns; ++t) g_spellRolls[t] = a_s[2 + t], g_bowRollsT[t] = a_s[2 + kRollTowns + t];
+		for (int t = 0; t < kRollTowns; ++t) g_spellRolls[t] = a_s[2 + t], g_classRollsT[t] = a_s[2 + kRollTowns + t];
 	}
 	void HeardBusy(int a_town, const std::string& a_who, bool a_on)
 	{

@@ -6,8 +6,6 @@ namespace bo3z
 	{
 		std::array<RE::TESBoundObject*, gen::kEnemies.size()>        g_enemies{};
 		std::array<RE::BGSSoundDescriptorForm*, gen::kSounds.size()> g_sounds{};
-		std::array<RE::TESObjectWEAP*, gen::kGuns.size()>            g_guns{};
-		std::array<RE::SpellItem*, gen::kGuns.size()>                g_gunSpells{};
 		std::array<RE::AlchemyItem*, gen::kPerks.size()>             g_potions{};
 		std::array<RE::FormID, gen::kPerks.size()>                   g_effects{};
 		std::array<RE::TESObjectACTI*, gen::kObjects.size()>         g_objects{};
@@ -70,90 +68,6 @@ namespace bo3z
 			auto* m = Lookup(gen::kQ_MQ102Marker);
 			g_riverwood = m ? m->As<RE::TESObjectREFR>() : nullptr;
 
-			int plugin = 0;
-			for (std::size_t i = 0; i < gen::kGuns.size(); ++i) {
-				auto* f = Lookup(gen::kPlugin, gen::kGuns[i].weapId, gen::kGuns[i].id);
-				g_guns[i] = f ? f->As<RE::TESObjectWEAP>() : nullptr;
-				plugin += g_guns[i] != nullptr;
-				if (gen::kGuns[i].handSpell) {
-					auto* sf = Lookup(gen::kPlugin, gen::kGuns[i].handSpell, gen::kGuns[i].id);
-					g_gunSpells[i] = sf ? sf->As<RE::SpellItem>() : nullptr;
-				}
-			}
-			// Wand bolts fly on Skyrim's own projectile records (the ones its spells use with the same model), so
-			// they carry Bethesda's settings for those effects (lights, sizing, particle setup).
-			{
-				std::unordered_map<std::string, RE::BGSProjectile*> byModel;
-				for (auto* pr : RE::TESDataHandler::GetSingleton()->GetFormArray<RE::BGSProjectile>()) {
-					if (!pr || (pr->GetFormID() >> 24) >= 0xFE || !pr->IsMissile()) {
-						continue;
-					}
-					std::string m = pr->GetModel() ? pr->GetModel() : "";
-					std::transform(m.begin(), m.end(), m.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-					if (!m.empty() && !byModel.contains(m)) {
-						byModel[m] = pr;
-					}
-				}
-				std::unordered_set<RE::EffectSetting*> done;
-				for (const auto& g : gen::kGuns) {
-					if (!g.bulletSpell) {
-						continue;
-					}
-					auto* raw = RE::TESDataHandler::GetSingleton()->LookupForm(g.bulletSpell, gen::kPlugin);
-					auto* sp = raw ? raw->As<RE::SpellItem>() : nullptr;
-					auto* e = sp && !sp->effects.empty() && sp->effects[0] ? sp->effects[0]->baseEffect : nullptr;
-					if (!e || !e->data.projectileBase) {
-						logger::warn("forms: {} bolt: spell {:03X} form {} spell {} effects {} effect {} projectile {}", g.id, g.bulletSpell, raw != nullptr, sp != nullptr,
-							sp ? sp->effects.size() : 0, e != nullptr, e && e->data.projectileBase);
-						continue;
-					}
-					// the bolt in flight hums with its own loop (Spec 12.3), whatever projectile carries it; Skyrim's own
-					// flight and fade sounds are taken off (only the mod's library plays)
-					auto fly = [&](RE::BGSProjectile* a_p) {
-						const int gi = static_cast<int>(&g - gen::kGuns.data());
-						if (a_p && gi >= 0 && gi < static_cast<int>(gen::kGunSounds.size())) {
-							const int tr = gen::kGunSounds[gi].travel;
-							a_p->data.activeSoundLoop = tr >= 0 ? Audio::Descriptor(static_cast<gen::Sound>(tr)) : nullptr;
-							a_p->data.countdownSound = nullptr;
-							a_p->data.deactivateSound = nullptr;
-						}
-					};
-					if (done.contains(e)) {
-						continue;
-					}
-					done.insert(e);
-					std::string m = e->data.projectileBase->GetModel() ? e->data.projectileBase->GetModel() : "";
-					std::transform(m.begin(), m.end(), m.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-					if (auto it = byModel.find(m); it != byModel.end()) {
-						logger::info("forms: {} bolt flies on Skyrim's projectile {:08X} ({})", g.id, it->second->GetFormID(), m);
-						e->data.projectileBase = it->second;
-					} else {
-						logger::info("forms: {} bolt keeps our projectile ({}: no vanilla match)", g.id, m);
-					}
-					fly(e->data.projectileBase);
-				}
-			}
-			// Hand spells borrow the look of the vanilla spell they unleash: fire hands for flames, frost for frost...
-			for (std::size_t i = 0; i < gen::kGuns.size(); ++i) {
-				auto* hs = g_gunSpells[i];
-				const int look = gen::kGuns[i].handLook >= 0 ? gen::kGuns[i].handLook : gen::kGuns[i].spell;  // the hands' glow
-				auto* src = look >= 0 ? Spell(look) : nullptr;
-				if (!hs || !src || hs->effects.empty() || src->effects.empty()) {
-					continue;
-				}
-				if (std::any_of(gen::kSpellcraft.begin(), gen::kSpellcraft.end(), [&](const auto& sc) { return sc.id == gen::kGuns[i].id; })) {
-					continue;  // the ten spells wear their own hand glow and light (plugin: fx_<id>_hand / fx_<id>_light)
-				}
-				auto* ours = hs->effects[0]->baseEffect;
-				for (auto* e : src->effects) {
-					if (auto* b = e ? e->baseEffect : nullptr; b && ours && (b->data.castingArt || b->data.light)) {
-						ours->data.castingArt = b->data.castingArt;
-						ours->data.light = b->data.light;
-						ours->data.castingSoundLevel = b->data.castingSoundLevel;
-						break;
-					}
-				}
-			}
 			for (std::size_t i = 0; i < gen::kPerks.size(); ++i) {
 				auto* a = Lookup(gen::kPlugin, gen::kPerks[i].alchId, gen::kPerks[i].id);
 				auto* e = Lookup(gen::kPlugin, gen::kPerks[i].mgefId, gen::kPerks[i].id);
@@ -164,7 +78,8 @@ namespace bo3z
 				auto* f = Lookup(gen::kPlugin, gen::kObjects[i].actiId, gen::kObjects[i].id);
 				g_objects[i] = f ? f->As<RE::TESObjectACTI>() : nullptr;
 			}
-			logger::info("forms: {} of {} guns from {}, intro quest {}, quickstart global {}, Riverwood marker {}", plugin, gen::kGuns.size(), gen::kPlugin,
+			const int plugin = static_cast<int>(std::count_if(g_objects.begin(), g_objects.end(), [](auto* o) { return o != nullptr; }));
+			logger::info("forms: {} of {} objects from {}, intro quest {}, quickstart global {}, Riverwood marker {}", plugin, g_objects.size(), gen::kPlugin,
 				g_intro != nullptr, g_quick != nullptr, g_riverwood != nullptr);
 			if (plugin == 0) {
 				logger::error("{} is not loaded: check Plugins.txt", gen::kPlugin);
@@ -206,17 +121,6 @@ namespace bo3z
 		}
 		RE::TESGlobal*      Quickstart() { return g_quick; }
 		RE::TESObjectREFR*  RiverwoodMarker() { return g_riverwood; }
-		RE::TESObjectWEAP*  Gun(int a_gun) { return a_gun >= 0 && a_gun < static_cast<int>(g_guns.size()) ? g_guns[a_gun] : nullptr; }
-		RE::SpellItem* GunSpell(int a_gun) { return a_gun >= 0 && a_gun < static_cast<int>(g_gunSpells.size()) ? g_gunSpells[a_gun] : nullptr; }
-		int GunIndexOf(const RE::TESForm* a_form)
-		{
-			for (int i = 0; a_form && i < static_cast<int>(g_guns.size()); ++i) {
-				if (g_guns[i] == a_form || (g_gunSpells[i] && g_gunSpells[i] == a_form)) {
-					return i;
-				}
-			}
-			return -1;
-		}
 		RE::AlchemyItem* PerkPotion(int a_perk) { return a_perk >= 0 && a_perk < static_cast<int>(g_potions.size()) ? g_potions[a_perk] : nullptr; }
 		int PerkIndexOfEffect(RE::FormID a_mgef)
 		{
@@ -422,9 +326,6 @@ namespace bo3z
 				if (a_s->OpenRecord('SPLV', 3)) {  // (3: the class pools; older levels are dropped)
 					a_s->WriteRecordData(lv.data(), static_cast<std::uint32_t>(lv.size()));
 				}
-				if (const auto bl = Bows::Levels(); a_s->OpenRecord('BWLV', 1)) {  // the altar's bows: how far each is reforged
-					a_s->WriteRecordData(bl.data(), static_cast<std::uint32_t>(bl.size()));
-				}
 				if (a_s->OpenRecord('CRS2', 1)) {  // (ten rites a city: marks a save made with them)
 					const std::uint32_t one = 1;
 					a_s->WriteRecordData(&one, sizeof(one));
@@ -490,10 +391,6 @@ namespace bo3z
 						std::vector<std::uint8_t> rs(length);
 						a_s->ReadRecordData(rs.data(), length);
 						Shops::SetRollState(rs);
-					} else if (type == 'BWLV' && version == 1) {
-						std::vector<std::uint8_t> bl(length);
-						a_s->ReadRecordData(bl.data(), length);
-						Bows::SetLevels(bl);
 					} else if (type == 'SPLV' && version == 3) {
 						std::vector<std::uint8_t> lv(length);
 						a_s->ReadRecordData(lv.data(), length);
@@ -518,7 +415,7 @@ namespace bo3z
 					Migrate();
 				}
 			}
-			void OnRevert(SKSE::SerializationInterface*) { g_val.fill(0), g_stacks.fill(0), g_stacksLoaded = false, g_stamBonus = 0, g_bond = 0, Arcana::SetLevels({}), Bows::SetLevels({}), Shops::SetRollState({}), Curse::SetMineState({}), Classes::Revert(), Kit::Revert(), Party::OnLoad(); }
+			void OnRevert(SKSE::SerializationInterface*) { g_val.fill(0), g_stacks.fill(0), g_stacksLoaded = false, g_stamBonus = 0, g_bond = 0, Arcana::SetLevels({}), Shops::SetRollState({}), Curse::SetMineState({}), Classes::Revert(), Kit::Revert(), Party::OnLoad(); }
 		}
 
 		void InstallCoSave()
@@ -576,33 +473,10 @@ namespace bo3z
 			}
 			WriteAV(a_av, static_cast<float>(a_value));
 		}
-		static int SlotAV(int a_slot) { return a_slot == 0 ? gen::kAV_slot0 : a_slot == 1 ? gen::kAV_slot1 : gen::kAV_slot2; }
-		int ReserveAV(int a_slot) { return a_slot == 0 ? gen::kAV_reserve0 : a_slot == 1 ? gen::kAV_reserve1 : gen::kAV_reserve2; }
-
-		Slot GetSlot(int a_slot)
-		{
-			const int v = Get(SlotAV(a_slot));
-			Slot      s;
-			s.gun = (((v >> 19) & 0x1F) | (((v >> 11) & 0x3) << 5)) - 1;  // (seven bits: the gun's index past 30 - the staffs - kept two more in the old clip field)
-			s.clip = (v >> 13) & 0x3F;
-			s.reserve = Flag(kFlagReserveV2) ? Get(ReserveAV(a_slot)) : (v & 0x7FF);
-			s.level = Flag(kFlagReserveV2) ? (v & 0x3) : 0;  // v0.4+: the old reserve bits hold the forge level
-			return s;
-		}
-		void SetSlot(int a_slot, const Slot& a_value)
-		{
-			const int v = a_value.gun < 0 ? 0 : (((a_value.gun + 1) & 0x1F) << 19) | ((((a_value.gun + 1) >> 5) & 0x3) << 11) | ((std::clamp(a_value.clip, 0, 63)) << 13) | (Flag(kFlagReserveV2) ? std::clamp(a_value.level, 0, 3) : std::clamp(a_value.reserve, 0, 2047));
-			Set(SlotAV(a_slot), v);
-			if (Flag(kFlagReserveV2)) {
-				Set(ReserveAV(a_slot), std::clamp(a_value.reserve, 0, 9999999));
-			}
-		}
 		int  Flags() { return Get(gen::kAV_flags); }
 		void SetFlags(int a_flags) { Set(gen::kAV_flags, a_flags & 0xFFFFFF); }
 		bool Flag(int a_bit) { return (Flags() >> a_bit) & 1; }
 		void SetFlag(int a_bit, bool a_on) { SetFlags(a_on ? (Flags() | (1 << a_bit)) : (Flags() & ~(1 << a_bit))); }
-		int  Crew() { return ((Flags() >> 1) & 0x7) - 1; }
-		void SetCrew(int a_crew) { SetFlags((Flags() & ~(0x7 << 1)) | (((a_crew + 1) & 0x7) << 1)); }
 		// v0.3 layout: perks moved to bits 14-22 so nine fit (v0.2 kept seven at bits 4-10).
 		// (the class perks: past the nine the flags have room for, a perk lives in the co-save's counts alone)
 		bool PerkBit(int a_perk) { return a_perk >= 0 && a_perk < kOldPerkBits && ((Flags() >> (kPerkShift + a_perk)) & 1); }
@@ -622,8 +496,6 @@ namespace bo3z
 			}
 			return n;
 		}
-		int  ActiveSlot() { return (Flags() >> 12) & 0x3; }
-		void SetActiveSlot(int a_slot) { SetFlags((Flags() & ~(0x3 << 12)) | ((a_slot & 0x3) << 12)); }
 
 		// (only without SKSE's co-save) the old actor values: a snapshot puts them back if they vanish at once
 		namespace
@@ -669,25 +541,15 @@ namespace bo3z
 				Set(gen::kAV_round, 0);
 				Set(gen::kAV_points, gen::kPoints_start);
 				Set(gen::kAV_box, 0);
-				for (int s = 0; s < 3; ++s) {
-					SetSlot(s, {});
-				}
 				SetFlag(kFlagPerksV2, true);
 				logger::info("new BO3 save state: {} points", gen::kPoints_start);
-			}
-			if (!Flag(kFlagReserveV2)) {
-				for (int s = 0; s < 3; ++s) {
-					Set(ReserveAV(s), Get(SlotAV(s)) & 0x7FF);
-				}
-				SetFlag(kFlagReserveV2, true);
-				logger::info("save moved reserve ammo to its own slots");
 			}
 			if (!Flag(kFlagPerksV2)) {
 				const int old = (Flags() >> 4) & 0x7F;
 				SetFlags((Flags() & ~(0x7F << 4)) | (old << kPerkShift) | (1 << kFlagPerksV2));
 				logger::info("save moved to v0.3 perk layout ({:07b})", old);
 			}
-			logger::info("world ready: round {} cleared, {} points, crew {}, perks {:09b}", Get(gen::kAV_round), Get(gen::kAV_points), Crew(), PerkBits());
+			logger::info("world ready: round {} cleared, {} points, perks {:09b}", Get(gen::kAV_round), Get(gen::kAV_points), PerkBits());
 			Perks::RearmAfterLoad();
 			Classes::OnWorldReady();
 			Curse::ForgetPendingLift();
@@ -702,7 +564,6 @@ namespace bo3z
 			if (a_points <= 0) {
 				return;
 			}
-			a_points = static_cast<int>(a_points * PowerUps::PointsMult());
 			// (Noah: too many septims) every earning - kills, trials, rounds, the altars - pays 80%; the fractions carry over
 			static float carry = 0;
 			const float  paid = a_points * 0.8f + carry;

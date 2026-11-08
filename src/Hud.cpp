@@ -42,10 +42,8 @@ namespace bo3z
 		ID3D11DeviceContext* g_context = nullptr;
 		ImFont*              g_font = nullptr;
 		std::array<ID3D11ShaderResourceView*, gen::kPerks.size()> g_perkIcons{};
-		std::array<ID3D11ShaderResourceView*, gen::kGuns.size()>  g_weaponIcons{};
 		std::array<ID3D11ShaderResourceView*, 8>                  g_elementIcons{};  // the Coffer spells' element emblems (el_<element>.png)
 		std::array<std::array<ID3D11ShaderResourceView*, 8>, 5>   g_schoolIcons{};
-		std::array<ID3D11ShaderResourceView*, 16>                 g_bowIcons{};      // the altar's bows: their archery emblem in the element's colour (bw_<element>.png)   // ...their school's sigil in the element's colour (sc_<school>_<element>.png)
 		ID3D11ShaderResourceView* g_menuBg = nullptr;   // the main menu's backdrop (tools/cover.py, MENU=1)
 		ID3D11ShaderResourceView* g_menuFog = nullptr;  // a tileable fog layer that drifts over it
 		ID3D11ShaderResourceView* g_mapIcons = nullptr;  // the world map's marker icons, an 8x8 atlas (tools/mapicons.py)
@@ -291,22 +289,19 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		{
 			TxtGold(dl, f, px, { cx - Measure(f, px, s).x * 0.5f, y }, s, al);
 		}
-		bool Legendary(int id) { return id >= Arcana::kIdBase && id < Bows::kIdBase && Arcana::TierOf(id - Arcana::kIdBase) >= 3; }
+		bool Legendary(int id) { return id >= Arcana::kIdBase && Arcana::TierOf(id - Arcana::kIdBase) >= 3; }
 
 		// Panel: a smoky black field in an iron-and-bronze frame with Nordic corner brackets (nine-slice of
 		// frame.png: 80px corners of 256), or, without the art, dark glass with gold ticks.
 		// A spell's emblem (256x256 medallion, rim at 104/128 of its half-width) wrapped in its living aura: the flame
 		// ring (rim at 0.62 of the frame's half-width) tinted with the spell's colour, a hotter inner pass in its accent,
 		// 16 frames a second; then the medallion on top. R is the medallion's rim radius on screen.
-		// what a HUD id names: a weapon (0..), or one of the Coffer's spells (Arcana::kIdBase + its index)
-		std::string ArmsName(int id) { return id >= Bows::kIdBase ? std::string(Bows::Name(id - Bows::kIdBase)) : id >= Arcana::kIdBase ? std::string(Arcana::Name(id - Arcana::kIdBase)) : id >= 0 && id < static_cast<int>(gen::kGuns.size()) ? std::string(gen::kGuns[id].label) : std::string(); }
-		// what kind it is, under its name on the roll: "Fire  -  Destruction" for a spell, "Fire Bow" for a bow
+		// what a HUD id names: one of the Coffer's spells (Arcana::kIdBase + its index)
+		std::string ArmsName(int id) { return id >= Arcana::kIdBase ? std::string(Arcana::Name(id - Arcana::kIdBase)) : std::string(); }
+		// what kind it is, under its name on the roll: "Fire  -  Destruction"
 		std::string ArmsType(int id)
 		{
 			const auto cap = [](std::string_view v) { std::string o(v); if (!o.empty()) o[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(o[0]))); return o; };
-			if (id >= Bows::kIdBase) {
-				return cap(Bows::Element(id - Bows::kIdBase)) + " Bow";
-			}
 			if (id >= Arcana::kIdBase) {
 				static constexpr std::array<std::string_view, 5> kSchool{ "Destruction", "Conjuration", "Restoration", "Alteration", "Illusion" };
 				const int i = id - Arcana::kIdBase;
@@ -314,7 +309,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			return {};
 		}
-		std::uint32_t ArmsColor(int id) { return id >= Bows::kIdBase ? Bows::Color(id - Bows::kIdBase) : id >= Arcana::kIdBase ? Arcana::ElementColor(Arcana::ElementOf(id - Arcana::kIdBase)) : id >= 0 && id < static_cast<int>(gen::kGuns.size()) ? gen::kGuns[id].color : 0xC8A060; }
+		std::uint32_t ArmsColor(int id) { return id >= Arcana::kIdBase ? Arcana::ElementColor(Arcana::ElementOf(id - Arcana::kIdBase)) : 0xC8A060; }
 
 		struct OrbTex { ID3D11ShaderResourceView* crystal[4]; ID3D11ShaderResourceView* soft; };
 		OrbTex MenuOrbTextures();  // (the menu's heart stone renders and soft light, defined with them below)
@@ -322,40 +317,21 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		{
 			ID3D11ShaderResourceView* iconTex = nullptr;
 			std::uint32_t             col = 0, acc = 0xFFFFFF;
-			if (gun >= Bows::kIdBase) {  // one of the altar's bows: the archery emblem in its element's colour
-				const int b = gun - Bows::kIdBase;
-				col = Bows::Color(b);
-				acc = ((std::min(255u, ((col >> 16) & 0xFF) + 90)) << 16) | ((std::min(255u, ((col >> 8) & 0xFF) + 90)) << 8) | std::min(255u, (col & 0xFF) + 90);
-				iconTex = b >= 0 && b < static_cast<int>(g_bowIcons.size()) ? g_bowIcons[b] : nullptr;
-			} else if (gun >= Arcana::kIdBase) {  // a Coffer spell: its element's emblem
+			if (gun >= Arcana::kIdBase) {  // a Coffer spell: its element's emblem
 				const int el = Arcana::ElementOf(gun - Arcana::kIdBase);
 				col = Arcana::ElementColor(el);
 				acc = ((std::min(255u, ((col >> 16) & 0xFF) + 90)) << 16) | ((std::min(255u, ((col >> 8) & 0xFF) + 90)) << 8) | std::min(255u, (col & 0xFF) + 90);
 				const int sc = std::clamp(Arcana::SchoolOf(gun - Arcana::kIdBase), 0, 4);
 				iconTex = el >= 0 && el < 8 ? (g_schoolIcons[sc][el] ? g_schoolIcons[sc][el] : g_elementIcons[el]) : nullptr;  // (Noah: the school, not the element)
 			} else {
-				if (gun < 0 || gun >= static_cast<int>(gen::kGuns.size())) {
-					return;
-				}
-				col = gen::kGuns[gun].color;
-				for (const auto& sc : gen::kSpellcraft) {
-					if (sc.id == gen::kGuns[gun].id) {
-						col = sc.color, acc = sc.accent;
-					}
-				}
-				iconTex = g_weaponIcons[gun];
+				return;
 			}
 			const auto rgb = [](std::uint32_t v, float a) { return IM_COL32((v >> 16) & 0xFF, (v >> 8) & 0xFF, v & 0xFF, static_cast<int>(255 * std::clamp(a, 0.0f, 1.0f))); };
 			// A Coffer spell's emblem shows how far it is reforged: unforged, the bare medallion (no flame, no glow); once, its
 			// flame; twice, a brighter, faster flame in a glow; three times (the last), all of that with a ring of runes
 			// turning round it and sparks circling, the whole emblem breathing.
 			int forge = 1;
-			if (gun >= Bows::kIdBase) {
-				forge = std::clamp(Bows::Level(gun - Bows::kIdBase), 0, 3);
-				if (forge == 0) {
-					flame = 0.0f;
-				}
-			} else if (gun >= Arcana::kIdBase) {
+			if (gun >= Arcana::kIdBase) {
 				forge = std::clamp(Arcana::Level(gun - Arcana::kIdBase), 0, 3);
 				if (forge == 0) {
 					flame = 0.0f;
@@ -1188,24 +1164,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const std::string t = s.sayWho.empty() ? s.sayLine : s.sayWho + ":  " + s.sayLine;
 				TxtC(dl, g_body, 22 * k, size.x * 0.5f, size.y * 0.78f, Fade(IM_COL32(240, 236, 226, 255), a), t, 1.5f * k, Fade(IM_COL32(0, 0, 0, 255), 0.6f * a));
 			}
-			if (s.deathT < 0.0f) {
-				// (Noah's power-ups) what's running, over the bars: its name and the seconds left, blinking in the last five
-				static constexpr const char* kPu[8] = { "", "DOUBLE ESSENCE", "", "MERCHANT'S BLESSING", "", "SHADOW OF NOCTURNAL", "THU'UM UNBOUND", "" };
-				static constexpr ImU32 kPuCol[8] = { 0, IM_COL32(255, 205, 70, 255), 0, IM_COL32(190, 120, 255, 255), 0, IM_COL32(170, 110, 240, 255), IM_COL32(210, 235, 255, 255), 0 };
-				float py = size.y - 150 * k;
-				for (int i = 0; i < 8; ++i) {
-					const float left = s.puLeft[i];
-					if (left <= 0 || !kPu[i][0]) continue;
-					if (left < 5.0f && std::fmod(left, 0.5f) < 0.18f) { py -= 26 * k; continue; }
-					TxtC(dl, g_title, 20 * k, size.x * 0.5f, py, kPuCol[i], fmt::format("{}  {}", kPu[i], static_cast<int>(std::ceil(left))), 2 * k, Fade(kPuCol[i], 0.5f));
-					py -= 26 * k;
-				}
-				// (the Ranger's special ammo, loaded) beside the quiver
-				if (s.specialKind >= 0 && s.specialLeft > 0) {
-					const std::string t = fmt::format("{} x{}", Upper(std::string(Bows::SpecialName(s.specialKind))), s.specialLeft);
-					Txt(dl, g_title, 18 * k, { size.x - 210 * k - Measure(g_title, 18 * k, t).x, size.y - 92 * k }, IM_COL32(255, 220, 140, 240), t, 1.5f * k, Fade(kGold, 0.5f));
-				}
-			}
 			if (s.deathT >= 0.0f) {  // (you fell: the fall's screen over everything)
 				DrawDeath(dl, s, size, k, now);
 				return;
@@ -1618,9 +1576,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				dl->AddRectFilledMultiColor({ 0, 0 }, { w, size.y }, e, z, z, e);
 				dl->AddRectFilledMultiColor({ size.x - w, 0 }, size, z, e, e, z);
 			}
-			if (s.nukeFlash > 0) {
-				dl->AddRectFilled({ 0, 0 }, size, IM_COL32(255, 250, 235, static_cast<int>(230 * std::min(1.0f, s.nukeFlash))));
-			}
 
 			// A freed shrine's wave: golden rings rolling out from it across the screen, a soft gold wash as it passes.
 			if (s.pulseOn && s.pulseT > 0) {
@@ -1875,10 +1830,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					dl->AddCircleFilled(p, r, IM_COL32(205, 175, 255, 235), 16);
 					dl->AddCircleFilled(p, r * 0.45f, IM_COL32(245, 250, 255, 255), 10);
 				}
-				if (s.crew >= 0 && s.crew < static_cast<int>(gen::kCrew.size())) {
-					const std::string c(gen::kCrew[s.crew].label);
-					Txt(dl, g_body, 13 * k, { coin.x + cr + 22 * k + numW, coin.y - 8 * k }, IM_COL32(190, 190, 190, 200), c);
-				}
 				if (s.gainTime > 0) {
 					const std::string g = (s.lastGain > 0 ? "+" : "") + std::to_string(s.lastGain);
 					const float       rise = (1.0f - s.gainTime) * 22 * k;
@@ -2083,7 +2034,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			const bool spellHands = s.handSpell[0] >= 0 || s.handSpell[1] >= 0;
 			if (!Hud::kEdgeHud && spellHands) {
 				static float shownS = 0;
-				shownS += ((s.gunOut ? 1.0f : 0.6f) - shownS) * std::min(1.0f, dt * 8);
+				shownS += (0.6f - shownS) * std::min(1.0f, dt * 8);
 				const float al = shownS;
 				// (Noah: cleaner and simpler) one slim card per hand: the element's emblem at the left, the spell's name,
 				// and its real magicka cost as a pip - nothing else
@@ -2132,33 +2083,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				card(s.handSpell[mainHand], s.handCost[mainHand], a, b, true, mainHand == 1 ? "RIGHT HAND" : "LEFT HAND");
 				if (s.handSpell[1] >= 0 && s.handSpell[0] >= 0) {
 					card(s.handSpell[0], s.handCost[0], { a.x, a.y - 60 * k }, { b.x, b.y - 60 * k }, true, "LEFT HAND");
-				}
-			}
-			// The altar's bow in hand: its card in the dock (its emblem aflame with its reforging, its name), and while it
-			// is drawn a thin ring round the crosshair filling in the element's colour, bright when the draw is full
-			if (!Hud::kEdgeHud && s.bowHeld >= 0 && !spellHands) {
-				const int    id = Bows::kIdBase + s.bowHeld;
-				const auto   bc = ArmsColor(id);
-				const ImU32  ecol = IM_COL32((bc >> 16) & 0xFF, (bc >> 8) & 0xFF, bc & 0xFF, 255);
-				const ImVec2 a{ size.x - 400 * k, size.y - 158 * k }, b{ size.x - 40 * k, size.y - 106 * k };
-				const float  rr = (b.y - a.y) * 0.5f;
-				dl->AddRectFilled(a, b, IM_COL32(8, 8, 10, 175), rr);
-				dl->AddRect(a, b, Fade(ecol, 0.55f), rr, 0, 1.2f * k);
-				DrawEmblem(dl, id, { a.x + rr, (a.y + b.y) * 0.5f }, rr - 6 * k, 1.0f, now, 0.9f);
-				Txt(dl, g_body, 12 * k, { a.x + rr * 2 + 6 * k, a.y + 7 * k }, Fade(ecol, 0.9f), "BOW");
-				Txt(dl, g_title, 22 * k, { a.x + rr * 2 + 6 * k, a.y + 22 * k }, kParch, ArmsName(id));
-				const std::string tier(Bows::TierName(s.bowHeld, Bows::Level(s.bowHeld)));
-				Txt(dl, g_body, 12 * k, { b.x - 18 * k - Measure(g_body, 12 * k, tier).x, a.y + 7 * k }, Fade(ecol, 0.9f), tier);
-				constexpr bool kDrawRing = false;  // (Noah: only the white dot at the crosshair)
-				if (kDrawRing && s.bowDraw > 0.02f) {
-					const ImVec2 cc{ size.x * 0.5f, size.y * 0.5f };
-					const float  R = 30 * k, a0 = -RE::NI_PI / 2, a1 = a0 + 2 * RE::NI_PI * std::clamp(s.bowDraw, 0.0f, 1.0f);
-					const bool   full = s.bowDraw >= 0.98f;
-					dl->AddCircle(cc, R, IM_COL32(20, 16, 12, 120), 96, 3 * k);
-					dl->PathArcTo(cc, R, a0, a1, 96);
-					dl->PathStroke(Fade(ecol, full ? 0.25f : 0.12f), 0, 9 * k);
-					dl->PathArcTo(cc, R, a0, a1, 96);
-					dl->PathStroke(full ? IM_COL32(255, 250, 235, 255) : Fade(ecol, 0.9f), 0, 2.2f * k);
 				}
 			}
 			// Shout card, bottom-right under the spell / weapon dock (Noah: Nordic) - a carved iron plate cut at the corners
@@ -2261,7 +2185,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// (Noah: Skyrim's own and other mods' weapons and spells too) what is in your hands when it is not the altar's: a
 			// slim card per hand in the same style - a drawn glyph of its kind, the hand, its name, and its damage (gold),
 			// armour (grey) or magicka cost (blue)
-			const bool skyHands = !spellHands && s.bowHeld < 0 && (s.skyKind[0] > 0 || s.skyKind[1] > 0);
+			const bool skyHands = !spellHands && (s.skyKind[0] > 0 || s.skyKind[1] > 0);
 			if (!Hud::kEdgeHud && skyHands) {
 				const auto card = [&](int i, ImVec2 a, ImVec2 b) {
 					const std::uint32_t c = s.skyColor[i];
@@ -2329,97 +2253,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				card(main, a, b);
 				if (main == 1 && s.skyKind[0] > 0) {
 					card(0, { a.x, a.y - 60 * k }, { b.x, b.y - 60 * k });
-				}
-			}
-			// Weapon dock, bottom-right: the weapon in hand as a large card (its picture, Reforge marks, ability and
-			// signature move), the other slots as small cards above it with their keys. Dimmed while sheathed.
-			// (Noah: the old dock drew over the new cards) the night's weapon in hand is one slim card like the others: its
-			// emblem aflame, the slot and its reforging, its name, and what it runs on - never while a bow is held
-			if (!Hud::kEdgeHud && !spellHands && !skyHands && s.bowHeld < 0) {
-				const bool any = std::any_of(s.slotGun.begin(), s.slotGun.begin() + std::clamp(s.slotCount, 0, 3), [](int g) { return g >= 0; });
-				static float shown = 0;
-				shown += ((s.gunOut ? 1.0f : 0.6f) - shown) * std::min(1.0f, dt * 8);
-				const int act = s.activeSlot >= 0 && s.activeSlot < s.slotCount ? s.activeSlot : -1;
-				const int ag = act >= 0 ? s.slotGun[act] : -1;
-				if (any && ag >= 0) {
-					const float         al = shown;
-					const ImVec2        a{ size.x - 400 * k, size.y - 158 * k }, b{ size.x - 40 * k, size.y - 106 * k };
-					const float         rr = (b.y - a.y) * 0.5f;
-					const std::uint32_t ec = gen::kGuns[ag].color;
-					const ImU32         ecol = IM_COL32((ec >> 16) & 0xFF, (ec >> 8) & 0xFF, ec & 0xFF, 255);
-					const int           lvl = std::clamp(s.slotLevel[act], 0, 3);
-					const auto          fc = gen::kForgeColor[lvl];
-					const ImU32         nameCol = lvl > 0 ? IM_COL32((fc >> 24) & 0xFF, (fc >> 16) & 0xFF, (fc >> 8) & 0xFF, 255) : kParch;
-					dl->AddRectFilled(a, b, IM_COL32(8, 8, 10, static_cast<int>(175 * al)), rr);
-					dl->AddRect(a, b, Fade(ecol, 0.55f * al), rr, 0, 1.2f * k);
-					DrawEmblem(dl, ag, { a.x + rr, (a.y + b.y) * 0.5f }, rr - 6 * k, al, now, 0.9f);
-					// right: what it runs on - a mana pip, or the endless mark
-					float textR = b.x - 14 * k;
-					{
-						const bool        endless = s.gunKind == 0 || s.gunKind == 3 || !s.gunOut;
-						const std::string vs = endless ? std::string("\xE2\x88\x9E") : std::to_string(static_cast<int>(std::ceil(s.manaCost)));
-						const float       cz = (endless ? 22 : 18) * k;
-						const auto        cm = Measure(g_num, cz, vs);
-						const ImVec2      p1{ b.x - 10 * k, (a.y + b.y) * 0.5f + cm.y * 0.5f + 3 * k }, p0{ p1.x - cm.x - 16 * k, p1.y - cm.y - 6 * k };
-						const ImU32       pc = endless ? IM_COL32(70, 62, 48, static_cast<int>(200 * al)) : s.mp >= s.manaCost ? IM_COL32(40, 70, 130, static_cast<int>(200 * al)) : IM_COL32(120, 30, 26, static_cast<int>(210 * al));
-						dl->AddRectFilled(p0, p1, pc, (p1.y - p0.y) * 0.5f);
-						Txt(dl, g_num, cz, { p0.x + 8 * k, p0.y + 3 * k }, Fade(IM_COL32(240, 236, 226, 255), al), vs);
-						textR = p0.x - 10 * k;
-					}
-					const float x0 = a.x + rr * 2 + 6 * k;
-					dl->PushClipRect(a, { textR, b.y }, true);
-					const std::string head = "SLOT " + std::to_string(act + 1) + "  " + (lvl >= 3 ? "ASCENDANT" : lvl > 0 ? "REFORGED " + std::string(lvl == 1 ? "I" : "II") : "");
-					Txt(dl, g_body, 12 * k, { x0, a.y + 7 * k }, Fade(ecol, 0.9f * al), head);
-					const std::string nm(gen::kGuns[ag].label);
-					float             nameSize = 22 * k;
-					while (nameSize > 11 * k && x0 + Measure(g_title, nameSize, nm).x > textR) {
-						nameSize -= 1 * k;
-					}
-					Txt(dl, g_title, nameSize, { x0, a.y + 22 * k }, Fade(nameCol, al), nm);
-					dl->PopClipRect();
-					if (s.slotCount > 1) {
-						const std::string hint = "G  next weapon";
-						Txt(dl, g_body, 12 * k, { b.x - Measure(g_body, 12 * k, hint).x - 10 * k, a.y - 18 * k }, Fade(IM_COL32(180, 172, 156, 200), al), hint);
-					}
-				}
-			}
-			if (s.gunOut) {
-				// power-ups running (BO3 style, bottom centre): name and seconds left, blinking near the end
-				{
-					struct PU { const char* name; float t; ImU32 col; } pus[] = { { "INSTA-KILL", s.puInsta, IM_COL32(255, 70, 60, 255) },
-						{ "DOUBLE POINTS", s.puDouble, IM_COL32(255, 210, 80, 255) }, { "FIRE SALE", s.puFireSale, IM_COL32(190, 120, 255, 255) } };
-					float y = size.y - 150 * k;
-					for (auto& pu : pus) {
-						if (pu.t <= 0 || (pu.t < 5 && std::fmod(now, 0.5f) < 0.2f)) {
-							continue;
-						}
-						// a dark pill in the power-up's colour, its seconds draining along the bottom
-						const std::string txt = pu.name;
-						const std::string sec = std::to_string(static_cast<int>(std::ceil(pu.t)));
-						const auto        ts = Measure(g_title, 20 * k, txt);
-						const float       w = ts.x + 90 * k, x0 = size.x * 0.5f - w * 0.5f;
-						dl->AddRectFilled({ x0, y - 4 * k }, { x0 + w, y + 30 * k }, IM_COL32(8, 8, 10, 190), 15 * k);
-						dl->AddRect({ x0, y - 4 * k }, { x0 + w, y + 30 * k }, Fade(pu.col, 0.8f), 15 * k, 0, 1.5f * k);
-						dl->AddRectFilled({ x0 + 14 * k, y + 25 * k }, { x0 + 14 * k + (w - 28 * k) * std::clamp(pu.t / 45.0f, 0.0f, 1.0f), y + 27 * k }, pu.col);
-						Txt(dl, g_title, 20 * k, { x0 + 18 * k, y }, pu.col, txt, 1.5f * k, pu.col);
-						Txt(dl, g_num, 20 * k, { x0 + w - 18 * k - Measure(g_num, 20 * k, sec).x, y }, kParch, sec);
-						y -= 40 * k;
-					}
-				}
-				// (no charge ring: a full charge shows in the spell itself, which pulses and flashes in the hands)
-				// crosshair: four ticks that tighten when aiming, a dot at full aim (Noah: "remove the crosshair" - off)
-				constexpr bool kCrosshairTicks = false;
-				const ImVec2 c{ size.x * 0.5f, size.y * 0.5f };
-				if (!kCrosshairTicks) {
-				} else if (s.ads < 0.95f) {
-					const float g = 10 * k * (1.0f - s.ads * 0.6f), l = 8 * k;
-					const ImU32 col = IM_COL32(255, 245, 225, static_cast<int>(220 * (1.0f - s.ads)));
-					dl->AddLine({ c.x - g - l, c.y }, { c.x - g, c.y }, col, 2 * k);
-					dl->AddLine({ c.x + g, c.y }, { c.x + g + l, c.y }, col, 2 * k);
-					dl->AddLine({ c.x, c.y - g - l }, { c.x, c.y - g }, col, 2 * k);
-					dl->AddLine({ c.x, c.y + g }, { c.x, c.y + g + l }, col, 2 * k);
-				} else {
-					dl->AddCircleFilled(c, 2.5f * k, IM_COL32(255, 80, 60, 230));
 				}
 			}
 			if (s.hitTime > 0) {
@@ -2610,21 +2443,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				dl->AddRectFilled({ cxs - bw * 0.5f, y0 + 52 * k }, { cxs + bw * 0.5f, y0 + 55 * k }, IM_COL32(20, 16, 12, 170));
 				dl->AddRectFilled({ cxs - bw * 0.5f, y0 + 52 * k }, { cxs - bw * 0.5f + bw * fr, y0 + 55 * k }, IM_COL32(214, 178, 96, 255));
 			}
-			// (Noah: seamless on a controller) the mod weapon's own controls, the first few times one comes out each session
-			{
-				static bool  wasOut = false;
-				static int   told = 0;
-				static float hintT = 0;
-				if (s.gunOut && !wasOut && told < 3) ++told, hintT = 7.0f;
-				wasOut = s.gunOut;
-				if (hintT > 0 && s.gunOut) {
-					hintT -= dt;
-					const float a = std::clamp(hintT / 1.0f, 0.0f, 1.0f);
-					const std::string t = g_padLast ? std::string("D-pad right  next weapon (hold: put away)     D-pad down  knife     tap ") + Hud::PadWord("LB") + "  dodge"
-					                                : std::string("G  next weapon (hold: put away)     V  knife     Left Alt  dodge");
-					TxtC(dl, g_body, 17 * k, size.x * 0.5f, size.y - 118 * k, Fade(IM_COL32(230, 220, 200, 235), a), t, 1.2f * k, Fade(IM_COL32(0, 0, 0, 220), a));
-				}
-			}
 			// (Noah: the Helgen skip never showed) its standing line at the foot of the screen, a gold bar filling as it is held
 			if (s.skipHint) {
 				const std::string t = g_padLast ? "Hold " + Hud::PadWord("A") + " to skip Helgen" : std::string("Hold H to skip Helgen");
@@ -2690,11 +2508,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					dl->AddCircleFilled(head, 2.2f * k, IM_COL32(255, 255, 240, 255), 16);
 					TxtC(dl, g_title, 20 * k, cc.x, cc.y + R + 14 * k, IM_COL32(255, 214, 140, 255), "KINDLING THE WARD-FIRE", 2 * k, IM_COL32(255, 140, 30, 255));
 				}
-			}
-			// Nuke: the dead regroup.
-			if (s.nukeLeft > 0.05f && (s.nukeLeft > 5 || std::fmod(now, 0.5f) >= 0.2f)) {
-				const std::string txt = "NUKE  -  THE DEAD REGROUP  " + std::to_string(static_cast<int>(std::ceil(s.nukeLeft)));
-				TxtC(dl, g_body, 22 * k, size.x * 0.5f, size.y - 236 * k, IM_COL32(255, 160, 60, 255), txt);
 			}
 			// (the Banner and the Lore card: drawn last, over every panel - DrawMessages)
 
@@ -3103,7 +2916,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const float  R = std::clamp(110.0f * 420.0f / std::max(200.0f, s.rollDist), 26.0f, 110.0f) * k;
 				const float  nameH = std::clamp(R / k * 0.30f, 22.0f, 34.0f) * k, typeH = nameH * 0.56f;
 				const float  cy = c.y + R * 1.1f;  // under the stone, clear of the beams
-				const int    base = s.rollBow ? Bows::kIdBase : Arcana::kIdBase;
+				const int    base = Arcana::kIdBase;
 				if (s.rollPhase == 2 && s.rollTarget >= 0) {
 					// a slot reel: the name in front with its kind under it, the ones before and after sliding past above and
 					// below, fading out
@@ -3114,7 +2927,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						// (the reel's own list, copied over with the HUD's state - never read from the altar's while it changes)
 						const int   rid = [&] {
 							const bool list = !s.rollReel.empty();
-							const int  n = std::max(1, list ? static_cast<int>(s.rollReel.size()) : s.rollBow ? Bows::Count() : Arcana::Count());
+							const int  n = std::max(1, list ? static_cast<int>(s.rollReel.size()) : Arcana::Count());
 							const int  i = (list ? s.rollReelAt : s.rollTarget) - Shops::kReelPass + static_cast<int>(std::floor(pos)) + jj;
 							const int  w = ((i % n) + n) % n;
 							return list ? s.rollReel[w] : w;
@@ -3142,7 +2955,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				} else if (s.rollPhase == 3 && s.rollGun >= 0) {
 					const float since = s.rollT * gen::kShowOffer, in = std::min(1.0f, since / 0.35f);
 					const ImU32 ec = s.rollPrize.empty() ? spellCol(s.rollGun, 1.0f) : kGold;
-					const bool  legend = s.rollPrize.empty() ? (s.rollGun >= Arcana::kIdBase && s.rollGun < Bows::kIdBase && Arcana::TierOf(s.rollGun - Arcana::kIdBase) >= 3) : s.rollPrizeLegend;
+					const bool  legend = s.rollPrize.empty() ? (s.rollGun >= Arcana::kIdBase && Arcana::TierOf(s.rollGun - Arcana::kIdBase) >= 3) : s.rollPrizeLegend;
 					const float y = cy - (nameH + typeH) * 0.5f;
 					const std::string rollName = s.rollPrize.empty() ? ArmsName(s.rollGun) : s.rollPrize, rollType = s.rollPrize.empty() ? ArmsType(s.rollGun) : (s.rollReelKind.empty() ? std::string("From the altar") : s.rollReelKind);
 					if (legend) {
@@ -3311,8 +3124,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					Divider(dl, cx, y, w * 0.30f, k, 0.6f);
 					y += 14 * k;
 				}
-				// (Noah, the altar rework) your kit - each item, its tier stars, its next upgrade and price - then the Armory,
-				// the Infusion roll and a Dragon Priest's relic
+				// (Noah, the altar rework) your kit - each item, its tier stars, its next upgrade and price - then the Armory
 				if (altarCls >= 0) {
 					auto stars = [&](float sx, float sy, int a_tier, int a_asc, ImU32 col) {
 						for (int q = 0; q < 3; ++q) {
@@ -3322,14 +3134,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						if (a_asc > 0) Txt(dl, g_body, 14 * k, { sx + 48 * k, sy - 9 * k }, kGold, "+" + std::to_string(a_asc));
 					};
 					auto rgb = [](std::uint32_t c, int a) { return IM_COL32((c >> 16) & 255, (c >> 8) & 255, c & 255, a); };
-					// a Dragon Priest's relic: it waits at the top, never inside a section
-					if (s.relicTokens > 0) {
-						focusRow(33, y - 6 * k, y + 56 * k);
-						bullet({ L, y + 2 * k }, 33, true);
-						TxtGold(dl, g_title, 19 * k, { L + 36 * k, y + 3 * k }, s.relicTokens > 1 ? fmt::format("A DRAGON PRIEST'S RELIC  ({} waiting)", s.relicTokens) : std::string("A DRAGON PRIEST'S RELIC"));
-						Txt(dl, g_body, 16 * k, { L + 36 * k, y + 30 * k }, kGold, s.relicA + "  -  " + s.relicDescA);
-						y += 62 * k;
-					}
 					int ready = 0;
 					for (const auto& l : s.kitLines) ready += l.can ? 1 : 0;
 					std::string kitSum = fmt::format("{} items", s.kitLines.size()) + (ready ? fmt::format("  -  {} to upgrade", ready) : std::string());
@@ -3339,8 +3143,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 							focusRow(l.id, y - 6 * k, y + 52 * k);
 							bullet({ L, y + 2 * k }, l.id, l.can);
 							const ImU32 col = rgb(l.color, 255);
-							Txt(dl, g_title, 19 * k, { L + 36 * k, y + 3 * k }, l.carried ? kParch : IM_COL32(170, 160, 140, 230), Upper(l.name) + (l.relic ? "  (RELIC)" : ""));
-							stars(L + 36 * k + Measure(g_title, 19 * k, Upper(l.name) + (l.relic ? "  (RELIC)" : "")).x + 16 * k, y + 14 * k, l.tier, l.asc, col);
+							Txt(dl, g_title, 19 * k, { L + 36 * k, y + 3 * k }, l.carried ? kParch : IM_COL32(170, 160, 140, 230), Upper(l.name));
+							stars(L + 36 * k + Measure(g_title, 19 * k, Upper(l.name)).x + 16 * k, y + 14 * k, l.tier, l.asc, col);
 							Txt(dl, g_body, 15 * k, { L + 36 * k, y + 29 * k }, IM_COL32(196, 182, 160, 235), l.info);
 							if (l.cost > 0) price(y + 2 * k, l.cost, l.can);
 							y += 56 * k;
@@ -5721,18 +5525,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					++icons;
 				}
 			}
-			int wicons = 0;
-			for (std::size_t i = 0; i < gen::kGuns.size(); ++i) {
-				const auto path = L"Data\\Interface\\CurseOfAlduin\\w_" + std::wstring(gen::kGuns[i].id.begin(), gen::kGuns[i].id.end()) + L".png";
-				if (SUCCEEDED(DirectX::CreateWICTextureFromFile(g_device, path.c_str(), nullptr, &g_weaponIcons[i]))) {
-					++wicons;
-				}
-			}
-			for (int b = 0; b < Bows::Count() && b < static_cast<int>(g_bowIcons.size()); ++b) {  // the altar's bows' emblems
-				const std::string_view el = Bows::Element(b);
-				const auto path = L"Data\\Interface\\CurseOfAlduin\\bw_" + std::wstring(el.begin(), el.end()) + L".png";
-				DirectX::CreateWICTextureFromFile(g_device, path.c_str(), nullptr, &g_bowIcons[b]);
-			}
 			for (int e = 0; e < 8; ++e) {
 				const std::string_view n = Arcana::ElementName(e);
 				const auto path = L"Data\\Interface\\CurseOfAlduin\\el_" + std::wstring(n.begin(), n.end()) + L".png";
@@ -5777,7 +5569,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\bloodmoon.png", nullptr, &g_moon);
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\divider.png", nullptr, &g_divider);
 			g_init = true;
-			logger::info("hud: ready ({} perk icons, {} weapon icons, menu art {})", icons, wicons, bg);
+			logger::info("hud: ready ({} perk icons, menu art {})", icons, bg);
 			return true;
 		}
 
@@ -6185,7 +5977,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				g_state.hurtTime = std::max(0.0f, g_state.hurtTime - dt);
 				g_state.revealTime = std::max(0.0f, g_state.revealTime - dt);
 				g_state.questNoteTime = std::max(0.0f, g_state.questNoteTime - dt);
-				g_state.nukeFlash = std::max(0.0f, g_state.nukeFlash - dt * 1.25f);
 				for (auto& m : g_state.motes) m[2] += dt;
 				std::erase_if(g_state.motes, [](const auto& m) { return m[2] >= 0.75f; });
 				s = g_state;
@@ -6345,7 +6136,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// (Noah: "only hide my gameplay HUD - keep my inventory HUDs available ... also keep the Echo Altar UI") filming
 			// mode hides the bars, the feed, the compass and Skyrim's own HUD - never a screen you work in: the Echo Altar, the
 			// High Hrothgar menu, the rest screen, the class and crew screens
-			const bool keepUi = s.perkMenu || s.hallMenu || s.crewScreen || Classes::Open() || Director::RestOpen();
+			const bool keepUi = s.perkMenu || s.hallMenu || Classes::Open() || Director::RestOpen();
 			if (static bool was = false; was != DevTools::HudOff()) {
 				was = DevTools::HudOff();
 				if (auto hud = uiM ? uiM->GetMenu(RE::HUDMenu::MENU_NAME) : nullptr; hud && hud->uiMovie) hud->uiMovie->SetVisible(!was);
@@ -6484,12 +6275,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						}
 					}
 				}
-				// (Noah: "I can still see a quiver count on the bottom right when these weapons don't have one") with one of our
-				// bows or crossbows in hand (they never run dry) Skyrim's arrow count is hidden; any other bow shows it
-				if (auto hud = uiM ? uiM->GetMenu(RE::HUDMenu::MENU_NAME) : nullptr; hud && hud->uiMovie) {
-					const bool ours = Bows::OursInHand();
-					hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.ArrowInfoInstance._alpha", RE::GFxValue(ours ? 0.0 : 100.0));
-				}
 				// Skyrim's enemy bar under the compass gives way to ours over each foe
 				if (static int vb = 0; vb++ % 15 == 0) {
 					if (auto hud = uiM ? uiM->GetMenu(RE::HUDMenu::MENU_NAME) : nullptr; hud && hud->uiMovie) {
@@ -6521,9 +6306,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 							hud->uiMovie->SetVariable((std::string(v) + "._alpha").c_str(), RE::GFxValue(0.0));
 							hud->uiMovie->SetVariable((std::string(v) + "._visible").c_str(), RE::GFxValue(false));
 						}
-						// (Noah: the arrow count sat behind our bow card) the altar's bows never run dry, so Skyrim's arrow line
-						// bottom-right goes while one is in hand; any other bow keeps it
-						if (!Hud::kEdgeHud) hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.ArrowInfoInstance._alpha", RE::GFxValue(s.bowHeld >= 0 ? 0.0 : 100.0));
 					}
 				}
 			}

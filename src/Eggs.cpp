@@ -78,11 +78,10 @@ namespace bo3z::Eggs
 			if (a_scale != 1.0f) ref->SetScale(a_scale);
 			return ref->CreateRefHandle();
 		}
-		// the element in your hands: the bow's, else a Coffer spell's (right hand first): 1 fire, 2 frost, 3 shock (0 other)
+		// the element in your hands: a Coffer spell's (right hand first): 1 fire, 2 frost, 3 shock (0 other)
 		int HandElement()
 		{
 			auto el = [](std::string_view n) { return n == "fire" ? 1 : n == "frost" ? 2 : n == "shock" ? 3 : 0; };
-			if (const int b = Bows::Held(); b >= 0) return el(Bows::Element(b));
 			const auto h = Arcana::Hands();
 			for (int i : { h[1], h[0] }) {
 				if (i >= 0) {

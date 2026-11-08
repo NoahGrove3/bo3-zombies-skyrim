@@ -32,8 +32,8 @@ namespace bo3z::Net
 	{
 		using u64 = std::uint64_t;
 		constexpr int kChannel = 7;
-		constexpr std::uint8_t kVersion = 2;  // (2: a player's wonder field is the class wonders won, as bits)
-		enum : std::uint8_t { kHello = 1, kState = 2, kPowerUp = 3, kCurse = 4, kPlayer = 5, kRevive = 6, kStats = 7, kEgg = 8, kAltar = 9, kClass = 10, kWord = 11, kPriest = 12 };
+		constexpr std::uint8_t kVersion = 3;  // (2: a player's wonder field is the class wonders won, as bits; 3: the power-ups gone from the state)
+		enum : std::uint8_t { kHello = 1, kState = 2, kRetired3 = 3, kCurse = 4, kPlayer = 5, kRevive = 6, kStats = 7, kEgg = 8, kAltar = 9, kClass = 10, kWord = 11, kPriest = 12 };
 #ifndef UN_BUILD
 #	define UN_BUILD "dev"
 #endif
@@ -170,7 +170,6 @@ namespace bo3z::Net
 		std::chrono::steady_clock::time_point g_lastState{};
 		State       g_last{};
 		bool        g_haveState = false;
-		std::vector<int> g_powerIn;   // power-ups taken elsewhere, applied on the main thread
 
 		struct JoinRequested final : CallbackBase  // GameLobbyJoinRequested_t (333): an invite accepted in the overlay
 		{
@@ -562,18 +561,6 @@ namespace bo3z::Net
 							g_lastState = std::chrono::steady_clock::now();
 						}
 						break;
-					case kPowerUp:
-						if (sz >= 2) {
-							g_powerIn.push_back(d[1]);
-							if (IsHost()) {  // relay a friend's grab to the others
-								for (u64 m : g_members) {
-									if (m != from) {
-										Send(m, d, 2, true);
-									}
-								}
-							}
-						}
-						break;
 					case kCurse:
 						if (IsHost() && sz >= 1 + 4 * static_cast<int>(gen::kCurseCities.size())) {
 							// (the stability audit: read here on the render hook - the freeing it can run belongs to the game's thread)
@@ -736,26 +723,6 @@ namespace bo3z::Net
 		const std::uint8_t m[2]{ kClass, static_cast<std::uint8_t>(a_cls) };
 		ToAll(m, 2, false);
 	}
-	void PowerUpTaken(int a_kind)
-	{
-		if (!g_lobby) {
-			return;
-		}
-		const std::uint8_t m[2]{ kPowerUp, static_cast<std::uint8_t>(a_kind) };
-		if (IsHost()) {
-			ToAll(m, 2, true);
-		} else {
-			Send(g_owner, m, 2, true);
-		}
-	}
-
-	std::vector<int> TakeRemotePowerUps()
-	{
-		std::vector<int> out;
-		out.swap(g_powerIn);
-		return out;
-	}
-
 	// Main thread, every frame (menus too: the lobby works from the main menu).
 	void Tick(float a_delta)
 	{

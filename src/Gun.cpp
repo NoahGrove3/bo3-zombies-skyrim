@@ -13,82 +13,12 @@ namespace bo3z
 	{
 		using Clock = std::chrono::steady_clock;
 
-		bool  g_trigger = false, g_adsHeld = false;
-		bool  g_dualHeld = false;  // hand spells: right mouse held, both hands gathering the signature move
-		float g_charge = 0, g_chargeCd = 0;  // hold-to-charge signature moves
-		float g_ads = 0, g_cooldown = 0, g_reload = 0, g_knifeCd = 0, g_burstTimer = 0;
-		int   g_burstLeft = 0;
-		Clock::time_point g_swapDown{};
-		bool  g_swapHeld = false;
 		std::unordered_map<RE::FormID, std::pair<Clock::time_point, bool>> g_hits;
 		std::mt19937 g_rng{ std::random_device{}() };
 		bool  g_loggedAim = false;
 
-		int CurrentGun()
-		{
-			auto* p = RE::PlayerCharacter::GetSingleton();
-			return p ? Forms::GunIndexOf(p->GetEquippedObject(false)) : -1;
-		}
-		bool Drawn()
-		{
-			auto* p = RE::PlayerCharacter::GetSingleton();
-			return p && p->AsActorState()->IsWeaponDrawn();
-		}
-		int SlotOf(int a_gun)
-		{
-			for (int s = 0; s < Gun::SlotCount(); ++s) {
-				if (Save::GetSlot(s).gun == a_gun) {
-					return s;
-				}
-			}
-			return -1;
-		}
-		bool GunOut() { return CurrentGun() >= 0 && Drawn() && !Intro::CrewScreenOpen(); }
 
-		// Bows: their elemental arrows never run out (topped up quietly, kept on the string).
-		void TopUpArrows(int a_gun, bool a_equip)
-		{
-			auto* p = RE::PlayerCharacter::GetSingleton();
-			if (!p || a_gun < 0 || gen::kGuns[a_gun].kind != gen::kKindBow || !gen::kGuns[a_gun].ammo) {
-				return;
-			}
-			auto* ammo = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESAmmo>(gen::kGuns[a_gun].ammo, gen::kPlugin);
-			if (!ammo) {
-				return;
-			}
-			const auto counts = p->GetInventoryCounts([ammo](RE::TESBoundObject& o) { return &o == ammo; });
-			const int  have = counts.empty() ? 0 : counts.begin()->second;
-			if (have < 40) {
-				p->AddObjectToContainer(ammo, nullptr, 80 - have, nullptr);
-			}
-			if (a_equip || p->GetCurrentAmmo() != ammo) {
-				RE::ActorEquipManager::GetSingleton()->EquipObject(p, ammo, nullptr, static_cast<std::uint32_t>(std::max(have, 80)), nullptr, true, false, false);
-			}
-		}
 
-		void Equip(int a_gun)
-		{
-			auto* p = RE::PlayerCharacter::GetSingleton();
-			auto* w = Forms::Gun(a_gun);
-			if (!p || (!w && !Forms::GunSpell(a_gun))) {
-				return;
-			}
-			if (auto* sp = Forms::GunSpell(a_gun)) {
-				if (!p->HasSpell(sp)) {
-					p->AddSpell(sp);
-				}
-				auto* right = RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F42);  // RightHand equip slot
-				auto* left = RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F43);   // LeftHand: both hands carry the spell (the dual-cast charge)
-				RE::ActorEquipManager::GetSingleton()->EquipSpell(p, sp, right);
-				RE::ActorEquipManager::GetSingleton()->EquipSpell(p, sp, left);
-			} else {
-				RE::ActorEquipManager::GetSingleton()->EquipObject(p, w);
-				TopUpArrows(a_gun, true);
-			}
-			if (!Drawn()) {
-				p->DrawWeaponMagicHands(true);
-			}
-		}
 
 		// (Noah: "using melee attack weapons should cost stamina, just like how magic costs mana - otherwise I could just
 		// infinitely swing until whatever I'm trying to kill dies") every swing of a blade, axe, mace or fist costs stamina
@@ -101,7 +31,7 @@ namespace bo3z
 			if (obj && obj->GetFormType() != RE::FormType::Weapon) return false;  // (a spell, a shield, a torch)
 			auto* w = obj ? obj->As<RE::TESObjectWEAP>() : nullptr;
 			if (w) {
-				if (w->IsBow() || w->IsCrossbow() || w->IsStaff() || Forms::GunIndexOf(w) >= 0) return false;
+				if (w->IsBow() || w->IsCrossbow() || w->IsStaff()) return false;
 				const bool two = w->IsTwoHandedSword() || w->IsTwoHandedAxe();
 				if (a_left && two) return false;  // (the left button with a two-hander is its block)
 				a_cost = w->IsHandToHandMelee() ? 6.0f : w->IsOneHandedDagger() ? 8.0f : two ? 20.0f : 12.0f;
@@ -129,6 +59,40 @@ namespace bo3z
 			if (now - last[a_left] < std::chrono::milliseconds(150)) return;
 			last[a_left] = now;
 			p->AsActorValueOwner()->DamageActorValue(RE::ActorValue::kStamina, std::min(cost, std::max(0.0f, Stamina(p))));
+		}
+		// any swing of the weapon in hand, heard from the animation graph (Alduin's Bane's and the swords' slashes, the swing's
+		// stamina)
+		std::atomic<int>  g_devSwing{ 0 };          // (dev: `swing 0|1` - a light or heavy swing's effects, no animation needed)
+		std::atomic<bool> g_weaponSwing{ false };
+		class SwingWatch : public RE::BSTEventSink<RE::BSAnimationGraphEvent>
+		{
+		public:
+			RE::BSEventNotifyControl ProcessEvent(const RE::BSAnimationGraphEvent* a_e, RE::BSTEventSource<RE::BSAnimationGraphEvent>*) override
+			{
+				if (a_e && a_e->tag.c_str()) {
+					std::string t(a_e->tag.c_str());
+					std::transform(t.begin(), t.end(), t.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+					if (t == "weaponswing") {
+						g_weaponSwing = true;
+						MeleeSwing(false);
+					} else if (t == "weaponleftswing") {
+						MeleeSwing(true);
+					}
+				}
+				return RE::BSEventNotifyControl::kContinue;
+			}
+		};
+		SwingWatch      g_swingWatch;
+		RE::NiAVObject* g_swingBody = nullptr;
+		void TickSwingWatch()   // (a new body after a load or a race change: listen to its graph - the third-person one only)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p || !p->Is3DLoaded()) return;
+			if (auto* root = p->Get3D(false); root != g_swingBody) {
+				p->RemoveAnimationGraphEventSink(&g_swingWatch);
+				p->AddAnimationGraphEventSink(&g_swingWatch);
+				g_swingBody = root;
+			}
 		}
 		// the attack button: refused while there isn't stamina for the swing
 		bool MeleeRefused(RE::InputEvent* a_event)
@@ -163,47 +127,14 @@ namespace bo3z
 				}
 				if (Echo::Eats(a_event)) return false;  // (the hall: a left click takes what's in your sights, no swing)
 				if (MeleeRefused(a_event)) return false;
-				if (GunOut()) {
-					// The fire button goes through: Skyrim plays the staff/hand cast. Right mouse (left-hand
-					// attack/block) stays ours for aiming.
-					auto* b = a_event ? a_event->AsButtonEvent() : nullptr;
-					if (b && ((b->GetDevice() == RE::INPUT_DEVICE::kMouse && b->GetIDCode() == gen::kKey2_fire) ||
-					             (b->GetDevice() == RE::INPUT_DEVICE::kGamepad && b->GetIDCode() == 0x000A))) {  // (RT on a pad)
-						return func(a_this, a_event);
-					}
-					return false;
-				}
 				return func(a_this, a_event);
 			}
 			static inline REL::Relocation<decltype(thunk)> func;
 		};
-		// Staffs: Skyrim's own staff swing plays when the shot leaves, not when the button goes down. The press and
-		// the hold never reach Skyrim (the hold is our charge-up, the staff held steady); on release, when a shot or
-		// a signature move actually goes, Skyrim gets a short synthetic tap and plays its staff cast animation.
-		RE::PlayerInputHandler* g_abHandler = nullptr;
-		// (Noah: the bow loosed at any point of the draw) a bow only lets go at the peak of its draw: a release that
-		// comes early is kept back and given to Skyrim the moment the string is all the way back (Bows.inl Tick)
-		bool              g_bowDrawing = false;      // the string is coming back
-		std::atomic<bool> g_bowFull{ false };        // the draw reached its peak (Skyrim's bowDrawn state/event)
-		bool              g_bowHeldRelease = false;  // an early release, waiting for the peak
-		RE::PlayerControlsData* g_abData = nullptr;
-		float                   g_swingUp = -1.0f;  // >= 0: a synthetic tap is down; let go when it runs out
-		bool                    g_swingWanted = false;
-		bool                    g_dual = false;     // hand spells: the left hand has come up for the charge
-		float                   g_tapT = -1.0f;   // >= 0: the staff's short thrust for a normal shot is playing
-		bool IsNativeStaff(int a_gun)  // (Noah) the Falmer staffs: Skyrim casts them (its animation, its spell); ours on the hit
-		{
-			if (a_gun < 0) return false;
-			const std::string_view id = gen::kGuns[a_gun].id;
-			return id == "gravecaller" || id == "frostbinder" || id == "wolfcrown" || id == "barrowhorn";
-		}
-		bool IsStaff(int a_gun) { return a_gun >= 0 && gen::kGuns[a_gun].kind == gen::kKindWand && !IsNativeStaff(a_gun); }
-		bool IsSpell(int a_gun) { return a_gun >= 0 && (gen::kGuns[a_gun].kind == gen::kKindTome || gen::kGuns[a_gun].kind == gen::kKindWonder); }
 
-		// Controllers (Xbox, and PlayStation through Steam Input, which Skyrim reads as an Xbox pad):
-		//   RT fire / charge, LT aim, D-pad right next weapon (hold: holster), D-pad down quick knife (Skyrim's hotkeys
-		// on those two wait while a weapon of ours is out).
-		constexpr std::uint32_t kPadRT = 0x000A, kPadLT = 0x0009, kPadRight = 0x0008, kPadDown = 0x0002;
+		// Controllers (Xbox, and PlayStation through Steam Input, which Skyrim reads as an Xbox pad): RT the right hand's
+		// attack, LT the left's
+		constexpr std::uint32_t kPadRT = 0x000A, kPadLT = 0x0009;
 		bool IsFireButton(const RE::ButtonEvent* b)
 		{
 			return b && ((b->GetDevice() == RE::INPUT_DEVICE::kMouse && b->GetIDCode() == gen::kKey2_fire) ||
@@ -215,14 +146,13 @@ namespace bo3z
 			                (b->GetDevice() == RE::INPUT_DEVICE::kGamepad && b->GetIDCode() == kPadLT));
 		}
 
-		bool g_nativeCut = false;
 		struct FireButton
 		{
 			static void thunk(RE::PlayerInputHandler* a_this, RE::ButtonEvent* a_event, RE::PlayerControlsData* a_data)
 			{
 				// the mouse's hands the natural way round: the left button is the left hand, the right button the right
-				// (Skyrim has them crossed). Not with a gun out (its fire button is its own) nor on a controller.
-				if (!GunOut() && a_event && a_event->GetDevice() == RE::INPUT_DEVICE::kMouse) {
+				// (Skyrim has them crossed). Not on a controller.
+				if (a_event && a_event->GetDevice() == RE::INPUT_DEVICE::kMouse) {
 					if (auto* ue = RE::UserEvents::GetSingleton()) {
 						if (a_event->QUserEvent() == ue->rightAttack) {
 							a_event->SetUserEvent(ue->leftAttack);
@@ -231,99 +161,15 @@ namespace bo3z
 						}
 					}
 				}
-				if (GunOut() && (IsStaff(CurrentGun()) || IsSpell(CurrentGun())) && IsFireButton(a_event)) {
-					g_abHandler = a_this, g_abData = a_data;
-					return;  // ours: the staff swing is played on release (TickSwing)
-				}
-				if (GunOut() && gen::kGuns[CurrentGun()].kind == gen::kKindBow && IsFireButton(a_event)) {
-					if (a_event->IsDown()) {
-						g_bowHeldRelease = false;
-					} else if (a_event->IsUp() && g_bowDrawing && !g_bowFull && !RE::PlayerCharacter::GetSingleton()->IsInMidair() && !Movement::Dodging()) {  // (Noah: falling, jumping or dodging mid-draw broke the bow: then Skyrim has the release)
-						g_abHandler = a_this, g_abData = a_data;
-						g_bowHeldRelease = true;  // not yet at 80%: the draw is called off (Bows.inl Tick)
-						return;
-					}
-				}
-				if (GunOut() && gen::kGuns[CurrentGun()].kind != gen::kKindBow && !IsNativeStaff(CurrentGun()) && IsFireButton(a_event)) {
-					auto& rd = a_event->GetRuntimeData();
-					if (a_event->IsDown()) {
-						g_nativeCut = false;
-					} else if (g_nativeCut) {
-						return;  // held on, or the real release after we already let go
-					} else if (a_event->IsHeld() && rd.heldDownSecs >= 0.12f) {
-						const float v = rd.value;
-						rd.value = 0.0f;  // reads as a release
-						func(a_this, a_event, a_data);
-						rd.value = v;
-						g_nativeCut = true;
-						return;
-					}
-				}
 				func(a_this, a_event, a_data);
 			}
 			static inline REL::Relocation<decltype(thunk)> func;
 		};
 
-		void SendAttack(bool a_left, float a_value, float a_held);
-		void SendFire(float a_value, float a_held) { SendAttack(false, a_value, a_held); }
-		void SendAttack(bool a_left, float a_value, float a_held)
-		{
-			if (auto* pc = RE::PlayerControls::GetSingleton(); pc && (!g_abHandler || !g_abData)) {
-				// our input handler takes the fire button before Skyrim's attack handler ever sees it, so the
-				// handler is fetched from the player controls (it never had a press to remember it by)
-				g_abHandler = reinterpret_cast<RE::PlayerInputHandler*>(pc->attackBlockHandler);
-				g_abData = &pc->data;
-			}
-			if (!g_abHandler || !g_abData) {
-				static bool warned = false;
-				if (!warned) {
-					warned = true;
-					logger::warn("staff: no attack handler for the native swing");
-				}
-				return;
-			}
-			auto* ue = RE::UserEvents::GetSingleton();
-			auto* ev = a_left ? RE::ButtonEvent::Create(RE::INPUT_DEVICE::kMouse, ue ? ue->leftAttack : RE::BSFixedString("Left Attack/Block"), gen::kKey2_ads, a_value, a_held)
-			                  : RE::ButtonEvent::Create(RE::INPUT_DEVICE::kMouse, ue ? ue->rightAttack : RE::BSFixedString("Right Attack/Block"), gen::kKey2_fire, a_value, a_held);
-			if (!ev) {
-				return;
-			}
-			FireButton::func(g_abHandler, ev, g_abData);
-			ev->~ButtonEvent();  // (the audit: its event-name string was never released)
-			RE::free(ev);
-			static int said = 0;
-			if (said++ < 4) {
-				logger::info("staff: native swing {} (Skyrim's staff cast plays with the shot)", a_value > 0 ? "down" : "up");
-			}
-		}
-
-		// The staff cast animation, in step with the shot: press now, let go 0.35 s later (long enough for Skyrim to
-		// commit to the staff cast).
-		void TickSwing(float a_delta)
-		{
-			if (g_swingUp >= 0.0f) {
-				if ((g_swingUp += a_delta) >= 0.35f) {
-					SendFire(0.0f, 0.35f);
-					g_swingUp = -1.0f;
-				}
-				return;
-			}
-			if (g_swingWanted) {
-				// Staffs are held with a mace grip now (see gen_esp.py): the shot's motion is ours (a short thrust in
-				// TickPose), Skyrim's own attack never plays (it would be a mace swing).
-				g_swingWanted = false;
-				g_tapT = 0.0f;
-			}
-		}
-
-		struct FavBlock  // the pad's D-pad right / down are ours while a weapon of ours is drawn
+		struct FavBlock  // the shrine's and menus' keys never reach the hotkeys
 		{
 			static bool thunk(RE::PlayerInputHandler* a_this, RE::InputEvent* a_event)
 			{
-				auto* b = a_event ? a_event->AsButtonEvent() : nullptr;
-				if (GunOut() && b && b->GetDevice() == RE::INPUT_DEVICE::kGamepad && (b->GetIDCode() == kPadRight || b->GetIDCode() == kPadDown)) {
-					return false;
-				}
 				if (Shops::MenuEats(a_event) || Classes::MenuEats(a_event) || Director::RestEats(a_event) || Loot::Eats(a_event) || Echo::Eats(a_event) || Director::BedEats(a_event)) {  // the shrine's keys (1-4, D-pad) and the loot list's never reach the hotkeys
 					return false;
 				}
@@ -353,7 +199,7 @@ namespace bo3z
 		{
 			static bool thunk(RE::PlayerInputHandler* a_this, RE::InputEvent* a_event)
 			{
-				if (GunOut() || Shops::MenuEats(a_event) || Classes::MenuEats(a_event) || Director::RestEats(a_event) || Loot::Eats(a_event) || Echo::Eats(a_event) || Director::BedEats(a_event)) {
+				if (Shops::MenuEats(a_event) || Classes::MenuEats(a_event) || Director::RestEats(a_event) || Loot::Eats(a_event) || Echo::Eats(a_event) || Director::BedEats(a_event)) {
 					return false;
 				}
 				return func(a_this, a_event);
@@ -363,23 +209,6 @@ namespace bo3z
 
 		float Rand(float a, float b) { return std::uniform_real_distribution<float>(a, b)(g_rng); }
 
-		RE::NiPoint3 Spread(const RE::NiPoint3& a_dir, float a_deg)
-		{
-			if (a_deg <= 0) {
-				return a_dir;
-			}
-			const float r = std::tan(a_deg * RE::NI_PI / 180.0f) * std::sqrt(Rand(0, 1)), t = Rand(0, 2 * RE::NI_PI);
-			RE::NiPoint3 up{ 0, 0, 1 };
-			RE::NiPoint3 right = a_dir.Cross(up);
-			if (right.Length() < 1e-3f) {
-				right = { 1, 0, 0 };
-			}
-			right.Unitize();
-			RE::NiPoint3 u = right.Cross(a_dir);
-			RE::NiPoint3 d = a_dir + right * (r * std::cos(t)) + u * (r * std::sin(t));
-			d.Unitize();
-			return d;
-		}
 
 		std::pair<float, float> RaySegment(const RE::NiPoint3& o, const RE::NiPoint3& d, const RE::NiPoint3& a, const RE::NiPoint3& b)
 		{
@@ -439,19 +268,6 @@ namespace bo3z
 			return a->GetPosition() + RE::NiPoint3{ 0, 0, 110 };
 		}
 
-		// Hexbinder / Plaguebringer marks (by form id): hexed take more damage, doomed explode on death, plagued pass it on.
-		std::unordered_map<RE::FormID, float> g_hexed;              // -> seconds left
-		std::unordered_map<RE::FormID, float> g_doomed;             // -> blast damage when it dies
-		std::unordered_map<RE::FormID, float> g_plagued;            // -> plague damage per second
-		struct Detonation
-		{
-			RE::NiPoint3 at;
-			float        damage, delay;
-			int          kind;  // 0 doom, 1 plague jump, 2 falling star
-			int          gun = -1;
-		};
-		std::vector<Detonation> g_detonations;
-
 		// Stormblast (Noah: the shout that charges your weapon did nothing): its words gather lightning in whatever you
 		// hold - gun, bow, spell, blade or fists - and the next blows you land let it go on the one you struck and leap to
 		// the dead around it. Thunderchild's Stormblast charges the same way (its own enchanting needs a plain weapon).
@@ -463,10 +279,6 @@ namespace bo3z
 			float spark = 0;
 		};
 		StormCharge g_storm;
-		float       g_propKickT = -1.0f;  // a wonder weapon just fired (src/WonderProps.inl: its model's attack motion)
-		bool        g_propKickBig = false;
-		std::atomic<int>  g_devSwing{ 0 };          // (dev: `swing 0|1` - a light or heavy swing's effects, no animation needed)
-		std::atomic<bool> g_weaponSwing{ false };  // (any swing of the weapon in hand, heard by Bows' animation sink: Alduin's Fang's charged swing)
 		bool        g_stormBusy = false;   // (while the lightning or a shout itself is dealing damage: no charge spent)
 		struct Arc
 		{
@@ -567,17 +379,6 @@ namespace bo3z
 			}
 		}
 
-		// (Noah: "the bows weren't causing the death effect mods") a bow's element for a blow that names none of its own -
-		// so a storm arrow's kill crackles with lightning like the storm spells', a fire arrow's burns, a frost one freezes
-		int FecOfRow(int a_row)
-		{
-			for (const auto& b : gen::kBows) {
-				if (b.spellRow != a_row) continue;
-				const std::string_view e = b.element;
-				return e == "fire" ? 0 : e == "frost" ? 1 : e == "shock" ? 2 : e == "sun" ? 5 : e == "blood" ? 6 : -1;
-			}
-			return -1;
-		}
 
 		bool Damage(RE::Actor* a_target, float a_bo3Damage, bool a_head, bool a_melee, bool a_quiet = false)
 		{
@@ -587,10 +388,9 @@ namespace bo3z
 			auto*       player = RE::PlayerCharacter::GetSingleton();
 			auto*       av = a_target->AsActorValueOwner();
 			const auto  tid = a_target->GetFormID();
-			const float hexMult = g_hexed.contains(tid) ? 1.5f : 1.0f;
 			// (the difficulty reaches the night's dead through their health alone - Settings::UndeadHealthMult; Skyrim's
 			// own enemies take our scripted blows scaled by it here, as Skyrim scales yours)
-			float       damage = a_bo3Damage * hexMult * Eggs::DamageMult() * (Director::IsRoundUndead(a_target) ? 1.0f : Difficulty::Dealt()) / gen::kRounds.hpScale;
+			float       damage = a_bo3Damage * Eggs::DamageMult() * (Director::IsRoundUndead(a_target) ? 1.0f : Difficulty::Dealt()) / gen::kRounds.hpScale;
 			if (!Director::IsRoundUndead(a_target)) {
 				// Skyrim's own enemies (bandits, draugr, dragons) are tuned to the player's level, not to the night: our
 				// weapons hit them like gear of your level would (half strength at level 1, full at 25, 1.5x at 50+).
@@ -610,9 +410,6 @@ namespace bo3z
 			if (Undead::IsDancing(a_target)) damage *= 1.5f;  // (the Dance Of Death: half again as hard)
 			if (Classes::Gilded(a_target)) damage *= 2.0f;  // (Noah: the Philosopher's Flask's gold statues - "taking double damage")
 			damage *= Director::TakenMult(a_target) * Kit::ArmorAscendMult() * Echo::SetDamageMult();  // (a brute dazed or berserk; your armor's Ascends; the First Dragonborn's Regalia)
-			if (PowerUps::InstaKill() && Director::IsRoundUndead(a_target)) {
-				damage = av->GetActorValue(RE::ActorValue::kHealth) + 1.0f;  // Insta-Kill (every one of them, one hit)
-			}
 			av->DamageActorValue(RE::ActorValue::kHealth, damage);
 			const bool ours = Director::IsRoundUndead(a_target);
 			g_hits[a_target->GetFormID()] = { Clock::now(), a_head && !a_melee };
@@ -634,15 +431,6 @@ namespace bo3z
 				if (a_head && !a_melee) {
 					HeadBurst(a_target);
 				}
-				if (auto it = g_doomed.find(tid); it != g_doomed.end()) {  // Doom Mark: it goes off, and takes the next ones with it
-					g_detonations.push_back({ a_target->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f }, it->second, 0.15f, 0 });
-					g_doomed.erase(it);
-				}
-				if (auto it = g_plagued.find(tid); it != g_plagued.end()) {  // the plague looks for its next host
-					g_detonations.push_back({ a_target->GetPosition(), it->second, 0.3f, 1 });
-					g_plagued.erase(it);
-				}
-				g_hexed.erase(tid);
 				if (Coop::Client() && ours) {
 					Curse::OnUndeadDeath(a_target);  // (the host's game prunes its own dead; here the kill is the count)
 				}
@@ -703,11 +491,6 @@ namespace bo3z
 			a->NotifyAnimationGraph("staggerStart");
 		}
 
-		float CrewMult(int a_passive)
-		{
-			const int c = Save::Crew();
-			return c >= 0 && gen::kCrew[c].passive == a_passive ? gen::kCrew[c].value : 1.0f;
-		}
 
 		int g_shots = 0;
 
@@ -731,67 +514,10 @@ namespace bo3z
 
 		std::vector<std::pair<RE::ObjectRefHandle, float>> g_flashes;  // muzzle lights, removed after a blink
 
-		// Where the bolt leaves from: the wand's tip in first person, else the right hand's magic node, else the eyes.
-		RE::NiPoint3 BoltOrigin(RE::PlayerCharacter* a_player, const gen::GunDef& g)
-		{
-			auto* cam = RE::PlayerCamera::GetSingleton();
-			RE::NiPoint3 eye = cam && cam->cameraRoot ? cam->cameraRoot->world.translate : a_player->GetPosition() + RE::NiPoint3{ 0, 0, 120 };
-			for (bool first : { true, false }) {
-				auto* root = a_player->Get3D(first);
-				if (!root) {
-					continue;
-				}
-				if (g.kind == gen::kKindWand) {
-					if (auto* w = root->GetObjectByName("WEAPON"); w && w->AsNode()) {
-						for (auto& c : w->AsNode()->GetChildren()) {
-							if (c) {
-								return c->world.translate + c->world.rotate * RE::NiPoint3{ 0, 62.0f, 0 } * c->world.scale;  // staff head (+Y, tools/staffs.py)
-							}
-						}
-					}
-				}
-				if (auto* m = root->GetObjectByName("NPC R MagicNode [RMag]")) {
-					return m->world.translate;
-				}
-			}
-			return eye;
-		}
 
-		void LaunchBolt(RE::PlayerCharacter* a_player, const gen::GunDef& g, const RE::NiPoint3& a_to, const RE::NiPoint3* a_from = nullptr)
-		{
-			auto* raw = RE::TESDataHandler::GetSingleton()->LookupForm(g.bulletSpell, gen::kPlugin);
-			auto* spell = raw ? raw->As<RE::SpellItem>() : nullptr;
-			auto* proj = spell && !spell->effects.empty() && spell->effects[0] && spell->effects[0]->baseEffect ? spell->effects[0]->baseEffect->data.projectileBase : nullptr;
-			if (!proj) {
-				static int warned = 0;
-				if (warned++ < 3) {
-					logger::warn("bolt: {} has no projectile (spell {:03X} found {})", g.id, g.bulletSpell, spell != nullptr);
-				}
-				return;
-			}
-			const RE::NiPoint3 from = a_from ? *a_from : BoltOrigin(a_player, g);
-			RE::NiPoint3       d = a_to - from;
-			const float        flat = std::sqrt(d.x * d.x + d.y * d.y);
-			RE::Projectile::ProjectileRot rot{ -std::atan2(d.z, std::max(1e-3f, flat)), std::atan2(d.x, d.y) };
-			RE::Projectile::LaunchData    ld(proj, a_player, from, rot);
-			ld.useOrigin = true;
-			ld.autoAim = false;
-			ld.spell = spell;
-			ld.castingSource = RE::MagicSystem::CastingSource::kRightHand;
-			RE::ProjectileHandle h;
-			RE::Projectile::Launch(&h, ld);
-			static int logged = 0;
-			if (logged++ < 6) {
-				auto pr = h.get();
-				logger::info("bolt: {} proj {:08X} from ({:.0f},{:.0f},{:.0f}) to ({:.0f},{:.0f},{:.0f}) -> {}", g.id, proj->GetFormID(), from.x, from.y, from.z, a_to.x, a_to.y, a_to.z,
-					pr ? fmt::format("launched {:08X} 3D {}", pr->GetFormID(), pr->Get3D() != nullptr) : std::string("no projectile"));
-			}
-		}
 
 		// Where the crosshair lands (physics ray), and the eye and aim it was cast from.
 		struct Aim { RE::NiPoint3 eye, dir, hit; };
-		bool StaffUnleash(std::string_view a_id, const Aim& a_aim, float a_base);  // (Staffs.inl) the four Falmer staffs' held attacks
-		void StaffTap(const gen::GunDef& g, const RE::NiPoint3& a_to, RE::Actor* a_hit, float a_dmg);
 		Aim AimAt(float a_range)
 		{
 			Aim  r;
@@ -1260,40 +986,7 @@ namespace bo3z
 			Gun::TickLooks(a_delta);
 		}
 
-		float BoltDelay(const gen::GunDef& g, const RE::NiPoint3& a_from, const RE::NiPoint3& a_to)
-		{
-			float speed = g.kind == gen::kKindBow ? 5200.0f : 3000.0f;
-			if (auto* raw = g.bulletSpell ? RE::TESDataHandler::GetSingleton()->LookupForm(g.bulletSpell, gen::kPlugin) : nullptr) {
-				if (auto* sp = raw->As<RE::SpellItem>(); sp && !sp->effects.empty() && sp->effects[0] && sp->effects[0]->baseEffect && sp->effects[0]->baseEffect->data.projectileBase) {
-					speed = std::max(500.0f, sp->effects[0]->baseEffect->data.projectileBase->data.speed);
-				}
-			}
-			return std::min(1.5f, a_from.GetDistance(a_to) / speed);
-		}
 
-		// An elemental arrow (bows): the arrow's own projectile, launched from a point (the bow, or the sky).
-		void LaunchArrow(RE::PlayerCharacter* a_player, const gen::GunDef& g, const RE::NiPoint3& a_to, const RE::NiPoint3* a_from = nullptr)
-		{
-			if (g.kind != gen::kKindBow) {  // (the bows became spells: their volleys fly as the spell's bolts)
-				LaunchBolt(a_player, g, a_to, a_from);
-				return;
-			}
-			auto* ammo = g.ammo ? RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESAmmo>(g.ammo, gen::kPlugin) : nullptr;
-			auto* proj = ammo ? ammo->data.projectile : nullptr;
-			if (!proj) {
-				return;
-			}
-			const RE::NiPoint3 from = a_from ? *a_from : BoltOrigin(a_player, g);
-			RE::NiPoint3       d = a_to - from;
-			const float        flat = std::sqrt(d.x * d.x + d.y * d.y);
-			RE::Projectile::ProjectileRot rot{ -std::atan2(d.z, std::max(1e-3f, flat)), std::atan2(d.x, d.y) };
-			RE::Projectile::LaunchData    ld(proj, a_player, from, rot);
-			ld.useOrigin = true;
-			ld.autoAim = false;
-			ld.ammoSource = ammo;
-			RE::ProjectileHandle h;
-			RE::Projectile::Launch(&h, ld);
-		}
 
 		// Black holes (Event Horizon): pull every undead in toward the centre, then collapse.
 		struct Well
@@ -1311,266 +1004,10 @@ namespace bo3z
 		struct PFire { RE::ObjectRefHandle fx; float t, life, delay, scale; RE::NiPoint3 at; std::uint32_t form = 0; };  // (form: 0 the violet fire, else an element's burst)
 		std::vector<PFire> g_pfire;  // (the Horn's dragon's violet breath: bursts placed along its line, gone a moment later)
 
-		// Time Stop (Chronos Hourglass): frozen zombies take the stored blow when time starts again.
-		struct Frozen
-		{
-			RE::ActorHandle who;
-			float           left, damage;
-		};
-		std::vector<Frozen> g_frozen;
-
-		// Prism Sentinel (Prismheart): a crystal hanging in the air that beams the nearest zombies.
-		struct Prism
-		{
-			RE::NiPoint3 at;
-			float        left, tick, base;
-			int          gun;
-		};
-		std::vector<Prism> g_prisms;
-
-		void FireOnce(const gen::GunDef& g)
-		{
-			auto* player = RE::PlayerCharacter::GetSingleton();
-			auto* cam = RE::PlayerCamera::GetSingleton();
-			if (!cam || !cam->cameraRoot) {
-				return;
-			}
-			const auto&  world = cam->cameraRoot->world;
-			const auto   origin = world.translate;
-			RE::NiPoint3 aim{ world.rotate.entry[0][1], world.rotate.entry[1][1], world.rotate.entry[2][1] };
-			aim.Unitize();
-			if (!g_loggedAim) {
-				logger::info("aim check: camera dir ({:.2f},{:.2f},{:.2f}) yaw {:.2f} pitch {:.2f}", aim.x, aim.y, aim.z, player->GetAngleZ(), player->GetAngleX());
-				g_loggedAim = true;
-			}
-			std::vector<RE::Actor*> candidates;
-			for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
-				if (auto a = h.get(); a && Targetable(a.get(), player) && a->GetPosition().GetDistance(origin) <= g.range) {
-					candidates.push_back(a.get());
-				}
-			}
-			const float spread = g.spreadHip + (g.spreadAds - g.spreadHip) * g_ads;
-			const float headMult = g.headMult * Perks::HeadMult();
-			const float headRadius = g.headRadius * (Perks::HeadMult() > 1.0f ? 1.5f : 1.0f);
-			const int   lvl = SlotOf(CurrentGun()) >= 0 ? Save::GetSlot(SlotOf(CurrentGun())).level : 0;
-			const float dmg = g.damage * Perks::DamageMult() * CrewMult(0) * UpgradeMult(lvl);
-			++g_shots;
-			if (g.special == 3) {  // cone blast (Thu'um Cannon): everything in front of you, harder up close
-				bool los = false;
-				for (auto* a : candidates) {
-					const auto to = HeadPos(a) - origin;
-					if (!a->IsDead() && AngleDeg(aim, to) <= g.spreadHip && player->HasLineOfSight(a, los)) {
-						const float fall = 1.0f - 0.6f * std::min(1.0f, to.Length() / g.range);
-						Damage(a, dmg * fall, false, false);
-					}
-				}
-				if (g.spell >= 0) {
-					Cast(g.spell, nullptr);
-				}
-				return;
-			}
-			RE::Actor* firstHit = nullptr;
-			const auto sp = static_cast<gen::Special>(g.special);
-			auto*      pav = player->AsActorValueOwner();
-			for (int p = 0; p < g.pellets; ++p) {
-				const auto dir = Spread(aim, spread);
-				// everything this ray passes through, nearest first (pierce wands keep going)
-				struct Hit { RE::Actor* a; float t; bool head; };
-				std::vector<Hit> hits;
-				for (auto* a : candidates) {
-					const auto hp = HeadPos(a);
-					if (auto [hd, ht] = RaySegment(origin, dir, hp, hp); hd <= headRadius) {
-						hits.push_back({ a, ht, true });
-					} else if (auto [bd, bt] = RaySegment(origin, dir, a->GetPosition() + RE::NiPoint3{ 0, 0, 15 }, hp); bd <= g.hitRadius) {
-						hits.push_back({ a, bt, false });
-					}
-				}
-				std::sort(hits.begin(), hits.end(), [](const Hit& x, const Hit& y) { return x.t < y.t; });
-				const int pierce = sp == gen::Special::Pierce ? std::max(1, static_cast<int>(g.abilityValue)) : 1;
-				int       taken = 0;
-				for (auto& h : hits) {
-					if (taken >= pierce) {
-						break;
-					}
-					bool los = false;
-					if (!player->HasLineOfSight(h.a, los)) {
-						continue;
-					}
-					++taken;
-					RE::Actor* best = h.a;
-					const bool head = h.head;
-					const float bestT = h.t;
-					if (!firstHit) {
-						firstHit = best;
-					}
-					if (g.spell >= 0 && (g.spellOn == 1 || (g.spellOn == 3 && g_shots % 4 == 0)) && p == 0 && taken == 1) {
-						Cast(g.spell, best);  // spell visuals/effects on the target (Wabbajack: its own madness)
-					}
-					const float hitDmg = dmg * (head ? headMult : 1.0f) * (taken > 1 ? 0.8f : 1.0f);
-					bool        killed = false;
-					if (!best->IsDead()) {
-						killed = Damage(best, hitDmg, head, false);
-					}
-					switch (sp) {
-					case gen::Special::Poison:
-						if (!killed) {
-							g_dots.push_back({ best->GetHandle(), hitDmg * g.abilityValue / 3.0f, 3.0f });
-						}
-						break;
-					case gen::Special::Soul:
-						if (killed) {
-							Points::Add(static_cast<int>(100 * g.abilityValue));  // soul harvest
-						}
-						break;
-					case gen::Special::Slow:
-						if (!killed) {
-							Director::Web(best->GetPosition(), 40.0f, 2.0f, 100.0f * g.abilityValue);
-						}
-						break;
-					case gen::Special::Lifesteal:
-						pav->RestoreActorValue(RE::ActorValue::kHealth, pav->GetPermanentActorValue(RE::ActorValue::kHealth) * g.abilityValue * 0.25f);
-						break;
-					case gen::Special::Stagger:
-						if (!killed && Rand(0, 1) < g.abilityValue) {
-							Stagger(best, 0.8f);
-						}
-						break;
-					case gen::Special::Stasis:
-						if (!killed && Rand(0, 1) < g.abilityValue) {
-							Director::Web(best->GetPosition(), 40.0f, 2.5f, 95.0f);  // locked in amber
-						}
-						break;
-					case gen::Special::Hex:
-						if (!killed) {
-							g_hexed[best->GetFormID()] = 5.0f;
-							Audio::At(gen::Sound::linger_hex, best, 0.8f);
-						}
-						break;
-					case gen::Special::Plague:
-						if (!killed) {
-							const float dps = hitDmg * g.abilityValue / 3.0f;
-							g_dots.push_back({ best->GetHandle(), dps, 3.0f });
-							g_plagued[best->GetFormID()] = dps;
-							Audio::At(gen::Sound::linger_plague, best, 0.8f);
-						}
-						break;
-					case gen::Special::Daze:
-						if (!killed) {
-							Stagger(best, 0.6f);
-							if (Rand(0, 1) < g.abilityValue) {
-								Director::Web(best->GetPosition(), 40.0f, 1.5f, 60.0f);
-							}
-						}
-						break;
-					default:
-						break;
-					}
-					if (sp == gen::Special::Chain) {  // chain (Skyforge): jumps between nearby dead
-						std::vector<RE::Actor*> chained{ best };
-						RE::Actor*              cur = best;
-						for (int k = 0; k < 6; ++k) {
-							RE::Actor* next = nullptr;
-							float      nd = g.splashRadius;
-							for (auto* a : candidates) {
-								if (a->IsDead() || std::find(chained.begin(), chained.end(), a) != chained.end()) {
-									continue;
-								}
-								if (const float d = a->GetPosition().GetDistance(cur->GetPosition()); d < nd) {
-									nd = d, next = a;
-								}
-							}
-							if (!next) {
-								break;
-							}
-							Damage(next, g.splashDamage * Perks::DamageMult(), false, false);
-							chained.push_back(next);
-							cur = next;
-						}
-					}
-				}
-			}
-			if (g.spell >= 0 && g.spellOn == 2) {
-				Cast(g.spell, firstHit);  // fired spell flies at what you hit (or straight ahead)
-			}
-			{
-				// one bolt per shot from the wand tip, and the element's blast where it lands
-				const Aim          a = AimAt(std::min(g.range, 6000.0f));
-				const bool         landed = firstHit || a.hit.GetDistance(a.eye) < std::min(g.range, 6000.0f) - 5.0f;
-				const RE::NiPoint3 to = firstHit ? HeadPos(firstHit) - RE::NiPoint3{ 0, 0, 30 } : a.hit;
-				if (g.bulletSpell) {
-					LaunchBolt(player, g, to);
-				}
-				if (const int gi = static_cast<int>(&g - gen::kGuns.data()); landed && gi >= 0 && gi < static_cast<int>(gen::kGuns.size()) && gen::kGunSounds[gi].hit >= 0) {
-					Audio::AtPoint(static_cast<gen::Sound>(gen::kGunSounds[gi].hit), to, BoltDelay(g, origin, to), 0.9f);  // the bolt's impact, when it gets there
-				}
-				if (landed && g.kind != gen::kKindTome && g.kind != gen::kKindWonder) {  // a quick spell is a bolt, not a bomb: only the gathered cast bursts
-					Blast(g.tapBlast, to, BoltDelay(g, origin, to), kTapBlastScale);
-					StaffTap(g, to, firstHit, dmg);
-					// every bolt and arrow splashes a little where it lands: the burst weapons (Splash) hard and wide,
-					// the rest a third of the hit within an arm's reach
-					const bool  burst = sp == gen::Special::Splash && g.splashRadius > 0;
-					const float r = burst ? g.splashRadius : (g.kind == gen::kKindBow ? 70.0f : 90.0f);
-					const float sd = burst ? g.splashDamage * Perks::DamageMult() : dmg * 0.33f;
-					for (auto* a : candidates) {
-						if (a != firstHit && !a->IsDead() && a->GetPosition().GetDistance(to) <= r + 20.0f) {
-							Damage(a, sd, false, false);
-						}
-					}
-				}
-			}
-			Perks::OnCast(g_shots);
-		}
-
 		float g_manaQuiet = 0;  // seconds since the last magicka shot (regen waits for it)
 
-		void TryFire(bool a_fromTrigger)
-		{
-			const int gun = CurrentGun(), slot = SlotOf(gun);
-			if (gun < 0 || slot < 0 || g_cooldown > 0) {
-				return;
-			}
-			const auto& g = gen::kGuns[gun];
-			auto*       player = RE::PlayerCharacter::GetSingleton();
-			if (g.mana > 0) {  // tomes and grimoires run on magicka
-				auto*       av = player->AsActorValueOwner();
-				const float cost = g.mana * Perks::ManaMult() * Difficulty::Mana();
-				if (av->GetActorValue(RE::ActorValue::kMagicka) < cost) {
-					if (a_fromTrigger) {
-						Forms::Play(g.emptySnd);
-						Hud::Banner("Not enough magicka", 1.2f);
-					}
-					g_burstLeft = 0;
-					g_cooldown = 0.35f;
-					return;
-				}
-				av->DamageActorValue(RE::ActorValue::kMagicka, cost);
-				g_manaQuiet = 0;
-			}
-			Forms::Play(g.fireSnd);
-			if (static int said = 0; said++ < 3) {
-				logger::info("gun: {} cast sound {}", g.id, static_cast<int>(g.fireSnd));
-			}
-			FireOnce(g);
-			const float delay = g.fireDelayMs / 1000.0f * Perks::FireDelayMult();
-			if (g.fire == gen::Fire::Burst) {
-				if (a_fromTrigger) {
-					g_burstLeft = g.burst - 1;
-				}
-				g_burstTimer = 0.07f;
-				g_cooldown = g_burstLeft > 0 ? 0.07f : delay;
-			} else {
-				g_cooldown = delay;
-			}
-		}
 
 
-		// ================================================================ signature moves (hold, then release)
-		float g_unleashMult = 1.0f;  // Ascendant moves (Reforge level 3): 1.25 for the strike, 0.75 for its echo
-		int   ForgeLevel() { return SlotOf(CurrentGun()) >= 0 ? Save::GetSlot(SlotOf(CurrentGun())).level : 0; }
-		float BaseDamage(const gen::GunDef& g)
-		{
-			return g.damage * Perks::DamageMult() * CrewMult(0) * UpgradeMult(ForgeLevel()) * g_unleashMult;
-		}
 
 		std::vector<RE::Actor*> Foes(const RE::NiPoint3& a_at, float a_radius)
 		{
@@ -1665,352 +1102,10 @@ namespace bo3z
 		}
 
 
-		void Bolts(RE::PlayerCharacter* p, const gen::GunDef& g, const std::vector<RE::Actor*>& a_to, int a_max)
-		{
-			int n = 0;
-			for (auto* f : a_to) {
-				if (n++ >= a_max) {
-					break;
-				}
-				if (g.bulletSpell) {
-					LaunchBolt(p, g, HeadPos(f) - RE::NiPoint3{ 0, 0, 20 });
-				} else if (g.spell >= 0) {
-					Cast(g.spell, f);
-				}
-			}
-		}
-
-		// The signature move of each weapon (sheet: weapons.chargeName/chargeText).
-		void Unleash(int a_gun, bool a_echo = false)
-		{
-			const auto& g = gen::kGuns[a_gun];
-			auto*       p = RE::PlayerCharacter::GetSingleton();
-			const float base = BaseDamage(g);
-			const Aim   aim = AimAt(std::min(g.range * 1.5f, 8000.0f));
-			auto        hit = [&](RE::Actor* f, float a_mult) { if (!f->IsDead()) { Damage(f, base * a_mult, false, false); } };
-			const std::string_view id = g.id;
-			Forms::Play(g.chargeSnd);
-			if (!a_echo) {
-				Hud::Banner(std::string(g.chargeName) + (ForgeLevel() >= gen::kForgeMax ? "  -  ASCENDANT" : ""), 1.2f);
-			}
-			logger::info("charge: {} unleashes {}", g.id, g.chargeName);
-
-			if (StaffUnleash(id, aim, base)) {
-				// (the Falmer staffs: Staffs.inl)
-			} else if (id == "sidearm" || id == "apprentice" || id == "marksman") {  // lances: a beam of force, everything in the line
-				auto line = InLine(aim, g.range * 1.5f, 75.0f);
-				for (auto* f : line) { hit(f, id == "marksman" ? 5.0f : 4.0f); Stagger(f, 0.9f); }
-				Bolts(p, g, line, 6);
-				LaunchBolt(p, g, aim.hit);
-				// the lance itself: bursts racing down the line from the staff to where it lands
-				const float len = std::min(aim.hit.GetDistance(aim.eye), g.range * 1.5f);
-				int         n = 0;
-				for (float t = 160.0f; t < len - 60.0f && n < 14; t += 170.0f, ++n) {
-					Blast(BlastIndex("light"), aim.eye + aim.dir * t - RE::NiPoint3{ 0, 0, 25.0f }, 0.025f * n);
-				}
-			} else if (id == "centurion") {  // pestilence: a plague burst that spreads from body to body
-				for (int k = 0; k < 5; ++k) {  // a spreading cloud of rot
-					const float a = k * 1.2566f;
-					Blast(g.chargeBlast, aim.hit + RE::NiPoint3{ std::cos(a) * 260.0f, std::sin(a) * 260.0f, 20.0f }, 0.15f + 0.08f * k);
-				}
-				for (auto* f : Foes(aim.hit, 700.0f)) {
-					hit(f, 1.0f);
-					g_dots.push_back({ f->GetHandle(), base * 0.8f, 6.0f });
-					g_plagued[f->GetFormID()] = base * 0.8f;
-				}
-				Bolts(p, g, Foes(aim.hit, 700.0f), 6);
-			} else if (id == "triad") {  // soul harvest: homing souls to the five nearest
-				auto foes = Foes(p->GetPosition(), 1600.0f);
-				if (foes.size() > 5) foes.resize(5);
-				for (std::size_t i = 0; i < foes.size(); ++i) {
-					hit(foes[i], 3.0f);
-					Blast(g.chargeBlast, foes[i]->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, 0.25f + 0.1f * i);  // the soul torn out
-				}
-				Bolts(p, g, foes, 5);
-				if (!foes.empty()) {  // the harvest returns to you
-					auto* av = p->AsActorValueOwner();
-					av->RestoreActorValue(RE::ActorValue::kMagicka, 15.0f * foes.size());
-				}
-			} else if (id == "spider") {  // spore bloom around the impact
-				Director::Web(aim.hit, 320.0f, 4.0f, 70.0f);
-				for (auto* f : Foes(aim.hit, 320.0f)) hit(f, 2.0f);
-				LaunchBolt(p, g, aim.hit);
-			} else if (id == "drill") {  // blood siphon around you
-				auto foes = Foes(p->GetPosition(), 450.0f);
-				for (auto* f : foes) hit(f, 2.0f);
-				auto* av = p->AsActorValueOwner();
-				av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * std::min(0.6f, 0.08f * foes.size()));
-				Bolts(p, g, foes, 6);
-			} else if (id == "steampump") {  // bone prison: cone root + stagger
-				auto cone = InCone(aim, 700.0f, 35.0f);
-				for (auto* f : cone) {
-					hit(f, 4.0f);
-					Stagger(f, 1.0f);
-					Director::Web(f->GetPosition(), 40.0f, 3.0f, 95.0f);
-				}
-				Bolts(p, g, cone, 6);
-			} else if (id == "animunculi") {  // doom mark: every zombie nearby hexed and doomed to explode
-				Audio::AtPoint(gen::Sound::linger_hex, aim.hit);
-				for (auto* f : Foes(aim.hit, 1300.0f)) {
-					g_hexed[f->GetFormID()] = 10.0f;
-					g_doomed[f->GetFormID()] = base * 3.0f;
-					hit(f, 0.5f);
-				}
-				LaunchBolt(p, g, aim.hit);
-			} else if (id == "kagrenac") {  // mass frenzy: they turn on their own kind
-				for (auto* f : Foes(aim.hit, 1100.0f)) {
-					Director::Frenzy(f, 8.0f);
-					Stagger(f, 0.5f);
-					Blast(BlastIndex("paralyze"), f->GetPosition() + RE::NiPoint3{ 0, 0, 90.0f }, 0.2f);  // their minds break
-				}
-				LaunchBolt(p, g, aim.hit);
-			} else if (id == "mammothlmg") {  // black hole: a singularity drags them in, then collapses
-				g_wells.push_back({ aim.hit, 3.0f, base, 0.0f });
-				LaunchBolt(p, g, aim.hit);
-			} else if (id == "longshot") {  // orbital strike: six stars fall one after another
-				for (int k = 0; k < 6; ++k) {
-					const float a = k * 2.1f;
-					const float r = 60.0f + 45.0f * k;
-					g_detonations.push_back({ aim.hit + RE::NiPoint3{ std::cos(a) * r, std::sin(a) * r, 0 }, base * 3.0f, 0.25f + 0.32f * k, 2, a_gun });
-				}
-			} else if (id == "aetherium") {  // auriel's wrath: huge sunburst
-				for (auto* f : Foes(aim.hit, 450.0f)) { hit(f, 2.5f); Stagger(f, 1.0f); }
-				LaunchBolt(p, g, aim.hit);
-				for (int k = 0; k < 5; ++k) {  // Auriel's sky-bolts ring the sunburst
-					const float a = k * 1.2566f + 0.4f;
-					const RE::NiPoint3 at = aim.hit + RE::NiPoint3{ std::cos(a) * 300.0f, std::sin(a) * 300.0f, 0 };
-					Blast(BlastIndex("skybolt"), at, 0.3f + 0.12f * k);
-					for (auto* f : Foes(at, 200.0f)) hit(f, 1.0f);
-				}
-			} else if (id == "flamerepeater") {  // meteor arrow: a burning star falls where it lands
-				const RE::NiPoint3 sky = aim.hit + RE::NiPoint3{ 120.0f, 80.0f, 1500.0f };
-				LaunchArrow(p, g, aim.hit, &sky);
-				for (auto* f : Foes(aim.hit, 460.0f)) {
-					hit(f, 5.0f);
-					g_dots.push_back({ f->GetHandle(), base * 0.8f, 4.0f });  // burning
-					Stagger(f, 1.0f);
-				}
-			} else if (id == "frostlancer") {  // glacier arrow: everything near the impact freezes solid
-				for (int k = 0; k < 6; ++k) {
-					const float a = k * RE::NI_PI / 3.0f;
-					const RE::NiPoint3 at = aim.hit + RE::NiPoint3{ std::cos(a) * 170.0f, std::sin(a) * 170.0f, 0 };
-					const RE::NiPoint3 sky = at + RE::NiPoint3{ 0, 0, 1200.0f };
-					LaunchArrow(p, g, at, &sky);
-				}
-				for (auto* f : Foes(aim.hit, 420.0f)) { hit(f, 3.0f); Director::Web(f->GetPosition(), 40.0f, 4.0f, 96.0f, true); }
-			} else if (id == "stormcaller") {  // thunderstrike: lightning chains through ten
-				auto foes = Foes(aim.hit, 1400.0f);
-				if (foes.size() > 10) foes.resize(10);
-				for (auto* f : foes) {
-					hit(f, 2.5f);
-					Stagger(f, 0.8f);
-					const RE::NiPoint3 at = f->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f };
-					const RE::NiPoint3 sky = at + RE::NiPoint3{ 30.0f, 0, 1300.0f };
-					LaunchArrow(p, g, at, &sky);
-				}
-			} else if (id == "embermortar") {  // Gale Volley: a fan of wind arrows; every dead thing in the spray is knocked flat where it stands
-				for (int k = -4; k <= 4; ++k) {
-					const float yaw = k * 0.075f, c = std::cos(yaw), sn = std::sin(yaw);
-					const RE::NiPoint3 d{ aim.dir.x * c - aim.dir.y * sn, aim.dir.x * sn + aim.dir.y * c, aim.dir.z };
-					LaunchArrow(p, g, aim.eye + d * 2200.0f);
-				}
-				auto* proc = p->GetActorRuntimeData().currentProcess;
-				int   n = 0;
-				for (auto* f : InCone(aim, 2000.0f, 32.0f)) {
-					hit(f, 3.0f);
-					if (proc && !f->IsDead()) {
-						// pushed from straight above: down they go on the spot, no flying across the field
-						proc->KnockExplosion(f, f->GetPosition() + RE::NiPoint3{ 0, 0, 140.0f }, 1.2f);
-						if (n++ < 8) {
-							Blast(BlastIndex("priestsmall"), f->GetPosition() + RE::NiPoint3{ 0, 0, 20.0f }, BoltDelay(g, aim.eye, f->GetPosition()), 0.4f);
-						}
-					}
-				}
-			} else if (id == "wabbajack") {  // mass madness
-				std::uniform_real_distribution<float> roll(0, 1);
-				for (auto* f : Foes(aim.hit, 600.0f)) {
-					if (roll(g_rng) < 0.5f) hit(f, 100.0f); else { hit(f, 1.0f); Stagger(f, 1.0f); }
-				}
-				Bolts(p, g, Foes(aim.hit, 600.0f), 6);
-			} else if (id == "thuumcannon") {  // the full shout
-				auto cone = InCone(aim, 1600.0f, 40.0f);
-				for (auto* f : cone) hit(f, 1.5f);
-				if (g.spell >= 0) Cast(g.spell, nullptr);
-			} else if (id == "skyforgearc") {  // storm call: chain through twelve
-				auto foes = Foes(aim.hit, 2000.0f);
-				if (foes.size() > 12) foes.resize(12);
-				for (auto* f : foes) hit(f, 1.2f);
-				Bolts(p, g, foes, 8);
-			}
-			// ---- the city relics (rewards of Alduin's Curse) ----
-			else if (id == "hearth") {  // Riverwood, Hearthfire Nova: six meteors round you, everything near you burns
-				const auto pp = p->GetPosition();
-				for (int k = 0; k < 6; ++k) {
-					const float a = k * RE::NI_PI / 3.0f;
-					g_detonations.push_back({ pp + RE::NiPoint3{ std::cos(a) * 360.0f, std::sin(a) * 360.0f, 0 }, base * 4.0f, 0.2f + 0.15f * k, 2, a_gun });
-				}
-				for (auto* f : Foes(pp, 700.0f)) {
-					hit(f, 1.5f);
-					g_dots.push_back({ f->GetHandle(), base * 0.8f, 5.0f });
-				}
-				Blast(BlastIndex("firestorm"), pp);
-			} else if (id == "gildergreen") {  // Whiterun, Kyne's Bloom: living wood roots them, you are healed whole
-				const auto pp = p->GetPosition();
-				for (auto* f : Foes(pp, 900.0f)) {
-					hit(f, 3.0f);
-					Director::Web(f->GetPosition(), 40.0f, 5.0f, 96.0f);
-				}
-				auto* av = p->AsActorValueOwner();
-				av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth));
-				Blast(BlastIndex("lightmassive"), pp);
-				Bolts(p, g, Foes(pp, 900.0f), 6);
-			} else if (id == "lorkhan") {  // Markarth, Tonal Stillness: time stops for them, then they shatter
-				for (auto* f : Foes(p->GetPosition(), 1500.0f)) {
-					Director::Web(f->GetPosition(), 40.0f, 4.0f, 100.0f);
-					g_frozen.push_back({ f->GetHandle(), 4.0f, base * 5.0f });
-				}
-				Blast(BlastIndex("shockmass"), p->GetPosition());
-			} else if (id == "arkay") {  // Falkreath, Return to the Grave: Arkay's judgement on every undead near you
-				auto foes = Foes(p->GetPosition(), 1200.0f);
-				for (auto* f : foes) hit(f, 6.0f);
-				Bolts(p, g, foes, 8);
-				auto* av = p->AsActorValueOwner();
-				av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.3f);
-				Blast(BlastIndex("priestlarge"), p->GetPosition());
-			} else if (id == "mirestaff") {  // Morthal, Drowning Mire: a bog drags them in and the plague runs through them
-				g_wells.push_back({ aim.hit, 4.0f, base * 1.5f, 0.0f });
-				Audio::AtPoint(gen::Sound::linger_plague, aim.hit);
-				for (auto* f : Foes(aim.hit, 900.0f)) {
-					g_dots.push_back({ f->GetHandle(), base * 0.8f, 6.0f });
-					g_plagued[f->GetFormID()] = base * 0.8f;
-				}
-				LaunchBolt(p, g, aim.hit);
-			} else if (id == "magnus") {  // Winterhold, Gaze of Magnus: three crystal eyes burn them for eight seconds
-				for (int k = 0; k < 3; ++k) {
-					const float a = k * 2.0944f;
-					g_prisms.push_back({ aim.hit + RE::NiPoint3{ std::cos(a) * 220.0f, std::sin(a) * 220.0f, 140.0f }, 8.0f, 0.1f * k, base * 1.5f, a_gun });
-				}
-				LaunchBolt(p, g, aim.hit);
-			} else if (id == "wolfqueen") {  // Solitude, Potema's Requiem: nine arrows, and the dead they strike turn on their own
-				for (int k = -4; k <= 4; ++k) {
-					const float yaw = k * 0.09f, c = std::cos(yaw), sn = std::sin(yaw);
-					const RE::NiPoint3 d{ aim.dir.x * c - aim.dir.y * sn, aim.dir.x * sn + aim.dir.y * c, aim.dir.z };
-					LaunchArrow(p, g, aim.eye + d * 2600.0f);
-				}
-				for (auto* f : InCone(aim, 2600.0f, 40.0f)) {
-					hit(f, 2.5f);
-					Director::Frenzy(f, 10.0f);
-				}
-			} else if (id == "ysgramor") {  // Windhelm, Wrath of Ysgramor: ice and lightning on twelve at once
-				auto foes = Foes(aim.hit, 1600.0f);
-				if (foes.size() > 12) foes.resize(12);
-				for (auto* f : foes) {
-					hit(f, 3.5f);
-					Director::Web(f->GetPosition(), 40.0f, 4.0f, 96.0f, true);
-					const RE::NiPoint3 at = f->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f };
-					const RE::NiPoint3 sky = at + RE::NiPoint3{ 30.0f, 0, 1300.0f };
-					LaunchArrow(p, g, at, &sky);
-				}
-				Blast(BlastIndex("icevolley"), aim.hit);
-			} else if (id == "nightingale") {  // Riften, Twilight's Eclipse: all in sight marked; each that falls takes the next
-				for (auto* f : Foes(p->GetPosition(), 2200.0f)) {
-					g_hexed[f->GetFormID()] = 12.0f;
-					g_doomed[f->GetFormID()] = base * 4.0f;
-					hit(f, 0.5f);
-				}
-				LaunchArrow(p, g, aim.hit);
-				Blast(BlastIndex("darkmassive"), p->GetPosition());
-			} else if (id == "nightmare") {  // Dawnstar, Nightmare Rain: ten burning stars from a dreaming sky
-				for (int k = 0; k < 10; ++k) {
-					const float a = k * 2.4f, r = 40.0f + 38.0f * k;
-					g_detonations.push_back({ aim.hit + RE::NiPoint3{ std::cos(a) * r, std::sin(a) * r, 0 }, base * 4.0f, 0.2f + 0.22f * k, 2, a_gun });
-				}
-			}
-		}
 
 
-		void TickMarks(float a_delta)
-		{
-			for (auto it = g_hexed.begin(); it != g_hexed.end();) {
-				it = (it->second -= a_delta) <= 0 ? g_hexed.erase(it) : std::next(it);
-			}
-			std::vector<Detonation> now;
-			for (auto& d : g_detonations) {
-				if ((d.delay -= a_delta) <= 0) {
-					now.push_back(d);
-				}
-			}
-			std::erase_if(g_detonations, [](const Detonation& d) { return d.delay <= 0; });
-			auto* p = RE::PlayerCharacter::GetSingleton();
-			for (auto& d : now) {
-				if (d.kind == 0) {         // a doomed one goes off: the dark reaches up out of it
-					Blast(BlastIndex("tentacle"), d.at);
-					Audio::AtPoint(gen::Sound::linger_doom, d.at);
-					for (auto* f : Foes(d.at, 230.0f)) {
-						Damage(f, d.damage, false, false, true);
-					}
-				} else if (d.kind == 1) {  // the plague jumps to the two nearest
-					auto foes = Foes(d.at, 300.0f);
-					if (!foes.empty()) {
-						Audio::AtPoint(gen::Sound::linger_jump, d.at);
-					}
-					for (std::size_t i = 0; i < foes.size() && i < 2; ++i) {
-						if (!g_plagued.contains(foes[i]->GetFormID())) {
-							g_dots.push_back({ foes[i]->GetHandle(), d.damage, 3.0f });
-							g_plagued[foes[i]->GetFormID()] = d.damage;
-						}
-					}
-				} else if (d.kind == 2 && d.gun >= 0) {  // a star falls
-					const RE::NiPoint3 sky = d.at + RE::NiPoint3{ 80.0f, 40.0f, 1400.0f };
-					if (gen::kGuns[d.gun].kind == gen::kKindBow) {
-						LaunchArrow(p, gen::kGuns[d.gun], d.at, &sky);
-					} else {
-						LaunchBolt(p, gen::kGuns[d.gun], d.at, &sky);
-					}
-					Blast(gen::kGuns[d.gun].chargeBlast >= 0 ? gen::kGuns[d.gun].chargeBlast : BlastIndex("shockmass"), d.at, 0.2f);  // each weapon's own fall
-					for (auto* f : Foes(d.at, 260.0f)) {
-						Damage(f, d.damage, false, false, true);
-						if (!f->IsDead()) {
-							Stagger(f, 0.7f);
-						}
-					}
-				}
-			}
-		}
 
-		void TickTimeAndPrisms(float a_delta)
-		{
-			auto* p = RE::PlayerCharacter::GetSingleton();
-			for (auto& f : g_frozen) {
-				if ((f.left -= a_delta) <= 0) {
-					if (auto a = f.who.get(); a && !a->IsDead()) {
-						Blast(BlastIndex("light"), a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f });
-						Damage(a.get(), f.damage, false, false);
-						if (!a->IsDead()) {
-							Stagger(a.get(), 1.0f);
-						}
-					}
-				}
-			}
-			std::erase_if(g_frozen, [](const Frozen& f) { return f.left <= 0; });
-			for (auto& pr : g_prisms) {
-				pr.left -= a_delta;
-				if ((pr.tick -= a_delta) > 0) {
-					continue;
-				}
-				pr.tick = 0.3f;
-				Blast(BlastIndex("light"), pr.at);
-				auto foes = Foes(pr.at, 1100.0f);
-				if (foes.size() > 3) {
-					foes.resize(3);
-				}
-				for (auto* f : foes) {
-					LaunchBolt(p, gen::kGuns[pr.gun], HeadPos(f) - RE::NiPoint3{ 0, 0, 20.0f }, &pr.at);
-					Damage(f, pr.base * 0.9f, false, false, true);
-				}
-			}
-			std::erase_if(g_prisms, [](const Prism& pr) { return pr.left <= 0; });
-		}
+
 
 		void TickWells(float a_delta)
 		{
@@ -2122,257 +1217,8 @@ namespace bo3z
 			std::erase_if(g_pfire, [](const PFire& f) { return f.t >= 99.0f; });
 		}
 
-		void StartRelease(const gen::GunDef& g);
-		// The finale every signature move shares: big blasts where it lands and on who it hit (or a ring around you
-		// for the sweeping moves), and the element's master spell on top.
-		void Finale(const gen::GunDef& g, const RE::NiPoint3& a_eye, const RE::NiPoint3& a_hit)
-		{
-			auto*                     p = RE::PlayerCharacter::GetSingleton();
-			const bool                around = g.chargeStyle == gen::kSweep;
-			const RE::NiPoint3        centre = around ? p->GetPosition() : a_hit;
-			std::vector<RE::NiPoint3> spots;
-			if (around) {
-				for (int k = 0; k < 6; ++k) {
-					const float a = k * RE::NI_PI / 3.0f;
-					spots.push_back(centre + RE::NiPoint3{ std::cos(a) * 280.0f, std::sin(a) * 280.0f, 40.0f });
-				}
-			} else {
-				spots.push_back(a_hit);
-			}
-			auto foes = Foes(centre, around ? 650.0f : 520.0f);
-			if (foes.size() > 5) {
-				foes.resize(5);
-			}
-			for (std::size_t i = 0; i < foes.size() && i < 2; ++i) {  // one burst where it lands and a couple on the caught - not a carpet
-				spots.push_back(foes[i]->GetPosition() + RE::NiPoint3{ 0, 0, 60 });
-			}
-			for (std::size_t i = 0; i < spots.size(); ++i) {
-				Blast(g.chargeBlast, spots[i], (around ? 0.0f : BoltDelay(g, a_eye, spots[i])) + 0.07f * i);
-			}
-			if (const int gi = static_cast<int>(&g - gen::kGuns.data()); gi >= 0 && gi < static_cast<int>(gen::kGuns.size()) && gen::kGunSounds[gi].boom >= 0 && !spots.empty()) {
-				Audio::AtPoint(static_cast<gen::Sound>(gen::kGunSounds[gi].boom), spots[0], around ? 0.0f : BoltDelay(g, a_eye, spots[0]));  // the burst where it lands
-			}
-			if (g.chargeSpell >= 0) {
-				if (foes.empty()) {
-					Cast(g.chargeSpell, nullptr);
-				}
-				for (std::size_t i = 0; i < foes.size() && i < 3; ++i) {
-					Cast(g.chargeSpell, foes[i]);
-				}
-			}
-		}
-
-		int   g_echoGun = -1;
-		float g_echoT = 0;
-		void TickEcho(float a_delta)
-		{
-			if (g_echoGun < 0 || (g_echoT -= a_delta) > 0) {
-				return;
-			}
-			const int gun = g_echoGun;
-			g_echoGun = -1;
-			if (gun != CurrentGun() || !GunOut()) {
-				return;
-			}
-			g_unleashMult = 0.75f;
-			Unleash(gun, true);
-			g_unleashMult = 1.0f;
-		}
-
-		bool TryUnleash(bool a_released)
-		{
-			const int gun = CurrentGun();
-			if (gun < 0 || !a_released) {
-				return false;
-			}
-			const auto& g = gen::kGuns[gun];
-			if (g_charge < g.chargeSeconds || g_chargeCd > 0) {
-				return false;
-			}
-			if (g.mana > 0) {
-				auto*       av = RE::PlayerCharacter::GetSingleton()->AsActorValueOwner();
-				const float cost = g.mana * g.chargeMana * Perks::ManaMult() * Difficulty::Mana();
-				if (av->GetActorValue(RE::ActorValue::kMagicka) < cost) {
-					Forms::Play(g.emptySnd);
-					Hud::Banner("Not enough magicka", 1.2f);
-					return true;
-				}
-				av->DamageActorValue(RE::ActorValue::kMagicka, cost);
-				g_manaQuiet = 0;
-			}
-			const bool ascendant = ForgeLevel() >= gen::kForgeMax;
-			g_chargeCd = g.chargeCooldown * (ascendant ? 0.75f : 1.0f) * Perks::ChargeMult();
-			StartRelease(g);
-			g_unleashMult = ascendant ? 1.25f : 1.0f;
-			Unleash(gun);
-			g_unleashMult = 1.0f;
-			if (ascendant) {  // the echo: the same move again, a heartbeat later
-				g_echoGun = gun;
-				g_echoT = 0.7f;
-			}
-			{
-				const Aim aim = AimAt(std::min(g.range * 1.5f, 8000.0f));
-				Finale(g, aim.eye, aim.hit);
-			}
-			return true;
-		}
-
-		// ================================================================ signature-move animation
-		// The charge-up and release of every signature move have their own motion of the casting arm (and wand):
-		// thrust (lances), slam (impact moves), sweep (around-you moves), twirl (wand spin), raise (call from
-		// the sky) and surge (wonder blasts). Built on top of Skyrim's animation each frame, after it ran.
-		float g_relT = -1.0f, g_spin = 0.0f, g_fovKick = 0.0f;
-		int   g_relStyle = 0;
-		bool  g_chargeSaid = false, g_readySaid = false, g_armLive = false;
-		struct PoseOut
-		{
-			float pitch = 0, yaw = 0, roll = 0, push = 0, lift = 0, shake = 0, spinRate = 0;
-		};
-		PoseOut g_pose;
-		float   g_jx = 0, g_jy = 0;  // this frame's tremble (rolled on the main thread)
-
-		PoseOut Scale(const PoseOut& a, float k) { return { a.pitch * k, a.yaw * k, a.roll * k, a.push * k, a.lift * k, a.shake * k, a.spinRate * k }; }
-		PoseOut Lerp(const PoseOut& a, const PoseOut& b, float t)
-		{
-			return { a.pitch + (b.pitch - a.pitch) * t, a.yaw + (b.yaw - a.yaw) * t, a.roll + (b.roll - a.roll) * t, a.push + (b.push - a.push) * t,
-				a.lift + (b.lift - a.lift) * t, a.shake + (b.shake - a.shake) * t, a.spinRate + (b.spinRate - a.spinRate) * t };
-		}
 		float EaseOut(float x) { x = std::clamp(x, 0.0f, 1.0f); return 1 - (1 - x) * (1 - x) * (1 - x); }
 		float EaseInOut(float x) { x = std::clamp(x, 0.0f, 1.0f); return x * x * (3 - 2 * x); }
-
-		//                                     pitch  yaw   roll   push  lift  shake  spin
-		constexpr PoseOut kChargePose[6] = { { 0.10f, 0.05f, 0.35f, -12, 0, 0.010f, 0 },     // thrust: drawn back, twisted
-			{ 0.75f, -0.10f, -0.25f, -4, 6, 0.012f, 0 },                                          // slam: raised high
-			{ 0.15f, -0.65f, 0.45f, -3, 0, 0.010f, 0 },                                           // sweep: wound up to the right
-			{ 0.40f, 0.0f, 0.0f, 0, 4, 0.006f, 16.0f },                                           // twirl: raised, spinning
-			{ 1.05f, 0.0f, 0.0f, 6, 10, 0.016f, 0 },                                              // raise: up to the sky
-			{ -0.05f, 0.0f, 0.0f, -14, -2, 0.030f, 0 } };                                         // surge: pulled in, shaking
-		constexpr PoseOut kStrikePose[6] = { { 0.0f, 0.0f, 0.0f, 26, 0, 0.004f, 0 },
-			{ -0.45f, 0.10f, 0.15f, 8, -4, 0.010f, 0 },
-			{ 0.10f, 0.90f, -0.40f, 4, 0, 0.004f, 0 },
-			{ 0.10f, 0.0f, 0.0f, 10, 0, 0.004f, 34.0f },
-			{ -0.30f, 0.0f, 0.0f, 10, -6, 0.020f, 0 },
-			{ -0.12f, 0.0f, 0.0f, 30, 0, 0.050f, 0 } };
-		// Staffs keep Skyrim's staff stance: the charge only draws the staff in a little and lifts its head, with the
-		// power trembling through it; the release drives it forward (no spinning, no hand-casting gestures).
-		// Charge: the staff drawn back and raised, its head lifted, the power trembling through it. Release: driven
-		// forward, the head dipping toward the target. Tap shot: a short jab.
-		constexpr PoseOut kStaffCharge{ 0.38f, 0.0f, 0.12f, -16, 9, 0.010f, 0 };
-		constexpr PoseOut kStaffStrike{ -0.22f, 0.0f, -0.05f, 34, -2, 0.008f, 0 };
-		constexpr PoseOut kStaffTap{ -0.12f, 0.0f, 0.0f, 20, 0, 0.0f, 0 };
-		// Bows: drawn in toward the cheek as the shot charges, a sharp kick when the arrow leaves.
-		constexpr PoseOut kBowDraw{ 0.06f, 0.04f, 0.0f, -7, 2, 0.006f, 0 };
-		constexpr PoseOut kBowLoose{ 0.16f, -0.05f, 0.0f, -12, 4, 0.0f, 0 };
-		constexpr float kFovKick[6] = { -9.0f, 7.0f, 5.0f, 4.0f, 6.0f, 12.0f };
-
-		// While charging, the element's storm wraps the caster (Skyrim's fire storm / blizzard / lightning storm cast look).
-		int g_aura = -1;
-		void SetAura(int a_spell)
-		{
-			if (a_spell == g_aura) {
-				return;
-			}
-			auto* p = RE::PlayerCharacter::GetSingleton();
-			if (g_aura >= 0) {
-				if (auto* sp = Forms::Spell(g_aura) ? Forms::Spell(g_aura)->As<RE::SpellItem>() : nullptr) {
-					p->RemoveSpell(sp);
-				}
-			}
-			g_aura = a_spell;
-			if (a_spell >= 0) {
-				if (auto* sp = Forms::Spell(a_spell) ? Forms::Spell(a_spell)->As<RE::SpellItem>() : nullptr) {
-					p->AddSpell(sp);
-				}
-			}
-		}
-
-		void StartRelease(const gen::GunDef& g)
-		{
-			g_relT = 0.0f;
-			g_relStyle = std::clamp(g.chargeStyle, 0, 5);
-			g_fovKick = kFovKick[g_relStyle];
-		}
-
-		void TickPose(float a_delta)
-		{
-			const int gun = CurrentGun();
-			PoseOut   out;
-			if (gun >= 0 && GunOut()) {
-				const auto& g = gen::kGuns[gun];
-				const int   style = std::clamp(g.chargeStyle, 0, 5);
-				const bool  bow = g.kind == gen::kKindBow;  // the draw is the animation
-				const bool  charging = (IsSpell(gun) ? g_dualHeld : g_trigger) && g.chargeSeconds > 0 && g_chargeCd <= 0 && g_charge > 0.18f;
-				const float c = charging ? EaseInOut((g_charge - 0.18f) / std::max(0.1f, g.chargeSeconds - 0.18f)) : 0.0f;
-				if (charging && !g_chargeSaid) {
-					const int st = gen::kGunSounds[gun].start;
-					Audio::Ui(st >= 0 ? static_cast<gen::Sound>(st) : gen::Sound::charge_up);  // the spell's own swell as its power begins to gather
-					if (const int hum = gen::kGunSounds[gun].charge; hum >= 0) {
-						Audio::LoopStart(Audio::kLoopCharge, static_cast<gen::Sound>(hum));  // the spell's own hum while it gathers
-					}
-					g_chargeSaid = true;
-				}
-				if (charging && c >= 1.0f && !g_readySaid) {
-					const int fu = gen::kGunSounds[gun].full;
-					Audio::Ui(fu >= 0 ? static_cast<gen::Sound>(fu) : gen::Sound::charge_ready);  // full: its own peak
-					g_readySaid = true;
-				}
-				if (!charging && Audio::Looping(Audio::kLoopCharge)) {
-					Audio::LoopStop(Audio::kLoopCharge, 250);
-				}
-				if (!(IsSpell(gun) ? g_dualHeld : g_trigger)) {
-					g_chargeSaid = g_readySaid = false;
-				}
-				SetAura(charging && !IsSpell(gun) ? g.chargeAura : -1);  // (the storm cloaks filled the first-person screen)
-				const bool staff = g.kind == gen::kKindWand;
-				const bool spell = IsSpell(gun);  // hand spells: Skyrim's own casting animations, nothing laid on top
-				out = spell ? PoseOut{} : bow ? Scale(kBowDraw, c) : staff ? Scale(kStaffCharge, c) : Scale(kChargePose[style], c);
-				if (spell) {
-					g_relT = -1.0f;
-				}
-				out.shake *= 0.5f + c;  // trembles harder as it fills
-				if (g_relT >= 0 && bow) {
-					g_relT = -1.0f;
-					g_tapT = 0.0f;  // the loose
-				}
-				if ((staff || bow) && g_tapT >= 0 && g_relT < 0 && !charging) {
-					const float u = g_tapT / 0.32f;   // in fast, settle back
-					const PoseOut& tap = bow ? kBowLoose : kStaffTap;
-					out = u < 0.25f ? Lerp(PoseOut{}, tap, EaseOut(u / 0.25f)) : Lerp(tap, PoseOut{}, EaseInOut((u - 0.25f) / 0.75f));
-					if ((g_tapT += a_delta) >= 0.32f) {
-						g_tapT = -1.0f;
-					}
-				}
-				if (g_relT >= 0) {
-					g_tapT = -1.0f;
-					const int   rs = g_relStyle;
-					const float dur = rs == gen::kRaise ? 0.75f : 0.55f;
-					float       u = g_relT / dur;
-					if (rs == gen::kRaise) {  // hold up high for a beat, then bring it down
-						u = u < 0.25f ? 0.0f : (u - 0.25f) / 0.75f;
-					}
-					constexpr float k = 0.22f;
-					const PoseOut& from = staff ? kStaffCharge : kChargePose[rs];
-					const PoseOut& to = staff ? kStaffStrike : kStrikePose[rs];
-					out = u < k ? Lerp(from, to, EaseOut(u / k)) : Lerp(to, PoseOut{}, EaseInOut((u - k) / (1 - k)));
-					if ((g_relT += a_delta) >= dur) {
-						g_relT = -1.0f;
-					}
-				}
-			} else {
-				g_relT = -1.0f;
-				SetAura(-1);
-			}
-			g_spin += out.spinRate * a_delta;
-			if (out.spinRate <= 0.01f) {  // settle the spin back to rest the short way
-				const float rest = std::round(g_spin / (2 * RE::NI_PI)) * 2 * RE::NI_PI;
-				g_spin += (rest - g_spin) * std::min(1.0f, a_delta * 10.0f);
-			}
-			g_fovKick += (0.0f - g_fovKick) * std::min(1.0f, a_delta * 6.0f);
-			g_jx = out.shake > 0 ? Rand(-out.shake, out.shake) : 0.0f;
-			g_jy = out.shake > 0 ? Rand(-out.shake, out.shake) : 0.0f;
-			g_pose = out;
-		}
-
 		RE::NiMatrix3 AxisAngle(RE::NiPoint3 a, float t)
 		{
 			a.Unitize();
@@ -2385,60 +1231,6 @@ namespace bo3z
 		}
 
 		// One per skeleton (first person, third person): the arm as the animation left it, and as we wrote it.
-		struct ArmState
-		{
-			RE::NiTransform orig, written;
-			RE::NiAVObject* bone = nullptr;
-		};
-		ArmState g_arm1st, g_arm3rd;
-		void PoseArm(RE::PlayerCharacter* a_player)
-		{
-			auto* cam = RE::PlayerCamera::GetSingleton();
-			if (!cam) {
-				return;
-			}
-			const bool first = cam->IsInFirstPerson();
-			auto*      root = a_player->Get3D(first);
-			if (!root) {
-				return;
-			}
-			ArmState& st = first ? g_arm1st : g_arm3rd;
-			auto*     bone = root->GetObjectByName("NPC R UpperArm [RUar]");
-			if (!bone || !bone->parent) {
-				return;
-			}
-			if (bone == st.bone && std::memcmp(&bone->local, &st.written, sizeof(RE::NiTransform)) == 0) {
-				bone->local = st.orig;  // the animation did not rewrite it this frame: start from the clean pose
-			}
-			st.bone = bone;
-			PoseOut o = g_pose;
-			if (!first) {  // the third-person body is seen from outside: the same motion, a little broader
-				o.pitch *= 1.25f, o.yaw *= 1.25f, o.roll *= 1.25f, o.push *= 0.8f, o.lift *= 0.8f;
-			}
-			if (std::abs(o.pitch) + std::abs(o.yaw) + std::abs(o.roll) + std::abs(o.push) + std::abs(o.lift) + o.shake < 1e-3f) {
-				st.bone = nullptr;
-				return;
-			}
-			const float jx = g_jx, jy = g_jy;
-			const float pitch = a_player->data.angle.x, yaw = a_player->data.angle.z;
-			const RE::NiPoint3 f{ std::sin(yaw) * std::cos(pitch), std::cos(yaw) * std::cos(pitch), -std::sin(pitch) };
-			const RE::NiPoint3 u{ std::sin(yaw) * std::sin(pitch), std::cos(yaw) * std::sin(pitch), std::cos(pitch) };
-			const RE::NiPoint3 r{ std::cos(yaw), -std::sin(yaw), 0 };
-			const RE::NiMatrix3 D = AxisAngle(u, o.yaw + jx) * AxisAngle(r, o.pitch + jy) * AxisAngle(f, o.roll);
-			const RE::NiMatrix3 P = bone->parent->world.rotate;
-			const RE::NiMatrix3 Pt = P.Transpose();
-			st.orig = bone->local;
-			bone->local.rotate = Pt * D * P * bone->local.rotate;
-			bone->local.translate += Pt * (f * o.push + u * o.lift) * (1.0f / std::max(0.01f, bone->parent->world.scale));
-			st.written = bone->local;
-			RE::NiUpdateData ud;
-			ud.time = 0.0f;
-			bone->UpdateDownwardPass(ud, 0);
-			if (!g_armLive) {
-				g_armLive = true;
-				logger::info("pose: arm animation live ({} person)", first ? "first" : "third");
-			}
-		}
 
 #include "Spellcraft.inl"
 		// (Noah, clips 300-303: the slashes, the Shadowflame cyclone, the heavy attacks' rings and pillars never showed - hung loose
@@ -2542,8 +1334,6 @@ namespace bo3z
 		{
 			void Tornado(int a_kind, const RE::NiPoint3& a_at, RE::NiPoint3 a_dir, float a_seconds, float a_damage, bool a_chase, int a_row);
 		}
-#include "Bows.inl"
-#include "Staffs.inl"
 #include "WonderProps.inl"
 
 		// (Noah: "an underhand throwing animation"; "realistic throwing animations and sound fx") a flask thrown underhand, the
@@ -2751,287 +1541,6 @@ namespace bo3z
 				}
 			}
 		}
-		// (the Mutagen Gauntlet: an orb set in the palm) the hand wearing it held open, its fingers eased out of the dagger's fist
-		// (the knuckles a little, the joints past them more) so they never close through the orb - as the flask's open hold,
-		// without its roll
-		float g_gauntW[2]{};
-		float g_gauntCurl = 0.0f, g_gauntOpen = 0.0f;
-		void PoseGauntletHand(RE::PlayerCharacter* a_player, float a_delta)
-		{
-			// (Noah: "the mutagen staff should ... cast like a staff with a beam not like a hand spell") the gauntlet's open hand
-			// and push are gone: the staff is held and cast by Skyrim's own staff animation
-			if (constexpr bool kStaff = true; kStaff) return;
-			{
-				const auto& gs = Props::g_gs;
-				const float curl = gs.phase == 1 && gs.t < 0.5f ? 1.0f : 0.0f, open = gs.phase == 2 || (gs.phase == 1 && gs.t >= 0.5f) ? 1.0f : 0.0f;
-				g_gauntCurl += (curl - g_gauntCurl) * std::min(1.0f, a_delta * 8.0f);
-				g_gauntOpen += (open - g_gauntOpen) * std::min(1.0f, a_delta * (open > g_gauntOpen ? 20.0f : 6.0f));
-			}
-			for (const bool L : { false, true }) {
-				const bool want = Classes::FlaskElementInHand(L) == 6 && Classes::FlaskInHand(L) && !Movement::Gliding();
-				float& w = g_gauntW[L ? 1 : 0];
-				w = std::clamp(w + (want ? 1.0f : -1.0f) * a_delta * 5.0f, 0.0f, 1.0f);
-				if (w <= 0.001f) continue;
-				const float ww = Ease(w);
-				for (const bool first : { false, true }) {
-					auto* root = a_player->Get3D(first);
-					if (!root) continue;
-					g_turnFirst = first;
-					auto* hand = root->GetObjectByName(HandBone(L, "hand"));
-					if (!hand) continue;
-					for (int i = 0; i < 5; ++i) {
-						for (int j = 0; j < 3; ++j) {
-							const char id[3] = { static_cast<char>('0' + i), static_cast<char>('0' + j), 0 };
-							auto* bone = root->GetObjectByName(HandBone(L, id));
-							if (!bone) continue;
-							RE::NiAVObject* prev = hand;
-							if (j > 0) {
-								const char pid[3] = { static_cast<char>('0' + i), static_cast<char>('0' + j - 1), 0 };
-								prev = root->GetObjectByName(HandBone(L, pid));
-							}
-							if (!prev) continue;
-							const RE::NiPoint3 pd = BoneZ(prev), sd = BoneZ(bone);
-							RE::NiPoint3 ax = pd.Cross(sd);
-							const float sn = ax.Length();
-							if (sn < 1e-3f) continue;
-							ax = ax * (1.0f / sn);
-							const float ang = std::atan2(sn, pd.Dot(sd));
-							// (the beam's gesture: the fingers curling in as it gathers, flung straight and open for the push)
-							const float base = i == 0 ? 0.35f : j == 0 ? 0.6f : 0.8f, open = i == 0 ? 0.75f : 1.0f;
-							const float k = (base + (0.12f - base) * g_gauntCurl + (open - base) * g_gauntOpen) * ww;
-							TurnBone(bone, AxisAngle(ax, -ang * k));
-						}
-					}
-				}
-			}
-		}
-		// (Noah: "a charge up animation like a hand gesture then a push to make it look visually powerful") the gauntlet's arm: in
-		// the charge the hand drawn in close and low before you, palm turned up as if gathering the light; then pushed out,
-		// the arm reaching, the palm rolled down and the wrist bent back so the palm - and its orb - faces where you aim;
-		// held there, trembling a little, as long as the beam pours
-		float g_gbW = 0.0f, g_gbS = 0.0f;
-		// the pose's numbers, tunable in game (dev: gpose <i> <v>): 0/1 the hand's distance ahead of your eyes in the charge /
-		// the push, 2/3 how far below them, 4/5 how far out to the side, 6 the elbow straightened for the push, 7 how fully the
-		// hand is turned to its frame, 8 third person: the shoulder's height, 9 third person: farther out, 10 the arm's reach
-		// (0..1), 11 the charge's palm (0 up, 1 turned in), 12 the push's fingers (0 up .. 1 ahead)
-		float g_gbReach = 0.0f;
-		float g_gbP[13] = { 26.0f, 46.0f, 17.0f, 6.0f, 3.0f, 8.0f, 0.97f, 1.0f, 112.0f, 14.0f, 1.0f, 1.0f, 0.25f };
-		// a rotation matrix as an axis and an angle
-		bool AxisOf(const RE::NiMatrix3& m, RE::NiPoint3& a_axis, float& a_ang)
-		{
-			const float tr = m.entry[0][0] + m.entry[1][1] + m.entry[2][2];
-			a_ang = std::acos(std::clamp((tr - 1.0f) * 0.5f, -1.0f, 1.0f));
-			if (a_ang < 1e-4f) return false;
-			RE::NiPoint3 ax{ m.entry[2][1] - m.entry[1][2], m.entry[0][2] - m.entry[2][0], m.entry[1][0] - m.entry[0][1] };
-			if (ax.Length() < 1e-5f) {   // (a half turn: the axis from the matrix's diagonal)
-				ax = { std::sqrt(std::max(0.0f, (m.entry[0][0] + 1) * 0.5f)), std::sqrt(std::max(0.0f, (m.entry[1][1] + 1) * 0.5f)), std::sqrt(std::max(0.0f, (m.entry[2][2] + 1) * 0.5f)) };
-				if (m.entry[0][1] < 0) ax.y = -ax.y;
-				if (m.entry[0][2] < 0) ax.z = -ax.z;
-			}
-			a_axis = ax * (1.0f / ax.Length());
-			return true;
-		}
-		RE::NiMatrix3 Cols(const RE::NiPoint3& x, const RE::NiPoint3& y, const RE::NiPoint3& z)
-		{
-			RE::NiMatrix3 m;
-			m.entry[0][0] = x.x, m.entry[1][0] = x.y, m.entry[2][0] = x.z;
-			m.entry[0][1] = y.x, m.entry[1][1] = y.y, m.entry[2][1] = y.z;
-			m.entry[0][2] = z.x, m.entry[1][2] = z.y, m.entry[2][2] = z.z;
-			return m;
-		}
-		// the hand's frame in the world for a palm facing pn with the fingers along fz: the bone's -Y the palm, +Z the fingers
-		RE::NiMatrix3 HandFrame(RE::NiPoint3 pn, RE::NiPoint3 fz)
-		{
-			fz.Unitize();
-			RE::NiPoint3 y = -pn;
-			y = y - fz * y.Dot(fz);
-			y.Unitize();
-			return Cols(y.Cross(fz), y, fz);
-		}
-		void PoseGauntletBeam(RE::PlayerCharacter* a_player, float a_delta)
-		{
-			if (constexpr bool kStaff = true; kStaff) return;   // (the staff: Skyrim's staff cast, not the gauntlet's push)
-			const auto& gs = Props::g_gs;
-			const bool on = gs.phase == 1 || gs.phase == 2;
-			g_gbW = std::clamp(g_gbW + (on ? 1.0f : -1.0f) * a_delta * (on ? 7.0f : 4.0f), 0.0f, 1.0f);
-			const float sWant = gs.phase == 2 ? 1.0f : (gs.phase == 1 ? std::clamp((gs.t - 0.5f) / 0.16f, 0.0f, 1.0f) : g_gbS);
-			g_gbS += (sWant - g_gbS) * std::min(1.0f, a_delta * (sWant > g_gbS ? 22.0f : 8.0f));   // (the push: fast)
-			if (g_gbW <= 0.001f) return;
-			auto* cam = RE::PlayerCamera::GetSingleton();
-			if (!cam || !cam->cameraRoot) return;
-			const bool first = cam->IsInFirstPerson();
-			auto* root = a_player->Get3D(first);
-			if (!root) return;
-			g_turnFirst = first;
-			const bool L = gs.left;
-			const float w = Ease(g_gbW), s = Ease(g_gbS);
-			const auto& cw = cam->cameraRoot->world;
-			RE::NiPoint3 f{ cw.rotate.entry[0][1], cw.rotate.entry[1][1], cw.rotate.entry[2][1] };
-			RE::NiPoint3 u{ cw.rotate.entry[0][2], cw.rotate.entry[1][2], cw.rotate.entry[2][2] };
-			RE::NiPoint3 r{ cw.rotate.entry[0][0], cw.rotate.entry[1][0], cw.rotate.entry[2][0] };
-			f.Unitize(), u.Unitize(), r.Unitize();
-			const float side = L ? -1.0f : 1.0f;
-			const float tt = static_cast<float>(Spellcraft::g_time);
-			const float* P = g_gbP;
-			const float dist = P[0] + (P[1] - P[0]) * s + (first ? 0.0f : P[9]);
-			const RE::NiPoint3 base = first ? cw.translate : a_player->GetPosition() + RE::NiPoint3{ 0, 0, P[8] };
-			RE::NiPoint3 target = base + f * dist + r * (side * (P[4] + (P[5] - P[4]) * s)) - u * (P[2] + (P[3] - P[2]) * s);
-			const float shake = gs.phase == 2 ? 0.3f : 0.12f;
-			target += RE::NiPoint3{ std::sin(tt * 13.0f), std::sin(tt * 17.0f + 2.0f), std::sin(tt * 11.0f + 1.0f) } * shake;
-			auto* ua = root->GetObjectByName(L ? "NPC L UpperArm [LUar]" : "NPC R UpperArm [RUar]");
-			auto* fa = root->GetObjectByName(HandBone(L, "fa"));
-			auto* hand = root->GetObjectByName(HandBone(L, "hand"));
-			if (!ua || !fa || !hand) return;
-			// the elbow bent just so the hand can reach its mark (a two-bone reach: the bend from the arm's own lengths), then
-			// the arm aimed at it below. P[6]: how much of the arm's full length it may straighten to (the elbow never locks)
-			{
-				const RE::NiPoint3 v1 = fa->world.translate - ua->world.translate, v2 = hand->world.translate - fa->world.translate;
-				const float l1 = v1.Length(), l2 = v2.Length();
-				RE::NiPoint3 hinge = v1.Cross(v2);
-				if (l1 > 1e-3f && l2 > 1e-3f && hinge.Length() > 1e-4f) {
-					hinge = hinge * (1.0f / hinge.Length());
-					const float cur = std::acos(std::clamp(v1.Dot(v2) / (l1 * l2), -1.0f, 1.0f));
-					const float D = std::clamp((target - ua->world.translate).Length(), std::abs(l1 - l2) + 1.0f, (l1 + l2) * std::clamp(P[6], 0.5f, 0.995f));
-					const float inner = std::acos(std::clamp((l1 * l1 + l2 * l2 - D * D) / (2.0f * l1 * l2), -1.0f, 1.0f));
-					const float want = 3.14159265f - inner;
-					TurnBone(fa, AxisAngle(hinge, (want - cur) * w));
-					g_gbReach = l1 + l2;
-				}
-			}
-			{   // the arm swung so the hand reaches its mark
-				RE::NiPoint3 a = hand->world.translate - ua->world.translate, b = target - ua->world.translate;
-				if (a.Length() > 1e-3f && b.Length() > 1e-3f) {
-					a.Unitize(), b.Unitize();
-					RE::NiPoint3 ax = a.Cross(b);
-					const float ang = std::acos(std::clamp(a.Dot(b), -1.0f, 1.0f));
-					if (ax.Length() > 1e-5f && ang > 1e-4f) TurnBone(ua, AxisAngle(ax * (1.0f / ax.Length()), ang * w * P[10]));
-				}
-			}
-			// the hand turned to its frame: in the charge the palm up (or turned in) with the fingers ahead, cupping the light;
-			// for the push the palm square to where you aim, the fingers up - the turn between them eased through by the push.
-			// A third of the turn about the forearm's line goes to the forearm (and its twist), so the wrist doesn't wring
-			const RE::NiPoint3 cupN = P[11] > 0.5f ? (r * -side) * 0.8f + u * 0.6f : u;
-			const RE::NiMatrix3 R0 = HandFrame(cupN, f * 0.9f - u * 0.2f);
-			const RE::NiMatrix3 R1 = HandFrame(f, u * (1.0f - P[12]) + f * P[12]);
-			RE::NiMatrix3 want = R0;
-			if (RE::NiPoint3 ax; s > 0.001f) {
-				float ang = 0;
-				if (AxisOf(R1 * R0.Transpose(), ax, ang)) want = AxisAngle(ax, ang * s) * R0;
-				else want = R1;
-			}
-			{
-				RE::NiPoint3 ax;
-				float ang = 0;
-				if (AxisOf(want * hand->world.rotate.Transpose(), ax, ang)) {
-					ang *= w * P[7];
-					RE::NiPoint3 a = hand->world.translate - fa->world.translate;
-					if (a.Length() > 1e-3f) {
-						a.Unitize();
-						const float roll = ax.Dot(a) * ang * 0.35f;   // (part of it about the forearm: given to the forearm)
-						TurnBone(fa, AxisAngle(a, roll * 0.75f));
-						TurnBone(root->GetObjectByName(HandBone(L, "twist")), AxisAngle(a, roll * 0.25f));
-					}
-					if (AxisOf(want * hand->world.rotate.Transpose(), ax, ang)) TurnBone(hand, AxisAngle(ax, ang * w * P[7]));
-				}
-			}
-			// (dev: where the hand landed, in your view's terms - right, ahead, up - for tuning the numbers above)
-			if (static float said = 0; (said -= a_delta) <= 0) {
-				said = 0.5f;
-				const RE::NiPoint3 eye = cw.translate;
-				auto cs = [&](const RE::NiPoint3& v) { return fmt::format("({:.0f},{:.0f},{:.0f})", v.Dot(r), v.Dot(f), v.Dot(u)); };
-				auto cd = [&](const RE::NiPoint3& v) { return fmt::format("({:.2f},{:.2f},{:.2f})", v.Dot(r), v.Dot(f), v.Dot(u)); };
-				RE::NiPoint3 n, fz, c;
-				PalmNormal(root, L, n, fz, c);
-				logger::info("gauntlet pose: phase {} s {:.2f} w {:.2f} {} reach {:.0f} | hand {} target {} | palm {} fingers {}", gs.phase, s, w, first ? "1st" : "3rd", g_gbReach,
-					cs(hand->world.translate - eye), cs(target - eye), cd(n), cd(fz));
-			}
-		}
-		void GauntletTune(int a_i, float a_v)
-		{
-			if (a_i >= 0 && a_i < static_cast<int>(std::size(g_gbP))) g_gbP[a_i] = a_v;
-			std::string all;
-			for (float v : g_gbP) all += fmt::format("{:g} ", v);
-			logger::info("gauntlet pose numbers: {}", all);
-		}
-		// (Noah: "have my character actually blow the horn") the arm lifting the horn to your lips, held as the horn sounds, and
-		// lowered: the hand reaches for a mark just before your mouth (a two-bone reach), turned so the horn's mouthpiece
-		// (HornLip, tools/wyrmhorn.py) comes to the lips - its error each frame nudging the mark, so it settles there
-		bool  g_hornLeft = false;
-		float g_hornT = -1.0f, g_hornW = 0.0f;
-		RE::NiPoint3 g_hornFix{};
-		void PoseHornBlow(RE::PlayerCharacter* a_player, float a_delta)
-		{
-			const float t = g_hornT;
-			// the weight: up in 0.45 s, held, down from 1.7 s
-			const float want = t < 0.0f ? 0.0f : t < 1.7f ? std::min(1.0f, t / 0.45f) : std::max(0.0f, 1.0f - (t - 1.7f) / 0.4f);
-			g_hornW += (want - g_hornW) * std::min(1.0f, a_delta * 14.0f);
-			if (g_hornW <= 0.002f) { g_hornFix = {}; return; }
-			auto* cam = RE::PlayerCamera::GetSingleton();
-			if (!cam || !cam->cameraRoot) return;
-			const bool first = cam->IsInFirstPerson();
-			auto* root = a_player->Get3D(first);
-			if (!root) return;
-			g_turnFirst = first;
-			const bool L = g_hornLeft;
-			const float w = Ease(g_hornW);
-			const auto& cw = cam->cameraRoot->world;
-			RE::NiPoint3 f{ cw.rotate.entry[0][1], cw.rotate.entry[1][1], cw.rotate.entry[2][1] };
-			RE::NiPoint3 u{ cw.rotate.entry[0][2], cw.rotate.entry[1][2], cw.rotate.entry[2][2] };
-			f.Unitize(), u.Unitize();
-			RE::NiPoint3 mouth;
-			if (first) mouth = cw.translate - u * 6.0f + f * 3.0f;
-			else if (auto* head = root->GetObjectByName("NPC Head [Head]")) {
-				RE::NiPoint3 hf{ head->world.rotate.entry[0][1], head->world.rotate.entry[1][1], head->world.rotate.entry[2][1] };
-				mouth = head->world.translate + hf * 9.0f - RE::NiPoint3{ 0, 0, 3.0f };
-				f = { std::sin(a_player->GetAngleZ()), std::cos(a_player->GetAngleZ()), 0.0f };
-			} else return;
-			auto* ua = root->GetObjectByName(L ? "NPC L UpperArm [LUar]" : "NPC R UpperArm [RUar]");
-			auto* fa = root->GetObjectByName(HandBone(L, "fa"));
-			auto* hand = root->GetObjectByName(HandBone(L, "hand"));
-			auto* lip = root->GetObjectByName("HornLip");
-			if (!ua || !fa || !hand) return;
-			// (Noah: "the horn calling animation is also very broken" - held overhand across the fist, mouthpiece left, bell
-			// right) the fist out before the face and off to its own side, so the horn runs from the lips across to it and
-			// the bell beyond - the view clear between; nudged by the error fed back
-			RE::NiPoint3 r = first ? RE::NiPoint3{ cw.rotate.entry[0][0], cw.rotate.entry[1][0], cw.rotate.entry[2][0] } : RE::NiPoint3{ std::cos(a_player->GetAngleZ()), -std::sin(a_player->GetAngleZ()), 0.0f };
-			r.Unitize();
-			RE::NiPoint3 target = mouth + f * 12.0f + r * (L ? -12.0f : 12.0f) - u * 3.0f + g_hornFix;
-			{   // the elbow bent to reach it
-				const RE::NiPoint3 v1 = fa->world.translate - ua->world.translate, v2 = hand->world.translate - fa->world.translate;
-				const float l1 = v1.Length(), l2 = v2.Length();
-				RE::NiPoint3 hinge = v1.Cross(v2);
-				if (l1 > 1e-3f && l2 > 1e-3f && hinge.Length() > 1e-4f) {
-					hinge = hinge * (1.0f / hinge.Length());
-					const float cur = std::acos(std::clamp(v1.Dot(v2) / (l1 * l2), -1.0f, 1.0f));
-					const float D = std::clamp((target - ua->world.translate).Length(), std::abs(l1 - l2) + 1.0f, (l1 + l2) * 0.97f);
-					const float inner = std::acos(std::clamp((l1 * l1 + l2 * l2 - D * D) / (2.0f * l1 * l2), -1.0f, 1.0f));
-					TurnBone(fa, AxisAngle(hinge, ((3.14159265f - inner) - cur) * w));
-				}
-			}
-			{   // the arm aimed at it
-				RE::NiPoint3 a = hand->world.translate - ua->world.translate, b = target - ua->world.translate;
-				if (a.Length() > 1e-3f && b.Length() > 1e-3f) {
-					a.Unitize(), b.Unitize();
-					RE::NiPoint3 ax = a.Cross(b);
-					const float ang = std::acos(std::clamp(a.Dot(b), -1.0f, 1.0f));
-					if (ax.Length() > 1e-5f && ang > 1e-4f) TurnBone(ua, AxisAngle(ax * (1.0f / ax.Length()), ang * w));
-				}
-			}
-			// the horn turned so its mouthpiece points at the lips (the bell up and out ahead), and the error fed back
-			if (lip) {
-				RE::NiPoint3 a = lip->world.translate - hand->world.translate, b = mouth - hand->world.translate;
-				if (a.Length() > 1e-3f && b.Length() > 1e-3f) {
-					a.Unitize(), b.Unitize();
-					RE::NiPoint3 ax = a.Cross(b);
-					const float ang = std::acos(std::clamp(a.Dot(b), -1.0f, 1.0f));
-					if (ax.Length() > 1e-5f && ang > 1e-4f) TurnBone(hand, AxisAngle(ax * (1.0f / ax.Length()), ang * w * 0.85f));
-				}
-				const RE::NiPoint3 err = mouth - lip->world.translate;
-				if (g_hornW > 0.9f) g_hornFix += err * std::min(1.0f, a_delta * 3.0f);
-				const float lim = 25.0f;
-				if (g_hornFix.Length() > lim) g_hornFix = g_hornFix * (lim / g_hornFix.Length());
-			}
-		}
 		// the bottle on the palm (after the throw's swing, so it rides the hand through it): its base where the palm is, its
 		// neck up out of the hand - the held model hangs from its neck (tools/flasks.py), its base this far down it
 		float FlaskBase(int a_el) { return a_el == 6 ? 15.76f : a_el == 0 ? 11.56f : 10.67f; }
@@ -3112,16 +1621,13 @@ namespace bo3z
 			{
 				func(a_this, a_delta);
 				try {
-					PoseArm(a_this);
-					PoseBegin(a_this);
+						PoseBegin(a_this);
 					// (Noah: "the new potion holding is still broken lets go back to holding the flask snout") the flask in the fist
 					// by its neck again (tools/flasks.py: the neck drawn out to fill the hand) - the palm-up hold is set aside
 					if constexpr (kPalmHold) PoseFlaskHand(a_this, a_delta);
 					PoseThrow(a_this);
-					PoseHornBlow(a_this, a_delta);
 					PoseEnd();
 					if constexpr (kPalmHold) PlaceHeldFlask(a_this);
-					Spellcraft::OnPose(a_this);
 					Movement::PoseGlideArms(a_this);
 					Movement::SwingBody(a_this);
 				} catch (...) {
@@ -3130,96 +1636,13 @@ namespace bo3z
 			static inline REL::Relocation<decltype(thunk)> func;
 		};
 
-		void Knife()
-		{
-			if (g_knifeCd > 0) {
-				return;
-			}
-			g_knifeCd = gen::kKnife.cooldownMs / 1000.0f;
-			auto* player = RE::PlayerCharacter::GetSingleton();
-			const float yaw = player->GetAngleZ();
-			const RE::NiPoint3 fwd{ std::sin(yaw), std::cos(yaw), 0 };
-			RE::Actor* best = nullptr;
-			float      bestD = gen::kKnife.range;
-			for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
-				auto a = h.get();
-				if (!a || !Targetable(a.get(), player)) {
-					continue;
-				}
-				RE::NiPoint3 to = a->GetPosition() - player->GetPosition();
-				to.z = 0;
-				const float d = to.Length();
-				if (d > bestD || d < 1) {
-					continue;
-				}
-				to.Unitize();
-				if (to.Dot(fwd) < std::cos(gen::kKnife.coneDeg * RE::NI_PI / 180.0f)) {
-					continue;
-				}
-				best = a.get(), bestD = d;
-			}
-			Forms::Play(gen::Sound::knife);
-			if (best) {
-				Damage(best, gen::kKnife.damage * CrewMult(2), false, true);
-			}
-		}
 
-		void Cycle()
-		{
-			const int n = Gun::SlotCount();
-			int       cur = SlotOf(CurrentGun());
-			for (int k = 1; k <= n; ++k) {
-				const int s = ((cur < 0 ? Save::ActiveSlot() - 1 : cur) + k + n) % n;
-				if (const auto sl = Save::GetSlot(s); sl.gun >= 0) {
-					Save::SetActiveSlot(s);
-					Equip(sl.gun);
-					g_reload = 0;
-					return;
-				}
-			}
-		}
 
-		void Holster()
-		{
-			if (auto* p = RE::PlayerCharacter::GetSingleton(); p && Drawn()) {
-				p->DrawWeaponMagicHands(false);
-			}
-		}
 
-		// Keep slots and inventory in step: a gun dropped or sold leaves its slot.
-		void SyncSlots()
-		{
-			auto* p = RE::PlayerCharacter::GetSingleton();
-			if (!p) {
-				return;
-			}
-			for (int s = 0; s < 3; ++s) {
-				auto sl = Save::GetSlot(s);
-				if (sl.gun < 0) {
-					continue;
-				}
-				if (auto* sp = Forms::GunSpell(sl.gun)) {
-					if (!p->HasSpell(sp) || s >= Gun::SlotCount()) {
-						p->RemoveSpell(sp);
-						Save::SetSlot(s, {});
-					}
-					continue;
-				}
-				auto* w = Forms::Gun(sl.gun);
-				const auto counts = p->GetInventoryCounts([w](RE::TESBoundObject& o) { return &o == w; });
-				if (counts.empty() || s >= Gun::SlotCount()) {
-					if (s >= Gun::SlotCount() && !counts.empty() && !ItemMenusOpen()) {
-						p->RemoveItem(w, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);  // lost the third slot
-					}
-					Save::SetSlot(s, {});
-				}
-			}
-		}
 	}
 
 	namespace Gun
 	{
-		int   SlotCount() { return Save::HasPerk(gen::kPerk_mammoth) ? 3 : 2; }
 		void  FxBlast(std::string_view a_name, const RE::NiPoint3& a_at, float a_delay) { Blast(BlastIndex(a_name), a_at, a_delay, 0.6f); }
 		void  FxBlastSized(std::string_view a_name, const RE::NiPoint3& a_at, float a_scale) { Blast(BlastIndex(a_name), a_at, 0.0f, a_scale); }
 		void  FxFrom(RE::BGSExplosion* a_src, const RE::NiPoint3& a_at, float a_scale)
@@ -3245,11 +1668,8 @@ namespace bo3z
 		{
 			if (a_target && !a_target->IsDead() && a_perSecond > 0 && a_seconds > 0) g_dots.push_back({ a_target->GetHandle(), a_perSecond, a_seconds, a_fec });
 		}
-		void  SkyFall(const RE::NiPoint3& a_at) { Props::SkyFireball(a_at); }  // (a burning star from the sky onto a point)
 
 		void SetGauntlet(const GauntletState& a_s) { Props::g_gs = a_s; }
-		void SetHornBlow(bool a_left, float a_t) { g_hornLeft = a_left, g_hornT = a_t; }
-		void DevGauntletTune(int a_i, float a_v) { GauntletTune(a_i, a_v); }
 		bool GauntletBeam(int a_el, float a_width, RE::NiPoint3& a_from, RE::NiPoint3& a_to)
 		{
 			auto* cam = RE::PlayerCamera::GetSingleton();
@@ -3293,40 +1713,6 @@ namespace bo3z
 				Damage(f, whole * a_share, false, false, true);
 			}
 			if (!a_blast.empty()) Blast(BlastIndex(a_blast), a_at, 0.0f, 0.45f);
-		}
-		// (Noah: the Ranger's wonder, the Subsuming Vortex) "a purple black hole that sucks in enemies then explodes - its
-		// Legendary form a larger black hole with stronger pull": a hole opens where the arrow struck, drags the dead in for
-		// 2.2 s (3 s Legendary), gnawing at those it holds, then bursts. At most three stand at once.
-		void  BlackHole(const RE::NiPoint3& a_at, bool a_legendary)
-		{
-			if (std::count_if(g_wells.begin(), g_wells.end(), [](const Well& w) { return w.vortex; }) >= 3) return;
-			auto* p = RE::PlayerCharacter::GetSingleton();
-			RE::NiPoint3 at = a_at;
-			if (float land = 0; RE::TES::GetSingleton()->GetLandHeight(at, land) && land > at.z - 300.0f && land < at.z + 60.0f) {
-				at.z = std::max(at.z, land + 70.0f);  // (hanging just over the ground, never in it)
-			}
-			const float whole = Director::RoundHealth() * gen::kRounds.hpScale;
-			// (the class audit: a flat share - the plain bow outgrew the wonder from about night 20) on the one curve: a Tier III
-			// item's, a Legendary's three Ascends more, with the night's power
-			// (Noah: "the wonder weapons should be the strongest weapons for their class") above every bow and crossbow's
-			// highest tier (13): the curve's 15th step, the 16th Legendary
-			const float grow = UpgradeMult(a_legendary ? kWonderUps + 1 : kWonderUps) * (0.7f + 0.3f * Arcana::Power());
-			Well w{ at, a_legendary ? 3.0f : 2.2f, whole * (a_legendary ? 0.32f : 0.22f) * grow, 0.15f };
-			w.vortex = true;
-			w.reach = a_legendary ? 1300.0f : 800.0f;
-			w.pull = a_legendary ? 620.0f : 360.0f;
-			w.burst = a_legendary ? 620.0f : 400.0f;
-			auto* base = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESBoundObject>(gen::kVortexFx, gen::kPlugin);
-			if (auto ref = p && base ? p->PlaceObjectAtMe(base, false) : nullptr) {
-				ref->SetPosition(at);
-				ref->GetReferenceRuntimeData().refScale = 5;
-				w.fx = ref->CreateRefHandle();
-			}
-			// (Noah: "the impact ... animations are invisible, but it sucks in zombies") violet fire flares where it opens
-			PurpleFire(at, 1.6f, 0.0f, 0.7f);
-			Audio::AtPoint(gen::Sound::unleash_hearth, at);
-			g_wells.push_back(std::move(w));
-			logger::info("vortex: a black hole opens{}", a_legendary ? " (Legendary)" : "");
 		}
 		// (Noah: "the dragon's current attacks are invisible ... the lingering acid is invisible") the bursts placed as world
 		// objects never showed: they are hung in the scene by hand now (as the spells' and the bows' own looks are), each
@@ -4359,108 +2745,10 @@ namespace bo3z
 			if (float land = 0; RE::TES::GetSingleton()->GetLandHeight(at, land) && land > at.z - 250.0f && land < at.z + 80.0f) at.z = land + 1.0f;
 			QueueFx(std::string("CurseOfAlduin\\fx\\motes_") + kName[a_elem] + ".nif", at, a_scale, 0.0f, a_life, true);
 		}
-		float AdsBlend() { return g_ads; }
-		bool  Owns(int a_gun) { return SlotOf(a_gun) >= 0; }
 
-		void RefillAmmo(int a_gun)
-		{
-			(void)a_gun;  // wands never run dry; tomes run on magicka
-		}
 
 		// a Falmer staff's own bolt struck something: our numbers and its element's work (Staffs.inl StaffTap)
 		bool TestKitOn();
-		bool OnStaffHit(RE::Actor* a_target, RE::FormID a_source)
-		{
-			auto* p = RE::PlayerCharacter::GetSingleton();
-			const int gun = CurrentGun();
-			if (!p || !a_target || !IsNativeStaff(gun)) return false;
-			auto* w = Forms::Gun(gun);
-			if (!w || (a_source != w->GetFormID() && !(w->formEnchanting && a_source == w->formEnchanting->GetFormID()))) return false;
-			static std::unordered_map<RE::FormID, std::chrono::steady_clock::time_point> last;  // (an area spell reports each target once)
-			const auto now = std::chrono::steady_clock::now();
-			if (auto it = last.find(a_target->GetFormID()); it != last.end() && now - it->second < std::chrono::milliseconds(150)) return true;
-			last[a_target->GetFormID()] = now;
-			const auto& g = gen::kGuns[gun];
-			const float dmg = g.damage * Perks::DamageMult() * UpgradeMult(ForgeLevel());
-			if (Director::IsFoe(a_target)) Damage(a_target, dmg, false, false, true);
-			if (g.id == "gravecaller" && Director::IsFoe(a_target) && !a_target->IsDead()) Classes::MarkForSummons(a_target);  // (the Conjurer's Staff)
-			StaffTap(g, a_target->GetPosition(), a_target, dmg);
-			return true;
-		}
-		void OnStaffCast(RE::FormID a_spell)  // a Falmer staff cast: its magicka (staffs run on it here)
-		{
-			auto* p = RE::PlayerCharacter::GetSingleton();
-			const int gun = CurrentGun();
-			auto* w = IsNativeStaff(gun) ? Forms::Gun(gun) : nullptr;
-			if (!p || !w || !w->formEnchanting || w->formEnchanting->GetFormID() != a_spell) return;
-			if (!TestKitOn()) p->AsActorValueOwner()->DamageActorValue(RE::ActorValue::kMagicka, gen::kGuns[gun].mana * Perks::ManaMult() * Difficulty::Mana());
-		}
-		int LevelOf(int a_gun) { const int s = SlotOf(a_gun); return s >= 0 ? Save::GetSlot(s).level : -1; }
-		void SetLevelOf(int a_gun, int a_level)
-		{
-			if (const int s = SlotOf(a_gun); s >= 0) {
-				auto sl = Save::GetSlot(s);
-				sl.level = std::clamp(a_level, 0, gen::kForgeMax);
-				Save::SetSlot(s, sl);
-			}
-		}
-		bool IsStaffWonder(int)
-		{
-			return false;  // (Noah: the staff wonders are removed - each class has its own wonder now)
-		}
-		int TakeAway(int a_gun)
-		{
-			auto* p = RE::PlayerCharacter::GetSingleton();
-			const int s = SlotOf(a_gun);
-			if (!p || s < 0) return -1;
-			const int lv = Save::GetSlot(s).level;
-			if (auto* w = Forms::Gun(a_gun); w && p->GetItemCount(w) > 0) {
-				p->RemoveItem(w, p->GetItemCount(w), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
-			}
-			Save::SetSlot(s, { -1, 0, 0, 0 });
-			return lv;
-		}
-		bool Give(int a_gun)
-		{
-			auto* p = RE::PlayerCharacter::GetSingleton();
-			auto* w = Forms::Gun(a_gun);
-			auto* spell = Forms::GunSpell(a_gun);
-			if (!p || (!w && !spell)) {
-				return false;
-			}
-			if (Owns(a_gun)) {
-				Equip(a_gun);
-				return true;
-			}
-			int slot = -1;
-			for (int s = 0; s < SlotCount() && slot < 0; ++s) {
-				if (Save::GetSlot(s).gun < 0) {
-					slot = s;
-				}
-			}
-			if (slot < 0) {  // full: replace the gun in hand (or the active slot)
-				slot = SlotOf(CurrentGun());
-				if (slot < 0) {
-					slot = Save::ActiveSlot() % SlotCount();
-				}
-				const int oldGun = Save::GetSlot(slot).gun;
-				if (auto* oldSpell = Forms::GunSpell(oldGun)) {
-					p->RemoveSpell(oldSpell);
-				} else if (auto* old = Forms::Gun(oldGun)) {
-					p->RemoveItem(old, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
-				}
-			}
-			Save::SetSlot(slot, { a_gun, gen::kGuns[a_gun].clip, gen::kGuns[a_gun].reserve });
-			Save::SetActiveSlot(slot);
-			if (spell) {
-				p->AddSpell(spell);
-			} else {
-				p->AddObjectToContainer(w, nullptr, 1, nullptr);
-			}
-			Equip(a_gun);
-			logger::info("gun: {} -> slot {}", gen::kGuns[a_gun].id, slot);
-			return true;
-		}
 
 		// (Noah: a test kit) every wonder weapon and Echo Altar tome, every Coffer spell, every elemental bow, every
 		// city's shout with Dragon's Updraft and the dragon's three bonds, and 100,000 septims - for trying it all out
@@ -4619,12 +2907,6 @@ namespace bo3z
 				}
 				RestoreNames();
 			}
-			// (Noah: "it had all the old bows we aren't going to use anymore") no bows - and the ones an older kit gave are taken back
-			for (int i = Bows::Count() - 1; i >= 0; --i) {
-				if (auto* w = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kBows[i].weap, gen::kPlugin); w && p->GetItemCount(w) > 0) {
-					p->RemoveItem(w, p->GetItemCount(w), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
-				}
-			}
 			if (auto* bane = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kFangWeap, gen::kPlugin); bane && p->GetItemCount(bane) <= 0) {
 				p->AddObjectToContainer(bane, nullptr, 1, nullptr);  // Alduin's Bane
 			}
@@ -4635,7 +2917,6 @@ namespace bo3z
 					++spells, ++byEl[std::string(Arcana::Name(i))];
 				}
 			}
-			Bows::SetLevels(std::vector<std::uint8_t>(BowsImpl::kN, static_cast<std::uint8_t>(gen::kForgeMax)));  // every bow at tier 3
 			if (auto* bane = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kFangWeap, gen::kPlugin)) {  // Alduin's Bane, in your hands
 				RE::ActorEquipManager::GetSingleton()->EquipObject(p, bane);
 			}
@@ -4655,7 +2936,7 @@ namespace bo3z
 			Hud::Banner(fmt::format("TEST KIT: the Echo Altar's {} spells, every class's spells, weapons, flasks and robes (Tier III), the four wonders, the ten Dragon Priest weapons, Alduin's Bane, the glider, 150,000 Cursed Essence", spells), 8.0f);
 			std::string list;
 			for (auto& [el, c] : byEl) list += fmt::format("{} {}, ", el, c);
-			logger::info("testkit: {} altar spells ({}) - {} others taken away; bows {}, essence {}", spells, list, removed, Bows::Count(), Points::Get());
+			logger::info("testkit: {} altar spells ({}) - {} others taken away; essence {}", spells, list, removed, Points::Get());
 		}
 		bool TestKitOn()
 		{
@@ -4714,85 +2995,6 @@ namespace bo3z
 
 		bool g_migrated = false;
 
-		// The old Dwemer guns are retired: take them out of the inventory (slots follow) and make sure
-		// the player has the Apprentice's Tome.
-		void MigrateRetired()
-		{
-			auto* p = RE::PlayerCharacter::GetSingleton();
-			if (!p || g_migrated) {
-				return;
-			}
-			g_migrated = true;
-			int removed = 0;
-			for (int i = 0; i < static_cast<int>(gen::kGuns.size()); ++i) {
-				if (!gen::kGuns[i].retired || IsStaffWonder(i)) {  // (the Falmer staffs are out of the box, not retired)
-					continue;
-				}
-				auto* w = Forms::Gun(i);
-				const auto counts = p->GetInventoryCounts([w](RE::TESBoundObject& o) { return &o == w; });
-				for (auto& [obj, n] : counts) {
-					p->RemoveItem(obj, n, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
-					++removed;
-				}
-			}
-			for (int s = 0; s < 3; ++s) {
-				auto sl = Save::GetSlot(s);
-				if (sl.gun >= 0 && gen::kGuns[sl.gun].retired && !IsStaffWonder(sl.gun)) {
-					Save::SetSlot(s, {});
-				}
-			}
-			// Tomes and grimoires used to be carried as staff items; now they live in your hands as spells.
-			for (int i = 0; i < static_cast<int>(gen::kGuns.size()); ++i) {
-				auto* sp = Forms::GunSpell(i);
-				auto* w = Forms::Gun(i);
-				if (!sp || !w) {
-					continue;
-				}
-				const auto counts = p->GetInventoryCounts([w](RE::TESBoundObject& o) { return &o == w; });
-				for (auto& [obj, n] : counts) {
-					p->RemoveItem(obj, n, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
-					++removed;
-				}
-				if (SlotOf(i) >= 0 && !p->HasSpell(sp)) {
-					p->AddSpell(sp);
-				}
-			}
-			// The four tomes became the elemental bows: a slot that held one gets the bow (and its arrows).
-			for (int s = 0; s < 3; ++s) {
-				const int gun = Save::GetSlot(s).gun;
-				if (gun >= 0 && gen::kGuns[gun].kind == gen::kKindBow) {
-					if (auto* w = Forms::Gun(gun)) {
-						const auto counts = p->GetInventoryCounts([w](RE::TESBoundObject& o) { return &o == w; });
-						if (counts.empty()) {
-							p->AddObjectToContainer(w, nullptr, 1, nullptr);
-							TopUpArrows(gun, false);
-							++removed;
-						}
-					}
-				}
-			}
-			for (int i = 0; i < static_cast<int>(gen::kGuns.size()); ++i) {
-				if (auto* sp = gen::kGuns[i].retired ? Forms::GunSpell(i) : nullptr; sp && p->HasSpell(sp)) {
-					p->RemoveSpell(sp);
-					++removed;
-				}
-			}
-			bool any = false;
-			for (int s = 0; s < 3; ++s) {
-				any |= Save::GetSlot(s).gun >= 0;
-			}
-			bool knowsCoffer = false;
-			for (int i = 0; i < 400 && !knowsCoffer; ++i) {
-				knowsCoffer = Arcana::Known(i);
-			}
-			if (Save::Flag(Save::kFlagStarted) && !any && !knowsCoffer) {
-				Arcana::GiveStarter();  // (a character with nothing in hand gets a Coffer spell to start with)
-			}
-			if (removed) {
-				logger::info("gun: retired {} old guns from the inventory", removed);
-				Hud::Banner("Old weapons swapped for the new arsenal.", 4.0f);
-			}
-		}
 
 		void HideVanillaBars()
 		{
@@ -4846,65 +3048,28 @@ namespace bo3z
 		{
 			g_migrated = false;
 			g_hits.clear();
-			g_trigger = g_adsHeld = g_dualHeld = false;
-			g_reload = g_cooldown = 0;
-			g_burstLeft = 0;
 			Spellcraft::Reset();
 			OrbDown();  // (the Light Orb and its light hung again on the new game's body, never carried over a load)
-			BowsImpl::Reset();
 			// (the audit: a load mid-unleash let the old game's stars fall, wells pull and storms crackle in the new one)
-			g_detonations.clear(), g_arcs.clear(), g_dots.clear(), g_shrink.clear(), g_blasts.clear(), g_wells.clear(), g_vflash.clear(), g_pfire.clear(), (void)std::for_each(g_eb.begin(), g_eb.end(), [](EBurst& b) { b.fx.Detach(); }), g_eb.clear(), (void)std::for_each(g_lobs.begin(), g_lobs.end(), [](Lobbed& l) { l.fx.Detach(); }), g_lobs.clear(), g_frozen.clear(), g_prisms.clear();
+			g_arcs.clear(), g_dots.clear(), g_shrink.clear(), g_blasts.clear(), g_wells.clear(), g_vflash.clear(), g_pfire.clear(), (void)std::for_each(g_eb.begin(), g_eb.end(), [](EBurst& b) { b.fx.Detach(); }), g_eb.clear(), (void)std::for_each(g_lobs.begin(), g_lobs.end(), [](Lobbed& l) { l.fx.Detach(); }), g_lobs.clear();
 			for (auto& l : g_slashes) l.fx.Detach();
 			for (auto& r : g_grows) r.fx.Detach();
 			for (auto& c : g_cyclones) c.fx.Detach();
 			g_slashes.clear(), g_grows.clear(), g_cyclones.clear();
 			g_hexed.clear(), g_doomed.clear(), g_plagued.clear();
 			g_zones.clear(), g_chill.clear(), g_frozenUntil.clear();
-			Props::g_world.clear(), Props::g_twisters.clear();
+			Props::g_twisters.clear();
 			g_storm.charges = 0;
 		}
 
-		// dev channel: 'cast tap|full|ult|orb' with the spell in hand (synthetic mouse input does not cast)
-		void DevCast(const std::string& a_mode)
-		{
-			const int gun = CurrentGun();
-			if (!Spellcraft::Is(gun)) {
-				logger::info("cast: no spellcraft spell in hand (gun {})", gun);
-				return;
-			}
-			if (a_mode == "tap" || a_mode == "full") {
-				Spellcraft::g_cd = 0;
-				Spellcraft::Tap(gun, a_mode == "full");
-			} else if (a_mode == "ult") {
-				Spellcraft::g_ultCd = 0;
-				Spellcraft::Ult(gun);
-			} else if (a_mode == "orb") {
-				Spellcraft::g_orbHeld = !Spellcraft::g_orbHeld;
-				Spellcraft::g_orbT = 0;
-			} else if (a_mode == "probe") {
-				Spellcraft::SpawnProbe(Spellcraft::Row(gun));
-			} else if (a_mode == "hand") {
-				Spellcraft::g_tapHeld = !Spellcraft::g_tapHeld;
-				Spellcraft::g_tapT = 0;
-			}
-			logger::info("cast: {} {} ({} shots in flight)", gen::kGuns[gun].id, a_mode, Spellcraft::g_shots2.size());
-		}
 
 		// Atronach Reforge: the weapon in your hands goes up a level (more damage, full ammo).
 		int ReforgeCost()
 		{
-			const int gun = CurrentGun(), slot = SlotOf(gun);
-			if (const int b = BowsImpl::Held(); b >= 0) {  // the altar's bow
-				return BowsImpl::g_level[b] >= gen::kForgeMax ? 0 : gen::kForgeCost[BowsImpl::g_level[b]];
-			}
-			if (gun < 0 || slot < 0) {
-				const auto hands = Arcana::Hands();
-				const int  sp = hands[1] >= 0 ? hands[1] : hands[0];
-				if (sp >= 0) return Arcana::NextRung(sp) < 0 ? 0 : gen::kForgeCost[std::clamp(Arcana::RungOf(sp) - 1, 0, 2)];
-				return -1;
-			}
-			const int lvl = Save::GetSlot(slot).level;
-			return lvl >= gen::kForgeMax ? 0 : gen::kForgeCost[lvl];
+			const auto hands = Arcana::Hands();
+			const int  sp = hands[1] >= 0 ? hands[1] : hands[0];
+			if (sp >= 0) return Arcana::NextRung(sp) < 0 ? 0 : gen::kForgeCost[std::clamp(Arcana::RungOf(sp) - 1, 0, 2)];
+			return -1;
 		}
 		// (Noah: harder to grow too strong) each weapon or spell takes one reforge a night
 		std::unordered_set<int> g_forgedTonight;
@@ -4921,46 +3086,14 @@ namespace bo3z
 		}
 		bool Reforge()
 		{
-			const int gun = CurrentGun(), slot = SlotOf(gun);
-			if (const int b = BowsImpl::Held(); b >= 0) {  // the altar's bow in hand: more power, then piercing, then three arrows
-				const int lv = BowsImpl::g_level[b];
-				const std::string name(gen::kBows[b].label);
-				if (lv >= gen::kForgeMax) {
-					Hud::Banner(name + " cannot hold more power", 2.5f);
-					return false;
-				}
-				if (const int have = Classes::BowMastery(b), want = Classes::BowMasteryNeed(b); have < want) {  // (Noah: the Ranger's bows need kills too)
-					Hud::Banner(name + ": " + std::to_string(have) + " / " + std::to_string(want) + " kills with it before it can be reforged", 3.0f);
-					return false;
-				}
-				if (ForgedTonight(Bows::kIdBase + b, name)) {
-					return false;
-				}
-				if (!Points::Spend(gen::kForgeCost[lv])) {
-					return false;
-				}
-				Classes::SpendBowMastery(b);
-				g_forgedTonight.insert(Bows::kIdBase + b);
-				BowsImpl::g_level[b] = static_cast<std::uint8_t>(lv + 1);
-				BowsImpl::ApplySpeed(b);
-				Hud::Banner(name + " reforged  " + std::string(lv + 1, '|') + "  - " + std::string(Bows::TierName(b, lv + 1)) + ", a faster draw", 4.0f);
-				logger::info("forge: {} -> level {}", name, lv + 1);
-				return true;
-			}
-			if (Classes::Get() == 2) {  // (the classes' growth) a crossbow in hand is reforged on its own kills
-				int freedX = 0;
-				for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) freedX += Curse::Freed(t) ? 1 : 0;
-				bool spent = false;
-				if (const int r = Classes::ReforgeCrossbow(freedX, spent); r >= 0) return spent;
-			}
-			if (gun < 0 || slot < 0) {
+			{
 				// (the classes overhaul) a class spell in hand (the right first) climbs its ladder: Reforge for Destruction,
 				// Bind Pact for the Summoner, Imbue for the Spellsword - the next rung's spell takes its place and its hands
 				const auto hands = Arcana::Hands();
 				const int  sp = hands[1] >= 0 ? hands[1] : hands[0];
 				if (sp < 0) {
 					const int c0 = Classes::Get();
-					Hud::Banner(c0 == 2 ? "Hold an elemental bow to reforge it" : c0 == 0 ? "Hold the summon spell you want to Bind" : c0 == 3 ? "Hold the touch you want to Imbue" : "Hold the spell you want to Reforge", 2.5f);
+					Hud::Banner(c0 == 0 ? "Hold the summon spell you want to Bind" : c0 == 3 ? "Hold the touch you want to Imbue" : "Hold the spell you want to Reforge", 2.5f);
 					return false;
 				}
 				const int cls = Arcana::ClassOf(sp);
@@ -5020,166 +3153,24 @@ namespace bo3z
 				Hud::Banner(std::string(verb) + ":  " + name + "  ->  " + std::string(Arcana::Name(next)) + (Arcana::TierOf(next) >= 3 ? "  -  LEGENDARY" : ""), 4.5f);
 				return true;
 			}
-			auto s = Save::GetSlot(slot);
-			if (IsStaffWonder(gun) && s.level >= gen::kForgeMax - 1 && s.level < gen::kForgeMax) {  // (Noah: the staffs' last step is a ritual)
-				Hud::Banner(std::string(gen::kGuns[gun].label) + ": it has grown as far as it can", 6.0f);
-				return false;
-			}
-			if (s.level >= gen::kForgeMax) {
-				Hud::Banner(std::string(gen::kGuns[gun].label) + " cannot hold more power", 2.5f);
-				return false;
-			}
-			if (ForgedTonight(gun, std::string(gen::kGuns[gun].label))) {
-				return false;
-			}
-			if (!Points::Spend(gen::kForgeCost[s.level])) {
-				return false;
-			}
-			g_forgedTonight.insert(gun);
-			s.level += 1;
-			s.clip = gen::kGuns[gun].clip;
-			s.reserve = gen::kGuns[gun].reserve;
-			Save::SetSlot(slot, s);
-			logger::info("forge: {} -> level {}", gen::kGuns[gun].id, s.level);
-			if (s.level >= gen::kForgeMax) {
-				Hud::Banner(std::string(gen::kGuns[gun].label) + " ASCENDED  |||  " + std::string(gen::kGuns[gun].chargeName) + " now strikes twice", 5.0f);
-			} else {
-				Hud::Banner(std::string(gen::kGuns[gun].label) + " reforged  " + std::string(s.level, '|') + "  (x" + fmt::format("{:.1f}", UpgradeMult(s.level)) + " damage)", 4.0f);
-			}
-			return true;
 		}
 
 		bool OnButton(const RE::ButtonEvent* a_event)
 		{
 			auto* ui = RE::UI::GetSingleton();
-			if (!ui || ui->GameIsPaused() || ui->IsMenuOpen(RE::DialogueMenu::MENU_NAME) || Intro::CrewScreenOpen() || ItemMenusOpen()) {
+			if (!ui || ui->GameIsPaused() || ui->IsMenuOpen(RE::DialogueMenu::MENU_NAME) || ItemMenusOpen()) {
 				return false;  // (the audit: G or the knife key in the inventory equipped from under it)
 			}
-			const auto dev = a_event->GetDevice();
-			const auto code = a_event->GetIDCode();
 			const bool down = a_event->IsDown(), up = !a_event->IsPressed();
-			const bool pad = dev == RE::INPUT_DEVICE::kGamepad;
-			if ((dev == RE::INPUT_DEVICE::kKeyboard && code == gen::kKey2_swap) || (pad && code == kPadRight && (GunOut() || Save::GetSlot(0).gun >= 0))) {
-				if (down) {
-					g_swapDown = Clock::now();
-					g_swapHeld = true;
-				} else if (up && g_swapHeld) {
-					g_swapHeld = false;
-					if (Clock::now() - g_swapDown > 400ms) {
-						Holster();
-					} else {
-						Cycle();
-					}
-				}
-				return true;
-			}
-			if (((dev == RE::INPUT_DEVICE::kKeyboard && code == gen::kKnife.key) || (pad && code == kPadDown && GunOut())) && down) {
-				Knife();
-				return true;
-			}
 			// (Noah: the Alchemist's flasks "should feel like a weapon") a flask held in a hand: that hand's attack throws it
 			if (IsFireButton(a_event) || IsAimButton(a_event)) {
 				const bool left = IsAimButton(a_event);
-				if (Classes::HornInHand(left)) {   // (the Horn of the Violet Wyrm: its attack blows it)
-					if (down) Classes::HornAttack(left);
-					return true;
-				}
 				if (Classes::FlaskInHand(left)) {
 					if (down) Classes::FlaskAttack(left);
 					else if (up) Classes::FlaskAttackUp(left);
 					// (the Mutagen Staff: Skyrim's own staff cast plays while the attack is held - the beam is ours)
 					if (Classes::FlaskElementInHand(left) != 6) return true;
 				}
-			}
-			if (!GunOut()) {
-				g_trigger = g_adsHeld = g_dualHeld = false;
-				return false;
-			}
-			if (const int cg = CurrentGun(); IsNativeStaff(cg)) {  // a Falmer staff: Skyrim casts it; a long hold also looses its held attack
-				if (IsFireButton(a_event)) {
-					if (down) g_charge = 0;
-					if (up && g_trigger) TryUnleash(true);
-					g_trigger = !up;
-				}
-				return false;
-			}
-			if (const int cg = CurrentGun(); Spellcraft::Is(cg)) {  // the ten spells (Spellcraft.inl)
-				if (IsFireButton(a_event)) {
-					Spellcraft::Left(cg, down, up);
-					return true;
-				}
-				if (IsAimButton(a_event)) {
-					Spellcraft::Right(cg, down, up);
-					g_adsHeld = false;
-					return true;
-				}
-			}
-			if (IsFireButton(a_event)) {
-				// One or the other, on release: a full charge unleashes the signature move, anything shorter is the
-				// weapon's normal shot (never both).
-				const bool spell = IsSpell(CurrentGun());
-				if (spell) {  // left mouse: a quick cast from the right hand (the charge is right mouse's)
-					if (down && !g_dualHeld) {
-						SendAttack(false, 1.0f, 0.0f);
-					}
-					if (up && g_trigger && !g_dualHeld) {
-						SendAttack(false, 0.0f, 0.1f);
-						TryFire(true);
-					}
-					g_trigger = !up;
-					return true;
-				}
-				if (down) {
-					g_charge = 0;
-				}
-				if (up && g_trigger) {
-					const bool bow = gen::kGuns[CurrentGun()].kind == gen::kKindBow;
-					const float cdBefore = g_cooldown;
-					if (TryUnleash(true)) {
-						g_swingWanted = IsStaff(CurrentGun());
-					} else {
-						if (!bow) {
-							TryFire(true);
-							g_swingWanted = IsStaff(CurrentGun()) && g_cooldown > cdBefore;  // a shot actually left
-						} else if (g_charge >= 0.5f) {
-							TryFire(true);  // a quick loose (Skyrim's own arrow flies; the hit and its splash are ours)
-						}
-					}
-					g_charge = 0;
-				}
-				g_trigger = !up;
-				return true;
-			}
-			if (IsAimButton(a_event)) {
-				if (IsSpell(CurrentGun())) {  // right mouse: both hands up, the power gathers; let go to unleash it
-					if (down) {
-						g_charge = 0;
-						SendAttack(false, 1.0f, 0.0f);
-						SendAttack(true, 1.0f, 0.0f);
-						g_dualHeld = true;
-					} else if (up && g_dualHeld) {
-						SendAttack(false, 0.0f, std::max(0.05f, g_charge));
-						SendAttack(true, 0.0f, std::max(0.05f, g_charge));
-						const int cur = CurrentGun();
-						if (!TryUnleash(true)) {
-							if (g_charge < 0.35f) {
-								TryFire(true);  // a quick dual tap is still a shot
-							} else {
-								const int fz = cur >= 0 ? gen::kGunSounds[cur].fizzle : -1;
-								Audio::Ui(fz >= 0 ? static_cast<gen::Sound>(fz) : gen::Sound::charge_fizzle);  // let go too early: this spell's power gutters out
-							}
-						} else {
-							Audio::Ui(gen::Sound::release_power, 0.8f);  // a full release lands with weight under the spell's own unleash
-						}
-						Audio::LoopStop(Audio::kLoopCharge, 150);
-						g_dualHeld = false;
-						g_charge = 0;
-					}
-					g_adsHeld = false;
-					return true;
-				}
-				g_adsHeld = !up;
-				return true;
 			}
 			return false;
 		}
@@ -5271,26 +3262,6 @@ namespace bo3z
 
 		// ---- aim down sights: pull the first-person gun onto the view line so you look down its barrel ----
 		struct Quat { float w, x, y, z; };
-		Quat ToQuat(const RE::NiMatrix3& m)
-		{
-			const auto& e = m.entry;
-			const float tr = e[0][0] + e[1][1] + e[2][2];
-			Quat q{};
-			if (tr > 0) {
-				const float s = std::sqrt(tr + 1.0f) * 2;
-				q = { 0.25f * s, (e[2][1] - e[1][2]) / s, (e[0][2] - e[2][0]) / s, (e[1][0] - e[0][1]) / s };
-			} else if (e[0][0] > e[1][1] && e[0][0] > e[2][2]) {
-				const float s = std::sqrt(1.0f + e[0][0] - e[1][1] - e[2][2]) * 2;
-				q = { (e[2][1] - e[1][2]) / s, 0.25f * s, (e[0][1] + e[1][0]) / s, (e[0][2] + e[2][0]) / s };
-			} else if (e[1][1] > e[2][2]) {
-				const float s = std::sqrt(1.0f + e[1][1] - e[0][0] - e[2][2]) * 2;
-				q = { (e[0][2] - e[2][0]) / s, (e[0][1] + e[1][0]) / s, 0.25f * s, (e[1][2] + e[2][1]) / s };
-			} else {
-				const float s = std::sqrt(1.0f + e[2][2] - e[0][0] - e[1][1]) * 2;
-				q = { (e[1][0] - e[0][1]) / s, (e[0][2] + e[2][0]) / s, (e[1][2] + e[2][1]) / s, 0.25f * s };
-			}
-			return q;
-		}
 		RE::NiMatrix3 FromQuat(Quat q)
 		{
 			const float n = std::sqrt(q.w * q.w + q.x * q.x + q.y * q.y + q.z * q.z);
@@ -5301,77 +3272,8 @@ namespace bo3z
 			m.entry[2][0] = 2 * (q.x * q.z - q.y * q.w), m.entry[2][1] = 2 * (q.y * q.z + q.x * q.w), m.entry[2][2] = 1 - 2 * (q.x * q.x + q.y * q.y);
 			return m;
 		}
-		Quat Nlerp(Quat a, Quat b, float t)
-		{
-			if (a.w * b.w + a.x * b.x + a.y * b.y + a.z * b.z < 0) {
-				b = { -b.w, -b.x, -b.y, -b.z };
-			}
-			return { a.w + (b.w - a.w) * t, a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t };
-		}
 
-		RE::NiPointer<RE::NiAVObject> g_adsModel;
-		RE::NiTransform               g_adsRest;
 
-		void AimViewmodel(RE::PlayerCharacter* a_player, float a_t)
-		{
-			auto* fp = a_player ? a_player->Get3D(true) : nullptr;
-			auto* bone = fp ? fp->GetObjectByName("WEAPON") : nullptr;
-			auto* boneNode = bone ? bone->AsNode() : nullptr;
-			RE::NiAVObject* model = nullptr;
-			if (boneNode) {
-				for (auto& c : boneNode->GetChildren()) {
-					if (c) {
-						model = c.get();
-						break;
-					}
-				}
-			}
-			if (model != g_adsModel.get()) {  // gun swapped: put the old one back, remember the new one's rest pose
-				if (g_adsModel) {
-					g_adsModel->local = g_adsRest;
-				}
-				g_adsModel.reset(model);
-				if (model) {
-					g_adsRest = model->local;
-				}
-			}
-			if (!model) {
-				return;
-			}
-			if (a_t <= 0.001f) {
-				model->local = g_adsRest;
-				return;
-			}
-			auto* cam = RE::PlayerCamera::GetSingleton();
-			if (!cam || !cam->cameraRoot) {
-				return;
-			}
-			// Camera basis from the view angles (pitch +down): forward f, up u, right r.
-			const float pitch = a_player->data.angle.x, yaw = a_player->data.angle.z;
-			const RE::NiPoint3 f{ std::sin(yaw) * std::cos(pitch), std::cos(yaw) * std::cos(pitch), -std::sin(pitch) };
-			const RE::NiPoint3 u{ std::sin(yaw) * std::sin(pitch), std::cos(yaw) * std::sin(pitch), std::cos(pitch) };
-			const RE::NiPoint3 r{ std::cos(yaw), -std::sin(yaw), 0 };
-			// Wand models: tip toward +Y, up +Z (point it where you look).
-			RE::NiMatrix3 want;
-			for (int i = 0; i < 3; ++i) {
-				const float rv[3] = { r.x, r.y, r.z }, fv[3] = { f.x, f.y, f.z }, uv[3] = { u.x, u.y, u.z };
-				want.entry[i][0] = rv[i], want.entry[i][1] = fv[i], want.entry[i][2] = uv[i];
-			}
-			const auto& pw = bone->world;
-			const float  scale = pw.scale * g_adsRest.scale;
-			const RE::NiPoint3 eye = cam->cameraRoot->world.translate;
-			const RE::NiPoint3 at = eye + f * gen::kAdsEyeDistance - u * (gen::kAdsSightHeight * scale);
-			const RE::NiMatrix3 inv = pw.rotate.Transpose();
-			RE::NiTransform aim;
-			aim.rotate = inv * want;
-			aim.translate = (inv * (at - pw.translate)) / std::max(0.001f, pw.scale);
-			aim.scale = g_adsRest.scale;
-			// Ease in/out so the raise looks like a motion, not a snap.
-			const float t = a_t * a_t * (3 - 2 * a_t);
-			model->local.rotate = FromQuat(Nlerp(ToQuat(g_adsRest.rotate), ToQuat(aim.rotate), t));
-			model->local.translate = g_adsRest.translate + (aim.translate - g_adsRest.translate) * t;
-			model->local.scale = g_adsRest.scale;
-		}
 
 		void FangHit(RE::Actor* a_target, bool a_power) { Props::FangHit(a_target, a_power); }
 		// ---- (Noah: "all 10 of the weapons from the priests act as normal weapons please make sure they actually have their
@@ -5639,24 +3541,6 @@ namespace bo3z
 		}
 
 
-		// a tome you know but carry in no slot (the test kit's), equipped from the Magic menu: it takes the slot in your
-		// hand, the one there before stays known
-		void SlotUnslotted()
-		{
-			const int gun = CurrentGun();
-			if (gun < 0 || SlotOf(gun) >= 0 || gen::kGuns[gun].kind == gen::kKindBow || (!Forms::GunSpell(gun) && !IsStaffWonder(gun))) {
-				return;
-			}
-			int slot = -1;
-			for (int s = 0; s < SlotCount() && slot < 0; ++s) {
-				if (Save::GetSlot(s).gun < 0) slot = s;
-			}
-			if (slot < 0) slot = Save::ActiveSlot() % SlotCount();
-			// (Noah: the test kit's staffs are tier 3)
-			Save::SetSlot(slot, { gun, gen::kGuns[gun].clip, gen::kGuns[gun].reserve, IsStaffWonder(gun) && TestKitOn() ? gen::kForgeMax : 0 });
-			Save::SetActiveSlot(slot);
-			logger::info("gun: {} taken up from the Magic menu / pack -> slot {}", gen::kGuns[gun].id, slot);
-		}
 
 		void Tick(float a_delta)
 		{
@@ -5669,14 +3553,9 @@ namespace bo3z
 					TestKit();
 				}
 			}
-			SlotUnslotted();
 			TickStorm(a_delta);
-			Props::Tick(a_delta, GunOut() ? CurrentGun() : -1);
-			Props::TickMad();
 			Props::TickGauntlet(a_delta);
-			Props::TickWorld(a_delta);
 			Props::TickFang(a_delta);
-			TickStaffs(a_delta);
 			static bool hooked = false;
 			if (!hooked) {
 				REL::Relocation<std::uintptr_t> ab{ RE::VTABLE_AttackBlockHandler[0] };
@@ -5705,15 +3584,7 @@ namespace bo3z
 				}
 				hooked = true;
 				logger::info("gun: attack/ready input hooks installed");
-				for (const auto& gg : gen::kGuns) {  // a charge aura saved mid-charge never sticks
-					if (auto* m = gg.chargeAura >= 0 ? Forms::Spell(gg.chargeAura) : nullptr) {
-						if (auto* sp = m->As<RE::SpellItem>()) {
-							RE::PlayerCharacter::GetSingleton()->RemoveSpell(sp);
-						}
-					}
-				}
 			}
-			MigrateRetired();
 			HideVanillaBars();
 			for (auto& [h, t] : g_flashes) {
 				if ((t -= a_delta) <= 0) {
@@ -5724,34 +3595,12 @@ namespace bo3z
 				}
 			}
 			std::erase_if(g_flashes, [](const auto& e) { return e.second <= 0; });
-			g_cooldown = std::max(0.0f, g_cooldown - a_delta);
-			g_knifeCd = std::max(0.0f, g_knifeCd - a_delta);
 			TickDots(a_delta);
 			TickMana(a_delta);
-			static float sync = 0;
-			if ((sync -= a_delta) <= 0) {
-				sync = 1.0f;
-				SyncSlots();
-				if (GunOut()) {
-					TopUpArrows(CurrentGun(), false);
-				}
-
-			}
-			const bool out = GunOut();
-			const int  gun = CurrentGun();
-			g_chargeCd = std::max(0.0f, g_chargeCd - a_delta);
-			// spells charge with right mouse (both hands), everything else by holding fire
-			const bool held = IsSpell(gun) ? g_dualHeld : g_trigger;
-			g_charge = out && held ? g_charge + a_delta / Perks::ChargeMult() : 0.0f;
-			TickPose(a_delta);
-			TickSwing(a_delta);
-			TickEcho(a_delta);
+			TickSwingWatch();
 			TickBlasts(a_delta);
 			TickWells(a_delta);
-			TickTimeAndPrisms(a_delta);
-			TickMarks(a_delta);
 			Spellcraft::Tick(a_delta);
-			BowsImpl::Tick(a_delta);
 			TickEBursts(a_delta);
 			TickLobs(a_delta);
 			TickGrows(a_delta);
@@ -5765,37 +3614,19 @@ namespace bo3z
 			for (auto& d : g_devFx) if ((d.left -= a_delta) <= 0) d.fx.Detach();
 			std::erase_if(g_devFx, [](auto& d) { return d.left <= 0; });
 			TickThrow(a_delta);
-			if (out) {
-				const auto& g = gen::kGuns[gun];
-				if (g_burstLeft > 0 && (g_burstTimer -= a_delta) <= 0) {
-					--g_burstLeft;
-					TryFire(false);
-				} else if (g_trigger && g.fire == gen::Fire::Auto) {
-					TryFire(false);
-				}
-			} else {
-				g_trigger = g_adsHeld = g_dualHeld = false;
-			}
-			// Aim down sights: blend the field of view.
-			const float target = out && g_adsHeld ? 1.0f : 0.0f;
-			const float step = a_delta / std::max(0.01f, gen::kAdsSeconds);
-			g_ads = target > g_ads ? std::min(target, g_ads + step) : std::max(target, g_ads - step);
 			if (auto* cam = RE::PlayerCamera::GetSingleton()) {
-				// Wider base view (sheet: movement.world_fov / viewmodel_fov), narrowing while aiming.
+				// the field of view is the player's own (Settings: first person and third person each)
 				auto& rd = cam->GetRuntimeData2();
-				// the field of view is the player's own (Settings: first person and third person each), narrowing while aiming
-				const float base = cam->IsInFirstPerson() ? Settings::FovFirst() : Settings::FovThird();
-				rd.worldFOV = base + (gen::kAdsFov - base) * g_ads + g_fovKick;
+				rd.worldFOV = cam->IsInFirstPerson() ? Settings::FovFirst() : Settings::FovThird();
 				// the hands follow the same slider: a wider view draws them smaller and further off, a narrower one closer
-				const float vm = std::clamp(gen::kViewmodelFov + (Settings::FovFirst() - 100.0f) * 0.6f, 55.0f, 110.0f);
-				rd.firstPersonFOV = vm + (gen::kAdsViewmodelFov - vm) * g_ads;
+				rd.firstPersonFOV = std::clamp(gen::kViewmodelFov + (Settings::FovFirst() - 100.0f) * 0.6f, 55.0f, 110.0f);
 			}
-			// (Noah: "an ADS sensitivity slider") while you aim - down a staff's sights, or a drawn bow - the look turns at
+			// (Noah: "an ADS sensitivity slider") while you aim - a drawn bow - the look turns at
 			// Skyrim's own sensitivity times ours; let go (or open a menu) and Skyrim's own comes back exactly as it was
 			{
 				static float skyrimSens = -1.0f;  // Skyrim's own while ours is applied (-1: not applied)
 				auto*       pl = RE::PlayerCharacter::GetSingleton();
-				float       aim = g_ads;
+				float       aim = 0.0f;
 				if (pl) {
 					const auto as = pl->AsActorState()->GetAttackState();
 					// (Noah: "the look sensitivity while holding the crossbow should be the same as the bow - it's very slow")
@@ -5819,55 +3650,21 @@ namespace bo3z
 					}
 				}
 			}
-			AimViewmodel(RE::PlayerCharacter::GetSingleton(), 0.0f);  // staffs and bows stay in Skyrim's own pose; aiming is the zoom
-			// (staffs never spin: the twirl was a wand thing)
 			const auto now = Clock::now();
 			std::erase_if(g_hits, [&](const auto& kv) { return now - kv.second.first > 2s; });
 
 			std::scoped_lock l(Hud::Lock());
 			auto& h = Hud::Edit();
-			h.gunOut = out;
-			h.ads = g_ads;
-			h.reloading = false;
-			if (out) {
-				const auto s = Save::GetSlot(SlotOf(gun));
-				h.gunName = std::string(gen::kGuns[gun].label);
-				h.gunLevel = SlotOf(gun) >= 0 ? Save::GetSlot(SlotOf(gun)).level : 0;
-				h.clip = s.clip;
-				h.reserve = s.reserve;
-				h.gunKind = gen::kGuns[gun].kind;
-				h.manaCost = gen::kGuns[gun].mana * Perks::ManaMult() * Difficulty::Mana();
-				{
-					std::string ab(gen::kGuns[gun].abilityText);
-					if (!ab.empty() && ab.back() == '.') {
-						ab.pop_back();
-					}
-					h.gunElement = ab + "   \xC2\xB7   Hold: " + std::string(gen::kGuns[gun].chargeName);
-				}
-				h.gunColor = gen::kGuns[gun].color;
-				const auto& gg = gen::kGuns[gun];
-				h.charge = g_charge > 0.2f ? std::min(1.0f, g_charge / gg.chargeSeconds) : 0.0f;
-				h.chargeCd = gg.chargeCooldown > 0 ? g_chargeCd / gg.chargeCooldown : 0.0f;
-				h.chargeName = std::string(gg.chargeName) + (ForgeLevel() >= gen::kForgeMax ? " ASCENDANT" : "");
-			}
 			h.points = Points::Get();
 			h.perks = Save::PerkBits();
 			for (int i = 0; i < static_cast<int>(gen::kPerks.size()) && i < 32; ++i) {
 				h.perkStacks[i] = Save::PerkStacks(i);
 			}
-			h.slotCount = SlotCount();
-			for (int i = 0; i < 3; ++i) {
-				const auto sl = i < h.slotCount ? Save::GetSlot(i) : Save::Slot{};
-				h.slotGun[i] = i < h.slotCount && sl.gun >= 0 && sl.gun < static_cast<int>(gen::kGuns.size()) ? sl.gun : -1;
-				h.slotLevel[i] = sl.level;
-			}
-			h.gunIndex = out ? gun : -1;
 			h.handSpell = Arcana::Hands();  // the Coffer spells in hand (the spell dock)
 			for (int i = 0; i < 2; ++i) {  // their real cost: the halved price, the reforge and your own skill and perks
 				auto* sp = Arcana::Spell(h.handSpell[i]);
 				h.handCost[i] = sp ? static_cast<int>(std::lround(sp->CalculateMagickaCost(RE::PlayerCharacter::GetSingleton()))) : 0;
 			}
-			h.activeSlot = out && SlotOf(gun) >= 0 ? SlotOf(gun) : (h.slotCount > 0 ? Save::ActiveSlot() % h.slotCount : -1);
 			{  // Skyrim's own (and other mods') equipment in hand, for the dock
 				auto* pl = RE::PlayerCharacter::GetSingleton();
 				for (int i = 0; i < 2; ++i) {
@@ -6145,91 +3942,6 @@ namespace bo3z
 		}
 	}
 
-	namespace Bows
-	{
-		int              Count() { return BowsImpl::kN; }
-		std::string_view Name(int a_i) { return a_i >= 0 && a_i < BowsImpl::kN ? gen::kBows[a_i].label : ""; }
-		std::uint32_t    Color(int a_i) { return a_i >= 0 && a_i < BowsImpl::kN ? gen::kBows[a_i].color : 0xFFFFFF; }
-		std::string_view Element(int a_i) { return a_i >= 0 && a_i < BowsImpl::kN ? gen::kBows[a_i].element : ""; }
-		int              Level(int a_i) { return a_i >= 0 && a_i < BowsImpl::kN ? BowsImpl::g_level[a_i] : 0; }
-		std::string_view TierName(int a_i, int a_tier) { return a_i >= 0 && a_i < BowsImpl::kN ? BowsImpl::kTierNames[static_cast<int>(BowsImpl::KindOf(a_i))][std::clamp(a_tier, 0, 3)] : ""; }
-		int              Held() { return BowsImpl::Held(); }
-		int              Carried() { return BowsImpl::Carried(); }
-		int              IndexOf(const RE::TESForm* a_form) { return BowsImpl::Of(a_form); }
-		void             Give(int a_i) { BowsImpl::Give(a_i); }
-		// a bow you don't carry, of the tiers the altars allow (the second tier once an altar is awake)
-		int Roll()
-		{
-			int freed = 0;
-			for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) {
-				freed += Curse::Freed(t) ? 1 : 0;
-			}
-			const int        maxTier = freed >= 1 ? 2 : 1;
-			const int        have = BowsImpl::Carried();
-			std::vector<int> pool;
-			for (int i = 0; i < BowsImpl::kN; ++i) {
-				if (i != have && gen::kBows[i].tier <= maxTier && BowsImpl::Weap(i)) {
-					pool.push_back(i);
-				}
-			}
-			return pool.empty() ? -1 : pool[std::uniform_int_distribution<std::size_t>(0, pool.size() - 1)(g_rng)];
-		}
-		std::vector<std::uint8_t> Levels() { return { BowsImpl::g_level.begin(), BowsImpl::g_level.end() }; }
-		int Restock() { return BowsImpl::Restock(); }
-		int              SpecialKind() { return BowsImpl::g_specialKind; }
-		int              SpecialLeft() { return BowsImpl::g_specialLeft; }
-		std::string_view SpecialName(int a_k) { return a_k >= 0 && a_k < 4 ? BowsImpl::kSpecialName[a_k] : ""; }
-		int              SpecialCost(int a_k) { return a_k >= 0 && a_k < 4 ? BowsImpl::kSpecialCost[a_k] / (PowerUps::FireSale() ? 2 : 1) : 0; }
-		bool BuySpecial(int a_k)
-		{
-			if (a_k < 0 || a_k >= 4) return false;
-			const int cost = SpecialCost(a_k);
-			if (!Points::Spend(cost)) {
-				Hud::Banner(fmt::format("{} ammo costs {} Cursed Essence", BowsImpl::kSpecialName[a_k], cost), 2.0f);
-				return false;
-			}
-			if (BowsImpl::g_specialKind == a_k) BowsImpl::g_specialLeft += 10;
-			else BowsImpl::g_specialKind = a_k, BowsImpl::g_specialLeft = 10;
-			Forms::Play(gen::Sound::reload_mag);
-			Hud::Banner(fmt::format("{} ammo  x{}  (-{}) - your next shots carry it", BowsImpl::kSpecialName[a_k], BowsImpl::g_specialLeft, cost), 3.0f);
-			return true;
-		}
-		void CrossbowStrike(int a_elem, int a_tier, RE::Actor* a_hit, float a_damage) { BowsImpl::CrossbowStrike(a_elem, a_tier, a_hit, a_damage); }
-		bool OursInHand()
-		{
-			auto* p = RE::PlayerCharacter::GetSingleton();
-			if (!p) return false;
-			if (BowsImpl::Held() >= 0 || BowsImpl::VortexHeld(p)) return true;
-			for (int e = 0; e < 3; ++e) if (auto* xb = Classes::CrossbowForm(e); xb && (p->GetEquippedObject(false) == xb || p->GetEquippedObject(true) == xb)) return true;
-			return false;
-		}
-		bool IsStrikeSpell(const RE::MagicItem* a_item)
-		{
-			if (!a_item) return false;
-			static std::vector<const RE::MagicItem*> own = [] {
-				std::vector<const RE::MagicItem*> v;
-				for (int k = 0; k < 6; ++k) for (int tier = 2; tier <= 3; ++tier) if (auto* sp = BowsImpl::TierSpell(static_cast<BowsImpl::Kind>(k), tier)) v.push_back(sp);
-				return v;
-			}();
-			for (auto* o : own) {
-				if (o && o == a_item) return true;
-			}
-			return false;
-		}
-		void SetLevels(const std::vector<std::uint8_t>& a_levels)
-		{
-			for (int i = 0; i < BowsImpl::kN; ++i) {
-				BowsImpl::g_level[i] = i < static_cast<int>(a_levels.size()) ? static_cast<std::uint8_t>(std::min<int>(a_levels[i], gen::kForgeMax)) : 0;
-			}
-			BowsImpl::ApplyAllSpeeds();
-		}
-		void SetLevel(int a_i, int a_level)
-		{
-			if (a_i < 0 || a_i >= BowsImpl::kN) return;
-			BowsImpl::g_level[a_i] = static_cast<std::uint8_t>(std::clamp(a_level, 0, 3));
-			BowsImpl::ApplyAllSpeeds();
-		}
-	}
 }
 
 namespace bo3z::Difficulty

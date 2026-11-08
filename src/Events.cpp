@@ -63,9 +63,6 @@ namespace bo3z
 			if (player && caster == player && me != player) {
 				if (auto* sm = me->As<RE::Actor>(); sm && ((sm->IsCommandedActor() && sm->GetCommandingActor().get() == player) || Classes::IsOwnSummon(sm))) return true;
 			}
-			if (player && me == player && Bows::IsStrikeSpell(a_data.magicItem)) {
-				return true;  // (Noah: the charged bow hurt me at night) our bows' spells never touch you, whoever they count as cast by
-			}
 			if (player && me == player) {
 				if (!caster) {
 					return true;  // a hazard, a trap, a lingering field with no one behind it
@@ -594,17 +591,11 @@ namespace bo3z
 					if (summon && told < 6) ++told, logger::info("classes: a summon's kill ({}, killer {})", dying->GetName(), killer ? killer->GetName() : "none");
 					if (mine || summon) Classes::OnKill(summon, dying, killer);
 				}
-				if (dying && dying != player && !Director::IsRoundUndead(dying) && a_event->actorKiller.get() == player && Director::IsFoe(dying)) {
-					PowerUps::MaybeDrop(dying->GetPosition());  // (Noah: any enemy can drop one - bandits, wolves, draugr too)
-				}
 				if (!dying || !Director::IsRoundUndead(dying)) {
 					return RE::BSEventNotifyControl::kContinue;
 				}
 				Audio::Voice(dying, Audio::VoiceEvent::kDeath);
 				Audio::Flesh(dying, true);
-				if (Coop::Client()) {
-					PowerUps::MaybeDrop(dying->GetPosition());  // a friend's game rolls its own drops (the host's aren't seen here)
-				}
 				if (a_event->actorKiller.get() != player) {
 					// a party member's kill counts for everyone (each player gets the points: nobody goes without)
 					auto* killer = a_event->actorKiller.get() ? a_event->actorKiller->As<RE::Actor>() : nullptr;
@@ -620,10 +611,7 @@ namespace bo3z
 				const auto [gun, head] = Gun::RecentHit(dying->GetFormID());
 				Points::Add(gun ? (head ? gen::kPoints_headshot_kill : gen::kPoints_kill) : gen::kPoints_melee_kill);
 				Hud::Essence(dying->GetPosition());
-				{
-					const bool bow = Bows::Held() >= 0;
-					Stats::OnKill(dying, gun, head, !gun && !bow, bow, dying->GetPosition().GetDistance(player->GetPosition()));
-				}
+				Stats::OnKill(dying, gun, head, !gun, false, dying->GetPosition().GetDistance(player->GetPosition()));
 				return RE::BSEventNotifyControl::kContinue;
 			}
 		};
@@ -906,10 +894,8 @@ namespace bo3z
 					}
 				}
 				if (a_event && player && a_event->cause.get() == player && a_event->target && a_event->target.get() != player) {
-					if (auto* t = a_event->target->As<RE::Actor>()) Gun::OnStaffHit(t, a_event->source);
-					if (auto* t = a_event->target->As<RE::Actor>()) Classes::ConjurerStaffHit(t, a_event->source);
 					if (auto* t = a_event->target->As<RE::Actor>(); t && Classes::IsRiftblade(a_event->source)) Classes::RiftHit(t);
-					if (auto* t = a_event->target->As<RE::Actor>(); t && a_event->source) Kit::OnPlayerHit(t, RE::TESForm::LookupByID(a_event->source));  // (the altar rework: the item's Infusion)
+					if (auto* t = a_event->target->As<RE::Actor>(); t && a_event->source) Kit::OnPlayerHit(t, RE::TESForm::LookupByID(a_event->source));  // (the Spellsword set's magicka)
 					if (auto* t = a_event->target->As<RE::Actor>()) Classes::NoteHit(t, a_event->source, a_event->flags.any(RE::TESHitEvent::Flag::kPowerAttack));
 					if (auto* t = a_event->target->As<RE::Actor>(); t && a_event->source) Gun::PriestHit(t, a_event->source, a_event->flags.any(RE::TESHitEvent::Flag::kPowerAttack));  // (the Dragon Priests' weapons)
 					auto* src = a_event->source ? RE::TESForm::LookupByID(a_event->source) : nullptr;
@@ -950,39 +936,19 @@ namespace bo3z
 					auto* src = a_event->source ? RE::TESForm::LookupByID(a_event->source) : nullptr;
 					if (auto* att = a_event->cause->As<RE::Actor>()) Classes::OnBlock(att, src && src->As<RE::MagicItem>());
 				}
-				// (Noah: Insta-Kill means one hit) any blow of yours - blade, fist, Skyrim's bows and spells - drops a wave undead
-				if (a_event && player && a_event->cause.get() == player && a_event->target && PowerUps::InstaKill()) {
-					if (auto* z = a_event->target->As<RE::Actor>(); z && z != player && !z->IsDead() && Director::IsRoundUndead(z) && !Director::IsGreat(z)) {
-						Tasks::Add([h = z->GetHandle()] {
-							auto a = h.get();
-							if (a && !a->IsDead() && !a->IsDeleted()) a->KillImpl(RE::PlayerCharacter::GetSingleton(), 9999.0f, true, false);
-						});
-					}
-				}
 				// Skyrim weapons and spells keep up with the rounds: each hit takes a share of a zombie's round health.
 				if (a_event && a_event->cause.get() == player && a_event->target) {
 					auto* z = a_event->target->As<RE::Actor>();
 					auto* src = RE::TESForm::LookupByID(a_event->source);
-					if (Bows::IndexOf(src) >= 0) {
-						return RE::BSEventNotifyControl::kContinue;  // the altar's bows: their own arrow is only the look (Bows.inl does the hit)
-					}
 					if (z && Director::IsRoundUndead(z)) {  // Trial of Steel: was it a blade, an axe, a mace or a fist?
 						auto*      w = src ? src->As<RE::TESObjectWEAP>() : nullptr;
-						const bool melee = !a_event->projectile && (src ? (w && !w->IsBow() && !w->IsCrossbow() && !w->IsStaff() && Forms::GunIndexOf(src) < 0) : true);
+						const bool melee = !a_event->projectile && (src ? (w && !w->IsBow() && !w->IsCrossbow() && !w->IsStaff()) : true);
 						Curse::NoteHit(z->GetFormID(), melee);
 					}
-					if (const int xe = Classes::CrossbowElement(src); z && xe >= 0) {
-						// (Noah: the crossbow and the bows the same) an elemental crossbow's bolt hits as an altar bow's full draw
-						if (!z->IsDead() && Director::IsFoe(z) && Limit(z)) {
-							Bows::CrossbowStrike(xe, Classes::CrossbowLevel(src), z, 0.0f);
-							if (Director::IsRoundUndead(z)) MarkHit(z);
-						}
-					} else if (const int ci = Arcana::IndexOf(src); z && ci >= 0 && !(Classes::Get() == 3 && Kit::TierOfSpell(src) >= 0)) {
-						// (the class audit: five of the Spellsword's Vigilant relics are the same spells as Destruction's ladders -
-						// cast by a Spellsword they hit as relics, below, with the relic's own tiers)
+					if (const int ci = Arcana::IndexOf(src); z && ci >= 0) {
 						CofferHit(z, ci);  // the Coffer's spells: every one of them hurts every enemy
 						if (Director::IsRoundUndead(z)) MarkHit(z);
-					} else if (const int cl = CloakOf(src); z && cl >= 0 && !(Classes::Get() == 3 && Kit::TierOfSpell(src) >= 0)) {
+					} else if (const int cl = CloakOf(src); z && cl >= 0) {
 						CofferHit(z, cl, true);
 						if (Director::IsRoundUndead(z)) MarkHit(z);
 					} else if (z && !z->IsDead() && Director::IsRoundUndead(z)) {
@@ -992,18 +958,12 @@ namespace bo3z
 								ourSpell = true;
 							}
 						}
-						if (src && !ourSpell && Forms::GunIndexOf(src) < 0 && !(fangId && src->GetFormID() == fangId) && Limit(z, nullptr, src->Is(RE::FormType::Spell) ? 0x6u : 0u)) {  // (a spell its own window beside the blade's)  // (the Fang's blows are FangHit's alone)
+						if (src && !ourSpell && !(fangId && src->GetFormID() == fangId) && Limit(z, nullptr, src->Is(RE::FormType::Spell) ? 0x6u : 0u)) {  // (a spell its own window beside the blade's)  // (the Fang's blows are FangHit's alone)
 							float share = gen::kShareSpell;
 							if (auto* w = src->As<RE::TESObjectWEAP>()) {
-								// (Noah: the one upgrade curve) a crossbow by its reforges, an altar spell-weapon by its steel
-								share = (w->IsBow() || w->IsCrossbow()) ? gen::kShareBow * UpgradeMult(Classes::CrossbowLevel(w) + Kit::CrossbowAscends(Classes::CrossbowElement(w))) : Classes::BladeShare(w);
+								share = Classes::BladeShare(w);  // (Noah: the one upgrade curve) an altar spell-weapon by its steel
 							} else if (src->Is(RE::FormType::Spell)) {
 								share *= 1.0f + 0.5f * Save::PerkStacks(gen::kPerk_twinstrike);
-								if (const int rt = Kit::TierOfSpell(src); rt >= 0) {
-									share *= UpgradeMult(rt);  // (a relic's spell: its tiers)
-									if (Classes::Get() == 3) share *= 1.15f;  // (the Spellsword's Vigilant spells: a step above the Armory's)
-									if (CloakOf(src) >= 0) share *= 0.25f;  // (a cloak's touch lands four times a second, as CofferHit's)
-								}
 								if (auto* sp = src->As<RE::SpellItem>(); sp && sp->GetCastingType() == RE::MagicSystem::CastingType::kConcentration) share *= 0.25f;  // (a stream or a wall lands many times a second - as CofferHit)
 							}
 							NoteStruck(z, false);
@@ -1030,8 +990,8 @@ namespace bo3z
 							if (const int fam = Classes::SummonFamily(ally); fam >= 0) {
 								best = Arcana::RungOf(fam), asc = Arcana::Level(fam);
 								for (int i : Arcana::Carried()) if (Arcana::ClassOf(i) == 0 && Arcana::LadderName(i) == Arcana::LadderName(fam)) best = std::max(best, Arcana::RungOf(i)), asc = std::max(asc, Arcana::Level(i));
-							} else if (const int rt = Kit::TierOfSummon(ally); rt >= 0) {
-								best = 1, asc = rt;  // (a Dragon Priest's relic, a hero or an army: its own tiers)
+							} else if (Classes::IsRiftSummon(ally)) {
+								best = 1, asc = Kit::RiftTier();  // (the Riftblade's atronachs: its tiers)
 							} else {
 								for (int i : Arcana::Carried()) if (Arcana::ClassOf(i) == 0) best = std::max(best, Arcana::RungOf(i)), asc = std::max(asc, Arcana::Level(i));
 							}
@@ -1047,7 +1007,6 @@ namespace bo3z
 							b = now;
 							if (mySummon) NoteStruck(z, true);
 							HurtUndead(z, Director::RoundHealth() * gen::kShareMelee * tierMult * (0.7f + 0.3f * Arcana::Power()), ally);
-							if (mySummon) Kit::OnSummonHit(ally, z);  // (its family's Infusion)
 						}
 					}
 				}
@@ -1116,7 +1075,6 @@ namespace bo3z
 						Director::Noise(shout ? 35.0f : 5.0f);
 					}
 					Compass::OnCast(a_event->spell);
-					Gun::OnStaffCast(a_event->spell);
 					Classes::NoteCast(a_event->spell);
 					if (Classes::OnCast(a_event->spell)) {
 						// (the Tome of the Six Fires)

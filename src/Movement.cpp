@@ -3203,7 +3203,7 @@ namespace bo3z
 			}
 
 			// ---- run/sprint speed, eased so switching sprint <-> run <-> strafe never jolts
-			float want = gen::kRunBoost + (sprint ? gen::kSprintBoost : 0.0f) + gen::kAdsSpeed * Gun::AdsBlend();
+			float want = gen::kRunBoost + (sprint ? gen::kSprintBoost : 0.0f);
 			// (Noah: "sprint in all directions like omni-movement in first person ... sprint backwards while casting spells or
 			// drawing a bow") in first person, sprint held while moving any way - back, sideways, casting, a bow drawn - runs
 			// you at sprint speed (Skyrim only sprints forward with empty hands, so its own sprint is left to that). It costs

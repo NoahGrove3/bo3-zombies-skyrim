@@ -115,13 +115,8 @@ namespace bo3z
 			} else if (cmd == "state" && player) {
 				const auto p = player->GetPosition();
 				auto*      cell = player->GetParentCell();
-				std::string slots;
-				for (int i = 0; i < 3; ++i) {
-					const auto s = Save::GetSlot(i);
-					slots += fmt::format(" [{}:{} {}/{}]", i, s.gun >= 0 ? gen::kGuns[s.gun].id : "-", s.clip, s.reserve);
-				}
-				logger::info("dev: state round={} points={} crew={} perks={:09b}{} pos=({:.0f},{:.0f},{:.0f}) cell={} hour={:.2f} introDone={} box={}", Save::Get(gen::kAV_round),
-					Points::Get(), Save::Crew(), Save::PerkBits(), slots, p.x, p.y, p.z, cell ? cell->GetFormEditorID() : "?",
+				logger::info("dev: state round={} points={} perks={:09b} pos=({:.0f},{:.0f},{:.0f}) cell={} hour={:.2f} introDone={} box={}", Save::Get(gen::kAV_round),
+					Points::Get(), Save::PerkBits(), p.x, p.y, p.z, cell ? cell->GetFormEditorID() : "?",
 					RE::Calendar::GetSingleton() ? RE::Calendar::GetSingleton()->GetHour() : -1.0f, Forms::IntroDone(), Shops::BoxTown());
 				Director::LogState();
 			} else if (cmd == "use" && player) {
@@ -256,22 +251,6 @@ namespace bo3z
 					};
 					walk(best->Get3D(), 0);
 				}
-			} else if (cmd == "boltinfo") {
-				for (const auto& g : gen::kGuns) {
-					if (!g.bulletSpell) {
-						continue;
-					}
-					auto* raw = RE::TESDataHandler::GetSingleton()->LookupForm(g.bulletSpell, gen::kPlugin);
-					auto* sp = raw ? raw->As<RE::SpellItem>() : nullptr;
-					auto* eff = sp && !sp->effects.empty() ? sp->effects[0] : nullptr;
-					auto* base = eff ? eff->baseEffect : nullptr;
-					auto* projForm = RE::TESDataHandler::GetSingleton()->LookupForm(g.bulletSpell - 2, gen::kPlugin);
-					logger::info("dev: boltinfo {} spell {:08X} type {} effects {} base {:08X} arch {} cast {} deliv {} proj {:08X} | PROJ? {:03X} -> {:08X} type {}", g.id,
-						raw ? raw->GetFormID() : 0, raw ? static_cast<int>(raw->GetFormType()) : -1, sp ? sp->effects.size() : 0, base ? base->GetFormID() : 0,
-						base ? static_cast<int>(base->data.archetype) : -1, base ? static_cast<int>(base->data.castingType) : -1, base ? static_cast<int>(base->data.delivery) : -1,
-						base && base->data.projectileBase ? base->data.projectileBase->GetFormID() : 0, g.bulletSpell - 2, projForm ? projForm->GetFormID() : 0,
-						projForm ? static_cast<int>(projForm->GetFormType()) : -1);
-				}
 			} else if (cmd == "cast") {
 				std::string mode;
 				in >> mode;
@@ -334,14 +313,6 @@ namespace bo3z
 				Director::DevMiniBoss();
 			} else if (cmd == "testkit") {
 				Gun::TestKit();
-			} else if (cmd == "give") {
-				std::string id;
-				in >> id;
-				for (int i = 0; i < static_cast<int>(gen::kGuns.size()); ++i) {
-					if (gen::kGuns[i].id == id) {
-						Gun::Give(i);
-					}
-				}
 			} else if (cmd == "tp" && player) {
 				std::string town;
 				in >> town;
@@ -599,17 +570,12 @@ namespace bo3z
 				in >> hand;
 				logger::info("dev: flask attack ({} hand, held {})", hand == "l" ? "left" : "right", Classes::FlaskInHand(hand == "l"));
 				Classes::FlaskAttack(hand == "l");
-			} else if (cmd == "wyrm") {  // wyrm <base|sound|play|call> [plugin hex]: the horn's wyrm and call (call: hex 1 = two)
+			} else if (cmd == "wyrm") {  // wyrm <base|play|call> [plugin hex]: the Violet Wyrm's body and call (call: hex 1 = two)
 				std::string what, plugin, hex;
 				in >> what >> plugin >> hex;
 				RE::FormID id = 0;
 				try { id = static_cast<RE::FormID>(std::stoul(hex.empty() ? (what == "call" ? plugin : "0") : hex, nullptr, 16)); } catch (...) {}
 				Classes::DevWyrm(what, what == "call" ? "" : plugin, id);
-			} else if (cmd == "gpose") {  // gpose [i v]: the Mutagen Gauntlet beam pose's numbers (Gun.cpp g_gbP)
-				int i = -1;
-				float v = 0;
-				in >> i >> v;
-				Gun::DevGauntletTune(i, v);
 			} else if (cmd == "gbeam") {  // gbeam <1|0> [l]: the Gauntlet's attack held / let go
 				int on = 0;
 				std::string hand;
@@ -680,9 +646,6 @@ namespace bo3z
 			} else if (cmd == "quit") {  // the game closed to the desktop (so a new build can go in)
 				logger::info("dev: quitting to the desktop");
 				if (auto* m = RE::Main::GetSingleton()) m->quitGame = true;
-			} else if (cmd == "horn") {
-				logger::info("dev: horn");
-				Classes::DevHorn();
 			} else if (cmd == "wonder") {  // wonder <class> <state 0-5>
 				int c = -1, st = 0;
 				in >> c >> st;
@@ -725,10 +688,6 @@ namespace bo3z
 					}
 				}
 				logger::info("dev: foes {}", n);
-			} else if (cmd == "crew") {
-				int c = 0;
-				in >> c;
-				Save::SetCrew(c);
 			} else {
 				logger::warn("dev: unknown command '{}'", a_line);
 			}

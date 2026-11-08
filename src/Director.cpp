@@ -2106,9 +2106,6 @@ namespace bo3z
 			auto boss = g_boss.handle.get();
 			s.bossHp = boss && !boss->IsDead() ? std::max(0.0f, boss->AsActorValueOwner()->GetActorValue(RE::ActorValue::kHealth)) / std::max(1.0f, g_boss.maxHp) : -1.0f;
 			s.bossEnraged = g_boss.enraged;
-			for (int k = 0; k < 4; ++k) {
-				s.pu[k] = PowerUps::Timer(k);
-			}
 			s.nuke = g_pause;
 		}
 
@@ -2179,11 +2176,6 @@ namespace bo3z
 				Hud::Edit().countdown = s.countdown;
 			} else if (g_phase != Phase::Day) {
 				Dawn();
-			}
-			for (int k = 0; k < 4; ++k) {  // the party shares power-ups
-				if (k != 2 && s.pu[k] > PowerUps::Timer(k) + 0.5f) {
-					PowerUps::SetTimer(k, s.pu[k]);
-				}
 			}
 			g_pause = std::max(g_pause, s.nuke);
 			for (int t = 0; t < static_cast<int>(gen::kCurseCities.size()) && t < 10; ++t) {
@@ -2677,13 +2669,7 @@ namespace bo3z
 				// Dawn ends the round: one more night survived (one more tally on the board).
 				Save::Set(gen::kAV_round, g_current);
 				Points::Add(gen::kPoints_round_survived);
-				if (g_bossNight) {  // (Noah) the boss night's reward: a power-up at your feet as the light comes
-					g_bossNight = false;
-					if (auto* pl = RE::PlayerCharacter::GetSingleton()) {
-						const float yaw = pl->GetAngleZ();
-						PowerUps::MaybeDrop(pl->GetPosition() + RE::NiPoint3{ std::sin(yaw) * 160.0f, std::cos(yaw) * 160.0f, 0.0f }, true);
-					}
-				}
+				g_bossNight = false;
 				Forms::Play(gen::Sound::night_end);
 				Stats::NightEnds(g_current);
 				logger::info("dawn: night {} survived, {} undead crumbled", g_current, n);
@@ -2739,7 +2725,6 @@ namespace bo3z
 					g_corpses.push_back(it->handle);
 					g_fading.push_back({ it->handle, Settings::CorpseSeconds() });  // the body lies there 10 s (MCM), then crumbles
 					g_settle.push_back({ it->handle, 0.0f });
-					PowerUps::MaybeDrop(a->GetPosition());
 					Curse::OnUndeadDeath(a.get());
 					it = g_alive.erase(it);
 				} else {
@@ -4453,7 +4438,6 @@ namespace bo3z
 		}
 		float EventDropMult() { return g_phase == Phase::Fighting && g_event >= 0 ? gen::kEvents[g_event].dropMult : 1.0f; }
 		void  Pause(float a_seconds) { g_pause = std::max(g_pause, a_seconds); }
-		float g_nukeLeft = 0;
 		float Paused() { return g_pause; }
 		bool  Fighting() { return g_phase == Phase::Fighting; }
 		void  NetFill(Net::State& a_state) { NetFillImpl(a_state); }
@@ -4700,10 +4684,10 @@ namespace bo3z
 			const bool wornNow = a_player->GetWornArmor(item->GetFormID()) != nullptr;
 			offFor = wornNow ? 0.0f : offFor + 0.5f;
 			const bool worn = wornNow || (offFor < 1.5f && a_player->GetItemCount(item) > 0);
-			const bool want = worn && !PowerUps::Shadow() && a_player->Is3DLoaded();
+			const bool want = worn && a_player->Is3DLoaded();
 			if (static int was = -1; was != static_cast<int>(want)) {
 				was = want;
-				logger::info("lantern: {} (worn {}, shadow {})", want ? "lit" : "dark", worn, PowerUps::Shadow());
+				logger::info("lantern: {} (worn {})", want ? "lit" : "dark", worn);
 			}
 			// (an older build's light effect, still on you from a save: off)
 			if (mt->HasMagicEffect(fx)) {
@@ -5511,7 +5495,6 @@ namespace bo3z
 					q->AddMessage(RE::SleepWaitMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr);
 				}
 			}
-			PowerUps::Tick(a_delta);
 			Settings::Tick();
 			TickFx(a_delta);
 			TickRisers(a_delta);
@@ -5565,7 +5548,6 @@ namespace bo3z
 					const auto c = gen::kEvents[tc].color;
 					h.waveThemeColor = 0xFF000000u | ((c & 0xFFu) << 16) | (c & 0xFF00u) | ((c >> 16) & 0xFFu);  // (RGB -> ImGui's ABGR)
 				}
-				h.nukeLeft = g_nukeLeft > 0 ? g_pause : 0.0f;  // (only a nuke's own lull is shown as one: a fall or a revive's isn't)
 				const bool waving = g_phase == Phase::Fighting && g_waves > 0;
 				h.wave = waving ? g_wave : 0, h.waves = waving ? g_waves : 0, h.waveSize = g_waveSize;
 				h.waveLeft = waving ? std::max(0, g_waveSize - g_waveSpawned) + static_cast<int>(g_alive.size()) : 0;
@@ -5589,7 +5571,6 @@ namespace bo3z
 			TickSlow();
 			TickSunrise();
 			g_pause = std::max(0.0f, g_pause - a_delta);
-			g_nukeLeft = std::max(0.0f, g_nukeLeft - a_delta);
 			Curse::Tick(a_delta);
 			Echo::Tick(a_delta);
 			Eggs::Tick(a_delta);
@@ -5666,225 +5647,6 @@ namespace bo3z
 				TickWaves(player, a_delta);
 				break;
 			}
-		}
-	}
-
-	// ---- BO3 power-ups: Insta-Kill, Double Points, Kaboom, Fire Sale ----
-	namespace PowerUps
-	{
-		namespace
-		{
-			struct Drop
-			{
-				RE::ObjectRefHandle token, light;
-				int                 kind;
-				float               left;
-			};
-			std::vector<Drop> g_drops;
-			// (Noah's power-ups, by kind - the tokens' order in tools/esp_ids.py POWERUPS): 0 (Insta-Kill, retired), 1 Double
-			// Essence 30 s, 2 Nuke, 3 Merchant's Blessing 45 s, 4 Refill Stats, 5 Shadow of Nocturnal 15 s, 6 Thu'um
-			// Unbound 20 s, 7 Kynareth's Mercy
-			float             g_timers[8] = {};   // seconds left, by kind
-			int               g_dropsThisNight = 0, g_night = -1;
-			std::mt19937      g_prng{ std::random_device{}() };
-			constexpr const char* kNames[8] = { "INSTA-KILL", "DOUBLE ESSENCE", "NUKE", "MERCHANT'S BLESSING", "REFILL STATS", "SHADOW OF NOCTURNAL", "THU'UM UNBOUND", "KYNARETH'S MERCY" };
-			constexpr int         kWeight[8] = { 0, 25, 15, 15, 25, 7, 7, 6 };  // (how often each drops: the strong ones rare)
-			constexpr int         kKinds = 8;
-		}
-
-		bool InstaKill() { return g_timers[0] > 0; }
-		float Timer(int a_kind) { return a_kind >= 0 && a_kind < kKinds ? g_timers[a_kind] : 0.0f; }
-		bool  Shadow() { return g_timers[5] > 0; }
-		void  SetTimer(int a_kind, float a_seconds)
-		{
-			if (a_kind >= 0 && a_kind < kKinds) {
-				g_timers[a_kind] = a_seconds;
-			}
-		}
-		float PointsMult() { return (g_timers[1] > 0 ? 2.0f : 1.0f) * Director::EventPointsMult(); }
-		bool FireSale() { return g_timers[3] > 0; }
-
-		// (Noah: "power-ups drop on the bodies: walk into one before it's gone in 20 s, blinking faster as it goes; a low
-		// chance, like 2%, on any kill")
-		constexpr bool kDropsOn = false;   // (Noah: "remove the power-up drops ... like the nuke and the insta-kill" - "Remove all power-ups"; and nothing at a boss's dawn)
-		void MaybeDrop(const RE::NiPoint3& a_at, bool a_force)
-		{
-			if (!kDropsOn) return;
-			auto* player = RE::PlayerCharacter::GetSingleton();
-			if (!player) {  // (Noah: any enemy, any hour)
-				return;
-			}
-			const int night = Save::Get(gen::kAV_round);
-			if (night != g_night) {
-				g_night = night, g_dropsThisNight = 0;
-			}
-			// like BO3: a few per round, never two on the ground at once
-			// (Noah: a 10% drop chance for any enemy) no cap a night; at most three lying about at once
-			if (!a_force && (g_drops.size() >= 3 || std::uniform_real_distribution<float>(0, 1)(g_prng) > 0.02f)) {
-				return;
-			}
-			const int kind = std::discrete_distribution<int>(std::begin(kWeight), std::end(kWeight))(g_prng);
-			if (kind < 0 || kind >= static_cast<int>(gen::kPowerups.size())) return;
-			auto*     dh = RE::TESDataHandler::GetSingleton();
-			auto*     stat = dh->LookupForm<RE::TESBoundObject>(gen::kPowerups[kind].first, gen::kPlugin);
-			auto*     ligh = dh->LookupForm<RE::TESBoundObject>(gen::kPowerups[kind].second, gen::kPlugin);
-			if (!stat) {
-				return;
-			}
-			Drop d{ {}, {}, kind, 20.0f };
-			if (auto t = player->PlaceObjectAtMe(stat, false)) {
-				t->SetPosition(a_at + RE::NiPoint3{ 0, 0, 10.0f });
-				d.token = t->GetHandle();
-			}
-			if (ligh) {
-				if (auto l = player->PlaceObjectAtMe(ligh, false)) {
-					l->SetPosition(a_at + RE::NiPoint3{ 0, 0, 50.0f });
-					d.light = l->GetHandle();
-				}
-			}
-			g_drops.push_back(d);
-			++g_dropsThisNight;
-			Forms::PlayAt(gen::Sound::powerup_spawn, player);
-			logger::info("powerup: {} dropped", kNames[kind]);
-		}
-
-		void Remove(Drop& d)
-		{
-			for (auto h : { d.token, d.light }) {
-				if (auto r = h.get()) {
-					r->Disable();
-					r->SetDelete(true);
-				}
-			}
-		}
-
-		void Grab(int a_kind, RE::PlayerCharacter* a_player, bool a_remote = false)
-		{
-			Forms::Play(gen::Sound::powerup_grab);
-			Hud::Banner(kNames[a_kind], 2.5f);
-			if (!a_remote) {
-				Net::PowerUpTaken(a_kind);  // the whole party gets it
-			}
-			if (a_kind == 2) {  // Nuke: every undead on the field drops, and none rise for 20 seconds
-				int n = 0;
-				if (a_remote && Coop::Client()) {  // the host's game kills them (Skyrim Together shows it); here the flash and the quiet
-					Director::Pause(20.0f);
-					Forms::Play(gen::Sound::nuke);
-					std::scoped_lock l(Hud::Lock());
-					Hud::Edit().nukeFlash = 1.0f, Director::g_nukeLeft = 20.0f;
-					return;
-				}
-				// (Noah: the nuke takes the whole wave) every living thing the night sent, near or far, the wyrms too
-				// (the audit: one Nuke during a siege or a priest's fight broke the curse) the great take a sixth of their health
-				for (auto& h : Director::AliveHandles()) {
-					if (auto a = h.get(); a && !a->IsDead()) {
-						if (Director::IsGreat(a.get())) {
-							auto* av = a->AsActorValueOwner();
-							av->DamageActorValue(RE::ActorValue::kHealth, 0.15f * av->GetPermanentActorValue(RE::ActorValue::kHealth));
-							continue;
-						}
-						a->KillImpl(a_player, 9999.0f, true, false);
-						++n;
-					}
-				}
-				for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {  // (and any stray of ours the list lost)
-					if (auto a = h.get(); a && !a->IsDead() && Director::IsRoundUndead(a.get()) && !Director::IsGreat(a.get())) {
-						a->KillImpl(a_player, 9999.0f, true, false);
-						++n;
-					}
-				}
-				Points::Add(400);
-				Director::Pause(20.0f);
-				Forms::Play(gen::Sound::nuke);
-				{
-					std::scoped_lock l(Hud::Lock());
-					Hud::Edit().nukeFlash = 1.0f, Director::g_nukeLeft = 20.0f;
-				}
-				logger::info("powerup: nuke took {}, 20 s before they rise again", n);
-			} else if (a_kind == 4) {  // Refill Stats: every quiver and weapon, health, magicka, stamina and the shout
-				for (int g = 0; g < static_cast<int>(gen::kGuns.size()); ++g) {
-					if (Gun::Owns(g)) Gun::RefillAmmo(g);
-				}
-				Bows::Restock();
-				auto* av = a_player->AsActorValueOwner();
-				for (auto v : { RE::ActorValue::kHealth, RE::ActorValue::kMagicka, RE::ActorValue::kStamina }) av->RestoreActorValue(v, av->GetPermanentActorValue(v));
-				Compass::ClearShout();
-				Forms::Play(gen::Sound::reload_mag);
-			} else if (a_kind == 7) {  // Kynareth's Mercy: everyone whole again, a fallen friend lifted
-				auto* av = a_player->AsActorValueOwner();
-				av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth));
-				Party::ReviveAt(a_player->GetPosition(), 1.0e9f);
-			} else {
-				static constexpr float kSecs[8] = { 0, 30.0f, 0, 45.0f, 0, 15.0f, 20.0f, 0 };
-				g_timers[a_kind] = kSecs[a_kind];
-				if (a_kind == 5) {  // Shadow of Nocturnal: the dead lose you
-					Party::Ghost(Party::kGhostShadow, true);
-					for (auto& h : Director::AliveHandles()) if (auto a = h.get(); a && !a->IsDead()) a->StopCombat();
-				}
-				if (a_kind == 6) Compass::ClearShout();
-			}
-		}
-
-		void Tick(float a_delta)
-		{
-			auto* player = RE::PlayerCharacter::GetSingleton();
-			const bool shadowWas = g_timers[5] > 0;
-			for (auto& t : g_timers) {
-				t = std::max(0.0f, t - a_delta);
-			}
-			if (shadowWas && g_timers[5] <= 0) Party::Ghost(Party::kGhostShadow, false);
-			if (g_timers[6] > 0) Compass::ClearShout();  // (Thu'um Unbound: no cooldown at all)
-			{
-				std::scoped_lock l(Hud::Lock());
-				for (int k = 0; k < kKinds; ++k) Hud::Edit().puLeft[k] = g_timers[k];
-			}
-			if (!player) {
-				return;
-			}
-			for (int k : Net::TakeRemotePowerUps()) {  // taken by a friend in the party
-				if (k >= 0 && k < kKinds) {
-					Grab(k, player, true);
-				}
-			}
-			for (auto& d : g_drops) {
-				d.left -= a_delta;
-				auto t = d.token.get();
-				if (!t) {
-					d.left = -1;
-					continue;
-				}
-				// turning slowly, and blinking in its last five seconds
-				if (auto* n = t->Get3D()) {
-					const float yaw = d.left * 1.6f;
-					n->local.rotate.SetEulerAnglesXYZ(0.0f, 0.0f, yaw);
-					n->local.translate.z = std::sin(d.left * 3.0f) * 4.0f;
-					// (Noah: blinking faster as it nears its end) from 10 s left, slowly; from 5 s faster; the last 2 s quickest
-					const float period = d.left < 2.0f ? 0.16f : d.left < 5.0f ? 0.35f : 0.7f;
-					const bool  hidden = d.left < 10.0f && std::fmod(d.left, period) < period * 0.4f;
-					if (hidden) {
-						n->GetFlags().set(RE::NiAVObject::Flag::kHidden);
-					} else {
-						n->GetFlags().reset(RE::NiAVObject::Flag::kHidden);
-					}
-					RE::NiUpdateData ud;
-					n->Update(ud);
-				}
-				RE::NiPoint3 to = t->GetPosition() - player->GetPosition();
-				to.z *= 0.4f;
-				if (to.Length() < 110.0f) {
-					Grab(d.kind, player);
-					d.left = -1;
-				}
-			}
-			for (auto& d : g_drops) {
-				if (d.left <= 0) {
-					Remove(d);
-				}
-			}
-			std::erase_if(g_drops, [](const Drop& d) { return d.left <= 0; });
-			std::scoped_lock l(Hud::Lock());
-			auto& h = Hud::Edit();
-			h.puInsta = g_timers[0], h.puDouble = g_timers[1], h.puFireSale = g_timers[3];
 		}
 	}
 
