@@ -3205,7 +3205,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				// [3] brews: a row of medallions, the chosen one described under it
 				const auto perkMenu = Perks::Menu();
 				int perksOwned = 0;
-				for (int q : perkMenu) perksOwned += s.perkStacks[q] > 0 ? 1 : 0;
+				for (int q = 0; q < static_cast<int>(gen::kPerks.size()) && q < static_cast<int>(s.perkStacks.size()); ++q) perksOwned += s.perkStacks[q] > 0 ? 1 : 0;  // (every brew you own takes a slot, another class's too)
 				if (section(212, "PERKS", fmt::format("{} of {} held", perksOwned, gen::kMaxPerks), false)) {
 					const auto& menu = perkMenu;  // (Noah: each class its own perks) the shared draughts, then your class's
 					const int  n = std::max(1, static_cast<int>(menu.size()));
