@@ -3,13 +3,12 @@ Mysteries"; "used and forgotten / donated weapons ... more run-down or dishevele
 from scratch (no one else's mesh): an old arched stone tablet floating over a cracked plinth. Its face is carved with a
 border of Dragon-tongue glyphs round a round recess - the light pool - where two glyph rings sit (they grind round during
 a roll) ringed by eight small gems (they light one by one). It is split by a crack, patched with rusted iron straps and
-rivets; its top corner has broken off and floats beside it. Candle stubs, old coins and folded notes from past owners sit
-on the plinth and in the cracks.
+rivets. The pedestal under it is cut from the same stone, carved and strapped the same way; candle stubs and old coins
+sit on its cap.
 
 Docs: docs/TABLET_OF_MYSTERIES.md. Driven by src (the Tablet): by name -
   TabletBody      the floating slab and all that rides on it (bobs, turns slowly; shakes in a roll)
   RingOuter/RingInner  the glyph rings (turned about the pool's centre, unevenly)
-  LooseCorner     the broken corner (drifts, turns)
   Gem0..Gem7      the gems' glow cards (hidden until lit)
   Spark0..Spark5  sparks spitting from the crack (hidden until a roll)
   Ghost           the weapons' ghostly outlines flickering in the pool (hidden until a roll)
@@ -57,8 +56,6 @@ GEM_R = 20.6                # the gems sit round the recess
 PLINTH_TOP = 42.0
 CRACK = np.array([[-6.0, Z1 + 1], [-3.5, Z1 - 12], [-8.0, Z1 - 22], [-4.0, PC[1] + POOL_R + 1]])   # down to the recess's rim
 CRACK2 = np.array([[3.0, PC[1] - POOL_R - 1], [6.5, PC[1] - 28], [2.0, Z0 + 8], [5.0, Z0 - 1]])
-# the broken corner: the cut runs from the arch's right shoulder in across the top
-CUT = np.array([[W2 + 1, Z1 - ARCH - 6], [20.0, Z1 - ARCH - 1], [16.5, Z1 - ARCH + 7], [19.0, Z1 - 7], [14.0, Z1 + 2]])
 
 
 def arch_outline(n=90):
@@ -80,24 +77,6 @@ def jag(path, amp, n, seed):
     off = gaussian_filter(r.normal(0, 1, n), 1.2) * amp
     off[0] = off[-1] = 0
     return P + nrm * off[:, None]
-
-
-def split_outline():
-    """the slab's outline with its corner broken off, and the corner piece's own outline (both counter-clockwise)"""
-    arch = arch_outline(240)
-    # resample the outline evenly so the break's ends land on it
-    seg = np.linalg.norm(np.diff(np.vstack([arch, arch[:1]]), axis=0), axis=1)
-    L = np.concatenate([[0], np.cumsum(seg)]); s_ = np.arange(0, L[-1], 0.6)
-    closed = np.vstack([arch, arch[:1]])
-    O = np.stack([np.interp(s_, L, closed[:, 0]), np.interp(s_, L, closed[:, 1])], 1)
-    ia = int(np.argmin(np.linalg.norm(O - CUT[0], axis=1)))      # on the right side, under the shoulder
-    ib = int(np.argmin(np.linalg.norm(O - CUT[-1], axis=1)))     # on the arch, right of its top
-    inner = CUT[1:-1]
-    cut = jag(np.vstack([O[ia], inner, O[ib]]), 0.9, 44, 7)
-    cut[0], cut[-1] = O[ia], O[ib]
-    corner = np.vstack([O[ia:ib + 1], cut[::-1][1:-1]])           # the outline from A on round to B, back along the break
-    slab = np.vstack([O[ib:], O[:ia + 1], cut[1:-1]])              # from B on round to A, then along the break to B
-    return slab, corner, cut, MPath(arch)
 
 
 def fill(outline, step):
@@ -219,52 +198,74 @@ def lathe_y(prof, c, nc=16, axis='z'):
     return P.reshape(-1, 3), N.reshape(-1, 3), UV.reshape(-1, 2), grid_faces(len(prof), nc + 1)
 
 
+# the pedestal's tiers: (z0, z1, half-width at z0, half-depth at z0, half-width at z1, half-depth at z1)
+TIERS = [(0.0, 4.0, 34.0, 16.0, 34.0, 16.0), (4.0, 6.5, 34.0, 16.0, 30.0, 13.0), (6.5, 34.0, 27.0, 11.0, 25.0, 10.0),
+         (34.0, 37.0, 25.0, 10.0, 32.0, 15.0), (37.0, PLINTH_TOP, 32.0, 15.0, 32.0, 15.0)]
+
+
 def plinth(M):
-    """the cracked pedestal: an eight-sided foot, a shaft and a cap, chipped all over; rubble round it"""
-    prof = [(0.0, 27.0), (3.0, 27.0), (4.0, 25.0), (7.5, 24.0), (8.5, 19.0), (12.0, 17.0), (30.0, 15.5), (34.0, 17.5),
-            (36.5, 22.0), (39.5, 22.5), (PLINTH_TOP, 21.0), (PLINTH_TOP, 0.0)]
-    V, N, UV, F = lathe_y(prof, (0, 0, 0), 8 * 6)
-    # chipped: the radius shaken (more on the corners), a broken bite out of the cap's front edge
-    th = np.arctan2(V[:, 1], V[:, 0]); r = np.hypot(V[:, 0], V[:, 1])
-    oct8 = 1.0 + 0.07 * np.abs(np.cos(4 * th)) ** 6          # (eight soft corners)
-    noise = (np.sin(th * 13 + V[:, 2] * 0.7) * 0.3 + np.sin(th * 29 - V[:, 2] * 1.3) * 0.18) * (r > 1)
-    bite = np.exp(-((th + 1.75) ** 2) / 0.05 - ((V[:, 2] - 38) ** 2) / 10) * 3.5
-    k = (oct8 * r + noise - bite) / (r + 1e-9)
-    V[:, 0] *= k; V[:, 1] *= k
-    UV = np.stack([th / (2 * np.pi) * 3, V[:, 2] / 30.0], 1)
-    M.add('Plinth', 'stone', V, N, UV, F)
+    """(Noah: "the base needs to match the tablet itself") the pedestal in the tablet's own stone and manner: a stepped
+    oblong block - a broad foot, a shaft, a cap - carved with the same glyph border, cracked, an iron strap round its
+    shaft; rubble at its foot, candle stubs and coins on its cap"""
+    per = lambda hx, hy: 4 * (hx + hy)
+    for (z0, z1, ax, ay, bx, by) in TIERS:
+        nv = max(3, int((z1 - z0) / 1.2))
+        for k in range(4):   # each side its own strip (hard corners)
+            nu = 32 if k % 2 == 0 else 14
+            u = np.linspace(0, 1, nu + 1); v = np.linspace(0, 1, nv + 1)
+            f, Vv = np.meshgrid(u, v)
+            hx = ax + (bx - ax) * Vv; hy = ay + (by - ay) * Vv; Z = z0 + (z1 - z0) * Vv
+            if k == 0: X, Y, nrm = -hx + 2 * hx * f, -hy + 0 * f, (0.0, -1.0)
+            elif k == 1: X, Y, nrm = hx + 0 * f, -hy + 2 * hy * f, (1.0, 0.0)
+            elif k == 2: X, Y, nrm = hx - 2 * hx * f, hy + 0 * f, (0.0, 1.0)
+            else: X, Y, nrm = -hx + 0 * f, hy - 2 * hy * f, (-1.0, 0.0)
+            P = np.stack([X, Y, Z], -1).reshape(-1, 3)
+            sl = -((bx - ax) if k % 2 == 1 else (by - ay)) / max(z1 - z0, 1e-6)
+            N = unit(np.tile([nrm[0], nrm[1], sl], (len(P), 1)))
+            UV = np.stack([(k + f) / 4.0, 1 - Z / PLINTH_TOP], -1).reshape(-1, 2)
+            M.add('Plinth', 'plinth', P, N, UV, grid_faces(nv + 1, nu + 1))
+    # the cap's top and the foot's underside
+    for z, hx, hy, ny in ((PLINTH_TOP, 32.0, 15.0, 1.0), (0.0, 34.0, 16.0, -1.0)):
+        g = np.stack(np.meshgrid(np.linspace(-hx, hx, 24), np.linspace(-hy, hy, 12)), -1).reshape(-1, 2)
+        P = np.stack([g[:, 0], g[:, 1], np.full(len(g), z)], 1)
+        UV = np.stack([(g[:, 0] + hx) / (2 * hx) * 0.5, 0.82 + (g[:, 1] + hy) / (2 * hy) * 0.16], 1)
+        M.add('Plinth', 'plinth', P, np.tile([0, 0, ny], (len(P), 1)).astype(float), UV, grid_faces(12, 24))
+    # the iron strap round the shaft, riveted, as the tablet's
+    z = 27.5; hgt = 3.4
+    hx, hy = 25.6 + 0.5, 10.3 + 0.5
+    loop = np.array([(-hx, -hy), (hx, -hy), (hx, hy), (-hx, hy), (-hx, -hy)])
+    seg = np.diff(loop, axis=0); L = np.concatenate([[0], np.cumsum(np.linalg.norm(seg, axis=1))])
+    sL = np.linspace(0, L[-1], 160); X = np.interp(sL, L, loop[:, 0]); Y = np.interp(sL, L, loop[:, 1])
+    dent = gaussian_filter(rng.normal(0, 0.12, len(sL)), 2)
+    P = np.vstack([np.stack([X, Y, z - hgt / 2 + dent], 1), np.stack([X, Y, z + hgt / 2 + dent], 1)])
+    Nn = unit(np.stack([X / hx * (np.abs(X) >= hx - 0.01), Y / hy * (np.abs(X) < hx - 0.01), np.zeros(len(sL))], 1) + 1e-6)
+    UV = np.vstack([np.stack([sL / 30.0, np.zeros(len(sL))], 1), np.stack([sL / 30.0, np.full(len(sL), hgt / 30.0)], 1)])
+    M.add('Straps', 'iron', P, np.vstack([Nn, Nn]), UV, grid_faces(2, len(sL)))
+    for xr in np.linspace(-hx + 3.5, hx - 3.5, 8):
+        rivet(M, (xr, -hy, z), 0.55)
+        rivet(M, (xr, hy, z), 0.55, back=True)
     # rubble: broken lumps of the same stone at its foot
     for i in range(9):
-        a = rng.uniform(0, 2 * np.pi); d = rng.uniform(28, 40); s = rng.uniform(1.5, 4.0)
-        c = (d * math.cos(a), d * math.sin(a), s * 0.4)
-        Vr, Nr, UVr, Fr = lathe_y([(-s * 0.4, 0), (-s * 0.3, s * 0.8), (s * 0.2, s), (s * 0.6, s * 0.6), (s * 0.7, 0)], c, 7)
+        a = rng.uniform(0, 2 * np.pi); d = rng.uniform(38, 46); sz = rng.uniform(1.5, 3.6)
+        c = (d * math.cos(a), d * math.sin(a) * 0.6, sz * 0.4)
+        Vr, Nr, UVr, Fr = lathe_y([(-sz * 0.4, 0), (-sz * 0.3, sz * 0.8), (sz * 0.2, sz), (sz * 0.6, sz * 0.6), (sz * 0.7, 0)], c, 7)
         Vr = c + (Vr - c) * rng.uniform(0.7, 1.3, 3)
         M.add('Rubble', 'stone', Vr, Nr, UVr * 0.3 + rng.random(2), Fr)
-    # the offerings on the cap: candle stubs, coins, a folded note
-    for i, (a, d, h) in enumerate(((0.4, 15.0, 3.2), (1.1, 16.5, 1.8), (2.5, 14.0, 4.4), (-0.7, 15.5, 2.4))):
-        c = (d * math.cos(a), d * math.sin(a), PLINTH_TOP)
+    # the offerings on the cap: candle stubs (old, yellowed wax), coins
+    for i, (x, y, h) in enumerate(CANDLES):
+        c = (x, y, PLINTH_TOP)
         wax = [(0, 1.25), (h * 0.9, 1.2), (h, 1.0), (h + 0.2, 0.7), (h + 0.25, 0.0)]
         Vc, Nc, UVc, Fc = lathe_y(wax, c, 14)
         Vc[:, 2] += np.where(Vc[:, 2] > PLINTH_TOP + h * 0.5, np.sin(np.arctan2(Vc[:, 1] - c[1], Vc[:, 0] - c[0]) * 3) * 0.18, 0)   # (melted, uneven)
         M.add('Candles', 'wax', Vc, Nc, UVc, Fc)
         M.add('Candles', 'wax', *lathe_y([(-0.1, 1.6), (0.15, 1.9), (0.35, 1.5), (0.4, 0)], c, 14))   # (the drip pooled under it)
     for i in range(7):
-        a = rng.uniform(-math.pi, math.pi); d = rng.uniform(5, 18)
-        c = (d * math.cos(a), d * math.sin(a), PLINTH_TOP + 0.05 + 0.18 * (i % 3))
+        c = (rng.uniform(-26, 26), rng.uniform(-11, 11), PLINTH_TOP + 0.05 + 0.18 * (i % 3))
         Vc, Nc, UVc, Fc = lathe_y([(0, 0), (0.0, 1.1), (0.16, 1.15), (0.2, 0)], c, 16)
         M.add('Coins', 'coin', Vc, Nc, UVc * 0.25 + [0.75 * (i % 2), 0], Fc)
 
 
-def note(M, c, w, h, tilt, bend, seed):
-    """a folded note tucked in a crack: a bent paper quad (both sides), a corner curled"""
-    nu, nv = 8, 10
-    u, v = np.meshgrid(np.linspace(-0.5, 0.5, nu), np.linspace(0, 1, nv))
-    x = u * w; z = v * h; y = bend * np.sin(u * np.pi) + 0.6 * (v ** 2) * (u > 0.2) * (u - 0.2)
-    ca, sa = math.cos(tilt), math.sin(tilt)
-    P = np.stack([c[0] + x * ca - z * sa, c[1] - y, c[2] + x * sa + z * ca], -1).reshape(-1, 3)
-    N = np.tile([0, -1, 0], (len(P), 1)).astype(float)
-    UV = np.stack([u + 0.5, 1 - v], -1).reshape(-1, 2) * [0.5, 1.0] + [0.5 * (seed % 2), 0]
-    M.add('Notes', 'paper', P, N, UV, grid_faces(nv, nu))
+CANDLES = [(-27.0, -9.0, 3.2), (-23.0, -11.0, 1.8), (26.0, -9.5, 4.4), (22.5, 10.0, 2.4)]
 
 
 def straps(M, outline):
@@ -454,16 +455,59 @@ def face_tex():
     col *= (1 - 0.35 * pool)[..., None]
     halo = np.exp(-((rP - POOL_R - 1) ** 2) / 12.0)
     col *= (1 - 0.25 * halo)[..., None]
-    # wax drips running down from the arch's foot of the left shoulder
-    for xs in (-W2 + 1.2, W2 - 1.4):
-        d = 0.5 * np.exp(-((X - xs) / 0.3) ** 2) * (Z > Z0 + 20) * (Z < Z0 + 20 + rng.uniform(6, 14))
-        col = col * (1 - 0.6 * d[..., None]) + np.array([218, 208, 180], np.float32) * 0.6 * d[..., None]
     nrm = height_to_normal(gaussian_filter(hgt, 0.6), S / 320.0)
     # the glow: the carved glyphs hold a faint failing light (the code breathes it unevenly)
     glow = np.zeros((S, S, 3), np.float32)
     lit = carve * (tileable(S, S, 0.9, 31) > 0.35)
     glow += np.array([255, 150, 60], np.float32) * lit[..., None] * 0.55
     return save(col, 'tablet_face_d.dds'), save(nrm, 'tablet_face_n.dds'), save(glow, 'tablet_face_g.dds')
+
+
+def plinth_tex():
+    """(the base in the tablet's own manner) the pedestal's sides: the face's stone, incised border lines round the shaft's
+    top and foot, a row of glyphs round its middle (glowing faintly, as the face's), cracks with soot, rust under the
+    strap; the cap's top and the foot's underside at the bottom of the sheet (v 0.82..0.98)"""
+    S = SIZE
+    col, hgt = stone_base(S, 11)
+    cv = Image.new('L', (S, S), 0); dr = ImageDraw.Draw(cv)
+    vz = lambda z: (1 - z / PLINTH_TOP) * S
+    lw = max(2, S // 900)
+    for z in (8.0, 9.6, 31.4, 32.8, 38.5, 40.6, 2.0):
+        dr.line([(0, vz(z)), (S, vz(z))], fill=255, width=lw)
+    # glyphs as the tablet's (2.6 units tall) on the front and back (u 0..0.25 and 0.5..0.75: each side a quarter of the
+    # sheet, so a texel is ~20 units wide there and ~1/97 unit tall: the glyphs drawn stretched to come out square)
+    G = glyph_shapes(); pu = S / 4 / 52.0; pv = S / PLINTH_TOP
+    def glyph_xy(g, cx, cz, size, w):
+        for kind, pts in g:
+            P = [(cx + (px - 0.5) * size * pu, vz(cz) + (py - 0.5) * size * pv) for px, py in pts]
+            if kind == 'dot': dr.ellipse([P[0][0] - w * pu, P[0][1] - w * pv, P[0][0] + w * pu, P[0][1] + w * pv], fill=255)
+            else: dr.line(P, fill=255, width=max(2, int(w * pu * 1.6)), joint='curve')
+    gi = 0
+    for q0 in (0.0, 0.5):
+        for k in range(13):
+            glyph_xy(G[gi % len(G)], q0 * S + (k + 0.5) / 13 * S / 4, 20.5, 2.6, 0.2); gi += 3
+        for k in range(26):
+            glyph_xy(G[(gi * 7) % len(G)], q0 * S + (k + 0.5) / 26 * S / 4, 39.6, 1.2, 0.12); gi += 1
+    carve = np.asarray(cv.filter(ImageFilter.GaussianBlur(S / 2200)), np.float32) / 255
+    carve *= np.clip(0.55 + 0.9 * tileable(S, S, 1.4, 22), 0, 1)
+    hgt = hgt - 0.9 * carve
+    col *= (1 - 0.5 * carve)[..., None]
+    ck = Image.new('L', (S, S), 0); dk = ImageDraw.Draw(ck)
+    for x0, seed in ((0.11, 5), (0.43, 6), (0.71, 8)):
+        P = jag(np.array([[x0 * S, vz(37)], [x0 * S + S * 0.02, vz(22)], [x0 * S - S * 0.015, vz(7)]]) , S * 0.004, 60, seed)
+        dk.line([tuple(p) for p in P], fill=255, width=max(3, S // 600))
+    crack = np.asarray(ck.filter(ImageFilter.GaussianBlur(S / 3000)), np.float32) / 255
+    hgt = hgt - 2.0 * crack
+    col *= (1 - 0.85 * crack)[..., None]
+    col *= (1 - 0.5 * np.clip(gaussian_filter(crack, S / 260) * 3, 0, 1))[..., None]
+    yy = (np.mgrid[0:S, 0:S][0].astype(np.float32) + 0.5) / S; Zp = (1 - yy) * PLINTH_TOP
+    streak = (Zp < 27.5) * np.exp(-(27.5 - Zp) / 7.0) * (tileable(S, S, 1.2, 23) ** 2)
+    r_ = np.clip(streak * 1.6, 0, 1)[..., None]
+    col = col * (1 - 0.55 * r_) + np.array([120, 60, 30], np.float32) * 0.55 * r_
+    col[int(S * 0.8):] = stone_base(S, 12)[0][int(S * 0.8):]           # (the cap's top: plain worn stone)
+    nrm = height_to_normal(gaussian_filter(hgt, 0.6), S / 320.0)
+    glow = np.array([255, 150, 60], np.float32) * (carve * (tileable(S, S, 0.9, 32) > 0.35))[..., None] * 0.5
+    return save(col, 'tablet_plinth_d.dds'), save(nrm, 'tablet_plinth_n.dds'), save(glow, 'tablet_plinth_g.dds')
 
 
 def stone_tex():
@@ -520,7 +564,7 @@ def small_tex():
     """wax, gems, coins and paper (2048, each its own)"""
     S = 2048
     f = tileable(S, S, 1.8, 91)
-    wax = np.array([214, 202, 170], np.float32) * (0.85 + 0.2 * f[..., None])
+    wax = np.array([150, 120, 74], np.float32) * (0.85 + 0.2 * f[..., None])   # (old, yellowed, grimy)
     soot = (np.mgrid[0:S, 0:S][0] < S * 0.12)[..., None] * 0.6
     wax = wax * (1 - soot)
     wD = save(wax, 'tablet_wax_d.dds'); wN = save(height_to_normal(f, 4.0), 'tablet_wax_n.dds')
@@ -648,8 +692,8 @@ def fx_job(base, out, fx, gem_at):
     for i, (x, z) in enumerate([CRACK[1], CRACK[2], (CRACK[3] + CRACK[2]) / 2, CRACK2[1], CRACK2[2], (CRACK2[0] + CRACK2[1]) / 2]):
         card(f'Spark{i}', fx['sparks'], (x, -T2 - 1.0, z), 6.0, '1,0.8,0.5,1', 2.2, (4, 4, 14 + i, i * 0.13))
     # the candles' flames (on the plinth: under the root, not the floating body)
-    for i, (a, d, h) in enumerate(((0.4, 15.0, 3.2), (1.1, 16.5, 1.8), (2.5, 14.0, 4.4), (-0.7, 15.5, 2.4))):
-        c = (d * math.cos(a), d * math.sin(a), PLINTH_TOP + h + 1.4)
+    for i, (x, y, h) in enumerate(CANDLES):
+        c = (x, y, PLINTH_TOP + h + 1.4)
         card(f'Flame{i}', fx['flame'], c, 1.6, '1,0.85,0.6,1', 2.0, (4, 4, 11 + i * 2, i * 0.21), parent='TabletOfMysteries')
         card(f'FlameGlow{i}', fx['glow'], c, 5.0, '1,0.6,0.3,0.35', 0.8, parent='TabletOfMysteries')
     # motes rising round the tablet
@@ -674,27 +718,23 @@ def build():
     WORK.mkdir(parents=True, exist_ok=True); MESHDIR.mkdir(parents=True, exist_ok=True)
     td.WORK = WORK
     print('textures...', SIZE)
-    fD, fN, fG = face_tex(); sD, sN = stone_tex(); rD, rN, rG = ring_tex(); iD, iN = iron_tex()
+    fD, fN, fG = face_tex(); sD, sN = stone_tex(); bD, bN, bG = plinth_tex(); rD, rN, rG = ring_tex(); iD, iN = iron_tex()
     (wD, wN), (gD, gN), (cD, cN), (pD, pN) = small_tex()
     fx = fx_tex()
     print('mesh...')
-    slab, piece, cut, full = split_outline()
-    body = Mesh(); base = Mesh(); corner = Mesh(); rings_o = Mesh(); rings_i = Mesh()
+    slab = arch_outline(240)
+    body = Mesh(); base = Mesh(); rings_o = Mesh(); rings_i = Mesh()
     plinth(base)
     slab_mesh(body, slab, 'Slab', 'face', 'stone', recess)
     straps(body, slab)
     gem_at = gems(body)
-    note(body, (-8.6, -T2 - 0.25, Z1 - 27.5), 3.0, 4.2, 0.35, 0.25, 0)       # tucked into the upper crack
-    note(body, (W2 - 7.0, -T2 - 0.7, Z0 + 10.6), 3.6, 5.2, -0.2, 0.3, 1)     # behind the lower strap
-    note(base, (6.0, -14.0, PLINTH_TOP + 0.1), 4.0, 5.0, 1.5, 0.05, 1)        # laid on the cap
-    # the broken corner: its own slab piece (same face texture: its carving continues across the break)
-    slab_mesh(corner, piece, 'Corner', 'face', 'stone', lambda x, z: np.zeros_like(x), step=0.9)
     ring_mesh(rings_o, 'RingOuter', RING_O[0], RING_O[1], -T2 + 1.25, (0.0, 0.5))
     ring_mesh(rings_i, 'RingInner', RING_I[0], RING_I[1], -T2 + 1.15, (0.5, 1.0))
-    parts = {'Base': base, 'Body': body, 'Corner': corner, 'RingOuter': rings_o, 'RingInner': rings_i}
+    parts = {'Base': base, 'Body': body, 'RingOuter': rings_o, 'RingInner': rings_i}
     # one OBJ per part (each its own NIF node, so the code can move them), joined afterwards
     mats = [f'mat face diffuse={fD} normal={fN} glow={fG} emit=1,0.7,0.4 emitmult=0.9 spec=0.35 gloss=18 alpha=0 doublesided=0',
             f'mat stone diffuse={sD} normal={sN} spec=0.3 gloss=14 alpha=0 doublesided=0',
+            f'mat plinth diffuse={bD} normal={bN} glow={bG} emit=1,0.7,0.4 emitmult=0.9 spec=0.35 gloss=18 alpha=0 doublesided=0',
             f'mat ring diffuse={rD} normal={rN} glow={rG} emit=1,0.7,0.4 emitmult=1.2 spec=0.4 gloss=22 alpha=0 doublesided=0',
             f'mat iron diffuse={iD} normal={iN} spec=0.9 gloss=40 alpha=0 doublesided=0',
             f'mat wax diffuse={wD} normal={wN} spec=0.4 gloss=20 alpha=0 doublesided=0',
@@ -716,7 +756,7 @@ def build():
         if r.returncode: print(r.stdout, r.stderr); raise SystemExit('modelconv failed: ' + name)
         nifs[name] = nif
     # the parts joined under one root: TabletOfMysteries > (the base's shapes), TabletBody > (the body, RingOuter,
-    # RingInner nodes), LooseCorner (beside the body, offset out and tilted)
+    # RingInner nodes)
     joined = WORK / 'tablet_joined.nif'
     jsrc = WORK / 'join.cpp'
     jsrc.write_text(JOIN_CPP)
@@ -724,9 +764,7 @@ def build():
     if not exe.exists() or exe.stat().st_mtime < jsrc.stat().st_mtime:
         subprocess.run(['g++', '-std=c++20', '-O1', f'-I{TOOLS}/nifly/include', f'-I{TOOLS}/nifly/external', str(jsrc),
                         str(TOOLS / 'nifly' / 'build' / 'src' / 'libnifly.a'), '-o', str(exe)], check=True)
-    cc = piece.mean(0)
-    subprocess.run([str(exe), str(joined), str(nifs['Base']), str(nifs['Body']), str(nifs['RingOuter']), str(nifs['RingInner']),
-                    str(nifs['Corner']), f'{cc[0]:.3f}', f'{cc[1]:.3f}'], check=True)
+    subprocess.run([str(exe), str(joined), str(nifs['Base']), str(nifs['Body']), str(nifs['RingOuter']), str(nifs['RingInner'])], check=True)
     out = MESHDIR / 'tablet.nif'
     L = fx_job(joined, out, fx, gem_at)
     (WORK / 'fx.job').write_text('\n'.join(L) + '\n')
@@ -734,7 +772,7 @@ def build():
     if r.returncode or 'no node' in r.stderr: print(r.stdout, r.stderr); raise SystemExit('fxwrite failed')
     # the glyphs' uneven breathing (the lit shader's emissive): the face and the rings, a little apart
     aj = WORK / 'anim.job'
-    aj.write_text(f'in {out}\nout {out}\npulse Body_face 0.35 1.15 2.7\npulse RingOuter_ring 0.5 1.4 1.9\npulse RingInner_ring 0.45 1.3 2.3\npulse Corner_face 0.2 0.9 3.4\n')
+    aj.write_text(f'in {out}\nout {out}\npulse Body_face 0.35 1.15 2.7\npulse RingOuter_ring 0.5 1.4 1.9\npulse RingInner_ring 0.45 1.3 2.3\npulse Base_plinth 0.3 1.0 3.1\n')
     r = subprocess.run([str(TOOLS / 'nifanim'), str(aj)], capture_output=True, text=True) if (TOOLS / 'nifanim').exists() else None
     if r is None:
         td.tool('nifanim'); r = subprocess.run([str(TOOLS / 'nifanim'), str(aj)], capture_output=True, text=True)
@@ -744,7 +782,7 @@ def build():
     return parts, out
 
 
-# joins the parts' NIFs into one: argv: out base body ringO ringI corner cornerX cornerZ
+# joins the parts' NIFs into one: argv: out base body ringO ringI
 JOIN_CPP = r'''#include "NifFile.hpp"
 #include <cmath>
 #include <cstdlib>
@@ -768,16 +806,9 @@ int main(int argc, char** argv) {
 	auto* body = out.AddNode("TabletBody", id, root);
 	auto* ro = out.AddNode("RingOuter", id, body);
 	auto* ri = out.AddNode("RingInner", id, body);
-	// the broken corner turned 18 degrees about its own middle (c) and drifted out and up from the break
-	const float cx = std::atof(argv[7]), cz = std::atof(argv[8]), a = 0.32f, ca = std::cos(a), sa = std::sin(a);
-	MatTransform ct;
-	ct.rotation = Matrix3(ca, 0, sa, 0, 1, 0, -sa, 0, ca);
-	const float dx = 5.5f, dy = -2.5f, dz = 4.0f;                           // (the drift)
-	ct.translation = Vector3(cx + dx - (ca * cx + sa * cz), dy, cz + dz - (-sa * cx + ca * cz));
-	auto* corner = out.AddNode("LooseCorner", ct, body);
-	NifFile b, o, i, c;
-	if (b.Load(argv[3]) || o.Load(argv[4]) || i.Load(argv[5]) || c.Load(argv[6])) return 2;
-	graft(out, body, b); graft(out, ro, o); graft(out, ri, i); graft(out, corner, c);
+	NifFile b, o, i;
+	if (b.Load(argv[3]) || o.Load(argv[4]) || i.Load(argv[5])) return 2;
+	graft(out, body, b); graft(out, ro, o); graft(out, ri, i);
 	return out.Save(argv[1]);
 }
 '''
@@ -796,12 +827,7 @@ def preview(path, parts):
     out = Image.new('RGB', (W * len(views), Hh + 28), (18, 18, 22)); dr = ImageDraw.Draw(out)
     for k, (label, R) in enumerate(views):
         sh2 = [(m, V.copy(), F) for m, V, F in sh]
-        for m, V, F in sh2:   # (the corner's node: turned about its middle and drifted, as JOIN_CPP sets it)
-            if str(m.get('name', '')).startswith('Corner'):
-                _, piece, _, _ = split_outline(); cx, cz = piece.mean(0); a = 0.32; ca, sa = math.cos(a), math.sin(a)
-                x, z = V[:, 0].copy(), V[:, 2].copy()
-                V[:, 0] = ca * x + sa * z + (cx + 5.5 - (ca * cx + sa * cz)); V[:, 2] = -sa * x + ca * z + (cz + 4.0 - (-sa * cx + ca * cz)); V[:, 1] -= 2.5
-        for m, V, F in sh2: V[:, 2] -= 82.0       # (centred on the tablet)
+        for m, V, F in sh2: V[:, 2] -= 82.0       # (centred on the whole)
         R2 = R
         img = render([(m, np.hstack([(V[:, :3] - [0, 0, 0]), V[:, 3:]]), F) for m, V, F in sh2], R2, W, Hh, span=190.0)
         out.paste(Image.fromarray((img * 255).astype(np.uint8)), (k * W, 0))

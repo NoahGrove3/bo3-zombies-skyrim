@@ -4,7 +4,8 @@ The mod's mystery box. Pay Cursed Essence, it rolls, you get a random **donated 
 worn out - it has limited uses and is lost if you fall.
 
 ## Theme: "used and forgotten"
-- An old floating stone tablet, cracked and patched with iron straps and rusted rivets; a broken corner floats beside it.
+- An old floating stone tablet, cracked and patched with iron straps and rusted rivets (Noah: no broken piece floating
+  off it, no white patches; the pedestal in the tablet's own stone and manner).
 - Glyphs flicker unevenly like a failing lantern; candle stubs, old coins and notes from past owners in its cracks.
 - 4K textures (stone, metal, emissive glyph layers).
 - Idle: slow bob and turn, uneven glyph glow, faint motes.
@@ -58,5 +59,7 @@ Battered (+2 tiers):
   eclipse that blinds and slows the dead.
 - The Wandering Star (staff, 40 casts): a dim caged star that bounces between up to 8 enemies.
 - Whisperwood Longbow (bow, 80 arrows): still sprouting leaves; arrows root the dead and heal you a little per enemy held.
+- (Noah, 2026-11-08) The Grimoire (battered, spell book): an actual spell book held open in the hand; casting comes from
+  the open book - pages turning, magical visuals rising off them. Its powers and uses: to be settled with Noah.
 
 Fists: gauntlets that power the bare-hand punch (Skyrim's own punch animations) with our hit effects on top.
