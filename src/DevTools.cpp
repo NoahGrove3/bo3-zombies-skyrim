@@ -251,15 +251,11 @@ namespace bo3z
 					};
 					walk(best->Get3D(), 0);
 				}
-			} else if (cmd == "cast") {
-				std::string mode;
-				in >> mode;
-				Gun::DevCast(mode);
 			} else if (cmd == "menupick") {  // menupick <start of a main-menu word>: as if clicked
 				std::string rest;
 				std::getline(in, rest);
 				Hud::DevMenuPick(rest.size() > 1 ? rest.substr(1) : rest);
-			} else if (cmd == "shrine") {  // shrine <0 call|1 reforge|2 bless|3 relic|4 leave|5 bond>
+			} else if (cmd == "shrine") {  // shrine <0 call|1 reforge|2 bless|4 leave|5 bond>
 				int a = 0;
 				in >> a;
 				Shops::DevAct(a);

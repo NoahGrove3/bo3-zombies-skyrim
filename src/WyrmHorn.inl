@@ -91,7 +91,7 @@
 				if (auto* fx = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kBowSkin[6], gen::kPlugin)) w->ApplyEffectShader(fx, 30.0f, nullptr, false, false, nullptr, false);
 			}
 		}
-		// gone (its 90 s up, or slain): the horn rests a minute
+		// gone (its 90 s up, or slain): the call rests a minute
 		if (g_wh.aloft && !WyrmAlive(g_wyrms[0]) && !WyrmAlive(g_wyrms[1]) && g_wh.called) {
 			g_wh.aloft = false;
 			g_wh.cool = kWhRest;
@@ -100,7 +100,5 @@
 		if (g_wh.cool > 0.0f && (g_wh.cool -= a_delta) <= 0.0f) {
 			g_wh.cool = 0.0f;
 			Hud::QuestBanner("The Violet Wyrm can be called again", 2.0f);
-		}
-	}
 		}
 	}
