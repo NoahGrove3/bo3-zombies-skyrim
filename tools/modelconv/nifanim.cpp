@@ -8,10 +8,15 @@
 //     axis and pace a little apart)
 //   pulse <shape-name prefix> <min> <max> <seconds>
 //     the lit shader's emissive multiple of each matching shape breathes between min and max (its glow map pulses)
+//   flip <shape-name prefix> <px> <py> <pz> <ax> <ay> <az> <degrees> <seconds>
+//     (a book's pages turning on their own) each matching shape (in name order) turns about the axis (ax,ay,az) through
+//     the pivot (px,py,pz) - its spine - lifting over to <degrees>, then settling back, once every <seconds>, each a
+//     little after the one before
 #include "NifFile.hpp"
 #include <cmath>
 #include <cstdio>
 #include <fstream>
+#include <algorithm>
 #include <random>
 #include <sstream>
 using namespace nifly;
@@ -32,6 +37,8 @@ int main(int argc, char** argv)
 	std::string   line, inPath, outPath;
 	struct Sway { std::string pre; float deg, secs; unsigned seed; };
 	struct Pulse { std::string pre; float lo, hi, secs; };
+	struct Flip { std::string pre; float px, py, pz, ax, ay, az, deg, secs; };
+	std::vector<Flip>  flips;
 	std::vector<Sway>  sways;
 	std::vector<Pulse> pulses;
 	while (std::getline(in, line)) {
@@ -41,6 +48,7 @@ int main(int argc, char** argv)
 		if (k == "in") std::getline(ss >> std::ws, inPath);
 		else if (k == "out") std::getline(ss >> std::ws, outPath);
 		else if (k == "sway") { Sway s{ "", 3, 4, 1 }; ss >> s.pre >> s.deg >> s.secs >> s.seed; sways.push_back(s); }
+		else if (k == "flip") { Flip f{}; ss >> f.pre >> f.px >> f.py >> f.pz >> f.ax >> f.ay >> f.az >> f.deg >> f.secs; flips.push_back(f); }
 		else if (k == "pulse") { Pulse p{ "", 1, 3, 3 }; ss >> p.pre >> p.lo >> p.hi >> p.secs; pulses.push_back(p); }
 	}
 	NifFile nif;
@@ -98,6 +106,54 @@ int main(int argc, char** argv)
 			++swayed;
 		}
 	}
+	int flipped = 0;
+	for (auto& f : flips) {
+		std::vector<BSTriShape*> pages;
+		for (auto* shape : nif.GetShapes())
+			if (auto* ts = dynamic_cast<BSTriShape*>(shape); ts && Prefix(ts->name.get(), f.pre)) pages.push_back(ts);
+		std::sort(pages.begin(), pages.end(), [](auto* a, auto* b) { return a->name.get() < b->name.get(); });
+		for (std::size_t k = 0; k < pages.size(); ++k) {
+			auto* ts = pages[k];
+			const Vector3 piv(f.px, f.py, f.pz);
+			for (auto& v : ts->vertData) v.vert -= piv;   // (the spine its origin)
+			ts->UpdateBounds();
+			MatTransform xf = ts->GetTransformToParent();
+			xf.translation += piv;
+			ts->SetTransformToParent(xf);
+			auto data = std::make_unique<NiTransformData>();
+			data->rotationType = LINEAR_KEY;
+			const int   n = 48;
+			const float start = 0.12f * static_cast<float>(k), up = 0.32f, down = 0.5f;   // (of the cycle)
+			for (int i = 0; i <= n; ++i) {
+				const float t = static_cast<float>(i) / n;
+				float a = 0.0f;
+				const float u = t - start;
+				if (u > 0 && u < up) { const float x = u / up; a = x * x * (3 - 2 * x); }                       // (lifted over)
+				else if (u >= up && u < up + down) { const float x = (u - up) / down; a = 1.0f - x * x * (3 - 2 * x); }   // (settling back)
+				NiAnimationKey<Quaternion> q;
+				q.type = LINEAR_KEY;
+				q.time = f.secs * t;
+				q.value = AxisAngle(f.ax, f.ay, f.az, a * f.deg * 3.14159f / 180.0f);
+				data->quaternionKeys.push_back(q);
+			}
+			const auto dataRef = hdr.AddBlock(std::move(data));
+			auto ip = std::make_unique<NiTransformInterpolator>();
+			ip->translation = xf.translation;
+			ip->rotation = Quaternion();
+			ip->scale = 1.0f;
+			ip->dataRef.index = dataRef;
+			const auto ipRef = hdr.AddBlock(std::move(ip));
+			auto ctrl = std::make_unique<NiTransformController>();
+			ctrl->flags = 0x48;
+			ctrl->frequency = 1.0f;
+			ctrl->startTime = 0.0f;
+			ctrl->stopTime = f.secs;
+			ctrl->targetRef.index = hdr.GetBlockID(ts);
+			ctrl->interpolatorRef.index = ipRef;
+			chain(ts, std::move(ctrl));
+			++flipped;
+		}
+	}
 	for (auto& p : pulses) {
 		for (auto* shape : nif.GetShapes()) {
 			if (!Prefix(shape->name.get(), p.pre)) continue;
@@ -142,5 +198,5 @@ int main(int argc, char** argv)
 		nif.AssignExtraData(root, std::move(bsx));
 	}
 	nif.Save(outPath);
-	printf("wrote %s (%d swaying, %d pulsing)\n", outPath.c_str(), swayed, pulsed);
+	printf("wrote %s (%d swaying, %d pulsing, %d turning)\n", outPath.c_str(), swayed, pulsed, flipped);
 }
