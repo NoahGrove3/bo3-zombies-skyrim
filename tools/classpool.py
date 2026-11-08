@@ -40,7 +40,6 @@ LADDERS = [
     ('destruction', 'blood', 'Arcane', 'arcane', [(OURS, 'Arcane Bolt'), (OURS, 'Mana Void'), (OURS, 'Lunar Tide'), (APOC, 'Apocalypse')]),
     # (the class review: every rune read as frost - the Elements trial counted one element, the seals missed them) each rung
     # its own element
-    ('destruction', 'runes', 'Runes', 'frost', [(MYST, 'Greater Frost Rune'), (MYST, 'Greater Lightning Rune', 'shock'), (MYST, 'Greater Fire Rune', 'fire'), (MYST, 'Siphon Spirit', 'arcane')]),   # (Noah: Death Cloud -> Siphon Spirit: poison is the Alchemist's)
     ('summoner', 'beasts', 'Beasts', 'arcane', [(COTC, 'Conjure Wolf'), (COTC, 'Conjure Ice Wolf'), (COTC, 'Conjure Alpha Wolf'), (COTC, 'Conjure Werebear')]),
     ('summoner', 'dead', 'The Dead', 'arcane', [(MYST, 'Conjure Skeleton'), (COTC, 'Conjure Draugr Wight'), (COTC, 'Conjure Draugr Deathlord Warrior'), (COTC, 'Conjure Draugr Death Overlord')]),
     ('summoner', 'daedra', 'Daedra', 'arcane', [(COTC, 'Conjure Dremora'), (COTC, 'Conjure Dremora Archer'), (COTC, 'Conjure Dremora Mage'), (MYST, 'Conjure Dremora Warlock')]),
@@ -52,10 +51,7 @@ LADDERS = [
     ('spellsword', 'sun', 'Sun', 'sun', [(MYST, 'Sunlight Touch'), (MYST, 'Radiant Touch'), (MYST, 'Searing Grasp')]),
     ('spellsword', 'blood', 'Arcane', 'arcane', [(OURS, 'Arcane Edge'), (OURS, 'Arcane Brand'), (OURS, 'Arcane Cascade')]),   # (Noah: Blood made Arcane - "Arcane blade, our own")
     # (Noah: "Remove the group and leave the poison stuff to the alchemist class") no Poison touches
-    # (Noah: "keep the close range spells like the fire one for the spellsword") the sprays and point-blank blasts
-    ('spellsword', 'fire_breath', 'Flame Breath', 'fire', [(MYST, 'Scorch'), (MYST, 'Greater Flames'), (MYST, 'Flame Tempest')]),
-    ('spellsword', 'frost_breath', 'Frost Breath', 'frost', [(MYST, 'Hoarfrost'), (MYST, 'Greater Frostbite'), (MYST, 'Flash Freeze')]),
-    ('spellsword', 'shock_breath', 'Storm Breath', 'shock', [(MYST, 'Greater Sparks'), (MYST, 'Electrocute')]),
+    # (Noah: the breath ladders, the Runes and the Cloaks removed - never offered)
     # (Noah: Poison Breath and Blood Breath - "Remove both")
     # (Noah, the altar rework: "remove the summoner magic damage starting spell - only the summons and the Riftblade")
     # Reanimate is gone from the pool (its records stay in the plugin, unused)
@@ -65,7 +61,6 @@ LADDERS = [
     ('summoner', 'ash', 'Ash', 'arcane', [(DB, 'Conjure Ash Spawn'), (MYST, 'Conjure Ash Husk'), (COTC, 'Conjure Ash Spawn Immolator'), (MYST, 'Conjure Ash Guardian')]),
     ('summoner', 'night', 'The Night', 'arcane', [(MYST, 'Conjure Death Hound'), (MYST, 'Conjure Volkihar Hound'), (MYST, 'Conjure Gargoyle'), (MYST, 'Conjure Gargoyle Brute')]),
     ('summoner', 'wrath', 'The Wrath', 'arcane', [(DG, 'Conjure Mistman'), (DG, 'Conjure Wrathman'), (MYST, 'Conjure Wrathman Marksman'), (MYST, 'Conjure Wrathman Warlock')]),
-    ('destruction', 'cloaks', 'Cloaks', 'fire', [(SKY, 'Flame Cloak'), (SKY, 'Frost Cloak', 'frost'), (SKY, 'Lightning Cloak', 'shock')]),
     ('destruction', 'walls', 'Walls', 'fire', [(SKY, 'Wall of Flames'), (SKY, 'Wall of Frost', 'frost'), (SKY, 'Wall of Storms', 'shock')]),
     ('destruction', 'storms', 'Storms', 'shock', [(APOC, 'Frost Nova', 'frost'), (SKY, 'Lightning Storm'), (APOC, 'Multivortex', 'arcane')]),   # (Noah: Frost Nova, Multivortex, Cinder Storm and Lightning Storm, weakest first by cost)
 ]
@@ -79,13 +74,13 @@ EXTRA = {(SKY, 'Conjure Flame Atronach'): (0x0204C3, 150, False), (SKY, 'Conjure
 # (Noah: "some of the spells don't go to tier 3 - new 4th spells where possible") the short Destruction ladders' fourth,
 # Legendary rungs from Apocalypse - appended after every other spell (a spell's index is in the saves); their damage comes
 # from the scripted spells they cast (PROCS: those hit as the rung itself)
-APPEND = {('destruction', 'shock'): [(APOC, 'Lightning Strike')], ('destruction', 'cloaks'): [(APOC, 'Ravaging Storm', 'shock')],
+APPEND = {('destruction', 'shock'): [(APOC, 'Lightning Strike')],
           ('destruction', 'walls'): [(APOC, 'Inferno', 'fire')], ('destruction', 'storms'): [(MYST, 'Cinder Storm', 'fire')]}   # (Noah: Volcano -> Inferno)
 EXTRA.update({(APOC, 'Lightning Strike'): (0x002878, 361, False), (APOC, 'Ravaging Storm'): (0x15E728, 431, False),
               (APOC, 'Volcano'): (0x04733C, 636, False), (APOC, 'Flamestrike'): (0x02E0C0, 664, False),
               (APOC, 'Shock Nova'): (0x00186D, 375, False), (APOC, 'Forbidden Sun'): (0x044264, 610, False), (APOC, 'Inferno'): (0x022DAB, 180, False),
               (APOC, 'Frost Nova'): (0x1347EE, 136, False), (APOC, 'Multivortex'): (0x1A4A4A, 200, False), (MYST, 'Cinder Storm'): (0x4B065B, 658, False), (APOC, 'Apocalypse'): (0x023316, 800, False)})
-PROCS = {(APOC, 'Ravaging Storm'): [0x15E725]}   # (Volcano and Flamestrike left the ladders)
+PROCS = {}   # (Volcano and Flamestrike left the ladders)
 ELEMENTS = ['fire', 'frost', 'shock', 'poison', 'corrosion', 'sun', 'blood', 'arcane']  # (corrosion took disease's place: nothing used it)
 
 
@@ -157,9 +152,13 @@ def main():
         procs += [(idx, plugin, pid) for pid in ids]
     h.append('\t// the spells a rung casts by script (their hits are the rung\'s): its index in kSpells, the proc\'s plugin and id')
     h.append('\tstruct Proc { int spell; const char* plugin; std::uint32_t id; };')
-    h.append(f'\tinline constexpr std::array<Proc, {len(procs)}> kProcs{{ {{')
-    h += [f'\t\t{{ {i}, "{pl}", 0x{pid:06X} }},' for i, pl, pid in procs]
-    h += ['\t} };', '}', '']
+    if procs:
+        h.append(f'\tinline constexpr std::array<Proc, {len(procs)}> kProcs{{ {{')
+        h += [f'\t\t{{ {i}, "{pl}", 0x{pid:06X} }},' for i, pl, pid in procs]
+        h += ['\t} };']
+    else:
+        h.append('\tinline constexpr std::array<Proc, 0> kProcs{};')
+    h += ['}', '']
     (ROOT / 'src' / 'CofferSpells.h').write_text('\n'.join(h))
     print(f'classpool: {len(rows)} spells in {len(ladders)} ladders')
 

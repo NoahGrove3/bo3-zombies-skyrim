@@ -311,8 +311,7 @@ namespace bo3z::Arcana
 	bool Rollable(int a_index)
 	{
 		if (a_index < 0 || a_index >= static_cast<int>(coffer::kSpells.size())) return false;
-		const auto& s = coffer::kSpells[a_index];
-		return !(s.cls == coffer::kSpellsword && std::string_view(s.ladderLabel).find("Breath") != std::string_view::npos);
+		return true;   // (the breath ladders are gone from the pool: every rung 1 may roll)
 	}
 	int Roll()
 	{
