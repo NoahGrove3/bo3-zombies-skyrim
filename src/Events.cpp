@@ -935,11 +935,6 @@ namespace bo3z
 				if (a_event && player && a_event->cause.get() == player && a_event->target.get() == player) {
 					Perks::SelfHit();  // (your own spells never hurt you)
 				}
-				// (the Spellsword's spellshield) a blow on you, blocked
-				if (a_event && player && a_event->target.get() == player && a_event->cause && a_event->cause.get() != player && a_event->flags.any(RE::TESHitEvent::Flag::kHitBlocked)) {
-					auto* src = a_event->source ? RE::TESForm::LookupByID(a_event->source) : nullptr;
-					if (auto* att = a_event->cause->As<RE::Actor>()) Classes::OnBlock(att, src && src->As<RE::MagicItem>());
-				}
 				// Skyrim weapons and spells keep up with the rounds: each hit takes a share of a zombie's round health.
 				if (a_event && a_event->cause.get() == player && a_event->target) {
 					auto* z = a_event->target->As<RE::Actor>();
@@ -1376,7 +1371,6 @@ namespace bo3z
 			Arcana::Load();
 			Fantasy::HushAltarEchoes();
 			Fantasy::TameSpellSounds();
-			Classes::TameSupport();
 			Director::HeadlongCombat();
 			Settings::ApplyMods();
 			if (auto* ini = RE::INIPrefSettingCollection::GetSingleton()) {  // (and no tutorials at all)

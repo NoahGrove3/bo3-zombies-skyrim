@@ -428,9 +428,6 @@ namespace bo3z
 		void             EarnWonder(int a_cls);        // (Eggs) the quest done: the wonder
 		std::string      WonderLine();                 // the altar's line: your class wonder's trial
 		std::vector<std::string> Progress(int& a_cls);  // the class guide's live page (paragraphs, <b> kept) and the class it is for
-		void             ImbueWeapon();                // the Spellsword's Imbue: the held spell-weapon one material up, its element kept
-		void             OnBlock(RE::Actor* a_attacker, bool a_spell);  // a blow blocked with a spellshield: reflect / stagger
-		void             TameSupport();                // the support relics' magicka cost, cut to castable (data loaded)
 		void             NextOutfit();                 // the altar's outfit picker: the next outfit (any class), worn
 		std::string      OutfitName();                 // the one worn from the picker ('' none yet)
 		int              Mastery(int a_index);     // kills its ladder has earned toward the next rung

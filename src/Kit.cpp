@@ -162,13 +162,15 @@ namespace bo3z::Kit
 		// the price and the gate of an item's next upgrade (a_next: the tier it would reach)
 		int UpgradeCost(int a_next)
 		{
-			return a_next <= 1 ? 4000 : a_next == 2 ? 6000 : a_next == 3 ? 8000 : 10000 + 2000 * (a_next - 4);  // (Noah: 4,000 / 6,000 / 8,000, then 10,000 and 2,000 more each Ascend)
+			const int base = a_next <= 1 ? 4000 : a_next == 2 ? 6000 : a_next == 3 ? 8000 : 10000 + 2000 * (a_next - 4);  // (Noah: 4,000 / 6,000 / 8,000, then 10,000 and 2,000 more each Ascend)
+			return static_cast<int>(std::lround(base * Director::PriceScale() / 50.0f)) * 50;   // (Noah, the essence economy: 3% more a night after night 10)
 		}
 		int UpgradeGate(int a_next) { return a_next <= 1 ? 0 : a_next == 2 ? 2 : a_next == 3 ? 4 : 6; }
 		constexpr int kMaxTier = 3 + 10;  // (ten Ascends at most)
 		int ArmoryCost(int a_at)
 		{
-			return a_at <= 3 ? 3000 : a_at <= 6 ? 6500 : 10000;
+			const int base = a_at <= 3 ? 3000 : a_at <= 6 ? 6500 : 10000;
+			return static_cast<int>(std::lround(base * Director::PriceScale() / 50.0f)) * 50;   // (Noah, the essence economy: 3% more a night after night 10)
 		}
 		const char* TierLabel(int t)
 		{

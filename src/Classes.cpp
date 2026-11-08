@@ -820,7 +820,6 @@ namespace bo3z::Classes
 					if (auto* perk = RE::TESDataHandler::GetSingleton()->LookupForm<RE::BGSPerk>(gen::kSummonCapPerks[k - 2], gen::kPlugin); perk && p->HasPerk(perk)) { cap = k; break; }
 				}
 				out.push_back(fmt::format("<b>Summon slots: {} of 4.</b> You start with 2; the Conjurer's Command Mead adds one, and your robes' Tier II one more.", cap));
-				out.push_back(freed >= 6 ? std::string("<b>Hero's Pact</b> is open: bind a hero or an army at any altar's second row.") : fmt::format("Hero's Pact: opens at 6 freed altars ({} to go).", 6 - freed));
 			}
 			break;
 		case coffer::kDestruction:
@@ -1270,91 +1269,9 @@ namespace bo3z::Classes
 		return g_outfitName;
 	}
 
-	namespace
-	{
-		constexpr std::uint32_t kSupport[] = { 0x1901E5, 0x4B065B, 0x25FBFF, 0xFF19E0 };  // Ash Cloud, Cinder Storm, Charged Nova, Symmetry
-	}
-	// (Noah: "I'm not able to cast it because it costs too much mana" - Ash Cloud at 282) the support relics cost about a
-	// third of Mysticism's price, never more than 100 magicka
-	void TameSupport()
-	{
-		for (auto id : kSupport) {
-			auto* sp = Myst(id);
-			if (!sp || sp->data.flags.any(RE::SpellItem::SpellFlag::kCostOverride)) continue;
-			float was = 0;
-			for (auto* e : sp->effects) if (e) was += e->cost;
-			sp->data.costOverride = std::clamp(static_cast<std::int32_t>(std::lround(was * 0.35f)), 40, 100);
-			sp->data.flags.set(RE::SpellItem::SpellFlag::kCostOverride);
-			logger::info("classes: support relic {} costs {} (was {:.0f})", sp->GetName(), sp->data.costOverride, was);
-		}
-	}
 
 
-	// (Noah's plan, the Spellsword) Imbue moves the held spell-weapon up a material - Steel, Orcish, Dwarven, Elven, Glass,
-	// Ebony, Daedric - keeping its kind and, where that material has it, its element
-	void ImbueWeapon()
-	{
-		auto* p = RE::PlayerCharacter::GetSingleton();
-		auto* dh = RE::TESDataHandler::GetSingleton();
-		auto* held = p ? p->GetEquippedObject(false) : nullptr;
-		auto* w = held ? held->As<RE::TESObjectWEAP>() : nullptr;
-		if (!w || !w->GetFile(0) || w->GetFile(0)->GetFilename() != "Spellsword.esp" || !dh) {
-			Hud::Banner("Hold a spell-weapon as you Imbue and its steel rises too", 3.0f);  // (the consistency pass: it was silent)
-			return;
-		}
-		static constexpr std::string_view kMat[] = { "Steel", "Orcish", "Dwarven", "Elven", "Glass", "Ebony", "Daedric" };
-		const std::string name = w->GetName();
-		int m = -1;
-		for (int i = 0; i < 7; ++i) if (name.starts_with(kMat[i])) m = i;
-		if (name.starts_with("Dwemer")) m = 2;
-		if (m < 0 || m >= 6) {
-			Hud::Banner(std::string(w->GetName()) + " has reached its finest steel", 3.0f);
-			return;
-		}
-		if (name.find(' ') == std::string::npos) return;  // (the audit: a one-word name threw here)
-		const std::string rest = name.substr(name.find(' '));                 // " Spellsword of Fire"
-		const std::string kind = rest.substr(0, rest.find(" of "));           // " Spellsword"
-		const std::string elem = rest.find(" of ") != std::string::npos ? rest.substr(rest.find(" of ")) : std::string();
-		RE::TESObjectWEAP* best = nullptr;
-		int bestScore = -1;
-		for (int nm = m + 1; nm < 7 && !best; ++nm) {
-			for (auto* c : dh->GetFormArray<RE::TESObjectWEAP>()) {
-				if (!c || !c->GetFile(0) || c->GetFile(0)->GetFilename() != "Spellsword.esp" || !c->GetName()) continue;
-				const std::string cn = c->GetName();
-				if (!cn.starts_with(kMat[nm]) || c->GetWeaponType() != w->GetWeaponType()) continue;  // (the same kind of weapon only: one-handed stays one-handed)
-				const int score = (cn.find(kind) != std::string::npos ? 2 : 0) + (!elem.empty() && cn.ends_with(elem) ? 1 : 0) + (c->GetWeaponType() == w->GetWeaponType() ? 2 : 0);
-				if (score > bestScore) bestScore = score, best = c;
-			}
-		}
-		if (!best) {
-			Hud::Banner("There is no finer steel for " + name + " at the altar", 3.0f);
-			return;
-		}
-		p->RemoveItem(w, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
-		GiveItem(p, best, 1, true);
-		Hud::Banner(std::string("Imbued: ") + name + "  ->  " + best->GetName(), 4.0f);
-		logger::info("classes: imbued {} -> {}", name, best->GetName());
-	}
 
-	// (Noah's plan, the Spellsword's defence) a spellshield blocks and turns spells back; a blocked blow staggers the dead
-	void OnBlock(RE::Actor* a_attacker, bool a_spell)
-	{
-		auto* p = RE::PlayerCharacter::GetSingleton();
-		if (!p || !a_attacker || a_attacker->IsDead() || g_class.load() != coffer::kSpellsword) return;
-		auto* left = p->GetEquippedObject(true);
-		auto* sh = left ? left->As<RE::TESObjectARMO>() : nullptr;
-		if (!sh || !sh->GetFile(0) || sh->GetFile(0)->GetFilename() != "Spellsword.esp") return;
-		static auto last = std::chrono::steady_clock::now() - std::chrono::seconds(5);
-		if (std::chrono::steady_clock::now() - last < std::chrono::milliseconds(600)) return;
-		last = std::chrono::steady_clock::now();
-		if (a_spell) {  // the spell turned back: a share of it returns to its caster
-			auto* av = a_attacker->AsActorValueOwner();
-			av->DamageActorValue(RE::ActorValue::kHealth, 0.35f * av->GetPermanentActorValue(RE::ActorValue::kHealth));
-			Gun::FxBlast("light", a_attacker->GetPosition() + RE::NiPoint3{ 0, 0, 80.0f });
-		} else if (Director::IsRoundUndead(a_attacker)) {
-			a_attacker->NotifyAnimationGraph("staggerStart");
-		}
-	}
 
 
 	bool WonderOpen()
