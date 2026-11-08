@@ -21,102 +21,12 @@
       "verify": []
     },
     {
-      "id": "riverwood_1",
-      "town": "Riverwood",
-      "worldspace": "Tamriel",
-      "anchor": "0x0162A4",
-      "object": "objects:brew_machine",
-      "slot": "layout:brew",
-      "verify": []
-    },
-    {
-      "id": "riverwood_2",
-      "town": "Riverwood",
-      "worldspace": "Tamriel",
-      "anchor": "0x0162A4",
-      "object": "objects:ammo_cache",
-      "slot": "layout:ammo",
-      "verify": []
-    },
-    {
-      "id": "riverwood_forge",
-      "town": "Riverwood",
-      "worldspace": "Tamriel",
-      "anchor": "0x0162A4",
-      "object": "objects:forge",
-      "slot": "layout:forge",
-      "verify": []
-    },
-    {
-      "id": "riverwood_3",
-      "town": "Riverwood",
-      "worldspace": "Tamriel",
-      "anchor": "0x0162A4",
-      "object": "objects:wall_triad",
-      "slot": "layout:wall_0",
-      "verify": []
-    },
-    {
-      "id": "riverwood_4",
-      "town": "Riverwood",
-      "worldspace": "Tamriel",
-      "anchor": "0x0162A4",
-      "object": "objects:wall_steampump",
-      "slot": "layout:wall_1",
-      "verify": []
-    },
-    {
       "id": "whiterun_0",
       "town": "Whiterun",
       "worldspace": "Tamriel",
       "anchor": "0x01B1F1",
       "object": "objects:coffer",
       "slot": "layout:box",
-      "verify": []
-    },
-    {
-      "id": "whiterun_1",
-      "town": "Whiterun",
-      "worldspace": "Tamriel",
-      "anchor": "0x01B1F1",
-      "object": "objects:brew_machine",
-      "slot": "layout:brew",
-      "verify": []
-    },
-    {
-      "id": "whiterun_2",
-      "town": "Whiterun",
-      "worldspace": "Tamriel",
-      "anchor": "0x01B1F1",
-      "object": "objects:ammo_cache",
-      "slot": "layout:ammo",
-      "verify": []
-    },
-    {
-      "id": "whiterun_forge",
-      "town": "Whiterun",
-      "worldspace": "Tamriel",
-      "anchor": "0x01B1F1",
-      "object": "objects:forge",
-      "slot": "layout:forge",
-      "verify": []
-    },
-    {
-      "id": "whiterun_3",
-      "town": "Whiterun",
-      "worldspace": "Tamriel",
-      "anchor": "0x01B1F1",
-      "object": "objects:wall_spider",
-      "slot": "layout:wall_0",
-      "verify": []
-    },
-    {
-      "id": "whiterun_4",
-      "town": "Whiterun",
-      "worldspace": "Tamriel",
-      "anchor": "0x01B1F1",
-      "object": "objects:wall_marksman",
-      "slot": "layout:wall_1",
       "verify": []
     },
     {
@@ -129,84 +39,12 @@
       "verify": []
     },
     {
-      "id": "solitude_1",
-      "town": "Solitude",
-      "worldspace": "Tamriel",
-      "anchor": "0x01C386",
-      "object": "objects:brew_machine",
-      "slot": "layout:brew",
-      "verify": []
-    },
-    {
-      "id": "solitude_2",
-      "town": "Solitude",
-      "worldspace": "Tamriel",
-      "anchor": "0x01C386",
-      "object": "objects:ammo_cache",
-      "slot": "layout:ammo",
-      "verify": []
-    },
-    {
-      "id": "solitude_forge",
-      "town": "Solitude",
-      "worldspace": "Tamriel",
-      "anchor": "0x01C386",
-      "object": "objects:forge",
-      "slot": "layout:forge",
-      "verify": []
-    },
-    {
-      "id": "solitude_3",
-      "town": "Solitude",
-      "worldspace": "Tamriel",
-      "anchor": "0x01C386",
-      "object": "objects:wall_drill",
-      "slot": "layout:wall_0",
-      "verify": []
-    },
-    {
       "id": "windhelm_0",
       "town": "Windhelm",
       "worldspace": "Tamriel",
       "anchor": "0x055FCB",
       "object": "objects:coffer",
       "slot": "layout:box",
-      "verify": []
-    },
-    {
-      "id": "windhelm_1",
-      "town": "Windhelm",
-      "worldspace": "Tamriel",
-      "anchor": "0x055FCB",
-      "object": "objects:brew_machine",
-      "slot": "layout:brew",
-      "verify": []
-    },
-    {
-      "id": "windhelm_2",
-      "town": "Windhelm",
-      "worldspace": "Tamriel",
-      "anchor": "0x055FCB",
-      "object": "objects:ammo_cache",
-      "slot": "layout:ammo",
-      "verify": []
-    },
-    {
-      "id": "windhelm_forge",
-      "town": "Windhelm",
-      "worldspace": "Tamriel",
-      "anchor": "0x055FCB",
-      "object": "objects:forge",
-      "slot": "layout:forge",
-      "verify": []
-    },
-    {
-      "id": "windhelm_3",
-      "town": "Windhelm",
-      "worldspace": "Tamriel",
-      "anchor": "0x055FCB",
-      "object": "objects:wall_spider",
-      "slot": "layout:wall_0",
       "verify": []
     },
     {
@@ -219,84 +57,12 @@
       "verify": []
     },
     {
-      "id": "markarth_1",
-      "town": "Markarth",
-      "worldspace": "Tamriel",
-      "anchor": "0x01C389",
-      "object": "objects:brew_machine",
-      "slot": "layout:brew",
-      "verify": []
-    },
-    {
-      "id": "markarth_2",
-      "town": "Markarth",
-      "worldspace": "Tamriel",
-      "anchor": "0x01C389",
-      "object": "objects:ammo_cache",
-      "slot": "layout:ammo",
-      "verify": []
-    },
-    {
-      "id": "markarth_forge",
-      "town": "Markarth",
-      "worldspace": "Tamriel",
-      "anchor": "0x01C389",
-      "object": "objects:forge",
-      "slot": "layout:forge",
-      "verify": []
-    },
-    {
-      "id": "markarth_3",
-      "town": "Markarth",
-      "worldspace": "Tamriel",
-      "anchor": "0x01C389",
-      "object": "objects:wall_marksman",
-      "slot": "layout:wall_0",
-      "verify": []
-    },
-    {
       "id": "riften_0",
       "town": "Riften",
       "worldspace": "Tamriel",
       "anchor": "0x042286",
       "object": "objects:coffer",
       "slot": "layout:box",
-      "verify": []
-    },
-    {
-      "id": "riften_1",
-      "town": "Riften",
-      "worldspace": "Tamriel",
-      "anchor": "0x042286",
-      "object": "objects:brew_machine",
-      "slot": "layout:brew",
-      "verify": []
-    },
-    {
-      "id": "riften_2",
-      "town": "Riften",
-      "worldspace": "Tamriel",
-      "anchor": "0x042286",
-      "object": "objects:ammo_cache",
-      "slot": "layout:ammo",
-      "verify": []
-    },
-    {
-      "id": "riften_forge",
-      "town": "Riften",
-      "worldspace": "Tamriel",
-      "anchor": "0x042286",
-      "object": "objects:forge",
-      "slot": "layout:forge",
-      "verify": []
-    },
-    {
-      "id": "riften_3",
-      "town": "Riften",
-      "worldspace": "Tamriel",
-      "anchor": "0x042286",
-      "object": "objects:wall_steampump",
-      "slot": "layout:wall_0",
       "verify": []
     },
     {
@@ -309,84 +75,12 @@
       "verify": []
     },
     {
-      "id": "falkreath_1",
-      "town": "Falkreath",
-      "worldspace": "Tamriel",
-      "anchor": "0x017760",
-      "object": "objects:brew_machine",
-      "slot": "layout:brew",
-      "verify": []
-    },
-    {
-      "id": "falkreath_2",
-      "town": "Falkreath",
-      "worldspace": "Tamriel",
-      "anchor": "0x017760",
-      "object": "objects:ammo_cache",
-      "slot": "layout:ammo",
-      "verify": []
-    },
-    {
-      "id": "falkreath_forge",
-      "town": "Falkreath",
-      "worldspace": "Tamriel",
-      "anchor": "0x017760",
-      "object": "objects:forge",
-      "slot": "layout:forge",
-      "verify": []
-    },
-    {
-      "id": "falkreath_3",
-      "town": "Falkreath",
-      "worldspace": "Tamriel",
-      "anchor": "0x017760",
-      "object": "objects:wall_triad",
-      "slot": "layout:wall_0",
-      "verify": []
-    },
-    {
       "id": "morthal_0",
       "town": "Morthal",
       "worldspace": "Tamriel",
       "anchor": "0x0177B0",
       "object": "objects:coffer",
       "slot": "layout:box",
-      "verify": []
-    },
-    {
-      "id": "morthal_1",
-      "town": "Morthal",
-      "worldspace": "Tamriel",
-      "anchor": "0x0177B0",
-      "object": "objects:brew_machine",
-      "slot": "layout:brew",
-      "verify": []
-    },
-    {
-      "id": "morthal_2",
-      "town": "Morthal",
-      "worldspace": "Tamriel",
-      "anchor": "0x0177B0",
-      "object": "objects:ammo_cache",
-      "slot": "layout:ammo",
-      "verify": []
-    },
-    {
-      "id": "morthal_forge",
-      "town": "Morthal",
-      "worldspace": "Tamriel",
-      "anchor": "0x0177B0",
-      "object": "objects:forge",
-      "slot": "layout:forge",
-      "verify": []
-    },
-    {
-      "id": "morthal_3",
-      "town": "Morthal",
-      "worldspace": "Tamriel",
-      "anchor": "0x0177B0",
-      "object": "objects:wall_spider",
-      "slot": "layout:wall_0",
       "verify": []
     },
     {
@@ -399,174 +93,12 @@
       "verify": []
     },
     {
-      "id": "dawnstar_1",
-      "town": "Dawnstar",
-      "worldspace": "Tamriel",
-      "anchor": "0x01773A",
-      "object": "objects:brew_machine",
-      "slot": "layout:brew",
-      "verify": []
-    },
-    {
-      "id": "dawnstar_2",
-      "town": "Dawnstar",
-      "worldspace": "Tamriel",
-      "anchor": "0x01773A",
-      "object": "objects:ammo_cache",
-      "slot": "layout:ammo",
-      "verify": []
-    },
-    {
-      "id": "dawnstar_forge",
-      "town": "Dawnstar",
-      "worldspace": "Tamriel",
-      "anchor": "0x01773A",
-      "object": "objects:forge",
-      "slot": "layout:forge",
-      "verify": []
-    },
-    {
-      "id": "dawnstar_3",
-      "town": "Dawnstar",
-      "worldspace": "Tamriel",
-      "anchor": "0x01773A",
-      "object": "objects:wall_marksman",
-      "slot": "layout:wall_0",
-      "verify": []
-    },
-    {
       "id": "winterhold_0",
       "town": "Winterhold",
       "worldspace": "Tamriel",
       "anchor": "0x0177EF",
       "object": "objects:coffer",
       "slot": "layout:box",
-      "verify": []
-    },
-    {
-      "id": "winterhold_1",
-      "town": "Winterhold",
-      "worldspace": "Tamriel",
-      "anchor": "0x0177EF",
-      "object": "objects:brew_machine",
-      "slot": "layout:brew",
-      "verify": []
-    },
-    {
-      "id": "winterhold_2",
-      "town": "Winterhold",
-      "worldspace": "Tamriel",
-      "anchor": "0x0177EF",
-      "object": "objects:ammo_cache",
-      "slot": "layout:ammo",
-      "verify": []
-    },
-    {
-      "id": "winterhold_forge",
-      "town": "Winterhold",
-      "worldspace": "Tamriel",
-      "anchor": "0x0177EF",
-      "object": "objects:forge",
-      "slot": "layout:forge",
-      "verify": []
-    },
-    {
-      "id": "winterhold_3",
-      "town": "Winterhold",
-      "worldspace": "Tamriel",
-      "anchor": "0x0177EF",
-      "object": "objects:wall_drill",
-      "slot": "layout:wall_0",
-      "verify": []
-    },
-    {
-      "id": "riverwood_relic",
-      "town": "Riverwood",
-      "worldspace": "Tamriel",
-      "anchor": "0x0162A4",
-      "object": "objects:relic_altar",
-      "slot": "layout:relic",
-      "verify": []
-    },
-    {
-      "id": "whiterun_relic",
-      "town": "Whiterun",
-      "worldspace": "Tamriel",
-      "anchor": "0x01B1F1",
-      "object": "objects:relic_altar",
-      "slot": "layout:relic",
-      "verify": []
-    },
-    {
-      "id": "solitude_relic",
-      "town": "Solitude",
-      "worldspace": "Tamriel",
-      "anchor": "0x01C386",
-      "object": "objects:relic_altar",
-      "slot": "layout:relic",
-      "verify": []
-    },
-    {
-      "id": "windhelm_relic",
-      "town": "Windhelm",
-      "worldspace": "Tamriel",
-      "anchor": "0x055FCB",
-      "object": "objects:relic_altar",
-      "slot": "layout:relic",
-      "verify": []
-    },
-    {
-      "id": "markarth_relic",
-      "town": "Markarth",
-      "worldspace": "Tamriel",
-      "anchor": "0x01C389",
-      "object": "objects:relic_altar",
-      "slot": "layout:relic",
-      "verify": []
-    },
-    {
-      "id": "riften_relic",
-      "town": "Riften",
-      "worldspace": "Tamriel",
-      "anchor": "0x042286",
-      "object": "objects:relic_altar",
-      "slot": "layout:relic",
-      "verify": []
-    },
-    {
-      "id": "falkreath_relic",
-      "town": "Falkreath",
-      "worldspace": "Tamriel",
-      "anchor": "0x017760",
-      "object": "objects:relic_altar",
-      "slot": "layout:relic",
-      "verify": []
-    },
-    {
-      "id": "morthal_relic",
-      "town": "Morthal",
-      "worldspace": "Tamriel",
-      "anchor": "0x0177B0",
-      "object": "objects:relic_altar",
-      "slot": "layout:relic",
-      "verify": []
-    },
-    {
-      "id": "dawnstar_relic",
-      "town": "Dawnstar",
-      "worldspace": "Tamriel",
-      "anchor": "0x01773A",
-      "object": "objects:relic_altar",
-      "slot": "layout:relic",
-      "verify": []
-    },
-    {
-      "id": "winterhold_relic",
-      "town": "Winterhold",
-      "worldspace": "Tamriel",
-      "anchor": "0x0177EF",
-      "object": "objects:relic_altar",
-      "slot": "layout:relic",
       "verify": []
     }
   ]

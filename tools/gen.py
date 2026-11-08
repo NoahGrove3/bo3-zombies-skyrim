@@ -73,7 +73,6 @@ import json as _json
 BL = sorted(q.stem for q in (root / 'tools/templates/expl').glob('*.json'))
 o.append('\t// spell blasts: Skyrim.esm explosions cloned at runtime with no damage (tools/templates/expl)')
 o.append('\tinline constexpr std::array<std::pair<std::string_view, std::uint32_t>, ' + str(len(BL)) + '> kBlasts{ {' + ', '.join('{ "%s", 0x%06X }' % (b, int(_json.load(open(root / 'tools/templates/expl' / (b + '.json')))['formid'], 16)) for b in BL) + '} };')
-o.append('\tstruct GunDef { std::string_view id, label, cls; Fire fire; float damage, headMult; int pellets; float spreadHip, spreadAds; int clip, reserve, fireDelayMs, burst, reloadMs; float range, splashRadius, splashDamage, hitRadius, headRadius; Sound fireSnd, reloadSnd, emptySnd; int wallBuyCost, ammoCost, boxWeight; std::uint32_t weapId; int special, spell, spellOn; bool retired; std::uint32_t bulletSpell; int kind; float mana, abilityValue; std::uint32_t handSpell; std::string_view abilityText; std::uint32_t color; std::string_view chargeName, chargeText; float chargeSeconds, chargeCooldown, chargeMana; int chargeStyle; int tapBlast, chargeBlast; int chargeAura, chargeSpell; std::uint32_t ammo; Sound chargeSnd; int relicTown; int handLook; };')
 o.append('\tenum ChargeStyle : int { kThrust = 0, kSlam = 1, kSweep = 2, kTwirl = 3, kRaise = 4, kSurge = 5 };')
 W = S['weapons']['rows']
 sid = lambda v: 'Sound::' + v.split(':')[1]
@@ -89,18 +88,9 @@ o.append(f'\tinline constexpr std::array<FormRef, {len(SP)}> kSpells{{ {{')
 for s in SP: o.append(f'\t\tFormRef{{ {cs(s["plugin"])}, 0x{int(s["localId"], 16):06X}, {cs(s["editorId"])} }},')
 o.append('\t} };')
 for i, s in enumerate(SP): o.append(f'\tinline constexpr int kSpell_{s["id"]} = {i};')
-o.append(f'\tinline constexpr std::array<GunDef, {len(W)}> kGuns{{ {{')
-for w in W:
-    o.append(f'\t\tGunDef{{ {cs(w["id"])}, {cs(w["label"])}, {cs(w["class"])}, Fire({fires[w["fire"]]}), {F(w["damage"])}, {F(w["headMult"])}, {w["pellets"]}, {F(w["spreadHip"])}, {F(w["spreadAds"])}, {w["clip"]}, {w["reserve"]}, {w["fireDelayMs"]}, {w["burst"]}, {w["reloadMs"]}, {F(w["range"])}, {F(w["splashRadius"])}, {F(w["splashDamage"])}, {F(w["hitRadius"])}, {F(w["headRadius"])}, {sid(w["fireSound"])}, {sid(w["reloadSound"])}, {sid(w["emptySound"])}, {w["wallBuyCost"]}, {w["ammoCost"]}, {w["boxWeight"]}, 0x{IDS[("WEAP", w["id"])]:03X}, {specials[w["special"]]}, {spidx(w["spell"])}, {spellon[w["spellOn"]]}, {str(w.get("retired", False)).lower()}, 0x{(IDS[("SPEL", "bullet_" + w["projectile"])] if w.get("projectile", "none") != "none" else 0):03X}, {wkinds[w["kind"]]}, {F(w["mana"])}, {F(w["abilityValue"])}, 0x{(IDS[("SPEL", "hand_" + w["id"])] if w["kind"] in ("tome", "wonder") else 0):03X}, {cs(w["abilityText"])}, 0x{w["element"]}, {cs(w["chargeName"])}, {cs(w["chargeText"])}, {F(w["chargeSeconds"])}, {F(w["chargeCooldown"])}, {F(w["chargeMana"])}, {["thrust","slam","sweep","twirl","raise","surge"].index(w["chargeStyle"])}, {BL.index(w["tapBlast"])}, {BL.index(w["chargeBlast"])}, {spidx("spells:aura_" + w["chargeAura"])}, {spidx(w["chargeSpell"] if w["chargeSpell"] == "none" else "spells:" + w["chargeSpell"])}, 0x{(IDS[("AMMO", "arrow_" + w["id"])] if w["kind"] == "bow" else 0):03X}, {sid(w["chargeSound"])}, {RELIC_TOWNS.index(w["relicTown"]) if w["relicTown"] != "none" else -1}, {spidx(w.get("handLook", "none"))} }},')
-o.append('\t} };')
-for i, w in enumerate(W): o.append(f'\tinline constexpr int kGunIdx_{w["id"]} = {i};')
 _sid = [x['id'] for x in S['sounds']['rows']]
 _gs = lambda pre, w: str(_sid.index(pre + w.get('soundAs', w['id']))) if (pre + w.get('soundAs', w['id'])) in _sid else '-1'  # (the wonders borrow a spell's sounds: soundAs)
-o.append('\tstruct GunSounds { int charge, hit, boom, start, full, fizzle, travel; };  // per spell (Spec 12.3): charge hum (loop), bolt impact, gathered burst, charging begins, full charge, early release, bolt in flight (loop); sound index, -1 none')
-o.append(f'\tinline constexpr std::array<GunSounds, {len(W)}> kGunSounds{{ {{ ' + ', '.join('GunSounds{ ' + ', '.join(_gs(p_, w) for p_ in ('charge_', 'hit_', 'boom_', 'start_', 'full_', 'fizzle_', 'travel_')) + ' }' for w in W) + ' } };')
 k = S['melee']['rows'][0]
-o.append('\tstruct KnifeDef { std::uint32_t key; float damage, range, coneDeg; int cooldownMs; };')
-o.append(f'\tinline constexpr KnifeDef kKnife{{ {k["key"]}, {F(k["damage"])}, {F(k["range"])}, {F(k["coneDeg"])}, {k["cooldownMs"]} }};')
 effects = {'health': 0, 'charge_speed': 1, 'fire_rate_and_damage': 2, 'self_revive': 3, 'speed_and_stamina': 4, 'headshots': 5, 'third_gun': 6, 'web_grenade': 7, 'cast_shock': 8, 'regrow_arrows': 9,
            'summon_might': 10, 'summon_tether': 11, 'summon_command': 12, 'dest_echo': 13, 'dest_focus': 14, 'dest_siphon': 15,
            'ranger_draw': 16, 'ranger_ward': 17, 'ss_bladesong': 18, 'ss_spellbind': 19, 'ss_tempo': 20, 'split_shot': 21}
@@ -115,10 +105,6 @@ o.append(f'\tinline constexpr int kMaxPerks = {S["perks"]["limits"]["maxPerks"]}
 _PCLS = {'': -1, 'summoner': 0, 'destruction': 1, 'ranger': 2, 'spellsword': 3}
 o.append(f'\tinline constexpr std::array<int, {len(P)}> kPerkClass{{ {{ {", ".join(str(_PCLS[p.get("cls", "")]) for p in P)} }} }};  // the class a perk belongs to (-1: every class)')
 C = S['crew']['rows']; passives = {'gun_damage_mult': 0, 'bonus_health': 1, 'knife_damage_mult': 2, 'box_cost': 3}
-o.append('\tstruct CrewDef { std::string_view id, label, quote; int passive; float value; std::string_view passiveText; };')
-o.append(f'\tinline constexpr std::array<CrewDef, {len(C)}> kCrew{{ {{')
-for c in C: o.append(f'\t\tCrewDef{{ {cs(c["id"])}, {cs(c["label"])}, {cs(c["quote"])}, {passives[c["passive"]]}, {F(c["passiveValue"])}, {cs(c["passiveText"])} }},')
-o.append('\t} };')
 for r in S['identity']['rows']: o.append(f'\tinline constexpr std::string_view kText_{r["id"]} = {cs(r["text"])};')
 O = S['objects']['rows']; kinds = {'box': 0, 'perk': 1, 'wallbuy': 2, 'ammo': 3, 'perkmenu': 4, 'forge': 5, 'relic': 6}
 def refidx(r):
@@ -137,8 +123,6 @@ o.append('\t} };')
 o.append(f'\tinline constexpr std::uint32_t kHeartStone = 0x{IDS[("STAT", "heart_stone")]:03X}, kHeartStoneLit = 0x{IDS[("STAT", "heart_stone_lit")]:03X};  // the Echo Altar\'s heart stone (dressing)')
 o.append(f'\tinline constexpr std::uint32_t kFreedRunes = 0x{IDS[("STAT", "freed_runes")]:03X}, kHeartMotes = 0x{IDS[("STAT", "heart_motes")]:03X};  // a freed altar\'s golden rune circle and its rising motes (they grow / fade in as it is freed)')
 o.append(f'\tinline constexpr std::array<std::uint32_t, 6> kPillarRock{{ {{ {", ".join("0x%03X" % IDS[("STAT", f"pillar_rock{k}")] for k in range(6))} }} }};  // the rune stones over its columns')
-o.append(f'\tinline constexpr std::array<std::uint32_t, {len(S["bows"]["rows"])}> kBowShowStat{{ {{ {", ".join("0x%03X" % IDS[("STAT", "1st_bow_" + b["id"])] for b in S["bows"]["rows"])} }} }};  // the altar\'s roll shows each bow itself')
-o.append(f'\tinline constexpr std::array<std::uint32_t, {len(W)}> kShowStat{{ {{ {", ".join("0x%03X" % IDS[("STAT", "show_" + w["id"])] for w in W)} }} }};')
 o.append(f'\tinline constexpr std::array<std::uint32_t, 8> kShowElement{{ {{ {", ".join("0x%03X" % IDS[("STAT", "show_el_" + e)] for e in ["fire", "frost", "shock", "poison", "disease", "sun", "blood", "arcane"])} }} }};  // Coffer spells: the roll shows the element')
 sh = S['dressing']['show']
 o.append(f'\tinline constexpr std::uint32_t kShowCheese = 0x{IDS[("STAT", "show_cheese")]:03X}, kRiseFx = 0x{IDS[("STAT", "rise_fx")]:03X}, kDragonAway = 0x{IDS[("STAT", "dragon_away")]:03X}, kWhirlwind = 0x{IDS[("STAT", "whirlwind")]:03X};')
@@ -205,13 +189,11 @@ o.append('\tnamespace elite { ' + ' '.join(f'inline constexpr float {r["id"]} = 
 AN = {r['id']: r for r in S['animations']['rows']}
 o.append(f'\tinline constexpr std::string_view kAnimFireCrossbow = {cs(AN["crossbow"]["fire"])}, kAnimReloadCrossbow = {cs(AN["crossbow"]["reload"])}, kAnimFireStaff = {cs(AN["staff"]["fire"])}, kAnimReloadStaff = {cs(AN["staff"]["reload"])};')
 import esp_ids as _pu
-o.append('\t// BO3 power-ups: Insta-Kill, Double Points, Kaboom, Fire Sale (token STAT, light)')
 o.append('\tinline constexpr std::array<std::uint32_t, 7> kSummonCapPerks{ ' + ', '.join(f'0x{IDS[("PERK", f"summon_cap_{n}")]:03X}' for n in range(2, 9)) + ' };   // the Summoner holds 2 .. 8 summons')
 o.append(f'\tinline constexpr std::uint32_t kSteadyPerk = 0x{IDS[("PERK", "steady")]:03X};   // the night\'s dead never stagger you (Mod Incoming Stagger x0)')
 o.append(f'\tinline constexpr std::uint32_t kWonderTomeSpell = 0x{IDS[("SPEL", "wonder_tome")]:03X};   // the Destruction wonder (Classes::OnCast)')
-o.append(f'\tinline constexpr std::uint32_t kVortexWeap = 0x{IDS[("WEAP", "vortex")]:03X}, kVortexAmmo = 0x{IDS[("AMMO", "vortexarrow")]:03X}, kVortexFx = 0x{IDS[("ACTI", "vortexfx")]:03X}; inline constexpr std::uint32_t kPurpleFire = 0x{IDS[("ACTI", "purplefire")]:03X}; inline constexpr std::array<std::uint32_t, 9> kBurst{{ {', '.join('0x%03X' % IDS[('ACTI', 'burst_' + e)] for e in ('fire', 'frost', 'shock', 'wind', 'sun', 'blood', 'void', 'poison', 'gold'))} }}; inline constexpr std::array<std::uint32_t, 7> kFlaskSpell{{ {', '.join('0x%03X' % IDS[('SPEL', 'throw_' + e)] for e in ('fire', 'frost', 'shock', 'poison', 'sun', 'blood', 'philosopher'))} }}; inline constexpr std::array<std::uint32_t, 7> kFlaskProj{{ {', '.join('0x%03X' % IDS[('SPEL', 'flask_' + e)] for e in ('fire', 'frost', 'shock', 'poison', 'sun', 'blood', 'philosopher'))} }}; inline constexpr std::array<std::uint32_t, 7> kFlaskItem{{ {', '.join('0x%03X' % IDS[('WEAP', 'flaskweap_' + e)] for e in ('fire', 'frost', 'shock', 'poison', 'sun', 'blood', 'philosopher'))} }}; inline constexpr std::array<std::uint32_t, 12> kArmGlow{{ {', '.join('0x%03X' % IDS[('EFSH', f'armglow_{c}_{t}')] for c in range(4) for t in (1, 2, 3))} }}; inline constexpr std::array<std::uint32_t, 7> kFlaskPotion{{ {', '.join('0x%03X' % IDS[('ALCH', 'flaskitem_' + e)] for e in ('fire', 'frost', 'shock', 'poison', 'sun', 'blood', 'philosopher'))} }}; inline constexpr std::uint32_t kAlchKnife = 0x{IDS[("WEAP", "alchknife")]:03X}, kBoneHorn = 0x{IDS[("SPEL", "bonehorn")]:03X}, kWyrmHorn = 0x{IDS[("WEAP", "wyrmhorn")]:03X}; inline constexpr std::uint32_t kSlayerWeap = 0x{IDS[("WEAP", "slayer")]:03X}; inline constexpr std::uint32_t kDaggerSpell = 0x{IDS[("SPEL", "throwdaggers")]:03X}; inline constexpr std::uint32_t kDaggerHit = 0x{IDS[("SPEL", "throwdagger")]:03X}; inline constexpr std::array<std::uint32_t, 7> kBowSkin{{ {', '.join('0x%03X' % IDS[('EFSH', 'bowskin_' + e)] for e in ('fire', 'frost', 'shock', 'wind', 'sun', 'blood', 'void'))} }};  // fire frost shock wind sun blood void   // the Ranger\'s wonder, the Subsuming Vortex')
+o.append(f'\tinline constexpr std::uint32_t kPurpleFire = 0x{IDS[("ACTI", "purplefire")]:03X}; inline constexpr std::array<std::uint32_t, 9> kBurst{{ {', '.join('0x%03X' % IDS[('ACTI', 'burst_' + e)] for e in ('fire', 'frost', 'shock', 'wind', 'sun', 'blood', 'void', 'poison', 'gold'))} }}; inline constexpr std::array<std::uint32_t, 7> kFlaskSpell{{ {', '.join('0x%03X' % IDS[('SPEL', 'throw_' + e)] for e in ('fire', 'frost', 'shock', 'poison', 'sun', 'blood', 'philosopher'))} }}; inline constexpr std::array<std::uint32_t, 7> kFlaskProj{{ {', '.join('0x%03X' % IDS[('SPEL', 'flask_' + e)] for e in ('fire', 'frost', 'shock', 'poison', 'sun', 'blood', 'philosopher'))} }}; inline constexpr std::array<std::uint32_t, 7> kFlaskItem{{ {', '.join('0x%03X' % IDS[('WEAP', 'flaskweap_' + e)] for e in ('fire', 'frost', 'shock', 'poison', 'sun', 'blood', 'philosopher'))} }}; inline constexpr std::array<std::uint32_t, 12> kArmGlow{{ {', '.join('0x%03X' % IDS[('EFSH', f'armglow_{c}_{t}')] for c in range(4) for t in (1, 2, 3))} }}; inline constexpr std::array<std::uint32_t, 7> kFlaskPotion{{ {', '.join('0x%03X' % IDS[('ALCH', 'flaskitem_' + e)] for e in ('fire', 'frost', 'shock', 'poison', 'sun', 'blood', 'philosopher'))} }}; inline constexpr std::uint32_t kAlchKnife = 0x{IDS[("WEAP", "alchknife")]:03X}, kBoneHorn = 0x{IDS[("SPEL", "bonehorn")]:03X}; inline constexpr std::uint32_t kSlayerWeap = 0x{IDS[("WEAP", "slayer")]:03X}; inline constexpr std::uint32_t kDaggerSpell = 0x{IDS[("SPEL", "throwdaggers")]:03X}; inline constexpr std::uint32_t kDaggerHit = 0x{IDS[("SPEL", "throwdagger")]:03X}; inline constexpr std::uint32_t kWyrmGlow = 0x{IDS[("EFSH", "bowskin_void")]:03X};  // the Violet Wyrm\'s glow')
 o.append('\tinline constexpr std::array<std::uint32_t, 4> kClassGuides{ ' + ', '.join(f'0x{IDS[("BOOK", "guide_" + c)]:03X}' for c in ('summoner', 'destruction', 'ranger', 'spellsword')) + ' };   // each class\'s guide book')
-o.append('\tinline constexpr std::array<std::pair<std::uint32_t, std::uint32_t>, ' + str(len(_pu.POWERUPS)) + '> kPowerups{ {' + ', '.join(f'{{ 0x{IDS[("STAT", "pu_" + k)]:03X}, 0x{IDS[("LIGH", "pu_" + k)]:03X} }}' for k, _ in _pu.POWERUPS) + '} };')
 o.append(f'\tinline constexpr std::uint32_t kReaperScythe = 0x{IDS[("WEAP", "reaper_scythe")]:03X};')
 o.append(f'\tinline constexpr std::uint32_t kWyrmClaws = 0x{IDS[("WEAP", "wyrm_claws")]:03X}, kShadowClaws = 0x{IDS[("WEAP", "shadow_claws")]:03X}, kZombieClaws = 0x{IDS[("WEAP", "zombie_claws")]:03X};')
 o.append(f'\tinline constexpr std::uint32_t kUndeadFaction = 0x{IDS[("FACT", "undead")]:03X};')
@@ -306,12 +288,6 @@ o.append(f'\tinline constexpr std::uint32_t kArtIceShell = 0x{IDS[("ARTO", "fx_i
 BW = S['bows']['rows']
 EL8 = ['fire', 'frost', 'shock', 'poison', 'disease', 'sun', 'blood', 'arcane']
 SCID = [r['id'] for r in S['spellcraft']['rows']]
-o.append('\tstruct BowDef { std::string_view id, label, text, element; int spellRow, tier; float share; std::uint32_t color, weap, ammo; };  // element: its emblem (bw_<element>.png)')
-o.append(f'\tinline constexpr std::array<BowDef, {len(BW)}> kBows{{ {{')
-for b in BW:
-    col = ''.join(f'{int(c * 255):02X}' for c in b['glow'])
-    o.append(f'\t\tBowDef{{ {cs(b["id"])}, {cs(b["label"])}, {cs(b["text"])}, {cs(b["element"])}, {SCID.index(b["spell"])}, {b["tier"]}, {F(b["share"])}, 0x{col}, 0x{IDS[("WEAP", "bow_" + b["id"])]:03X}, 0x{IDS[("AMMO", "bowarrow_" + b["id"])]:03X} }},')
-o.append('\t} };')
 # Stage 2 (sheet: echo): src/Echo.cpp
 EC = S['echo']
 WIDS = [w['id'] for w in EC['wonders']]
@@ -339,12 +315,10 @@ for w in WD['rows']:
     o.append(f'\t\tWordDef{{ {cs(w["id"])}, {cs(w["word"])}, {cs(w["meaning"])}, {cs(w["site"])}, {cs(w["wake"])}, {cs(w["silenced"])}, {cs(w["power"])}, {cs(b["row"])}, {cs(b["name"])}, {F(w["at"][0])}, {F(w["at"][1])}, {F(w["at"][2])}, {F(w["yaw"])}, {F(b["health"])}, {F(b["scale"])}, {{ {", ".join(map(str, wv))} }}, {{ {", ".join(map(str, el))} }}, {len(w["waves"])} }},')
 o.append('\t} };')
 o.append(f'\tinline constexpr float kWordWake = {F(WD["wakeRange"])}, kWordLeash = {F(WD["leashRange"])};')
-o.append('\tinline constexpr std::array<std::uint32_t, 3> kElemCrossbows{ { ' + ', '.join(f'0x{IDS[("WEAP", "xbow_" + e)]:03X}' for e in ('fire', 'frost', 'shock')) + ' } };  // the Ranger\'s elemental crossbows: fire, frost, shock')
 o.append(f'\tinline constexpr std::uint32_t kHallFang = 0x{IDS[("ACTI", "hall_fang")]:03X}, kHallRobes = 0x{IDS[("ACTI", "hall_robes")]:03X}, kHallSkull = 0x{IDS[("ACTI", "hall_skull")]:03X}, kHallEndless = 0x{IDS[("ACTI", "hall_endless")]:03X}, kHallThrone = 0x{IDS[("ACTI", "hall_throne")]:03X}, kHallFangShow = 0x{IDS[("STAT", "hall_fang_show")]:03X}, kFangWeap = 0x{IDS[("WEAP", "fang")]:03X};')
 o.append('\tinline constexpr std::array<std::uint32_t, 5> kHallFloat{ ' + ', '.join(f'0x{IDS[("ACTI", "hf_" + k)]:03X}' for k in ('gravecaller', 'frostbinder', 'wolfcrown', 'barrowhorn', 'bane')) + ' };  // the four wonders (class order) and Alduin\'s Bane, floating in High Hrothgar\'s hall')
 o.append('\tinline constexpr std::array<std::uint32_t, 5> kHallGhost{ ' + ', '.join(f'0x{IDS[("ACTI", "hg_" + k)]:03X}' for k in ('gravecaller', 'frostbinder', 'wolfcrown', 'barrowhorn', 'bane')) + ' };  // the same, greyed out (tools/modelconv/ghostnif.cpp)')
 o.append(f'\tinline constexpr std::uint32_t kHallGlow = 0x{IDS[("ACTI", "hf_glow")]:03X}, kHallGlowTall = 0x{IDS[("ACTI", "hf_glowtall")]:03X}, kHallPillar = 0x{IDS[("ACTI", "hf_pillar")]:03X};')
-o.append('\tinline constexpr std::array<std::uint32_t, 5> kEmmFx{ ' + ', '.join(f'0x{IDS[("ACTI", "emm_" + k)]:03X}' for k in ('summon', 'crystal', 'orb', 'storm', 'tornado')) + ' };  // summon, crystal, orb, storm, tornado')
 o.append('\tinline constexpr std::array<std::uint32_t, 6> kTornado{ ' + ', '.join(f'0x{IDS[("ACTI", "emm_tornado")]:03X}' if k == 'fire' else f'0x{IDS[("ACTI", "tornado_" + k)]:03X}' for k in ('fire', 'frost', 'shock', 'wind', 'sun', 'blood')) + ' };  // by element (Bows Kind order)')
 rl, kl = EC['relic'], EC['kill']
 o.append('\tinline constexpr std::array<int, 6> kEchoGuards{ ' + ', '.join(map(str, rl['guards'])) + ' }, kEchoElites{ ' + ', '.join(map(str, rl['elites'])) + ' }, kEchoKillN{ ' + ', '.join(map(str, kl['n'])) + ' };  // per Skyrim difficulty')

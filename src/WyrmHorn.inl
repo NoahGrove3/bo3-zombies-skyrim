@@ -88,7 +88,7 @@
 			if (!w || w->IsDead() || !w->Is3DLoaded()) continue;
 			if ((g_wyrmGlow[i] -= a_delta) <= 0.0f) {
 				g_wyrmGlow[i] = 25.0f;
-				if (auto* fx = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kBowSkin[6], gen::kPlugin)) w->ApplyEffectShader(fx, 30.0f, nullptr, false, false, nullptr, false);
+				if (auto* fx = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kWyrmGlow, gen::kPlugin)) w->ApplyEffectShader(fx, 30.0f, nullptr, false, false, nullptr, false);
 			}
 		}
 		// gone (its 90 s up, or slain): the call rests a minute

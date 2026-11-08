@@ -1075,7 +1075,6 @@ namespace bo3z::gen
 	inline constexpr std::uint32_t kAltarBeamSpell = 0xCA4;
 	// spell blasts: Skyrim.esm explosions cloned at runtime with no damage (tools/templates/expl)
 	inline constexpr std::array<std::pair<std::string_view, std::uint32_t>, 31> kBlasts{ {{ "ashguardian", 0x401AAC0 }, { "atrofire", 0x060DAF }, { "atrofrost", 0x10A197 }, { "bloodplague", 0x200E7B4 }, { "chainmass", 0x0BECB0 }, { "constellation", 0x403D5CE }, { "daedraball", 0x4024FBA }, { "daedramouth", 0x4024FC2 }, { "dark", 0x04046D }, { "darkmassive", 0x0BECAF }, { "dragonfire", 0x0247BE }, { "dragonstorm", 0x016C46 }, { "fireball", 0x0439C0 }, { "firestorm", 0x08196B }, { "frost", 0x078C12 }, { "giantslam", 0x104D46 }, { "icevolley", 0x0D6C63 }, { "icewraith", 0x05E994 }, { "light", 0x0562F0 }, { "lightmassive", 0x0225AF }, { "paralyze", 0x031047 }, { "poisongas", 0x401D748 }, { "priestlarge", 0x0EBB74 }, { "priestsmall", 0x0EBB73 }, { "runeshock", 0x0665BB }, { "shockmass", 0x0D13E8 }, { "shoutarea", 0x084B32 }, { "skybolt", 0x200AEB4 }, { "spiderspit", 0x04C6CF }, { "tentacle", 0x4039E48 }, { "turnundead", 0x095491 }} };
-	struct GunDef { std::string_view id, label, cls; Fire fire; float damage, headMult; int pellets; float spreadHip, spreadAds; int clip, reserve, fireDelayMs, burst, reloadMs; float range, splashRadius, splashDamage, hitRadius, headRadius; Sound fireSnd, reloadSnd, emptySnd; int wallBuyCost, ammoCost, boxWeight; std::uint32_t weapId; int special, spell, spellOn; bool retired; std::uint32_t bulletSpell; int kind; float mana, abilityValue; std::uint32_t handSpell; std::string_view abilityText; std::uint32_t color; std::string_view chargeName, chargeText; float chargeSeconds, chargeCooldown, chargeMana; int chargeStyle; int tapBlast, chargeBlast; int chargeAura, chargeSpell; std::uint32_t ammo; Sound chargeSnd; int relicTown; int handLook; };
 	enum ChargeStyle : int { kThrust = 0, kSlam = 1, kSweep = 2, kTwirl = 3, kRaise = 4, kSurge = 5 };
 	inline constexpr std::array<FormRef, 32> kSpells{ {
 		FormRef{ "Skyrim.esm", 0x012FD0, "Firebolt" },
@@ -1143,80 +1142,6 @@ namespace bo3z::gen
 	inline constexpr int kSpell_look_sunfire = 29;
 	inline constexpr int kSpell_look_turnundead = 30;
 	inline constexpr int kSpell_look_deadthrall = 31;
-	inline constexpr std::array<GunDef, 34> kGuns{ {
-		GunDef{ "sidearm", "Grave Spark", "pistol", Fire(0), 260.0f, 2.0f, 1, 1.5f, 0.4f, 0, 0, 480, 1, 0, 4500.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_sidearm, Sound::cast_light, Sound::mana_empty, 0, 0, 0, 0x814, 0, -1, 0, true, 0x8E6, 1, 4.0f, 0.0f, 0x9EF, "Fast arcane bolts. Charged: a held beam of force that pierces the line.", 0xA861FF, "Arcane Lance", "A beam of raw force tears through the whole line", 1.4f, 4.0f, 4.0f, 0, 18, 18, 17, -1, 0x000, Sound::unleash_sidearm, -1, 18 },
-		GunDef{ "centurion", "Plague Bolt", "pistol", Fire(0), 620.0f, 2.0f, 1, 1.4f, 0.3f, 0, 0, 620, 1, 0, 4500.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_centurion, Sound::cast_light, Sound::mana_empty, 0, 0, 0, 0x815, 13, -1, 0, true, 0x8E9, 1, 5.0f, 0.5f, 0x9F1, "Plague bolts. The rot spreads when they drop.", 0x82FF28, "Pestilence", "A green plague-cloud swallows the crowd", 1.6f, 11.0f, 4.0f, 1, 21, 21, 16, -1, 0x000, Sound::unleash_centurion, -1, 19 },
-		GunDef{ "triad", "Soulwisp", "pistol", Fire(2), 240.0f, 2.0f, 1, 1.6f, 0.4f, 0, 0, 480, 3, 0, 4500.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_triad, Sound::cast_light, Sound::mana_empty, 0, 0, 1, 0x816, 0, -1, 0, true, 0x8EC, 1, 6.0f, 0.0f, 0x9F3, "Wisps that seek the dead. Charged: six wisps hunt down a crowd.", 0x6BFFFA, "Soul Storm", "Five souls ripped out at once", 1.4f, 6.0f, 4.0f, 3, 20, 20, 17, -1, 0x000, Sound::unleash_triad, -1, 20 },
-		GunDef{ "spider", "Bramble Spike", "smg", Fire(0), 120.0f, 2.0f, 1, 2.5f, 0.6f, 0, 0, 480, 1, 0, 4000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_spider, Sound::cast_light, Sound::mana_empty, 0, 0, 1, 0x817, 0, -1, 0, true, 0x8EF, 1, 5.0f, 35.0f, 0x9F5, "A spray of poison thorns. Charged: roots burst up and hold the dead in place.", 0x73FF38, "Rootgrasp", "Thorns erupt and lock the horde in place", 1.4f, 6.0f, 4.0f, 1, 23, 28, 16, -1, 0x000, Sound::unleash_spider, -1, 21 },
-		GunDef{ "drill", "Bloodreaver", "smg", Fire(0), 260.0f, 2.0f, 1, 2.8f, 0.7f, 0, 0, 480, 1, 0, 4000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_drill, Sound::cast_light, Sound::mana_empty, 0, 0, 1, 0x818, 0, -1, 0, true, 0x8F2, 1, 5.0f, 0.04f, 0x9F7, "Drain bolts that heal you. Charged: a blood nova round you that feeds on every foe it hits.", 0xF2102A, "Blood Nova", "Drain every foe around you dry", 1.4f, 7.0f, 4.0f, 2, 23, 3, 15, -1, 0x000, Sound::unleash_drill, -1, 22 },
-		GunDef{ "steampump", "Bone Spear", "shotgun", Fire(3), 640.0f, 1.5f, 7, 7.0f, 5.0f, 0, 0, 650, 1, 0, 1700.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_steampump, Sound::cast_light, Sound::mana_empty, 0, 0, 0, 0x819, 9, -1, 0, true, 0x8F5, 1, 5.0f, 0.35f, 0x9F9, "Grave bolts that stagger.", 0xE3DCC0, "Bone Prison", "A wall of bone traps everything ahead", 1.6f, 7.0f, 4.0f, 2, 18, 0, 16, -1, 0x000, Sound::unleash_steampump, -1, 23 },
-		GunDef{ "marksman", "Moonshard", "ar", Fire(0), 600.0f, 2.0f, 1, 1.8f, 0.2f, 0, 0, 600, 1, 0, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_marksman, Sound::cast_light, Sound::mana_empty, 0, 0, 0, 0x81A, 10, -1, 0, true, 0x8F8, 1, 5.0f, 3.0f, 0x9FB, "Moonshards pierce three.", 0xCFE0FF, "Lunar Lance", "A moonbeam splits the night in two", 1.6f, 5.0f, 4.0f, 0, 18, 17, 16, -1, 0x000, Sound::unleash_marksman, -1, 24 },
-		GunDef{ "animunculi", "Hexfire", "ar", Fire(0), 650.0f, 3.0f, 1, 2.0f, 0.3f, 0, 0, 620, 1, 0, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_animunculi, Sound::cast_light, Sound::mana_empty, 0, 0, 0, 0x81B, 12, -1, 0, true, 0xA72, 1, 5.0f, 0.5f, 0x9FD, "Hexed dead take 50% more.", 0xC83CFF, "Doom Mark", "Mark the horde. They explode in a chain", 1.6f, 12.0f, 4.0f, 1, 29, 29, 17, -1, 0x000, Sound::unleash_animunculi, -1, 25 },
-		GunDef{ "kagrenac", "Mind Spike", "ar", Fire(0), 640.0f, 2.0f, 1, 2.2f, 0.35f, 0, 0, 620, 1, 0, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_kagrenac, Sound::cast_light, Sound::mana_empty, 0, 0, 0, 0x81C, 14, -1, 0, true, 0xA6C, 1, 5.0f, 0.6f, 0x9FF, "Mind bolts daze.", 0xFF5AC8, "Mass Frenzy", "The dead turn on each other", 1.6f, 14.0f, 4.0f, 3, 6, 6, 17, -1, 0x000, Sound::unleash_kagrenac, -1, 26 },
-		GunDef{ "mammothlmg", "Voidcall", "lmg", Fire(0), 300.0f, 2.0f, 1, 3.0f, 0.5f, 0, 0, 480, 1, 0, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_mammothlmg, Sound::cast_light, Sound::mana_empty, 0, 0, 1, 0x81D, 0, -1, 0, true, 0x9EB, 1, 6.0f, 25.0f, 0xA01, "A slow void orb that drags the dead in. Charged: a black hole that pulls them together and collapses.", 0x1AF2CC, "Singularity", "A singularity swallows the horde", 1.4f, 6.0f, 4.0f, 3, 17, 8, 17, -1, 0x000, Sound::unleash_mammothlmg, -1, 27 },
-		GunDef{ "longshot", "Starfall", "sniper", Fire(0), 700.0f, 3.0f, 1, 4.0f, 0.05f, 0, 0, 680, 1, 0, 12000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_longshot, Sound::cast_light, Sound::mana_empty, 0, 0, 0, 0x81E, 10, -1, 0, true, 0x904, 1, 6.0f, 3.0f, 0xA03, "Star bolts pierce three.", 0x8CB4FF, "Orbital Strike", "Six stars crash down around your mark", 1.6f, 12.0f, 4.0f, 4, 5, 5, 17, -1, 0x000, Sound::unleash_longshot, -1, 28 },
-		GunDef{ "aetherium", "Dawnlight", "wonder", Fire(0), 240.0f, 2.0f, 1, 1.0f, 0.5f, 0, 0, 480, 1, 0, 5000.0f, 130.0f, 350.0f, 28.0f, 14.0f, Sound::cast_aetherium, Sound::cast_light, Sound::mana_empty, 0, 0, 1, 0x81F, 0, -1, 0, true, 0x907, 1, 6.0f, 0.0f, 0xA05, "Holy light that sears the undead. Charged: a sunburst that blinds and burns a wide circle.", 0xFFCC5C, "Sunburst", "A sunburst scorches everything near", 1.4f, 9.0f, 4.0f, 4, 30, 30, 15, -1, 0x000, Sound::unleash_aetherium, -1, 29 },
-		GunDef{ "flamerepeater", "Emberbrand", "smg", Fire(0), 300.0f, 2.5f, 1, 2.2f, 1.0f, 0, 0, 480, 1, 0, 6000.0f, 110.0f, 300.0f, 28.0f, 14.0f, Sound::cast_flamerepeater, Sound::reload_mag, Sound::mana_empty, 0, 0, 1, 0x894, 0, -1, 0, true, 0x9E2, 1, 5.0f, 0.0f, 0x916, "Fire bolts that set the dead alight. Charged: a lobbed fireball that bursts and burns.", 0xFF6612, "Ember Mortar", "Call a meteor down on your mark", 1.4f, 6.0f, 4.0f, 0, 12, 12, 15, -1, 0x000, Sound::unleash_flamerepeater, -1, 0 },
-		GunDef{ "frostlancer", "Cryo Freeze", "ar", Fire(0), 220.0f, 2.5f, 1, 1.2f, 0.2f, 0, 0, 480, 1, 0, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_frostlancer, Sound::reload_mag, Sound::mana_empty, 0, 0, 1, 0x895, 0, -1, 0, true, 0x9E5, 1, 5.0f, 40.0f, 0x918, "An ice beam that freezes a foe solid for 5 seconds. Charged: a nova that freezes everything near.", 0x85DBFF, "Frost Nova", "Freeze the whole crowd solid", 1.4f, 6.0f, 4.0f, 0, 14, 16, 16, -1, 0x000, Sound::unleash_frostlancer, -1, 2 },
-		GunDef{ "stormcaller", "Stormcaller", "ar", Fire(0), 240.0f, 2.5f, 1, 1.5f, 0.4f, 0, 0, 480, 1, 0, 6000.0f, 320.0f, 500.0f, 28.0f, 14.0f, Sound::cast_stormcaller, Sound::reload_mag, Sound::mana_empty, 0, 0, 1, 0x896, 0, -1, 0, true, 0x9E8, 1, 5.0f, 0.0f, 0x91A, "Lightning that leaps between the dead. Charged: a thunderbolt called down from the sky.", 0x6B94FF, "Thunderhead", "Lightning tears through ten of them", 1.4f, 6.0f, 4.0f, 0, 24, 24, 17, -1, 0x000, Sound::unleash_stormcaller, -1, 3 },
-		GunDef{ "embermortar", "Gale", "shotgun", Fire(0), 520.0f, 2.5f, 1, 1.0f, 0.5f, 0, 0, 480, 1, 0, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_embermortar, Sound::reload_shell, Sound::mana_empty, 0, 0, 1, 0x897, 0, -1, 0, true, 0x9EE, 1, 5.0f, 0.0f, 0x91C, "A gust that cuts down three or four of the dead. Charged: a wind ball that bursts and flings them far.", 0xEBF2FF, "Tempest Sphere", "A spray of wind arrows knocks them all flat", 1.4f, 8.0f, 4.0f, 0, 23, 26, 16, -1, 0x000, Sound::unleash_embermortar, -1, 30 },
-		GunDef{ "wabbajack", "Wabbajack", "wonder", Fire(0), 900.0f, 1.0f, 1, 1.0f, 0.5f, 0, 0, 700, 1, 0, 4000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_wabbajack, Sound::reload_mag, Sound::mana_empty, 0, 0, 0, 0x898, 4, 6, 1, true, 0xA6F, 1, 8.0f, 0.0f, 0x91E, "Pure madness.", 0xAAFF5A, "Mass Madness", "Madness takes every foe nearby", 1.6f, 8.0f, 4.0f, 3, 18, 7, 17, -1, 0x000, Sound::unleash_wabbajack, -1, 6 },
-		GunDef{ "thuumcannon", "Grimoire of the Thu'um", "wonder", Fire(0), 5000.0f, 1.0f, 1, 22.0f, 22.0f, 0, 0, 900, 1, 0, 1100.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_thuumcannon, Sound::reload_shell, Sound::mana_empty, 0, 0, 0, 0x899, 3, 5, 2, true, 0x000, 2, 40.0f, 0.0f, 0x920, "Unrelenting Force.", 0xFFD25A, "FUS RO DAH", "The full shout. Everything flies", 1.5f, 8.0f, 2.0f, 5, 18, 19, 16, -1, 0x000, Sound::cast_heavy, -1, -1 },
-		GunDef{ "skyforgearc", "Sky Sunder", "wonder", Fire(0), 820.0f, 1.0f, 1, 1.5f, 0.5f, 0, 0, 700, 1, 0, 3500.0f, 420.0f, 3000.0f, 28.0f, 14.0f, Sound::cast_skyforgearc, Sound::reload_mag, Sound::mana_empty, 0, 0, 0, 0x89A, 2, -1, 0, true, 0xA75, 1, 7.0f, 0.0f, 0x922, "Chain lightning.", 0x78DCFF, "Storm Call", "Lightning leaps through twelve foes", 1.6f, 8.0f, 4.0f, 4, 24, 4, 17, -1, 0x000, Sound::unleash_skyforgearc, -1, 4 },
-		GunDef{ "apprentice", "Apprentice's Tome", "pistol", Fire(0), 80.0f, 2.0f, 1, 1.5f, 0.4f, 0, 0, 160, 1, 0, 4200.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_apprentice, Sound::reload_mag, Sound::mana_empty, 0, 0, 0, 0x8AA, 0, 0, 2, true, 0x000, 1, 5.0f, 0.0f, 0x924, "Firebolts.", 0xFFB060, "Arcane Lance", "A beam through everything in the line", 0.9f, 4.0f, 3.0f, 0, 18, 19, 17, -1, 0x000, Sound::cast_heavy, -1, -1 },
-		GunDef{ "hearth", "Giant's Hearth", "wonder", Fire(0), 1150.0f, 2.0f, 1, 3.0f, 0.5f, 0, 0, 600, 1, 0, 7000.0f, 140.0f, 500.0f, 28.0f, 14.0f, Sound::cast_hearth, Sound::cast_light, Sound::mana_empty, 0, 0, 0, 0x99A, 1, -1, 0, true, 0x907, 0, 0.0f, 0.0f, 0x000, "Ember bolts burst where they land.", 0xFF7A2A, "Hearthfire Nova", "Six meteors rain down around you", 1.4f, 5.0f, 0.0f, 4, 12, 13, 15, -1, 0x000, Sound::unleash_hearth, 0, -1 },
-		GunDef{ "gildergreen", "Gildergreen Bough", "wonder", Fire(0), 1150.0f, 2.0f, 1, 3.0f, 0.5f, 0, 0, 600, 1, 0, 7000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_gildergreen, Sound::cast_light, Sound::mana_empty, 0, 0, 0, 0x99B, 8, -1, 0, true, 0x8F8, 0, 0.0f, 0.1f, 0x000, "Kills knit your wounds.", 0xA6FF6A, "Kyne's Bloom", "Living wood binds them. You heal whole", 1.4f, 5.0f, 0.0f, 4, 18, 19, 17, -1, 0x000, Sound::unleash_gildergreen, 1, -1 },
-		GunDef{ "lorkhan", "Heart of Lorkhan", "wonder", Fire(0), 1200.0f, 2.0f, 1, 3.0f, 0.5f, 0, 0, 600, 1, 0, 7000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_lorkhan, Sound::cast_light, Sound::mana_empty, 0, 0, 0, 0x99C, 9, -1, 0, true, 0x904, 0, 0.0f, 0.5f, 0x000, "Tonal bolts knock them down.", 0xFF9A30, "Tonal Stillness", "Time stops. Then they shatter", 1.4f, 5.0f, 0.0f, 5, 24, 25, 17, -1, 0x000, Sound::unleash_lorkhan, 4, -1 },
-		GunDef{ "arkay", "Arkay's Last Rite", "wonder", Fire(0), 1150.0f, 2.0f, 1, 3.0f, 0.5f, 0, 0, 600, 1, 0, 7000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_arkay, Sound::cast_light, Sound::mana_empty, 0, 0, 0, 0x99D, 6, -1, 0, true, 0x8EC, 0, 0.0f, 1.0f, 0x000, "Grave-light hunts the nearest dead.", 0xE8E4FF, "Return to the Grave", "Arkay's judgement strikes every undead near", 1.4f, 5.0f, 0.0f, 4, 18, 22, 16, -1, 0x000, Sound::unleash_arkay, 6, -1 },
-		GunDef{ "mirestaff", "Hjaalmarch Mirestaff", "wonder", Fire(0), 1100.0f, 2.0f, 1, 3.0f, 0.5f, 0, 0, 600, 1, 0, 7000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_mirestaff, Sound::cast_light, Sound::mana_empty, 0, 0, 0, 0x99E, 13, -1, 0, true, 0x8E9, 0, 0.0f, 0.6f, 0x000, "Marsh plague jumps on death.", 0x7CC23A, "Drowning Mire", "A bog drags them under", 1.4f, 5.0f, 0.0f, 1, 8, 9, 16, -1, 0x000, Sound::unleash_mirestaff, 7, -1 },
-		GunDef{ "magnus", "Eye of Magnus", "wonder", Fire(0), 1200.0f, 2.0f, 1, 3.0f, 0.5f, 0, 0, 600, 1, 0, 7000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_magnus, Sound::cast_light, Sound::mana_empty, 0, 0, 0, 0x99F, 10, -1, 0, true, 0x8E6, 0, 0.0f, 4.0f, 0x000, "Arcane lances pierce four.", 0x7FD8FF, "Gaze of Magnus", "Three crystal eyes burn the dead for eight seconds", 1.4f, 5.0f, 0.0f, 4, 18, 19, 17, -1, 0x000, Sound::unleash_magnus, 9, -1 },
-		GunDef{ "wolfqueen", "Wolf Queen's Longbow", "wonder", Fire(0), 1500.0f, 2.5f, 1, 1.5f, 0.4f, 0, 0, 150, 1, 0, 7000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_wolfqueen, Sound::reload_mag, Sound::mana_empty, 0, 0, 0, 0x9A0, 14, -1, 0, true, 0x000, 3, 0.0f, 0.5f, 0x000, "Necromantic arrows daze.", 0xB07BFF, "Potema's Requiem", "Nine arrows. Every one hit fights for you", 1.8f, 5.0f, 0.0f, 0, 8, 9, 16, -1, 0x9D2, Sound::unleash_wolfqueen, 2, -1 },
-		GunDef{ "ysgramor", "Ysgramor's Stormbow", "wonder", Fire(0), 1450.0f, 2.5f, 1, 1.5f, 0.4f, 0, 0, 150, 1, 0, 7000.0f, 320.0f, 700.0f, 28.0f, 14.0f, Sound::cast_ysgramor, Sound::reload_mag, Sound::mana_empty, 0, 0, 0, 0x9A1, 2, -1, 0, true, 0x000, 3, 0.0f, 0.0f, 0x000, "Frost-lightning arcs to two more.", 0x9ED8FF, "Wrath of Ysgramor", "A blizzard of ice and lightning on twelve", 1.8f, 5.0f, 0.0f, 0, 14, 16, 16, -1, 0x9D4, Sound::unleash_ysgramor, 3, -1 },
-		GunDef{ "nightingale", "Nightingale's Shadowbow", "wonder", Fire(0), 1450.0f, 2.5f, 1, 1.5f, 0.4f, 0, 0, 150, 1, 0, 7000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_nightingale, Sound::reload_mag, Sound::mana_empty, 0, 0, 0, 0x9A2, 12, -1, 0, true, 0x000, 3, 0.0f, 0.5f, 0x000, "Hexed dead take more.", 0x7A4DFF, "Twilight's Eclipse", "Mark all in sight. Each death takes the next", 1.8f, 5.0f, 0.0f, 0, 8, 9, 17, -1, 0x9D6, Sound::unleash_nightingale, 5, -1 },
-		GunDef{ "nightmare", "Vaermina's Dreamstring", "wonder", Fire(0), 1550.0f, 2.5f, 1, 1.5f, 0.4f, 0, 0, 150, 1, 0, 7000.0f, 120.0f, 600.0f, 28.0f, 14.0f, Sound::cast_nightmare, Sound::reload_mag, Sound::mana_empty, 0, 0, 0, 0x9A3, 1, -1, 0, true, 0x000, 3, 0.0f, 0.0f, 0x000, "Dream-fire bursts on impact.", 0xFF4F8F, "Nightmare Rain", "Ten burning stars fall from the sky", 1.8f, 5.0f, 0.0f, 0, 12, 13, 15, -1, 0x9D8, Sound::unleash_nightmare, 8, -1 },
-		GunDef{ "gravecaller", "Void Staff", "wonder", Fire(0), 800.0f, 2.0f, 1, 1.6f, 0.4f, 0, 0, 520, 1, 0, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_triad, Sound::cast_light, Sound::mana_empty, 0, 0, 0, 0xC51, 0, -1, 0, false, 0x9EB, 0, 6.0f, 0.0f, 0x000, "One of the four elemental staffs: its bolts drag the dead together and a kill may rise as a spectral spider. Held, a void orb pulls the crowd in, then crushes it. Upgraded, a wider pull and three spiders every time.", 0xB070FF, "Void Orb", "A void orb drags the dead together, then crushes them", 0.91f, 8.0f, 4.0f, 4, 8, 9, 17, -1, 0x000, Sound::unleash_triad, -1, -1 },
-		GunDef{ "frostbinder", "Rime Staff", "wonder", Fire(0), 850.0f, 2.0f, 1, 1.2f, 0.2f, 0, 0, 520, 1, 0, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_frostlancer, Sound::reload_mag, Sound::mana_empty, 0, 0, 0, 0xC52, 7, -1, 0, true, 0x9E5, 0, 6.0f, 40.0f, 0x000, "Shards that slow the dead, freeze them on the third hit, and shatter what is frozen. Hold: a blizzard that freezes everything in it. Upgraded: the blizzard hunts the dead - and a bolt that lands by a fallen friend raises them.", 0x8FE6FF, "Blizzard", "A blizzard that freezes everything caught in it", 0.91f, 8.0f, 4.0f, 4, 14, 16, 16, -1, 0x000, Sound::unleash_frostlancer, -1, -1 },
-		GunDef{ "wolfcrown", "Storm Staff", "wonder", Fire(0), 700.0f, 2.0f, 1, 3.0f, 0.5f, 0, 0, 520, 1, 0, 6000.0f, 420.0f, 400.0f, 28.0f, 14.0f, Sound::cast_mammothlmg, Sound::cast_light, Sound::mana_empty, 0, 0, 0, 0xC53, 2, -1, 0, true, 0x9E8, 0, 6.0f, 25.0f, 0x000, "Lightning that leaps between four of the dead. Hold: Storm Bloom - a burst of storm lightning where you aim. Upgraded: a wider, harder bloom - and a bolt that lands by a fallen friend raises them.", 0xA88CFF, "Storm Bloom", "A bloom of storm lightning bursts where you aim", 0.91f, 8.0f, 4.0f, 4, 24, 25, 17, -1, 0x000, Sound::unleash_mammothlmg, -1, -1 },
-		GunDef{ "barrowhorn", "Ember Staff", "wonder", Fire(0), 800.0f, 2.0f, 1, 1.0f, 0.5f, 0, 0, 520, 1, 0, 6000.0f, 200.0f, 350.0f, 28.0f, 14.0f, Sound::cast_embermortar, Sound::reload_shell, Sound::mana_empty, 0, 0, 0, 0xC54, 1, -1, 0, true, 0x9E2, 0, 6.0f, 0.0f, 0x000, "Bolts that burst into fire and set the dead burning. Hold: a meteor falls where you aim and leaves the ground burning. Upgraded: a line of fire pillars - and a bolt that lands by a fallen friend raises them.", 0xFF7A3C, "Meteor", "A meteor falls where you aim and leaves the ground burning", 0.91f, 8.0f, 4.0f, 4, 12, 13, 15, -1, 0x000, Sound::unleash_embermortar, -1, -1 },
-	} };
-	inline constexpr int kGunIdx_sidearm = 0;
-	inline constexpr int kGunIdx_centurion = 1;
-	inline constexpr int kGunIdx_triad = 2;
-	inline constexpr int kGunIdx_spider = 3;
-	inline constexpr int kGunIdx_drill = 4;
-	inline constexpr int kGunIdx_steampump = 5;
-	inline constexpr int kGunIdx_marksman = 6;
-	inline constexpr int kGunIdx_animunculi = 7;
-	inline constexpr int kGunIdx_kagrenac = 8;
-	inline constexpr int kGunIdx_mammothlmg = 9;
-	inline constexpr int kGunIdx_longshot = 10;
-	inline constexpr int kGunIdx_aetherium = 11;
-	inline constexpr int kGunIdx_flamerepeater = 12;
-	inline constexpr int kGunIdx_frostlancer = 13;
-	inline constexpr int kGunIdx_stormcaller = 14;
-	inline constexpr int kGunIdx_embermortar = 15;
-	inline constexpr int kGunIdx_wabbajack = 16;
-	inline constexpr int kGunIdx_thuumcannon = 17;
-	inline constexpr int kGunIdx_skyforgearc = 18;
-	inline constexpr int kGunIdx_apprentice = 19;
-	inline constexpr int kGunIdx_hearth = 20;
-	inline constexpr int kGunIdx_gildergreen = 21;
-	inline constexpr int kGunIdx_lorkhan = 22;
-	inline constexpr int kGunIdx_arkay = 23;
-	inline constexpr int kGunIdx_mirestaff = 24;
-	inline constexpr int kGunIdx_magnus = 25;
-	inline constexpr int kGunIdx_wolfqueen = 26;
-	inline constexpr int kGunIdx_ysgramor = 27;
-	inline constexpr int kGunIdx_nightingale = 28;
-	inline constexpr int kGunIdx_nightmare = 29;
-	inline constexpr int kGunIdx_gravecaller = 30;
-	inline constexpr int kGunIdx_frostbinder = 31;
-	inline constexpr int kGunIdx_wolfcrown = 32;
-	inline constexpr int kGunIdx_barrowhorn = 33;
-	struct GunSounds { int charge, hit, boom, start, full, fizzle, travel; };  // per spell (Spec 12.3): charge hum (loop), bolt impact, gathered burst, charging begins, full charge, early release, bolt in flight (loop); sound index, -1 none
-	inline constexpr std::array<GunSounds, 34> kGunSounds{ { GunSounds{ 1, 3, 4, 90, 91, 92, 93 }, GunSounds{ 6, 8, 9, 106, 107, 108, 109 }, GunSounds{ 11, 13, 14, 94, 95, 96, 97 }, GunSounds{ 16, 18, 19, 154, 155, 156, 157 }, GunSounds{ 21, 23, 24, 110, 111, 112, 113 }, GunSounds{ 26, 28, 29, 114, 115, 116, 117 }, GunSounds{ 31, 33, 34, 130, 131, 132, 133 }, GunSounds{ 36, 38, 39, 122, 123, 124, 125 }, GunSounds{ 41, 43, 44, 98, 99, 100, 101 }, GunSounds{ 46, 48, 49, 118, 119, 120, 121 }, GunSounds{ 51, 53, 54, 146, 147, 148, 149 }, GunSounds{ 56, 58, 59, 150, 151, 152, 153 }, GunSounds{ 61, 63, 64, 126, 127, 128, 129 }, GunSounds{ 66, 68, 69, 134, 135, 136, 137 }, GunSounds{ 71, 73, 74, 138, 139, 140, 141 }, GunSounds{ 76, 78, 79, 158, 159, 160, 161 }, GunSounds{ 81, 83, 84, 102, 103, 104, 105 }, GunSounds{ -1, -1, -1, -1, -1, -1, -1 }, GunSounds{ 86, 88, 89, 142, 143, 144, 145 }, GunSounds{ -1, -1, -1, -1, -1, -1, -1 }, GunSounds{ -1, -1, -1, -1, -1, -1, -1 }, GunSounds{ -1, -1, -1, -1, -1, -1, -1 }, GunSounds{ -1, -1, -1, -1, -1, -1, -1 }, GunSounds{ -1, -1, -1, -1, -1, -1, -1 }, GunSounds{ -1, -1, -1, -1, -1, -1, -1 }, GunSounds{ -1, -1, -1, -1, -1, -1, -1 }, GunSounds{ -1, -1, -1, -1, -1, -1, -1 }, GunSounds{ -1, -1, -1, -1, -1, -1, -1 }, GunSounds{ -1, -1, -1, -1, -1, -1, -1 }, GunSounds{ -1, -1, -1, -1, -1, -1, -1 }, GunSounds{ 11, 13, 14, 94, 95, 96, 97 }, GunSounds{ 66, 68, 69, 134, 135, 136, 137 }, GunSounds{ 46, 48, 49, 118, 119, 120, 121 }, GunSounds{ 76, 78, 79, 158, 159, 160, 161 } } };
-	struct KnifeDef { std::uint32_t key; float damage, range, coneDeg; int cooldownMs; };
-	inline constexpr KnifeDef kKnife{ 47, 150.0f, 170.0f, 45.0f, 650 };
 	struct PerkDef { std::string_view id, label; int cost, effect; float value; std::uint32_t mgefId, alchId; };
 	inline constexpr std::array<PerkDef, 21> kPerks{ {
 		PerkDef{ "trollshide", "Troll's Hide Mead", 3200, 0, 100.0f, 0x800, 0x820 },
@@ -1265,13 +1190,6 @@ namespace bo3z::gen
 	inline constexpr std::array<std::string_view, 21> kPerkDesc{ { "+100 maximum health.", "Your spells cost 15% less magicka.", "Your spells deal 25% more damage.", "Saves you from one death: instead of dying, you get back up - but the save spends every perk you carry, this tonic too.", "You move 30% faster and your stamina refills 30% faster.", "Your magicka refills 30% faster.", "+50 maximum magicka.", "When an enemy hits you, frost webs burst out and slow every enemy nearby.", "Every 12th spell you cast sends out a lightning burst around you.", "Your flasks' bursts reach 25% wider.", "Your summons have 30% more health and deal 30% more damage.", "Each time one of your summons kills an enemy, you heal 3% of your maximum health.", "You can have one more summon out at a time (up to 4).", "Enemies you kill with Destruction spells explode, hurting the enemies around them.", "Destruction spells cost 25% less magicka.", "Each kill with a Destruction spell gives you back 4% of your magicka.", "You throw your flasks 25% faster.", "Enemies' hits do 20% less damage to you.", "Each melee hit you land on an enemy heals you 1.5% of your maximum health.", "Each melee kill gives you back 6% of your magicka.", "Your melee attacks are 15% faster." } };
 	inline constexpr int kMaxPerks = 12;
 	inline constexpr std::array<int, 21> kPerkClass{ { -1, -1, -1, -1, -1, -1, -1, -1, -1, 2, 0, 0, 0, 1, 1, 1, 2, 2, 3, 3, 3 } };  // the class a perk belongs to (-1: every class)
-	struct CrewDef { std::string_view id, label, quote; int passive; float value; std::string_view passiveText; };
-	inline constexpr std::array<CrewDef, 4> kCrew{ {
-		CrewDef{ "halvard", "Halvard Stone-Fist", "Legion taught me to march. The dead taught me to run.", 0, 1.1f, "+10% weapon damage" },
-		CrewDef{ "gorza", "Gorza gra-Bor", "I forged my own hammer. You will not like where it lands.", 1, 50.0f, "+50 health" },
-		CrewDef{ "saffir", "Saffir al-Rihad", "Steel is a song. The dead never learn the words.", 2, 2.0f, "Knife does double damage" },
-		CrewDef{ "eldrith", "Eldrith Vael", "I have read what the Thalmor buried. The Coffer and I understand each other.", 3, 750.0f, "The Coffer costs 750" },
-	} };
 	inline constexpr std::string_view kText_mode = "The Curse of Alduin";
 	inline constexpr std::string_view kText_tagline = "Every night the dead rise. Every night, more of them.";
 	inline constexpr std::string_view kText_box = "The Echo Altar";
@@ -1282,30 +1200,11 @@ namespace bo3z::gen
 	inline constexpr std::string_view kText_round_word = "Night";
 	inline constexpr std::string_view kText_station_marker = "Echo Altar";
 	struct ObjectDef { std::string_view id, label; int kind, cost, ref; std::uint32_t actiId; float scale; bool retired; };
-	inline constexpr std::array<ObjectDef, 20> kObjects{ {
+	inline constexpr std::array<ObjectDef, 1> kObjects{ {
 		ObjectDef{ "coffer", "Echo Altar", 0, 950, -1, 0x807, 1.0f, false },
-		ObjectDef{ "brew_machine", "Brew Machine", 4, 0, -1, 0x8A8, 1.0f, true },
-		ObjectDef{ "ammo_cache", "Ammo Cache", 3, 750, -1, 0x8A9, 1.0f, true },
-		ObjectDef{ "forge", "Atronach Reforge", 5, 4000, -1, 0x8C7, 1.0f, true },
-		ObjectDef{ "ammo_crate", "Ammo Cache", 3, 750, -1, 0x8A3, 1.0f, true },
-		ObjectDef{ "perk_trollshide", "Troll's Hide Mead", 1, 2500, 0, 0x808, 1.5f, true },
-		ObjectDef{ "perk_quicksilver", "Quicksilver Draught", 1, 3000, 1, 0x809, 1.6f, true },
-		ObjectDef{ "perk_twinstrike", "Twin Strike Ale", 1, 2000, 2, 0x80A, 0.9f, true },
-		ObjectDef{ "perk_hearthfire", "Hearthfire Tonic", 1, 500, 3, 0x80B, 1.0f, true },
-		ObjectDef{ "perk_windrunner", "Windrunner Brew", 1, 2000, 4, 0x80C, 1.0f, true },
-		ObjectDef{ "perk_hawkeye", "Hawkeye Tincture", 1, 1500, 5, 0x80D, 1.6f, true },
-		ObjectDef{ "perk_mammoth", "Mammoth Back Porter", 1, 4000, 6, 0x80E, 1.0f, true },
-		ObjectDef{ "perk_frostbite", "Frostbite Venom", 1, 4000, 7, 0x829, 1.5f, true },
-		ObjectDef{ "perk_stormcrown", "Stormcrown Cider", 1, 2000, 8, 0x82A, 0.5f, true },
-		ObjectDef{ "wall_triad", "Soulbinder", 2, 500, 2, 0x80F, 1.0f, true },
-		ObjectDef{ "wall_spider", "Prismheart", 2, 1000, 10, 0x810, 1.0f, true },
-		ObjectDef{ "wall_drill", "Chronos Hourglass", 2, 1300, 8, 0x811, 1.0f, true },
-		ObjectDef{ "wall_steampump", "Witherroot", 2, 900, 1, 0x812, 1.0f, true },
-		ObjectDef{ "wall_marksman", "Rimefang", 2, 900, 13, 0x813, 1.0f, true },
-		ObjectDef{ "relic_altar", "Echo Altar", 6, 0, -1, 0x9DA, 0.8f, true },
 	} };
 	struct DressDef { int object; std::uint32_t formId; bool light; float x, y, z, scale, spin; bool freed, held; };  // held: only while the city is still cursed
-	inline constexpr std::array<DressDef, 83> kDress{ {
+	inline constexpr std::array<DressDef, 18> kDress{ {
 		DressDef{ 0, 0x926, false, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, false, false },
 		DressDef{ 0, 0xC87, false, 0.0f, 0.0f, 175.0f, 1.0f, 8.0f, false, true },
 		DressDef{ 0, 0xC88, false, 0.0f, 0.0f, 175.0f, 1.0f, 8.0f, true, false },
@@ -1324,77 +1223,10 @@ namespace bo3z::gen
 		DressDef{ 0, 0xC27, false, 0.0f, -380.0f, 0.0f, 1.0f, 0.0f, true, false },
 		DressDef{ 0, 0xC28, true, 0.0f, 0.0f, 260.0f, 1.0f, 0.0f, true, false },
 		DressDef{ 0, 0xC84, false, 0.0f, 0.0f, 330.0f, 1.0f, 8.0f, true, false },
-		DressDef{ 1, 0x8AB, true, 0.0f, 60.0f, 120.0f, 1.0f, 0.0f, false, false },
-		DressDef{ 2, 0x8A4, false, 0.0f, 0.0f, 62.0f, 2.0f, 30.0f, false, false },
-		DressDef{ 2, 0x8A5, false, 0.0f, 0.0f, 75.0f, 0.5f, 0.0f, false, false },
-		DressDef{ 2, 0x8A6, true, 0.0f, 30.0f, 100.0f, 1.0f, 0.0f, false, false },
-		DressDef{ 2, 0x997, false, 0.0f, 0.0f, 0.0f, 0.75f, 0.0f, false, false },
-		DressDef{ 2, 0x998, false, 0.0f, 0.0f, 0.0f, 0.42f, 0.0f, false, false },
-		DressDef{ 2, 0x999, true, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, false, false },
-		DressDef{ 3, 0x8C9, true, 0.0f, 40.0f, 110.0f, 1.0f, 0.0f, false, false },
-		DressDef{ 4, 0x8A4, false, 0.0f, 0.0f, 62.0f, 2.0f, 30.0f, false, false },
-		DressDef{ 4, 0x8A5, false, 0.0f, 0.0f, 75.0f, 0.5f, 0.0f, false, false },
-		DressDef{ 4, 0x8A6, true, 0.0f, 30.0f, 100.0f, 1.0f, 0.0f, false, false },
-		DressDef{ 5, 0x851, false, 0.0f, 0.0f, 0.0f, 0.3f, 0.0f, false, false },
-		DressDef{ 5, 0x852, true, 0.0f, 20.0f, 130.0f, 1.0f, 0.0f, false, false },
-		DressDef{ 5, 0x875, false, 0.0f, 0.0f, 120.0f, 3.0f, 40.0f, false, false },
-		DressDef{ 5, 0x876, false, 0.0f, 10.0f, 95.0f, 1.3f, 0.0f, false, false },
-		DressDef{ 5, 0x877, false, 0.0f, 0.0f, 135.0f, 0.6f, 0.0f, false, false },
-		DressDef{ 6, 0x851, false, 0.0f, 0.0f, 0.0f, 0.3f, 0.0f, false, false },
-		DressDef{ 6, 0x854, true, 0.0f, 20.0f, 130.0f, 1.0f, 0.0f, false, false },
-		DressDef{ 6, 0x878, false, 0.0f, 0.0f, 110.0f, 3.0f, 40.0f, false, false },
-		DressDef{ 6, 0x879, false, -14.0f, 8.0f, 92.0f, 1.6f, 0.0f, false, false },
-		DressDef{ 6, 0x87A, false, 14.0f, 8.0f, 92.0f, 1.6f, 0.0f, false, false },
-		DressDef{ 6, 0x87B, false, 0.0f, 0.0f, 125.0f, 0.6f, 0.0f, false, false },
-		DressDef{ 7, 0x851, false, 0.0f, 0.0f, 0.0f, 0.3f, 0.0f, false, false },
-		DressDef{ 7, 0x856, true, 0.0f, 20.0f, 130.0f, 1.0f, 0.0f, false, false },
-		DressDef{ 7, 0x87C, false, 0.0f, 0.0f, 140.0f, 3.0f, 40.0f, false, false },
-		DressDef{ 7, 0x87D, false, -18.0f, 12.0f, 110.0f, 1.8f, 0.0f, false, false },
-		DressDef{ 7, 0x87E, false, 18.0f, 12.0f, 110.0f, 1.8f, 0.0f, false, false },
-		DressDef{ 7, 0x87F, false, 0.0f, 0.0f, 155.0f, 0.6f, 0.0f, false, false },
-		DressDef{ 8, 0x851, false, 0.0f, 0.0f, 0.0f, 0.3f, 0.0f, false, false },
-		DressDef{ 8, 0x858, true, 0.0f, 20.0f, 130.0f, 1.0f, 0.0f, false, false },
-		DressDef{ 8, 0x880, false, 0.0f, 0.0f, 120.0f, 3.0f, 40.0f, false, false },
-		DressDef{ 8, 0x881, false, 30.0f, 0.0f, 70.0f, 1.6f, 0.0f, false, false },
-		DressDef{ 8, 0x882, false, 0.0f, 0.0f, 135.0f, 0.6f, 0.0f, false, false },
-		DressDef{ 9, 0x851, false, 0.0f, 0.0f, 0.0f, 0.3f, 0.0f, false, false },
-		DressDef{ 9, 0x85A, true, 0.0f, 20.0f, 130.0f, 1.0f, 0.0f, false, false },
-		DressDef{ 9, 0x883, false, 0.0f, 0.0f, 110.0f, 3.0f, 40.0f, false, false },
-		DressDef{ 9, 0x884, false, -16.0f, 6.0f, 95.0f, 4.0f, 0.0f, false, false },
-		DressDef{ 9, 0x885, false, 16.0f, 6.0f, 95.0f, 4.0f, 0.0f, false, false },
-		DressDef{ 9, 0x886, false, 0.0f, 0.0f, 125.0f, 0.6f, 0.0f, false, false },
-		DressDef{ 10, 0x851, false, 0.0f, 0.0f, 0.0f, 0.3f, 0.0f, false, false },
-		DressDef{ 10, 0x85C, true, 0.0f, 20.0f, 130.0f, 1.0f, 0.0f, false, false },
-		DressDef{ 10, 0x887, false, 0.0f, 0.0f, 130.0f, 3.0f, 40.0f, false, false },
-		DressDef{ 10, 0x888, false, 0.0f, 10.0f, 100.0f, 0.25f, 25.0f, false, false },
-		DressDef{ 10, 0x889, false, 0.0f, 0.0f, 145.0f, 0.6f, 0.0f, false, false },
-		DressDef{ 11, 0x851, false, 0.0f, 0.0f, 0.0f, 0.3f, 0.0f, false, false },
-		DressDef{ 11, 0x85E, true, 0.0f, 20.0f, 130.0f, 1.0f, 0.0f, false, false },
-		DressDef{ 11, 0x88A, false, 0.0f, 0.0f, 150.0f, 3.0f, 40.0f, false, false },
-		DressDef{ 11, 0x88B, false, 0.0f, 0.0f, 40.0f, 0.8f, 0.0f, false, false },
-		DressDef{ 11, 0x88C, false, 0.0f, 0.0f, 165.0f, 0.6f, 0.0f, false, false },
-		DressDef{ 12, 0x851, false, 0.0f, 0.0f, 0.0f, 0.3f, 0.0f, false, false },
-		DressDef{ 12, 0x860, true, 0.0f, 20.0f, 130.0f, 1.0f, 0.0f, false, false },
-		DressDef{ 12, 0x88D, false, 0.0f, 0.0f, 110.0f, 3.0f, 40.0f, false, false },
-		DressDef{ 12, 0x88E, false, 20.0f, 10.0f, 60.0f, 4.0f, 0.0f, false, false },
-		DressDef{ 12, 0x88F, false, -20.0f, 10.0f, 60.0f, 3.0f, 0.0f, false, false },
-		DressDef{ 12, 0x890, false, 0.0f, 0.0f, 125.0f, 0.6f, 0.0f, false, false },
-		DressDef{ 13, 0x851, false, 0.0f, 0.0f, 0.0f, 0.3f, 0.0f, false, false },
-		DressDef{ 13, 0x862, true, 0.0f, 20.0f, 130.0f, 1.0f, 0.0f, false, false },
-		DressDef{ 13, 0x891, false, 0.0f, 0.0f, 140.0f, 3.0f, 40.0f, false, false },
-		DressDef{ 13, 0x892, false, 0.0f, 0.0f, 170.0f, 0.3f, -30.0f, false, false },
-		DressDef{ 13, 0x893, false, 0.0f, 0.0f, 155.0f, 0.6f, 0.0f, false, false },
-		DressDef{ 14, 0x863, true, 0.0f, 40.0f, 80.0f, 1.0f, 0.0f, false, false },
-		DressDef{ 15, 0x863, true, 0.0f, 40.0f, 80.0f, 1.0f, 0.0f, false, false },
-		DressDef{ 16, 0x863, true, 0.0f, 40.0f, 80.0f, 1.0f, 0.0f, false, false },
-		DressDef{ 17, 0x863, true, 0.0f, 40.0f, 80.0f, 1.0f, 0.0f, false, false },
-		DressDef{ 18, 0x863, true, 0.0f, 40.0f, 80.0f, 1.0f, 0.0f, false, false },
 	} };
 	inline constexpr std::uint32_t kHeartStone = 0xC87, kHeartStoneLit = 0xC88;  // the Echo Altar's heart stone (dressing)
 	inline constexpr std::uint32_t kFreedRunes = 0xC84, kHeartMotes = 0xC89;  // a freed altar's golden rune circle and its rising motes (they grow / fade in as it is freed)
 	inline constexpr std::array<std::uint32_t, 6> kPillarRock{ { 0xC8B, 0xC8C, 0xC8D, 0xC8E, 0xC8F, 0xC90 } };  // the rune stones over its columns
-	inline constexpr std::array<std::uint32_t, 6> kBowShowStat{ { 0xC0B, 0xC0C, 0xC0D, 0xC23, 0xC0F, 0xC10 } };  // the altar's roll shows each bow itself
-	inline constexpr std::array<std::uint32_t, 34> kShowStat{ { 0x864, 0x865, 0x866, 0x867, 0x868, 0x869, 0x86A, 0x86B, 0x86C, 0x86D, 0x86E, 0x86F, 0x89B, 0x89C, 0x89D, 0x89E, 0x89F, 0x8A0, 0x8A1, 0x8C0, 0x9B9, 0x9BB, 0x9BD, 0x9BF, 0x9C1, 0x9C3, 0x9C5, 0x9C7, 0x9C9, 0x9CB, 0xC56, 0xC58, 0xC5A, 0xC5C } };
 	inline constexpr std::array<std::uint32_t, 8> kShowElement{ { 0xBC5, 0xBC6, 0xBC7, 0xBC8, 0xBC9, 0xBCA, 0xBCB, 0xBCC } };  // Coffer spells: the roll shows the element
 	inline constexpr std::uint32_t kShowCheese = 0x870, kRiseFx = 0x8A2, kDragonAway = 0xC01, kWhirlwind = 0xC02;
 	inline constexpr std::uint32_t kUpdraftShout = 0xC09;  // Bond II: the Updraft shout
@@ -1542,69 +1374,17 @@ namespace bo3z::gen
 		ShoutDef{ "shatter", "Arcane Singularity", "A vortex pulls the dead together where you look, then detonates", 9, 0xA4C, { 0xA3D, 0xA3F, 0xA41 }, { 0xA3E, 0xA40, 0xA42 }, 0x7FD8FF, "SU", "GRAH", "DUN", 227, "", 0x000000, "", "Air", "Battle", "Grace" },
 	} };
 	struct LocationDef { int town; std::uint32_t anchor; int object; int slot; };
-	inline constexpr std::array<LocationDef, 62> kLocations{ {
+	inline constexpr std::array<LocationDef, 10> kLocations{ {
 		LocationDef{ 0, 0x0162A4, 0, 0 },
-		LocationDef{ 0, 0x0162A4, 1, 1 },
-		LocationDef{ 0, 0x0162A4, 2, 2 },
-		LocationDef{ 0, 0x0162A4, 3, 3 },
-		LocationDef{ 0, 0x0162A4, 14, 4 },
-		LocationDef{ 0, 0x0162A4, 17, 5 },
 		LocationDef{ 1, 0x01B1F1, 0, 0 },
-		LocationDef{ 1, 0x01B1F1, 1, 1 },
-		LocationDef{ 1, 0x01B1F1, 2, 2 },
-		LocationDef{ 1, 0x01B1F1, 3, 3 },
-		LocationDef{ 1, 0x01B1F1, 15, 4 },
-		LocationDef{ 1, 0x01B1F1, 18, 5 },
 		LocationDef{ 2, 0x01C386, 0, 0 },
-		LocationDef{ 2, 0x01C386, 1, 1 },
-		LocationDef{ 2, 0x01C386, 2, 2 },
-		LocationDef{ 2, 0x01C386, 3, 3 },
-		LocationDef{ 2, 0x01C386, 16, 4 },
 		LocationDef{ 3, 0x055FCB, 0, 0 },
-		LocationDef{ 3, 0x055FCB, 1, 1 },
-		LocationDef{ 3, 0x055FCB, 2, 2 },
-		LocationDef{ 3, 0x055FCB, 3, 3 },
-		LocationDef{ 3, 0x055FCB, 15, 4 },
 		LocationDef{ 4, 0x01C389, 0, 0 },
-		LocationDef{ 4, 0x01C389, 1, 1 },
-		LocationDef{ 4, 0x01C389, 2, 2 },
-		LocationDef{ 4, 0x01C389, 3, 3 },
-		LocationDef{ 4, 0x01C389, 18, 4 },
 		LocationDef{ 5, 0x042286, 0, 0 },
-		LocationDef{ 5, 0x042286, 1, 1 },
-		LocationDef{ 5, 0x042286, 2, 2 },
-		LocationDef{ 5, 0x042286, 3, 3 },
-		LocationDef{ 5, 0x042286, 17, 4 },
 		LocationDef{ 6, 0x017760, 0, 0 },
-		LocationDef{ 6, 0x017760, 1, 1 },
-		LocationDef{ 6, 0x017760, 2, 2 },
-		LocationDef{ 6, 0x017760, 3, 3 },
-		LocationDef{ 6, 0x017760, 14, 4 },
 		LocationDef{ 7, 0x0177B0, 0, 0 },
-		LocationDef{ 7, 0x0177B0, 1, 1 },
-		LocationDef{ 7, 0x0177B0, 2, 2 },
-		LocationDef{ 7, 0x0177B0, 3, 3 },
-		LocationDef{ 7, 0x0177B0, 15, 4 },
 		LocationDef{ 8, 0x01773A, 0, 0 },
-		LocationDef{ 8, 0x01773A, 1, 1 },
-		LocationDef{ 8, 0x01773A, 2, 2 },
-		LocationDef{ 8, 0x01773A, 3, 3 },
-		LocationDef{ 8, 0x01773A, 18, 4 },
 		LocationDef{ 9, 0x0177EF, 0, 0 },
-		LocationDef{ 9, 0x0177EF, 1, 1 },
-		LocationDef{ 9, 0x0177EF, 2, 2 },
-		LocationDef{ 9, 0x0177EF, 3, 3 },
-		LocationDef{ 9, 0x0177EF, 16, 4 },
-		LocationDef{ 0, 0x0162A4, 19, 7 },
-		LocationDef{ 1, 0x01B1F1, 19, 7 },
-		LocationDef{ 2, 0x01C386, 19, 7 },
-		LocationDef{ 3, 0x055FCB, 19, 7 },
-		LocationDef{ 4, 0x01C389, 19, 7 },
-		LocationDef{ 5, 0x042286, 19, 7 },
-		LocationDef{ 6, 0x017760, 19, 7 },
-		LocationDef{ 7, 0x0177B0, 19, 7 },
-		LocationDef{ 8, 0x01773A, 19, 7 },
-		LocationDef{ 9, 0x0177EF, 19, 7 },
 	} };
 	inline constexpr float kRunBoost = -9.0f, kSprintBoost = 21.0f, kSlideSpeed = 720.0f, kSlideSeconds = 0.9f, kSlideBoost = 0.0f, kSlideJump = 1.0f, kAirControl = 520.0f, kAirMax = 0.0f, kSprintStamina = 0.2f, kJumpHeight = 1.2f;
 	inline constexpr float kStrafeSpeed = 0.97f, kBackSpeed = 0.85f, kGroundAccel = 14.0f, kTurnRate = 2.0f;
@@ -1632,13 +1412,11 @@ namespace bo3z::gen
 	inline constexpr std::array<std::uint32_t, 4> kForgeColor{ { 0xECE2C8FF, 0x4FA8FFFF, 0xB266FFFF, 0xFFC83DFF } };
 	namespace elite { inline constexpr float healthMult = 6.0f; inline constexpr float maxAlive = 2.0f; inline constexpr float hitShare = 0.5f; inline constexpr float lungeEvery = 8.0f; inline constexpr float lungeMin = 350.0f; inline constexpr float lungeMax = 1100.0f; inline constexpr float shriekEvery = 12.0f; inline constexpr float shriekRange = 550.0f; inline constexpr float shriekSlow = 40.0f; inline constexpr float shriekSeconds = 3.0f; inline constexpr float shriekDamage = 0.1f; inline constexpr float drainShare = 0.08f; inline constexpr float killPoints = 288.0f; }
 	inline constexpr std::string_view kAnimFireCrossbow = "attackStart", kAnimReloadCrossbow = "reloadStart", kAnimFireStaff = "BeginCastRight", kAnimReloadStaff = "none";
-	// BO3 power-ups: Insta-Kill, Double Points, Kaboom, Fire Sale (token STAT, light)
 	inline constexpr std::array<std::uint32_t, 7> kSummonCapPerks{ 0xCAD, 0xCAE, 0xCAF, 0xCCF, 0xCF9, 0xCFA, 0xCFB };   // the Summoner holds 2 .. 8 summons
 	inline constexpr std::uint32_t kSteadyPerk = 0xCD8;   // the night's dead never stagger you (Mod Incoming Stagger x0)
 	inline constexpr std::uint32_t kWonderTomeSpell = 0xCB1;   // the Destruction wonder (Classes::OnCast)
-	inline constexpr std::uint32_t kVortexWeap = 0xCD0, kVortexAmmo = 0xCD1, kVortexFx = 0xCD3; inline constexpr std::uint32_t kPurpleFire = 0xD41; inline constexpr std::array<std::uint32_t, 9> kBurst{ 0xD51, 0xD52, 0xD53, 0xD54, 0xD55, 0xD56, 0xD57, 0xD58, 0xD59 }; inline constexpr std::array<std::uint32_t, 7> kFlaskSpell{ 0xD6F, 0xD70, 0xD71, 0xD72, 0xD73, 0xD74, 0xD75 }; inline constexpr std::array<std::uint32_t, 7> kFlaskProj{ 0xD5C, 0xD5F, 0xD62, 0xD65, 0xD68, 0xD6B, 0xD6E }; inline constexpr std::array<std::uint32_t, 7> kFlaskItem{ 0xD93, 0xD94, 0xD95, 0xD96, 0xD97, 0xD98, 0xD99 }; inline constexpr std::array<std::uint32_t, 12> kArmGlow{ 0xD80, 0xD81, 0xD82, 0xD83, 0xD84, 0xD85, 0xD86, 0xD87, 0xD88, 0xD89, 0xD8A, 0xD8B }; inline constexpr std::array<std::uint32_t, 7> kFlaskPotion{ 0xD79, 0xD7A, 0xD7B, 0xD7C, 0xD7D, 0xD7E, 0xD7F }; inline constexpr std::uint32_t kAlchKnife = 0xD77, kBoneHorn = 0xD78, kWyrmHorn = 0xE7C; inline constexpr std::uint32_t kSlayerWeap = 0xD4B; inline constexpr std::uint32_t kDaggerSpell = 0xD50; inline constexpr std::uint32_t kDaggerHit = 0xD4E; inline constexpr std::array<std::uint32_t, 7> kBowSkin{ 0xD42, 0xD43, 0xD44, 0xD45, 0xD46, 0xD47, 0xD48 };  // fire frost shock wind sun blood void   // the Ranger's wonder, the Subsuming Vortex
+	inline constexpr std::uint32_t kPurpleFire = 0xD41; inline constexpr std::array<std::uint32_t, 9> kBurst{ 0xD51, 0xD52, 0xD53, 0xD54, 0xD55, 0xD56, 0xD57, 0xD58, 0xD59 }; inline constexpr std::array<std::uint32_t, 7> kFlaskSpell{ 0xD6F, 0xD70, 0xD71, 0xD72, 0xD73, 0xD74, 0xD75 }; inline constexpr std::array<std::uint32_t, 7> kFlaskProj{ 0xD5C, 0xD5F, 0xD62, 0xD65, 0xD68, 0xD6B, 0xD6E }; inline constexpr std::array<std::uint32_t, 7> kFlaskItem{ 0xD93, 0xD94, 0xD95, 0xD96, 0xD97, 0xD98, 0xD99 }; inline constexpr std::array<std::uint32_t, 12> kArmGlow{ 0xD80, 0xD81, 0xD82, 0xD83, 0xD84, 0xD85, 0xD86, 0xD87, 0xD88, 0xD89, 0xD8A, 0xD8B }; inline constexpr std::array<std::uint32_t, 7> kFlaskPotion{ 0xD79, 0xD7A, 0xD7B, 0xD7C, 0xD7D, 0xD7E, 0xD7F }; inline constexpr std::uint32_t kAlchKnife = 0xD77, kBoneHorn = 0xD78; inline constexpr std::uint32_t kSlayerWeap = 0xD4B; inline constexpr std::uint32_t kDaggerSpell = 0xD50; inline constexpr std::uint32_t kDaggerHit = 0xD4E; inline constexpr std::uint32_t kWyrmGlow = 0xD48;  // the Violet Wyrm's glow
 	inline constexpr std::array<std::uint32_t, 4> kClassGuides{ 0xCD4, 0xCD5, 0xCD6, 0xCD7 };   // each class's guide book
-	inline constexpr std::array<std::pair<std::uint32_t, std::uint32_t>, 8> kPowerups{ {{ 0x96D, 0x96E }, { 0x96F, 0x970 }, { 0x971, 0x972 }, { 0x973, 0x974 }, { 0xCAB, 0xCAC }, { 0xD09, 0xD0A }, { 0xD0B, 0xD0C }, { 0xD0D, 0xD0E }} };
 	inline constexpr std::uint32_t kReaperScythe = 0x96C;
 	inline constexpr std::uint32_t kWyrmClaws = 0x9DD, kShadowClaws = 0x9DE, kZombieClaws = 0x9DF;
 	inline constexpr std::uint32_t kUndeadFaction = 0x93B;
@@ -1736,15 +1514,6 @@ namespace bo3z::gen
 		SpellcraftDef{ "barrowhorn", "Horn of the Dragon Priests", 0xFFC45C, 0xFFF3D6, 8, 3, 1600.0f, 60.0f, 560.0f, 1, 0.0f, 5, 0.0f, 6, 13, "The War-Host Charges", 1600.0f, 110.0f, "A war-cry that hurls the dead back in a wave. Charged: the old war-host of the barrows charges down the line in front of you.", 0xC6E, 0xC6F },
 	} };
 	inline constexpr std::uint32_t kArtIceShell = 0xBC0, kArtRoots = 0xBC1, kArtBurn = 0xBC2, kArtPoison = 0xBC3, kArtPortal = 0xCB2, kArtPortalBig = 0xCB5;  // status looks on the struck
-	struct BowDef { std::string_view id, label, text, element; int spellRow, tier; float share; std::uint32_t color, weap, ammo; };  // element: its emblem (bw_<element>.png)
-	inline constexpr std::array<BowDef, 6> kBows{ {
-		BowDef{ "emberstring", "Emberstring", "Charred horn strung with a thread of living flame. Its arrows set the dead burning.", "fire", 1, 1, 0.38f, 0xFF6B14, 0xC11, 0xC12 },
-		BowDef{ "rimehorn", "Rimehorn", "Glacier-blue bone from the Throat of the World. Its arrows freeze the dead where they stand.", "frost", 2, 1, 0.36f, 0x8CD8FF, 0xC14, 0xC15 },
-		BowDef{ "stormreach", "Stormreach", "Storm-blue steel that hums before the rain. Its arrows leap from one of the dead to the next - drawn full at its last reforge, a storm ball hangs where it strikes.", "shock", 3, 1, 0.34f, 0x8C7FFF, 0xC17, 0xC18 },
-		BowDef{ "skyhowl", "Skyhowl", "Pale ash strung with a captured gale, like the Tongues' storm-horns. Its arrows burst into a howling wind that hurls the dead away - drawn full, the bow itself looses a blast of wind that flings everything before you.", "wind", 6, 2, 0.36f, 0x8CFFD8, 0xC24, 0xC25 },
-		BowDef{ "dawnspire", "Dawnspire", "Sun-gilded bronze of the old Tongues. Its arrows sear the dead and stagger them.", "sun", 8, 2, 0.42f, 0xFFCC4C, 0xC1D, 0xC1E },
-		BowDef{ "thirstbow", "Thirstbow", "Blood-dark yew that drinks what it strikes. Every hit gives you back a little life.", "blood", 5, 2, 0.4f, 0xE51E28, 0xC20, 0xC21 },
-	} };
 	struct EchoWonder { std::string_view id, label, text; std::uint32_t color, pedestal, gem; };
 	inline constexpr std::array<EchoWonder, 4> kEchoWonders{ {
 		EchoWonder{ "gravecaller", "Call of the Violet Wyrm", "A summoning spell. Cast it and a violet wyrm flies in and burns the dead within 50 m of you for 90 seconds, circling and strafing. The call rests a minute after the wyrm departs. Once the three dragons fall, a second, smaller wyrm answers with it.", 0x9CFF6A, 0xC44, 0xC4A },
@@ -1778,12 +1547,10 @@ namespace bo3z::gen
 		WordDef{ "echo", "ALDUIN", "The World-Eater's Echo", "the summit of the Throat of the World", "The three words are silent, and only their maker is left. On the summit of the Throat of the World, where the Tongues once cast Alduin out of time, his echo still circles - and the dead of all Skyrim answer it one last time. Climb the mountain at night and end the curse.", "The Echo of Alduin breaks apart over the summit and its voice is gone from the world. The Curse of Alduin is broken: the dead of Skyrim sleep, and the nights are only nights again.", "The Curse Broken: the Hall of the Awakened opens beneath High Hrothgar.", "echo_alduin", "The Echo of Alduin", 56044.0f, -47760.0f, 36055.0f, 0.0f, 80.0f, 1.0f, { 12, 14, 16, 18 }, { 3, 3, 4, 4 }, 4 },
 	} };
 	inline constexpr float kWordWake = 3200.0f, kWordLeash = 6500.0f;
-	inline constexpr std::array<std::uint32_t, 3> kElemCrossbows{ { 0xD04, 0xD05, 0xD06 } };  // the Ranger's elemental crossbows: fire, frost, shock
 	inline constexpr std::uint32_t kHallFang = 0xC72, kHallRobes = 0xC73, kHallSkull = 0xC74, kHallEndless = 0xC75, kHallThrone = 0xC76, kHallFangShow = 0xC77, kFangWeap = 0xC79;
 	inline constexpr std::array<std::uint32_t, 5> kHallFloat{ 0xDA1, 0xDA2, 0xDA3, 0xDA4, 0xDA5 };  // the four wonders (class order) and Alduin's Bane, floating in High Hrothgar's hall
 	inline constexpr std::array<std::uint32_t, 5> kHallGhost{ 0xDA9, 0xDAA, 0xDAB, 0xDAC, 0xDAD };  // the same, greyed out (tools/modelconv/ghostnif.cpp)
 	inline constexpr std::uint32_t kHallGlow = 0xDA6, kHallGlowTall = 0xDA7, kHallPillar = 0xDA8;
-	inline constexpr std::array<std::uint32_t, 5> kEmmFx{ 0xC7A, 0xC7B, 0xC7C, 0xC7D, 0xC7E };  // summon, crystal, orb, storm, tornado
 	inline constexpr std::array<std::uint32_t, 6> kTornado{ 0xC7E, 0xC7F, 0xC80, 0xC81, 0xC82, 0xC83 };  // by element (Bows Kind order)
 	inline constexpr std::array<int, 6> kEchoGuards{ 3, 4, 4, 5, 6, 6 }, kEchoElites{ 0, 1, 1, 1, 2, 2 }, kEchoKillN{ 20, 25, 30, 35, 40, 50 };  // per Skyrim difficulty
 	inline constexpr float kEchoWake = 2600.0f, kEchoTake = 260.0f, kEchoKillRadius = 3000.0f, kEchoStoneTake = 230.0f;

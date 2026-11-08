@@ -112,16 +112,17 @@ def dressing(S):
             records[(kind, key)] = {'model': perk['potionModel'] if r['model'] == '$potion' else r['model'],
                                     'color': perk['color'] if r['color'] == '$perk' else r['color'], 'radius': r['radius']}
             pieces.append((oi, kind, key, r))
+    for r in S['dressing']['rows']:   # (the Ward trial's brazier: placed by the trial itself, on no altar object)
+        if r['for'] == 'trial':
+            records[('STAT' if r['type'] == 'stat' else 'LIGH', r['id'])] = {'model': r['model'], 'color': r['color'], 'radius': r['radius']}
     for w in S['weapons']['rows']:
         records[('STAT', '1st_' + w['id'])] = {'model': w.get('firstModel', w['standinModel']), 'color': '', 'radius': 0}
         sc_ids = {r['id'] for r in S['spellcraft']['rows']} if 'spellcraft' in S else set()
         records[('STAT', 'show_' + w['id'])] = {'model': f"CurseOfAlduin\\fx\\{w['id']}_icon.nif" if w['id'] in sc_ids else w['standinModel'], 'color': '', 'radius': 0}  # the roll shows the spell's logo
-    records[('STAT', '1st_vortex')] = {'model': 'CurseOfAlduin\\bow\\vortex.nif', 'color': '', 'radius': 0}
     for _e in ('fire', 'frost', 'shock', 'poison', 'sun', 'blood', 'philosopher'):   # (Noah: the flasks held in the hand)
         records[('STAT', '1st_flask_' + _e)] = {'model': 'CurseOfAlduin\\alchemist\\mutagen_staff.nif' if _e == 'philosopher' else 'CurseOfAlduin\\alchemist\\flask_' + _e + '_held.nif', 'color': '', 'radius': 0}
     for _t, (_k, _n, _m, _kind, _d, _x) in PRIEST_WEAPONS.items():   # (the Dragon Priests' weapons, held)
         records[('STAT', '1st_priest_' + _k)] = {'model': 'CurseOfAlduin\\priests\\' + _m + '.nif', 'color': '', 'radius': 0}
-    records[('STAT', '1st_wyrmhorn')] = {'model': 'CurseOfAlduin\\summoner\\wyrm_horn.nif', 'color': '', 'radius': 0}   # (Noah: the Horn of the Violet Wyrm, held)
     records[('STAT', '1st_slayer')] = {'model': 'Light Greatswords\\akaviri\\LightGreatsword.nif', 'color': '', 'radius': 0}        # (Noah) the Dragon Slayer: the Ayleid Crystal Saber
     records[('STAT', '1st_mace')] = {'model': 'Light Greatswords\\daedric\\LightGreatsword.nif', 'color': '', 'radius': 0}  # (Noah) the Alchemist's Shadowflame Sword: Kv's purple crystal sword
     records[('STAT', '1st_kvred')] = {'model': 'Light Greatswords\\nordic\\LightGreatsword.nif', 'color': '', 'radius': 0}  # the Spellsword's
@@ -135,7 +136,4 @@ def dressing(S):
     records[('STAT', 'dragon_away')] = {'model': 'CurseOfAlduin\\fx\\dragon_away.nif', 'color': '', 'radius': 0}  # the glider's dragon, flying off
     records[('STAT', 'whirlwind')] = {'model': 'CurseOfAlduin\\fx\\whirlwind.nif', 'color': '', 'radius': 0}  # Bond II's Updraft shout: the whirlwind round you
     records[('STAT', 'rise_fx')] = {'model': S['dressing']['show']['riseFxModel'], 'color': '', 'radius': 0}
-    for k, col in POWERUPS:   # BO3 power-up drops: a glowing token and its light
-        records[('STAT', 'pu_' + k)] = {'model': f'CurseOfAlduin\\powerup\\{k}.nif', 'color': '', 'radius': 0}
-        records[('LIGH', 'pu_' + k)] = {'model': '', 'color': col, 'radius': 260}
     return records, pieces

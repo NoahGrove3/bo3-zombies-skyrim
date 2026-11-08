@@ -211,22 +211,6 @@ for e, label, text in FLASKS:
         elif name == 'DATA': b = struct.pack('<IfH', 0, 0.5, 0)
         subs.append(sub(name, b))
     recs['WEAP'].append(record('WEAP', fid('WEAP', 'flaskweap_' + e), subs))
-# (Noah: the Horn of the Violet Wyrm - "Held in hand", "my character actually blow the horn with a horn sound then the
-# dragon flies in") the horn itself: a weapon held as a dagger is (tools/wyrmhorn.py's model), its attack taken by
-# src/Classes.cpp (HornAttack): the arm lifts it to your lips and blows
-subs = []
-for name, hx in T['weap_daedricdagger']['subs']:
-    b = bytes.fromhex(hx)
-    if name == 'EDID': b = z('UN_WyrmHorn')
-    elif name == 'FULL': b = z('Horn of the Violet Wyrm')
-    elif name == 'MODL': b = z('CurseOfAlduin\\summoner\\wyrm_horn.nif')
-    elif name in ('MODT', 'EITM', 'EAMT'): continue
-    elif name == 'DESC': b = z("The Summoner's wonder: a dragon's horn bound in silver. Attack to blow it: a violet wyrm flies in and burns the dead within 30 m of you for 90 seconds. It can be blown again a minute after the wyrm departs.")
-    elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_wyrmhorn'))
-    elif name in ('TNAM', 'INAM', 'NAM9', 'NAM8'): b = struct.pack('<I', 0)   # (Noah: "it also has dagger sounds") none of a dagger's
-    elif name == 'DATA': b = struct.pack('<IfH', 0, 2.0, 0)
-    subs.append(sub(name, b))
-recs['WEAP'].append(record('WEAP', fid('WEAP', 'wyrmhorn'), subs))
 # (Noah: "the 10 priest drop weapons") each Dragon Priest's weapon (esp_ids.PRIEST_WEAPONS): Skyrim's own swings for
 # its kind - one-handed blades on the dagger's record with a sword's swings, two-handers on the draugr greatsword's
 # with a greatsword's or a battleaxe's / warhammer's, the bows on the longbow's (their models stand on the bow rig)
@@ -505,24 +489,6 @@ for bw in S['bows']['rows']:
         elif name == 'DATA': b = struct.pack('<IfH', 0, 1.0, 0)
         subs.append(sub(name, b))
     recs['WEAP'].append(record('WEAP', fid('WEAP', 'bow_' + bw['id']), subs))
-
-# (Noah: "the Ranger starts with a crossbow with elemental bolts - a crossbow for each element; the fire one to start, the
-# rest at the Echo Altar; reforging raises its damage, its quiver and the spell its bolts strike with") Dawnguard's
-# crossbow, one for each element (src/Classes.cpp: its bolts, its quiver; src/Bows.inl CrossbowStrike: its impact)
-XBOWS = {'fire': ('Ember Crossbow', 'Its bolts burst into fire. Each reforge: harder bolts, a fuller quiver, and a greater blast of flame - Flare Shot, Scorch, then Immolation.'),
-         'frost': ('Rime Crossbow', 'Its bolts burst into frost. Each reforge: harder bolts, a fuller quiver, and a greater blast of cold - Deep Freeze, Flash Freeze, then Throat of the World.'),
-         'shock': ('Storm Crossbow', 'Its bolts burst into lightning. Each reforge: harder bolts, a fuller quiver, and a greater storm - Chain Lightning, Finger of the Mountain, then Electrocution.')}
-for el, (label, text) in XBOWS.items():
-    subs = []
-    for name, hx in T['weap_crossbow']['subs']:
-        b = bytes.fromhex(hx)
-        if name == 'EDID': b = z('UN_Crossbow_' + el)
-        elif name == 'FULL': b = z(label)
-        elif name == 'DESC': b = z(text)
-        elif name == 'DATA': b = struct.pack('<IfH', 600, 14.0, 22)
-        subs.append(sub(name, b))
-    recs['WEAP'].append(record('WEAP', fid('WEAP', 'xbow_' + el), subs))
-
 
 # (Noah: "replace the madness sword ... replace the rift blade with the new white sword ... change the shadowflame mace to be a
 # shadowflame sword with a model from one of our mods ... destruction should get an elemental upgradable sword too") the four
@@ -815,7 +781,7 @@ BOW_SKIN = {
     'blood': dict(fill=(200, 10, 20), edge=(230, 20, 30), keys=((255, 120, 120), (200, 20, 30), (90, 0, 5))),
     'void':  dict(fill=(170, 60, 255), edge=(190, 80, 255), keys=((240, 210, 255), (170, 70, 255), (60, 0, 140))),
 }
-for el, t in BOW_SKIN.items():
+for el, t in ((k, v) for k, v in BOW_SKIN.items() if k == 'void'):   # (only the void skin is left: the Violet Wyrm's glow)
     d = bytearray(tsub('efsh_enchpurple', 'DATA'))
     d[0] = d[0] & ~0x08
     struct.pack_into('<f', d, 0x20, 1.1)
@@ -833,56 +799,6 @@ for el, t in BOW_SKIN.items():
         subs.append(sub(name, bytes(d) if name == 'DATA' else bytes.fromhex(hx)))
     recs['EFSH'].append(record('EFSH', fid('EFSH', f'bowskin_{el}'), subs))
 
-# (Noah: "change the summoner spell to something more fitting" - Reanimate) a dark bolt: Skyrim's own Reanimate look (its
-# projectile, its hand and hit art, its sounds), but aimed at the living; it barely hurts by itself - Classes::ConjurerStaffHit
-# deals the blow, marks the struck for your summons, and any of the dead it kills rises as your thrall
-md = bytearray(tsub('mgef_firebolt', 'DATA'))
-struct.pack_into('<I', md, 12, 0x13)                  # Conjuration
-struct.pack_into('<I', md, 16, 0xFFFFFFFF)            # no resistance
-struct.pack_into('<I', md, 24, 0x075347)              # Reanimate's casting light
-struct.pack_into('<I', md, 32, 0x075272)              # Reanimate's hit shader
-struct.pack_into('<I', md, 36, 0)
-struct.pack_into('<I', md, 72, 0x075348)              # ReanimateProjectile
-struct.pack_into('<I', md, 76, 0)                     # no explosion
-for off, v in ((92, 0x05CBFF), (96, 0x075271), (100, 0x075346), (108, 0)): struct.pack_into('<I', md, off, v)
-recs['MGEF'].append(record('MGEF', fid('MGEF', 'reanimatebolt'), [
-    sub('EDID', z('UN_ReanimateBolt')), sub('FULL', z('Reanimate')), sub('MDOB', struct.pack('<I', 0x1097CC)), sub('DATA', bytes(md)),
-    sub('SNDD', bytes.fromhex('0000000069f2030001000000f9c8030002000000fac8030003000000b1f20300')), sub('DNAM', z(''))]))
-REANIMATE = [('reanimate_1', 'Reanimate', 90, 'Strikes one of the dead with grave-magic and marks it for your summons. Any of the dead it kills rises as your thrall for 20 seconds.'),
-             ('reanimate_2', 'Raise the Fallen', 140, 'A harder bolt of grave-magic. Any of the dead it kills rises as your thrall for 25 seconds, stronger.'),
-             ('reanimate_3', 'Army of the Grave', 200, 'The Legendary bolt of grave-magic. Any of the dead it kills rises as your thrall for 30 seconds, stronger still - three may walk at once.')]
-for key, name, cost, text in REANIMATE:
-    spit = bytearray(tsub('spel_firebolt', 'SPIT'))
-    struct.pack_into('<I', spit, 0, cost); struct.pack_into('<I', spit, 32, 0)
-    recs['SPEL'].append(record('SPEL', fid('SPEL', key), [
-        sub('EDID', z('UN_' + key)), sub('OBND', bytes(12)), sub('FULL', z(name)), sub('MDOB', struct.pack('<I', 0x1097CC)), sub('ETYP', tsub('spel_firebolt', 'ETYP')),
-        sub('DESC', z(text)), sub('SPIT', bytes(spit)), sub('EFID', struct.pack('<I', fid('MGEF', 'reanimatebolt'))), sub('EFIT', struct.pack('<fII', 5.0, 0, 0))]))
-
-# (Noah: the Ranger's wonder is a purple bow, the Subsuming Vortex) a real bow - its arrows hit as arrows - whose every
-# arrow opens a black hole where it lands (src/Classes.cpp TickFast finds where it struck; src/Gun.cpp BlackHole)
-pd = bytearray(tsub('proj_arrow', 'DATA'))
-struct.pack_into('<I', pd, 16, 0)                     # no light
-recs['PROJ'].append(record('PROJ', fid('PROJ', 'vortexarrow'), [
-    sub('EDID', z('UN_VortexArrowProj')), sub('OBND', tsub('proj_arrow', 'OBND')), sub('FULL', z('Vortex Arrow')),
-    sub('MODL', z('CurseOfAlduin\\arrows\\arrowthunderflight.nif')), sub('DATA', bytes(pd)), sub('NAM1', b'\0'), sub('VNAM', tsub('proj_arrow', 'VNAM'))]))   # (Noah: like the elemental bows - the violet Elemental Arrow)
-recs['AMMO'].append(record('AMMO', fid('AMMO', 'vortexarrow'), [
-    sub('EDID', z('UN_VortexArrow')), sub('OBND', tsub('ammo_iron', 'OBND')), sub('FULL', z('Vortex Arrow')),
-    sub('MODL', z('CurseOfAlduin\\arrows\\arrowthunderquiver.nif')), sub('YNAM', tsub('ammo_iron', 'YNAM')), sub('ZNAM', tsub('ammo_iron', 'ZNAM')),
-    sub('KSIZ', tsub('ammo_iron', 'KSIZ')), sub('KWDA', tsub('ammo_iron', 'KWDA')), sub('DATA', struct.pack('<IIfIf', fid('PROJ', 'vortexarrow'), 0x4, 20.0, 0, 0.0))]))
-subs = []
-for name, hx in T['weap_longbow']['subs']:
-    b = bytes.fromhex(hx)
-    if name == 'EDID': b = z('UN_SubsumingVortex')
-    elif name == 'FULL': b = z('Subsuming Vortex')
-    elif name == 'MODL': b = z('CurseOfAlduin\\bow\\vortex.nif')
-    elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_vortex'))
-    elif name == 'MODT': continue
-    elif name == 'DESC': b = z("A bow of black-violet steel that hums like a held breath. Every arrow it looses tears open a black hole where it lands: the dead are dragged in, then it bursts. After Sovngarde the holes grow wider and pull harder.")
-    elif name == 'DATA': b = struct.pack('<IfH', 5000, 1.0, 22)
-    subs.append(sub(name, b))
-recs['WEAP'].append(record('WEAP', fid('WEAP', 'vortex'), subs))
-recs['ACTI'].append(record('ACTI', fid('ACTI', 'vortexfx'), [sub('EDID', z('UN_VortexFx')), sub('OBND', struct.pack('<6h', -170, -170, -150, 170, 170, 150)),
-    sub('MODL', z('CurseOfAlduin\\fx\\vortex.nif')), sub('FNAM', b'\0\0')]))
 recs['ACTI'].append(record('ACTI', fid('ACTI', 'purplefire'), [sub('EDID', z('UN_PurpleFire')), sub('OBND', struct.pack('<6h', -120, -120, -40, 120, 120, 140)),   # (the Horn's dragon's violet breath)
     sub('MODL', z('CurseOfAlduin\\fx\\purplefire.nif')), sub('FNAM', b'\0\0')]))
 for e in ('fire', 'frost', 'shock', 'wind', 'sun', 'blood', 'void', 'poison', 'gold'):  # (Noah: the arrows land as impact grenades, in the bow's own colour - tools/elemburst.py)

@@ -10,42 +10,5 @@
     "verify",
     "passiveText"
   ],
-  "rows": [
-    {
-      "id": "halvard",
-      "label": "Halvard Stone-Fist",
-      "quote": "Legion taught me to march. The dead taught me to run.",
-      "passive": "gun_damage_mult",
-      "passiveValue": 1.1,
-      "verify": [],
-      "passiveText": "+10% weapon damage"
-    },
-    {
-      "id": "gorza",
-      "label": "Gorza gra-Bor",
-      "quote": "I forged my own hammer. You will not like where it lands.",
-      "passive": "bonus_health",
-      "passiveValue": 50,
-      "verify": [],
-      "passiveText": "+50 health"
-    },
-    {
-      "id": "saffir",
-      "label": "Saffir al-Rihad",
-      "quote": "Steel is a song. The dead never learn the words.",
-      "passive": "knife_damage_mult",
-      "passiveValue": 2.0,
-      "verify": [],
-      "passiveText": "Knife does double damage"
-    },
-    {
-      "id": "eldrith",
-      "label": "Eldrith Vael",
-      "quote": "I have read what the Thalmor buried. The Coffer and I understand each other.",
-      "passive": "box_cost",
-      "passiveValue": 750,
-      "verify": [],
-      "passiveText": "The Coffer costs 750"
-    }
-  ]
+  "rows": []
 }
