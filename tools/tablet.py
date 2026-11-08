@@ -119,7 +119,8 @@ def slab_mesh(M, outline, name, mat_face, mat_side, front_disp, step=1.1, y0=0.0
     Nf = unit(np.stack([dx, -np.ones_like(dx), dz], 1))
     M.add(name + 'Face', mat_face, Vf, Nf, uv(pts[:, 0], pts[:, 1]), tri)
     Vb = np.stack([pts[:, 0], np.full(len(pts), y0 + T2), pts[:, 1]], 1)
-    M.add(name + 'Back', mat_side, Vb, np.tile([0, 1, 0], (len(pts), 1)), np.stack([pts[:, 0] / 40 + 0.3, pts[:, 1] / 40], 1), tri[:, [0, 2, 1]])
+    # (Noah: the back - the front's glyph border, tallies and names scratched inside it) planar too, seen from behind (x mirrored)
+    M.add(name + 'Back', 'back', Vb, np.tile([0, 1, 0], (len(pts), 1)), np.stack([(W2 - pts[:, 0]) / (2 * W2), 1 - (pts[:, 1] - Z0) / H], 1), tri[:, [0, 2, 1]])
     # the sides: the outline swept from face to back through a rounded bevel, chipped
     o = outline
     t = np.gradient(o, axis=0); t /= np.linalg.norm(t, axis=1, keepdims=True) + 1e-9
@@ -510,6 +511,75 @@ def plinth_tex():
     return save(col, 'tablet_plinth_d.dds'), save(nrm, 'tablet_plinth_n.dds'), save(glow, 'tablet_plinth_g.dds')
 
 
+def back_tex():
+    """(Noah: option 4) the back: the same weathered stone and carved glyph border as the face (glowing as it does), and
+    inside it the marks of everyone who rolled here - hundreds of tallies in fives and half-worn names scratched in, some
+    deep, most faint; the cracks run through from the front; rust under the straps"""
+    S = SIZE
+    col, hgt = stone_base(S, 13)
+    yy, xx = (np.mgrid[0:S, 0:S].astype(np.float32) + 0.5) / S
+    X = W2 - xx * 2 * W2; Z = Z0 + (1 - yy) * H                      # (the back's texel -> the tablet's x, mirrored)
+    px = lambda x, z: ((W2 - x) / (2 * W2) * S, (1 - (z - Z0) / H) * S)
+    cv = Image.new('L', (S, S), 0); dr = ImageDraw.Draw(cv)
+    lw = max(2, int(0.22 / (2 * W2) * S))
+    for ins in (2.4, 6.2):
+        pts = [px(-W2 + ins, Z0 + ins)] + [px((W2 - ins) * math.cos(t), Z1 - ARCH + (ARCH - ins * 0.8) * math.sin(t)) for t in np.linspace(math.pi, 0, 180)] + [px(W2 - ins, Z0 + ins)]
+        dr.line(pts, fill=255, width=lw); dr.line([px(-W2 + ins, Z0 + ins), px(W2 - ins, Z0 + ins)], fill=255, width=lw)
+    G = glyph_shapes(); gi = 5; gs = 2.8 / (2 * W2) * S
+    for z in np.arange(Z0 + 7.5, Z1 - ARCH - 1, 3.6):
+        for x in (-W2 + 4.3, W2 - 4.3):
+            x0, y0 = px(x + 1.4, z + 1.4); draw_glyph(dr, G[gi % len(G)], x0, y0, gs, max(2, gs * 0.11), 255); gi += 1
+    for t in np.linspace(math.pi * 0.95, math.pi * 0.05, 15):
+        x = (W2 - 4.3) * math.cos(t); z = Z1 - ARCH + (ARCH - 3.4) * math.sin(t)
+        x0, y0 = px(x + 1.4, z + 1.4); draw_glyph(dr, G[gi % len(G)], x0, y0, gs, max(2, gs * 0.11), 255); gi += 1
+    carve = np.asarray(cv.filter(ImageFilter.GaussianBlur(S / 2200)), np.float32) / 255
+    carve *= np.clip(0.55 + 0.9 * tileable(S, S, 1.4, 24), 0, 1)
+    # the scratches: tallies in fives and names, in the field inside the border (depth: a few deep, most faint)
+    sc = Image.new('L', (S, S), 0); ds = ImageDraw.Draw(sc)
+    r = np.random.default_rng(1313)
+    inside = MPath(np.array([(-W2 + 7.2, Z0 + 7.2), (W2 - 7.2, Z0 + 7.2)] + [((W2 - 7.2) * math.cos(t), Z1 - ARCH + (ARCH - 6.0) * math.sin(t)) for t in np.linspace(0, math.pi, 40)]))
+    u = S / (2 * W2)                                                      # (texels per unit)
+    for _ in range(420):                                                  # tallies
+        x, z = r.uniform(-W2 + 8, W2 - 8), r.uniform(Z0 + 8, Z1 - 8)
+        if not inside.contains_point((x, z)): continue
+        depth = int(255 * (0.35 + 0.65 * r.random() ** 3)); h = r.uniform(1.0, 1.8); tilt = r.uniform(-0.15, 0.15)
+        for k in range(r.integers(1, 5)):
+            xs = x + k * 0.45
+            ds.line([px(xs, z), px(xs + tilt, z + h)], fill=depth, width=max(2, int(0.16 * u)))
+        if r.random() < 0.7:
+            ds.line([px(x - 0.3, z + 0.2), px(x + 1.9, z + h - 0.2)], fill=depth, width=max(2, int(0.16 * u)))
+    for _ in range(90):                                                   # names: a run of scratched letters
+        x, z = r.uniform(-W2 + 8, W2 - 16), r.uniform(Z0 + 8, Z1 - 10)
+        if not inside.contains_point((x, z)) or not inside.contains_point((x + 8, z)): continue
+        depth = int(255 * (0.3 + 0.6 * r.random() ** 2)); hh = r.uniform(0.9, 1.5); xx0 = x
+        for c in range(r.integers(4, 10)):
+            g = G[r.integers(len(G))]
+            for kind, pts in g:
+                if kind == 'dot': continue
+                ds.line([px(xx0 + qx * hh * 0.7, z + (1 - qy) * hh) for qx, qy in pts], fill=depth, width=max(2, int(0.13 * u)))
+            xx0 += hh * 0.8
+        if r.random() < 0.4: ds.line([px(x, z - 0.4), px(xx0, z - 0.4 + r.uniform(-0.3, 0.3))], fill=depth // 2, width=max(2, int(0.05 * u)))
+    scr = np.asarray(sc.filter(ImageFilter.GaussianBlur(S / 3200)), np.float32) / 255
+    hgt = hgt - 0.9 * carve - 0.6 * scr
+    col *= (1 - 0.5 * carve)[..., None]
+    col = col * (1 - 0.62 * scr[..., None]) + np.array([60, 52, 44], np.float32) * 0.2 * scr[..., None]   # (dirt in the scratches)
+    # the cracks, through from the front (mirrored)
+    ck = Image.new('L', (S, S), 0); dk = ImageDraw.Draw(ck)
+    for path, seed in ((CRACK, 3), (CRACK2, 4)):
+        P = jag(path, 0.7, 70, seed); dk.line([px(x, z) for x, z in P], fill=255, width=max(3, int(S / 500)))
+    crack = np.asarray(ck.filter(ImageFilter.GaussianBlur(S / 3000)), np.float32) / 255
+    hgt -= 2.0 * crack
+    col *= (1 - 0.85 * crack)[..., None]
+    col *= (1 - 0.5 * np.clip(gaussian_filter(crack, S / 260) * 3, 0, 1))[..., None]
+    for zs in (Z0 + 12.0, PC[1] + 8.0):
+        streak = (Z < zs) * np.exp(-(zs - Z) / 9.0) * (tileable(S, S, 1.2, int(zs) + 7) ** 2) * (np.sin(X * 1.1) * 0.5 + 0.5)
+        r_ = np.clip(streak * 1.6, 0, 1)[..., None]
+        col = col * (1 - 0.55 * r_) + np.array([120, 60, 30], np.float32) * 0.55 * r_
+    nrm = height_to_normal(gaussian_filter(hgt, 0.6), S / 320.0)
+    glow = np.array([255, 150, 60], np.float32) * (carve * (tileable(S, S, 0.9, 33) > 0.35))[..., None] * 0.55
+    return save(col, 'tablet_back_d.dds'), save(nrm, 'tablet_back_n.dds'), save(glow, 'tablet_back_g.dds')
+
+
 def stone_tex():
     S = SIZE
     col, hgt = stone_base(S, 41, (112, 108, 100))
@@ -718,7 +788,7 @@ def build():
     WORK.mkdir(parents=True, exist_ok=True); MESHDIR.mkdir(parents=True, exist_ok=True)
     td.WORK = WORK
     print('textures...', SIZE)
-    fD, fN, fG = face_tex(); sD, sN = stone_tex(); bD, bN, bG = plinth_tex(); rD, rN, rG = ring_tex(); iD, iN = iron_tex()
+    fD, fN, fG = face_tex(); sD, sN = stone_tex(); bD, bN, bG = plinth_tex(); kD, kN, kG = back_tex(); rD, rN, rG = ring_tex(); iD, iN = iron_tex()
     (wD, wN), (gD, gN), (cD, cN), (pD, pN) = small_tex()
     fx = fx_tex()
     print('mesh...')
@@ -734,6 +804,7 @@ def build():
     # one OBJ per part (each its own NIF node, so the code can move them), joined afterwards
     mats = [f'mat face diffuse={fD} normal={fN} glow={fG} emit=1,0.7,0.4 emitmult=0.9 spec=0.35 gloss=18 alpha=0 doublesided=0',
             f'mat stone diffuse={sD} normal={sN} spec=0.3 gloss=14 alpha=0 doublesided=0',
+            f'mat back diffuse={kD} normal={kN} glow={kG} emit=1,0.7,0.4 emitmult=0.9 spec=0.35 gloss=18 alpha=0 doublesided=0',
             f'mat plinth diffuse={bD} normal={bN} glow={bG} emit=1,0.7,0.4 emitmult=0.9 spec=0.35 gloss=18 alpha=0 doublesided=0',
             f'mat ring diffuse={rD} normal={rN} glow={rG} emit=1,0.7,0.4 emitmult=1.2 spec=0.4 gloss=22 alpha=0 doublesided=0',
             f'mat iron diffuse={iD} normal={iN} spec=0.9 gloss=40 alpha=0 doublesided=0',
@@ -772,7 +843,7 @@ def build():
     if r.returncode or 'no node' in r.stderr: print(r.stdout, r.stderr); raise SystemExit('fxwrite failed')
     # the glyphs' uneven breathing (the lit shader's emissive): the face and the rings, a little apart
     aj = WORK / 'anim.job'
-    aj.write_text(f'in {out}\nout {out}\npulse Body_face 0.35 1.15 2.7\npulse RingOuter_ring 0.5 1.4 1.9\npulse RingInner_ring 0.45 1.3 2.3\npulse Base_plinth 0.3 1.0 3.1\n')
+    aj.write_text(f'in {out}\nout {out}\npulse Body_face 0.35 1.15 2.7\npulse RingOuter_ring 0.5 1.4 1.9\npulse RingInner_ring 0.45 1.3 2.3\npulse Base_plinth 0.3 1.0 3.1\npulse Body_back 0.3 1.05 2.9\n')
     r = subprocess.run([str(TOOLS / 'nifanim'), str(aj)], capture_output=True, text=True) if (TOOLS / 'nifanim').exists() else None
     if r is None:
         td.tool('nifanim'); r = subprocess.run([str(TOOLS / 'nifanim'), str(aj)], capture_output=True, text=True)

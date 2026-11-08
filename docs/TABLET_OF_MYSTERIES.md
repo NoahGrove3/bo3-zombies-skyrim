@@ -7,6 +7,7 @@ worn out - it has limited uses and is lost if you fall.
 - An old floating stone tablet, cracked and patched with iron straps and rusted rivets (Noah: no broken piece floating
   off it, no white patches; the pedestal in the tablet's own stone and manner).
 - Glyphs flicker unevenly like a failing lantern; candle stubs and old coins on the pedestal.
+- The back (Noah: option 4): the front's glyph border, and inside it tallies and names scratched in by past owners.
 - 4K textures (stone, metal, emissive glyph layers).
 - Idle: slow bob and turn, uneven glyph glow, faint motes.
 - Roll (animated on the model, not an overlay): glyph rings grind round unevenly, sparks spit from the cracks, ghostly
@@ -59,7 +60,8 @@ Battered (+2 tiers):
   eclipse that blinds and slows the dead.
 - The Wandering Star (staff, 40 casts): a dim caged star that bounces between up to 8 enemies.
 - Whisperwood Longbow (bow, 80 arrows): still sprouting leaves; arrows root the dead and heal you a little per enemy held.
-- (Noah, 2026-11-08) The Grimoire (battered, spell book): an actual spell book held open in the hand; casting comes from
-  the open book - pages turning, magical visuals rising off them. Its powers and uses: to be settled with Noah.
+- (Noah, 2026-11-08) The Grimoire (battered, one-handed spell book, 30 casts; the strongest of the tablet's weapons - it
+  must look and feel strong): an actual spell book held open in the hand; casting comes from the open book - pages
+  turning, magical visuals rising off them. What it casts: to be settled with Noah.
 
 Fists: gauntlets that power the bare-hand punch (Skyrim's own punch animations) with our hit effects on top.
