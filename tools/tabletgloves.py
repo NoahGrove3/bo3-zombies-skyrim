@@ -398,7 +398,7 @@ if __name__ == '__main__':
     names = [a for a in sys.argv[1:] if not a.startswith('--')] or ['stormknuckles', 'emberclaw']
     if 'stormknuckles' in names:
         tex = {'strap': strap_tex('w_stormknuckles_strap', (64, 46, 34), seed=1),
-               'brass': metal_tex('w_stormknuckles_brass', (150, 116, 62), dark=0.7, etch=pw.knotwork(2048, 6, 0.1, 3), seed=810),
+               'brass': metal_tex('w_stormknuckles_brass', (150, 116, 62), dark=0.7, etch=tw.knot(3, 6), seed=810),
                'gem': gem_tex('w_stormknuckles_gem', (90, 150, 255), seed=812)}
         stormknuckles(tex)
     if 'emberclaw' in names:
