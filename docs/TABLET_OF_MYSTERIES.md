@@ -62,6 +62,11 @@ Battered (+2 tiers):
 - Whisperwood Longbow (bow, 80 arrows): still sprouting leaves; arrows root the dead and heal you a little per enemy held.
 - (Noah, 2026-11-08) The Grimoire (battered, one-handed spell book, 30 casts; the strongest of the tablet's weapons - it
   must look and feel strong): an actual spell book held open in the hand; casting comes from the open book - pages
-  turning, magical visuals rising off them. What it casts: to be settled with Noah.
+  turning, magical visuals rising off them. (Noah: idea 1) The Unwritten Codex: each cast flips to a random chapter and its
+  glyphs lift off the page into the spell - Fire: a meteor where you aim; Frost: a line of ice spikes bursting out of
+  the ground toward the target, freezing all it hits; Storm: a bolt chaining through up to 10 of the dead; Void: a black
+  orb that pulls the dead together and crushes them. Every 10th cast is a "chapter's end": all four at once.
+  Casting: the book snaps open, its pages flip on their own, glyphs and embers rise off them, a spell circle forms in the
+  air before it; at its last use it burns to ash in the hand.
 
 Fists: gauntlets that power the bare-hand punch (Skyrim's own punch animations) with our hit effects on top.
