@@ -1759,7 +1759,7 @@ namespace bo3z
 		}
 		int RollBase()
 		{
-			return gen::kObjects[0].cost;
+			return static_cast<int>(std::lround(gen::kObjects[0].cost * Director::PriceScale()));   // (the essence economy: 3% more a night after night 10)
 		}
 		int RollCost(int a_town = -2)
 		{

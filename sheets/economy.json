@@ -1,6 +1,6 @@
 {
  "sheet": "economy",
- "about": "Points, BO3 Zombies values. One row per way of earning or spending. (Noah 2026-10-26: \"make enemies drop more cursed essence\" - kills about double, spell and blade kills 75, a night survived 250) (Noah 2026-10-29, the altar rework: no wands - every kill 75, no headshot or hit bonus) (Noah 2026-10-29: \"make enemies drop more cursed essence - like 15% more\" - every kill 86, elites and bosses 15% more)",
+ "about": "Points, BO3 Zombies values. One row per way of earning or spending. (Noah 2026-10-26: \"make enemies drop more cursed essence\" - kills about double, spell and blade kills 75, a night survived 250) (Noah 2026-10-29, the altar rework: no wands - every kill 75, no headshot or hit bonus) (Noah 2026-10-29: \"make enemies drop more cursed essence - like 15% more\" - every kill 86, elites and bosses 15% more) (Noah 2026-11-08, the inflation check: a kill's essence tapers after night 10 - 86 x sqrt(night 10's dead / tonight's dead), never below 20: 51 at night 20, 36 at 50, 27 at 100 (src/Director.cpp KillEssenceScale); a mini-boss's essence 5,000 + 500 a night, at most 20,000 (src/Kit.cpp); the altar's rolls and the Tablet cost 3% more a night after night 10 (Director::PriceScale))",
  "columns": [
   "id",
   "event",

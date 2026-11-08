@@ -464,7 +464,8 @@ namespace bo3z::Kit
 				return was + " - " + (t + 1 <= 3 ? std::string(TierLabel(t + 1)) : "Ascend " + std::to_string(t + 1 - 3)) + ", free";
 			}
 		}
-		const int pts = static_cast<int>(std::lround((5000 + 1000 * std::max(0, a_night)) * Perks::MiniBossEssenceMult()));  // (Bounty Hunter's Ale: twice)
+		// (Noah, 2026-11-08, the essence economy) 5,000 + 500 a night, at most 20,000 (it was + 1,000 a night, no cap)
+		const int pts = static_cast<int>(std::lround(std::min(20000, 5000 + 500 * std::max(0, a_night)) * Perks::MiniBossEssenceMult()));  // (Bounty Hunter's Ale: twice)
 		Points::Add(pts);
 		return fmt::format("{} Cursed Essence", pts);
 	}

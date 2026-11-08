@@ -24,7 +24,8 @@ worn out - it has limited uses and is lost if you fall.
 - Co-op: one tablet everyone sees; each player rolls their own weapons.
 
 ## Price
-- 1,500 to spin; +500 for every spin or repair; back to 1,500 at dawn.
+- 1,500 to spin; +500 for every spin or repair; back to 1,500 at dawn. After night 10 the whole price is 3% more a
+  night (the essence economy, 2026-11-08).
 - Repair ("refill") at the tablet costs the same as the current spin price and raises it too (no farming).
 
 ## Taking a weapon

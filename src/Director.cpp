@@ -3667,6 +3667,30 @@ namespace bo3z
 		}
 
 		float RoundHealth() { return HealthFor(std::max(1, g_current)); }
+		// (Noah, 2026-11-08, the essence economy: "in later rounds when there's hundreds of enemies I think inflation will cause
+		// unintended effects") the night's dead for one player (waves of 20, +10 a wave, +5 a night; capped as WaveSize is)
+		static int SoloNightKills(int a_night)
+		{
+			const int n = std::max(1, a_night), w = WavesFor(n);
+			int k = 0;
+			for (int i = 0; i < w; ++i) k += std::min(kNightCapPerPlayer, 20 + 5 * (n - 1) + 10 * i);
+			return k;
+		}
+		// a kill's essence after night 10 tapers as the nights' dead multiply: 86 until night 10, then 86 x the square root of
+		// (night 10's dead / tonight's dead) - 51 at night 20, 36 at 50, 27 at 100 - never below 20
+		float KillEssenceScale()
+		{
+			const int n = Save::Get(gen::kAV_round);
+			if (n <= 10) return 1.0f;
+			const float v = 86.0f * std::sqrt(static_cast<float>(SoloNightKills(10)) / static_cast<float>(SoloNightKills(n)));
+			return std::max(20.0f, v) / 86.0f;
+		}
+		// the repeat buys (the altar's rolls, the Tablet) cost 3% more a night after night 10
+		float PriceScale()
+		{
+			const int n = Save::Get(gen::kAV_round);
+			return n <= 10 ? 1.0f : 1.0f + 0.03f * static_cast<float>(n - 10);
+		}
 		bool  IsElite(RE::Actor* a_actor) { return a_actor && g_elites.contains(a_actor->GetFormID()); }
 		bool BossPos(RE::NiPoint3& a_at)
 		{

@@ -289,7 +289,8 @@ namespace bo3z::Tablet
 	int Price()
 	{
 		Night();
-		return 1500 + 500 * g_steps;  // (Noah: 1,500, +500 for every spin or repair, back to 1,500 at dawn)
+		// (Noah: 1,500, +500 for every spin or repair, back to 1,500 at dawn) (the essence economy: 3% more a night after night 10)
+		return static_cast<int>(std::lround((1500 + 500 * g_steps) * Director::PriceScale() / 50.0f)) * 50;
 	}
 
 	bool Carrying()

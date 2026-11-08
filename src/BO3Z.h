@@ -161,6 +161,8 @@ namespace bo3z
 		void             Frenzy(RE::Actor* a_actor, float a_seconds);  // Mindbreaker: turns on its own kind  // night truce: townsfolk and followers can't be hurt
 		bool             NightNow();  // night hours (the undead are out)
 		float            RoundHealth();  // a zombie's full health this round (Skyrim units)
+		float            KillEssenceScale();  // (the essence economy) a kill's essence after night 10: tapering as the dead multiply
+		float            PriceScale();        // the repeat buys' prices: 3% more a night after night 10
 		RE::TESFaction*  UndeadFactionForm();  // the Curse's own faction (the night's dead)
 		bool             IsElite(RE::Actor* a_actor);
 		bool             IsBoss(RE::Actor* a_actor);

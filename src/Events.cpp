@@ -602,16 +602,16 @@ namespace bo3z
 					// a party member's kill counts for everyone (each player gets the points: nobody goes without)
 					auto* killer = a_event->actorKiller.get() ? a_event->actorKiller->As<RE::Actor>() : nullptr;
 					if (Net::InLobby() && Party::IsFriend(killer)) {
-						Points::Add(gen::kPoints_kill);
+						Points::Add(static_cast<int>(std::lround(gen::kPoints_kill * Director::KillEssenceScale())));
 					} else if (killer && ((killer->IsCommandedActor() && killer->GetCommandingActor().get() == player) || Classes::IsOwnSummon(killer) || Echo::IsAlly(killer))) {
 						// (the audit: since a summon's kill became the summon's, it paid nothing) your summons' and allies' kills pay
-						Points::Add(static_cast<int>(std::lround(gen::kPoints_kill * Perks::KillEssenceMult(dying))));
+						Points::Add(static_cast<int>(std::lround(gen::kPoints_kill * Director::KillEssenceScale() * Perks::KillEssenceMult(dying))));
 						Hud::Essence(dying->GetPosition());
 					}
 					return RE::BSEventNotifyControl::kContinue;  // dawn, followers, guards: no points
 				}
 				const auto [gun, head] = Gun::RecentHit(dying->GetFormID());
-				Points::Add(static_cast<int>(std::lround((gun ? (head ? gen::kPoints_headshot_kill : gen::kPoints_kill) : gen::kPoints_melee_kill) * Perks::KillEssenceMult(dying))));
+				Points::Add(static_cast<int>(std::lround((gun ? (head ? gen::kPoints_headshot_kill : gen::kPoints_kill) : gen::kPoints_melee_kill) * Director::KillEssenceScale() * Perks::KillEssenceMult(dying))));
 				Hud::Essence(dying->GetPosition());
 				Stats::OnKill(dying, gun, head, !gun, false, dying->GetPosition().GetDistance(player->GetPosition()));
 				return RE::BSEventNotifyControl::kContinue;
