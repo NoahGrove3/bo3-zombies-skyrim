@@ -1150,6 +1150,38 @@ namespace bo3z
 			}
 			logger::info("world: loading screens - {} from the Compendium, {} others set aside", on, off);
 		}
+		// (Noah: "Are you able to remove taunting from the night enemies?") Skyrim's combat and stagger taunts - the dead
+		// flinging their arms and calling you on instead of coming - each given a condition: not one of the night's
+		void NoUndeadTaunts()
+		{
+			auto* dh = RE::TESDataHandler::GetSingleton();
+			auto* fac = dh ? dh->LookupForm<RE::TESFaction>(gen::kUndeadFaction, gen::kPlugin) : nullptr;
+			if (!fac) return;
+			static constexpr std::uint32_t kTaunts[] = { 0x0BE3C8, 0x0BE3C9, 0x0BE3CA, 0x0BE3CB, 0x0BE3CC, 0x0BE3CD, 0x0BE3CE, 0x0BE3CF,
+				0x0BE3D1, 0x0BE3D2, 0x0BE3D3, 0x0BE3D4, 0x0BE3D5, 0x0BE3D6, 0x0BE3D7, 0x0BE3D8, 0x0D5F1A, 0x050CE9, 0x0A82AE, 0x0A82AF };
+			int n = 0;
+			auto gate = [&](RE::TESIdleForm* idle) {
+				auto* c = new RE::TESConditionItem();
+				c->data.functionData.function = RE::FUNCTION_DATA::FunctionID::kGetInFaction;
+				c->data.functionData.params[0] = fac, c->data.functionData.params[1] = nullptr;
+				c->data.comparisonValue.f = 0.0f;
+				c->data.flags.opCode = RE::CONDITION_ITEM_DATA::OpCode::kEqualTo;
+				c->data.flags.isOR = false;
+				c->data.object = RE::CONDITIONITEMOBJECT::kSelf;
+				c->next = idle->conditions.head;
+				idle->conditions.head = c;
+				++n;
+			};
+			for (auto id : kTaunts) if (auto* idle = dh->LookupForm<RE::TESIdleForm>(id, "Skyrim.esm")) gate(idle);
+			// (and any mod's idle whose animation event names a taunt)
+			for (auto* idle : dh->GetFormArray<RE::TESIdleForm>()) {
+				if (!idle || idle->GetFormID() >> 24 == 0) continue;
+				std::string ev(idle->animEventName.c_str() ? idle->animEventName.c_str() : "");
+				std::transform(ev.begin(), ev.end(), ev.begin(), [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+				if (ev.find("taunt") != std::string::npos) gate(idle);
+			}
+			logger::info("world: {} taunts kept from the night's dead", n);
+		}
 		void DarkenNights()
 		{
 			auto  scale = [](RE::Color& c, float f) { c.red = static_cast<std::uint8_t>(c.red * f), c.green = static_cast<std::uint8_t>(c.green * f), c.blue = static_cast<std::uint8_t>(c.blue * f); };
@@ -1357,6 +1389,7 @@ namespace bo3z
 			// opening the map, which hides that node, crashed the game)
 			DarkenNights();
 			OnlyCompendiumScreens();
+			NoUndeadTaunts();
 			// (Noah: "Obtain the Spellsword Manual" still in the journal) the Spellsword mod's start quest never starts on a
 			// new game at all (stopping it once it ran didn't hold) - the class gives the Spellsword's kit
 			if (auto* q = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESQuest>(0x009A24, "Spellsword.esp")) {
