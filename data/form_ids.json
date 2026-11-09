@@ -1760,6 +1760,16 @@
   "EFSH:armglow_2_6": "0xedc",
   "EFSH:armglow_3_4": "0xedd",
   "EFSH:armglow_3_5": "0xede",
-  "EFSH:armglow_3_6": "0xedf"
+  "EFSH:armglow_3_6": "0xedf",
+  "STAT:tabshow_stormtalons": "0xee0",
+  "STAT:tabshow_talons": "0xee1",
+  "STAT:tabshow_wyrmspine": "0xee2",
+  "STAT:tabshow_cinderclaws": "0xee3",
+  "STAT:tabshow_frostmourn": "0xee4",
+  "WEAP:tab_stormtalons": "0xee5",
+  "WEAP:tab_talons": "0xee6",
+  "WEAP:tab_wyrmspine": "0xee7",
+  "WEAP:tab_cinderclaws": "0xee8",
+  "WEAP:tab_frostmourn": "0xee9"
  }
 }

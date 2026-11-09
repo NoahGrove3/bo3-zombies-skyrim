@@ -15,20 +15,22 @@
     ],
     "rows": [
         {
-            "id": "stormknuckles",
-            "label": "Stormbound Knuckles",
+            "id": "stormtalons",
+            "label": "Stormtalons",
             "grade": "worn",
-            "type": "fists",
+            "type": "dagger",
             "uses": 100,
-            "model": "",
-            "power": "Brass knuckles wrapped round cracked storm gems. Every punch arcs lightning to 2 more of the dead; a heavy punch slams the ground in a ring of shock.",
-            "owner": "Left by a pit-fighter from Windhelm who never lost a bout.",
+            "model": "weapons\\NewArmoury\\Fists\\GlassClaw.nif",
+            "power": "Glass claws worn on both hands, humming with a storm. Every 3rd hit jumps lightning to 2 more of the dead; a heavy hit stuns the one struck.",
+            "owner": "Left by a storm-mage who fought with her hands when her magicka ran dry.",
+            "look": {
+                "plugin": "NewArmoury.esp",
+                "id": "0x19AAAA",
+                "left": "0x19AAE0"
+            },
             "verify": [],
-            "show": "CurseOfAlduin\\tablet\\stormknuckles_show.nif",
-            "gloves": [
-                "CurseOfAlduin\\tablet\\stormknuckles_gloves.nif",
-                "CurseOfAlduin\\tablet\\stormknuckles_gloves_1st.nif"
-            ]
+            "show": "weapons\\NewArmoury\\Fists\\GlassClaw.nif",
+            "gloves": []
         },
         {
             "id": "gravebell",
@@ -44,16 +46,21 @@
             "gloves": []
         },
         {
-            "id": "saltrice",
-            "label": "Saltrice Sickle",
-            "grade": "worn",
+            "id": "talons",
+            "label": "Talons of Woe",
+            "grade": "battered",
             "type": "dagger",
-            "uses": 100,
-            "model": "CurseOfAlduin\\tablet\\saltrice.nif",
-            "power": "A farmer's sickle crusted in salt. The dead it cuts take 30% more from everything for 4 seconds.",
-            "owner": "Left by a farmer from Rorikstead who held his field for nine nights.",
+            "uses": 30,
+            "model": "weapons\\NewArmoury\\Fists\\DBClaw.nif",
+            "power": "Dragonbone claws worn on both hands. Their bleed runs twice as deep in the dead, and each kill heals you a little.",
+            "owner": "Cut from the talons of a dragon that fell over Whiterun.",
+            "look": {
+                "plugin": "NewArmoury.esp",
+                "id": "0x19AAB2",
+                "left": "0x19AAEE"
+            },
             "verify": [],
-            "show": "CurseOfAlduin\\tablet\\saltrice.nif",
+            "show": "weapons\\NewArmoury\\Fists\\DBClaw.nif",
             "gloves": []
         },
         {
@@ -67,19 +74,27 @@
             "owner": "Dragged out of the White River.",
             "verify": [],
             "show": "CurseOfAlduin\\tablet\\riverstone.nif",
-            "gloves": []
+            "gloves": [],
+            "look": {
+                "plugin": "NewArmoury.esp",
+                "id": "0x16801F"
+            }
         },
         {
-            "id": "rattlebone",
-            "label": "Rattlebone Bow",
-            "grade": "worn",
-            "type": "bow",
-            "uses": 100,
-            "model": "CurseOfAlduin\\tablet\\rattlebone.nif",
-            "power": "Strung with sinew and old bones. Every arrow bounces on to a second of the dead.",
-            "owner": "Its owner's name is scratched off the grip.",
+            "id": "wyrmspine",
+            "label": "Wyrmspine Pike",
+            "grade": "battered",
+            "type": "greatsword",
+            "uses": 30,
+            "model": "weapons\\NewArmoury\\Pikes\\DragonBonePike.nif",
+            "power": "A pike of dragon bone. Its thrusts pierce through 2 more of the dead in a line; a heavy thrust drives a spike of bone up out of the ground ahead.",
+            "owner": "Carved from the spine of the first dragon Alduin raised.",
+            "look": {
+                "plugin": "NewArmoury.esp",
+                "id": "0x153BB9"
+            },
             "verify": [],
-            "show": "CurseOfAlduin\\tablet\\rattlebone.nif",
+            "show": "weapons\\NewArmoury\\Pikes\\DragonBonePike.nif",
             "gloves": []
         },
         {
@@ -93,23 +108,29 @@
             "owner": "Carried by a lamplighter of Riften until the lamps went out.",
             "verify": [],
             "show": "CurseOfAlduin\\tablet\\lanternwick.nif",
-            "gloves": []
+            "gloves": [],
+            "look": {
+                "plugin": "NewArmoury.esp",
+                "id": "0x18B765"
+            }
         },
         {
-            "id": "emberclaw",
-            "label": "Emberclaw Wraps",
-            "grade": "battered",
-            "type": "fists",
-            "uses": 30,
-            "model": "",
-            "power": "Charred hand-wraps with coals sewn in. Punches set the dead burning; every 4th punch throws a fireball.",
-            "owner": "Unwound from the hands of a burned monk.",
+            "id": "cinderclaws",
+            "label": "Cinderclaws",
+            "grade": "worn",
+            "type": "dagger",
+            "uses": 100,
+            "model": "weapons\\NewArmoury\\Fists\\DaedricClaw.nif",
+            "power": "Daedric claws worn on both hands, still smouldering. Every swipe sets the dead burning; a heavy swipe flings a fan of embers.",
+            "owner": "Pried from a dremora who walked out of an Oblivion gate.",
+            "look": {
+                "plugin": "NewArmoury.esp",
+                "id": "0x19AAAC",
+                "left": "0x19AAE8"
+            },
             "verify": [],
-            "show": "CurseOfAlduin\\tablet\\emberclaw_show.nif",
-            "gloves": [
-                "CurseOfAlduin\\tablet\\emberclaw_gloves.nif",
-                "CurseOfAlduin\\tablet\\emberclaw_gloves_1st.nif"
-            ]
+            "show": "weapons\\NewArmoury\\Fists\\DaedricClaw.nif",
+            "gloves": []
         },
         {
             "id": "eclipse",
@@ -122,7 +143,11 @@
             "owner": "Its last bearer saw the sun go out over Sky Haven.",
             "verify": [],
             "show": "CurseOfAlduin\\tablet\\eclipse.nif",
-            "gloves": []
+            "gloves": [],
+            "look": {
+                "plugin": "NewArmoury.esp",
+                "id": "0x153BB0"
+            }
         },
         {
             "id": "wanderstar",
@@ -135,19 +160,27 @@
             "owner": "Found at the bottom of the College's collapsed well.",
             "verify": [],
             "show": "CurseOfAlduin\\tablet\\wanderstar.nif",
-            "gloves": []
+            "gloves": [],
+            "look": {
+                "plugin": "Fulcimentum - More Staves and Wands of Skyrim.esp",
+                "id": "0x000808"
+            }
         },
         {
-            "id": "whisperwood",
-            "label": "Whisperwood Longbow",
-            "grade": "battered",
-            "type": "bow",
-            "uses": 30,
-            "model": "CurseOfAlduin\\tablet\\whisperwood.nif",
-            "power": "A bow still sprouting leaves. Its arrows root the dead where they stand, and you heal a little for each one held.",
-            "owner": "Grown, not made, by a Spriggan's keeper.",
+            "id": "frostmourn",
+            "label": "Frostmourn Rapier",
+            "grade": "worn",
+            "type": "dagger",
+            "uses": 100,
+            "model": "weapons\\NewArmoury\\Rapier\\StahlrimRapier.nif",
+            "power": "A rapier of stalhrim, cold to the touch. Its thrusts slow everything they touch; a heavy thrust freezes a ring of the dead around you.",
+            "owner": "Brought from Solstheim by a duellist of Raven Rock.",
+            "look": {
+                "plugin": "NewArmoury.esp",
+                "id": "0x01EE21"
+            },
             "verify": [],
-            "show": "CurseOfAlduin\\tablet\\whisperwood.nif",
+            "show": "weapons\\NewArmoury\\Rapier\\StahlrimRapier.nif",
             "gloves": []
         },
         {

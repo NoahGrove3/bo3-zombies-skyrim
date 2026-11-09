@@ -1521,19 +1521,19 @@ namespace bo3z::gen
 		SpellcraftDef{ "barrowhorn", "Horn of the Dragon Priests", 0xFFC45C, 0xFFF3D6, 8, 3, 1600.0f, 60.0f, 560.0f, 1, 0.0f, 5, 0.0f, 6, 13, "The War-Host Charges", 1600.0f, 110.0f, "A war-cry that hurls the dead back in a wave. Charged: the old war-host of the barrows charges down the line in front of you.", 0xC6E, 0xC6F },
 	} };
 	inline constexpr std::uint32_t kArtIceShell = 0xBC0, kArtRoots = 0xBC1, kArtBurn = 0xBC2, kArtPoison = 0xBC3, kArtPortal = 0xCB2, kArtPortalBig = 0xCB5;  // status looks on the struck
-	struct TabletWeapon { std::string_view id, label; bool battered; int type, uses; std::uint32_t form, show, gloves; };  // type: 0 fists 1 mace 2 dagger 3 battleaxe 4 bow 5 staff 6 greatsword 7 book
+	struct TabletWeapon { std::string_view id, label; bool battered; int type, uses; std::uint32_t form, show, gloves; std::string_view lookPlugin; std::uint32_t look, left; };  // look: another mod's weapon it wears (left: its left-hand twin)  // type: 0 fists 1 mace 2 dagger 3 battleaxe 4 bow 5 staff 6 greatsword 7 book
 	inline constexpr std::array<TabletWeapon, 11> kTabletWeapons{ {
-		TabletWeapon{ "stormknuckles", "Stormbound Knuckles", false, 0, 100, 0xEBD, 0xECB, 0xECF },
-		TabletWeapon{ "gravebell", "Gravebell Mace", false, 1, 100, 0xEBE, 0xEB5, 0x000 },
-		TabletWeapon{ "saltrice", "Saltrice Sickle", false, 2, 100, 0xEBF, 0xEB6, 0x000 },
-		TabletWeapon{ "riverstone", "Riverstone Halberd", false, 3, 100, 0xEC0, 0xEB7, 0x000 },
-		TabletWeapon{ "rattlebone", "Rattlebone Bow", false, 4, 100, 0xEC1, 0xEB8, 0x000 },
-		TabletWeapon{ "lanternwick", "Rimewick Quarterstaff", false, 3, 100, 0xEC2, 0xEB9, 0x000 },
-		TabletWeapon{ "emberclaw", "Emberclaw Wraps", true, 0, 30, 0xEC3, 0xECC, 0xED1 },
-		TabletWeapon{ "eclipse", "Eclipse Edge", true, 6, 30, 0xEC4, 0xEBA, 0x000 },
-		TabletWeapon{ "wanderstar", "The Wandering Star", true, 5, 30, 0xEC5, 0xEBB, 0x000 },
-		TabletWeapon{ "whisperwood", "Whisperwood Longbow", true, 4, 30, 0xEC6, 0xEBC, 0x000 },
-		TabletWeapon{ "codex", "The Unwritten Codex", true, 7, 30, 0xEC7, 0xECD, 0x000 },
+		TabletWeapon{ "stormtalons", "Stormtalons", false, 2, 100, 0xEE5, 0xEE0, 0x000, "NewArmoury.esp", 0x19AAAA, 0x19AAE0 },
+		TabletWeapon{ "gravebell", "Gravebell Mace", false, 1, 100, 0xEBE, 0xEB5, 0x000, "", 0x0, 0x0 },
+		TabletWeapon{ "talons", "Talons of Woe", true, 2, 30, 0xEE6, 0xEE1, 0x000, "NewArmoury.esp", 0x19AAB2, 0x19AAEE },
+		TabletWeapon{ "riverstone", "Riverstone Halberd", false, 3, 100, 0xEC0, 0xEB7, 0x000, "NewArmoury.esp", 0x16801F, 0x0 },
+		TabletWeapon{ "wyrmspine", "Wyrmspine Pike", true, 6, 30, 0xEE7, 0xEE2, 0x000, "NewArmoury.esp", 0x153BB9, 0x0 },
+		TabletWeapon{ "lanternwick", "Rimewick Quarterstaff", false, 3, 100, 0xEC2, 0xEB9, 0x000, "NewArmoury.esp", 0x18B765, 0x0 },
+		TabletWeapon{ "cinderclaws", "Cinderclaws", false, 2, 100, 0xEE8, 0xEE3, 0x000, "NewArmoury.esp", 0x19AAAC, 0x19AAE8 },
+		TabletWeapon{ "eclipse", "Eclipse Edge", true, 6, 30, 0xEC4, 0xEBA, 0x000, "NewArmoury.esp", 0x153BB0, 0x0 },
+		TabletWeapon{ "wanderstar", "The Wandering Star", true, 5, 30, 0xEC5, 0xEBB, 0x000, "Fulcimentum - More Staves and Wands of Skyrim.esp", 0x000808, 0x0 },
+		TabletWeapon{ "frostmourn", "Frostmourn Rapier", false, 2, 100, 0xEE9, 0xEE4, 0x000, "NewArmoury.esp", 0x01EE21, 0x0 },
+		TabletWeapon{ "codex", "The Unwritten Codex", true, 7, 30, 0xEC7, 0xECD, 0x000, "", 0x0, 0x0 },
 	} };
 	inline constexpr std::uint32_t kTabletArrow = 0xEC9;
 	struct EchoWonder { std::string_view id, label, text; std::uint32_t color, pedestal, gem; };

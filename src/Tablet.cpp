@@ -103,11 +103,27 @@ namespace bo3z::Tablet
 			auto* f = Forms::Ours(gen::kTabletWeapons[a_w].gloves);
 			return f ? f->As<RE::TESObjectARMO>() : nullptr;
 		}
+		// (the claws: Animated Armoury's own left-hand claw worn in the other hand with ours)
+		RE::TESObjectWEAP* LeftOf(int a_w)
+		{
+			if (a_w < 0 || a_w >= static_cast<int>(gen::kTabletWeapons.size()) || !gen::kTabletWeapons[a_w].left) return nullptr;
+			auto* f = RE::TESDataHandler::GetSingleton()->LookupForm(gen::kTabletWeapons[a_w].left, gen::kTabletWeapons[a_w].lookPlugin);
+			return f ? f->As<RE::TESObjectWEAP>() : nullptr;
+		}
+		void GiveLeft(RE::PlayerCharacter* p, int a_w)
+		{
+			auto* l = LeftOf(a_w);
+			auto* em = RE::ActorEquipManager::GetSingleton();
+			if (!l || !p || !em) return;
+			if (p->GetItemCount(l) < 1) Forms::Give(p, l, 1);
+			em->EquipObject(p, l, nullptr, 1, RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F43), false, false, false, true);
+		}
 		void TakeAway(int a_w)
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			auto* f = FormOf(a_w);
 			if (!p || !f) return;
+			if (auto* l = LeftOf(a_w); l && p->GetItemCount(l) > 0) p->RemoveItem(l, p->GetItemCount(l), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
 			if (auto* gl = GlovesOf(a_w); gl && p->GetItemCount(gl) > 0) {
 				p->RemoveItem(gl, p->GetItemCount(gl), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
 				if (auto* prev = g_prevGloves ? RE::TESForm::LookupByID<RE::TESObjectARMO>(g_prevGloves) : nullptr; prev && p->GetItemCount(prev) > 0) {
@@ -150,6 +166,7 @@ namespace bo3z::Tablet
 			} else if (auto* b = f->As<RE::TESBoundObject>()) {
 				Forms::Give(p, b, 1);
 				em->EquipObject(p, b, nullptr, 1, d.type == 4 || d.type == 3 || d.type == 6 ? nullptr : right, false, false, false, true);
+				GiveLeft(p, a_w);
 				if (auto* gl = GlovesOf(a_w)) {   // (the fists: their gloves on)
 					if (auto* worn = p->GetWornArmor(RE::BGSBipedObjectForm::BipedObjectSlot::kHands); worn && worn != gl) g_prevGloves = worn->GetFormID();
 					Forms::Give(p, gl, 1);
@@ -496,14 +513,68 @@ namespace bo3z::Tablet
 	void OnStrike(RE::Actor* a_target, RE::FormID a_source, bool a_power, bool a_arrow)
 	{
 		auto* f = FormOf(g_held);
-		if (!a_target || !f || f->GetFormID() != a_source || !Director::IsFoe(a_target)) return;
+		auto* lt = LeftOf(g_held);
+		if (!a_target || !f || (f->GetFormID() != a_source && (!lt || lt->GetFormID() != a_source)) || !Director::IsFoe(a_target)) return;
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		const float S = Share();
 		const RE::NiPoint3 tp = a_target->GetPosition();
 		const std::string_view id = gen::kTabletWeapons[g_held].id;
 		if (g_countFor != g_held) g_countFor = g_held, g_count = 0;   // (a new weapon counts afresh)
 		++g_count;
-		if (id == "stormknuckles") {   // each punch arcs lightning to 2 more; a heavy punch slams the ground in a ring of shock
+		if (id == "stormtalons") {   // every 3rd hit jumps lightning to 2 more; a heavy hit stuns the one struck
+			if (g_count % 3 == 0) for (auto* o : Others(a_target, tp, 420.0f, 2)) { Gun::LightningArc(Mid(a_target), Mid(o), 0.0f); Gun::HitShare(o, S * 0.6f); }
+			if (a_power) { Gun::Freeze(a_target, 1.5f); Gun::ElemBurst(2, Mid(a_target), 0.6f, 0.0f, 0.6f); }
+		} else if (id == "talons") {   // the bleed runs twice as deep in the dead; each kill heals you a little
+			Gun::Burn(a_target, S * 0.08f, 4.0f, -1);
+			Gun::ElemBurst(5, Mid(a_target), 0.4f, 0.0f, 0.5f);
+			if (a_target->IsDead() || a_target->AsActorValueOwner()->GetActorValue(RE::ActorValue::kHealth) <= 0) {
+				if (auto* av = p ? p->AsActorValueOwner() : nullptr) av->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kDamage, RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.03f);
+			}
+		} else if (id == "cinderclaws") {   // every swipe sets the dead burning; a heavy swipe flings a fan of embers
+			Gun::Burn(a_target, S * 0.06f, 4.0f, 0);
+			if (a_power && g_slamCool <= 0 && p) {
+				g_slamCool = 1.2f;
+				RE::NiPoint3 d = Gun::SwingDir(); d.z = 0;
+				if (d.Length() > 1e-3f) d = d * (1.0f / d.Length());
+				const RE::NiPoint3 from = p->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f };
+				for (int k = -2; k <= 2; ++k) {
+					const float a = k * 0.28f;
+					const RE::NiPoint3 dir{ d.x * std::cos(a) - d.y * std::sin(a), d.x * std::sin(a) + d.y * std::cos(a), 0 };
+					for (auto* o : Gun::LineHurt(from, from + dir * 520.0f, 70.0f, S * 0.5f)) Gun::Burn(o, S * 0.06f, 4.0f, 0);
+					Gun::ElemBurst(0, from + dir * 260.0f, 0.5f, 0.05f * (k + 2), 0.6f);
+				}
+			}
+		} else if (id == "wyrmspine") {   // thrusts pierce through 2 more in a line; a heavy thrust drives a spike of bone up ahead
+			if (p) {
+				RE::NiPoint3 d = Gun::SwingDir(); d.z = 0;
+				if (d.Length() > 1e-3f) d = d * (1.0f / d.Length());
+				int n = 0;
+				for (auto* o : Gun::LineHurt(tp + RE::NiPoint3{ 0, 0, 50.0f }, tp + d * 300.0f + RE::NiPoint3{ 0, 0, 50.0f }, 70.0f, 0.0f)) {
+					if (o == a_target || n >= 2) continue;
+					Gun::HitShare(o, S * 0.7f), ++n;
+				}
+				if (a_power && g_splitCool <= 0) {
+					g_splitCool = 1.5f;
+					const RE::NiPoint3 at = p->GetPosition() + d * 280.0f;
+					Gun::FxBlast("giantslam", at);
+					Gun::AreaHurt(at, 180.0f, S * 1.6f, "");
+					for (auto* o : Gun::FoesNear(at, 180.0f)) Gun::Knock(o, 2.0f);
+				}
+			}
+		} else if (id == "frostmourn") {   // thrusts slow everything they touch; a heavy thrust freezes a ring around you
+			Gun::ElemBurst(1, Mid(a_target), 0.35f, 0.0f, 0.5f);
+			if (auto* av = a_target->AsActorValueOwner()) {
+				av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, -40.0f);
+				av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, 0.01f);
+				av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, -0.01f);
+				Tasks::Later(3.0f, [h = a_target->GetHandle()] { if (auto x = h.get()) { auto* v = x->AsActorValueOwner(); v->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, 40.0f); v->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, 0.01f); v->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, -0.01f); } });
+			}
+			if (a_power && g_eclipseCool <= 0 && p) {
+				g_eclipseCool = 2.0f;
+				Gun::ElemBurst(1, p->GetPosition() + RE::NiPoint3{ 0, 0, 30.0f }, 1.4f, 0.0f, 1.0f);
+				for (auto* o : Gun::FoesNear(p->GetPosition(), 330.0f)) Gun::Freeze(o, 3.0f);
+			}
+		} else if (id == "stormknuckles") {   // each punch arcs lightning to 2 more; a heavy punch slams the ground in a ring of shock
 			for (auto* o : Others(a_target, tp, 380.0f, 2)) { Gun::LightningArc(Mid(a_target), Mid(o), 0.0f); Gun::HitShare(o, S * 0.5f); }
 			if (a_power && g_slamCool <= 0 && p) {
 				g_slamCool = 1.0f;
@@ -708,6 +779,7 @@ namespace bo3z::Tablet
 				}
 				g_held = i, g_uses = gen::kTabletWeapons[i].uses;
 				Rename(i, g_uses);
+				if (LeftOf(i) && p->GetEquippedObject(true) != LeftOf(i)) GiveLeft(p, i);
 				if (auto* gl = GlovesOf(i)) {
 					Forms::Give(p, gl, 1);
 					if (auto* em = RE::ActorEquipManager::GetSingleton()) em->EquipObject(p, gl, nullptr, 1, nullptr, false, false, false, true);
@@ -785,27 +857,22 @@ namespace bo3z::Tablet
 			}
 		}
 	}
-	// (Noah: "Make Eclipse edge the glass pike") the Eclipse Edge takes Animated Armoury's Glass Pike - its models, its pike
-	// thrusts and reach, its sounds - and its pedestal shows the pike
+	// (Noah: "Make Eclipse edge the glass pike", "for 2. use the glass staff #112. 4. use #76 ... 5. use #60", the five new ones
+	// from Animated Armoury) a Tablet weapon that wears another mod's weapon (sheets/tablet.json look) takes its models, how it's
+	// held and swung, its reach and its sounds; its pedestal shows it
 	void AdoptLooks()
 	{
 		for (int i = 0; i < static_cast<int>(gen::kTabletWeapons.size()); ++i) {
 			const auto& d = gen::kTabletWeapons[i];
-			std::uint32_t src = 0;
-			const char* plugin = "NewArmoury.esp";
-			// (Noah: "for 2. use the glass staff #112. 4. use #76 and change the name to match. 5. use #60")
-			if (d.id == "eclipse") src = 0x153BB0;           // Glass Pike
-			else if (d.id == "lanternwick") src = 0x18B765;  // Stalhrim Quarterstaff (the Rimewick)
-			else if (d.id == "riverstone") src = 0x16801F;   // Nordic Halberd
-			else if (d.id == "wanderstar") src = 0x000808, plugin = "Fulcimentum - More Staves and Wands of Skyrim.esp";   // Glass Staff
-			if (!src) continue;
-			auto* f = RE::TESDataHandler::GetSingleton()->LookupForm(src, plugin);
+			if (!d.look) continue;
+			auto* f = RE::TESDataHandler::GetSingleton()->LookupForm(d.look, d.lookPlugin);
 			auto* s = f ? f->As<RE::TESObjectWEAP>() : nullptr;
 			auto* w = Forms::Ours(d.form) ? Forms::Ours(d.form)->As<RE::TESObjectWEAP>() : nullptr;
-			if (!s || !w) continue;
+			if (!s || !w) { logger::warn("tablet: {} can't wear {:06X} of {} - is the mod installed?", d.label, d.look, d.lookPlugin); continue; }
 			Classes::AdoptLook(w, s);
 			if (auto* show = Forms::Ours(d.show) ? Forms::Ours(d.show)->As<RE::TESObjectSTAT>() : nullptr) show->SetModel(s->GetModel());
 			logger::info("tablet: the {} takes the look of {}", d.label, s->GetName());
 		}
 	}
+
 }
