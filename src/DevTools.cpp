@@ -642,6 +642,36 @@ namespace bo3z
 			} else if (cmd == "quit") {  // the game closed to the desktop (so a new build can go in)
 				logger::info("dev: quitting to the desktop");
 				if (auto* m = RE::Main::GetSingleton()) m->quitGame = true;
+			} else if (cmd == "freeloop") {
+				// freeloop [seconds] [town index] | freeloop off: (Noah: "run the echo altar being freed animation every 20
+				// seconds so I can get a clip of it") the city's freeing - the charge, the burst, the runes - played again and
+				// again (the city you're in unless a town is named); off stops it
+				static int loopGen = 0;
+				std::string a;
+				in >> a;
+				++loopGen;
+				if (a == "off") {
+					logger::info("dev: freeloop off");
+				} else {
+					float secs = 20.0f;
+					int   town = -1;
+					try { if (!a.empty()) secs = std::max(10.0f, std::stof(a)); } catch (...) {}
+					in >> town;
+					if (town < 0) town = Curse::ZoneTown();
+					if (town < 0) {
+						logger::info("dev: freeloop - not in a city (name a town index)");
+					} else {
+						const int mine = loopGen;
+						static std::function<void(int, int, float)> again;
+						again = [](int a_gen, int a_town, float a_secs) {
+							if (a_gen != loopGen) return;
+							Shops::FreedPulse(a_town);
+							Tasks::Later(a_secs, [a_gen, a_town, a_secs] { if (a_gen == loopGen) Tasks::Add([a_gen, a_town, a_secs] { again(a_gen, a_town, a_secs); }); });
+						};
+						logger::info("dev: freeloop - {} freed every {:.0f} s", gen::kTowns[town], secs);
+						again(mine, town, secs);
+					}
+				}
 			} else if (cmd == "tablet") {  // tablet <roll|gold|town <n>>: the Tablet of Mysteries rolled now, or moved
 				std::string what;
 				int t = -1;
