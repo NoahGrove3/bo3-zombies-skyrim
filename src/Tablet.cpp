@@ -528,7 +528,7 @@ namespace bo3z::Tablet
 			Gun::Burn(a_target, S * 0.08f, 4.0f, -1);
 			Gun::ElemBurst(5, Mid(a_target), 0.4f, 0.0f, 0.5f);
 			if (a_target->IsDead() || a_target->AsActorValueOwner()->GetActorValue(RE::ActorValue::kHealth) <= 0) {
-				if (auto* av = p ? p->AsActorValueOwner() : nullptr) av->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kDamage, RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.03f);
+				if (auto* av = p ? p->AsActorValueOwner() : nullptr) av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.03f);
 			}
 		} else if (id == "cinderclaws") {   // every swipe sets the dead burning; a heavy swipe flings a fan of embers
 			Gun::Burn(a_target, S * 0.06f, 4.0f, 0);
