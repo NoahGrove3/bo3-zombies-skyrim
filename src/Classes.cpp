@@ -2998,10 +2998,10 @@ namespace bo3z::Classes
 			"Legendary: three bolts of lightning strike from the sky around it.", "Legendary: it splits into three more acid splashes.",
 			"Legendary: a pillar of sunlight strikes down where it breaks.", "Legendary: after the pull, a lunar tide blasts the dead back out." };
 		static const Card kSets[] = {
-			{ "Conjurer's Violet", "The Summoner's set: the Black Mage's robes in violet.", { "Tier I: your summons take a fifth less harm.", "Tier II: one more summon slot.", "Tier III: your summons' kills heal you." } },
-			{ "Battlemage's Ember", "The Battle-mage's set: the Black Mage's robes in ember orange.", { "Tier I: your spells cost 10% less.", "Tier II: your magicka comes back faster.", "Tier III: your spells cost a quarter less." } },
-			{ "Alchemist's Verdant", "The Alchemist's set: the Black Mage's robes in green.", { "Tier I: you throw 15% faster.", "Tier II: your flasks' bursts reach 20% wider.", "Tier III: each flask kill heals you 2%." } },
-			{ "Spellsword's Azure", "The Spellsword's set: the Black Mage's robes in azure.", { "Tier I: you mend in a fight.", "Tier II: your blade's hits put magicka back.", "Tier III: your blade hits 15% harder." } },
+			{ "Conjurer's Robes", "The Summoner's set: Calling of the Conjurer's robe, hood and boots.", { "Tier I: your summons take a fifth less harm.", "Tier II: one more summon slot.", "Tier III: your summons' kills heal you." } },
+			{ "Black Mage College Robes", "The Battle-mage's set: Black Mage Armor's College robes, hood and boots.", { "Tier I: your spells cost 10% less.", "Tier II: your magicka comes back faster.", "Tier III: your spells cost a quarter less." } },
+			{ "Gondorian Ranger Armor", "The Alchemist's set: the Gondorian Ranger's cuirass and boots, the Ithilien hood.", { "Tier I: you throw 15% faster.", "Tier II: your flasks' bursts reach 20% wider.", "Tier III: each flask kill heals you 2%." } },
+			{ "Black Archmage Plate", "The Spellsword's set: the Black Archmage's plate.", { "Tier I: you mend in a fight.", "Tier II: your blade's hits put magicka back.", "Tier III: your blade hits 15% harder." } },
 		};
 		std::string want;
 		const Card* c = nullptr;
@@ -3535,16 +3535,22 @@ namespace bo3z::Classes
 	namespace
 	{
 		struct Piece { const char* plugin; std::uint32_t id; };
-		// (Noah: "have all the classes have the same armor (dark mage set the one given in the destruction and alchemist class) set
-		// with different accent colors matching their color class") every class in the Black Mage robes, its stitching, lacing
-		// and trims in its own colour: the Summoner's violet, Destruction's ember orange, the Alchemist's green, the Spellsword's blue
-		// (built on the player's PC from Black Mage Armor SE, src/ArmorForge.cpp; the records are ours, tools/gen_esp.py)
+		// (Noah, from the armour lookbook: "for Summoner use #9 without the gauntlets. for Destruction use #7 mage robes without
+		// the gauntlets. for Alchemist use #33 without the gauntlets. for Spellsword use #6" - the gauntlets clipped the cloth;
+		// "exactly as previewed": each set in its own mod's colours, the class colour only in the upgrade aura)
 		std::vector<Piece> SetPieces(int a_cls, int, bool)
 		{
-			if (a_cls < 0 || a_cls > 3) return {};
-			std::vector<Piece> out;
-			for (int i = 0; i < 4; ++i) out.push_back({ gen::kPlugin.data(), gen::kClassArmour[a_cls][i] });
-			return out;
+			switch (a_cls) {
+			case coffer::kSummoner:  // Calling of the Conjurer's Conjurer's Robe (Rogues 'n Raiders), its boots, the Arch Conjurer's hood
+				return { { "Rogues 'n Raiders.esp", 0x8C94A2 }, { "Rogues 'n Raiders.esp", 0x2998A6 }, { "Rogues 'n Raiders.esp", 0x91A4FB } };
+			case coffer::kDestruction:  // Black Mage Armor SE: the College robes, the leather hood, the College boots
+				return { { "Black Mage Armor SE.esp", 0x0146A5 }, { "Black Mage Armor SE.esp", 0x000D71 }, { "Black Mage Armor SE.esp", 0x0146A6 } };
+			case coffer::kAlchemist:  // the Gondorian Ranger's cuirass and boots, the Ithilien hood
+				return { { "GondorianRangerArmor.esp", 0x000D64 }, { "GondorianRangerArmor.esp", 0x000D66 }, { "GondorianRangerArmor.esp", 0x000D63 } };
+			case coffer::kSpellsword:  // Black Mage Armor SE: the Black Archmage's plate - cuirass, helm, gauntlets, sabatons
+				return { { "Black Mage Armor SE.esp", 0x00DA79 }, { "Black Mage Armor SE.esp", 0x00DFDD }, { "Black Mage Armor SE.esp", 0x00EAC2 }, { "Black Mage Armor SE.esp", 0x00EAC1 } };
+			default: return {};
+			}
 		}
 		// the sets the classes wore before (taken back from a character still carrying them)
 		std::vector<Piece> OldSetPieces(int a_cls, int a_tier, bool a_female)
@@ -3592,7 +3598,10 @@ namespace bo3z::Classes
 		std::vector<RE::TESObjectARMO*> AllSetForms(int a_cls)
 		{
 			std::vector<RE::TESObjectARMO*> out;
-			for (int t = 0; t <= (a_cls == coffer::kDestruction || a_cls == coffer::kAlchemist ? 3 : 0); ++t) for (auto* a : SetFormsAt(a_cls, t)) if (std::find(out.begin(), out.end(), a) == out.end()) out.push_back(a);  // (the earlier tiers' looks, taken back)
+			for (auto* a : SetFormsAt(a_cls, 0)) if (std::find(out.begin(), out.end(), a) == out.end()) out.push_back(a);  // (the earlier tiers' looks, taken back)
+			for (int i = 0; i < 4; ++i) {   // (the class-coloured Black Mage robes every class wore before the lookbook's sets)
+				if (auto* f = Lookup(gen::kClassArmour[a_cls][i], gen::kPlugin.data())) if (auto* a = f->As<RE::TESObjectARMO>(); a && std::find(out.begin(), out.end(), a) == out.end()) out.push_back(a);
+			}
 			for (int t = 0; t <= 3; ++t) {   // (and the sets the classes wore before every class wore the Black Mage's)
 				for (const bool fem : { false, true }) {
 					for (const auto& pc : OldSetPieces(a_cls, t, fem)) {
@@ -3606,7 +3615,7 @@ namespace bo3z::Classes
 	std::string ArmourSetName(int a_cls, int a_tier)
 	{
 		if (a_cls < 0 || a_cls > 3) return "Armor";
-		static constexpr const char* kName[4] = { "Conjurer's Violet Robes", "Battlemage's Ember Robes", "Alchemist's Verdant Robes", "Spellsword's Azure Robes" };   // (tools/gen_esp.py CLASS_ARMOUR_NAMES)
+		static constexpr const char* kName[4] = { "Conjurer's Robes", "Black Mage College Robes", "Gondorian Ranger Armor", "Black Archmage Plate" };   // (the lookbook's sets, by their mods' names)
 		return a_tier >= 1 ? fmt::format("{} (Enchanted {})", kName[a_cls], a_tier >= 3 ? "III" : a_tier == 2 ? "II" : "I") : std::string(kName[a_cls]);
 	}
 

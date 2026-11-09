@@ -16,7 +16,7 @@
           "title": "The Summoner",
           "paras": [
             "A conjurer of the <b>College of Winterhold</b>. Your summons fight for you - every kill they make is yours: Cursed Essence, progress and trials.",
-            "<b>You start with</b> Conjure Wolf (left hand), Conjure Skeleton in your spellbook, the <b>Radiant Blade</b> (right hand) and the <b>Conjurer's Violet Robes</b> (the Black Mage's robes in the Summoner's violet) (your armor set: Tier I your summons take a fifth less, Tier II one more summon slot, Tier III your summons' kills heal you). Every class sword climbs the same way: Base is the bare sword; Tier I its element wakes on the blade and every light swing sends out an arc slash in its colour that pierces through the dead; Tier II its heavy attacks burst round where they land; Tier III its own power. The <b>Radiant Blade</b>'s light is white; at Tier III three blades of light circle you and strike the dead that come near."
+            "<b>You start with</b> Conjure Wolf (left hand), Conjure Skeleton in your spellbook, the <b>Radiant Blade</b> (right hand) and the <b>Conjurer's Robes</b> (Calling of the Conjurer's robe, hood and boots) (your armor set: Tier I your summons take a fifth less, Tier II one more summon slot, Tier III your summons' kills heal you). Every class sword climbs the same way: Base is the bare sword; Tier I its element wakes on the blade and every light swing sends out an arc slash in its colour that pierces through the dead; Tier II its heavy attacks burst round where they land; Tier III its own power. The <b>Radiant Blade</b>'s light is white; at Tier III three blades of light circle you and strike the dead that come near."
           ]
         },
         {
@@ -60,7 +60,7 @@
           "title": "The Battle-mage",
           "paras": [
             "A battle-mage of the <b>College of Winterhold</b>: a different element in each hand, struck from afar - bolts, beams, storms and runes.",
-            "<b>You start with</b> the <b>Carian Blade</b> (right hand - raw blue sorcery no foe resists: Tier I its arcs, Tier II its heavy attacks burst, Tier III a charged swing conjures a giant spectral greatsword that sweeps all before you), Ice Spike (left hand), Firebolt in your spellbook, a Destruction tome and the <b>Battlemage's Ember Robes</b> - your armor set (the Black Mage's robes in ember orange, glowing, enchanted, from Tier I - brighter each tier): Tier I spells cost 10% less, Tier II magicka comes back faster, Tier III spells cost a quarter less. Your magicka starts coming back 1 second after a cast."
+            "<b>You start with</b> the <b>Carian Blade</b> (right hand - raw blue sorcery no foe resists: Tier I its arcs, Tier II its heavy attacks burst, Tier III a charged swing conjures a giant spectral greatsword that sweeps all before you), Ice Spike (left hand), Firebolt in your spellbook, a Destruction tome and the <b>Black Mage College Robes</b> - your armor set (Black Mage Armor's College robes, hood and boots; from Tier I an aura in your class's colour, brighter each tier): Tier I spells cost 10% less, Tier II magicka comes back faster, Tier III spells cost a quarter less. Your magicka starts coming back 1 second after a cast."
           ]
         },
         {
@@ -103,7 +103,7 @@
           "title": "The Alchemist",
           "paras": [
             "A wandering <b>alchemist</b>: flasks of fire, frost, storm, acid, holy water and the void, lobbed into the dead - every flask bursts where it lands, on a body, a wall or the ground.",
-            "<b>You start with</b> the <b>Shadowflame Sword</b> (right hand - its arcs set the dead burning with <b>Shadowflame</b>, fire at twice its damage for 5 s; at Tier III the dead that die burning explode and set those round them alight), the <b>Fire Flask</b> (left hand - hold a flask in either hand and attack to throw it, underhand) and the <b>Alchemist's Verdant Robes</b> - your armor set (the Black Mage's robes in green, glowing, enchanted, from Tier I - brighter each tier): Tier I you throw 15% faster, Tier II their bursts reach 20% wider, Tier III each flask kill heals you 2%.",
+            "<b>You start with</b> the <b>Shadowflame Sword</b> (right hand - its arcs set the dead burning with <b>Shadowflame</b>, fire at twice its damage for 5 s; at Tier III the dead that die burning explode and set those round them alight), the <b>Fire Flask</b> (left hand - hold a flask in either hand and attack to throw it, underhand) and the <b>Gondorian Ranger Armor</b> - your armor set (the Gondorian Ranger's cuirass and boots and the Ithilien hood; from Tier I an aura in your class's colour, brighter each tier): Tier I you throw 15% faster, Tier II their bursts reach 20% wider, Tier III each flask kill heals you 2%.",
             "An Alchemist in your party lets everyone mend slowly in a fight."
           ]
         },
@@ -148,7 +148,7 @@
           "title": "The Spellsword",
           "paras": [
             "A <b>Vigilant of Stendarr</b>: steel in one hand, a touch spell in the other - fire, frost, shock, sun or arcane - that rides every blow of the blade.",
-            "<b>You start with</b> the <b>Spellbound Blade</b> (its element is the spell in your other hand; at Tier III its arcs carry that spell), <b>Burning Touch</b> (left hand) and the <b>Spellsword's Azure Robes</b> (the Black Mage's robes in the Spellsword's blue) (your armor set): Tier I you mend in a fight, Tier II your blade's hits put magicka back, Tier III your blade hits 15% harder. No shields: your off hand is always a spell, and every blade hit casts it."
+            "<b>You start with</b> the <b>Spellbound Blade</b> (its element is the spell in your other hand; at Tier III its arcs carry that spell), <b>Burning Touch</b> (left hand) and the <b>Black Archmage Plate</b> (Black Mage Armor's Black Archmage plate: cuirass, helm, gauntlets and sabatons) (your armor set): Tier I you mend in a fight, Tier II your blade's hits put magicka back, Tier III your blade hits 15% harder. No shields: your off hand is always a spell, and every blade hit casts it."
           ]
         },
         {

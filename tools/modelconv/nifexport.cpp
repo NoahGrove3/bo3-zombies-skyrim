@@ -29,7 +29,6 @@ int main(int argc, char** argv) {
 	int si = 0;
 	for (auto* s : nif.GetShapes()) {
 		auto* t = dynamic_cast<BSTriShape*>(s);
-		if (!t) continue;
 		FILE* o = fopen((out + "/shape_" + std::to_string(si++) + ".txt").c_str(), "w");
 		fprintf(o, "name\t%s\n", s->name.get().c_str());
 		for (int k = 0; k < 3; ++k) { std::string tex; nif.GetTextureSlot(s, tex, k == 2 ? 2 : k); fprintf(o, "tex%d\t%s\n", k, tex.c_str()); }
@@ -43,11 +42,19 @@ int main(int argc, char** argv) {
 		}
 		MatTransform st = s->GetTransformToParent();
 		fprintf(o, "shapexf\t%f %f %f\t%f\n", st.translation.x, st.translation.y, st.translation.z, st.scale);
-		for (auto& v : t->vertData) {
-			fprintf(o, "v %f %f %f %f %f", v.vert.x, v.vert.y, v.vert.z, (float)v.uv.u, (float)v.uv.v);
-			fprintf(o, " %d %d %d %d %f %f %f %f\n", v.weightBones[0], v.weightBones[1], v.weightBones[2], v.weightBones[3], (float)v.weights[0], (float)v.weights[1], (float)v.weights[2], (float)v.weights[3]);
+		if (t && !t->vertData.empty()) {
+			for (auto& v : t->vertData) {
+				fprintf(o, "v %f %f %f %f %f", v.vert.x, v.vert.y, v.vert.z, (float)v.uv.u, (float)v.uv.v);
+				fprintf(o, " %d %d %d %d %f %f %f %f\n", v.weightBones[0], v.weightBones[1], v.weightBones[2], v.weightBones[3], (float)v.weights[0], (float)v.weights[1], (float)v.weights[2], (float)v.weights[3]);
+			}
+		} else {
+			const auto* vs = nif.GetVertsForShape(s); const auto* uvs = nif.GetUvsForShape(s);
+			if (vs) for (size_t i = 0; i < vs->size(); ++i) {
+				Vector2 uv = uvs && i < uvs->size() ? (*uvs)[i] : Vector2();
+				fprintf(o, "v %f %f %f %f %f 0 0 0 0 1 0 0 0\n", (*vs)[i].x, (*vs)[i].y, (*vs)[i].z, uv.u, uv.v);
+			}
 		}
-		std::vector<Triangle> tris; t->GetTriangles(tris);
+		std::vector<Triangle> tris; s->GetTriangles(tris);
 		for (auto& tr : tris) fprintf(o, "f %d %d %d\n", tr.p1, tr.p2, tr.p3);
 		fclose(o);
 	}

@@ -1290,7 +1290,7 @@ namespace bo3z
 
 		void OnDataLoaded()
 		{
-			ArmorForge::Build();  // (Noah: Black Mage Armor SE "required": the class robes made from its files, here)
+			// (the class-coloured Black Mage robes are gone - each class wears its lookbook set as its mod made it - so ArmorForge::Build no longer runs)
 			FreeBowMovement();
 			Undead::InstallHooks();
 			Hud::InstallInputGate();
