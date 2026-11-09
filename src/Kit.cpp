@@ -271,7 +271,7 @@ namespace bo3z::Kit
 				if (w) {
 					// (Noah: "the sword itself in hand doesn't have the special FX") Skyrim draws no enchantment on a weapon out of
 					// charge - and none at all counts as out: a little charge, and its looks cost none, so it never runs down
-					w->amountofEnchantment = t >= 1 ? 100 : 0;
+					w->amountofEnchantment = t >= 1 || w == Classes::CarianBlade() ? 100 : 0;   // (Destruction's wands cast at every tier)
 					if (auto* p = RE::PlayerCharacter::GetSingleton()) {
 						if (auto* inv = p->GetInventoryChanges(); inv && inv->entryList) {
 							for (auto* e : *inv->entryList) {

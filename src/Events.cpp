@@ -968,7 +968,7 @@ namespace bo3z
 							}
 							NoteStruck(z, false);
 							const auto* bw = src->As<RE::TESObjectWEAP>();
-							HurtUndead(z, Director::RoundHealth() * share * (0.7f + 0.3f * Arcana::Power()), nullptr, bw && Classes::SwordClass(bw) == 2 ? 0 : -1);  // (the night's power curve; the Shadowflame Sword's dead die by fire)
+							HurtUndead(z, Director::RoundHealth() * share * (0.7f + 0.3f * Arcana::Power()), nullptr, bw && Classes::SwordClass(bw) == 2 ? 0 : -1);  // (the night's power curve; the Shadowflame Whip's dead die by fire)
 							Undead::OnHit(z);
 							MarkHit(z);
 						}

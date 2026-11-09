@@ -91,7 +91,8 @@ def echo_ids(S):
     TB = S.get('tablet', {}).get('rows', [])
     ids += [('WEAP', 'tab_' + w['id']) for w in TB if w['type'] != 'book'] + [(k, 'tab_' + w['id']) for w in TB if w['type'] == 'book' for k in ('SPEL', 'MGEF')]
     ids += [('AMMO', 'tab_arrow'), ('PROJ', 'tab_arrow')]
-    ids += [('MGEF', 'tabstaffcast'), ('ENCH', 'tabstaff')]   # (the donated staffs' casts: ours, src/Tablet.cpp)
+    ids += [('MGEF', 'tabstaffcast'), ('ENCH', 'tabstaff')]
+    ids += [('ENCH', 'carianwand')]   # (Noah: Destruction's wands - their cast is ours, src/Classes.cpp WandCast)   # (the donated staffs' casts: ours, src/Tablet.cpp)
     ids += [(k, 'tabglove_' + w['id']) for w in TB if w.get('gloves') for k in ('ARMA', 'ARMO')]   # (the fists: gloves on the hands)
     ids += [('MGEF', 'wyrmcall')]   # (Noah: the Violet Wyrm made a summon spell: its cast's effect)
     ids += [('WEAP', 'wyrmhorn')]   # (Noah: the Horn of the Violet Wyrm - "Held in hand")   # (Noah: the Mutagen Gauntlet made a staff: its beam held as Skyrim's staff cast)

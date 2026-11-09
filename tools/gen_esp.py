@@ -253,6 +253,12 @@ recs['ENCH'].append(record('ENCH', fid('ENCH', 'tabstaff'), [
     sub('EDID', z('UN_TabletStaffEnch')), sub('OBND', bytes(12)), sub('FULL', z('Donated Staff')),
     sub('ENIT', struct.pack('<iIIiIIfII', 0, 0x1, 1, 3000, 0, 0x0C, 0.0, 0, 0)),
     sub('EFID', struct.pack('<I', fid('MGEF', 'tabstaffcast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
+# (Noah: "Destruction - Carian Wands, one per hand") the wands' enchantment: fire and forget on yourself, free - only so Skyrim
+# plays the cast; its Carian bolt is ours (src/Classes.cpp WandCast)
+recs['ENCH'].append(record('ENCH', fid('ENCH', 'carianwand'), [
+    sub('EDID', z('UN_CarianWandEnch')), sub('OBND', bytes(12)), sub('FULL', z('Carian Bolt')),
+    sub('ENIT', struct.pack('<iIIiIIfII', 0, 0x1, 1, 3000, 0, 0x0C, 0.0, 0, 0)),
+    sub('EFID', struct.pack('<I', fid('MGEF', 'wandcast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 for w in S['tablet']['rows']:
     if w['type'] == 'book': continue
     tmpl, anim, spd, reach, wt, kws = TB_KIND[w['type']]
@@ -596,14 +602,14 @@ KV = 'kv\\crystalsword\\'
 # and what each of its tiers does - its description, and (TIER_TEXT) the tier's own line on the item card
 SWORD_DESC = {   # (Noah: "way too long" - the card tells what the sword is; each tier's line is added by src/Classes.cpp TickItemCard)
     'radiant': "The Summoner's blade: pale silver, burning with white sunlight.",
-    'carian': "Destruction's blade: stahlrim edged in raw sorcery.",
+    'carian': "Destruction's wands, one for each hand: each cast looses a bolt of raw sorcery - fire, frost and lightning in turn.",
     'alch': "The Alchemist's blade: daedric steel wreathed in purple shadowflame.",
     'ss_none': "The Spellsword's blade: it takes the element of the spell in your other hand.",
     'slayer': "The Akaviri dragon-hunters' blade. Swings 50% faster. Light swings: golden fire, twice the damage to dragons. Heavy attacks: a cyclone of golden dragonfire.",
 }
 TIER_TEXT = {   # (the look's enchantment on the item card: what this tier adds)
     'radiant': ("Light swings loose white sun balls through the dead.", "Sun balls; heavy attacks call a pillar of sunlight down on the one you strike.", "Sun balls, and a great pillar of sunlight on every heavy attack."),
-    'carian': ("Light swings loose bolts of fire, frost and lightning through the dead.", "Elemental bolts; heavy attacks loose a storm cyclone of fire, ice and lightning.", "Elemental bolts, and a great storm cyclone on every heavy attack."),
+    'carian': ("Each cast looses a bolt of fire, frost or lightning through the dead.", "Every 3rd cast is a great bolt that pierces.", "Great bolts, and both wands cast together loose a crossing volley."),
     'alch': ("Light swings loose bolts of shadowflame that set the dead burning.", "Bolts of shadowflame; heavy attacks loose a cyclone of purple fire.", "Bolts of shadowflame, and a great cyclone of purple fire on every heavy attack."),
     'ss': ("Light swings loose bolts of your spell's element through the dead.", "Bolts of your spell's element; heavy attacks loose a cyclone of it.", "Bolts of your spell's element, and a great cyclone of it on every heavy attack."),
     'slayer': ("Golden fire: twice the damage to dragons; heavy attacks loose a cyclone of golden dragonfire.",) * 3,
@@ -615,14 +621,14 @@ LGS = {'radiant': 'silver', 'carian': 'stahlrim', 'shadowflame': 'daedric', 'spe
 def lgs(k): return f'Light Greatswords\\{LGS[k]}\\LightGreatsword.nif'
 # (Noah: "hang them at the hip") the four class swords: our copies sheathed at the hip (src/ArmorForge.cpp BuildHipBlades)
 def hip(k): return f'CurseOfAlduin\\hipblades\\{LGS[k]}.nif'
-crystal_weapon('riftblade', 'UN_Riftblade', 'Radiant Blade', hip('radiant'), '1st_riftblade',
+crystal_weapon('riftblade', 'UN_Riftblade', 'Radiant Quarterstaff', hip('radiant'), '1st_riftblade',
     SWORD_DESC['radiant'],
     (900, 10.0, 10))
-crystal_weapon('carianblade', 'UN_CarianBlade', 'Carian Blade', hip('carian'), '1st_kvblue',
+crystal_weapon('carianblade', 'UN_CarianBlade', 'Carian Wand', hip('carian'), '1st_kvblue',
     SWORD_DESC['carian'],
     (900, 10.0, 10))
 
-crystal_weapon('alchknife', 'UN_AlchemistKnife', 'Shadowflame Sword', hip('shadowflame'), '1st_mace',
+crystal_weapon('alchknife', 'UN_AlchemistKnife', 'Shadowflame Whip', hip('shadowflame'), '1st_mace',
     SWORD_DESC['alch'],
     (900, 10.0, 10))
 
@@ -671,7 +677,7 @@ MAD_GLOW = [  # its tiers: the blade's own fire, brighter each tier (src/Kit.cpp
     dict(persist=1.3, pulse=0.3, particles=True, birth=140.0, alpha=(0.12, 0.65, 0.12), scale2=11.0, life=0.8, fill=(215, 35, 18), keys=((255, 170, 90), (230, 45, 20), (120, 0, 0)), edge=(240, 40, 15)),
 ]
 # (the audit: the Madness Sword's first-person static pointed at Saints & Seducers' model - Creation Club content, never required: gone)
-crystal_weapon('madness', 'UN_MadnessSword', 'Spellbound Blade', hip('spellbound'), '1st_kvred',
+crystal_weapon('madness', 'UN_MadnessSword', 'Spellbound Rapier', hip('spellbound'), '1st_kvred',
     SWORD_DESC['ss_none'],
     (900, 10.0, 10))
 

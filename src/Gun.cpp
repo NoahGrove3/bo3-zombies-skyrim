@@ -2641,7 +2641,7 @@ namespace bo3z
 		void Knock(RE::Actor* a_a, float a_mag) { if (a_a && !a_a->IsDead()) Stagger(a_a, a_mag); }
 		int  FecElem(int a_elem) { const int was = g_fecElem; g_fecElem = a_elem; return was; }
 		void FireDeath(RE::Actor* a_a, int a_elem) { FecMark(a_a, a_elem); }
-		// (Noah, the Shadowflame Sword: "Fire cyclone") a spinning tornado of violet fire (tools/firecyclone.py) carried along the
+		// (Noah, the Shadowflame Whip: "Fire cyclone") a spinning tornado of violet fire (tools/firecyclone.py) carried along the
 		// ground from a point, slowing as it goes: the dead near it are dragged in, those it touches caught (a_touch, once
 		// each) and those in its heart burned every beat; at its end it bursts (a_burst)
 		struct Cyclone

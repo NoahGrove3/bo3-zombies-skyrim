@@ -212,7 +212,12 @@ namespace bo3z::Classes
 			case coffer::kDestruction:
 				GiveSpell(Rung1(a_cls, "Fire"), false);
 				GiveSpell(Rung1(a_cls, "Frost"), true);
-				GiveItem(p, CarianBlade(), 1, true);  // (Noah: "destruction should get an elemental upgradable sword too") the Carian Blade in the right hand
+				// (Noah: "Destruction - Carian Wands, one per hand") a wand in each hand (the spells kept in your book)
+				GiveItem(p, CarianBlade(), 2, false);
+				if (auto* em = RE::ActorEquipManager::GetSingleton(); em && CarianBlade()) {
+					em->EquipObject(p, CarianBlade(), nullptr, 1, RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F42), false, false, false, true);
+					em->EquipObject(p, CarianBlade(), nullptr, 1, RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F43), false, false, false, true);
+				}
 				if (auto* tome = Lookup(0x817, "Equipable Tomes - Redone.esp")) GiveItem(p, tome, 1, true);  // a Destruction tome at the hip
 				break;
 			case coffer::kAlchemist:
@@ -1908,7 +1913,7 @@ namespace bo3z::Classes
 	void RiftHit(RE::Actor* a_target)
 	{
 		(void)a_target;
-		return;  // (Noah: the Riftblade is the Radiant Blade now - its rifts and atronachs replaced by the sword tier ladder)
+		return;  // (Noah: the Riftblade is the Radiant Quarterstaff now - its rifts and atronachs replaced by the sword tier ladder)
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (!p || !a_target || !Director::IsFoe(a_target)) return;
 		static int hits = 0, bigHits = 0;
@@ -2102,11 +2107,54 @@ namespace bo3z::Classes
 	}
 	bool ThrowFlask(RE::FormID a_spell);  // (below: the Alchemist's flasks)
 	void TickAlchemy(float a_delta);
+	namespace { const char* ArcModel(int a_key); }
+	// (Noah: "Destruction - Carian Wands ... Each cast fires a Carian bolt. Tier II: every 3rd cast is a great bolt that pierces.
+	// Tier III: casting both wands together fires a crossing volley") fire, frost and lightning in turn
+	void WandCast()
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* w = CarianBlade();
+		if (!p || !w) return;
+		const int t = std::max(0, Kit::TierOfWeapon(w));
+		static int turn = 0, casts = 0;
+		static auto last = std::chrono::steady_clock::now() - std::chrono::seconds(5);
+		const auto now = std::chrono::steady_clock::now();
+		const bool both = now - last < std::chrono::milliseconds(500);
+		last = now;
+		++casts;
+		const bool great = t >= 2 && casts % 3 == 0;
+		const RE::NiPoint3 dir = Gun::SwingDir();
+		auto fire = [&](const RE::NiPoint3& d, float sizeMul, float shareMul) {
+			Gun::SlashSpec sl;
+			const int bolt = 4 + (turn++ % 3);
+			sl.model = ArcModel(bolt);
+			sl.from = Gun::SwingFrom();
+			sl.dir = d;
+			sl.roll = Gun::SwingRoll(d);
+			sl.range = 1400.0f + 200.0f * std::min(t, 3);
+			sl.bolt = true, sl.speed = 1150.0f;
+			sl.scale = (1.1f + 0.15f * std::min(t, 3)) * sizeMul;
+			sl.share = BladeShare(w) * (0.7f + 0.3f * Arcana::Power()) * (t >= 1 ? UpgradeMult(t) / std::max(0.01f, UpgradeMult(1)) : 0.6f) * shareMul;
+			sl.flingKill = 16.0f;
+			sl.onHit = [bolt](RE::Actor* a, bool killed) {
+				if (!killed && a) Gun::ElemBurst(bolt - 4, a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, 0.35f, 0.0f, 0.4f);
+			};
+			Gun::Slash(sl);
+		};
+		fire(dir, great ? 1.8f : 1.0f, great ? 2.0f : 1.0f);
+		if (t >= 3 && both) {   // the crossing volley: two more, either side
+			for (const float a : { -0.18f, 0.18f }) {
+				RE::NiPoint3 d{ dir.x * std::cos(a) - dir.y * std::sin(a), dir.x * std::sin(a) + dir.y * std::cos(a), dir.z };
+				fire(d, 1.0f, 0.8f);
+			}
+		}
+	}
 	bool OnCast(RE::FormID a_spell)
 	{
 		PatchArcane();
 		if (const int k = ArcaneKind(a_spell); k >= 0 && k < 3) { ArcaneCast(k, a_spell); return true; }
 		if (ThrowFlask(a_spell)) return true;
+		if (CarianBlade() && CarianBlade()->formEnchanting && a_spell == CarianBlade()->formEnchanting->GetFormID()) { WandCast(); return true; }
 		if (auto* horn = WyrmSpell(); horn && a_spell == horn->GetFormID()) {
 			WyrmCast();   // (the Call of the Violet Wyrm: WyrmHorn.inl)
 			return true;
@@ -2480,6 +2528,16 @@ namespace bo3z::Classes
 		static constexpr Src kWhip{ "NewArmoury.esp", { 0x31BDDE, 0x31BDE4, 0x31BDE5, 0x31BDE6 } };     // the Alchemist's whip
 		static constexpr Src kRapier{ "NewArmoury.esp", { 0x019D0D, 0x019D12, 0x019D13, 0x01EE23 } };   // the Spellsword's rapier
 		const int c = SwordClass(a_w);
+		// (Noah: "for the wands make it Steel starting, Stalhrim for tier 1, Glass tier 2, ebony tier 3, and daedric ascend")
+		if (c == 1) {
+			static constexpr std::uint32_t kWand[5] = { 0x000805, 0x000812, 0x000807, 0x00B041, 0x000816 };
+			auto* f = Lookup(kWand[std::clamp(a_tier, 0, 4)], "Fulcimentum - More Staves and Wands of Skyrim.esp");
+			auto* s = f ? f->As<RE::TESObjectWEAP>() : nullptr;
+			if (!s) return false;
+			const bool changed = AdoptLook(a_w, s);
+			if (changed) logger::info("classes: the {} takes the look of {}", a_w->GetName(), s->GetName());
+			return changed;
+		}
 		const Src* src = c == 0 ? &kQStaff : c == 2 ? &kWhip : c == 3 ? &kRapier : nullptr;
 		if (!src) return false;
 		const int i = a_tier <= 1 ? 0 : a_tier == 2 ? 1 : a_tier == 3 ? 2 : 3;
@@ -2584,7 +2642,7 @@ namespace bo3z::Classes
 		struct Shadowflame { RE::ActorHandle who; float left = 0, tick = 0; };
 		std::vector<Shadowflame> g_shadow;
 		constexpr float kShadowSeconds = 5.0f;   // (Noah: "2x flame damage for 5 seconds")
-		bool g_shadowChain = false;               // the Shadowflame Sword's Tier III: the burning dead explode (set by TickSwords)
+		bool g_shadowChain = false;               // the Shadowflame Whip's Tier III: the burning dead explode (set by TickSwords)
 		int  g_shadowTier = 1;
 		// (Noah: "it should set enemies on fire with purple flames") the burning one wrapped in violet fire for as long as it burns
 		void ShadowCloak(RE::Actor* a_f)
@@ -2872,8 +2930,8 @@ namespace bo3z::Classes
 		auto* f = RE::TESDataHandler::GetSingleton()->LookupForm(gen::kCarianWeap, gen::kPlugin);
 		return f ? f->As<RE::TESObjectWEAP>() : nullptr;
 	}
-	// which class's sword: 0 the Summoner's Radiant Blade, 1 Destruction's Carian Blade, 2 the Alchemist's Shadowflame Sword,
-	// 3 the Spellsword's Spellbound Blade (-1: none of them)
+	// which class's sword: 0 the Summoner's Radiant Quarterstaff, 1 Destruction's Carian Wand, 2 the Alchemist's Shadowflame Whip,
+	// 3 the Spellsword's Spellbound Rapier (-1: none of them)
 	int SwordClass(const RE::TESForm* a_w)
 	{
 		if (!a_w) return -1;
@@ -2932,10 +2990,10 @@ namespace bo3z::Classes
 			// (the vanilla enchantments it remade are remade again by Vibrant Weapons when that loads after it - their own art
 			// lost: so each look takes the mod's own copy of the effect, which no other mod touches)
 			static constexpr Src kSrc[10] = {
-				{ 0x000D75, true, "purple flames" },            // alch: the Shadowflame Sword (zzOverflowingPurple1)
-				{ 0x00184D, true, "lightning" },                // carian: the Carian Blade (zzOverflowingPurpleBlue1: its shock)
-				{ 0x00438D, true, "white light" },              // radiant: the Radiant Blade (zzOverflowingmoon1)
-				{ 0x000D73, true, "fire" },                     // ss_none: the Spellbound Blade's red fire (zzOverflowingOrange1)
+				{ 0x000D75, true, "purple flames" },            // alch: the Shadowflame Whip (zzOverflowingPurple1)
+				{ 0x00184D, true, "lightning" },                // carian: the Carian Wand (zzOverflowingPurpleBlue1: its shock)
+				{ 0x00438D, true, "white light" },              // radiant: the Radiant Quarterstaff (zzOverflowingmoon1)
+				{ 0x000D73, true, "fire" },                     // ss_none: the Spellbound Rapier's red fire (zzOverflowingOrange1)
 				{ 0x000D73, true, "fire" },                     // ss_fire
 				{ 0x000D74, true, "frost" },                    // ss_frost (zzOverflowingIceBlue1)
 				{ 0x00184D, true, "lightning" },                // ss_shock
@@ -2951,13 +3009,13 @@ namespace bo3z::Classes
 				for (int t = 0; t < 3; ++t) {
 					if (auto* m = dh->LookupForm<RE::EffectSetting>(gen::kBladeVizFx[k][t], gen::kPlugin)) {
 						// (Noah: "remove the red effect ... it looks better with just the elemental effects from the mod" - "Both") the
-						// Spellbound Blade's looks (3-8) wear the mod's element art alone, no glow over the blade
+						// Spellbound Rapier's looks (3-8) wear the mod's element art alone, no glow over the blade
 						// (Noah: "I want the blade to show the element of the spell in my other hand") the element looks (4-8) wear the
 						// mod's element shader and art again; the bare look (3) none - the static red was our own dark-red Madfire
 						// (Props::TickMad), gone now
 						if (k == 3) m->data.enchantShader = nullptr;
 						else if (from->data.enchantShader) m->data.enchantShader = from->data.enchantShader;
-						// (Noah: "the red glow on the blade removed") the mod's animated art stayed on the Spellbound Blade, glowing
+						// (Noah: "the red glow on the blade removed") the mod's animated art stayed on the Spellbound Rapier, glowing
 						// red whatever its element, after its spell was gone: its looks keep Vibrant Weapons' element art alone
 						if (k == 3) m->data.enchantEffectArt = nullptr;
 						else if (from->data.enchantEffectArt) m->data.enchantEffectArt = from->data.enchantEffectArt;
@@ -2972,9 +3030,11 @@ namespace bo3z::Classes
 	RE::EnchantmentItem* BladeLook(const RE::TESObjectWEAP* a_w, int a_tier)
 	{
 		PatchLookArt();
+		// (Noah: Destruction's "Carian Wands") the wands carry their cast, at every tier - the bolt is ours (WandCast)
+		if (SwordClass(a_w) == 1) return RE::TESDataHandler::GetSingleton()->LookupForm<RE::EnchantmentItem>(gen::kCarianWandEnch, gen::kPlugin);
 		int key = SwordClass(a_w) >= 0 ? LookKey(SwordClass(a_w)) : -1;
 		if (a_w && a_w == Slayer()) key = 9;
-		// (Noah: "the static red effect is still on the spellbound blade I want that removed") the Spellbound Blade wears no
+		// (Noah: "the static red effect is still on the spellbound blade I want that removed") the Spellbound Rapier wears no
 		// look at all - other mods dress any fire enchantment in their own red art, whatever ours carries
 		// (Noah: "I want the blade to show the element of the spell in my other hand") its element looks back; bare-handed, none
 		if (key < 0 || key == 3 || a_tier < 1) return nullptr;
@@ -3030,13 +3090,13 @@ namespace bo3z::Classes
 		const std::string nm = name.GetString();
 		struct Card { const char* name; const char* base; const char* tier[3]; };
 		static const Card kCards[] = {
-			{ "Radiant Blade", "The Summoner's blade: pale silver, burning with white sunlight.",
+			{ "Radiant Quarterstaff", "The Summoner's blade: pale silver, burning with white sunlight.",
 				{ "Tier I: light swings loose white sun balls that burn through the dead.", "Tier II: heavy attacks call a pillar of sunlight down on the one you strike.", "Tier III: heavy attacks call a great pillar of sunlight down." } },
-			{ "Carian Blade", "Destruction's blade: stahlrim edged in raw sorcery.",
+			{ "Carian Wand", "Destruction's blade: stahlrim edged in raw sorcery.",
 				{ "Tier I: light swings loose bolts of fire, frost and lightning in turn.", "Tier II: heavy attacks loose a storm cyclone of fire, ice and lightning.", "Tier III: heavy attacks loose a great storm cyclone." } },
-			{ "Shadowflame Sword", "The Alchemist's blade: daedric steel wreathed in purple shadowflame.",
+			{ "Shadowflame Whip", "The Alchemist's blade: daedric steel wreathed in purple shadowflame.",
 				{ "Tier I: light swings loose bolts of shadowflame that set the dead burning.", "Tier II: heavy attacks loose a cyclone of purple fire.", "Tier III: heavy attacks loose a great cyclone of purple fire." } },
-			{ "Spellbound Blade", "The Spellsword's blade: it takes the element of the spell in your other hand.",
+			{ "Spellbound Rapier", "The Spellsword's blade: it takes the element of the spell in your other hand.",
 				{ "Tier I: light swings loose bolts of your spell's element.", "Tier II: heavy attacks loose a cyclone of it, casting your spell on all it catches.", "Tier III: heavy attacks loose a great cyclone of it." } },
 		};
 		// (Noah: "Now do the same thing for the flasks and the armor for each class") the flasks: what each is, and its tier's
@@ -3119,7 +3179,7 @@ namespace bo3z::Classes
 		const RE::NiPoint3 fwd = Flat(a_dir, p);
 		const RE::NiPoint3 from = OnGround(a_me + fwd * 380.0f, a_me.z);   // (seen in game: risen 120 units ahead, its funnel swallowed the camera - the whole screen white and orange)
 		if (a_cls == 0) {
-			// (Noah, the Radiant Blade reworked: "Sun pillar strike") Auriel's sunbeam slams down where the blow lands, searing all
+			// (Noah, the Radiant Quarterstaff reworked: "Sun pillar strike") Auriel's sunbeam slams down where the blow lands, searing all
 			// round it - Tier II smaller, Tier III great (fxmap.ini sun_strike: Dawnguard's own)
 			// (Noah, clip 10: "the heavy attack should cast the light beam from the sky closer to the player where the enemy was
 			// hit") on the one your blow reaches - the nearest of the dead just ahead - else a step in front of you
@@ -3142,7 +3202,7 @@ namespace bo3z::Classes
 				Gun::AreaHurt(at, r, (big ? 0.55f : 0.4f) * pw, "");
 				for (auto* f : NearFoes(at, r, 20)) { Gun::Burn(f, whole * 0.04f * pw, 3.0f); Gun::Knock(f, 0.6f); }
 			});
-			logger::info("swords: the Radiant Blade's sun pillar ({})", big ? "great" : "small");
+			logger::info("swords: the Radiant Quarterstaff's sun pillar ({})", big ? "great" : "small");
 			return;
 		}
 		// (seen in game: a burst and ring set off 120 units before your eyes filled the whole screen orange as the cyclone rose)
@@ -3234,8 +3294,8 @@ namespace bo3z::Classes
 			sl.roll = Gun::SwingRoll(dir);
 			sl.range = 1400.0f + 200.0f * t;
 			// (seen in game: the bolts left the blade at a third of their size at 2,300 a second - never seen) a bolt at its full
-			// size from the blade, at a spell's own pace - the Radiant Blade's spectral wave still a crescent that grows
-			const bool isBolt = true;   // (Noah, clip 10: the Radiant Blade's a white sun ball now, a bolt like the rest)
+			// size from the blade, at a spell's own pace - the Radiant Quarterstaff's spectral wave still a crescent that grows
+			const bool isBolt = true;   // (Noah, clip 10: the Radiant Quarterstaff's a white sun ball now, a bolt like the rest)
 			sl.bolt = isBolt;
 			if (isBolt) sl.speed = 1150.0f;
 			sl.scale = (isBolt ? 1.3f : 0.9f) + 0.15f * t;
@@ -3366,7 +3426,7 @@ namespace bo3z::Classes
 			art = 0.25f;
 			int key = cls >= 0 && t >= 1 ? LookKey(cls) : -1;
 			if (w && w == Slayer()) key = 9;
-			if (key == 3) key = -1;   // (the Spellbound Blade bare-handed: no look)
+			if (key == 3) key = -1;   // (the Spellbound Rapier bare-handed: no look)
 			// (Noah: "when I change it to ice, my sword is still on fire") its enchantment's look was only set when the kit was synced:
 			// the moment the other hand's element changes, the blade is given its new look (taken off and on again)
 			static int lastSs = -2;
@@ -3386,9 +3446,9 @@ namespace bo3z::Classes
 			// (Noah: "The green animation circling the sword, I want that to be changed to a golden color instead of green, but keep the
 			// same animation") the Dragon Slayer's art round the blade coloured gold, in both bodies
 			if (key == 9) for (const bool fp : { false, true }) if (auto* root = p->Get3D(fp)) Gun::TintGold(root->GetObjectByName("WEAPON"));
-			// (Noah, clips 8-9: the Radiant Blade's art showed frost-blue and green - "should be white") the Summoner's in white
+			// (Noah, clips 8-9: the Radiant Quarterstaff's art showed frost-blue and green - "should be white") the Summoner's in white
 			if (key == 2) for (const bool fp : { false, true }) if (auto* root = p->Get3D(fp)) Gun::TintPal(root->GetObjectByName("WEAPON"), "textures\\CurseOfAlduin\\fx\\pal_white.dds", false);
-			// (Noah, clips 301-302: the Shadowflame Sword and the Spellbound Blade unseen in the hand, in both views) a flask's
+			// (Noah, clips 301-302: the Shadowflame Whip and the Spellbound Rapier unseen in the hand, in both views) a flask's
 			// throw hides the hand's weapon node from the release to the end of the throw: never left hidden once no throw is on
 			if (!Gun::Throwing()) {
 				for (const bool fp : { false, true }) {

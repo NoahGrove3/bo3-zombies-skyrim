@@ -744,14 +744,14 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		{
 			struct Card { const char* name; const char* lore; ImU32 col; const char* tag; const char* arms; const char* grow; const char* kit; };
 			static const Card kCards[4] = {
-				{ "SUMMONER", "Conjurer of the College of Winterhold", IM_COL32(170, 120, 255, 255), "An army that grows family by family", "Summons - beasts, the dead, Daedra, Dwemer, the wild - and the Radiant Blade",
-				  "Your kit grows at the altar: every family and the Radiant Blade to Legendary", "Conjure Wolf, Conjure Skeleton, the Radiant Blade, the Summoner Set" },
+				{ "SUMMONER", "Conjurer of the College of Winterhold", IM_COL32(170, 120, 255, 255), "An army that grows family by family", "Summons - beasts, the dead, Daedra, Dwemer, the wild - and the Radiant Quarterstaff",
+				  "Your kit grows at the altar: every family and the Radiant Quarterstaff to Legendary", "Conjure Wolf, Conjure Skeleton, the Radiant Quarterstaff, the Summoner Set" },
 				{ "DESTRUCTION", "Battle-mage of the College of Winterhold", IM_COL32(255, 120, 60, 255), "Master the elements one at a time", "Ranged spells: fire, frost, shock, sun, blood and runes",
-				  "Your kit grows at the altar: each element, and the Carian Blade, to Legendary", "Firebolt, Ice Spike, the Carian Blade, the Destruction Set" },
+				  "Your kit grows at the altar: each element, and the Carian Wand, to Legendary", "Firebolt, Ice Spike, the Carian Wand, the Destruction Set" },
 				{ "ALCHEMIST", "A wanderer of the Drifter's road", IM_COL32(150, 230, 90, 255), "Flasks of fire, frost, storm, acid and blood", "Thrown flask bombs that burst where they land - and a sword of shadowflame",
-				  "Your kit grows at the altar: each flask and the sword to Legendary", "The Shadowflame Sword, the Fire Flask, the Alchemist Set" },
+				  "Your kit grows at the altar: each flask and the whip to Legendary", "The Shadowflame Whip, the Fire Flask, the Alchemist Set" },
 				{ "SPELLSWORD", "A Vigilant of Stendarr", IM_COL32(120, 180, 255, 255), "Steel in one hand, a spell in the other", "A one-handed blade and touch spells - and the Vigilants' relic spells",
-				  "Your kit grows at the altar: the blade and each spell to Legendary", "The Spellbound Blade, Burning Touch, the Spellsword Set" } };
+				  "Your kit grows at the altar: the rapier and each spell to Legendary", "The Spellbound Rapier, Burning Touch, the Spellsword Set" } };
 			// (Noah: "the background for each class a photo of a character from the modded loading screens ... the selected box
 			// to grow bigger when hovering over it and hide the text unless it's being hovered ... smooth like the echo alter
 			// nav animations") each card wears a Lore-Based Loading Screens painting (read from the player's own install, never
