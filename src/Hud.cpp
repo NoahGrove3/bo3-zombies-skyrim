@@ -6125,9 +6125,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						if (msgY0 < 1e8) {
 							hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.MessagesBlock._y", RE::GFxValue(msgY0 + 150.0));
 						}
-						// (Noah: no pop-ups) Skyrim's quest and objective notices ("Stand in the runic circle...") never show
-						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.QuestUpdateBaseInstance._alpha", RE::GFxValue(0.0));
-						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.QuestUpdateBaseInstance._visible", RE::GFxValue(false));
+						// (Noah, 2026-11-08: "make sure the Edge UI's pop ups for discovered locations, learning shout words, and other Skyrim
+						// pop ups are turned on") Skyrim's centre notices - a place discovered, a word of power learned, quests started,
+						// updated and done, levels and skills - show again, in Edge UI's look (they were hidden; brought back on an old save)
+						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.QuestUpdateBaseInstance._alpha", RE::GFxValue(100.0));
+						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.QuestUpdateBaseInstance._visible", RE::GFxValue(true));
 						// and its crosshair to our dot
 						// (Noah: "remove the crosshair dot from the gameplay UI" - then "I can see the base Skyrim crosshair icon") gone in
 						// the Edge UI too: SkyHUD's dot is off (skyhud.txt bDotCrosshair=0) and Skyrim's own reticle hidden here
