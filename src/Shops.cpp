@@ -990,9 +990,11 @@ namespace bo3z
 				return;
 			}
 			SettleStand(loc.town, anchor);
-			auto want = SlotPos(plan, loc.slot);
+			// (Noah: the Tablet of Mysteries' spots placed by hand) a fixed spot stands where it was marked, turned as marked
+			auto want = loc.fixed ? RE::NiPoint3{ loc.x, loc.y, loc.z } : SlotPos(plan, loc.slot);
+			const float sweep = loc.fixed ? std::max<float>(gen::kPlanSweep, anchor->GetPosition().GetDistance(want) + 300.0f) : gen::kPlanSweep;
 			RE::TESObjectREFR* found = nullptr;
-			RE::TES::GetSingleton()->ForEachReferenceInRange(anchor, gen::kPlanSweep, [&](RE::TESObjectREFR* r) {
+			RE::TES::GetSingleton()->ForEachReferenceInRange(anchor, sweep, [&](RE::TESObjectREFR* r) {
 				if (r && r->GetBaseObject() == base && !r->IsDeleted() && std::hypot(r->GetPosition().x - want.x, r->GetPosition().y - want.y) < 80.0f) {
 					found = r;
 					return RE::BSContainer::ForEachResult::kStop;
@@ -1001,7 +1003,7 @@ namespace bo3z
 			});
 			// the shrine brings its own dais - (Noah: the cone under it showed, the altar rose off the floor) sunk so its
 			// cobbled skirt is all below the ground and the dais floor lies flush with it
-			const float floorZ = gen::kObjects[loc.object].kind == 0 ? plan.top - kAltarSink : plan.top;
+			const float floorZ = loc.fixed ? loc.z : gen::kObjects[loc.object].kind == 0 ? plan.top - kAltarSink : plan.top;
 			want.z = floorZ;
 			if (!found) {
 				auto ref = anchor->PlaceObjectAtMe(base, false);
@@ -1010,7 +1012,7 @@ namespace bo3z
 				}
 				ref->SetScale(gen::kObjects[loc.object].scale);
 				ref->SetPosition(want);
-				ref->SetAngle({ 0, 0, SlotFacing(plan, loc.slot) });
+				ref->SetAngle({ 0, 0, loc.fixed ? loc.yawDeg * RE::NI_PI / 180.0f : SlotFacing(plan, loc.slot) });
 				found = ref.get();
 				logger::info("shops: placed {} in {} at ({:.0f},{:.0f},{:.0f})", gen::kObjects[loc.object].id, gen::kTowns[loc.town], want.x, want.y, want.z);
 			} else if (auto pos = found->GetPosition(); std::abs(pos.z - floorZ) > 4.0f) {
@@ -1021,6 +1023,15 @@ namespace bo3z
 				found->SetScale(gen::kObjects[loc.object].scale);  // (the Coffer grew)
 			}
 			g_placed[a_index] = found->CreateRefHandle();
+			if (loc.fixed) {  // (a tablet an older build stood beside the altar: taken away, the marked spot's the one)
+				std::vector<RE::TESObjectREFR*> old;
+				RE::TES::GetSingleton()->ForEachReferenceInRange(anchor, sweep, [&](RE::TESObjectREFR* r) {
+					if (r && r != found && r->GetBaseObject() == base && !r->IsDeleted()) old.push_back(r);
+					return RE::BSContainer::ForEachResult::kContinue;
+				});
+				for (auto* r : old) r->Disable(), r->SetDelete(true);
+				if (!old.empty()) logger::info("shops: {} older tablet(s) in {} taken away", old.size(), gen::kTowns[loc.town]);
+			}
 			if (gen::kObjects[loc.object].kind == 0) {
 				// (Noah: a second altar stood buried in the Echo Stone) one altar a town: any other copy of it - left behind
 				// by an older layout - goes, with everything dressed on it

@@ -5418,6 +5418,47 @@ namespace bo3z
 			auto* ui = RE::UI::GetSingleton();
 			if (!ui || ui->GameIsPaused() || ui->IsMenuOpen(RE::Console::MENU_NAME) || !Save::Flag(Save::kFlagStarted)) return;
 			const auto id = a_b->GetIDCode();
+			// (Noah: "Im ready for the ... Tablet placements") with the test kit on, N saves a Tablet of Mysteries spot for the
+			// city you're in: where you stand, its face looking the way you look - written to SKSE/CurseOfAlduin-tablets.txt
+			// (one line per city: a city marked again is replaced), for sheets/locations.json
+			if (id == 0x31 && Gun::TestKitOn() && !g_scoutOn) {
+				Tasks::Add([] {
+					auto* pl = RE::PlayerCharacter::GetSingleton();
+					if (!pl) return;
+					auto at = pl->GetPosition();
+					if (const auto top = WalkTop(pl->GetParentCell(), at, 60.0f)) at.z = *top;
+					const int t = NearestTown(at, pl->GetWorldspace());
+					if (t < 0) {
+						Hud::Banner("NO CITY NEAR ENOUGH FOR THE TABLET", 2.5f);
+						return;
+					}
+					float yawDeg = pl->data.angle.z * 57.2958f + 180.0f;   // (the tablet's face is its -y side: turned to look your way)
+					while (yawDeg >= 360.0f) yawDeg -= 360.0f;
+					const auto d = SKSE::log::log_directory();
+					const auto file = (d ? *d : std::filesystem::path{}) / "CurseOfAlduin-tablets.txt";
+					std::map<std::string, std::string> lines;
+					{
+						std::ifstream in(file);
+						for (std::string l; std::getline(in, l);) {
+							if (l.empty() || l[0] == '#') continue;
+							lines[l.substr(0, l.find(' '))] = l;
+						}
+					}
+					std::string town = TownName(t);
+					std::replace(town.begin(), town.end(), ' ', '_');
+					const bool again = lines.contains(town);
+					auto* ws = pl->GetWorldspace();
+					lines[town] = fmt::format("{} {:.0f} {:.0f} {:.0f} {:.0f} {:08X}", town, at.x, at.y, at.z, yawDeg, ws ? ws->GetFormID() : 0u);
+					{
+						std::ofstream out(file, std::ios::trunc);
+						out << "# city x y z yawDeg worldspace - the Tablet of Mysteries' spots (N with the test kit on)\n";
+						for (auto& [k, v] : lines) out << v << "\n";
+					}
+					Hud::Banner(fmt::format("TABLET SPOT {} FOR {} ({} OF {} CITIES)", again ? "REPLACED" : "SAVED", TownName(t), lines.size(), gen::kTowns.size()), 3.0f);
+					logger::info("tablet spot: {} at ({:.0f}, {:.0f}, {:.0f}) facing {:.0f} deg{}", TownName(t), at.x, at.y, at.z, yawDeg, again ? " (replaced)" : "");
+				});
+				return;
+			}
 			if (!kScoutAvailable) return;
 			if (id == 0x44) {  // F10: scout mode on / off
 				Tasks::Add([] { Settings::SetScout(!Settings::Scout()); });

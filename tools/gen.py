@@ -164,9 +164,9 @@ o.append(f'\tinline constexpr std::array<ShoutDef, {len(SH)}> kShouts{{ {{')
 for h in SH:
     o.append(f'\t\tShoutDef{{ {cs(h["id"])}, {cs(h["label"])}, {cs(h["text"])}, {towns.index(h["town"]) if h["town"] else -1}, 0x{IDS[("SHOU", h["id"])]:03X}, {{ ' + ', '.join(f'0x{IDS[("WOOP", "shout_" + h["id"] + "_" + str(n))]:03X}' for n in range(3)) + ' }, { ' + ', '.join(f'0x{IDS[("SPEL", "shout_" + h["id"] + "_" + str(n))]:03X}' for n in range(3)) + f' }}, 0x{h["color"]}, {cs(h["words"][0])}, {cs(h["words"][1])}, {cs(h["words"][2])}, {[x["id"] for x in S["sounds"]["rows"]].index("shout_" + h["id"])}, {cs(h.get("plugin", ""))}, 0x{int(h.get("shoutId", "0"), 16):06X}, {cs(h.get("quest", ""))}, ' + ', '.join(cs(x) for x in (h.get("translations") or ["", "", ""])[:3]) + ' },')
 o.append('\t} };')
-o.append('\tstruct LocationDef { int town; std::uint32_t anchor; int object; int slot; };')
+o.append('\tstruct LocationDef { int town; std::uint32_t anchor; int object; int slot; bool fixed; float x, y, z, yawDeg; };  // (fixed: a hand-placed spot - x y z in the anchor\'s worldspace, yawDeg its turn)')
 o.append(f'\tinline constexpr std::array<LocationDef, {len(L)}> kLocations{{ {{')
-for l in L: o.append(f'\t\tLocationDef{{ {towns.index(l["town"])}, 0x{int(l["anchor"],16):06X}, {oid.index(l["object"].split(":")[1])}, {slots.index(l["slot"].split(":")[1])} }},')
+for l in L: o.append(f'\t\tLocationDef{{ {towns.index(l["town"])}, 0x{int(l["anchor"],16):06X}, {oid.index(l["object"].split(":")[1])}, {slots.index(l["slot"].split(":")[1])}, {"true" if "x" in l else "false"}, {F(l.get("x", 0))}, {F(l.get("y", 0))}, {F(l.get("z", 0))}, {F(l.get("yawDeg", 0))} }},')
 o.append('\t} };')
 M = {r['id']: r for r in S['movement']['rows']}
 o.append(f'\tinline constexpr float kRunBoost = {F(M["run_boost"]["value"])}, kSprintBoost = {F(M["sprint_boost"]["value"])}, kSlideSpeed = {F(M["slide"]["value"])}, kSlideSeconds = {F(M["slide"]["durationMs"]/1000)}, kSlideBoost = {F(M["slide_boost"]["value"])}, kSlideJump = {F(M["slide_jump"]["value"])}, kAirControl = {F(M["air_control"]["value"])}, kAirMax = {F(M["air_max"]["value"])}, kSprintStamina = {F(M["sprint_stamina"]["value"])}, kJumpHeight = {F(M["jump_height"]["value"])};')

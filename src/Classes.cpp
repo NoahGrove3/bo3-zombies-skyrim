@@ -3288,14 +3288,16 @@ namespace bo3z::Classes
 				if (!o.item || SwordClass(o.item) < 0 || !o.partClone) continue;
 				if (std::abs(o.partClone->local.scale - 0.85f) > 0.001f) o.partClone->local.scale = 0.85f;
 				auto* root = p->Get3D(fp);
-				auto* want = root ? root->GetObjectByName(inHand ? "WEAPON" : "WeaponBack") : nullptr;
+				// (Noah: "when putting away my sword ... the sword was on my back but the animation was putting it on my side" -
+				// "hang them at the hip") put away, the blade hangs at the side, where the one-handed sheathe takes it
+				auto* want = root ? root->GetObjectByName(inHand ? "WEAPON" : "WeaponSword") : nullptr;
 				auto* node = want ? want->AsNode() : nullptr;
 				RE::NiPointer<RE::NiAVObject> blade = o.partClone;
 				if (node && blade->parent != node) {
 					if (blade->parent) blade->parent->DetachChild2(blade.get());
 					node->AttachChild(blade.get(), true);
 					static int said = 0;
-					if (said++ < 6) logger::info("swords: {} blade moved to {} (weapon state {})", fp ? "1st" : "3rd", inHand ? "the hand" : "the back", static_cast<int>(ws));
+					if (said++ < 6) logger::info("swords: {} blade moved to {} (weapon state {})", fp ? "1st" : "3rd", inHand ? "the hand" : "the hip", static_cast<int>(ws));
 				}
 			}
 		}
