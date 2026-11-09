@@ -1295,6 +1295,17 @@ namespace bo3z
 						SKSE::GetTaskInterface()->AddTask([] { Classes::DressUnder(); });
 					}
 				}
+				// (the Alchemist's whip: its chain told it's in hand, as Animated Armoury's own script does for its whips)
+				if (a_event && a_event->equipped && a_event->actor && a_event->actor->IsPlayerRef()) {
+					if (auto* w = RE::TESForm::LookupByID<RE::TESObjectWEAP>(a_event->baseObject); w && w == Classes::AlchemistKnife()) {
+						RE::ActorHandle h = a_event->actor->As<RE::Actor>() ? a_event->actor->As<RE::Actor>()->GetHandle() : RE::ActorHandle{};
+						Tasks::Later(0.1f, [h] {
+							auto a = h.get();
+							if (!a) return;
+							Classes::WhipEquipped(a.get(), a->GetEquippedObject(true) == Classes::AlchemistKnife() && a->GetEquippedObject(false) != Classes::AlchemistKnife());
+						});
+					}
+				}
 				if (!a_event || !a_event->equipped || s_mine.load() || !a_event->actor || !a_event->actor->IsPlayerRef()) {
 					return RE::BSEventNotifyControl::kContinue;
 				}
@@ -1324,6 +1335,7 @@ namespace bo3z
 		{
 			// (the class-coloured Black Mage robes are gone - each class wears its lookbook set as its mod made it - so ArmorForge::Build no longer runs)
 			ArmorForge::BuildHipBlades();
+			Tablet::AdoptLooks();
 			FreeBowMovement();
 			Undead::InstallHooks();
 			Hud::InstallInputGate();

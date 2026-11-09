@@ -771,4 +771,22 @@ namespace bo3z::Tablet
 			}
 		}
 	}
+	// (Noah: "Make Eclipse edge the glass pike") the Eclipse Edge takes Animated Armoury's Glass Pike - its models, its pike
+	// thrusts and reach, its sounds - and its pedestal shows the pike
+	void AdoptLooks()
+	{
+		for (int i = 0; i < static_cast<int>(gen::kTabletWeapons.size()); ++i) {
+			const auto& d = gen::kTabletWeapons[i];
+			std::uint32_t src = 0;
+			if (d.id == "eclipse") src = 0x153BB0;   // Glass Pike
+			if (!src) continue;
+			auto* f = RE::TESDataHandler::GetSingleton()->LookupForm(src, "NewArmoury.esp");
+			auto* s = f ? f->As<RE::TESObjectWEAP>() : nullptr;
+			auto* w = Forms::Ours(d.form) ? Forms::Ours(d.form)->As<RE::TESObjectWEAP>() : nullptr;
+			if (!s || !w) continue;
+			Classes::AdoptLook(w, s);
+			if (auto* show = Forms::Ours(d.show) ? Forms::Ours(d.show)->As<RE::TESObjectSTAT>() : nullptr) show->SetModel(s->GetModel());
+			logger::info("tablet: the {} takes the look of {}", d.label, s->GetName());
+		}
+	}
 }

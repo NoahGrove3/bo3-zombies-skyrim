@@ -2443,9 +2443,6 @@ namespace bo3z::Classes
 	}
 	RE::TESObjectWEAP* AlchemistKnife()
 	{
-		// (Noah: the Alchemist's weapon "the Wildfire Whip") Animated Armoury's own Wildfire - its whip script and sounds with
-		// it; our Shadowflame Sword should the mod be missing
-		if (auto* f = Lookup(0x31BDED, "NewArmoury.esp")) if (auto* w = f->As<RE::TESObjectWEAP>()) return w;
 		auto* f = RE::TESDataHandler::GetSingleton()->LookupForm(gen::kAlchKnife, gen::kPlugin);
 		return f ? f->As<RE::TESObjectWEAP>() : nullptr;
 	}
@@ -2474,22 +2471,39 @@ namespace bo3z::Classes
 		}
 		return changed;
 	}
+	// (Noah: "for the quarter staffs, wands, whips, and Rapier make it steel/iron, ebony, daedric, dragon bone for ascent
+	// upgrades") Base and Tier I steel or iron, Tier II ebony, Tier III daedric, Ascended dragonbone
 	bool AdoptTierLook(RE::TESObjectWEAP* a_w, int a_tier)
 	{
-		struct Src { std::uint32_t id[3]; };
-		static constexpr Src kQStaff{ { 0x18B756, 0x18B75D, 0x18B763 } };   // Iron, Glass, Dragonbone Quarterstaff
-		static constexpr Src kKatana{ { 0x344735, 0x344731, 0x34473A } };   // Steel, Glass, Daedric Katana
+		struct Src { const char* plugin; std::uint32_t id[4]; };
+		static constexpr Src kQStaff{ "NewArmoury.esp", { 0x18B760, 0x18B75B, 0x18B757, 0x18B763 } };   // the Summoner's quarterstaff
+		static constexpr Src kWhip{ "NewArmoury.esp", { 0x31BDDE, 0x31BDE4, 0x31BDE5, 0x31BDE6 } };     // the Alchemist's whip
+		static constexpr Src kRapier{ "NewArmoury.esp", { 0x019D0D, 0x019D12, 0x019D13, 0x01EE23 } };   // the Spellsword's rapier
 		const int c = SwordClass(a_w);
-		const Src* src = c == 0 ? &kQStaff : c == 3 ? &kKatana : nullptr;
+		const Src* src = c == 0 ? &kQStaff : c == 2 ? &kWhip : c == 3 ? &kRapier : nullptr;
 		if (!src) return false;
-		const int i = a_tier <= 1 ? 0 : a_tier == 2 ? 1 : 2;
-		auto* f = Lookup(src->id[i], "NewArmoury.esp");
+		const int i = a_tier <= 1 ? 0 : a_tier == 2 ? 1 : a_tier == 3 ? 2 : 3;
+		auto* f = Lookup(src->id[i], src->plugin);
 		auto* s = f ? f->As<RE::TESObjectWEAP>() : nullptr;
 		if (!s) return false;
 		const bool changed = AdoptLook(a_w, s);
 		if (changed) logger::info("classes: the {} takes the look of {}", a_w->GetName(), s->GetName());
 		return changed;
 	}
+	// (Animated Armoury's whips swing their own chain by a variable its script sets on equipping - ours carry no script, so
+	// it's set here, through the same Papyrus call)
+	void WhipEquipped(RE::Actor* a_a, bool a_left)
+	{
+		auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+		if (!vm || !a_a) return;
+		auto* policy = vm->GetObjectHandlePolicy();
+		const auto h = policy ? policy->GetHandleForObject(RE::Actor::FORMTYPE, a_a) : 0;
+		if (!h) return;
+		RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> cb;
+		auto* args = RE::MakeFunctionArguments(std::string(a_left ? "EqpInLeft" : "EqpInRight"), 1.0f);
+		vm->DispatchMethodCall(h, "Actor", "SetSubGraphFloatVariable", args, cb);
+	}
+
 	namespace
 	{
 		int g_lastFlaskEl = 0;  // the last flask thrown
