@@ -153,6 +153,7 @@ BOOL APIENTRY DllMain(HMODULE a_module, DWORD a_reason, LPVOID)
 	if (a_reason == DLL_PROCESS_ATTACH && IsAsi(a_module) && !g_booted.exchange(true) && FirstCopy(a_module)) {
 		::DisableThreadLibraryCalls(a_module);
 		bo3z::PluginList::Ensure();  // before the game reads Plugins.txt
+		bo3z::Display::FitScreen(false);  // (and its screen size, before its window)
 		if (auto h = ::CreateThread(nullptr, 0, BootThread, nullptr, 0, nullptr)) {
 			::CloseHandle(h);
 		}
@@ -168,6 +169,7 @@ SKSEPluginLoad(const SKSE::LoadInterface* a_skse)
 	SKSE::Init(a_skse, { .log = false });
 	bo3z::PluginList::Ensure();
 	SetupLog();
+	bo3z::Display::FitScreen(true);
 	logger::info("The Curse of Alduin {} loading as SKSE plugin", bo3z::kVersion);
 	bo3z::Save::InstallCoSave();
 	bo3z::Events::InstallMenuWatch();

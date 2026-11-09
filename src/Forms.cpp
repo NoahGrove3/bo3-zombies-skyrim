@@ -1,3 +1,4 @@
+#include <shlobj.h>
 #include "BO3Z.h"
 
 namespace bo3z
@@ -209,6 +210,38 @@ namespace bo3z
 		void PlayAt(gen::Sound a_sound, RE::TESObjectREFR* a_at) { Audio::At(a_sound, a_at); }
 	}
 
+	namespace Display
+	{
+		// (Noah: "automatically adapt the game resolution and UI for in-game to whatever monitor or screen the game is being
+		// displayed on") before the game makes its window: SkyrimPrefs.ini's size set to the screen the game opens on (the main
+		// one) at its own resolution, windowed full screen kept - a laptop, a monitor, a TV each get theirs. (The menus and our
+		// HUD scale with the screen's height on their own.)
+		void FitScreen(bool a_memory)
+		{
+			DEVMODEW dm{};
+			dm.dmSize = sizeof(dm);
+			if (!::EnumDisplaySettingsW(nullptr, ENUM_CURRENT_SETTINGS, &dm) || dm.dmPelsWidth < 640 || dm.dmPelsHeight < 480) return;
+			wchar_t docs[MAX_PATH]{};
+			if (FAILED(::SHGetFolderPathW(nullptr, CSIDL_PERSONAL, nullptr, SHGFP_TYPE_CURRENT, docs))) return;
+			for (const wchar_t* folder : { L"\\My Games\\Skyrim Special Edition", L"\\My Games\\Skyrim Special Edition GOG", L"\\My Games\\Skyrim Special Edition EPIC" }) {
+				const std::wstring ini = std::wstring(docs) + folder + L"\\SkyrimPrefs.ini";
+				if (::GetFileAttributesW(ini.c_str()) == INVALID_FILE_ATTRIBUTES) continue;
+				const UINT w = ::GetPrivateProfileIntW(L"Display", L"iSize W", 0, ini.c_str());
+				const UINT h = ::GetPrivateProfileIntW(L"Display", L"iSize H", 0, ini.c_str());
+				const UINT full = ::GetPrivateProfileIntW(L"Display", L"bFull Screen", 0, ini.c_str());
+				const UINT bord = ::GetPrivateProfileIntW(L"Display", L"bBorderless", 1, ini.c_str());
+				if (!full && !bord) continue;   // (a window by choice: its size left alone)
+				if (w == dm.dmPelsWidth && h == dm.dmPelsHeight) continue;
+				::WritePrivateProfileStringW(L"Display", L"iSize W", std::to_wstring(dm.dmPelsWidth).c_str(), ini.c_str());
+				::WritePrivateProfileStringW(L"Display", L"iSize H", std::to_wstring(dm.dmPelsHeight).c_str(), ini.c_str());
+				if (auto* prefs = a_memory ? RE::INIPrefSettingCollection::GetSingleton() : nullptr) {   // (should the game have read its settings already)
+					if (auto* sw = prefs->GetSetting("iSize W:Display")) sw->data.i = static_cast<std::int32_t>(dm.dmPelsWidth);
+					if (auto* sh = prefs->GetSetting("iSize H:Display")) sh->data.i = static_cast<std::int32_t>(dm.dmPelsHeight);
+				}
+				if (a_memory) logger::info("display: the screen is {}x{} - the game's size set to it (was {}x{})", dm.dmPelsWidth, dm.dmPelsHeight, w, h);
+			}
+		}
+	}
 	namespace PluginList
 	{
 		// %LOCALAPPDATA%\Skyrim Special Edition\Plugins.txt: append "*CurseOfAlduin.esp" if it isn't listed.

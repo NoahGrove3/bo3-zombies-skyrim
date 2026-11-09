@@ -33,6 +33,10 @@ namespace bo3z
 	}
 
 	// Plugins.txt: make sure CurseOfAlduin.esp is enabled (called from DllMain, before the game reads it).
+	namespace Display
+	{
+		void FitScreen(bool a_memory);   // (a_memory: SKSE's loaded - the game's settings in memory too)   // SkyrimPrefs.ini's size to the screen's own resolution, before the window's made
+	}
 	namespace PluginList
 	{
 		void Ensure();
