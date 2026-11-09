@@ -1523,16 +1523,16 @@ namespace bo3z::gen
 	inline constexpr std::uint32_t kArtIceShell = 0xBC0, kArtRoots = 0xBC1, kArtBurn = 0xBC2, kArtPoison = 0xBC3, kArtPortal = 0xCB2, kArtPortalBig = 0xCB5;  // status looks on the struck
 	struct TabletWeapon { std::string_view id, label; bool battered; int type, uses; std::uint32_t form, show, gloves; };  // type: 0 fists 1 mace 2 dagger 3 battleaxe 4 bow 5 staff 6 greatsword 7 book
 	inline constexpr std::array<TabletWeapon, 11> kTabletWeapons{ {
-		TabletWeapon{ "stormknuckles", "Stormbound Knuckles", false, 0, 350, 0xEBD, 0xECB, 0xECF },
-		TabletWeapon{ "gravebell", "Gravebell Mace", false, 1, 300, 0xEBE, 0xEB5, 0x000 },
-		TabletWeapon{ "saltrice", "Saltrice Sickle", false, 2, 320, 0xEBF, 0xEB6, 0x000 },
-		TabletWeapon{ "riverstone", "Riverstone Axe", false, 3, 240, 0xEC0, 0xEB7, 0x000 },
-		TabletWeapon{ "rattlebone", "Rattlebone Bow", false, 4, 200, 0xEC1, 0xEB8, 0x000 },
-		TabletWeapon{ "lanternwick", "Lanternwick Staff", false, 5, 90, 0xEC2, 0xEB9, 0x000 },
-		TabletWeapon{ "emberclaw", "Emberclaw Wraps", true, 0, 160, 0xEC3, 0xECC, 0xED1 },
-		TabletWeapon{ "eclipse", "Eclipse Edge", true, 6, 120, 0xEC4, 0xEBA, 0x000 },
-		TabletWeapon{ "wanderstar", "The Wandering Star", true, 5, 40, 0xEC5, 0xEBB, 0x000 },
-		TabletWeapon{ "whisperwood", "Whisperwood Longbow", true, 4, 80, 0xEC6, 0xEBC, 0x000 },
+		TabletWeapon{ "stormknuckles", "Stormbound Knuckles", false, 0, 100, 0xEBD, 0xECB, 0xECF },
+		TabletWeapon{ "gravebell", "Gravebell Mace", false, 1, 100, 0xEBE, 0xEB5, 0x000 },
+		TabletWeapon{ "saltrice", "Saltrice Sickle", false, 2, 100, 0xEBF, 0xEB6, 0x000 },
+		TabletWeapon{ "riverstone", "Riverstone Halberd", false, 3, 100, 0xEC0, 0xEB7, 0x000 },
+		TabletWeapon{ "rattlebone", "Rattlebone Bow", false, 4, 100, 0xEC1, 0xEB8, 0x000 },
+		TabletWeapon{ "lanternwick", "Rimewick Quarterstaff", false, 3, 100, 0xEC2, 0xEB9, 0x000 },
+		TabletWeapon{ "emberclaw", "Emberclaw Wraps", true, 0, 30, 0xEC3, 0xECC, 0xED1 },
+		TabletWeapon{ "eclipse", "Eclipse Edge", true, 6, 30, 0xEC4, 0xEBA, 0x000 },
+		TabletWeapon{ "wanderstar", "The Wandering Star", true, 5, 30, 0xEC5, 0xEBB, 0x000 },
+		TabletWeapon{ "whisperwood", "Whisperwood Longbow", true, 4, 30, 0xEC6, 0xEBC, 0x000 },
 		TabletWeapon{ "codex", "The Unwritten Codex", true, 7, 30, 0xEC7, 0xECD, 0x000 },
 	} };
 	inline constexpr std::uint32_t kTabletArrow = 0xEC9;

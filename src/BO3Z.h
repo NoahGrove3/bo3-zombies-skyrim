@@ -406,6 +406,7 @@ namespace bo3z
 		RE::TESObjectWEAP* CarianBlade();             // Destruction's Carian Blade
 		int                SwordClass(const RE::TESForm* a_w);   // whose class sword (0 Summoner, 1 Destruction, 2 Alchemist, 3 Spellsword; -1 none)
 		bool                 AdoptLook(RE::TESObjectWEAP* a_w, const RE::TESObjectWEAP* a_src);   // an Animated Armoury weapon's look and feel on ours
+		void                 NameSetPieces();   // the class sets' pieces named for their class ("Alchemist Set Hood")
 		bool                 AdoptTierLook(RE::TESObjectWEAP* a_w, int a_tier);   // a class weapon's material for its tier
 		void                 WhipEquipped(RE::Actor* a_a, bool a_left);   // a whip's chain told it's in hand
 		RE::EnchantmentItem* BladeLook(const RE::TESObjectWEAP* a_w, int a_tier);   // a sword's look at a tier (nullptr: bare)

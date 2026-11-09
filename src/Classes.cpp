@@ -3056,10 +3056,10 @@ namespace bo3z::Classes
 			"Legendary: three bolts of lightning strike from the sky around it.", "Legendary: it splits into three more acid splashes.",
 			"Legendary: a pillar of sunlight strikes down where it breaks.", "Legendary: after the pull, a lunar tide blasts the dead back out." };
 		static const Card kSets[] = {
-			{ "Conjurer's Robes", "The Summoner's set: Calling of the Conjurer's robe, hood and boots.", { "Tier I: your summons take a fifth less harm.", "Tier II: one more summon slot.", "Tier III: your summons' kills heal you." } },
-			{ "Black Mage College Robes", "The Battle-mage's set: Black Mage Armor's College robes, hood and boots.", { "Tier I: your spells cost 10% less.", "Tier II: your magicka comes back faster.", "Tier III: your spells cost a quarter less." } },
-			{ "Gondorian Ranger Armor", "The Alchemist's set: the Gondorian Ranger's cuirass and boots, the Ithilien hood.", { "Tier I: you throw 15% faster.", "Tier II: your flasks' bursts reach 20% wider.", "Tier III: each flask kill heals you 2%." } },
-			{ "Black Archmage Plate", "The Spellsword's set: the Black Archmage's plate.", { "Tier I: you mend in a fight.", "Tier II: your blade's hits put magicka back.", "Tier III: your blade hits 15% harder." } },
+			{ "Summoner Set", "The Summoner's armor: a conjurer's robe, hood and boots, stitched with binding sigils that steady the bond between you and what you call.", { "Tier I: your summons take a fifth less harm.", "Tier II: one more summon slot.", "Tier III: your summons' kills heal you." } },
+			{ "Destruction Set", "The Destruction mage's armor: dark College robes, hood and boots, woven to carry raw magicka from the heart to the hands.", { "Tier I: your spells cost 10% less.", "Tier II: your magicka comes back faster.", "Tier III: your spells cost a quarter less." } },
+			{ "Alchemist Set", "The Alchemist's armor: a ranger's cuirass, hood and boots, light and hard-wearing, with loops at the belt for flasks.", { "Tier I: you throw 15% faster.", "Tier II: your flasks' bursts reach 20% wider.", "Tier III: each flask kill heals you 2%." } },
+			{ "Spellsword Set", "The Spellsword's armor: black plate etched with runes - cuirass, helm, gauntlets and sabatons - for the one who fights with blade and spell together.", { "Tier I: you mend in a fight.", "Tier II: your blade's hits put magicka back.", "Tier III: your blade hits 15% harder." } },
 		};
 		std::string want;
 		const Card* c = nullptr;
@@ -3678,10 +3678,23 @@ namespace bo3z::Classes
 	std::string ArmourSetName(int a_cls, int a_tier)
 	{
 		if (a_cls < 0 || a_cls > 3) return "Armor";
-		static constexpr const char* kName[4] = { "Conjurer's Robes", "Black Mage College Robes", "Gondorian Ranger Armor", "Black Archmage Plate" };   // (the lookbook's sets, by their mods' names)
+		static constexpr const char* kName[4] = { "Summoner Set", "Destruction Set", "Alchemist Set", "Spellsword Set" };   // (Noah: "renamed to their class like \"Alchemist Set\"")
 		return a_tier >= 1 ? fmt::format("{} (Enchanted {})", kName[a_cls], a_tier >= 3 ? "III" : a_tier == 2 ? "II" : "I") : std::string(kName[a_cls]);
 	}
 
+	// (Noah: "the new armor sets also need to be renamed to their class like \"Alchemist Set\" or Destruction Set") each piece
+	// named for its class's set and its place in it
+	void NameSetPieces()
+	{
+		static constexpr const char* kSet[4] = { "Summoner Set", "Destruction Set", "Alchemist Set", "Spellsword Set" };
+		using S = RE::BGSBipedObjectForm::BipedObjectSlot;
+		for (int c = 0; c < 4; ++c) {
+			for (auto* a : SetForms(c, 0)) {
+				const char* part = a->HasPartOf(S::kBody) ? (c <= 1 ? "Robes" : "Cuirass") : (a->HasPartOf(S::kHead) || a->HasPartOf(S::kHair)) ? (c == 3 ? "Helm" : "Hood") : a->HasPartOf(S::kHands) ? "Gauntlets" : a->HasPartOf(S::kFeet) ? (c == 3 ? "Sabatons" : "Boots") : "Piece";
+				a->fullName = fmt::format("{} {}", kSet[c], part);
+			}
+		}
+	}
 	bool ArmourCarried(int a_cls, int a_tier)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();

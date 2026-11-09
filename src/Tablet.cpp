@@ -478,6 +478,21 @@ namespace bo3z::Tablet
 		return it != g_salt.end() && it->second > g_pclock ? 1.3f : 1.0f;
 	}
 	// a blow or an arrow of yours landed with the donated weapon in hand: its power
+	namespace
+	{
+		// an orb of lantern-light that pulls the dead in, then bursts
+		// (Noah: "its way too powerful") its pull smaller, its burst under half what it was
+		void LanternOrb(float S)
+		{
+			RE::Actor* t = nullptr;
+			const RE::NiPoint3 at = AimPoint(&t);
+			RE::NiPoint3 d = (at + RE::NiPoint3{ 0, 0, 60.0f }) - Gun::SwingFrom();
+			if (d.Length() > 1e-3f) d = d * (1.0f / d.Length());
+			Gun::Lob("CurseOfAlduin\\fx\\lightorb.nif", Gun::SwingFrom(), d * 1500.0f + RE::NiPoint3{ 0, 0, 120.0f }, 0.8f, [S](const RE::NiPoint3& land) {
+				Gun::Singularity(land + RE::NiPoint3{ 0, 0, 50.0f }, 280.0f, 1.1f, S * 0.9f, false);
+			}, 4.0f, 500.0f);
+		}
+	}
 	void OnStrike(RE::Actor* a_target, RE::FormID a_source, bool a_power, bool a_arrow)
 	{
 		auto* f = FormOf(g_held);
@@ -506,6 +521,11 @@ namespace bo3z::Tablet
 		} else if (id == "saltrice") {   // the struck take 30% more from everything for 4 s
 			g_salt[a_target->GetFormID()] = g_pclock + 4.0f;
 			Gun::Motes(4, tp, 0.4f, 1.0f);
+		} else if (id == "lanternwick") {   // (now a quarterstaff) a heavy attack that lands throws the orb
+			if (a_power && g_slamCool <= 0) {
+				g_slamCool = 2.5f;
+				LanternOrb(S);
+			}
 		} else if (id == "riverstone") {   // hits knock the dead back; a heavy attack splits the ground in a line
 			Gun::Knock(a_target, 1.2f);
 			if (a_power && g_splitCool <= 0 && p) {
@@ -559,14 +579,8 @@ namespace bo3z::Tablet
 		const std::string_view id = gen::kTabletWeapons[g_held].id;
 		if (g_countFor != g_held) g_countFor = g_held, g_count = 0;
 		++g_count;
-		if (id == "lanternwick") {   // an orb that pulls the dead in, then bursts
-			RE::Actor* t = nullptr;
-			const RE::NiPoint3 at = AimPoint(&t);
-			RE::NiPoint3 d = (at + RE::NiPoint3{ 0, 0, 60.0f }) - Gun::SwingFrom();
-			if (d.Length() > 1e-3f) d = d * (1.0f / d.Length());
-			Gun::Lob("CurseOfAlduin\\fx\\lightorb.nif", Gun::SwingFrom(), d * 1500.0f + RE::NiPoint3{ 0, 0, 120.0f }, 0.8f, [S](const RE::NiPoint3& land) {
-				Gun::Singularity(land + RE::NiPoint3{ 0, 0, 50.0f }, 380.0f, 1.6f, S * 2.2f, false);
-			}, 4.0f, 500.0f);
+		if (id == "lanternwick") {
+			LanternOrb(S);
 		} else if (id == "wanderstar") {   // a dim caged star that bounces between up to 8 of the dead
 			RE::Actor* t = nullptr;
 			const RE::NiPoint3 at = AimPoint(&t);
@@ -778,9 +792,14 @@ namespace bo3z::Tablet
 		for (int i = 0; i < static_cast<int>(gen::kTabletWeapons.size()); ++i) {
 			const auto& d = gen::kTabletWeapons[i];
 			std::uint32_t src = 0;
-			if (d.id == "eclipse") src = 0x153BB0;   // Glass Pike
+			const char* plugin = "NewArmoury.esp";
+			// (Noah: "for 2. use the glass staff #112. 4. use #76 and change the name to match. 5. use #60")
+			if (d.id == "eclipse") src = 0x153BB0;           // Glass Pike
+			else if (d.id == "lanternwick") src = 0x18B765;  // Stalhrim Quarterstaff (the Rimewick)
+			else if (d.id == "riverstone") src = 0x16801F;   // Nordic Halberd
+			else if (d.id == "wanderstar") src = 0x000808, plugin = "Fulcimentum - More Staves and Wands of Skyrim.esp";   // Glass Staff
 			if (!src) continue;
-			auto* f = RE::TESDataHandler::GetSingleton()->LookupForm(src, "NewArmoury.esp");
+			auto* f = RE::TESDataHandler::GetSingleton()->LookupForm(src, plugin);
 			auto* s = f ? f->As<RE::TESObjectWEAP>() : nullptr;
 			auto* w = Forms::Ours(d.form) ? Forms::Ours(d.form)->As<RE::TESObjectWEAP>() : nullptr;
 			if (!s || !w) continue;
