@@ -3000,6 +3000,10 @@ namespace bo3z
 			if (const int have = Points::Get(); have < 150000) {
 				Points::Refund(150000 - have);
 			}
+			// (Noah: "increase my players weight I cant move with the test kit") room for all of it: carry weight 10,000 or more
+			if (auto* av = p->AsActorValueOwner(); av && av->GetActorValue(RE::ActorValue::kCarryWeight) < 10000.0f) {
+				av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kCarryWeight, 10000.0f - av->GetActorValue(RE::ActorValue::kCarryWeight));
+			}
 			Hud::Banner(fmt::format("TEST KIT: the Echo Altar's {} spells, every class's spells, weapons, flasks and robes (Tier III), the four wonders, the ten Dragon Priest weapons, the Tablet's eleven weapons, Alduin's Bane, the glider, 150,000 Cursed Essence", spells), 8.0f);
 			std::string list;
 			for (auto& [el, c] : byEl) list += fmt::format("{} {}, ", el, c);
