@@ -2443,8 +2443,52 @@ namespace bo3z::Classes
 	}
 	RE::TESObjectWEAP* AlchemistKnife()
 	{
+		// (Noah: the Alchemist's weapon "the Wildfire Whip") Animated Armoury's own Wildfire - its whip script and sounds with
+		// it; our Shadowflame Sword should the mod be missing
+		if (auto* f = Lookup(0x31BDED, "NewArmoury.esp")) if (auto* w = f->As<RE::TESObjectWEAP>()) return w;
 		auto* f = RE::TESDataHandler::GetSingleton()->LookupForm(gen::kAlchKnife, gen::kPlugin);
 		return f ? f->As<RE::TESObjectWEAP>() : nullptr;
+	}
+	// (Noah: "the new weapons in the classes" - the Summoner a quarterstaff, the Spellsword a katana, each a better material with
+	// each tier) a class weapon takes on an Animated Armoury weapon's whole look and feel: its models, how it's held and swung
+	// (the animation family its keywords call up), its reach and speed, its sounds - our record, our powers
+	bool AdoptLook(RE::TESObjectWEAP* a_w, const RE::TESObjectWEAP* a_s)
+	{
+		if (!a_w || !a_s) return false;
+		const bool changed = std::string_view(a_w->GetModel()) != std::string_view(a_s->GetModel());
+		a_w->SetModel(a_s->GetModel());
+		a_w->firstPersonModelObject = a_s->firstPersonModelObject;
+		a_w->weaponData.animationType = a_s->weaponData.animationType;
+		a_w->weaponData.reach = a_s->weaponData.reach;
+		a_w->weaponData.speed = a_s->weaponData.speed;
+		a_w->SetEquipSlot(a_s->GetEquipSlot());
+		a_w->attackSound = a_s->attackSound, a_w->attackSound2D = a_s->attackSound2D, a_w->attackLoopSound = a_s->attackLoopSound;
+		a_w->attackFailSound = a_s->attackFailSound, a_w->idleSound = a_s->idleSound, a_w->equipSound = a_s->equipSound;
+		a_w->unequipSound = a_s->unequipSound, a_w->impactDataSet = a_s->impactDataSet;
+		for (std::uint32_t i = 0; i < a_s->numKeywords; ++i) {
+			auto* k = a_s->keywords[i];
+			if (!k || a_w->HasKeyword(k)) continue;
+			const std::string_view ed(k->GetFormEditorID() ? k->GetFormEditorID() : "");
+			auto* file = k->GetFile(0);
+			if ((file && std::string_view(file->GetFilename()) == "NewArmoury.esp") || ed.starts_with("WeapType")) a_w->AddKeyword(k);
+		}
+		return changed;
+	}
+	bool AdoptTierLook(RE::TESObjectWEAP* a_w, int a_tier)
+	{
+		struct Src { std::uint32_t id[3]; };
+		static constexpr Src kQStaff{ { 0x18B756, 0x18B75D, 0x18B763 } };   // Iron, Glass, Dragonbone Quarterstaff
+		static constexpr Src kKatana{ { 0x344735, 0x344731, 0x34473A } };   // Steel, Glass, Daedric Katana
+		const int c = SwordClass(a_w);
+		const Src* src = c == 0 ? &kQStaff : c == 3 ? &kKatana : nullptr;
+		if (!src) return false;
+		const int i = a_tier <= 1 ? 0 : a_tier == 2 ? 1 : 2;
+		auto* f = Lookup(src->id[i], "NewArmoury.esp");
+		auto* s = f ? f->As<RE::TESObjectWEAP>() : nullptr;
+		if (!s) return false;
+		const bool changed = AdoptLook(a_w, s);
+		if (changed) logger::info("classes: the {} takes the look of {}", a_w->GetName(), s->GetName());
+		return changed;
 	}
 	namespace
 	{
@@ -3293,6 +3337,9 @@ namespace bo3z::Classes
 				if (!bip) continue;
 				auto& o = bip->objects[RE::BIPED_OBJECT::kOneHandSword];
 				if (!o.item || SwordClass(o.item) < 0 || !o.partClone) continue;
+				// (only Light Greatswords' long blades: the Animated Armoury weapons the classes carry now are their own size)
+				auto* ow = o.item->As<RE::TESObjectWEAP>();
+				if (!ow || !std::string_view(ow->GetModel()).contains("hipblades")) continue;
 				if (std::abs(o.partClone->local.scale - 0.85f) > 0.001f) o.partClone->local.scale = 0.85f;
 				// (Noah, clips 8-9: the blade unseen in the hand after a night began, and gone as it was put away in first person)
 				// it was moved between the hand and the back by hand - fighting the game's own draw and sheathe; its model now

@@ -281,7 +281,8 @@ namespace bo3z::Kit
 						}
 					}
 					auto* want = Classes::BladeLook(w, t);
-					if (w->formEnchanting != want) {
+					const bool newLook = Classes::AdoptTierLook(w, t);
+					if (w->formEnchanting != want || newLook) {
 						w->formEnchanting = want;
 						// (the blade in hand: taken off and on again, so its new look shows; in a menu, once it closes)
 						auto* p = RE::PlayerCharacter::GetSingleton();
