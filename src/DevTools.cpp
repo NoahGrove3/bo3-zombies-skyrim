@@ -642,6 +642,10 @@ namespace bo3z
 			} else if (cmd == "quit") {  // the game closed to the desktop (so a new build can go in)
 				logger::info("dev: quitting to the desktop");
 				if (auto* m = RE::Main::GetSingleton()) m->quitGame = true;
+			} else if (cmd == "fly") {  // fly on|off: fly where you look (sprint: faster), hang in the air when you let go
+				std::string v;
+				in >> v;
+				Director::DevFly(v != "off");
 			} else if (cmd == "freeloop") {
 				// freeloop [seconds] [town index] | freeloop off: (Noah: "run the echo altar being freed animation every 20
 				// seconds so I can get a clip of it") the city's freeing - the charge, the burst, the runes - played again and

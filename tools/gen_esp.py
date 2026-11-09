@@ -602,7 +602,7 @@ SWORD_DESC = {   # (Noah: "way too long" - the card tells what the sword is; eac
     'slayer': "The Akaviri dragon-hunters' blade. Swings 50% faster. Light swings: golden fire, twice the damage to dragons. Heavy attacks: a cyclone of golden dragonfire.",
 }
 TIER_TEXT = {   # (the look's enchantment on the item card: what this tier adds)
-    'radiant': ("Light swings loose spectral blade waves through the dead.", "Spectral blades; heavy attacks call a pillar of sunlight down.", "Spectral blades, and a great pillar of sunlight on every heavy attack."),
+    'radiant': ("Light swings loose white sun balls through the dead.", "Sun balls; heavy attacks call a pillar of sunlight down on the one you strike.", "Sun balls, and a great pillar of sunlight on every heavy attack."),
     'carian': ("Light swings loose bolts of fire, frost and lightning through the dead.", "Elemental bolts; heavy attacks loose a storm cyclone of fire, ice and lightning.", "Elemental bolts, and a great storm cyclone on every heavy attack."),
     'alch': ("Light swings loose bolts of shadowflame that set the dead burning.", "Bolts of shadowflame; heavy attacks loose a cyclone of purple fire.", "Bolts of shadowflame, and a great cyclone of purple fire on every heavy attack."),
     'ss': ("Light swings loose bolts of your spell's element through the dead.", "Bolts of your spell's element; heavy attacks loose a cyclone of it.", "Bolts of your spell's element, and a great cyclone of it on every heavy attack."),
@@ -613,14 +613,16 @@ TIER_NAME = {'radiant': 'Radiant Light', 'carian': 'Carian Sorcery', 'alch': 'Sh
 # that mod (a requirement): the class swords drawn at 85% by src/Classes.cpp (one-handed), the Bane and the Slayer as they are
 LGS = {'radiant': 'silver', 'carian': 'stahlrim', 'shadowflame': 'daedric', 'spellbound': 'nordic', 'bane': 'dragonbone', 'slayer': 'akaviri'}
 def lgs(k): return f'Light Greatswords\\{LGS[k]}\\LightGreatsword.nif'
-crystal_weapon('riftblade', 'UN_Riftblade', 'Radiant Blade', lgs('radiant'), '1st_riftblade',
+# (Noah: "hang them at the hip") the four class swords: our copies sheathed at the hip (src/ArmorForge.cpp BuildHipBlades)
+def hip(k): return f'CurseOfAlduin\\hipblades\\{LGS[k]}.nif'
+crystal_weapon('riftblade', 'UN_Riftblade', 'Radiant Blade', hip('radiant'), '1st_riftblade',
     SWORD_DESC['radiant'],
     (900, 10.0, 10))
-crystal_weapon('carianblade', 'UN_CarianBlade', 'Carian Blade', lgs('carian'), '1st_kvblue',
+crystal_weapon('carianblade', 'UN_CarianBlade', 'Carian Blade', hip('carian'), '1st_kvblue',
     SWORD_DESC['carian'],
     (900, 10.0, 10))
 
-crystal_weapon('alchknife', 'UN_AlchemistKnife', 'Shadowflame Sword', lgs('shadowflame'), '1st_mace',
+crystal_weapon('alchknife', 'UN_AlchemistKnife', 'Shadowflame Sword', hip('shadowflame'), '1st_mace',
     SWORD_DESC['alch'],
     (900, 10.0, 10))
 
@@ -669,7 +671,7 @@ MAD_GLOW = [  # its tiers: the blade's own fire, brighter each tier (src/Kit.cpp
     dict(persist=1.3, pulse=0.3, particles=True, birth=140.0, alpha=(0.12, 0.65, 0.12), scale2=11.0, life=0.8, fill=(215, 35, 18), keys=((255, 170, 90), (230, 45, 20), (120, 0, 0)), edge=(240, 40, 15)),
 ]
 # (the audit: the Madness Sword's first-person static pointed at Saints & Seducers' model - Creation Club content, never required: gone)
-crystal_weapon('madness', 'UN_MadnessSword', 'Spellbound Blade', lgs('spellbound'), '1st_kvred',
+crystal_weapon('madness', 'UN_MadnessSword', 'Spellbound Blade', hip('spellbound'), '1st_kvred',
     SWORD_DESC['ss_none'],
     (900, 10.0, 10))
 

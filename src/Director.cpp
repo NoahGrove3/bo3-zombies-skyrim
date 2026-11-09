@@ -5174,6 +5174,7 @@ namespace bo3z
 		};
 		std::vector<ScoutMk> g_marks;
 		bool                 g_scoutOn = false, g_marksLoaded = false;
+		bool                 g_devFly = false;   // (Noah: "give me flight super speed" for placing the Tablet) the scout's flight alone
 		RE::NiPoint3         g_hover{};  // (scout flight) where you hang in the air
 		struct ScoutArrow
 		{
@@ -5251,6 +5252,16 @@ namespace bo3z
 				}
 			}
 		}
+		bool TickScout(RE::PlayerCharacter* a_player, float a_delta);
+		void SetDevFly(bool a_on)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p || a_on == g_devFly) return;
+			g_devFly = a_on;
+			g_hover = p->GetPosition() + RE::NiPoint3{ 0, 0, 40.0f };
+			if (!a_on) if (auto* ctrl = p->GetCharController()) ctrl->gravity = 1.0f;
+			logger::info("dev: fly {}", a_on ? "on" : "off");
+		}
 		bool TickScout(RE::PlayerCharacter* a_player, float a_delta)
 		{
 			const bool want = kScoutAvailable && Settings::Scout() && Save::Flag(Save::kFlagStarted);
@@ -5300,8 +5311,8 @@ namespace bo3z
 					logger::info("scout: off");
 				}
 			}
-			if (!g_scoutOn) return false;
-			TickPurge(a_delta);
+			if (!g_scoutOn && !g_devFly) return false;
+			if (g_scoutOn) TickPurge(a_delta);
 			// flight: moving, you go where you look - up and down too - fast (sprint: faster); let go high up and you hang
 			// there; let go near the ground and you come down onto it, on your feet (Noah: "stuck in the falling animation":
 			// a bow can't be drawn in the air - B marks from up there instead)
@@ -5347,6 +5358,7 @@ namespace bo3z
 					}
 				}
 			}
+			if (!g_scoutOn) return false;   // (the dev flight only: the night goes on)
 			// arrows of yours at rest: each a mark (gathered under the projectiles' lock, marked after it)
 			std::vector<RE::NiPoint3> rest;
 			if (auto* mgr = RE::Projectile::Manager::GetSingleton()) {
@@ -5792,5 +5804,6 @@ namespace bo3z
 			}
 			logger::info("undead: {} of ours fight headlong (no circling or strafing)", n);
 		}
+		void DevFly(bool a_on) { SetDevFly(a_on); }
 	}
 }

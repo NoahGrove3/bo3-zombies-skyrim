@@ -2973,7 +2973,7 @@ namespace bo3z::Classes
 		struct Card { const char* name; const char* base; const char* tier[3]; };
 		static const Card kCards[] = {
 			{ "Radiant Blade", "The Summoner's blade: pale silver, burning with white sunlight.",
-				{ "Tier I: light swings loose spectral blade waves that cut through the dead.", "Tier II: heavy attacks call a pillar of sunlight down where they land.", "Tier III: heavy attacks call a great pillar of sunlight down." } },
+				{ "Tier I: light swings loose white sun balls that burn through the dead.", "Tier II: heavy attacks call a pillar of sunlight down on the one you strike.", "Tier III: heavy attacks call a great pillar of sunlight down." } },
 			{ "Carian Blade", "Destruction's blade: stahlrim edged in raw sorcery.",
 				{ "Tier I: light swings loose bolts of fire, frost and lightning in turn.", "Tier II: heavy attacks loose a storm cyclone of fire, ice and lightning.", "Tier III: heavy attacks loose a great storm cyclone." } },
 			{ "Shadowflame Sword", "The Alchemist's blade: daedric steel wreathed in purple shadowflame.",
@@ -3063,7 +3063,16 @@ namespace bo3z::Classes
 		if (a_cls == 0) {
 			// (Noah, the Radiant Blade reworked: "Sun pillar strike") Auriel's sunbeam slams down where the blow lands, searing all
 			// round it - Tier II smaller, Tier III great (fxmap.ini sun_strike: Dawnguard's own)
-			const RE::NiPoint3 at = OnGround(a_me + fwd * (big ? 650.0f : 480.0f), a_me.z);
+			// (Noah, clip 10: "the heavy attack should cast the light beam from the sky closer to the player where the enemy was
+			// hit") on the one your blow reaches - the nearest of the dead just ahead - else a step in front of you
+			RE::NiPoint3 at = OnGround(a_me + fwd * 170.0f, a_me.z);
+			{
+				float best = 1e9f;
+				for (auto* f : NearFoes(a_me + fwd * 150.0f, 260.0f, 12)) {
+					const float d = f->GetPosition().GetDistance(a_me);
+					if (d < best) best = d, at = OnGround(f->GetPosition(), a_me.z);
+				}
+			}
 			const float sz = big ? 1.0f : 0.65f, r = big ? 420.0f : 280.0f;
 			// (Noah: "Cast the real Sunbeam") Mysticism's own Sunbeam down out of the sky (Gun::SkyBeam; without Mysticism the sunlit pillar)
 			Gun::SkyBeam(at, big ? 2.0f : 1.4f);
@@ -3168,7 +3177,7 @@ namespace bo3z::Classes
 			sl.range = 1400.0f + 200.0f * t;
 			// (seen in game: the bolts left the blade at a third of their size at 2,300 a second - never seen) a bolt at its full
 			// size from the blade, at a spell's own pace - the Radiant Blade's spectral wave still a crescent that grows
-			const bool isBolt = cls != 0;
+			const bool isBolt = true;   // (Noah, clip 10: the Radiant Blade's a white sun ball now, a bolt like the rest)
 			sl.bolt = isBolt;
 			if (isBolt) sl.speed = 1150.0f;
 			sl.scale = (isBolt ? 1.3f : 0.9f) + 0.15f * t;
@@ -3279,26 +3288,15 @@ namespace bo3z::Classes
 		// the first-person body has no back to see. Ours is moved by hand: in the hand from the moment it's drawn to the moment
 		// it's put away, on the back the rest of the time
 		if (p) {
-			const auto ws = p->AsActorState()->GetWeaponState();
-			const bool inHand = ws == RE::WEAPON_STATE::kDrawing || ws == RE::WEAPON_STATE::kDrawn || ws == RE::WEAPON_STATE::kWantToSheathe;
 			for (const bool fp : { false, true }) {
 				auto& bip = p->GetBiped(fp);
 				if (!bip) continue;
 				auto& o = bip->objects[RE::BIPED_OBJECT::kOneHandSword];
 				if (!o.item || SwordClass(o.item) < 0 || !o.partClone) continue;
 				if (std::abs(o.partClone->local.scale - 0.85f) > 0.001f) o.partClone->local.scale = 0.85f;
-				auto* root = p->Get3D(fp);
-				// (Noah: "when putting away my sword ... the sword was on my back but the animation was putting it on my side" -
-				// "hang them at the hip") put away, the blade hangs at the side, where the one-handed sheathe takes it
-				auto* want = root ? root->GetObjectByName(inHand ? "WEAPON" : "WeaponSword") : nullptr;
-				auto* node = want ? want->AsNode() : nullptr;
-				RE::NiPointer<RE::NiAVObject> blade = o.partClone;
-				if (node && blade->parent != node) {
-					if (blade->parent) blade->parent->DetachChild2(blade.get());
-					node->AttachChild(blade.get(), true);
-					static int said = 0;
-					if (said++ < 6) logger::info("swords: {} blade moved to {} (weapon state {})", fp ? "1st" : "3rd", inHand ? "the hand" : "the hip", static_cast<int>(ws));
-				}
+				// (Noah, clips 8-9: the blade unseen in the hand after a night began, and gone as it was put away in first person)
+				// it was moved between the hand and the back by hand - fighting the game's own draw and sheathe; its model now
+				// names the hip as its sheath (ArmorForge::BuildHipBlades), so the game moves it itself
 			}
 		}
 		// (Noah: "Both layered") the look's Vibrant Weapons art along the blade in your hand - an ability of ours, laid on while
@@ -3327,6 +3325,8 @@ namespace bo3z::Classes
 			// (Noah: "The green animation circling the sword, I want that to be changed to a golden color instead of green, but keep the
 			// same animation") the Dragon Slayer's art round the blade coloured gold, in both bodies
 			if (key == 9) for (const bool fp : { false, true }) if (auto* root = p->Get3D(fp)) Gun::TintGold(root->GetObjectByName("WEAPON"));
+			// (Noah, clips 8-9: the Radiant Blade's art showed frost-blue and green - "should be white") the Summoner's in white
+			if (key == 2) for (const bool fp : { false, true }) if (auto* root = p->Get3D(fp)) Gun::TintPal(root->GetObjectByName("WEAPON"), "textures\\CurseOfAlduin\\fx\\pal_white.dds", false);
 			// (Noah, clips 301-302: the Shadowflame Sword and the Spellbound Blade unseen in the hand, in both views) a flask's
 			// throw hides the hand's weapon node from the release to the end of the throw: never left hidden once no throw is on
 			if (!Gun::Throwing()) {

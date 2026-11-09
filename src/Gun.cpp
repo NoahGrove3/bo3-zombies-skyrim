@@ -2352,18 +2352,21 @@ namespace bo3z
 			std::erase_if(g_looks, [](const Look& l) { return l.t > l.life; });
 		}
 		// (the Dragon Slayer's art round its blade) every effect shader under a node coloured by the gold ramp - each only once
-		void TintGold(RE::NiAVObject* a_root)
+		void TintGold(RE::NiAVObject* a_root) { TintPal(a_root, "textures\\CurseOfAlduin\\fx\\pal_gold.dds", true); }
+		// (Noah, clip 9: "the green visual effects on the blade should be white in color") any palette, the flames kept or hidden
+		void TintPal(RE::NiAVObject* a_root, const std::string& pal, bool a_hideFlames)
 		{
 			if (!a_root) return;
-			static const std::string pal = "textures\\CurseOfAlduin\\fx\\pal_gold.dds";
 			// (Noah: "remove the flames on the sword itself") the fire art a fire spell in the other hand lays on the blade
 			// (Skyrim's flame enchantment: its flames, glow and heat shimmer) is hidden - only the gold circling stays
-			RE::BSVisit::TraverseScenegraphGeometries(a_root, [&](RE::BSGeometry* g) {
-				const std::string_view n(g->name.c_str() ? g->name.c_str() : "");
-				if (n == "pFlames" || n == "pIncandescence" || n == "RefractionShape") g->GetFlags().set(RE::NiAVObject::Flag::kHidden);
-				return RE::BSVisit::BSVisitControl::kContinue;
-			});
-			for (const char* n : { "pFlames", "pIncandescence", "RefractionShape" }) if (auto* o = a_root->GetObjectByName(n)) o->GetFlags().set(RE::NiAVObject::Flag::kHidden);
+			if (a_hideFlames) {
+				RE::BSVisit::TraverseScenegraphGeometries(a_root, [&](RE::BSGeometry* g) {
+					const std::string_view n(g->name.c_str() ? g->name.c_str() : "");
+					if (n == "pFlames" || n == "pIncandescence" || n == "RefractionShape") g->GetFlags().set(RE::NiAVObject::Flag::kHidden);
+					return RE::BSVisit::BSVisitControl::kContinue;
+				});
+				for (const char* n : { "pFlames", "pIncandescence", "RefractionShape" }) if (auto* o = a_root->GetObjectByName(n)) o->GetFlags().set(RE::NiAVObject::Flag::kHidden);
+			}
 			bool any = false;
 			RE::BSVisit::TraverseScenegraphGeometries(a_root, [&](RE::BSGeometry* g) {
 				auto* ep = netimmerse_cast<RE::BSEffectShaderProperty*>(g->GetGeometryRuntimeData().shaderProperty.get());
@@ -2378,7 +2381,7 @@ namespace bo3z
 			if (static int said = 0; said++ < 4) {
 				std::string names;
 				RE::BSVisit::TraverseScenegraphGeometries(a_root, [&](RE::BSGeometry* g) { names += std::string(g->name.c_str()) + " "; return RE::BSVisit::BSVisitControl::kContinue; });
-				logger::info("swords: the Dragon Slayer's art in gold: {}", names);
+				logger::info("swords: blade art tinted ({}): {}", pal, names);
 			}
 		}
 		// (Noah: "Cast the real Sunbeam" - "animated and hyper realistic") Mysticism's own Sunbeam, cast down out of the sky onto
@@ -3363,8 +3366,18 @@ namespace bo3z
 			void ForAWhile(RE::Actor* a, RE::ActorValue a_av, float a_delta, float a_secs)
 			{
 				if (!a || a->IsDead()) return;
-				a->AsActorValueOwner()->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, a_av, a_delta);
-				Tasks::Later(a_secs, [h = a->GetHandle(), a_av, a_delta]() { if (auto x = h.get()) x->AsActorValueOwner()->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, a_av, -a_delta); });
+				// (Noah, clip: "the mist blade ... not doing what it says") a speed change only takes once the carry weight is
+				// touched - the priest weapons' slows never showed
+				auto apply = [a_av](RE::Actor* x, float d) {
+					auto* av = x->AsActorValueOwner();
+					av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, a_av, d);
+					if (a_av == RE::ActorValue::kSpeedMult) {
+						av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, 0.01f);
+						av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, -0.01f);
+					}
+				};
+				apply(a, a_delta);
+				Tasks::Later(a_secs, [h = a->GetHandle(), apply, a_delta]() { if (auto x = h.get()) apply(x.get(), -a_delta); });
 			}
 			void Sleep(RE::Actor* a, float a_secs)   // (Vokun) laid down asleep: paralysed where they stand
 			{
@@ -3442,11 +3455,14 @@ namespace bo3z
 			case 1:   // Nahkriin's Mistblade: blinded (slowed, their blows weak); heavy - a fog where they wander lost
 				ForAWhile(a_t, RE::ActorValue::kSpeedMult, -45.0f, 3.0f);
 				ForAWhile(a_t, RE::ActorValue::kAttackDamageMult, -0.5f, 3.0f);
+				// (Noah: you couldn't see it work) the blinded wrapped in pale mist while it lasts
+				if (auto* fx = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kHallGhostShader, gen::kPlugin)) a_t->ApplyEffectShader(fx, heavy ? 6.0f : 3.0f);
 				Motes(3, tp, 0.5f, 2.0f);
 				if (heavy) {
 					for (auto* f : Foes(tp, 600.0f)) {
 						ForAWhile(f, RE::ActorValue::kSpeedMult, -60.0f, 6.0f);
 						ForAWhile(f, RE::ActorValue::kAttackDamageMult, -0.6f, 6.0f);
+						if (auto* fx = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kHallGhostShader, gen::kPlugin)) f->ApplyEffectShader(fx, 6.0f);
 						f->StopCombat();
 					}
 					Motes(3, tp, 2.2f, 6.0f);

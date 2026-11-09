@@ -1291,6 +1291,7 @@ namespace bo3z
 		void OnDataLoaded()
 		{
 			// (the class-coloured Black Mage robes are gone - each class wears its lookbook set as its mod made it - so ArmorForge::Build no longer runs)
+			ArmorForge::BuildHipBlades();
 			FreeBowMovement();
 			Undead::InstallHooks();
 			Hud::InstallInputGate();

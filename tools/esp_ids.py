@@ -131,10 +131,10 @@ def dressing(S):
     for _t, (_k, _n, _m, _kind, _d, _x) in PRIEST_WEAPONS.items():   # (the Dragon Priests' weapons, held)
         records[('STAT', '1st_priest_' + _k)] = {'model': 'CurseOfAlduin\\priests\\' + _m + '.nif', 'color': '', 'radius': 0}
     records[('STAT', '1st_slayer')] = {'model': 'Light Greatswords\\akaviri\\LightGreatsword.nif', 'color': '', 'radius': 0}        # (Noah) the Dragon Slayer: the Ayleid Crystal Saber
-    records[('STAT', '1st_mace')] = {'model': 'Light Greatswords\\daedric\\LightGreatsword.nif', 'color': '', 'radius': 0}  # (Noah) the Alchemist's Shadowflame Sword: Kv's purple crystal sword
-    records[('STAT', '1st_kvred')] = {'model': 'Light Greatswords\\nordic\\LightGreatsword.nif', 'color': '', 'radius': 0}  # the Spellsword's
-    records[('STAT', '1st_kvblue')] = {'model': 'Light Greatswords\\stahlrim\\LightGreatsword.nif', 'color': '', 'radius': 0}  # Destruction's Carian blade
-    records[('STAT', '1st_riftblade')] = {'model': 'Light Greatswords\\silver\\LightGreatsword.nif', 'color': '', 'radius': 0}  # (Noah) the Riftblade: Abyssal Heart   # the Ranger's wonder: the Subsuming Vortex
+    records[('STAT', '1st_mace')] = {'model': 'CurseOfAlduin\\hipblades\\daedric.nif', 'color': '', 'radius': 0}  # (Noah) the Alchemist's Shadowflame Sword: Kv's purple crystal sword
+    records[('STAT', '1st_kvred')] = {'model': 'CurseOfAlduin\\hipblades\\nordic.nif', 'color': '', 'radius': 0}  # the Spellsword's
+    records[('STAT', '1st_kvblue')] = {'model': 'CurseOfAlduin\\hipblades\\stahlrim.nif', 'color': '', 'radius': 0}  # Destruction's Carian blade
+    records[('STAT', '1st_riftblade')] = {'model': 'CurseOfAlduin\\hipblades\\silver.nif', 'color': '', 'radius': 0}  # (Noah) the Riftblade: Abyssal Heart   # the Ranger's wonder: the Subsuming Vortex
     for b in S.get('bows', {}).get('rows', []):   # the altar's bows: their first-person model
         records[('STAT', '1st_bow_' + b['id'])] = {'model': f"CurseOfAlduin\\bow\\{b['id']}.nif", 'color': '', 'radius': 0}
     records[('STAT', 'show_cheese')] = {'model': S['dressing']['show']['cheeseModel'], 'color': '', 'radius': 0}

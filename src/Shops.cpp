@@ -98,7 +98,9 @@ namespace bo3z
 					});
 					continue;
 				}
-				if (d.freed && !freed) {
+				// (dev freeloop: a freed city's freeing played again) its freed pieces kept - hidden through the charge, grown at the burst
+				const bool replay = PulseHolds(gen::kLocations[a_index].town) && Curse::Freed(gen::kLocations[a_index].town);
+				if (d.freed && !freed && !replay) {
 					// (Noah: "when I load into a save, the altar has the particle effects before it's been freed") a freed
 					// piece left from another game (or placed a moment before this save's own state was read) is taken away
 					RE::TES::GetSingleton()->ForEachReferenceInRange(a_main, 700.0f, [&](RE::TESObjectREFR* r) {
@@ -1967,6 +1969,20 @@ namespace bo3z
 						if (el < kPulseCharge) {
 							// the charge: the roll's lightning, stone after stone into the heart, its runes climbing
 							const float u = el / kPulseCharge;
+							// (Noah: the replayed freeing was "missing the particles and golden rune fading in") a freed city's runes
+							// and motes, there from before, held at nothing through the charge - so they grow and fade in again
+							RE::TES::GetSingleton()->ForEachReferenceInRange(r.get(), 500.0f, [&](RE::TESObjectREFR* x) {
+								auto* b = x ? x->GetBaseObject() : nullptr;
+								const bool runes = b && b == Forms::Ours(gen::kFreedRunes), motes = b && b == Forms::Ours(gen::kHeartMotes);
+								if (!runes && !motes) return RE::BSContainer::ForEachResult::kContinue;
+								if (auto* o = x->Get3D()) {
+									o->local.scale = runes ? 0.001f : x->GetScale();
+									Fade(o, 0.0f);
+									RE::NiUpdateData ud;
+									o->Update(ud);
+								}
+								return RE::BSContainer::ForEachResult::kContinue;
+							});
 							TickBeams(r.get(), a_delta, std::min(1.0f, u * 1.15f));
 							if (const auto parts = FindAltarParts(r.get()); parts.heart) {
 								HeartGlow(parts.heart, 1.0f + 6.0f * u + 2.5f * std::max(0.0f, std::sin(el * 38.0f)));
@@ -2089,11 +2105,26 @@ namespace bo3z
 			if (auto* pc = RE::PlayerCamera::GetSingleton(); pc && pc->cameraRoot) {
 				camPos = pc->cameraRoot->world.translate;
 			}
+			// (Noah: "make the floating stones gradually spin faster during the animation then gradually go back to their normal
+			// rotation speed") the freeing's stones: up to six times their turn through the charge, held through the burst, then
+			// easing back to their own
+			static float spinBoost = 1.0f;
+			static RE::NiPoint3 spinAt{};
+			{
+				float target = 1.0f;
+				if (g_pulse && g_pulse->started) {
+					if (auto pr = g_pulse->shrine.get()) spinAt = pr->GetPosition();
+					const float el = kPulseSeconds - g_pulse->t;
+					target = el < kPulseCharge ? 1.0f + 5.0f * (el / kPulseCharge) : el < kPulseCharge + 1.5f ? 6.0f : 1.0f;
+				}
+				const float rate = target > spinBoost ? 3.0f : 0.5f;   // (quick to wind up, slow to settle)
+				spinBoost += (target - spinBoost) * std::min(1.0f, rate * a_delta);
+			}
 			for (auto& s : g_spinners) {
 				if (auto r = s.ref.get(); r && r->Is3DLoaded()) {
 					// the shrine's heart turns faster while it rolls (the crystal races, the shards whirl). Statics never move
 					// by their angle while loaded, so their 3D node is turned (and the rocks bob) directly.
-					const float boost = 1.0f;
+					const float boost = r->GetPosition().GetDistance(spinAt) < 900.0f ? spinBoost : 1.0f;
 					auto* node = r->Get3D() ? r->Get3D()->AsNode() : nullptr;
 					if (!node) {
 						continue;

@@ -731,6 +731,7 @@ namespace bo3z
 		int   g_liftOff = 0;                 // Bond II: 1 the Updraft's whirlwind is carrying you up
 		constexpr float kUpdraftRise = 1.4f, kUpdraftEnd = 2.1f;  // its climb, then its hold at the top
 		float g_updraftAge = 99;
+		float g_sinceGlide = 99;   // seconds since a glide let you go (the landing fix-up is for flights only)
 		bool  g_glideQueued = false;         // Activate pressed on the Updraft's way up: the glider opens at its top             // seconds since the Updraft (a glider opened soon after: the dragon comes quicker)
 		struct Whirl  // (hung on your own 3D - both skeletons - so it is drawn wherever you are)
 		{
@@ -1757,6 +1758,7 @@ namespace bo3z
 					g_armHoldOn = false, g_armHold = 0, g_flapT = -1, g_liftT = -1, g_divePitch = 0;
 					if (g_breathSound.IsValid()) g_breathSound.Stop();
 					DiveRush(a_player, 0.0f);
+					g_sinceGlide = 0;
 					logger::info("glider: {} - the dragon lets go", landed ? "landed" : "the glide is over");
 				}
 			}
@@ -3035,18 +3037,23 @@ namespace bo3z
 			bool  jumpState = false;
 			a_p->GetGraphVariableBool("bInJumpState", jumpState);
 			const bool busy = g_hadDragon || g_liftOff != 0 || g_dive || Dodging() || a_p->IsInKillMove();
-			if (!cc || busy || !OnGround(a_p) || !(jumpState || a_p->IsInMidair())) {
+			// (Noah, clip 6: "when I jump and land my character lands twice and it makes me put away my weapons then draw
+			// again") an ordinary jump's landing is still in its jump state for a moment - told to land again, then set back
+			// to standing with the hands redone; only a flight's end (a glide, the Updraft) is ever stuck, so only after one
+			g_sinceGlide += a_delta;
+			const bool afterFlight = g_sinceGlide < 20.0f || g_updraftAge < 60.0f;
+			if (!cc || busy || !afterFlight || !OnGround(a_p) || !(jumpState || a_p->IsInMidair())) {
 				stuckT = 0, step = 0;
 				return;
 			}
 			stuckT += a_delta;
-			if (step == 0 && stuckT > 0.35f) {
+			if (step == 0 && stuckT > 0.8f) {
 				step = 1;
 				cc->fallTime = 0.0f;
 				cc->flags.reset(RE::CHARACTER_FLAGS::kJumping);
 				const bool took = a_p->NotifyAnimationGraph("JumpLand") || a_p->NotifyAnimationGraph("JumpLandEnd");
 				logger::info("land: still in the jump state on the ground (graph {}, midair {}) - told it landed ({})", jumpState, a_p->IsInMidair(), took ? "taken" : "not taken");
-			} else if (step == 1 && stuckT > 1.0f) {
+			} else if (step == 1 && stuckT > 2.0f) {
 				step = 2;
 				cc->fallTime = 0.0f;
 				cc->flags.reset(RE::CHARACTER_FLAGS::kJumping);

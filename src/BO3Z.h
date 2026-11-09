@@ -193,6 +193,7 @@ namespace bo3z
 		int              ThemeNow();          // the theme being fought (event night or themed wave), -1 none
 		void             DevTheme(int a_theme, bool a_night);  // dev: the next wave themed (or tonight an event night)
 		void             DevMiniBoss();
+		void             DevFly(bool a_on);   // the scout's flight alone, for placing things (dev: fly on|off)
 		float            EventDropMult();
 		void             Pause(float a_seconds);  // Nuke: no undead rise for a while
 		float            Paused();
@@ -756,6 +757,7 @@ namespace bo3z
 		void                  DevLook(const std::string& a_model, const std::string& a_mode, float a_scale, const std::string& a_pal, float a_secs);
 		void                  DevFxReload();
 		void                  TintGold(RE::NiAVObject* a_root);   // every effect shader under a node in gold (once)
+		void                  TintPal(RE::NiAVObject* a_root, const std::string& a_pal, bool a_hideFlames);   // ... in any palette
 		void                  DevSwing(int a_power);
 		void                  TickLooks(float a_delta);
 		void                  StartThrow(bool a_left, std::function<void()> a_release);  // the underhand throw on that arm; a_release at the top of the swing
@@ -768,6 +770,7 @@ namespace bo3z
 	namespace ArmorForge
 	{
 		void Build();  // the class robes built from Black Mage Armor SE's files on this PC (once per recipe)
+		void BuildHipBlades();  // the four class swords' models, sheathed at the hip (from Light Greatswords' files on this PC)
 	}
 
 	// (Noah: the mystery box) the Tablet of Mysteries: one freed city at a time; its roll animated on its model (Tablet.cpp)
