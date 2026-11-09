@@ -3696,13 +3696,15 @@ namespace bo3z::Classes
 			}
 		}
 		// (Noah: "the upgraded version to make the item look enchanted") the set's glow, its class's colour, from Tier I
-		if (const int at = std::min(3, Kit::ArmourTier(c)); at >= 1 && p->Is3DLoaded() && !p->IsDead()) {
+		// (Noah: "give the player an aura when the armor is upgraded", faint to blazing) Tier I a sheen, Tier II wisps rising off you,
+		// Tier III a full aura, each Ascend (three steps) brighter
+		if (const int at = std::min(6, Kit::ArmourTier(c)); at >= 1 && p->Is3DLoaded() && !p->IsDead()) {
 			static float renew = 0;
 			static int   was = 0;
 			renew -= 1.0f;
 			if (renew <= 0 || at != was) {
 				renew = 2.0f, was = at;
-				if (auto* fx = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kArmGlow[c * 3 + at - 1], gen::kPlugin)) p->ApplyEffectShader(fx, 3.2f, nullptr, false, false, nullptr, false);
+				if (auto* fx = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kArmGlow[c * 6 + at - 1], gen::kPlugin)) p->ApplyEffectShader(fx, 3.2f, nullptr, false, false, nullptr, false);
 			}
 		}
 		// (the Gondorian set, Tier I) the Ranger's stride: 10% faster

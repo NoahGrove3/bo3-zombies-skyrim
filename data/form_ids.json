@@ -1748,6 +1748,18 @@
   "ARMA:tabglove_emberclaw": "0xed0",
   "ARMO:tabglove_emberclaw": "0xed1",
   "MGEF:tabstaffcast": "0xed2",
-  "ENCH:tabstaff": "0xed3"
+  "ENCH:tabstaff": "0xed3",
+  "EFSH:armglow_0_4": "0xed4",
+  "EFSH:armglow_0_5": "0xed5",
+  "EFSH:armglow_0_6": "0xed6",
+  "EFSH:armglow_1_4": "0xed7",
+  "EFSH:armglow_1_5": "0xed8",
+  "EFSH:armglow_1_6": "0xed9",
+  "EFSH:armglow_2_4": "0xeda",
+  "EFSH:armglow_2_5": "0xedb",
+  "EFSH:armglow_2_6": "0xedc",
+  "EFSH:armglow_3_4": "0xedd",
+  "EFSH:armglow_3_5": "0xede",
+  "EFSH:armglow_3_6": "0xedf"
  }
 }

@@ -683,18 +683,30 @@ crystal_weapon('slayer', 'UN_DragonSlayer', 'Dragon Slayer', lgs('slayer'), '1st
 # (Noah: "I want the armor kits for all classes to stay the same visually through all the upgrades ... the upgraded version
 # to make the item look enchanted") each class's set glows with its colour from Tier I, stronger each tier (Classes::TickArmour
 # lays it on you): Summoner violet, Destruction ember-orange, Alchemist green, Spellsword blue
+# (Noah, 2026-11-08: "give the player an aura when the armor is upgraded" - "faint to blazing", in the class's colour) the glow
+# grows into an aura: Tier I a faint sheen; Tier II wisps of the class's light rise off you; Tier III a full aura of them;
+# each Ascend (up to three steps) burns brighter and thicker - Skyrim's own enchantment shader (its flame-wisp particles)
 ARM_COL = [((150, 90, 255), (210, 170, 255)), ((255, 110, 30), (255, 190, 110)), ((90, 230, 60), (190, 255, 150)), ((80, 150, 255), (170, 210, 255))]
 for c, (fill, edge) in enumerate(ARM_COL):
-    for t in (1, 2, 3):
+    for t in (1, 2, 3, 4, 5, 6):
         d = bytearray(tsub('efsh_enchpurple', 'DATA'))
-        d[0x10:0x13] = bytes(int(x * (0.18 + 0.12 * t)) for x in fill)   # its fill, brighter each tier
-        d[0x38:0x3B] = bytes(int(x * (0.45 + 0.18 * t)) for x in edge)   # its edge glow
-        struct.pack_into('<f', d, 0x20, 0.8 + 0.2 * t)                    # (persistence)
-        struct.pack_into('<f', d, 0x24, 0.5 - 0.1 * t)                    # (pulse)
-        if t < 3: d[0] = d[0] | 0x08                                      # no particles below Legendary
+        g = min(1.0, 0.16 + 0.11 * t)
+        d[0x10:0x13] = bytes(min(255, int(x * g)) for x in fill)               # its fill, brighter each step
+        d[0x38:0x3B] = bytes(min(255, int(x * min(1.0, 0.4 + 0.12 * t))) for x in edge)   # its edge glow
+        struct.pack_into('<f', d, 0x20, 0.75 + 0.15 * t)                    # (persistence)
+        struct.pack_into('<f', d, 0x24, max(0.1, 0.5 - 0.08 * t))           # (pulse)
+        if t < 2: d[0] = d[0] | 0x08                                        # Tier I: no wisps yet
         else:
-            struct.pack_into('<f', d, 0x7C, 40.0)
+            d[0] = d[0] & ~0x08
+            struct.pack_into('<f', d, 0x7C, (12.0, 40.0, 55.0, 70.0, 90.0)[t - 2])   # wisps born a second: a few, then a blaze
+            struct.pack_into('<f', d, 0x84, 1.4 + 0.15 * (t - 2))           # (each lives ~1.5 s)
+            struct.pack_into('<f', d, 0x88, 0.4)
+            struct.pack_into('<f', d, 0x8C, 3.0)                            # (off the body)
+            struct.pack_into('<3f', d, 0x94, 0.0, 0.0, 6.0 + 2.0 * t)       # (and up)
+            struct.pack_into('<3f', d, 0xA0, 0.0, 0.0, 18.0 + 4.0 * t)      # (rising faster as they go)
+            struct.pack_into('<2f', d, 0xAC, 1.5 + 0.3 * t, 5.0 + 1.2 * t)  # (their size: born small, swelling)
             for k, rgb in enumerate((edge, fill, tuple(x // 3 for x in fill))): d[0xBC + 4 * k:0xBC + 4 * k + 3] = bytes(rgb)
+            struct.pack_into('<3f', d, 0xC8, 0.0, min(1.0, 0.35 + 0.12 * t), 0.0)   # (they fade in and out)
         subs = [sub('EDID', z(f'UN_ArmGlow_{c}_{t}'))]
         for name, hx in T['efsh_enchpurple']['subs']:
             if name == 'EDID': continue
