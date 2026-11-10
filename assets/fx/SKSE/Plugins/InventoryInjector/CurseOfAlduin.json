@@ -131,6 +131,214 @@
     },
     {
       "match": {
+        "formType": "Weapon",
+        "formId": {
+          "anyOf": [
+            "CurseOfAlduin.esp|D10"
+          ]
+        }
+      },
+      "assign": {
+        "subTypeDisplay": "Quarterstaff",
+        "iconSource": "skyui/icons_item_psychosteve.swf",
+        "iconLabel": "weapon_staff",
+        "iconColor": "#e8e8e8"
+      }
+    },
+    {
+      "match": {
+        "formType": "Weapon",
+        "formId": {
+          "anyOf": [
+            "CurseOfAlduin.esp|DB9"
+          ]
+        }
+      },
+      "assign": {
+        "subTypeDisplay": "Wand",
+        "iconSource": "skyui/icons_item_psychosteve.swf",
+        "iconLabel": "weapon_staff",
+        "iconColor": "#e8e8e8"
+      }
+    },
+    {
+      "match": {
+        "formType": "Weapon",
+        "formId": {
+          "anyOf": [
+            "CurseOfAlduin.esp|D77"
+          ]
+        }
+      },
+      "assign": {
+        "subTypeDisplay": "Whip",
+        "iconSource": "skyui/icons_item_psychosteve.swf",
+        "iconLabel": "weapon_mace",
+        "iconColor": "#e8e8e8"
+      }
+    },
+    {
+      "match": {
+        "formType": "Weapon",
+        "formId": {
+          "anyOf": [
+            "CurseOfAlduin.esp|D1E"
+          ]
+        }
+      },
+      "assign": {
+        "subTypeDisplay": "Rapier",
+        "iconSource": "skyui/icons_item_psychosteve.swf",
+        "iconLabel": "weapon_sword",
+        "iconColor": "#e8e8e8"
+      }
+    },
+    {
+      "match": {
+        "formType": "Weapon",
+        "formId": {
+          "anyOf": [
+            "CurseOfAlduin.esp|EE5"
+          ]
+        }
+      },
+      "assign": {
+        "subTypeDisplay": "Claws",
+        "iconSource": "skyui/icons_item_psychosteve.swf",
+        "iconLabel": "weapon_dagger",
+        "iconColor": "#e8e8e8"
+      }
+    },
+    {
+      "match": {
+        "formType": "Weapon",
+        "formId": {
+          "anyOf": [
+            "CurseOfAlduin.esp|EE6"
+          ]
+        }
+      },
+      "assign": {
+        "subTypeDisplay": "Claws",
+        "iconSource": "skyui/icons_item_psychosteve.swf",
+        "iconLabel": "weapon_dagger",
+        "iconColor": "#e8e8e8"
+      }
+    },
+    {
+      "match": {
+        "formType": "Weapon",
+        "formId": {
+          "anyOf": [
+            "CurseOfAlduin.esp|EE8"
+          ]
+        }
+      },
+      "assign": {
+        "subTypeDisplay": "Claws",
+        "iconSource": "skyui/icons_item_psychosteve.swf",
+        "iconLabel": "weapon_dagger",
+        "iconColor": "#e8e8e8"
+      }
+    },
+    {
+      "match": {
+        "formType": "Weapon",
+        "formId": {
+          "anyOf": [
+            "CurseOfAlduin.esp|EE7"
+          ]
+        }
+      },
+      "assign": {
+        "subTypeDisplay": "Pike",
+        "iconSource": "skyui/icons_item_psychosteve.swf",
+        "iconLabel": "weapon_greatsword",
+        "iconColor": "#e8e8e8"
+      }
+    },
+    {
+      "match": {
+        "formType": "Weapon",
+        "formId": {
+          "anyOf": [
+            "CurseOfAlduin.esp|EE9"
+          ]
+        }
+      },
+      "assign": {
+        "subTypeDisplay": "Rapier",
+        "iconSource": "skyui/icons_item_psychosteve.swf",
+        "iconLabel": "weapon_sword",
+        "iconColor": "#e8e8e8"
+      }
+    },
+    {
+      "match": {
+        "formType": "Weapon",
+        "formId": {
+          "anyOf": [
+            "CurseOfAlduin.esp|EC4"
+          ]
+        }
+      },
+      "assign": {
+        "subTypeDisplay": "Pike",
+        "iconSource": "skyui/icons_item_psychosteve.swf",
+        "iconLabel": "weapon_greatsword",
+        "iconColor": "#e8e8e8"
+      }
+    },
+    {
+      "match": {
+        "formType": "Weapon",
+        "formId": {
+          "anyOf": [
+            "CurseOfAlduin.esp|EC2"
+          ]
+        }
+      },
+      "assign": {
+        "subTypeDisplay": "Quarterstaff",
+        "iconSource": "skyui/icons_item_psychosteve.swf",
+        "iconLabel": "weapon_staff",
+        "iconColor": "#e8e8e8"
+      }
+    },
+    {
+      "match": {
+        "formType": "Weapon",
+        "formId": {
+          "anyOf": [
+            "CurseOfAlduin.esp|EC0"
+          ]
+        }
+      },
+      "assign": {
+        "subTypeDisplay": "Halberd",
+        "iconSource": "skyui/icons_item_psychosteve.swf",
+        "iconLabel": "weapon_battleaxe",
+        "iconColor": "#e8e8e8"
+      }
+    },
+    {
+      "match": {
+        "formType": "Weapon",
+        "formId": {
+          "anyOf": [
+            "CurseOfAlduin.esp|EC5"
+          ]
+        }
+      },
+      "assign": {
+        "subTypeDisplay": "Staff",
+        "iconSource": "skyui/icons_item_psychosteve.swf",
+        "iconLabel": "weapon_staff",
+        "iconColor": "#e8e8e8"
+      }
+    },
+    {
+      "match": {
         "formType": "Spell",
         "formId": {
           "anyOf": [

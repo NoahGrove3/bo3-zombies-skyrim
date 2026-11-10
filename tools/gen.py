@@ -379,6 +379,17 @@ _FLASKCOL = {'fire': '#ff7a2a', 'frost': '#9fdcff', 'shock': '#b48cff', 'poison'
 for _e, _c in _FLASKCOL.items():
     _rules.append({"match": {"formType": "Weapon", "formId": {"anyOf": [f'CurseOfAlduin.esp|{IDS[("WEAP", "flaskweap_" + _e)]:X}']}},
                    "assign": {"subTypeDisplay": "Alchemist", "iconSource": "skyui/icons_item_psychosteve.swf", "iconLabel": "default_potion", "iconColor": _c}})
+# (Noah: "the Radiant Quarterstaff says that the weapon type is Warhammer ... the weapon icon ... a hammer that's blue when it
+# should be the staff") the weapons that wear Animated Armoury's and Fulcimentum's looks: their own kind and icon
+_KINDS = [('riftblade', 'Quarterstaff', 'weapon_staff'), ('carianblade', 'Wand', 'weapon_staff'), ('alchknife', 'Whip', 'weapon_mace'),
+          ('madness', 'Rapier', 'weapon_sword'), ('tab_stormtalons', 'Claws', 'weapon_dagger'), ('tab_talons', 'Claws', 'weapon_dagger'),
+          ('tab_cinderclaws', 'Claws', 'weapon_dagger'), ('tab_wyrmspine', 'Pike', 'weapon_greatsword'), ('tab_frostmourn', 'Rapier', 'weapon_sword'),
+          ('tab_eclipse', 'Pike', 'weapon_greatsword'), ('tab_lanternwick', 'Quarterstaff', 'weapon_staff'), ('tab_riverstone', 'Halberd', 'weapon_battleaxe'),
+          ('tab_wanderstar', 'Staff', 'weapon_staff')]
+for _k, _sub, _icon in _KINDS:
+    if ('WEAP', _k) not in IDS: print('no WEAP', _k); continue
+    _rules.append({"match": {"formType": "Weapon", "formId": {"anyOf": [f'CurseOfAlduin.esp|{IDS[("WEAP", _k)]:X}']}},
+                   "assign": {"subTypeDisplay": _sub, "iconSource": "skyui/icons_item_psychosteve.swf", "iconLabel": _icon, "iconColor": "#e8e8e8"}})
 _leg = [f'{r["plugin"]}|{int(r["formId"], 16):X}' for r in S['coffer_spells']['rows'] if int(r.get('tier', 0)) >= 3]
 if _leg:
     _rules.append({"match": {"formType": "Spell", "formId": {"anyOf": _leg}},
