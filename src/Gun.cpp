@@ -3013,7 +3013,9 @@ namespace bo3z
 			// (Noah: "including all the wonders and boss weapons") the ten Dragon Priests' weapons
 			for (const auto& b : gen::kCityBosses) {
 				// (Noah: "remove the bows from the test kit since we aren't using any bows anymore")
-				if (auto* w = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(b.weapon, gen::kPlugin); w && !w->IsBow() && !w->IsCrossbow() && p->GetItemCount(w) <= 0) p->AddObjectToContainer(w, nullptr, 1, nullptr);
+				auto* w = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(b.weapon, gen::kPlugin);
+				if (w && (w->IsBow() || w->IsCrossbow())) { if (const int n = p->GetItemCount(w); n > 0) p->RemoveItem(w, n, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr); continue; }   // (an older kit's bows taken back)
+				if (w && p->GetItemCount(w) <= 0) p->AddObjectToContainer(w, nullptr, 1, nullptr);
 			}
 			if (const int have = Points::Get(); have < 150000) {
 				Points::Refund(150000 - have);

@@ -699,7 +699,10 @@ namespace bo3z::Tablet
 			else if (auto* b = f->As<RE::TESBoundObject>(); b && p->GetItemCount(b) <= 0) p->AddObjectToContainer(b, nullptr, 1, nullptr);
 			++n;
 		}
-		// (no bows any more: no arrows given)
+		// (no bows any more: an older kit's arrows taken back)
+		if (auto* ar = Forms::Ours(gen::kTabletArrow) ? Forms::Ours(gen::kTabletArrow)->As<RE::TESBoundObject>() : nullptr; ar && p->GetItemCount(ar) > 0) {
+			p->RemoveItem(ar, p->GetItemCount(ar), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+		}
 		logger::info("testkit: the Tablet's {} donated weapons", n);
 	}
 	bool IsTablet(const RE::TESForm* a_w) { return a_w && g_held >= 0 && FormOf(g_held) == a_w; }
