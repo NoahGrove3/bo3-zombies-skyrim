@@ -642,6 +642,16 @@ namespace bo3z
 			} else if (cmd == "quit") {  // the game closed to the desktop (so a new build can go in)
 				logger::info("dev: quitting to the desktop");
 				if (auto* m = RE::Main::GetSingleton()) m->quitGame = true;
+			} else if (cmd == "clawrot") {  // clawrot <x> <y> <z> | clawrot off: the claws' turn in first person, in degrees
+				std::string a;
+				in >> a;
+				if (a == "off") Classes::DevClawRot(0, 0, 0, false);
+				else {
+					float x = 0, y = 0, z = 0;
+					try { x = std::stof(a); } catch (...) {}
+					in >> y >> z;
+					Classes::DevClawRot(x, y, z, true);
+				}
 			} else if (cmd == "fly") {  // fly on|off: fly where you look (sprint: faster), hang in the air when you let go
 				std::string v;
 				in >> v;

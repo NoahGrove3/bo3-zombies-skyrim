@@ -3724,6 +3724,46 @@ namespace bo3z::Classes
 	}
 	// (Noah: "an item that you actually throw") a flask that leaves your pack was used (its hotkey, or Use in the pack): it is
 	// thrown and put back - an Alchemist's flasks never run out, a breath between throws (the Philosopher's Flask twelve seconds)
+	// (Noah: "the claws are still facing the wrong way. The blade part of the claws should be facing away from the player") the
+	// claws' own model turned round in first person - the right hand's, the left's: degrees about x, y, z (dev: clawrot)
+	namespace
+	{
+		RE::NiPoint3 g_clawRot{ 0.0f, 0.0f, 180.0f };
+		bool         g_clawRotOn = true;
+	}
+	void DevClawRot(float a_x, float a_y, float a_z, bool a_on)
+	{
+		g_clawRot = { a_x, a_y, a_z }, g_clawRotOn = a_on;
+		logger::info("dev: clawrot {} {:.0f} {:.0f} {:.0f}", a_on ? "on" : "off", a_x, a_y, a_z);
+	}
+	void TickClaws()
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* cam = RE::PlayerCamera::GetSingleton();
+		if (!p || !cam || !p->Is3DLoaded()) return;
+		static RE::BGSKeyword* claw = RE::TESDataHandler::GetSingleton()->LookupForm<RE::BGSKeyword>(0x19AAB4, "NewArmoury.esp");
+		if (!claw) return;
+		auto* root = p->Get3D(true);
+		if (!root || !cam->IsInFirstPerson()) return;
+		static std::unordered_map<RE::NiAVObject*, RE::NiMatrix3> was;   // (each claw's model: how it sat before)
+		if (was.size() > 64) was.clear();
+		for (const bool left : { false, true }) {
+			auto* o = p->GetEquippedObject(left);
+			auto* w = o ? o->As<RE::TESObjectWEAP>() : nullptr;
+			if (!w || !w->HasKeyword(claw)) continue;
+			auto* node = root->GetObjectByName(left ? "SHIELD" : "WEAPON");
+			auto* nn = node ? node->AsNode() : nullptr;
+			if (!nn) continue;
+			for (auto& ch : nn->GetChildren()) {
+				if (!ch) continue;
+				auto [it, fresh] = was.try_emplace(ch.get(), ch->local.rotate);
+				RE::NiMatrix3 turn;
+				const float d = 0.0174533f;
+				turn.SetEulerAnglesXYZ(g_clawRot.x * d, g_clawRot.y * d, g_clawRot.z * d);
+				ch->local.rotate = g_clawRotOn ? it->second * turn : it->second;
+			}
+		}
+	}
 	void TickAlchemy(float a_delta)
 	{
 		TickGoldClouds(a_delta);
@@ -3732,6 +3772,7 @@ namespace bo3z::Classes
 		g_flaskCool = std::max(0.0f, g_flaskCool - a_delta), g_philCool = std::max(0.0f, g_philCool - a_delta);
 		TickGauntletBeam(a_delta);
 		TickMutagen(a_delta);
+		TickClaws();
 		// (Noah: "when swinging the whips, I don't see the whip uncoil") its chain told again each time it's drawn - the
 		// variable Animated Armoury's script sets on equipping doesn't outlive the weapon's 3D being put away and remade
 		if (auto* pw = RE::PlayerCharacter::GetSingleton()) {

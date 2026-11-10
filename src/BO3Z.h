@@ -406,6 +406,7 @@ namespace bo3z
 		// (Noah: "make the mutagen staff just like a quarter staff ... holding block should fire the beam and heavy attack should
 		// throw flasks cycling through each flask") Animated Armoury's Dwarven Quarterstaff's look and swings; block held: a 2 s
 		// piercing beam, the next vial's element each; a power attack throws the next flask
+		void               DevClawRot(float a_x, float a_y, float a_z, bool a_on);   // (dev: clawrot) the claws' turn in first person
 		void               MutagenLook();                        // (data loaded: the look taken)
 		bool               MutagenInHand();                      // the Mutagen Staff drawn in your hands
 		void               MutagenBlock(bool a_down);            // the block button pressed / let go with it drawn
