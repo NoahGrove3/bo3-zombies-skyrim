@@ -5433,7 +5433,9 @@ namespace bo3z
 			// (Noah: "Im ready for the ... Tablet placements") with the test kit on, N saves a Tablet of Mysteries spot for the
 			// city you're in: where you stand, its face looking the way you look - written to SKSE/CurseOfAlduin-tablets.txt
 			// (one line per city: a city marked again is replaced), for sheets/locations.json
-			if (id == 0x31 && Gun::TestKitOn() && !g_scoutOn) {
+			// (Noah placed all ten with a save from before the kit loaded: nothing was written, and with the HUD hidden nothing said so)
+			// the dev flight is enough too; a sound for each spot saved, another when no city is near
+			if (id == 0x31 && (Gun::TestKitOn() || g_devFly) && !g_scoutOn) {
 				Tasks::Add([] {
 					auto* pl = RE::PlayerCharacter::GetSingleton();
 					if (!pl) return;
@@ -5442,6 +5444,8 @@ namespace bo3z
 					const int t = NearestTown(at, pl->GetWorldspace());
 					if (t < 0) {
 						Hud::Banner("NO CITY NEAR ENOUGH FOR THE TABLET", 2.5f);
+						Forms::Play(gen::Sound::coffer_cheese);
+						logger::info("tablet spot: no city near enough at ({:.0f}, {:.0f}, {:.0f})", at.x, at.y, at.z);
 						return;
 					}
 					float yawDeg = pl->data.angle.z * 57.2958f + 180.0f;   // (the tablet's face is its -y side: turned to look your way)
@@ -5468,6 +5472,7 @@ namespace bo3z
 					}
 					Hud::Banner(fmt::format("TABLET SPOT {} FOR {} ({} OF {} CITIES)", again ? "REPLACED" : "SAVED", TownName(t), lines.size(), gen::kTowns.size()), 3.0f);
 					logger::info("tablet spot: {} at ({:.0f}, {:.0f}, {:.0f}) facing {:.0f} deg{}", TownName(t), at.x, at.y, at.z, yawDeg, again ? " (replaced)" : "");
+					Forms::Play(gen::Sound::coffer_open);
 				});
 				return;
 			}
