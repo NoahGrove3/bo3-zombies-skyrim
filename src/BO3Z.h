@@ -829,6 +829,7 @@ namespace bo3z
 		bool        StandFrame(int a_town, RE::NiPoint3& a_center, float& a_yaw, RE::TESWorldSpace*& a_world);  // true: the station is placed
 		RE::TESObjectREFR* Placed(int a_town, int a_kind);
 		void               FreedPulse(int a_town);   // the city's last rite: the shrine sends out a wave of light and sound  // the town's machine of that object kind (6 = relic shrine), if placed
+		void                DevFreed(int a_town, bool a_on);   // (dev freeloop) a city's freed look shown though it isn't freed (-1: none)
 		int         TownOfRef(RE::TESObjectREFR* a_ref);
 		bool        StationTarget(int a_town, RE::NiPoint3& a_at);  // where to head for the town's station, in your current world (a walled city from outside: its gate)
 		bool        Discovered(int a_town);

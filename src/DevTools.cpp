@@ -655,6 +655,7 @@ namespace bo3z
 				in >> a;
 				++loopGen;
 				if (a == "off") {
+					Shops::DevFreed(-1, false);
 					logger::info("dev: freeloop off");
 				} else {
 					float secs = 20.0f;
@@ -672,6 +673,7 @@ namespace bo3z
 							Shops::FreedPulse(a_town);
 							Tasks::Later(a_secs, [a_gen, a_town, a_secs] { if (a_gen == loopGen) Tasks::Add([a_gen, a_town, a_secs] { again(a_gen, a_town, a_secs); }); });
 						};
+						Shops::DevFreed(town, true);   // (a city not yet freed: its freed look - the rune, the motes - shown while the loop runs)
 						logger::info("dev: freeloop - {} freed every {:.0f} s", gen::kTowns[town], secs);
 						again(mine, town, secs);
 					}

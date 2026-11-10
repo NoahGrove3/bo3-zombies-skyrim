@@ -31,6 +31,10 @@ namespace bo3z
 		constexpr float                          kPulseSeconds = 9.0f, kPulseCharge = 3.6f, kPulseGrow = 3.2f;
 		// the freed look waits for the burst (the charge plays on the cursed altar)
 		bool PulseHolds(int a_town) { return g_pulse && g_pulse->town == a_town && !g_pulse->burst; }
+		// (dev freeloop on a city not yet freed - Noah: "it's still missing the golden rune ... and the blue particles ... those should
+		// stay at the end of the echo altar's animation") the freed look shown there all the same, while the loop runs
+		std::array<bool, gen::kTowns.size()> g_devFreed{};
+		bool FreedLook(int a_town) { return Curse::Freed(a_town) || (a_town >= 0 && a_town < static_cast<int>(g_devFreed.size()) && g_devFreed[a_town]); }
 		std::vector<Spinner>                     g_spinners;
 		RE::ObjectRefHandle                      g_orbAim;  // the shrine whose orb is in the crosshair (Activate opens it)
 		bool                                     g_humming = false;  // the shrine's hum is playing (a load stops every loop)
@@ -65,7 +69,7 @@ namespace bo3z
 			// and no night being fought
 			// (its last night ends the moment the Dragon Priest falls: freed is complete; the night's own fighting elsewhere
 			// no longer hides it - Noah: the freed rune circle stood still on later nights)
-			const bool freed = Curse::Freed(gen::kLocations[a_index].town) && !PulseHolds(gen::kLocations[a_index].town);
+			const bool freed = FreedLook(gen::kLocations[a_index].town) && !PulseHolds(gen::kLocations[a_index].town);
 			for (const auto& d : gen::kDress) {
 				if (d.object != obj) {
 					continue;
@@ -99,7 +103,7 @@ namespace bo3z
 					continue;
 				}
 				// (dev freeloop: a freed city's freeing played again) its freed pieces kept - hidden through the charge, grown at the burst
-				const bool replay = PulseHolds(gen::kLocations[a_index].town) && Curse::Freed(gen::kLocations[a_index].town);
+				const bool replay = PulseHolds(gen::kLocations[a_index].town) && FreedLook(gen::kLocations[a_index].town);
 				if (d.freed && !freed && !replay) {
 					// (Noah: "when I load into a save, the altar has the particle effects before it's been freed") a freed
 					// piece left from another game (or placed a moment before this save's own state was read) is taken away
@@ -2258,6 +2262,12 @@ namespace bo3z
 
 		// The city's Curse is lifted: the shrine sends out a wave - a burst of light that rolls outward three times, a
 		// deep toll heard across the city - and from now on it burns gold with a beam of light over it (Dress: freed pieces).
+		void DevFreed(int a_town, bool a_on)
+		{
+			if (a_town < 0) { g_devFreed.fill(false); }
+			else if (a_town < static_cast<int>(g_devFreed.size())) g_devFreed[a_town] = a_on;
+			for (std::size_t i = 0; i < gen::kLocations.size(); ++i) if (a_town < 0 || gen::kLocations[i].town == a_town) g_dressed[i] = false;
+		}
 		void FreedPulse(int a_town)
 		{
 			auto* shrine = Placed(a_town, 0);
