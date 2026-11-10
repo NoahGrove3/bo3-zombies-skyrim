@@ -696,6 +696,37 @@ namespace bo3z
 				};
 				logger::info("dev: spells known: {} | right {} | left {} | magicka {:.0f}/{:.0f}", known, nm(false), nm(true),
 					player->AsActorValueOwner()->GetActorValue(RE::ActorValue::kMagicka), player->AsActorValueOwner()->GetPermanentActorValue(RE::ActorValue::kMagicka));
+			} else if (cmd == "sounds" && player) {
+				// sounds [range]: every sound marker and looping activator around you - what plays, from which plugin (Noah: the
+				// static by Riverwood's river)
+				float range = 4000.0f;
+				in >> range;
+				int n = 0;
+				RE::TES::GetSingleton()->ForEachReferenceInRange(player, range, [&](RE::TESObjectREFR* r) {
+					auto* base = r ? r->GetBaseObject() : nullptr;
+					if (!base) return RE::BSContainer::ForEachResult::kContinue;
+					RE::BGSSoundDescriptorForm* d = nullptr;
+					if (auto* so = base->As<RE::TESSound>()) d = so->descriptor;
+					else if (auto* ac = base->As<RE::TESObjectACTI>()) d = ac->soundLoop;
+					if (!d && !base->Is(RE::FormType::Sound)) return RE::BSContainer::ForEachResult::kContinue;
+					auto* bf = base->GetFile(0);
+					auto* rf = r->GetFile(0);
+					logger::info("dev: sound ref {:08X} ({}) base {:08X} '{}' [{}] desc {:08X} [{}] d {:.0f}{}", r->GetFormID(), rf ? rf->GetFilename() : "?",
+						base->GetFormID(), base->GetFormEditorID() ? base->GetFormEditorID() : "", bf ? bf->GetFilename() : "?",
+						d ? d->GetFormID() : 0, d && d->GetFile(0) ? d->GetFile(0)->GetFilename() : "?", r->GetPosition().GetDistance(player->GetPosition()),
+						r->IsDisabled() ? " (disabled)" : "");
+					++n;
+					return RE::BSContainer::ForEachResult::kContinue;
+				});
+				logger::info("dev: sounds {} within {:.0f}", n, range);
+			} else if (cmd == "hush") {
+				// hush <ref hex>: switch one placed sound off (disable) - hush <ref hex> on: back on
+				std::string hex, on;
+				in >> hex >> on;
+				if (auto* r = hex.empty() ? nullptr : RE::TESForm::LookupByID<RE::TESObjectREFR>(static_cast<RE::FormID>(std::stoul(hex, nullptr, 16)))) {
+					if (on == "on") r->Enable(false); else r->Disable();
+					logger::info("dev: hush {:08X} {}", r->GetFormID(), on == "on" ? "on" : "off");
+				}
 			} else if (cmd == "foes" && player) {  // foes: the undead round you - their spells, shouts and voice
 				int n = 0;
 				const auto at = player->GetPosition();
