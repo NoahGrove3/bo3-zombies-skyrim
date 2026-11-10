@@ -5332,7 +5332,7 @@ namespace bo3z
 						const float yaw = a_player->data.angle.z, pitch = a_player->data.angle.x;
 						const RE::NiPoint3 fwd{ std::sin(yaw) * std::cos(pitch), std::cos(yaw) * std::cos(pitch), -std::sin(pitch) };
 						const RE::NiPoint3 right{ std::cos(yaw), -std::sin(yaw), 0.0f };
-						const float speed = a_player->AsActorState()->IsSprinting() ? 5000.0f : 1800.0f;
+						const float speed = a_player->AsActorState()->IsSprinting() ? 10000.0f : 3600.0f;   // (Noah: "make my flight speed 2 times faster")
 						const float dt = std::min(a_delta, 0.05f);
 						RE::NiPoint3 next = g_hover + (fwd * in.y + right * in.x) * (speed * dt);
 						if (const auto top = WalkTop(a_player->GetParentCell(), next, 60.0f); top && next.z < *top + 4.0f) next.z = *top + 4.0f;  // (never into the ground)
