@@ -1532,7 +1532,7 @@ namespace bo3z::gen
 		TabletWeapon{ "lanternwick", "Rimewick Quarterstaff", false, 3, 100, 0xEC2, 0xEB9, 0x000, "NewArmoury.esp", 0x18B765, 0x0 },
 		TabletWeapon{ "cinderclaws", "Cinderclaws", false, 2, 100, 0xEE8, 0xEE3, 0x000, "NewArmoury.esp", 0x19AAAC, 0x19AAE8 },
 		TabletWeapon{ "eclipse", "Eclipse Edge", true, 6, 30, 0xEC4, 0xEBA, 0x000, "NewArmoury.esp", 0x153BB0, 0x0 },
-		TabletWeapon{ "wanderstar", "The Wandering Star", true, 5, 30, 0xEC5, 0xEBB, 0x000, "Fulcimentum - More Staves and Wands of Skyrim.esp", 0x000808, 0x0 },
+		TabletWeapon{ "wanderstar", "The Wandering Star", true, 3, 30, 0xEC5, 0xEBB, 0x000, "Fulcimentum - More Staves and Wands of Skyrim.esp", 0x000808, 0x0 },
 		TabletWeapon{ "frostmourn", "Frostmourn Rapier", false, 2, 100, 0xEE9, 0xEE4, 0x000, "NewArmoury.esp", 0x01EE21, 0x0 },
 		TabletWeapon{ "codex", "The Unwritten Codex", true, 7, 30, 0xEC7, 0xECD, 0x000, "", 0x0, 0x0 },
 	} };

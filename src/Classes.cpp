@@ -3656,7 +3656,6 @@ namespace bo3z::Classes
 		if (!mut || !s) { logger::warn("alchemist: the Mutagen Staff can't take the Dwarven Quarterstaff's look - is Animated Armoury installed?"); return; }
 		AdoptLook(mut, s);
 		mut->formEnchanting = nullptr, mut->amountofEnchantment = 0;   // (no staff cast of Skyrim's: its beam and flasks are ours)
-		mut->weaponData.damage = std::max<std::uint16_t>(mut->weaponData.damage, s->weaponData.damage);
 		logger::info("alchemist: the Mutagen Staff takes the look of {} - swung as a quarterstaff", s->GetName());
 	}
 	void MutagenBlock(bool a_down) { g_mq.block = a_down; }
@@ -3733,6 +3732,14 @@ namespace bo3z::Classes
 		g_flaskCool = std::max(0.0f, g_flaskCool - a_delta), g_philCool = std::max(0.0f, g_philCool - a_delta);
 		TickGauntletBeam(a_delta);
 		TickMutagen(a_delta);
+		// (Noah: "when swinging the whips, I don't see the whip uncoil") its chain told again each time it's drawn - the
+		// variable Animated Armoury's script sets on equipping doesn't outlive the weapon's 3D being put away and remade
+		if (auto* pw = RE::PlayerCharacter::GetSingleton()) {
+			static bool wasDrawn = false;
+			const bool drawn = pw->AsActorState()->IsWeaponDrawn() && pw->GetEquippedObject(false) == AlchemistKnife();
+			if (drawn && !wasDrawn) Tasks::Later(0.3f, [] { if (auto* q = RE::PlayerCharacter::GetSingleton()) WhipEquipped(q, false); });
+			wasDrawn = drawn;
+		}
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (!p || !p->Is3DLoaded() || p->IsDead() || ItemMenusOpen()) return;
 		// (Noah: "turn off player voice grunts while casting the flasks") with a flask in hand your voice is quiet: its voice

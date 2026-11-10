@@ -386,7 +386,7 @@ _KINDS = [('riftblade', 'Quarterstaff', 'weapon_staff'), ('carianblade', 'Wand',
           ('madness', 'Rapier', 'weapon_sword'), ('tab_stormtalons', 'Claws', 'weapon_dagger'), ('tab_talons', 'Claws', 'weapon_dagger'),
           ('tab_cinderclaws', 'Claws', 'weapon_dagger'), ('tab_wyrmspine', 'Pike', 'weapon_greatsword'), ('tab_frostmourn', 'Rapier', 'weapon_sword'),
           ('tab_eclipse', 'Pike', 'weapon_greatsword'), ('tab_lanternwick', 'Quarterstaff', 'weapon_staff'), ('tab_riverstone', 'Halberd', 'weapon_battleaxe'),
-          ('tab_wanderstar', 'Staff', 'weapon_staff')]
+          ('tab_wanderstar', 'Quarterstaff', 'weapon_staff')]
 for _k, _sub, _icon in _KINDS:
     if ('WEAP', _k) not in IDS: print('no WEAP', _k); continue
     _rules.append({"match": {"formType": "Weapon", "formId": {"anyOf": [f'CurseOfAlduin.esp|{IDS[("WEAP", _k)]:X}']}},

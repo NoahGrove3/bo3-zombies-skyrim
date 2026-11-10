@@ -331,7 +331,7 @@
         }
       },
       "assign": {
-        "subTypeDisplay": "Staff",
+        "subTypeDisplay": "Quarterstaff",
         "iconSource": "skyui/icons_item_psychosteve.swf",
         "iconLabel": "weapon_staff",
         "iconColor": "#e8e8e8"

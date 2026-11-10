@@ -592,6 +592,12 @@ namespace bo3z::Tablet
 		} else if (id == "saltrice") {   // the struck take 30% more from everything for 4 s
 			g_salt[a_target->GetFormID()] = g_pclock + 4.0f;
 			Gun::Motes(4, tp, 0.4f, 1.0f);
+		} else if (id == "wanderstar") {   // (Noah: "the Wandering Star ... needs the quarterstaff attack animations") a heavy blow that lands lets the star out
+			if (a_power && g_slamCool <= 0) {
+				g_slamCool = 2.5f;
+				Gun::FxBlast("light", Mid(a_target));
+				Chain(a_target, Mid(a_target), 8, S * 1.4f, 4);
+			}
 		} else if (id == "lanternwick") {   // (now a quarterstaff) a heavy attack that lands throws the orb
 			if (a_power && g_slamCool <= 0) {
 				g_slamCool = 2.5f;
@@ -693,9 +699,7 @@ namespace bo3z::Tablet
 			else if (auto* b = f->As<RE::TESBoundObject>(); b && p->GetItemCount(b) <= 0) p->AddObjectToContainer(b, nullptr, 1, nullptr);
 			++n;
 		}
-		if (auto* ar = Forms::Ours(gen::kTabletArrow) ? Forms::Ours(gen::kTabletArrow)->As<RE::TESBoundObject>() : nullptr; ar && p->GetItemCount(ar) < 200) {
-			p->AddObjectToContainer(ar, nullptr, 200 - p->GetItemCount(ar), nullptr);
-		}
+		// (no bows any more: no arrows given)
 		logger::info("testkit: the Tablet's {} donated weapons", n);
 	}
 	bool IsTablet(const RE::TESForm* a_w) { return a_w && g_held >= 0 && FormOf(g_held) == a_w; }
@@ -870,6 +874,17 @@ namespace bo3z::Tablet
 			auto* w = Forms::Ours(d.form) ? Forms::Ours(d.form)->As<RE::TESObjectWEAP>() : nullptr;
 			if (!s || !w) { logger::warn("tablet: {} can't wear {:06X} of {} - is the mod installed?", d.label, d.look, d.lookPlugin); continue; }
 			Classes::AdoptLook(w, s);
+			// (Noah: "the Wandering Star weapon also needs the quarterstaff attack animations") the Fulcimentum glass staff's look,
+			// swung as Animated Armoury's quarterstaffs are (the Glass Quarterstaff's how-it's-held, its reach and sounds)
+			if (std::string_view(d.id) == "wanderstar") {
+				if (auto* qf = RE::TESDataHandler::GetSingleton()->LookupForm(0x18B75D, "NewArmoury.esp"); qf && qf->As<RE::TESObjectWEAP>()) {
+					const std::string model = w->GetModel();
+					auto* first = w->firstPersonModelObject;
+					Classes::AdoptLook(w, qf->As<RE::TESObjectWEAP>());
+					w->SetModel(model.c_str()), w->firstPersonModelObject = first;
+					w->formEnchanting = nullptr, w->amountofEnchantment = 0;
+				}
+			}
 			if (auto* show = Forms::Ours(d.show) ? Forms::Ours(d.show)->As<RE::TESObjectSTAT>() : nullptr) show->SetModel(s->GetModel());
 			logger::info("tablet: the {} takes the look of {}", d.label, s->GetName());
 		}
