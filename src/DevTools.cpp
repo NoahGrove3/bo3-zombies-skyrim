@@ -645,12 +645,14 @@ namespace bo3z
 			} else if (cmd == "clawrot") {  // clawrot <x> <y> <z> | clawrot off: the claws' turn in first person, in degrees
 				std::string a;
 				in >> a;
-				if (a == "off") Classes::DevClawRot(0, 0, 0, false);
+				// clawrot <x> <y> <z> [3]: the first-person turn (or with 3, the third-person one)
+				if (a == "off") Classes::DevClawRot(0, 0, 0, false, false);
 				else {
 					float x = 0, y = 0, z = 0;
+					int   v = 1;
 					try { x = std::stof(a); } catch (...) {}
-					in >> y >> z;
-					Classes::DevClawRot(x, y, z, true);
+					in >> y >> z >> v;
+					Classes::DevClawRot(x, y, z, true, v == 3);
 				}
 			} else if (cmd == "fly") {  // fly on|off: fly where you look (sprint: faster), hang in the air when you let go
 				std::string v;

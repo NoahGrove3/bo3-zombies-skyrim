@@ -3259,6 +3259,12 @@ namespace bo3z
 			// (Noah: the Alchemist's flasks "should feel like a weapon") a flask held in a hand: that hand's attack throws it
 			if (IsFireButton(a_event) || IsAimButton(a_event)) {
 				const bool left = IsAimButton(a_event);
+				// (Noah: "the carian wand won't cast") the wand's attack held: its casts (Classes::TickWand)
+				if (!left && Classes::WandInHand()) {
+					if (down) Classes::WandButton(true);
+					else if (up) Classes::WandButton(false);
+					return false;
+				}
 				// (Noah: the Mutagen Staff "just like a quarter staff") swung as one; the block button held looses its beam
 				if (Classes::MutagenInHand()) {
 					if (left && down) Classes::MutagenBlock(true);

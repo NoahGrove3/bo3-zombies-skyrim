@@ -2116,6 +2116,10 @@ namespace bo3z::Classes
 	{
 		float g_wandNext = 0.0f;   // seconds to the next bolt while the cast is held
 		bool  g_wandHeld = false;
+		bool  g_wandButton = false;   // the attack held with the wand drawn (Gun's buttons)
+		RE::FormID g_wandEcho = 0;    // the spell the wand just loosed (its cast event, if Skyrim sends one, not taken twice)
+		std::chrono::steady_clock::time_point g_wandEchoAt{};
+		bool  g_wandEchoArmed = false;
 		RE::BGSSoundDescriptorForm* ReleaseSound(RE::FormID a_spell)
 		{
 			auto* sp = RE::TESForm::LookupByID<RE::SpellItem>(a_spell);
@@ -2180,6 +2184,12 @@ namespace bo3z::Classes
 		}
 	}
 	// every frame: the held cast's bolts, and the wand kept to one, in the right hand
+	void WandButton(bool a_down) { g_wandButton = a_down; }
+	bool WandInHand()
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		return p && CarianBlade() && p->GetEquippedObject(false) == CarianBlade() && p->AsActorState()->IsWeaponDrawn();
+	}
 	void TickWand(float a_delta)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
@@ -2199,15 +2209,40 @@ namespace bo3z::Classes
 			}
 		}
 		bool held = false;
-		if (p->GetEquippedObject(false) == w && p->AsActorState()->IsWeaponDrawn()) {
-			if (auto* c = p->GetMagicCaster(RE::MagicSystem::CastingSource::kRightHand)) {
-				held = c->currentSpell && w->formEnchanting && c->currentSpell == w->formEnchanting &&
-				       (c->state.get() == RE::MagicCaster::State::kCasting || c->state.get() == RE::MagicCaster::State::kCharging);
+		const bool inHand = p->GetEquippedObject(false) == w && p->AsActorState()->IsWeaponDrawn();
+		if (!inHand) g_wandButton = false;
+		if (inHand) {
+			auto* c = p->GetMagicCaster(RE::MagicSystem::CastingSource::kRightHand);
+			const bool casting = c && c->currentSpell && w->formEnchanting && c->currentSpell == w->formEnchanting &&
+			                     (c->state.get() == RE::MagicCaster::State::kCasting || c->state.get() == RE::MagicCaster::State::kCharging);
+			// (Noah: "the carian wand won't cast for me") the attack held is enough - Skyrim's own staff cast or not
+			held = casting || g_wandButton;
+			if (static float said = 0; g_wandButton && (said -= a_delta) <= 0) {
+				said = 1.0f;
+				logger::info("classes: the Carian Wand held - its cast {} (state {}, spell {:08X})", casting ? "plays" : "doesn't play",
+					c ? static_cast<int>(c->state.get()) : -1, c && c->currentSpell ? c->currentSpell->GetFormID() : 0);
 			}
 		}
 		if (held) {
-			if (!g_wandHeld) g_wandNext = 0.0f;   // (the first bolt as the wand comes up)
-			if ((g_wandNext -= a_delta) <= 0.0f) { WandCast(); g_wandNext += 1.0f; if (g_wandNext < 0) g_wandNext = 1.0f; }   // (Noah: "cast every second instead of 2 seconds")
+			if (!g_wandHeld) g_wandNext = 0.0f;   // (the first as the wand comes up)
+			if ((g_wandNext -= a_delta) <= 0.0f) {   // (Noah: "cast every second")
+				g_wandNext += 1.0f;
+				if (g_wandNext < 0) g_wandNext = 1.0f;
+				// (Noah: "It's supposed to cast whatever spell I have on my left hand ... it shoots 1 per second without using
+				// mana") the spell in your left hand, loosed from the wand's tip, free; no spell there: the Carian bolts
+				auto* left = p->GetEquippedObject(true);
+				auto* sp = left ? left->As<RE::SpellItem>() : nullptr;
+				auto* c = p->GetMagicCaster(RE::MagicSystem::CastingSource::kRightHand);
+				if (sp && c && sp->GetSpellType() == RE::MagicSystem::SpellType::kSpell) {
+					c->CastSpellImmediate(sp, false, nullptr, 1.0f, false, 0.0f, p);
+					g_wandEcho = sp->GetFormID(), g_wandEchoAt = std::chrono::steady_clock::now();
+					OnCast(sp->GetFormID());   // (a spell of ours: its own cast, as if from the hand - Skyrim's own cast event for it, if any, ignored)
+					g_wandEchoArmed = true;
+					if (static int n = 0; n++ % 20 == 0) logger::info("classes: the Carian Wand looses {} (no magicka)", sp->GetName());
+				} else {
+					WandCast();
+				}
+			}
 		}
 		g_wandHeld = held;
 		// (Noah: "only allowed to hold one wand at a time") never in the left hand, never two in the pack
@@ -2227,6 +2262,10 @@ namespace bo3z::Classes
 	}
 	bool OnCast(RE::FormID a_spell)
 	{
+		if (g_wandEchoArmed && a_spell == g_wandEcho && std::chrono::steady_clock::now() - g_wandEchoAt < std::chrono::milliseconds(150)) {
+			g_wandEchoArmed = false;
+			return true;
+		}
 		PatchArcane();
 		if (const int k = ArcaneKind(a_spell); k >= 0 && k < 3) { ArcaneCast(k, a_spell); return true; }
 		if (ThrowFlask(a_spell)) return true;
@@ -3728,12 +3767,13 @@ namespace bo3z::Classes
 	// claws' own model turned round in first person - the right hand's, the left's: degrees about x, y, z (dev: clawrot)
 	namespace
 	{
-		RE::NiPoint3 g_clawRot{ 0.0f, 0.0f, 180.0f };
+		RE::NiPoint3 g_clawRot{ 0.0f, 0.0f, 180.0f };     // first person
+		RE::NiPoint3 g_clawRot3{ 0.0f, 0.0f, 180.0f };    // third person
 		bool         g_clawRotOn = true;
 	}
-	void DevClawRot(float a_x, float a_y, float a_z, bool a_on)
+	void DevClawRot(float a_x, float a_y, float a_z, bool a_on, bool a_third)
 	{
-		g_clawRot = { a_x, a_y, a_z }, g_clawRotOn = a_on;
+		(a_third ? g_clawRot3 : g_clawRot) = { a_x, a_y, a_z }, g_clawRotOn = a_on;
 		logger::info("dev: clawrot {} {:.0f} {:.0f} {:.0f}", a_on ? "on" : "off", a_x, a_y, a_z);
 	}
 	void TickClaws()
@@ -3743,10 +3783,12 @@ namespace bo3z::Classes
 		if (!p || !cam || !p->Is3DLoaded()) return;
 		static RE::BGSKeyword* claw = RE::TESDataHandler::GetSingleton()->LookupForm<RE::BGSKeyword>(0x19AAB4, "NewArmoury.esp");
 		if (!claw) return;
-		auto* root = p->Get3D(true);
-		if (!root || !cam->IsInFirstPerson()) return;
 		static std::unordered_map<RE::NiAVObject*, RE::NiMatrix3> was;   // (each claw's model: how it sat before)
 		if (was.size() > 64) was.clear();
+		for (const bool third : { false, true }) {
+		auto* root = p->Get3D(!third);
+		if (!root) continue;
+		const RE::NiPoint3 rot = third ? g_clawRot3 : g_clawRot;
 		for (const bool left : { false, true }) {
 			auto* o = p->GetEquippedObject(left);
 			auto* w = o ? o->As<RE::TESObjectWEAP>() : nullptr;
@@ -3759,9 +3801,10 @@ namespace bo3z::Classes
 				auto [it, fresh] = was.try_emplace(ch.get(), ch->local.rotate);
 				RE::NiMatrix3 turn;
 				const float d = 0.0174533f;
-				turn.SetEulerAnglesXYZ(g_clawRot.x * d, g_clawRot.y * d, g_clawRot.z * d);
+				turn.SetEulerAnglesXYZ(rot.x * d, rot.y * d, rot.z * d);
 				ch->local.rotate = g_clawRotOn ? it->second * turn : it->second;
 			}
+		}
 		}
 	}
 	void TickAlchemy(float a_delta)
