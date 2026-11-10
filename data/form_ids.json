@@ -1771,6 +1771,7 @@
   "WEAP:tab_wyrmspine": "0xee7",
   "WEAP:tab_cinderclaws": "0xee8",
   "WEAP:tab_frostmourn": "0xee9",
-  "ENCH:carianwand": "0xeea"
+  "ENCH:carianwand": "0xeea",
+  "MGEF:wandhold": "0xeeb"
  }
 }
