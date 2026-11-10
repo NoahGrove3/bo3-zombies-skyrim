@@ -407,6 +407,7 @@ namespace bo3z
 		// throw flasks cycling through each flask") Animated Armoury's Dwarven Quarterstaff's look and swings; block held: a 2 s
 		// piercing beam, the next vial's element each; a power attack throws the next flask
 		void               DevClawRot(float a_x, float a_y, float a_z, bool a_on, bool a_third);
+		void               DevClawForm(RE::FormID a_local, float a_x, float a_y, float a_z);  // one claw's own turn (its NewArmoury id)
 		void               WandButton(bool a_down);   // the attack pressed / let go with the Carian Wand drawn
 		bool               WandInHand();
 		void               WandReady();   // (data loaded) the Carian Wand carries its cast at every tier   // (dev: clawrot) the claws' turn in first person

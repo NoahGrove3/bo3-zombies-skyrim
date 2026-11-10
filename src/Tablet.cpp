@@ -83,6 +83,8 @@ namespace bo3z::Tablet
 
 		RE::TESForm* FormOf(int a_w) { return a_w >= 0 && a_w < static_cast<int>(gen::kTabletWeapons.size()) ? Forms::Ours(gen::kTabletWeapons[a_w].form) : nullptr; }
 		// its name in the pack with its wear: "Gravebell Mace (62%)"
+		RE::TESObjectWEAP* LeftOf(int a_w);
+		std::unordered_map<RE::FormID, std::string> g_leftWas;  // (Animated Armoury's left claws: their own names, put back when ours go)
 		void Rename(int a_w, int a_uses)
 		{
 			auto* f = FormOf(a_w);
@@ -92,6 +94,11 @@ namespace bo3z::Tablet
 			const std::string nm = fmt::format("{} ({}%)", d.label, pct);
 			if (auto* w = f->As<RE::TESObjectWEAP>()) w->fullName = nm;
 			else if (auto* sp = f->As<RE::SpellItem>()) sp->fullName = nm;
+			// (Noah: "It should be Cinderclaws Left, not Daedric Claws Left") the claws' other hand under the same name
+			if (auto* l = a_w == g_held ? LeftOf(a_w) : nullptr) {
+				if (!g_leftWas.contains(l->GetFormID())) g_leftWas[l->GetFormID()] = l->fullName.c_str();
+				l->fullName = fmt::format("{} Left", d.label);
+			}
 		}
 		// the donated weapon taken off you and out of your pack (and the bows' arrows)
 		// (Noah: "real hand wraps or elemental brass knuckles") the fists' gloves, worn in the hands' slot while they are held
@@ -124,6 +131,7 @@ namespace bo3z::Tablet
 			auto* f = FormOf(a_w);
 			if (!p || !f) return;
 			if (auto* l = LeftOf(a_w); l && p->GetItemCount(l) > 0) p->RemoveItem(l, p->GetItemCount(l), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+			if (auto* l = LeftOf(a_w)) if (auto it = g_leftWas.find(l->GetFormID()); it != g_leftWas.end()) l->fullName = it->second;
 			if (auto* gl = GlovesOf(a_w); gl && p->GetItemCount(gl) > 0) {
 				p->RemoveItem(gl, p->GetItemCount(gl), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
 				if (auto* prev = g_prevGloves ? RE::TESForm::LookupByID<RE::TESObjectARMO>(g_prevGloves) : nullptr; prev && p->GetItemCount(prev) > 0) {

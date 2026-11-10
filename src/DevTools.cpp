@@ -654,6 +654,11 @@ namespace bo3z
 					in >> y >> z >> v;
 					Classes::DevClawRot(x, y, z, true, v == 3);
 				}
+			} else if (cmd == "clawform") {  // clawform <hex NewArmoury id> <x> <y> <z>: that one claw's own turn, both views
+				std::string id;
+				float       x = 0, y = 0, z = 0;
+				in >> id >> x >> y >> z;
+				try { Classes::DevClawForm(static_cast<RE::FormID>(std::stoul(id, nullptr, 16)), x, y, z); } catch (...) {}
 			} else if (cmd == "fly") {  // fly on|off: fly where you look (sprint: faster), hang in the air when you let go
 				std::string v;
 				in >> v;

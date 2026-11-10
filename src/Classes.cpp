@@ -3798,9 +3798,19 @@ namespace bo3z::Classes
 	// claws' own model turned round in first person - the right hand's, the left's: degrees about x, y, z (dev: clawrot)
 	namespace
 	{
-		RE::NiPoint3 g_clawRot{ 0.0f, 0.0f, 180.0f };     // first person
-		RE::NiPoint3 g_clawRot3{ 0.0f, 0.0f, 180.0f };    // third person
+		// (Noah, after "clawrot 180 0 180" live: "nice, but the only one that's not looking correct is the Daedric claws")
+		RE::NiPoint3 g_clawRot{ 180.0f, 0.0f, 180.0f };     // first person
+		RE::NiPoint3 g_clawRot3{ 180.0f, 0.0f, 180.0f };    // third person
 		bool         g_clawRotOn = true;
+		// one claw's own turn in place of the above, in the right hand (Animated Armoury's left Daedric claw - the Cinderclaws'
+		// left - sat "upside down under my palm" ... "its only when i equip the left one on my right hand"): its NewArmoury.esp
+		// id -> degrees (dev: clawform <hex id> x y z)
+		std::unordered_map<RE::FormID, RE::NiPoint3> g_clawForm{ { 0x19AAE8, { 180.0f, 0.0f, 0.0f } } };
+	}
+	void DevClawForm(RE::FormID a_local, float a_x, float a_y, float a_z)
+	{
+		g_clawForm[a_local & 0xFFFFFF] = { a_x, a_y, a_z };
+		logger::info("dev: clawform {:06X} {:.0f} {:.0f} {:.0f}", a_local & 0xFFFFFF, a_x, a_y, a_z);
 	}
 	void DevClawRot(float a_x, float a_y, float a_z, bool a_on, bool a_third)
 	{
@@ -3827,12 +3837,16 @@ namespace bo3z::Classes
 			auto* node = root->GetObjectByName(left ? "SHIELD" : "WEAPON");
 			auto* nn = node ? node->AsNode() : nullptr;
 			if (!nn) continue;
+			RE::NiPoint3 r = rot;
+			if (!left && w->GetFile(0) && w->GetFile(0)->GetFilename() == "NewArmoury.esp") {
+				if (auto f = g_clawForm.find(w->GetLocalFormID()); f != g_clawForm.end()) r = f->second;
+			}
 			for (auto& ch : nn->GetChildren()) {
 				if (!ch) continue;
 				auto [it, fresh] = was.try_emplace(ch.get(), ch->local.rotate);
 				RE::NiMatrix3 turn;
 				const float d = 0.0174533f;
-				turn.SetEulerAnglesXYZ(rot.x * d, rot.y * d, rot.z * d);
+				turn.SetEulerAnglesXYZ(r.x * d, r.y * d, r.z * d);
 				ch->local.rotate = g_clawRotOn ? it->second * turn : it->second;
 			}
 		}

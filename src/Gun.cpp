@@ -3430,6 +3430,24 @@ namespace bo3z
 				if (a_m.size() > 400) a_m.clear();
 				a_m[a->GetFormID()] = std::chrono::steady_clock::now() + std::chrono::milliseconds(static_cast<int>(a_secs * 1000));
 			}
+			// (the Glacier Greatsword) frozen solid a few seconds at a time, again and again, while it lives and is marked
+			std::unordered_set<RE::FormID> g_glacierHeld;
+			void GlacierChain(RE::ActorHandle a_h)
+			{
+				auto a = a_h.get();
+				if (!a) return;
+				if (a->IsDead() || !Marked(g_frozen, a.get())) {
+					g_glacierHeld.erase(a->GetFormID());
+					return;
+				}
+				Freeze(a.get(), 3.0f);
+				Tasks::Later(2.8f, [a_h]() { GlacierChain(a_h); });
+			}
+			void GlacierHold(RE::ActorHandle a_h)
+			{
+				auto a = a_h.get();
+				if (a && g_glacierHeld.insert(a->GetFormID()).second) GlacierChain(a_h);
+			}
 			std::array<int, 10> g_arrows{};   // (the bows: arrows struck toward the sixth)
 			std::array<std::chrono::steady_clock::time_point, 10> g_lastProc{};
 			RE::NiPoint3 Chest(RE::Actor* a) { return a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }; }
@@ -3518,8 +3536,10 @@ namespace bo3z
 				break;
 			}
 			case 3:   // Zahkriisos' Glacier Greatsword: frozen and slowed; heavy - the frozen round you shatter
-				ForAWhile(a_t, RE::ActorValue::kSpeedMult, -50.0f, 3.0f);
-				Mark(g_frozen, a_t, 4.0f);
+				// (Noah: "the opponent should be frozen until they die. This makes the power attack actually effective") a hit
+				// freezes it solid, held so while it lives - until a power attack shatters it
+				Mark(g_frozen, a_t, 3600.0f);
+				GlacierHold(a_t->GetHandle());
 				ElemBurst(1, Chest(a_t), 0.5f, 0.0f, 0.5f);
 				if (heavy) {
 					for (auto* f : Foes(pp, 600.0f)) {
@@ -3574,7 +3594,8 @@ namespace bo3z
 				break;
 			case 6: {   // Krosis' Grief Blade: each hit heals you; heavy - a wail that weakens all near
 				auto* av = p->AsActorValueOwner();
-				av->RestoreActorValue(RE::ActorValue::kHealth, std::max(4.0f, av->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.03f));
+				// (Noah: "The grief blade heals too much. It's way too strong" - 1% a hit, from 3%)
+				av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.01f);
 				if (heavy) {
 					for (auto* f : Foes(pp, 700.0f)) {
 						ForAWhile(f, RE::ActorValue::kAttackDamageMult, -0.4f, 8.0f);
