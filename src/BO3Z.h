@@ -408,6 +408,7 @@ namespace bo3z
 		void               SlayerKill();              // a kill by the Dragon Slayer: an ember
 		int                SlayerEmbers();
 		RE::TESObjectWEAP* CarianBlade();             // Destruction's Carian Wand
+		RE::TESObjectWEAP* ClassWeapon(int a_cls);    // a class's weapon (0 Summoner .. 3 Spellsword)
 		int                SwordClass(const RE::TESForm* a_w);   // whose class sword (0 Summoner, 1 Destruction, 2 Alchemist, 3 Spellsword; -1 none)
 		bool                 AdoptLook(RE::TESObjectWEAP* a_w, const RE::TESObjectWEAP* a_src);   // an Animated Armoury weapon's look and feel on ours
 		void                 NameSetPieces();   // the class sets' pieces named for their class ("Alchemist Set Hood")

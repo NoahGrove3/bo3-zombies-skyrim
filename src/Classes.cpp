@@ -2932,6 +2932,10 @@ namespace bo3z::Classes
 	}
 	// which class's sword: 0 the Summoner's Radiant Quarterstaff, 1 Destruction's Carian Wand, 2 the Alchemist's Shadowflame Whip,
 	// 3 the Spellsword's Spellbound Rapier (-1: none of them)
+	RE::TESObjectWEAP* ClassWeapon(int a_cls)
+	{
+		return a_cls == 0 ? Riftblade() : a_cls == 1 ? CarianBlade() : a_cls == 2 ? AlchemistKnife() : a_cls == 3 ? SpellswordBlade() : nullptr;
+	}
 	int SwordClass(const RE::TESForm* a_w)
 	{
 		if (!a_w) return -1;
