@@ -50,7 +50,7 @@ recs['PROJ'].append(record('PROJ', fid('PROJ', 'castflame'), [
     sub('EDID', z('UN_CastCarrier')), sub('OBND', tsub('proj_bullet', 'OBND')), sub('MODL', z('')),
     sub('DATA', bytes(pd)), sub('NAM1', b'\0'), sub('VNAM', struct.pack('<I', 0))]))
 
-def cast_mgef(key, label, cast=2):
+def cast_mgef(key, label, cast=2, aimed=False):
     md = bytearray(tsub('mgef_firebolt', 'DATA'))
     struct.pack_into('<I', md, 0, 0x200 | 0x400 | 0x800)  # no magnitude/duration/area; not hostile (no crime, no aggro)
     struct.pack_into('<f', md, 4, 0.0)                 # base cost
@@ -60,10 +60,15 @@ def cast_mgef(key, label, cast=2):
     struct.pack_into('<I', md, 76, 0)
     struct.pack_into('<I', md, 80, cast)               # 1 fire-and-forget (one cast per click), 2 concentration
     struct.pack_into('<I', md, 84, 0)                  # self (nothing launched natively)
+    if aimed:   # (a staff's concentration aimed: the staff pointed, not the hand's cast - the carrier flies, unseen and harmless)
+        struct.pack_into('<I', md, 72, fid('PROJ', 'castflame')); struct.pack_into('<I', md, 84, 2)
     for off in (92, 96, 100, 116): struct.pack_into('<I', md, off, 0)  # casting art set at runtime from the matching vanilla spell
     recs['MGEF'].append(record('MGEF', fid('MGEF', key), [
         sub('EDID', z('UN_' + key)), sub('FULL', z(label)), sub('MDOB', tsub('mgef_firebolt', 'MDOB')), sub('DATA', bytes(md)), sub('DNAM', z(''))]))
 cast_mgef('wandcast', 'Wand Cast', 1)
+# (Noah: the Carian Wand "point like a staff ... holding the attack should cast automatically every 2s") held: Skyrim's
+# staff concentration keeps the wand pointed while the attack is held; src/Classes.cpp TickWand looses the bolts
+cast_mgef('wandhold', 'Carian Bolt', 2, aimed=True)
 # (Noah: "lets just make it a summon spell") the Call of the Violet Wyrm's effect: a Conjuration cast (its look and sound
 # taken at runtime from Skyrim's Conjure Familiar - src/Classes.cpp), the wyrm called by src/WyrmHorn.inl WyrmCast
 cast_mgef('wyrmcall', 'Call of the Violet Wyrm', 1)
@@ -257,8 +262,8 @@ recs['ENCH'].append(record('ENCH', fid('ENCH', 'tabstaff'), [
 # plays the cast; its Carian bolt is ours (src/Classes.cpp WandCast)
 recs['ENCH'].append(record('ENCH', fid('ENCH', 'carianwand'), [
     sub('EDID', z('UN_CarianWandEnch')), sub('OBND', bytes(12)), sub('FULL', z('Carian Bolt')),
-    sub('ENIT', struct.pack('<iIIiIIfII', 0, 0x1, 1, 3000, 0, 0x0C, 0.0, 0, 0)),
-    sub('EFID', struct.pack('<I', fid('MGEF', 'wandcast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
+    sub('ENIT', struct.pack('<iIIiIIfII', 0, 0x1, 2, 3000, 2, 0x0C, 0.0, 0, 0)),
+    sub('EFID', struct.pack('<I', fid('MGEF', 'wandhold'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 for w in S['tablet']['rows']:
     if w['type'] == 'book': continue
     tmpl, anim, spd, reach, wt, kws = TB_KIND[w['type']]
@@ -602,14 +607,14 @@ KV = 'kv\\crystalsword\\'
 # and what each of its tiers does - its description, and (TIER_TEXT) the tier's own line on the item card
 SWORD_DESC = {   # (Noah: "way too long" - the card tells what the sword is; each tier's line is added by src/Classes.cpp TickItemCard)
     'radiant': "The Summoner's blade: pale silver, burning with white sunlight.",
-    'carian': "Destruction's wands, one for each hand: each cast looses a bolt of raw sorcery - fire, frost and lightning in turn.",
+    'carian': "Destruction's wand, held in the right hand: hold its cast and it looses a bolt of raw sorcery every 2 seconds - fire, lightning and ice in turn.",
     'alch': "The Alchemist's blade: daedric steel wreathed in purple shadowflame.",
     'ss_none': "The Spellsword's blade: it takes the element of the spell in your other hand.",
     'slayer': "The Akaviri dragon-hunters' blade. Swings 50% faster. Light swings: golden fire, twice the damage to dragons. Heavy attacks: a cyclone of golden dragonfire.",
 }
 TIER_TEXT = {   # (the look's enchantment on the item card: what this tier adds)
     'radiant': ("Light swings loose white sun balls through the dead.", "Sun balls; heavy attacks call a pillar of sunlight down on the one you strike.", "Sun balls, and a great pillar of sunlight on every heavy attack."),
-    'carian': ("Each cast looses a bolt of fire, frost or lightning through the dead.", "Every 3rd cast is a great bolt that pierces.", "Great bolts, and both wands cast together loose a crossing volley."),
+    'carian': ("Hold the cast: a bolt every 2 seconds - fire, lightning, ice in turn.", "Every 3rd bolt is a great bolt that pierces.", "Every 3rd bolt is a great bolt, with a crossing volley either side."),
     'alch': ("Light swings loose bolts of shadowflame that set the dead burning.", "Bolts of shadowflame; heavy attacks loose a cyclone of purple fire.", "Bolts of shadowflame, and a great cyclone of purple fire on every heavy attack."),
     'ss': ("Light swings loose bolts of your spell's element through the dead.", "Bolts of your spell's element; heavy attacks loose a cyclone of it.", "Bolts of your spell's element, and a great cyclone of it on every heavy attack."),
     'slayer': ("Golden fire: twice the damage to dragons; heavy attacks loose a cyclone of golden dragonfire.",) * 3,

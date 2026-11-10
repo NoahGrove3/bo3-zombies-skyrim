@@ -212,11 +212,10 @@ namespace bo3z::Classes
 			case coffer::kDestruction:
 				GiveSpell(Rung1(a_cls, "Fire"), false);
 				GiveSpell(Rung1(a_cls, "Frost"), true);
-				// (Noah: "Destruction - Carian Wands, one per hand") a wand in each hand (the spells kept in your book)
-				GiveItem(p, CarianBlade(), 2, false);
+				// (Noah: "the destruction class should only be allowed to hold one wand at a time") the wand in the right hand
+				GiveItem(p, CarianBlade(), 1, false);
 				if (auto* em = RE::ActorEquipManager::GetSingleton(); em && CarianBlade()) {
 					em->EquipObject(p, CarianBlade(), nullptr, 1, RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F42), false, false, false, true);
-					em->EquipObject(p, CarianBlade(), nullptr, 1, RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F43), false, false, false, true);
 				}
 				if (auto* tome = Lookup(0x817, "Equipable Tomes - Redone.esp")) GiveItem(p, tome, 1, true);  // a Destruction tome at the hip
 				break;
@@ -2108,8 +2107,34 @@ namespace bo3z::Classes
 	bool ThrowFlask(RE::FormID a_spell);  // (below: the Alchemist's flasks)
 	void TickAlchemy(float a_delta);
 	namespace { const char* ArcModel(int a_key); }
-	// (Noah: "Destruction - Carian Wands ... Each cast fires a Carian bolt. Tier II: every 3rd cast is a great bolt that pierces.
-	// Tier III: casting both wands together fires a crossing volley") fire, frost and lightning in turn
+	// (Noah: "Destruction - Carian Wands ... Each cast fires a Carian bolt. Tier II: every 3rd cast is a great bolt that pierces")
+	// (Noah: "one wand at a time"; "point like a staff, and holding the wand's attack should cast automatically every 2s
+	// alternating fire, lightning and ice") held, Skyrim's staff cast keeps the wand pointed; a bolt leaves its tip at once and
+	// every 2 s after - fire, lightning, ice in turn. Tier II every 3rd is a great bolt; Tier III every 3rd also looses a
+	// crossing volley (two more either side). Each bolt sounds as Skyrim's own Firebolt, Lightning Bolt or Ice Spike leaving the hand.
+	namespace
+	{
+		float g_wandNext = 0.0f;   // seconds to the next bolt while the cast is held
+		bool  g_wandHeld = false;
+		RE::BGSSoundDescriptorForm* ReleaseSound(RE::FormID a_spell)
+		{
+			auto* sp = RE::TESForm::LookupByID<RE::SpellItem>(a_spell);
+			auto* mg = sp && !sp->effects.empty() && sp->effects[0] ? sp->effects[0]->baseEffect : nullptr;
+			if (!mg) return nullptr;
+			for (auto& sp2 : mg->effectSounds) if (sp2.id == RE::MagicSystem::SoundID::kRelease && sp2.sound) return sp2.sound;
+			return nullptr;
+		}
+		RE::NiPoint3 WandTip(RE::PlayerCharacter* a_p)
+		{
+			if (auto* c = a_p->GetMagicCaster(RE::MagicSystem::CastingSource::kRightHand)) {
+				if (auto* n = c->GetMagicNode()) {
+					const auto at = n->world.translate;
+					if (at.GetDistance(a_p->GetPosition()) < 400.0f) return at;
+				}
+			}
+			return Gun::SwingFrom();
+		}
+	}
 	void WandCast()
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
@@ -2117,36 +2142,75 @@ namespace bo3z::Classes
 		if (!p || !w) return;
 		const int t = std::max(0, Kit::TierOfWeapon(w));
 		static int turn = 0, casts = 0;
-		static auto last = std::chrono::steady_clock::now() - std::chrono::seconds(5);
-		const auto now = std::chrono::steady_clock::now();
-		const bool both = now - last < std::chrono::milliseconds(500);
-		last = now;
 		++casts;
-		const bool great = t >= 2 && casts % 3 == 0;
+		const bool third = casts % 3 == 0;
+		const bool great = t >= 2 && third;
 		const RE::NiPoint3 dir = Gun::SwingDir();
+		const RE::NiPoint3 from = WandTip(p);
+		static constexpr int kOrder[3] = { 4, 6, 5 };                                     // fire, lightning, ice (ArcModel's bolts)
+		static constexpr RE::FormID kSnd[3] = { 0x0012FCD5, 0x0002DD2A, 0x0002B96C };    // Firebolt, Lightning Bolt, Ice Spike
+		const int k = turn++ % 3;
+		const int bolt = kOrder[k];
+		if (auto* snd = ReleaseSound(kSnd[k])) Audio::Game(snd->GetFormID(), p, great ? 1.0f : 0.85f);
 		auto fire = [&](const RE::NiPoint3& d, float sizeMul, float shareMul) {
 			Gun::SlashSpec sl;
-			const int bolt = 4 + (turn++ % 3);
 			sl.model = ArcModel(bolt);
-			sl.from = Gun::SwingFrom();
+			sl.from = from;
 			sl.dir = d;
 			sl.roll = Gun::SwingRoll(d);
 			sl.range = 1400.0f + 200.0f * std::min(t, 3);
 			sl.bolt = true, sl.speed = 1150.0f;
 			sl.scale = (1.1f + 0.15f * std::min(t, 3)) * sizeMul;
-			sl.share = BladeShare(w) * (0.7f + 0.3f * Arcana::Power()) * (t >= 1 ? UpgradeMult(t) / std::max(0.01f, UpgradeMult(1)) : 0.6f) * shareMul;
+			// (one wand, one bolt each 2 s: each bolt carries what two wands' quicker casts did between them)
+			sl.share = BladeShare(w) * (0.7f + 0.3f * Arcana::Power()) * (t >= 1 ? UpgradeMult(t) / std::max(0.01f, UpgradeMult(1)) : 0.6f) * shareMul * 2.0f;
 			sl.flingKill = 16.0f;
 			sl.onHit = [bolt](RE::Actor* a, bool killed) {
-				if (!killed && a) Gun::ElemBurst(bolt - 4, a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, 0.35f, 0.0f, 0.4f);
+				if (!a) return;
+				static constexpr const char* kHit[3] = { "fireball", "frost", "runeshock" };
+				Gun::BlastSound(kHit[std::clamp(bolt - 4, 0, 2)], a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, 0.6f);
+				if (!killed) Gun::ElemBurst(bolt - 4, a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, 0.35f, 0.0f, 0.4f);
 			};
 			Gun::Slash(sl);
 		};
 		fire(dir, great ? 1.8f : 1.0f, great ? 2.0f : 1.0f);
-		if (t >= 3 && both) {   // the crossing volley: two more, either side
+		if (t >= 3 && third) {   // the crossing volley: two more, either side
 			for (const float a : { -0.18f, 0.18f }) {
 				RE::NiPoint3 d{ dir.x * std::cos(a) - dir.y * std::sin(a), dir.x * std::sin(a) + dir.y * std::cos(a), dir.z };
 				fire(d, 1.0f, 0.8f);
 			}
+		}
+	}
+	// every frame: the held cast's bolts, and the wand kept to one, in the right hand
+	void TickWand(float a_delta)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* w = CarianBlade();
+		if (!p || !w || !p->Is3DLoaded()) return;
+		bool held = false;
+		if (p->GetEquippedObject(false) == w && p->AsActorState()->IsWeaponDrawn()) {
+			if (auto* c = p->GetMagicCaster(RE::MagicSystem::CastingSource::kRightHand)) {
+				held = c->currentSpell && w->formEnchanting && c->currentSpell == w->formEnchanting &&
+				       (c->state.get() == RE::MagicCaster::State::kCasting || c->state.get() == RE::MagicCaster::State::kCharging);
+			}
+		}
+		if (held) {
+			if (!g_wandHeld) g_wandNext = 0.0f;   // (the first bolt as the wand comes up)
+			if ((g_wandNext -= a_delta) <= 0.0f) { WandCast(); g_wandNext += 2.0f; if (g_wandNext < 0) g_wandNext = 2.0f; }
+		}
+		g_wandHeld = held;
+		// (Noah: "only allowed to hold one wand at a time") never in the left hand, never two in the pack
+		if (ItemMenusOpen()) return;
+		static float check = 0.0f;
+		if ((check -= a_delta) > 0) return;
+		check = 0.5f;
+		auto* em = RE::ActorEquipManager::GetSingleton();
+		if (em && p->GetEquippedObject(true) == w) {
+			em->UnequipObject(p, w, nullptr, 1, RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F43), false, true, false, true);
+			Hud::QuestBanner("The Carian Wand is held in the right hand only", 2.5f);
+		}
+		if (const int n = p->GetItemCount(w); n > 1) {
+			p->RemoveItem(w, n - 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+			logger::info("classes: {} spare Carian Wand(s) taken away - one wand at a time", n - 1);
 		}
 	}
 	bool OnCast(RE::FormID a_spell)
@@ -2154,7 +2218,7 @@ namespace bo3z::Classes
 		PatchArcane();
 		if (const int k = ArcaneKind(a_spell); k >= 0 && k < 3) { ArcaneCast(k, a_spell); return true; }
 		if (ThrowFlask(a_spell)) return true;
-		if (CarianBlade() && CarianBlade()->formEnchanting && a_spell == CarianBlade()->formEnchanting->GetFormID()) { WandCast(); return true; }
+		if (CarianBlade() && CarianBlade()->formEnchanting && a_spell == CarianBlade()->formEnchanting->GetFormID()) return true;   // (its bolts: TickWand, while held)
 		if (auto* horn = WyrmSpell(); horn && a_spell == horn->GetFormID()) {
 			WyrmCast();   // (the Call of the Violet Wyrm: WyrmHorn.inl)
 			return true;
@@ -2227,6 +2291,7 @@ namespace bo3z::Classes
 
 		TickSummons(a_delta);
 		TickAlchemy(a_delta);
+		TickWand(a_delta);
 		TickMagnus(a_delta);
 		g_tomeCool = std::max(0.0f, g_tomeCool - a_delta);
 		if (g_tomeHold > 0 && (g_tomeHold -= a_delta) <= 0) {
@@ -3096,8 +3161,8 @@ namespace bo3z::Classes
 		static const Card kCards[] = {
 			{ "Radiant Quarterstaff", "The Summoner's blade: pale silver, burning with white sunlight.",
 				{ "Tier I: light swings loose white sun balls that burn through the dead.", "Tier II: heavy attacks call a pillar of sunlight down on the one you strike.", "Tier III: heavy attacks call a great pillar of sunlight down." } },
-			{ "Carian Wand", "Destruction's blade: stahlrim edged in raw sorcery.",
-				{ "Tier I: light swings loose bolts of fire, frost and lightning in turn.", "Tier II: heavy attacks loose a storm cyclone of fire, ice and lightning.", "Tier III: heavy attacks loose a great storm cyclone." } },
+			{ "Carian Wand", "Destruction's wand: hold its cast and it looses a bolt every 2 seconds - fire, lightning and ice in turn.",
+				{ "Tier I: hold the cast for a bolt every 2 seconds - fire, lightning, ice in turn.", "Tier II: every 3rd bolt is a great bolt that pierces.", "Tier III: every 3rd bolt is a great bolt with a crossing volley either side." } },
 			{ "Shadowflame Whip", "The Alchemist's blade: daedric steel wreathed in purple shadowflame.",
 				{ "Tier I: light swings loose bolts of shadowflame that set the dead burning.", "Tier II: heavy attacks loose a cyclone of purple fire.", "Tier III: heavy attacks loose a great cyclone of purple fire." } },
 			{ "Spellbound Rapier", "The Spellsword's blade: it takes the element of the spell in your other hand.",

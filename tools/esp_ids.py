@@ -96,6 +96,7 @@ def echo_ids(S):
     ids += [(k, 'tabglove_' + w['id']) for w in TB if w.get('gloves') for k in ('ARMA', 'ARMO')]   # (the fists: gloves on the hands)
     ids += [('MGEF', 'wyrmcall')]   # (Noah: the Violet Wyrm made a summon spell: its cast's effect)
     ids += [('WEAP', 'wyrmhorn')]   # (Noah: the Horn of the Violet Wyrm - "Held in hand")   # (Noah: the Mutagen Gauntlet made a staff: its beam held as Skyrim's staff cast)
+    ids += [('MGEF', 'wandhold')]   # (Noah: the Carian Wand pointed like a staff, its cast held - a bolt every 2 s)
     return ids
 def blasts():
     """Spell blasts: no-damage copies of Skyrim's explosions (tools/templates/expl/<name>.json)."""
