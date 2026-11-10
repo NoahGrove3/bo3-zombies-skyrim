@@ -6,7 +6,7 @@ writes
     MCM/Config/CurseOfAlduin/config.json     the pages (MCM Helper format)
     MCM/Config/CurseOfAlduin/settings.ini    the defaults (MCM Helper keeps the player's own in MCM/Settings/CurseOfAlduin.ini)
     Scripts/CurseOfAlduin_MCM.pex            the page's script: a bare MCM_ConfigBase (assets/mcm, made by tools/pexrename.py)
-    SKSE/Plugins/Experience/Actors/CurseOfAlduin.ini   the night's dead give a quarter of Experience's usual XP
+    SKSE/Plugins/Experience/Actors/CurseOfAlduin.ini   the night's dead give no XP
 
 The game reads the same ini (src/Settings.cpp); the quest that registers the page is in the plugin (tools/gen_esp.py).
 Mods without a menu of their own (QuickLoot, Character Menu) get a page here; their files are written when the game
@@ -162,12 +162,21 @@ def main():
     shutil.copy(ROOT / 'assets' / 'mcm' / 'Scripts' / 'CurseOfAlduin_MCM.pex', OUT / 'Scripts' / 'CurseOfAlduin_MCM.pex')
     rows = json.load(open(ROOT / 'sheets' / 'enemies.json'))['rows']
     by = {}
+    # (Noah: "I also don't want any enemies from the nighttime to give XP") every one of the night's dead gives none - each
+    # kind the night raises, ours too (their ids from the frozen form id list)
+    ours = json.load(open(ROOT / 'data' / 'form_ids.json'))['ids']
+    seen = set()
     for r in rows:
-        if r['id'] in XP and str(r.get('localId', '')).startswith('0x'):  # (our own dead too: they gave Experience's full XP before)
-            by.setdefault(r['plugin'], []).append(f"; {r['label']} ({r['id']})\n{int(r['localId'], 16):08X} = {XP[r['id']]}")
+        lid = str(r.get('localId', ''))
+        if lid.startswith('auto:'):
+            lid = ours.get('NPC_:' + lid[5:], '')
+        if not lid.startswith('0x') or (r['plugin'], lid) in seen:
+            continue
+        seen.add((r['plugin'], lid))
+        by.setdefault(r['plugin'], []).append(f"; {r['label']} ({r['id']})\n{int(lid, 16):08X} = 0")
     exp = OUT / 'SKSE' / 'Plugins' / 'Experience' / 'Actors'
     exp.mkdir(parents=True, exist_ok=True)
-    (exp / 'CurseOfAlduin.ini').write_text('; The Curse of Alduin: the night\'s dead give an eighth of the usual XP (tools/mcm.py)\n' +
+    (exp / 'CurseOfAlduin.ini').write_text('; The Curse of Alduin: the night\'s dead give no XP (tools/mcm.py)\n' +
                                            '\n'.join(f'[{p}]\n' + '\n'.join(v) + '\n' for p, v in by.items()))
     print('mcm: wrote', cfg, 'and', exp / 'CurseOfAlduin.ini')
 
