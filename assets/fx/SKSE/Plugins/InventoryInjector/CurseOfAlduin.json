@@ -123,9 +123,9 @@
         }
       },
       "assign": {
-        "subTypeDisplay": "Alchemist",
+        "subTypeDisplay": "Staff",
         "iconSource": "skyui/icons_item_psychosteve.swf",
-        "iconLabel": "default_potion",
+        "iconLabel": "weapon_staff",
         "iconColor": "#ffc94a"
       }
     },
