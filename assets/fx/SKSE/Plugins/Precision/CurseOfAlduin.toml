@@ -1,0 +1,5 @@
+# The Curse of Alduin: the Alchemist's Shadowflame Whip wears Animated Armoury's whips (src/Classes.cpp AdoptTierLook) - its
+# reach in Precision as theirs (Animated Armoury - Precision Whips Patch: 120)
+[[WeaponOverride]]
+Weapon = { FormID = 0xD77, Plugin = "CurseOfAlduin.esp" }  # UN_AlchKnife - Shadowflame Whip
+Length = 120
