@@ -5311,6 +5311,24 @@ namespace bo3z
 					logger::info("scout: off");
 				}
 			}
+			// (Noah: "make my movement speed even faster when using the test kit") on the ground too: three and a half times your
+			// pace while the dev flight is on - taken off with it (and off a save that kept it)
+			{
+				static bool boosted = false, checked = false;
+				constexpr float kBoost = 250.0f;
+				if (g_devFly && !boosted) {
+					av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, kBoost);
+					av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, 0.1f), av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, -0.1f);
+					boosted = true, checked = true;
+				} else if (!g_devFly && (boosted || !checked)) {
+					const float m = a_player->GetActorValueModifier(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult);
+					if (boosted || m >= kBoost - 1.0f) {
+						av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, -kBoost);
+						av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, 0.1f), av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, -0.1f);
+					}
+					boosted = false, checked = true;
+				}
+			}
 			if (!g_scoutOn && !g_devFly) return false;
 			if (g_scoutOn) TickPurge(a_delta);
 			// flight: moving, you go where you look - up and down too - fast (sprint: faster); let go high up and you hang
