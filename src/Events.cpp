@@ -194,6 +194,34 @@ namespace bo3z
 			}
 			static inline REL::Relocation<decltype(thunk)> func;
 		};
+		// (Noah: "our modded enemies ... should drop very little skill point XP") skill progress won fighting one of the night's
+		// kinds (the enemies sheet's - at night or met in the wilds) is a quarter of Skyrim's
+		std::atomic<std::int64_t> g_ourFoeAt{ 0 };   // when you last struck one of ours (ms)
+		std::unordered_set<RE::FormID> g_ourBases;
+		bool OurEnemy(RE::Actor* a)
+		{
+			if (!a) return false;
+			if (g_ourBases.empty()) {
+				auto* dh = RE::TESDataHandler::GetSingleton();
+				for (const auto& e : gen::kEnemies) if (auto* f = dh->LookupForm(e.form.localId, e.form.plugin)) g_ourBases.insert(f->GetFormID());
+				g_ourBases.insert(0);
+			}
+			auto* b = a->GetActorBase();
+			if (b && g_ourBases.contains(b->GetFormID())) return true;
+			if (auto* tb = a->GetTemplateBase(); tb && g_ourBases.contains(tb->GetFormID())) return true;
+			return false;
+		}
+		std::int64_t NowMs() { return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count(); }
+		struct PlayerUseSkill
+		{
+			static void thunk(RE::PlayerCharacter* a_this, RE::ActorValue a_av, float a_points, RE::TESForm* a_arg3)
+			{
+				bool ours = NowMs() - g_ourFoeAt.load() < 1500;
+				if (!ours && a_this) if (auto t = a_this->GetActorRuntimeData().currentCombatTarget.get(); t && OurEnemy(t.get())) ours = true;
+				func(a_this, a_av, ours ? a_points * 0.25f : a_points, a_arg3);
+			}
+			static inline REL::Relocation<decltype(thunk)> func;
+		};
 		struct PlayerKill
 		{
 			static void thunk(RE::Actor* a_this, RE::Actor* a_attacker, float a_damage, bool a_sendEvent, bool a_ragdollInstant)
@@ -896,6 +924,7 @@ namespace bo3z
 					}
 				}
 				if (a_event && player && a_event->cause.get() == player && a_event->target && a_event->target.get() != player) {
+					if (auto* t = a_event->target->As<RE::Actor>(); t && OurEnemy(t)) g_ourFoeAt = NowMs();
 					if (auto* t = a_event->target->As<RE::Actor>(); t && Classes::IsRiftblade(a_event->source)) Classes::RiftHit(t);
 					if (auto* t = a_event->target->As<RE::Actor>(); t && a_event->source) Kit::OnPlayerHit(t, RE::TESForm::LookupByID(a_event->source));  // (the Spellsword set's magicka)
 					if (auto* t = a_event->target->As<RE::Actor>()) Classes::NoteHit(t, a_event->source, a_event->flags.any(RE::TESHitEvent::Flag::kPowerAttack));
@@ -1432,6 +1461,7 @@ namespace bo3z
 			REL::Relocation<std::uintptr_t> vtbl{ RE::VTABLE_PlayerCharacter[0] };
 			PlayerUpdate::func = vtbl.write_vfunc(0xAD, PlayerUpdate::thunk);
 			PlayerKill::func = vtbl.write_vfunc(0x10E, PlayerKill::thunk);
+			PlayerUseSkill::func = vtbl.write_vfunc(0xF7, PlayerUseSkill::thunk);
 			PlayerSelfHarm::func = vtbl.write_vfunc(0x104, PlayerSelfHarm::thunk);
 			{
 				REL::Relocation<std::uintptr_t> ex{ RE::VTABLE_Explosion[0] };
