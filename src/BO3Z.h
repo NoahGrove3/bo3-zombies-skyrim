@@ -408,7 +408,8 @@ namespace bo3z
 		// piercing beam, the next vial's element each; a power attack throws the next flask
 		void               DevClawRot(float a_x, float a_y, float a_z, bool a_on, bool a_third);
 		void               WandButton(bool a_down);   // the attack pressed / let go with the Carian Wand drawn
-		bool               WandInHand();   // (dev: clawrot) the claws' turn in first person
+		bool               WandInHand();
+		void               WandReady();   // (data loaded) the Carian Wand carries its cast at every tier   // (dev: clawrot) the claws' turn in first person
 		void               MutagenLook();                        // (data loaded: the look taken)
 		bool               MutagenInHand();                      // the Mutagen Staff drawn in your hands
 		void               MutagenBlock(bool a_down);            // the block button pressed / let go with it drawn

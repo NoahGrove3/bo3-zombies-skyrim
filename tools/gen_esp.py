@@ -607,14 +607,14 @@ KV = 'kv\\crystalsword\\'
 # and what each of its tiers does - its description, and (TIER_TEXT) the tier's own line on the item card
 SWORD_DESC = {   # (Noah: "way too long" - the card tells what the sword is; each tier's line is added by src/Classes.cpp TickItemCard)
     'radiant': "The Summoner's blade: pale silver, burning with white sunlight.",
-    'carian': "Destruction's wand, held in the right hand: hold its cast and it looses a bolt of raw sorcery every second - fire, lightning and ice in turn.",
+    'carian': "Destruction's wand, held in the right hand: hold its cast and it looses a bolt of raw sorcery every half second - fire, lightning and ice in turn.",
     'alch': "The Alchemist's blade: daedric steel wreathed in purple shadowflame.",
     'ss_none': "The Spellsword's blade: it takes the element of the spell in your other hand.",
     'slayer': "The Akaviri dragon-hunters' blade. Swings 50% faster. Light swings: golden fire, twice the damage to dragons. Heavy attacks: a cyclone of golden dragonfire.",
 }
 TIER_TEXT = {   # (the look's enchantment on the item card: what this tier adds)
     'radiant': ("Light swings loose white sun balls through the dead.", "Sun balls; heavy attacks call a pillar of sunlight down on the one you strike.", "Sun balls, and a great pillar of sunlight on every heavy attack."),
-    'carian': ("Hold the cast: a bolt every second - fire, lightning, ice in turn.", "Every 3rd bolt is a great bolt that pierces.", "Every 3rd bolt is a great bolt, with a crossing volley either side."),
+    'carian': ("Hold the cast: a bolt every half second - fire, lightning, ice in turn.", "Every 3rd bolt is a great bolt that pierces.", "Every 3rd bolt is a great bolt, with a crossing volley either side."),
     'alch': ("Light swings loose bolts of shadowflame that set the dead burning.", "Bolts of shadowflame; heavy attacks loose a cyclone of purple fire.", "Bolts of shadowflame, and a great cyclone of purple fire on every heavy attack."),
     'ss': ("Light swings loose bolts of your spell's element through the dead.", "Bolts of your spell's element; heavy attacks loose a cyclone of it.", "Bolts of your spell's element, and a great cyclone of it on every heavy attack."),
     'slayer': ("Golden fire: twice the damage to dragons; heavy attacks loose a cyclone of golden dragonfire.",) * 3,

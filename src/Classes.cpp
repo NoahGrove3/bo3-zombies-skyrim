@@ -2184,6 +2184,15 @@ namespace bo3z::Classes
 		}
 	}
 	// every frame: the held cast's bolts, and the wand kept to one, in the right hand
+	// (Noah: "only the ascent level wand is doing the casting animation. Can you make sure it's all of them?") the wand carries
+	// its cast from the moment the game loads, at every tier - not only once the kit has been synced
+	void WandReady()
+	{
+		auto* w = CarianBlade();
+		auto* en = RE::TESDataHandler::GetSingleton()->LookupForm<RE::EnchantmentItem>(gen::kCarianWandEnch, gen::kPlugin);
+		if (!w || !en) return;
+		w->formEnchanting = en, w->amountofEnchantment = 100;
+	}
 	void WandButton(bool a_down) { g_wandButton = a_down; }
 	bool WandInHand()
 	{
@@ -2223,14 +2232,14 @@ namespace bo3z::Classes
 					c ? static_cast<int>(c->state.get()) : -1, c && c->currentSpell ? c->currentSpell->GetFormID() : 0);
 			}
 		}
-		// (Noah: "I can spam the wand ... so it only fires after holding the cast") the cast held 0.4 s before the first, and
-		// never two within a second - tapping looses nothing
+		// (Noah: "I can spam the wand ... so it only fires after holding the cast") the cast held 0.3 s before the first, and
+		// never two within half a second - tapping looses nothing
 		static float heldFor = 0.0f;
 		heldFor = held ? heldFor + a_delta : 0.0f;
 		g_wandNext = std::max(0.0f, g_wandNext - a_delta);
-		if (held && heldFor >= 0.4f) {
-			if (g_wandNext <= 0.0f) {   // (Noah: "cast every second")
-				g_wandNext = 1.0f;
+		if (held && heldFor >= 0.3f) {
+			if (g_wandNext <= 0.0f) {   // (Noah: "attack every half a second without being able to spam them. You have to hold them down")
+				g_wandNext = 0.5f;
 				// (Noah: "It's supposed to cast whatever spell I have on my left hand ... it shoots 1 per second without using
 				// mana") the spell in your left hand, loosed from the wand's tip, free; no spell there: the Carian bolts
 				auto* left = p->GetEquippedObject(true);
@@ -2254,6 +2263,7 @@ namespace bo3z::Classes
 		if ((check -= a_delta) > 0) return;
 		check = 0.5f;
 		auto* em = RE::ActorEquipManager::GetSingleton();
+		if (!w->formEnchanting || w->amountofEnchantment == 0) WandReady();
 		if (em && p->GetEquippedObject(true) == w) {
 			em->UnequipObject(p, w, nullptr, 1, RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F43), false, true, false, true);
 			Hud::QuestBanner("The Carian Wand is held in the right hand only", 2.5f);
@@ -3215,8 +3225,8 @@ namespace bo3z::Classes
 		static const Card kCards[] = {
 			{ "Radiant Quarterstaff", "The Summoner's blade: pale silver, burning with white sunlight.",
 				{ "Tier I: light swings loose white sun balls that burn through the dead.", "Tier II: heavy attacks call a pillar of sunlight down on the one you strike.", "Tier III: heavy attacks call a great pillar of sunlight down." } },
-			{ "Carian Wand", "Destruction's wand: hold its cast and it looses a bolt every second - fire, lightning and ice in turn.",
-				{ "Tier I: hold the cast for a bolt every second - fire, lightning, ice in turn.", "Tier II: every 3rd bolt is a great bolt that pierces.", "Tier III: every 3rd bolt is a great bolt with a crossing volley either side." } },
+			{ "Carian Wand", "Destruction's wand: hold its cast and it looses a bolt every half second - fire, lightning and ice in turn.",
+				{ "Tier I: hold the cast for a bolt every half second - fire, lightning, ice in turn.", "Tier II: every 3rd bolt is a great bolt that pierces.", "Tier III: every 3rd bolt is a great bolt with a crossing volley either side." } },
 			{ "Shadowflame Whip", "The Alchemist's blade: daedric steel wreathed in purple shadowflame.",
 				{ "Tier I: light swings loose bolts of shadowflame that set the dead burning.", "Tier II: heavy attacks loose a cyclone of purple fire.", "Tier III: heavy attacks loose a great cyclone of purple fire." } },
 			{ "Spellbound Rapier", "The Spellsword's blade: it takes the element of the spell in your other hand.",
