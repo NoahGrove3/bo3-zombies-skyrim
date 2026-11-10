@@ -2223,11 +2223,14 @@ namespace bo3z::Classes
 					c ? static_cast<int>(c->state.get()) : -1, c && c->currentSpell ? c->currentSpell->GetFormID() : 0);
 			}
 		}
-		if (held) {
-			if (!g_wandHeld) g_wandNext = 0.0f;   // (the first as the wand comes up)
-			if ((g_wandNext -= a_delta) <= 0.0f) {   // (Noah: "cast every second")
-				g_wandNext += 1.0f;
-				if (g_wandNext < 0) g_wandNext = 1.0f;
+		// (Noah: "I can spam the wand ... so it only fires after holding the cast") the cast held 0.4 s before the first, and
+		// never two within a second - tapping looses nothing
+		static float heldFor = 0.0f;
+		heldFor = held ? heldFor + a_delta : 0.0f;
+		g_wandNext = std::max(0.0f, g_wandNext - a_delta);
+		if (held && heldFor >= 0.4f) {
+			if (g_wandNext <= 0.0f) {   // (Noah: "cast every second")
+				g_wandNext = 1.0f;
 				// (Noah: "It's supposed to cast whatever spell I have on my left hand ... it shoots 1 per second without using
 				// mana") the spell in your left hand, loosed from the wand's tip, free; no spell there: the Carian bolts
 				auto* left = p->GetEquippedObject(true);

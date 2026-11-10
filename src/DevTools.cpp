@@ -768,6 +768,35 @@ namespace bo3z
 				std::string files;
 				for (auto& [f, c] : byFile) files += fmt::format("{} {}, ", f, c);
 				logger::info("dev: floaters {} of {} within {:.0f} - by the plugin that last moved them: {}", n, all, range, files);
+			} else if (cmd == "near" && player) {
+				// near [range]: the trees, rocks and plants nearest you - model, who placed it, who last moved it, its height
+				// over the ground (Noah: stand by a floating one)
+				float range = 700.0f;
+				in >> range;
+				struct Row { float d; std::string line; };
+				std::vector<Row> rows;
+				RE::TES::GetSingleton()->ForEachReferenceInRange(player, range, [&](RE::TESObjectREFR* r) {
+					auto* base = r ? r->GetBaseObject() : nullptr;
+					if (!base || r == player || r->IsDisabled() || r->IsDeleted()) return RE::BSContainer::ForEachResult::kContinue;
+					const auto ft = base->GetFormType();
+					if (ft != RE::FormType::Tree && ft != RE::FormType::Static && ft != RE::FormType::Flora && ft != RE::FormType::MovableStatic && ft != RE::FormType::Activator) return RE::BSContainer::ForEachResult::kContinue;
+					auto* mdl = base->As<RE::TESModel>();
+					const auto pos = r->GetPosition();
+					float land = 0;
+					const bool got = RE::TES::GetSingleton()->GetLandHeight(pos, land);
+					auto* last = r->GetDescriptionOwnerFile();
+					auto* first = r->GetFile(0);
+					auto* bf = base->GetFile(0);
+					auto* bl = base->GetDescriptionOwnerFile();
+					const float d = pos.GetDistance(player->GetPosition());
+					rows.push_back({ d, fmt::format("dev: near {:08X} d {:.0f} base {:08X} [{} / last {}] model '{}' z {:.0f} land {:.0f} ({:+.0f}) scale {:.2f} 3d {} placed by {} last moved by {}", r->GetFormID(), d,
+						base->GetFormID(), bf ? bf->GetFilename() : "?", bl ? bl->GetFilename() : "?", mdl ? mdl->GetModel() : "", pos.z, got ? land : 0.0f, got ? pos.z - land : 0.0f, r->GetScale(),
+						r->Get3D() != nullptr, first ? first->GetFilename() : "?", last ? last->GetFilename() : "?") });
+					return RE::BSContainer::ForEachResult::kContinue;
+				});
+				std::sort(rows.begin(), rows.end(), [](const Row& a, const Row& b) { return a.d < b.d; });
+				for (std::size_t i = 0; i < rows.size() && i < 25; ++i) logger::info("{}", rows[i].line);
+				logger::info("dev: near {} within {:.0f}", rows.size(), range);
 			} else if (cmd == "hush") {
 				// hush <ref hex>: switch one placed sound off (disable) - hush <ref hex> on: back on
 				std::string hex, on;
