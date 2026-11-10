@@ -2110,7 +2110,7 @@ namespace bo3z::Classes
 	// (Noah: "Destruction - Carian Wands ... Each cast fires a Carian bolt. Tier II: every 3rd cast is a great bolt that pierces")
 	// (Noah: "one wand at a time"; "point like a staff, and holding the wand's attack should cast automatically every 2s
 	// alternating fire, lightning and ice") held, Skyrim's staff cast keeps the wand pointed; a bolt leaves its tip at once and
-	// every 2 s after - fire, lightning, ice in turn. Tier II every 3rd is a great bolt; Tier III every 3rd also looses a
+	// every second after - fire, lightning, ice in turn. Tier II every 3rd is a great bolt; Tier III every 3rd also looses a
 	// crossing volley (two more either side). Each bolt sounds as Skyrim's own Firebolt, Lightning Bolt or Ice Spike leaving the hand.
 	namespace
 	{
@@ -2161,8 +2161,7 @@ namespace bo3z::Classes
 			sl.range = 1400.0f + 200.0f * std::min(t, 3);
 			sl.bolt = true, sl.speed = 1150.0f;
 			sl.scale = (1.1f + 0.15f * std::min(t, 3)) * sizeMul;
-			// (one wand, one bolt each 2 s: each bolt carries what two wands' quicker casts did between them)
-			sl.share = BladeShare(w) * (0.7f + 0.3f * Arcana::Power()) * (t >= 1 ? UpgradeMult(t) / std::max(0.01f, UpgradeMult(1)) : 0.6f) * shareMul * 2.0f;
+			sl.share = BladeShare(w) * (0.7f + 0.3f * Arcana::Power()) * (t >= 1 ? UpgradeMult(t) / std::max(0.01f, UpgradeMult(1)) : 0.6f) * shareMul;
 			sl.flingKill = 16.0f;
 			sl.onHit = [bolt](RE::Actor* a, bool killed) {
 				if (!a) return;
@@ -2186,6 +2185,19 @@ namespace bo3z::Classes
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		auto* w = CarianBlade();
 		if (!p || !w || !p->Is3DLoaded()) return;
+		// (Noah: "make the tip of the wand glow while casting") the held cast wears Sparks' casting glow and light - Skyrim hangs
+		// a staff's casting art on its tip
+		if (static bool glow = false; !glow && w->formEnchanting && !w->formEnchanting->effects.empty() && w->formEnchanting->effects[0]) {
+			glow = true;
+			auto* me = w->formEnchanting->effects[0]->baseEffect;
+			auto* sparks = RE::TESForm::LookupByID<RE::SpellItem>(0x0002DD29);
+			auto* src = sparks && !sparks->effects.empty() && sparks->effects[0] ? sparks->effects[0]->baseEffect : nullptr;
+			if (me && src) {
+				me->data.castingArt = src->data.castingArt;
+				me->data.light = src->data.light;
+				logger::info("classes: the Carian Wand's tip glows as {} while its cast is held", src->GetFullName());
+			}
+		}
 		bool held = false;
 		if (p->GetEquippedObject(false) == w && p->AsActorState()->IsWeaponDrawn()) {
 			if (auto* c = p->GetMagicCaster(RE::MagicSystem::CastingSource::kRightHand)) {
@@ -2195,7 +2207,7 @@ namespace bo3z::Classes
 		}
 		if (held) {
 			if (!g_wandHeld) g_wandNext = 0.0f;   // (the first bolt as the wand comes up)
-			if ((g_wandNext -= a_delta) <= 0.0f) { WandCast(); g_wandNext += 2.0f; if (g_wandNext < 0) g_wandNext = 2.0f; }
+			if ((g_wandNext -= a_delta) <= 0.0f) { WandCast(); g_wandNext += 1.0f; if (g_wandNext < 0) g_wandNext = 1.0f; }   // (Noah: "cast every second instead of 2 seconds")
 		}
 		g_wandHeld = held;
 		// (Noah: "only allowed to hold one wand at a time") never in the left hand, never two in the pack
@@ -3161,8 +3173,8 @@ namespace bo3z::Classes
 		static const Card kCards[] = {
 			{ "Radiant Quarterstaff", "The Summoner's blade: pale silver, burning with white sunlight.",
 				{ "Tier I: light swings loose white sun balls that burn through the dead.", "Tier II: heavy attacks call a pillar of sunlight down on the one you strike.", "Tier III: heavy attacks call a great pillar of sunlight down." } },
-			{ "Carian Wand", "Destruction's wand: hold its cast and it looses a bolt every 2 seconds - fire, lightning and ice in turn.",
-				{ "Tier I: hold the cast for a bolt every 2 seconds - fire, lightning, ice in turn.", "Tier II: every 3rd bolt is a great bolt that pierces.", "Tier III: every 3rd bolt is a great bolt with a crossing volley either side." } },
+			{ "Carian Wand", "Destruction's wand: hold its cast and it looses a bolt every second - fire, lightning and ice in turn.",
+				{ "Tier I: hold the cast for a bolt every second - fire, lightning, ice in turn.", "Tier II: every 3rd bolt is a great bolt that pierces.", "Tier III: every 3rd bolt is a great bolt with a crossing volley either side." } },
 			{ "Shadowflame Whip", "The Alchemist's blade: daedric steel wreathed in purple shadowflame.",
 				{ "Tier I: light swings loose bolts of shadowflame that set the dead burning.", "Tier II: heavy attacks loose a cyclone of purple fire.", "Tier III: heavy attacks loose a great cyclone of purple fire." } },
 			{ "Spellbound Rapier", "The Spellsword's blade: it takes the element of the spell in your other hand.",
@@ -3496,6 +3508,9 @@ namespace bo3z::Classes
 			int key = cls >= 0 && t >= 1 ? LookKey(cls) : -1;
 			if (w && w == Slayer()) key = 9;
 			if (key == 3) key = -1;   // (the Spellbound Rapier bare-handed: no look)
+			// (Noah: "the ice effect ... was floating" - the Radiant Quarterstaff put away on the back, its art still hung where the
+			// hand was) the art along the blade only while it's drawn
+			if (!p->AsActorState()->IsWeaponDrawn()) key = -1;
 			// (Noah: "when I change it to ice, my sword is still on fire") its enchantment's look was only set when the kit was synced:
 			// the moment the other hand's element changes, the blade is given its new look (taken off and on again)
 			static int lastSs = -2;
