@@ -733,6 +733,41 @@ namespace bo3z
 					return RE::BSContainer::ForEachResult::kContinue;
 				});
 				logger::info("dev: sounds {} within {:.0f}", n, range);
+			} else if (cmd == "floaters" && player) {
+				// floaters [range]: trees, rocks and plants round you standing above the ground under them (Noah: "floating rocks
+				// and trees and bushes") - each with the plugin that last placed or moved it
+				float range = 6000.0f;
+				in >> range;
+				int n = 0, all = 0;
+				std::map<std::string, int> byFile;
+				RE::TES::GetSingleton()->ForEachReferenceInRange(player, range, [&](RE::TESObjectREFR* r) {
+					auto* base = r ? r->GetBaseObject() : nullptr;
+					if (!base || r->IsDisabled() || r->IsDeleted()) return RE::BSContainer::ForEachResult::kContinue;
+					const auto ft = base->GetFormType();
+					if (ft != RE::FormType::Tree && ft != RE::FormType::Static && ft != RE::FormType::Flora && ft != RE::FormType::MovableStatic) return RE::BSContainer::ForEachResult::kContinue;
+					auto* bo = base->As<RE::TESBoundObject>();
+					if (!bo) return RE::BSContainer::ForEachResult::kContinue;
+					const auto pos = r->GetPosition();
+					float land = 0;
+					if (!RE::TES::GetSingleton()->GetLandHeight(pos, land)) return RE::BSContainer::ForEachResult::kContinue;
+					++all;
+					const float scale = r->GetScale();
+					const float bottom = pos.z + static_cast<float>(bo->boundData.boundMin.z) * scale;
+					const float sizeXY = static_cast<float>(std::max(bo->boundData.boundMax.x - bo->boundData.boundMin.x, bo->boundData.boundMax.y - bo->boundData.boundMin.y)) * scale;
+					if (bottom - land > 60.0f && std::abs(r->data.angle.x) < 0.3f && std::abs(r->data.angle.y) < 0.3f) {
+						auto* last = r->GetDescriptionOwnerFile();
+						auto* first = r->GetFile(0);
+						const std::string lf = last ? std::string(last->GetFilename()) : "?";
+						++byFile[lf];
+						if (n++ < 40) logger::info("dev: floater {:08X} {} '{}' {:.0f} above the ground (size {:.0f}) at ({:.0f},{:.0f},{:.0f}) placed by {} last moved by {}", r->GetFormID(),
+							ft == RE::FormType::Tree ? "tree" : ft == RE::FormType::Flora ? "plant" : "static", base->GetFormEditorID() ? base->GetFormEditorID() : "", bottom - land, sizeXY, pos.x, pos.y, pos.z,
+							first ? first->GetFilename() : "?", lf);
+					}
+					return RE::BSContainer::ForEachResult::kContinue;
+				});
+				std::string files;
+				for (auto& [f, c] : byFile) files += fmt::format("{} {}, ", f, c);
+				logger::info("dev: floaters {} of {} within {:.0f} - by the plugin that last moved them: {}", n, all, range, files);
 			} else if (cmd == "hush") {
 				// hush <ref hex>: switch one placed sound off (disable) - hush <ref hex> on: back on
 				std::string hex, on;
