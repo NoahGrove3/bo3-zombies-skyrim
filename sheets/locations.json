@@ -8,7 +8,12 @@
     "anchor",
     "object",
     "slot",
-    "verify"
+    "verify",
+    "x",
+    "y",
+    "z",
+    "yawDeg",
+    "world"
   ],
   "rows": [
     {
@@ -108,7 +113,12 @@
       "anchor": "0x0162A4",
       "object": "objects:tablet",
       "slot": "layout:forge",
-      "verify": []
+      "verify": [],
+      "x": 21645,
+      "y": -41598,
+      "z": -151,
+      "yawDeg": 28,
+      "world": "0x00003C"
     },
     {
       "id": "whiterun_tablet",
@@ -117,7 +127,12 @@
       "anchor": "0x01B1F1",
       "object": "objects:tablet",
       "slot": "layout:forge",
-      "verify": []
+      "verify": [],
+      "x": 20369,
+      "y": -7484,
+      "z": -3651,
+      "yawDeg": 259,
+      "world": "0x01A26F"
     },
     {
       "id": "solitude_tablet",
@@ -126,7 +141,12 @@
       "anchor": "0x01C386",
       "object": "objects:tablet",
       "slot": "layout:forge",
-      "verify": []
+      "verify": [],
+      "x": -58948,
+      "y": 104758,
+      "z": -8464,
+      "yawDeg": 210,
+      "world": "0x037EDF"
     },
     {
       "id": "windhelm_tablet",
@@ -135,7 +155,12 @@
       "anchor": "0x055FCB",
       "object": "objects:tablet",
       "slot": "layout:forge",
-      "verify": []
+      "verify": [],
+      "x": 134242,
+      "y": 40283,
+      "z": -11921,
+      "yawDeg": 254,
+      "world": "0x01691D"
     },
     {
       "id": "markarth_tablet",
@@ -144,7 +169,12 @@
       "anchor": "0x01C389",
       "object": "objects:tablet",
       "slot": "layout:forge",
-      "verify": []
+      "verify": [],
+      "x": -172706,
+      "y": 2718,
+      "z": -3850,
+      "yawDeg": 147,
+      "world": "0x016D71"
     },
     {
       "id": "riften_tablet",
@@ -153,7 +183,12 @@
       "anchor": "0x042286",
       "object": "objects:tablet",
       "slot": "layout:forge",
-      "verify": []
+      "verify": [],
+      "x": 172775,
+      "y": -97904,
+      "z": 11136,
+      "yawDeg": 184,
+      "world": "0x016BB4"
     },
     {
       "id": "falkreath_tablet",
@@ -162,7 +197,12 @@
       "anchor": "0x017760",
       "object": "objects:tablet",
       "slot": "layout:forge",
-      "verify": []
+      "verify": [],
+      "x": -30193,
+      "y": -87051,
+      "z": -3104,
+      "yawDeg": 47,
+      "world": "0x00003C"
     },
     {
       "id": "morthal_tablet",
@@ -171,7 +211,12 @@
       "anchor": "0x0177B0",
       "object": "objects:tablet",
       "slot": "layout:forge",
-      "verify": []
+      "verify": [],
+      "x": -39846,
+      "y": 66757,
+      "z": -13870,
+      "yawDeg": 264,
+      "world": "0x00003C"
     },
     {
       "id": "dawnstar_tablet",
@@ -180,7 +225,12 @@
       "anchor": "0x01773A",
       "object": "objects:tablet",
       "slot": "layout:forge",
-      "verify": []
+      "verify": [],
+      "x": 27854,
+      "y": 104015,
+      "z": -13632,
+      "yawDeg": 5,
+      "world": "0x00003C"
     },
     {
       "id": "winterhold_tablet",
@@ -189,7 +239,12 @@
       "anchor": "0x0177EF",
       "object": "objects:tablet",
       "slot": "layout:forge",
-      "verify": []
+      "verify": [],
+      "x": 109290,
+      "y": 101508,
+      "z": -9019,
+      "yawDeg": 238,
+      "world": "0x00003C"
     }
   ]
 }

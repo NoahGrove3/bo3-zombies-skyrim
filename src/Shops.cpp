@@ -992,6 +992,46 @@ namespace bo3z
 			const auto& plan = g_towns[loc.town];
 			auto*       anchor = TownAnchor(loc.town);
 			auto*       base = Forms::Object(loc.object);
+			// (Noah's Tablet spots inside the walled cities - Whiterun, Solitude, Windhelm, Markarth, Riften - lie in the city's
+			// own worldspace, not the gate's outside it) placed from you while you are in that city and near the spot
+			if (loc.fixed && loc.world && base && !gen::kObjects[loc.object].retired) {
+				auto* pl = RE::PlayerCharacter::GetSingleton();
+				auto* aws = anchor ? anchor->GetWorldspace() : nullptr;
+				if (!aws || aws->GetFormID() != loc.world) {
+					// (a tablet an older build stood beside the altar outside the gate: taken away)
+					if (anchor && plan.state == TownPlan::State::Ready && anchor->Is3DLoaded()) {
+						std::vector<RE::TESObjectREFR*> old;
+						RE::TES::GetSingleton()->ForEachReferenceInRange(anchor, gen::kPlanSweep, [&](RE::TESObjectREFR* r) {
+							if (r && r->GetBaseObject() == base && !r->IsDeleted() && !r->IsDisabled()) old.push_back(r);
+							return RE::BSContainer::ForEachResult::kContinue;
+						});
+						for (auto* r : old) r->Disable(), r->SetDelete(true);
+						if (!old.empty()) logger::info("shops: {} older tablet(s) outside {} taken away", old.size(), gen::kTowns[loc.town]);
+					}
+					auto* pws = pl ? pl->GetWorldspace() : nullptr;
+					const RE::NiPoint3 want{ loc.x, loc.y, loc.z };
+					if (!pws || pws->GetFormID() != loc.world || pl->GetPosition().GetDistance(want) > 6000.0f) return;
+					RE::TESObjectREFR* found = nullptr;
+					RE::TES::GetSingleton()->ForEachReferenceInRange(pl, 7000.0f, [&](RE::TESObjectREFR* r) {
+						if (r && r->GetBaseObject() == base && !r->IsDeleted() && std::hypot(r->GetPosition().x - want.x, r->GetPosition().y - want.y) < 80.0f) {
+							found = r;
+							return RE::BSContainer::ForEachResult::kStop;
+						}
+						return RE::BSContainer::ForEachResult::kContinue;
+					});
+					if (!found) {
+						auto ref = pl->PlaceObjectAtMe(base, false);
+						if (!ref) return;
+						ref->SetScale(gen::kObjects[loc.object].scale);
+						ref->SetPosition(want);
+						ref->SetAngle({ 0, 0, loc.yawDeg * RE::NI_PI / 180.0f });
+						found = ref.get();
+						logger::info("shops: placed {} in {} at its marked spot ({:.0f},{:.0f},{:.0f}) in its city", gen::kObjects[loc.object].id, gen::kTowns[loc.town], want.x, want.y, want.z);
+					}
+					g_placed[a_index] = found->CreateRefHandle();
+					return;
+				}
+			}
 			if (plan.state != TownPlan::State::Ready || !anchor || !base || gen::kObjects[loc.object].retired) {
 				return;
 			}

@@ -356,6 +356,20 @@ namespace bo3z
 					g_pendingChars.push_back(static_cast<unsigned char>(rest[i]));
 				}
 				logger::info("dev: type '{}'", rest.size() > 1 ? rest.substr(1) : "");
+			} else if (cmd == "god") {  // god on|off: console god mode set (not toggled), and said in the log
+				std::string v;
+				in >> v;
+				const bool want = v != "off";
+				if (want != RE::PlayerCharacter::IsGodMode()) {
+					if (auto* factory = RE::IFormFactory::GetConcreteFormFactoryByType<RE::Script>()) {
+						if (auto* script = factory->Create()) {
+							script->SetCommand("tgm");
+							script->CompileAndRun(player);
+							delete script;
+						}
+					}
+				}
+				logger::info("dev: god {} (now {})", want ? "on" : "off", RE::PlayerCharacter::IsGodMode() ? "on" : "off");
 			} else if (cmd == "console") {
 				std::string rest;
 				std::getline(in, rest);
