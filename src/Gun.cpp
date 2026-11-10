@@ -3020,6 +3020,11 @@ namespace bo3z
 			if (const int have = Points::Get(); have < 150000) {
 				Points::Refund(150000 - have);
 			}
+			// (Noah: "give the test kit the light orb so I can see") the Light Orb, worn
+			if (auto* orb = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectARMO>(gen::kLanternItem, gen::kPlugin)) {
+				if (p->GetItemCount(orb) <= 0) p->AddObjectToContainer(orb, nullptr, 1, nullptr);
+				RE::ActorEquipManager::GetSingleton()->EquipObject(p, orb, nullptr, 1, nullptr, false, false, false, true);
+			}
 			// (Noah: "increase my players weight I cant move with the test kit") room for all of it: carry weight 10,000 or more
 			if (auto* av = p->AsActorValueOwner(); av && av->GetActorValue(RE::ActorValue::kCarryWeight) < 10000.0f) {
 				av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kCarryWeight, 10000.0f - av->GetActorValue(RE::ActorValue::kCarryWeight));
