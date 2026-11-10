@@ -1,6 +1,7 @@
 #include "BO3Z.h"
 #include "Codex.h"
 #include <sstream>
+#include <unordered_set>
 
 #include <imgui.h>
 #include <imgui_impl_dx11.h>
@@ -5493,6 +5494,75 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			return y + lineH;
 		}
 
+		// ---- (Noah: "redesign the UI ... into something more simplified and interactive, similar to the Echo Altar UI, instead
+		// of just a bunch of text laid out") two layouts, from the mockups he picked:
+		//   the class books (A): the five books as tabs over a title row; the sections listed down the left like the Echo
+		//   Altar's rows; the chosen one on the right as short bullet lines - "Your Progress" first, drawn live: your nights,
+		//   cities, Essence and wonder as tiles, then your kit with its tier pips and next price
+		//   the lore (C): the chapters as a timeline across the top, the chapter's painting on the left (a painting from the
+		//   Lore Load Screens mod, read from its own files - "do 1"), its lines as bullets on the right
+		// Each bullet is a paragraph's first sentence; Enter / A shows every paragraph whole, a click shows one.
+		std::atomic<int> g_cxFull{ 0 };  // Enter / A pressed since the last frame
+		bool             g_cxShowAll = false;
+		std::unordered_set<std::string> g_cxOpenPara;  // (the paragraphs opened by a click: chapter + index)
+		std::string Strip(std::string_view a_s)
+		{
+			std::string o;
+			for (std::size_t i = 0; i < a_s.size(); ++i) {
+				if (a_s[i] == '<') { const auto e = a_s.find('>', i); if (e != std::string_view::npos) { i = e; continue; } }
+				o += a_s[i];
+			}
+			return o;
+		}
+		// a paragraph's first sentence, its tags kept balanced
+		std::string ShortLine(std::string_view a_p)
+		{
+			std::size_t cut = std::string_view::npos;
+			int         depth = 0;
+			for (std::size_t i = 0; i + 1 < a_p.size(); ++i) {
+				if (a_p[i] == '<') { const auto e = a_p.find('>', i); if (e == std::string_view::npos) break; depth += a_p[i + 1] == '/' ? -1 : 1; i = e; continue; }
+				if ((a_p[i] == '.' || a_p[i] == '!' || a_p[i] == '?') && a_p[i + 1] == ' ' && i > 20) { cut = i + 1; break; }
+				if (a_p[i] == ':' && a_p[i + 1] == ' ' && i > 60) { cut = i; break; }
+			}
+			std::string o(cut == std::string_view::npos ? a_p : a_p.substr(0, cut));
+			if (Strip(o).size() > 170) {   // (a long first sentence: cut at a word near 160 letters)
+				std::string s;
+				int         n = 0;
+				bool        b = false, it = false;
+				for (std::size_t i = 0; i < o.size(); ++i) {
+					if (o[i] == '<') { const auto e = o.find('>', i); const auto tag = o.substr(i, e - i + 1); b = tag == "<b>" ? true : tag == "</b>" ? false : b; it = tag == "<i>" ? true : tag == "</i>" ? false : it; s += tag; i = e; continue; }
+					if (o[i] == ' ' && n > 150) { s += "..."; break; }
+					s += o[i], ++n;
+				}
+				if (b) s += "</b>";
+				if (it) s += "</i>";
+				o = s;
+			}
+			if (cut != std::string_view::npos && a_p[cut] == ':') o += "...";
+			// unbalanced (a cut inside bold): close it
+			const auto opens = [&](std::string_view t) { std::size_t c = 0, p = 0; while ((p = o.find(t, p)) != std::string::npos) ++c, p += t.size(); return c; };
+			if (opens("<b>") > opens("</b>")) o += "</b>";
+			if (opens("<i>") > opens("</i>")) o += "</i>";
+			return o;
+		}
+		// the lore's paintings (Lore Load Screens' own files): each chapter's, by its place in the book
+		ID3D11ShaderResourceView* LoreArt(int a_index)
+		{
+			static constexpr const char* kArt[8] = { "FactionGreybeard01", "DragonNamedAlduin01", "EnemyUndeadZombie", "RuinsNordicWordWall",
+				"ShoutUnrelentingForce", "LoreMainDragonborn01", "TamrielProvinceSkyrim", "LoreSovngarde01" };
+			static std::array<ID3D11ShaderResourceView*, 8> tex{};
+			static std::array<bool, 8> tried{};
+			if (a_index < 0 || a_index >= 8 || !g_device) return nullptr;
+			if (!tried[a_index]) {
+				tried[a_index] = true;
+				const std::wstring path = L"Data/textures/loreloadscreens/" + std::wstring(kArt[a_index], kArt[a_index] + std::strlen(kArt[a_index])) + L".dds";
+				ID3D11Resource* res = nullptr;
+				if (SUCCEEDED(DirectX::CreateDDSTextureFromFile(g_device, path.c_str(), &res, &tex[a_index])) && res) res->Release();
+				logger::info("hud: the Codex's painting for chapter {} ({}) {}", a_index, kArt[a_index], tex[a_index] ? "loaded" : "not found - is Lore Load Screens installed?");
+			}
+			return tex[a_index];
+		}
+
 		void DrawCodex(ImVec2 size, float now, int clicks)
 		{
 			auto*       dl = ImGui::GetForegroundDrawList();
@@ -5500,185 +5570,245 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			const ImVec2 cur = g_cursor;
 			auto hover = [&](ImVec2 a, ImVec2 b) { return cur.x >= a.x && cur.x <= b.x && cur.y >= a.y && cur.y <= b.y; };
 			bool click = clicks > 0;
-			// the two books: the lore, and your class's guide (when you have one)
-			std::vector<int> books{ 0 };
-			if (g_cxGuide >= 1) books.push_back(g_cxGuide);
+			constexpr ImU32 kMuted = IM_COL32(168, 159, 141, 255), kLine = IM_COL32(58, 53, 43, 255), kCard = IM_COL32(24, 23, 20, 236), kInk2 = IM_COL32(207, 200, 184, 255);
+			// the books: the lore and the four class guides as tabs (a freed city's page beside them when one was opened)
+			std::vector<int> books{ 0, 1, 2, 3, 4 };
 			if (g_cxPage >= 5) books.push_back(g_cxPage);
-			// input since the last frame
-			if (const int b = g_cxBook.exchange(0); b != 0 && books.size() > 1) {
+			if (const int b = g_cxBook.exchange(0); b != 0) {
 				const auto it = std::find(books.begin(), books.end(), g_cxOpenBook);
-				const std::size_t i = it == books.end() ? 0 : static_cast<std::size_t>(it - books.begin());
-				g_cxOpenBook = books[(i + 1) % books.size()], g_cxCh = CodexChapters(g_cxOpenBook).front(), g_cxY = g_cxYGoal = 0;
+				const int  i = it == books.end() ? 0 : static_cast<int>(it - books.begin());
+				const int  n = static_cast<int>(books.size());
+				g_cxOpenBook = books[((i + b) % n + n) % n];
+				g_cxCh = -1, g_cxY = g_cxYGoal = 0;
 			}
+			const bool lore = g_cxOpenBook == 0 || g_cxOpenBook >= 5;
+			// a class book: "Your Progress" first
 			auto chs = CodexChapters(g_cxOpenBook);
-			if (chs.empty()) {
-				return;
+			if (chs.empty()) return;
+			if (!lore) {
+				std::stable_partition(chs.begin(), chs.end(), [](int c) { return codex::kChapters[c].image == "@progress"; });
 			}
 			int at = static_cast<int>(std::find(chs.begin(), chs.end(), g_cxCh) - chs.begin());
-			if (at >= static_cast<int>(chs.size())) {
-				at = 0, g_cxCh = chs[0];
-			}
+			if (at >= static_cast<int>(chs.size())) at = 0, g_cxCh = chs[0];
 			if (const int d = g_cxChapter.exchange(0); d != 0) {
 				at = std::clamp(at + d, 0, static_cast<int>(chs.size()) - 1);
 				g_cxCh = chs[at], g_cxY = g_cxYGoal = 0;
 			}
+			if (g_cxFull.exchange(0) % 2) g_cxShowAll = !g_cxShowAll;
 			g_cxYGoal += g_cxScroll.exchange(0) * 70.0f * k;
 
-			// the room: Edge UI's smoked charcoal over the world, darker at the edges
-			dl->AddRectFilled({ 0, 0 }, size, IM_COL32(6, 6, 7, 222));
-			dl->AddRectFilledMultiColor({ 0, 0 }, { size.x, size.y * 0.35f }, IM_COL32(0, 0, 0, 120), IM_COL32(0, 0, 0, 120), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0));
-			dl->AddRectFilledMultiColor({ 0, size.y * 0.65f }, size, IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 140), IM_COL32(0, 0, 0, 140));
-			const float W = std::min(size.x - 60 * k, 1680 * k), H = 960 * k;
+			// the room
+			dl->AddRectFilled({ 0, 0 }, size, IM_COL32(6, 6, 7, 228));
+			const float W = std::min(size.x - 60 * k, 1700 * k), H = 980 * k;
 			const ImVec2 o{ (size.x - W) * 0.5f, (size.y - H) * 0.5f };
+			auto pickChapter = [&](int j) { at = j, g_cxCh = chs[j], g_cxY = g_cxYGoal = 0; };
 
-			// the books, as tabs: spaced capitals, the open one in bronze with a hairline under it
-			const float tabY = o.y + 8 * k;
-			float       tx = o.x + 20 * k;
-			for (int b : books) {
-				const std::string t = Upper(std::string(codex::kBooks[b]));
-				const ImVec2      m = Measure(g_title, 24 * k, t);
-				const ImVec2      a{ tx, tabY }, z{ tx + m.x, tabY + m.y + 10 * k };
-				const bool        on = b == g_cxOpenBook, hv = hover(a, z);
-				Txt(dl, g_title, 24 * k, a, on ? kGold : hv ? IM_COL32(230, 220, 200, 255) : IM_COL32(150, 144, 132, 255), t);
-				if (on) {
-					dl->AddRectFilledMultiColor({ a.x - 10 * k, z.y - 0.7f * k }, { (a.x + z.x) * 0.5f, z.y + 0.7f * k }, Fade(kGold, 0.0f), kGold, kGold, Fade(kGold, 0.0f));
-					dl->AddRectFilledMultiColor({ (a.x + z.x) * 0.5f, z.y - 0.7f * k }, { z.x + 10 * k, z.y + 0.7f * k }, kGold, Fade(kGold, 0.0f), Fade(kGold, 0.0f), kGold);
-				}
-				if (hv && click && !on) {
-					g_cxOpenBook = b, chs = CodexChapters(b), at = 0, g_cxCh = chs[0], g_cxY = g_cxYGoal = 0, click = false;
-				}
-				tx += m.x + 64 * k;
-			}
-			// close
+			// ---- row 1: the five books, evenly spaced, the open one bronze with a bar under it
 			{
-				const ImVec2 c{ o.x + W - 26 * k, tabY + 18 * k };
+				const float tabH = 46 * k, gap = 8 * k;
+				const int   n = static_cast<int>(books.size());
+				const float tw = (W - 60 * k - gap * (n - 1)) / n;
+				static constexpr const char* kTab[5] = { "CURSE OF ALDUIN", "SUMMONER", "BATTLE-MAGE", "ALCHEMIST", "SPELLSWORD" };
+				for (int i = 0; i < n; ++i) {
+					const int    b = books[i];
+					const ImVec2 a{ o.x + i * (tw + gap), o.y }, z{ a.x + tw, o.y + tabH };
+					const bool   on = b == g_cxOpenBook, hv = hover(a, z);
+					const std::string t = b < 5 ? kTab[b] : Upper(std::string(codex::kBooks[b]).substr(0, 40));
+					TxtC(dl, g_title, 20 * k, (a.x + z.x) * 0.5f, a.y + 10 * k, on ? kGold : hv ? kParch : kMuted, t);
+					dl->AddRectFilled({ a.x, z.y - 2 * k }, { z.x, z.y }, on ? kGold : kLine);
+					if (hv && click && !on) g_cxOpenBook = b, g_cxCh = -1, g_cxY = g_cxYGoal = 0, click = false;
+				}
+				// close
+				const ImVec2 c{ o.x + W - 22 * k, o.y + tabH * 0.5f };
 				const bool   hv = hover({ c.x - 22 * k, c.y - 22 * k }, { c.x + 22 * k, c.y + 22 * k });
-				const ImU32  col = hv ? kGold : IM_COL32(170, 162, 146, 255);
-				dl->AddLine({ c.x - 10 * k, c.y - 10 * k }, { c.x + 10 * k, c.y + 10 * k }, col, 1.6f * k);
-				dl->AddLine({ c.x + 10 * k, c.y - 10 * k }, { c.x - 10 * k, c.y + 10 * k }, col, 1.6f * k);
+				dl->AddLine({ c.x - 10 * k, c.y - 10 * k }, { c.x + 10 * k, c.y + 10 * k }, hv ? kGold : kMuted, 1.6f * k);
+				dl->AddLine({ c.x + 10 * k, c.y - 10 * k }, { c.x - 10 * k, c.y + 10 * k }, hv ? kGold : kMuted, 1.6f * k);
 				if (hv && click) {
-					if (auto* q = RE::UIMessageQueue::GetSingleton()) {
-						q->AddMessage(RE::BookMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr);
-					}
+					if (auto* q = RE::UIMessageQueue::GetSingleton()) q->AddMessage(RE::BookMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr);
 					click = false;
 				}
 			}
-
-			const float top = o.y + 70 * k, bottom = o.y + H - 40 * k;
-			// the chapters: a dark glass pane, the chosen one marked by a bronze bar and a faint wash
-			const float lw = 400 * k;
-			Panel(dl, { o.x, top }, { o.x + lw, bottom }, k);
-			float ly = top + 30 * k;
-			for (int j = 0; j < static_cast<int>(chs.size()); ++j) {
-				const auto&  ch = codex::kChapters[chs[j]];
-				const ImVec2 a{ o.x + 14 * k, ly - 6 * k }, z{ o.x + lw - 14 * k, ly + 30 * k };
-				const bool   on = j == at, hv = hover(a, z);
-				const bool   live = ch.image == "@progress";
-				if (on || hv) {
-					dl->AddRectFilledMultiColor(a, z, on ? IM_COL32(196, 170, 112, 46) : IM_COL32(255, 255, 255, 14), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0), on ? IM_COL32(196, 170, 112, 46) : IM_COL32(255, 255, 255, 14));
-				}
-				if (on) {
-					dl->AddRectFilled(a, { a.x + 3 * k, z.y }, kGold);
-				}
-				if (live) {  // the live page: a small bronze diamond
-					const ImVec2 dm{ a.x + 14 * k, (a.y + z.y) * 0.5f };
-					dl->AddQuadFilled({ dm.x, dm.y - 4 * k }, { dm.x + 4 * k, dm.y }, { dm.x, dm.y + 4 * k }, { dm.x - 4 * k, dm.y }, kGold);
-				}
-				TxtWrap(dl, g_title, 19 * k, { a.x + (live ? 26 : 16) * k, ly }, on ? kParch : hv ? IM_COL32(225, 214, 192, 255) : IM_COL32(160, 152, 138, 255), std::string(ch.title), lw - 70 * k, 1);
-				if (hv && click) {
-					at = j, g_cxCh = chs[j], g_cxY = g_cxYGoal = 0, click = false;
-				}
-				ly += 40 * k;
-			}
-
-			// the page: a second pane, the chapter's words in warm off-white
-			const ImVec2 pa{ o.x + lw + 22 * k, top }, pz{ o.x + W, bottom };
-			Panel(dl, pa, pz, k);
-			const auto& ch = codex::kChapters[g_cxCh];
-			const float mx = 70 * k, colW = std::min(pz.x - pa.x - 2 * mx, 900 * k);
-			const float cx = (pa.x + pz.x) * 0.5f, x0 = cx - colW * 0.5f;
-			const float viewTop = pa.y + 22 * k, viewBot = pz.y - 22 * k;
-			const float maxY = std::max(0.0f, g_cxH - (viewBot - viewTop));
-			g_cxYGoal = std::clamp(g_cxYGoal, 0.0f, maxY);
-			g_cxY += (g_cxYGoal - g_cxY) * std::min(1.0f, ImGui::GetIO().DeltaTime * 14.0f);
-			dl->PushClipRect({ pa.x, viewTop }, { pz.x, viewBot }, true);
-			float y = viewTop + 30 * k - g_cxY;
+			// ---- row 2: the book's title on the left, what it is on the right, on one line
+			const float row2 = o.y + 66 * k;
 			{
-				const std::string t = Upper(std::string(ch.title));
-				const float       tw = Measure(g_title, 34 * k, t).x;
-				Txt(dl, g_title, 34 * k, { cx - tw * 0.5f, y }, kParch, t);
-				y += 50 * k;
-				Divider(dl, cx, y, 170 * k, k, 0.9f);
-				y += 28 * k;
+				static constexpr const char* kSchool[5] = { "THE GREYBEARD'S ACCOUNT", "SCHOOL: CONJURATION", "SCHOOL: DESTRUCTION", "SCHOOL: ALCHEMY", "SCHOOL: BLADE AND SPELL" };
+				Txt(dl, g_title, 32 * k, { o.x, row2 }, kGold, Upper(std::string(codex::kBooks[g_cxOpenBook])), 1.0f * k, IM_COL32(0, 0, 0, 255));
+				const std::string r = g_cxOpenBook < 5 ? kSchool[g_cxOpenBook] : "A FREED ALTAR'S PAGE";
+				const float       rw = Measure(g_title, 18 * k, r).x;
+				Txt(dl, g_title, 18 * k, { o.x + W - rw, row2 + 12 * k }, kMuted, r);
+				dl->AddRectFilledMultiColor({ o.x, row2 + 52 * k }, { o.x + W * 0.5f, row2 + 53.2f * k }, Fade(kGold, 0.9f), Fade(kGold, 0.4f), Fade(kGold, 0.4f), Fade(kGold, 0.9f));
+				dl->AddRectFilledMultiColor({ o.x + W * 0.5f, row2 + 52 * k }, { o.x + W, row2 + 53.2f * k }, Fade(kGold, 0.4f), Fade(kGold, 0.0f), Fade(kGold, 0.0f), Fade(kGold, 0.4f));
 			}
-			if (!ch.image.empty() && ch.image != "@progress") {
-				auto it = g_cxArt.find(std::string(ch.image));
-				if (it == g_cxArt.end()) {
-					ID3D11ShaderResourceView* t = nullptr;
-					float w = 0, h = 0;
-					LoadTex("..\\..\\Textures\\CurseOfAlduin\\Book\\" + std::string(ch.image) + ".png", &t, &w, &h);
-					it = g_cxArt.emplace(std::string(ch.image), std::make_pair(t, ImVec2{ w, h })).first;
+			const float top = row2 + 76 * k, bottom = o.y + H - 34 * k;
+
+			// the chapter's bullets, from (x0, y) in a column w wide; returns the y after them
+			auto bullets = [&](const codex::Chapter& ch, float x0, float y, float w) {
+				for (int i = 0; i < static_cast<int>(ch.paras.size()); ++i) {
+					const std::string key = std::to_string(g_cxCh) + ":" + std::to_string(i);
+					const bool        whole = g_cxShowAll || g_cxOpenPara.contains(key);
+					const std::string shortL = ShortLine(ch.paras[i]);
+					const bool        more = Strip(shortL).size() + 4 < Strip(ch.paras[i]).size();
+					const std::string text = whole || !more ? std::string(ch.paras[i]) : shortL;
+					const float       h = RichText(dl, text, { x0 + 26 * k, y }, w - 26 * k, 21 * k, false);
+					const ImVec2      a{ x0, y - 4 * k }, z{ x0 + w, y + h };
+					const bool        hv = more && hover(a, z);
+					if (hv) dl->AddRectFilled(a, z, IM_COL32(255, 255, 255, 10));
+					dl->AddRectFilled({ x0 + 4 * k, y + 9 * k }, { x0 + 12 * k, y + 17 * k }, more && !whole ? kGold : Fade(kGold, 0.55f));
+					RichText(dl, text, { x0 + 26 * k, y }, w - 26 * k, 21 * k, true);
+					if (hv && click) {
+						if (g_cxOpenPara.contains(key)) g_cxOpenPara.erase(key); else g_cxOpenPara.insert(key);
+						click = false;
+					}
+					y += h + 12 * k;
 				}
-				if (auto* t = it->second.first; t && it->second.second.x > 0) {
-					// (the woodcuts are ink: they sit on a small parchment plate, framed in bronze)
-					const float w = std::min(colW * 0.6f, it->second.second.x * 1.2f * k), h = w * it->second.second.y / it->second.second.x;
-					const ImVec2 a{ cx - w * 0.5f - 14 * k, y }, z{ cx + w * 0.5f + 14 * k, y + h + 28 * k };
-					dl->AddRectFilledMultiColor(a, z, IM_COL32(214, 200, 168, 236), IM_COL32(210, 194, 160, 236), IM_COL32(190, 172, 136, 236), IM_COL32(198, 182, 146, 236));
-					dl->AddRect(a, z, Fade(kGold, 0.85f), 0, 0, 1.2f * k);
-					dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(t)), { cx - w * 0.5f, y + 14 * k }, { cx + w * 0.5f, y + 14 * k + h });
-					y += h + 28 * k + 26 * k;
-				}
-			}
-			if (ch.image == "@progress") {
-				// (Noah: "a guide book for each class that tracks progression") built each second by src/Classes.cpp
-				int                      cls = -1;
-				const auto               lines = Classes::Progress(cls);
-				const int                bookCls = g_cxOpenBook - 1;
-				std::vector<std::string> show;
-				if (cls < 0) {
-					show.push_back("You have not chosen a class yet. Choose one at an Echo Altar's top row and this page fills in.");
-				} else if (cls != bookCls) {
-					show.push_back(std::string("You walk the ") + std::string(Classes::Name(cls)) + "'s path now. Change back at an Echo Altar to take this one up again - it keeps its spells and progress for you.");
-				} else {
-					show = lines;
-				}
-				show.push_back("<i>This page follows you as you play: it is written fresh every time you open the book.</i>");
-				for (const auto& para : show) {
-					// each line a row of the ledger: a small bronze diamond, then the words
-					dl->AddQuadFilled({ x0 - 18 * k, y + 12 * k }, { x0 - 14 * k, y + 16 * k }, { x0 - 18 * k, y + 20 * k }, { x0 - 22 * k, y + 16 * k }, Fade(kGold, 0.8f));
-					y += RichText(dl, para, { x0, y }, colW, 22 * k, true) + 14 * k;
-				}
-			}
-			for (const auto& para : ch.paras) {
-				y += RichText(dl, para, { x0, y }, colW, 22 * k, true) + 15 * k;
-			}
-			g_cxH = y + g_cxY - viewTop + 30 * k;
-			dl->PopClipRect();
-			// more below
-			if (g_cxY < maxY - 2) {
-				dl->AddRectFilledMultiColor({ pa.x + 1, viewBot - 50 * k }, { pz.x - 1, viewBot }, IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 170), IM_COL32(0, 0, 0, 170));
-			}
-			// prev / next chapter along the bottom of the page
-			auto arrowBtn = [&](bool a_next) {
-				const bool ok = a_next ? at + 1 < static_cast<int>(chs.size()) : at > 0;
-				if (!ok) return;
-				const std::string t = a_next ? std::string(codex::kChapters[chs[at + 1]].title) + "  >" : "<  " + std::string(codex::kChapters[chs[at - 1]].title);
-				const ImVec2      m = Measure(g_title, 17 * k, t);
-				const ImVec2      a{ a_next ? pz.x - m.x - 24 * k : pa.x + 24 * k, bottom + 9 * k }, z{ a.x + m.x, a.y + m.y };
-				const bool        hv = hover(a, z);
-				Txt(dl, g_title, 17 * k, a, hv ? kGold : IM_COL32(168, 160, 144, 255), t);
-				if (hv && click) {
-					at += a_next ? 1 : -1, g_cxCh = chs[at], g_cxY = g_cxYGoal = 0, click = false;
-				}
+				return y;
 			};
-			arrowBtn(false);
-			arrowBtn(true);
-			TxtC(dl, g_body, 15 * k, o.x + lw * 0.5f, bottom + 10 * k, IM_COL32(140, 134, 122, 255),
-				g_padLast ? std::string("D-pad up / down  scroll    D-pad left / right  chapter    ") + (books.size() > 1 ? Hud::PadWord("LB") + " / " + Hud::PadWord("RB") + "  book    " : std::string()) + Hud::PadWord("B") + "  close"
-				          : std::string("Wheel / W S  scroll    A D  chapter    ") + (books.size() > 1 ? "Q E  book    " : "") + "Esc  close");
-			if (cur.x >= 0) {
-				DrawPingCursor(dl, cur, k, now);
+
+			if (!lore) {
+				// ---- (A) the sections down the left, like the Echo Altar's rows
+				const float lw = 330 * k;
+				float       ly = top;
+				for (int j = 0; j < static_cast<int>(chs.size()); ++j) {
+					const auto&  ch = codex::kChapters[chs[j]];
+					const ImVec2 a{ o.x, ly }, z{ o.x + lw, ly + 48 * k };
+					const bool   on = j == at, hv = hover(a, z);
+					dl->AddRectFilled(a, z, on ? kGold : hv ? IM_COL32(40, 37, 31, 240) : kCard);
+					if (!on) dl->AddRect(a, z, kLine, 0, 0, 1.0f * k);
+					const std::string t = ch.image == "@progress" ? "YOUR PROGRESS" : Upper(std::string(ch.title));
+					Txt(dl, g_title, 18 * k, { a.x + 16 * k, a.y + 13 * k }, on ? IM_COL32(18, 17, 15, 255) : kParch, t);
+					if (hv && click) pickChapter(j), click = false;
+					ly += 54 * k;
+				}
+				TxtWrap(dl, g_body, 14 * k, { o.x, bottom - 4 * k }, kMuted,
+					g_padLast ? "D-pad  section    " + Hud::PadWord("A") + "  whole text    " + Hud::PadWord("LB") + " / " + Hud::PadWord("RB") + "  book    " + Hud::PadWord("B") + "  close"
+					          : std::string("W S  section    Wheel  scroll    Enter  whole text    Q E  book    Esc  close"), lw + 400 * k, 1);
+				// ---- the chosen section on the right
+				const ImVec2 pa{ o.x + lw + 28 * k, top }, pz{ o.x + W, bottom - 28 * k };
+				const auto&  ch = codex::kChapters[g_cxCh];
+				const float  viewTop = pa.y, viewBot = pz.y;
+				const float  maxY = std::max(0.0f, g_cxH - (viewBot - viewTop));
+				g_cxYGoal = std::clamp(g_cxYGoal, 0.0f, maxY);
+				g_cxY += (g_cxYGoal - g_cxY) * std::min(1.0f, ImGui::GetIO().DeltaTime * 14.0f);
+				dl->PushClipRect({ pa.x - 2 * k, viewTop - 6 * k }, { pz.x + 2 * k, viewBot }, true);
+				float       y = viewTop - g_cxY;
+				const float w = pz.x - pa.x;
+				if (ch.image == "@progress") {
+					const auto snap = Classes::Codex();
+					const int  bookCls = g_cxOpenBook - 1;
+					// the four tiles
+					const float tw = (w - 3 * 14 * k) / 4;
+					const std::string vals[4] = { std::to_string(snap.nights), fmt::format("{} / {}", snap.freed, gen::kTowns.size()), Num(snap.points), "" };
+					static constexpr const char* kLab[4] = { "NIGHTS SURVIVED", "CITIES FREED", "CURSED ESSENCE", "WONDER" };
+					for (int i = 0; i < 4; ++i) {
+						const ImVec2 a{ pa.x + i * (tw + 14 * k), y }, z{ a.x + tw, y + 96 * k };
+						dl->AddRectFilled(a, z, kCard);
+						dl->AddRect(a, z, kLine, 0, 0, 1.0f * k);
+						Txt(dl, g_body, 13 * k, { a.x + 16 * k, a.y + 14 * k }, kMuted, kLab[i]);
+						if (i < 3) Txt(dl, g_title, 34 * k, { a.x + 16 * k, a.y + 38 * k }, kGold, vals[i]);
+						else TxtWrap(dl, g_body, 16 * k, { a.x + 16 * k, a.y + 40 * k }, kParch, snap.wonder.empty() ? std::string("-") : snap.wonder, tw - 32 * k, 2);
+					}
+					y += 96 * k + 26 * k;
+					if (snap.cls < 0) {
+						y += RichText(dl, "You have not chosen a class yet. Choose one at an Echo Altar and this page fills in.", { pa.x, y }, w, 21 * k, true);
+					} else if (snap.cls != bookCls) {
+						y += RichText(dl, std::string("You walk the <b>") + std::string(Classes::Name(snap.cls)) + "'s</b> path now. This page fills in when you take this one up again at an Echo Altar - it keeps its spells and progress for you.", { pa.x, y }, w, 21 * k, true);
+					} else {
+						Txt(dl, g_title, 17 * k, { pa.x, y }, kGold, "YOUR KIT");
+						y += 34 * k;
+						for (const auto& l : snap.kit) {
+							const ImVec2 a{ pa.x, y }, z{ pa.x + w, y + 54 * k };
+							dl->AddRectFilled(a, z, kCard);
+							dl->AddRect(a, z, l.can ? Fade(kGold, 0.9f) : kLine, 0, 0, 1.0f * k);
+							Txt(dl, g_title, 19 * k, { a.x + 18 * k, a.y + 15 * k }, kParch, l.name);
+							const float px = a.x + w * 0.30f;
+							for (int t = 0; t < 4; ++t) dl->AddRectFilled({ px + t * 34 * k, a.y + 23 * k }, { px + t * 34 * k + 28 * k, a.y + 31 * k }, t < l.tier + (l.asc > 0 ? 1 : 0) ? kGold : kLine);
+							static constexpr const char* kTier[4] = { "Base", "Tier I", "Tier II", "Tier III" };
+							const std::string tl = !l.carried ? std::string("In your chest") : l.asc > 0 ? fmt::format("Ascend {}", l.asc) : kTier[std::clamp(l.tier, 0, 3)];
+							Txt(dl, g_body, 15 * k, { px + 150 * k, a.y + 17 * k }, kMuted, tl);
+							std::string info = l.info;
+							if (const auto arrow = info.find("  ->  "); arrow != std::string::npos) info = "Next: " + info.substr(arrow + 6);
+							TxtWrap(dl, g_body, 15 * k, { px + 270 * k, a.y + 17 * k }, kInk2, info, w * 0.70f - 270 * k - 150 * k, 1);
+							if (l.cost > 0) {
+								const std::string c = Num(l.cost);
+								Txt(dl, g_title, 17 * k, { z.x - 18 * k - Measure(g_title, 17 * k, c).x, a.y + 16 * k }, l.can ? kGold : kMuted, c);
+							}
+							y += 62 * k;
+						}
+						y += 14 * k;
+						// the rest of the live page (spells and their ladders, the class's own lines): short bullets
+						int dummy = -1;
+						const auto lines = Classes::Progress(dummy);
+						Txt(dl, g_title, 17 * k, { pa.x, y }, kGold, "YOUR SPELLS AND ROAD");
+						y += 34 * k;
+						for (const auto& para : lines) {
+							dl->AddRectFilled({ pa.x + 4 * k, y + 9 * k }, { pa.x + 12 * k, y + 17 * k }, Fade(kGold, 0.7f));
+							y += RichText(dl, para, { pa.x + 26 * k, y }, w - 26 * k, 19 * k, true) + 10 * k;
+						}
+					}
+				} else {
+					Txt(dl, g_title, 24 * k, { pa.x, y }, kParch, Upper(std::string(ch.title)));
+					y += 46 * k;
+					y = bullets(ch, pa.x, y, w);
+				}
+				g_cxH = y + g_cxY - viewTop + 20 * k;
+				dl->PopClipRect();
+				if (g_cxY < maxY - 2) dl->AddRectFilledMultiColor({ pa.x, viewBot - 44 * k }, { pz.x, viewBot }, IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0), IM_COL32(6, 6, 7, 230), IM_COL32(6, 6, 7, 230));
+			} else {
+				// ---- (C) the chapters as a timeline across the top
+				const int   n = static_cast<int>(chs.size());
+				const float tlY = top + 12 * k;
+				std::vector<float> xs(n);
+				for (int j = 0; j < n; ++j) xs[j] = n == 1 ? o.x + W * 0.5f : o.x + 70 * k + (W - 140 * k) * j / (n - 1);
+				for (int j = 0; j + 1 < n; ++j) dl->AddRectFilled({ xs[j], tlY - 1 * k }, { xs[j + 1], tlY + 1 * k }, j < at ? kRune : kLine);
+				for (int j = 0; j < n; ++j) {
+					const bool   on = j == at, past = j < at;
+					const float  r = (on ? 13 : 9) * k;
+					std::string  t = Upper(std::string(codex::kChapters[chs[j]].title));
+					if (const auto dot = t.find(". "); dot != std::string::npos && dot <= 4) t = t.substr(dot + 2);   // ("I. WHAT HAPPENED": the numeral off)
+					const float  tsz = 13 * k, tw = Measure(g_title, tsz, t).x;
+					const ImVec2 a{ std::min(xs[j] - r, xs[j] - tw * 0.5f) - 6 * k, tlY - r - 6 * k }, z{ std::max(xs[j] + r, xs[j] + tw * 0.5f) + 6 * k, tlY + r + 36 * k };
+					const bool   hv = hover(a, z);
+					if (on) dl->AddCircleFilled({ xs[j], tlY }, r + 5 * k, kLine, 24);
+					dl->AddCircleFilled({ xs[j], tlY }, r, on || past ? (on ? kGold : kRune) : hv ? kMuted : kLine, 24);
+					Txt(dl, g_title, tsz, { xs[j] - tw * 0.5f, tlY + r + 10 * k }, on ? kGold : hv ? kParch : kMuted, t);
+					if (hv && click && !on) pickChapter(j), click = false;
+				}
+				const float bodyTop = tlY + 74 * k;
+				const auto& ch = codex::kChapters[g_cxCh];
+				// the painting on the left
+				const float artW = W * 0.40f, artH = artW * 9.0f / 16.0f;
+				const ImVec2 aa{ o.x, bodyTop }, az{ o.x + artW, bodyTop + artH };
+				const int   loreIdx = g_cxOpenBook == 0 ? at : -1;
+				if (auto* t = loreIdx >= 0 ? LoreArt(loreIdx) : nullptr) {
+					// (the paintings are 16:9 inside a square frame with black bars above and below)
+					dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(t)), aa, az, { 0.0f, 0.219f }, { 1.0f, 0.781f });
+				} else {
+					dl->AddRectFilled(aa, az, kCard);
+					TxtC(dl, g_title, 18 * k, (aa.x + az.x) * 0.5f, (aa.y + az.y) * 0.5f - 10 * k, kMuted, Upper(std::string(ch.title)));
+				}
+				dl->AddRect(aa, az, Fade(kGold, 0.75f), 0, 0, 1.2f * k);
+				// its lines on the right
+				const ImVec2 pa{ o.x + artW + 40 * k, bodyTop }, pz{ o.x + W, bottom - 34 * k };
+				const float  viewTop = pa.y, viewBot = pz.y;
+				const float  maxY = std::max(0.0f, g_cxH - (viewBot - viewTop));
+				g_cxYGoal = std::clamp(g_cxYGoal, 0.0f, maxY);
+				g_cxY += (g_cxYGoal - g_cxY) * std::min(1.0f, ImGui::GetIO().DeltaTime * 14.0f);
+				dl->PushClipRect({ pa.x - 2 * k, viewTop - 6 * k }, { pz.x + 2 * k, viewBot }, true);
+				float y = viewTop - g_cxY;
+				Txt(dl, g_title, 30 * k, { pa.x, y }, kParch, std::string(ch.title));
+				y += 54 * k;
+				y = bullets(ch, pa.x, y, pz.x - pa.x);
+				g_cxH = y + g_cxY - viewTop + 20 * k;
+				dl->PopClipRect();
+				if (g_cxY < maxY - 2) dl->AddRectFilledMultiColor({ pa.x, viewBot - 44 * k }, { pz.x, viewBot }, IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0), IM_COL32(6, 6, 7, 230), IM_COL32(6, 6, 7, 230));
+				// along the foot: the keys, and where you are
+				TxtWrap(dl, g_body, 14 * k, { o.x, bottom - 4 * k }, kMuted,
+					g_padLast ? "D-pad  chapter    " + Hud::PadWord("A") + "  whole text    " + Hud::PadWord("LB") + " / " + Hud::PadWord("RB") + "  book    " + Hud::PadWord("B") + "  close"
+					          : std::string("A D / W S  chapter    Wheel  scroll    Enter  whole text    Q E  book    Esc  close"), W * 0.7f, 1);
+				const std::string pg = fmt::format("{} / {}", at + 1, n);
+				Txt(dl, g_title, 17 * k, { o.x + W - Measure(g_title, 17 * k, pg).x, bottom - 6 * k }, kGold, pg);
 			}
+			if (cur.x >= 0) DrawPingCursor(dl, cur, k, now);
 		}
 
 		bool CodexOpen() { return g_cxOpenBook >= 0; }
@@ -5692,10 +5822,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				return false;
 			}
 			if (g_cxOpenBook < 0) {  // just opened: at the book picked, its first chapter (the scroll and keys from before forgotten)
-				g_cxOpenBook = which, g_cxCh = CodexChapters(which).front(), g_cxY = g_cxYGoal = 0;
+				g_cxOpenBook = which, g_cxCh = -1, g_cxY = g_cxYGoal = 0, g_cxShowAll = false;
 				g_cxGuide = which >= 1 && which <= 4 ? which : Classes::Get() >= 0 ? 1 + Classes::Get() : 0;  // (the guide beside the lore: the one opened, else your class's)
 				g_cxPage = which >= 5 ? which : -1;
-				g_cxScroll = 0, g_cxChapter = 0, g_cxBook = 0;
+				g_cxScroll = 0, g_cxChapter = 0, g_cxBook = 0, g_cxFull = 0;
 				logger::info("hud: the Codex opens at {}", codex::kBooks[which]);
 			}
 			if (auto m = a_ui->GetMenu(RE::BookMenu::MENU_NAME); m && m->uiMovie && m->uiMovie->GetVisible()) {
@@ -6447,22 +6577,23 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const auto id = a_b->GetIDCode();
 				const auto dev = a_b->GetDevice();
 				if (dev == RE::INPUT_DEVICE::kKeyboard) {
-					if (id == 0xC8 || id == 0x11) --g_cxScroll;        // up, W
-					else if (id == 0xD0 || id == 0x1F) ++g_cxScroll;   // down, S
+					// (the redesign: the arrows and WASD move between sections / chapters, the wheel scrolls)
+					if (id == 0xC8 || id == 0x11 || id == 0xCB || id == 0x1E) --g_cxChapter;        // up, W, left, A
+					else if (id == 0xD0 || id == 0x1F || id == 0xCD || id == 0x20) ++g_cxChapter;   // down, S, right, D
 					else if (id == 0xC9) g_cxScroll -= 6;              // page up
 					else if (id == 0xD1) g_cxScroll += 6;              // page down
-					else if (id == 0xCB || id == 0x1E) --g_cxChapter;  // left, A
-					else if (id == 0xCD || id == 0x20) ++g_cxChapter;  // right, D
-					else if (id == 0x10 || id == 0x12) ++g_cxBook;     // Q, E
+					else if (id == 0x1C || id == 0x39) ++g_cxFull;     // Enter, Space: the whole text
+					else if (id == 0x10) --g_cxBook;                   // Q
+					else if (id == 0x12) ++g_cxBook;                   // E
 				} else if (dev == RE::INPUT_DEVICE::kMouse) {
 					if (id == 8) g_cxScroll -= 1;
 					else if (id == 9) g_cxScroll += 1;
 				} else if (dev == RE::INPUT_DEVICE::kGamepad) {
-					if (id == 0x0001) --g_cxScroll;
-					else if (id == 0x0002) ++g_cxScroll;
-					else if (id == 0x0004) --g_cxChapter;
-					else if (id == 0x0008) ++g_cxChapter;
-					else if (id == 0x0100 || id == 0x0200) ++g_cxBook;  // the shoulders
+					if (id == 0x0001 || id == 0x0004) --g_cxChapter;   // d-pad up, left
+					else if (id == 0x0002 || id == 0x0008) ++g_cxChapter;   // d-pad down, right
+					else if (id == 0x1000) ++g_cxFull;                     // A: the whole text
+					else if (id == 0x0100) --g_cxBook;                     // LB
+					else if (id == 0x0200) ++g_cxBook;                     // RB
 				}
 				return;
 			}

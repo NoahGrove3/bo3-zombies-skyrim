@@ -591,6 +591,7 @@ namespace bo3z::Classes
 			return;
 		}
 		g_class = a_cls;
+		if (from >= 0 && from != a_cls) Perks::RefundOtherClasses(a_cls);
 		Purge();
 		Swap(from, a_cls);
 		g_open = false;
@@ -780,7 +781,7 @@ namespace bo3z::Classes
 		if (a_index >= 0 && a_index < static_cast<int>(coffer::kSpells.size())) g_mastery[coffer::kSpells[a_index].ladder] = 0;
 	}
 
-	namespace { std::mutex g_lineLock; std::string g_line; std::vector<std::string> g_progress; int g_progressCls = -1; }
+	namespace { std::mutex g_lineLock; std::string g_line; std::vector<std::string> g_progress; int g_progressCls = -1; CodexSnap g_codexSnap; }
 	std::string WonderLineNow();
 	// (Noah: "a guide book for each class that tracks progression") the class guide's live page: built here once a second
 	// (the game's own thread), read by the Codex when the book is open
@@ -1105,10 +1106,22 @@ namespace bo3z::Classes
 		{
 			auto line = WonderLineNow();
 			auto prog = ProgressNow();
+			CodexSnap snap;
+			snap.cls = g_class.load();
+			snap.freed = FreedCount();
+			snap.points = Points::Get();
+			snap.nights = static_cast<int>(Save::Get(gen::kAV_round));
+			snap.wonder = line;
+			if (snap.cls >= 0) {
+				Hud::State tmp;
+				Kit::Fill(tmp);
+				for (const auto& k : tmp.kitLines) snap.kit.push_back({ k.name, k.info, k.tier, k.asc, k.cost, k.can, k.carried, k.color });
+			}
 			std::scoped_lock l(g_lineLock);
 			g_line = std::move(line);
 			g_progress = std::move(prog);
 			g_progressCls = g_class.load();
+			g_codexSnap = std::move(snap);
 		}
 		// (Fletcher's Sap Draught: the quiver's regrowth comes sooner and faster - Bows.inl TickRegen)
 		// (Noah's plan, the Spellsword) Imbue unlocks The Wizard Warrior's Enchantment Powers 1 to 4, one per rung climbed
@@ -1386,6 +1399,11 @@ namespace bo3z::Classes
 	{
 		for (auto s : g_wStep) if (s >= kWonderTaken) return true;
 		return false;
+	}
+	CodexSnap Codex()
+	{
+		std::scoped_lock l(g_lineLock);
+		return g_codexSnap;
 	}
 	std::vector<std::string> Progress(int& a_cls)
 	{

@@ -410,6 +410,11 @@ namespace bo3z
 		void               WandButton(bool a_down);   // the attack pressed / let go with the Carian Wand drawn
 		bool               WandInHand();
 		void               WandReady();   // (data loaded) the Carian Wand carries its cast at every tier   // (dev: clawrot) the claws' turn in first person
+		// (Noah: the Codex redesign - "progress first") the class book's live page: your nights, cities, Essence, wonder and
+		// kit, read once a second on the game's thread (Tick) and drawn by the Codex
+		struct CodexKit { std::string name, info; int tier{ 0 }, asc{ 0 }, cost{ -1 }; bool can{ false }, carried{ true }; std::uint32_t color{ 0xC8B48C }; };
+		struct CodexSnap { int cls{ -1 }, nights{ 0 }, freed{ 0 }, points{ 0 }; std::string wonder; std::vector<CodexKit> kit; };
+		CodexSnap          Codex();
 		void               MutagenLook();                        // (data loaded: the look taken)
 		bool               MutagenInHand();                      // the Mutagen Staff drawn in your hands
 		void               MutagenBlock(bool a_down);            // the block button pressed / let go with it drawn
@@ -844,6 +849,7 @@ namespace bo3z
 		void OnEffect(RE::FormID a_mgef);
 		bool Grant(int a_perk);    // bought: applied at once (one of each)
 		bool Refund(int a_perk);   // given back at the altar: off you, half its price back
+		int  RefundOtherClasses(int a_keep);  // (a class switch) the other classes' brews off you, half their price back; the shared ones stay
 		std::vector<std::uint8_t> TakeAll();                         // (a class left) its brews off you
 		void                      GiveBack(const std::vector<std::uint8_t>& a_stacks);  // (a class taken up again) back on
 		void OnZombieHit(RE::Actor* a_zombie);  // a round zombie hit the player

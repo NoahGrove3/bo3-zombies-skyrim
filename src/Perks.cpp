@@ -151,6 +151,27 @@ namespace bo3z
 			return true;
 		}
 
+		// (Noah: "When switching from one class to another, if perks were bought on the class that's being switched out for,
+		// it should automatically refund those perks ... and 3 slots opened ... The universal perks stay though"; at half
+		// price, like a refund by hand) every class brew not of the class you take up comes off you, half its price back
+		int RefundOtherClasses(int a_keep)
+		{
+			int n = 0, back = 0;
+			for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) {
+				if (N(i) <= 0 || gen::kPerkClass[i] < 0 || gen::kPerkClass[i] == a_keep) continue;
+				Apply(i, -1);
+				Save::SetPerkStacks(i, 0);
+				back += gen::kPerks[i].cost / 2;
+				++n;
+				logger::info("perk: {} refunded on a class switch ({})", gen::kPerks[i].id, gen::kPerks[i].cost / 2);
+			}
+			if (n > 0) {
+				Points::Refund(back);
+				Hud::Banner(fmt::format("{} class perk{} refunded  (+{})", n, n == 1 ? "" : "s", Num(back)), 4.0f);
+			}
+			return n;
+		}
+
 		// (Noah: "the perks as well for classes when switching to another class"; "the universal perks should stay when
 		// switching classes") a class you leave keeps its own brews: they come off you and are handed back when you play that
 		// class again; the shared brews stay on you
