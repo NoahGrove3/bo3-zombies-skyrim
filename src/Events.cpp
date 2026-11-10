@@ -1340,6 +1340,7 @@ namespace bo3z
 			// (Noah: "a random sword on his hip ... It said I had the quarterstaff equipped") the class weapons wear their
 			// Base look from the start - before any is given or equipped (their tiers' looks follow on a load)
 			for (int c = 0; c < 4; ++c) if (auto* w = Classes::ClassWeapon(c)) Classes::AdoptTierLook(w, 0);
+			Classes::MutagenLook();
 			FreeBowMovement();
 			Undead::InstallHooks();
 			Hud::InstallInputGate();

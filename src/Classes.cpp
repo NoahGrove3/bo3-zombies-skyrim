@@ -3615,6 +3615,95 @@ namespace bo3z::Classes
 	}
 	void FlaskAttackUp(bool a_left) { if (FlaskHeld(a_left) == 6) g_gb.held = false; }
 	void DevGauntletHold(bool a_on, bool a_left) { if (a_on) GauntletPress(a_left); else g_gb.held = false; }
+	// ---- (Noah: "make the mutagen staff just like a quarter staff ... give it the quarterstaff animations. And make it cast a
+	// 2-second laser beam that pierces and is an element for each of the vials"; "holding block should fire the beam and heavy
+	// attack should throw flasks cycling through each flask"; "next vial each beam"; the look: "Dwarven Quarterstaff")
+	namespace
+	{
+		struct MutagenQs { bool block = false; float beam = 0, cool = 0, tick = 0, burst = 0; int el = 0, throwEl = 0, beamEl = -1; };
+		MutagenQs g_mq;
+		constexpr std::uint64_t kMqLoop = 0x6A07B0A2ull;
+		RE::NiPoint3 MutagenTip(RE::PlayerCharacter* a_p)
+		{
+			auto* cam = RE::PlayerCamera::GetSingleton();
+			const bool first = cam && cam->IsInFirstPerson();
+			RE::NiPoint3 fwd{ 0, 1, 0 };
+			if (cam && cam->cameraRoot) { const auto& m = cam->cameraRoot->world.rotate; fwd = { m.entry[0][1], m.entry[1][1], m.entry[2][1] }; fwd.Unitize(); }
+			if (auto* root = a_p->Get3D(first)) {
+				if (auto* n = root->GetObjectByName("WEAPON")) {
+					const auto at = n->world.translate;
+					if (at.GetDistance(a_p->GetPosition()) < 300.0f) return at + fwd * 35.0f;
+				}
+			}
+			return Gun::SwingFrom();
+		}
+		void MutagenBeamStop()
+		{
+			if (g_mq.beam > 0 || g_mq.beamEl >= 0) { Audio::LoopStop(kMqLoop, 250); Gun::GauntletBeamOff(); }
+			g_mq.beam = 0, g_mq.beamEl = -1;
+		}
+	}
+	bool MutagenInHand()
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		return p && p->AsActorState()->IsWeaponDrawn() && FlaskHeld(false) == 6;
+	}
+	void MutagenLook()
+	{
+		auto* mut = FlaskItem(6) ? FlaskItem(6)->As<RE::TESObjectWEAP>() : nullptr;
+		auto* f = Lookup(0x18B75A, "NewArmoury.esp");   // Animated Armoury's Dwarven Quarterstaff
+		auto* s = f ? f->As<RE::TESObjectWEAP>() : nullptr;
+		if (!mut || !s) { logger::warn("alchemist: the Mutagen Staff can't take the Dwarven Quarterstaff's look - is Animated Armoury installed?"); return; }
+		AdoptLook(mut, s);
+		mut->formEnchanting = nullptr, mut->amountofEnchantment = 0;   // (no staff cast of Skyrim's: its beam and flasks are ours)
+		mut->weaponData.damage = std::max<std::uint16_t>(mut->weaponData.damage, s->weaponData.damage);
+		logger::info("alchemist: the Mutagen Staff takes the look of {} - swung as a quarterstaff", s->GetName());
+	}
+	void MutagenBlock(bool a_down) { g_mq.block = a_down; }
+	void MutagenPower()
+	{
+		if (g_class.load() != coffer::kAlchemist) { Hud::QuestBanner("The Mutagen Staff answers only to an Alchemist", 2.0f); return; }
+		static auto last = std::chrono::steady_clock::now() - std::chrono::seconds(5);
+		const auto now = std::chrono::steady_clock::now();
+		if (now - last < std::chrono::milliseconds(400)) return;   // (one swing, heard once)
+		last = now;
+		const int el = g_mq.throwEl;
+		g_mq.throwEl = (g_mq.throwEl + 1) % 6;
+		ThrowFlaskEl(el, false);   // fire, frost, storm, acid, holy water, void in turn
+	}
+	void TickMutagen(float a_delta)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* ui = RE::UI::GetSingleton();
+		const bool ok = p && MutagenInHand() && !p->IsDead() && !ItemMenusOpen() && !(ui && ui->GameIsPaused());
+		if (!ok) { g_mq.block = false; MutagenBeamStop(); return; }
+		g_mq.cool = std::max(0.0f, g_mq.cool - a_delta);
+		if (g_mq.beam <= 0 && g_mq.block && g_mq.cool <= 0) {
+			if (g_class.load() != coffer::kAlchemist) {
+				Hud::QuestBanner("The Mutagen Staff answers only to an Alchemist", 2.0f);
+				g_mq.block = false;
+				return;
+			}
+			g_mq.beam = 2.0f, g_mq.beamEl = g_mq.el, g_mq.tick = 0, g_mq.burst = 0;   // a 2 s beam of the next vial
+			g_mq.el = (g_mq.el + 1) % 6;
+			static constexpr const char* kSnd[6] = { "fireball", "frost", "runeshock", "poisongas", "light", "lightmassive" };
+			Gun::BlastSound(kSnd[g_mq.beamEl], MutagenTip(p), 0.8f);
+			Audio::At(gen::Sound::release_power, p, 0.9f);
+			logger::info("alchemist: the Mutagen Staff's beam - vial {}", g_mq.beamEl);
+		}
+		if (g_mq.beam > 0) {
+			g_mq.beam -= a_delta;
+			const int e = g_mq.beamEl;
+			const RE::NiPoint3 from = MutagenTip(p);
+			RE::NiPoint3 to;
+			if (Gun::StaffBeam(e, kGbWidth, from, to)) {
+				Audio::LoopAt(kMqLoop, gen::Sound::rite_hum, from, 0.9f);
+				if ((g_mq.tick -= a_delta) <= 0) { g_mq.tick = 0.2f; GbStrike(e, from, to, 0.2f); }   // (every one of the dead along it)
+				if ((g_mq.burst -= a_delta) <= 0) { g_mq.burst = 0.45f; Gun::ElemBurst(kFlaskBurst[e], to, 0.7f, 0.0f, 0.6f); }
+			}
+			if (g_mq.beam <= 0) { MutagenBeamStop(); g_mq.cool = 0.35f; }   // (held on: the next vial's beam after a breath)
+		}
+	}
 	// (Noah: "hold it in my left or right hand with an underhand throwing animation ... it should feel like a weapon") the
 	// hand's attack: the arm swings it underhand and lets it go at the top of the swing; a breath between throws
 	void FlaskAttack(bool a_left)
@@ -3643,6 +3732,7 @@ namespace bo3z::Classes
 		TickSwords(a_delta);
 		g_flaskCool = std::max(0.0f, g_flaskCool - a_delta), g_philCool = std::max(0.0f, g_philCool - a_delta);
 		TickGauntletBeam(a_delta);
+		TickMutagen(a_delta);
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (!p || !p->Is3DLoaded() || p->IsDead() || ItemMenusOpen()) return;
 		// (Noah: "turn off player voice grunts while casting the flasks") with a flask in hand your voice is quiet: its voice

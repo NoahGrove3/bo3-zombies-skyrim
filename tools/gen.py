@@ -378,7 +378,7 @@ _rules = [
 _FLASKCOL = {'fire': '#ff7a2a', 'frost': '#9fdcff', 'shock': '#b48cff', 'poison': '#7cff3a', 'sun': '#ffe08a', 'blood': '#3d6bff', 'philosopher': '#ffc94a'}
 for _e, _c in _FLASKCOL.items():
     _rules.append({"match": {"formType": "Weapon", "formId": {"anyOf": [f'CurseOfAlduin.esp|{IDS[("WEAP", "flaskweap_" + _e)]:X}']}},
-                   "assign": {"subTypeDisplay": "Staff" if _e == 'philosopher' else "Alchemist", "iconSource": "skyui/icons_item_psychosteve.swf",
+                   "assign": {"subTypeDisplay": "Quarterstaff" if _e == 'philosopher' else "Alchemist", "iconSource": "skyui/icons_item_psychosteve.swf",
                               "iconLabel": "weapon_staff" if _e == 'philosopher' else "default_potion", "iconColor": _c}})   # (Noah: the Mutagen Staff "still has the old potion icon instead of the staff icon")
 # (Noah: "the Radiant Quarterstaff says that the weapon type is Warhammer ... the weapon icon ... a hammer that's blue when it
 # should be the staff") the weapons that wear Animated Armoury's and Fulcimentum's looks: their own kind and icon

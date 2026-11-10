@@ -75,6 +75,7 @@ namespace bo3z
 					if (t == "weaponswing") {
 						g_weaponSwing = true;
 						MeleeSwing(false);
+						if (auto* pp = RE::PlayerCharacter::GetSingleton(); pp && PowerAttacking(pp) && Classes::MutagenInHand()) Classes::MutagenPower();
 					} else if (t == "weaponleftswing") {
 						MeleeSwing(true);
 					}
@@ -1754,6 +1755,19 @@ namespace bo3z
 			if (a_width > 0.0f) Props::GBeamLay(a_el, palm, to, a_width);   // (none drawn: the staff's own beam shows)
 			return true;
 		}
+		bool StaffBeam(int a_el, float a_width, const RE::NiPoint3& a_from, RE::NiPoint3& a_to)
+		{
+			auto* cam = RE::PlayerCamera::GetSingleton();
+			if (!cam || !cam->cameraRoot) return false;
+			const auto& cw = cam->cameraRoot->world;
+			RE::NiPoint3 f{ cw.rotate.entry[0][1], cw.rotate.entry[1][1], cw.rotate.entry[2][1] };
+			f.Unitize();
+			const RE::NiPoint3 eye = cw.translate, farPt = eye + f * 2800.0f;
+			const float hit = Spellcraft::WorldHit(eye + f * 40.0f, farPt);
+			a_to = hit <= 1.0f ? (eye + f * 40.0f) + (farPt - (eye + f * 40.0f)) * hit : farPt;
+			if (a_width > 0.0f) Props::GBeamLay(a_el, a_from, a_to, a_width);
+			return true;
+		}
 		void GauntletBeamOff() { Props::GBeamOff(); }
 		std::vector<RE::Actor*> LineHurt(const RE::NiPoint3& a_from, const RE::NiPoint3& a_to, float a_radius, float a_share)
 		{
@@ -3237,6 +3251,12 @@ namespace bo3z
 			// (Noah: the Alchemist's flasks "should feel like a weapon") a flask held in a hand: that hand's attack throws it
 			if (IsFireButton(a_event) || IsAimButton(a_event)) {
 				const bool left = IsAimButton(a_event);
+				// (Noah: the Mutagen Staff "just like a quarter staff") swung as one; the block button held looses its beam
+				if (Classes::MutagenInHand()) {
+					if (left && down) Classes::MutagenBlock(true);
+					else if (left && up) Classes::MutagenBlock(false);
+					return false;
+				}
 				if (Classes::FlaskInHand(left)) {
 					if (down) Classes::FlaskAttack(left);
 					else if (up) Classes::FlaskAttackUp(left);

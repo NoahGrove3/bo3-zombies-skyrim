@@ -112,7 +112,7 @@ FLASKS = [('fire', 'Fire Flask', 'A flask of liquid fire. It bursts where it lan
           ('poison', 'Acid Flask', 'A flask of green acid. It bursts into a corroding splash where it lands.'),
           ('sun', 'Holy Water', 'Blessed water of Stendarr. It bursts into searing light where it lands; the dead burn in it.'),
           ('blood', 'Voidglass Flask', 'A flask of bottled void. It shatters and drags the dead in to where it broke.'),
-          ('philosopher', "Mutagen Staff", 'The Alchemist\'s wonder: a staff whose orb is fed by six vials of the elements. Hold attack to loose a beam from the orb that pierces the dead, pouring each vial in turn for 5 seconds; let go and the emptied vials refill.')]
+          ('philosopher', "Mutagen Staff", 'The Alchemist\'s wonder: a quarterstaff fed by six vials of the elements. Hold block to loose a 2-second beam that pierces the dead, each beam the next vial - fire, frost, storm, acid, holy water, void. Power attacks throw a flask, each the next element.')]
 FLASK_TIERS = ' The glass shatters, its element bursts, and a pool of it lingers on the ground. Tier I: a burst half again as wide. Tier II: a chain reaction - the dead it kills burst in its element too. Legendary: a cyclone of its element rises where it breaks and rolls into the dead.'
 for e, label, text in FLASKS:
     pd = bytearray(tsub('proj_bullet', 'DATA'))
