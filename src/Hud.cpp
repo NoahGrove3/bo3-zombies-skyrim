@@ -5680,8 +5680,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					ly += 54 * k;
 				}
 				TxtWrap(dl, g_body, 14 * k, { o.x, bottom - 4 * k }, kMuted,
-					g_padLast ? "D-pad  section    " + Hud::PadWord("A") + "  whole text    " + Hud::PadWord("LB") + " / " + Hud::PadWord("RB") + "  book    " + Hud::PadWord("B") + "  close"
-					          : std::string("W S  section    Wheel  scroll    Enter  whole text    Q E  book    Esc  close"), lw + 400 * k, 1);
+					g_padLast ? "D-pad Up/Down  section    D-pad Left/Right  tab    " + Hud::PadWord("A") + "  select    " + Hud::PadWord("B") + "  back"
+					          : std::string("W S  section    A D  tab    Wheel  scroll    Enter  select    Esc  back"), lw + 600 * k, 1);
 				// ---- the chosen section on the right
 				const ImVec2 pa{ o.x + lw + 28 * k, top }, pz{ o.x + W, bottom - 28 * k };
 				const auto&  ch = codex::kChapters[g_cxCh];
@@ -5803,8 +5803,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				if (g_cxY < maxY - 2) dl->AddRectFilledMultiColor({ pa.x, viewBot - 44 * k }, { pz.x, viewBot }, IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0), IM_COL32(6, 6, 7, 230), IM_COL32(6, 6, 7, 230));
 				// along the foot: the keys, and where you are
 				TxtWrap(dl, g_body, 14 * k, { o.x, bottom - 4 * k }, kMuted,
-					g_padLast ? "D-pad  chapter    " + Hud::PadWord("A") + "  whole text    " + Hud::PadWord("LB") + " / " + Hud::PadWord("RB") + "  book    " + Hud::PadWord("B") + "  close"
-					          : std::string("A D / W S  chapter    Wheel  scroll    Enter  whole text    Q E  book    Esc  close"), W * 0.7f, 1);
+					g_padLast ? "D-pad Up/Down  chapter    D-pad Left/Right  tab    " + Hud::PadWord("A") + "  select    " + Hud::PadWord("B") + "  back"
+					          : std::string("W S  chapter    A D  tab    Wheel  scroll    Enter  select    Esc  back"), W * 0.7f, 1);
 				const std::string pg = fmt::format("{} / {}", at + 1, n);
 				Txt(dl, g_title, 17 * k, { o.x + W - Measure(g_title, 17 * k, pg).x, bottom - 6 * k }, kGold, pg);
 			}
@@ -6577,23 +6577,26 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const auto id = a_b->GetIDCode();
 				const auto dev = a_b->GetDevice();
 				if (dev == RE::INPUT_DEVICE::kKeyboard) {
-					// (the redesign: the arrows and WASD move between sections / chapters, the wheel scrolls)
-					if (id == 0xC8 || id == 0x11 || id == 0xCB || id == 0x1E) --g_cxChapter;        // up, W, left, A
-					else if (id == 0xD0 || id == 0x1F || id == 0xCD || id == 0x20) ++g_cxChapter;   // down, S, right, D
+					// (Noah: "left or right changes the category on the top and up and down control what's in that category") the
+					// keys as the pad: left/right (A/D, Q/E) the tab, up/down (W/S) its sections or chapters, the wheel scrolls
+					if (id == 0xC8 || id == 0x11) --g_cxChapter;                         // up, W
+					else if (id == 0xD0 || id == 0x1F) ++g_cxChapter;                    // down, S
+					else if (id == 0xCB || id == 0x1E || id == 0x10) --g_cxBook;         // left, A, Q
+					else if (id == 0xCD || id == 0x20 || id == 0x12) ++g_cxBook;         // right, D, E
 					else if (id == 0xC9) g_cxScroll -= 6;              // page up
 					else if (id == 0xD1) g_cxScroll += 6;              // page down
 					else if (id == 0x1C || id == 0x39) ++g_cxFull;     // Enter, Space: the whole text
-					else if (id == 0x10) --g_cxBook;                   // Q
-					else if (id == 0x12) ++g_cxBook;                   // E
 				} else if (dev == RE::INPUT_DEVICE::kMouse) {
 					if (id == 8) g_cxScroll -= 1;
 					else if (id == 9) g_cxScroll += 1;
 				} else if (dev == RE::INPUT_DEVICE::kGamepad) {
-					if (id == 0x0001 || id == 0x0004) --g_cxChapter;   // d-pad up, left
-					else if (id == 0x0002 || id == 0x0008) ++g_cxChapter;   // d-pad down, right
-					else if (id == 0x1000) ++g_cxFull;                     // A: the whole text
-					else if (id == 0x0100) --g_cxBook;                     // LB
-					else if (id == 0x0200) ++g_cxBook;                     // RB
+					// (Noah: "the D pad for navigation on all the tabs and categories (left or right changes the category on the top and
+					// up and down control what's in that category) and A/X for select B/O for back/exit")
+					if (id == 0x0001) --g_cxChapter;                       // d-pad up
+					else if (id == 0x0002) ++g_cxChapter;                  // d-pad down
+					else if (id == 0x0004 || id == 0x0100) --g_cxBook;     // d-pad left, LB
+					else if (id == 0x0008 || id == 0x0200) ++g_cxBook;     // d-pad right, RB
+					else if (id == 0x1000) ++g_cxFull;                     // A / cross: open the section's whole text
 				}
 				return;
 			}
@@ -6601,7 +6604,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			if (a_b && a_b->IsDown() && a_b->GetDevice() == RE::INPUT_DEVICE::kKeyboard && a_b->GetIDCode() == 0x3B && InGame()) {
 				Tasks::AddUI([] {
 					const int cls = Classes::Get();
-					auto* book = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectBOOK>(cls >= 0 ? gen::kClassGuides[cls] : gen::kDirgeBook, gen::kPlugin);
+					(void)cls;   // (Noah: one book - The Curse of Alduin, every class a tab in it)
+					auto* book = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectBOOK>(gen::kDirgeBook, gen::kPlugin);
 					auto* pl = RE::PlayerCharacter::GetSingleton();
 					auto* em = RE::ActorEquipManager::GetSingleton();
 					if (book && pl && em && !RE::UI::GetSingleton()->IsMenuOpen(RE::BookMenu::MENU_NAME)) {

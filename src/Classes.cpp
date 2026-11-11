@@ -568,7 +568,22 @@ namespace bo3z::Classes
 			auto* dh = RE::TESDataHandler::GetSingleton();
 			return dh && a_cls >= 0 && a_cls < 4 ? dh->LookupForm<RE::TESObjectBOOK>(gen::kClassGuides[a_cls], gen::kPlugin) : nullptr;
 		}
-		bool GiveGuide(int a_cls)
+		void TakeGuides()
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p) return;
+			auto* dh = RE::TESDataHandler::GetSingleton();
+			std::vector<RE::TESObjectBOOK*> books;
+			for (int c = 0; c < 4; ++c) if (auto* b = Guide(c)) books.push_back(b);
+			if (auto* b = dh->LookupForm<RE::TESObjectBOOK>(gen::kGuideBook, gen::kPlugin)) books.push_back(b);   // (the old Survivor's Guide)
+			for (auto* b : books) {
+				if (const int n = p->GetItemCount(b); n > 0) {
+					p->RemoveItem(b, n, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+					logger::info("classes: {} taken back - The Curse of Alduin holds every class's pages", b->GetName());
+				}
+			}
+		}
+		[[maybe_unused]] bool GiveGuide(int a_cls)
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			auto* b = Guide(a_cls);
@@ -598,12 +613,10 @@ namespace bo3z::Classes
 		g_closedAt = std::chrono::steady_clock::now();
 		Forms::Play(gen::Sound::quest_step);
 		{ std::string u(coffer::kClassName[a_cls]); for (auto& ch : u) ch = static_cast<char>(std::toupper(static_cast<unsigned char>(ch))); Hud::Banner(u, 4.0f); }
-		if (GiveGuide(a_cls)) {
-			auto* b = Guide(a_cls);
-			std::string t(b ? b->GetName() : "Your class guide");
-			for (auto& ch : t) ch = static_cast<char>(std::toupper(static_cast<unsigned char>(ch)));
-			Hud::Lore(t, "Your class guide is in your pack, under Books. It shows how your class grows and keeps a live page of how far you have come.", 9.0f);
-		}
+		// (Noah: "since the curse of Alduin book contains everything for the classes and the lore remove the class path books so
+		// everyone just gets the curse of Alduin book") your class's pages are a tab in it
+		TakeGuides();
+		Hud::Lore("THE CURSE OF ALDUIN", "Your class's path is a tab in The Curse of Alduin, in your pack under Books (F1). It shows how your class grows and keeps a live page of how far you have come.", 9.0f);
 		logger::info("classes: {} -> {}{}", Name(from), Name(a_cls), g_switching ? " (switched at an altar)" : "");
 	}
 
@@ -616,7 +629,7 @@ namespace bo3z::Classes
 	// a save loaded with no class yet (older saves): the picker too
 	void OnWorldReady()
 	{
-		if (const int c = g_class.load(); c >= 0) GiveGuide(c);  // (a save from before the guides: its class's guide)
+		TakeGuides();  // (a save from before: the class path books taken back - The Curse of Alduin holds them all)
 		// (Noah: "it only lets me equip a helmet and boots") the kit and the underwear went on locked in older builds: each
 		// worn piece is taken off and put back on, free to change
 		if (auto* p = RE::PlayerCharacter::GetSingleton(); p) {
@@ -2312,7 +2325,22 @@ namespace bo3z::Classes
 				auto* sp = left ? left->As<RE::SpellItem>() : nullptr;
 				auto* c = p->GetMagicCaster(RE::MagicSystem::CastingSource::kRightHand);
 				if (sp && c && sp->GetSpellType() == RE::MagicSystem::SpellType::kSpell) {
-					c->CastSpellImmediate(sp, false, nullptr, 1.0f, false, 0.0f, p);
+					// (Noah: "the wand animation stops when I cast a spell on my other hand" - the left spell was cast through the
+					// right hand's own caster, cutting short the wand's held cast each time) an aimed spell is launched from the
+					// wand's tip itself, along your aim; any other through the instant caster - the right hand left to its cast
+					auto* mg = !sp->effects.empty() && sp->effects[0] ? sp->effects[0]->baseEffect : nullptr;
+					auto* proj = mg && sp->GetDelivery() == RE::MagicSystem::Delivery::kAimed ? mg->data.projectileBase : nullptr;
+					if (proj) {
+						const RE::NiPoint3 dir = Gun::SwingDir();
+						RE::Projectile::ProjectileRot rot{ -std::asin(std::clamp(dir.z, -1.0f, 1.0f)), std::atan2(dir.x, dir.y) };
+						RE::Projectile::LaunchData ld(proj, p, WandTip(p), rot);
+						ld.useOrigin = true, ld.autoAim = false, ld.spell = sp;
+						ld.castingSource = RE::MagicSystem::CastingSource::kRightHand;
+						RE::ProjectileHandle h;
+						RE::Projectile::Launch(&h, ld);
+					} else if (auto* ic = p->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)) {
+						ic->CastSpellImmediate(sp, false, nullptr, 1.0f, false, 0.0f, p);
+					}
 					g_wandEcho = sp->GetFormID(), g_wandEchoAt = std::chrono::steady_clock::now();
 					OnCast(sp->GetFormID());   // (a spell of ours: its own cast, as if from the hand - Skyrim's own cast event for it, if any, ignored)
 					g_wandEchoArmed = true;

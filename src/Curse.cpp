@@ -1152,7 +1152,7 @@ namespace bo3z
 					}
 					GiveBook(player);
 					Forms::Play(gen::Sound::quest_start);
-					Note("The Curse of Alduin is in your pack (Books). Your class guide follows when you choose a class at an Echo Altar", 8.0f);
+					Note("The Curse of Alduin is in your pack (Books, or F1): the lore, and every class's path as a tab", 8.0f);
 					return;
 				}
 			}
