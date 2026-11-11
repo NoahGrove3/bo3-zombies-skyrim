@@ -456,7 +456,7 @@ namespace bo3z::Classes
 	{
 		constexpr int kWonderSteps = 3, kWonderOpensAt = 6;  // (g_wStep: 0 shut, 1-3 its quest open, 4 won and taken up, 5 won - waiting on its pedestal)
 		constexpr int kWonderTaken = kWonderSteps + 1, kWonderWaiting = kWonderSteps + 2;
-		constexpr const char* kWonderName[4] = { "Call of the Violet Wyrm", "Staff of Magnus", "Mutagen Staff", "Dragon Slayer" };  // (Noah: the Summoner's, Destruction's and the Alchemist's remade)
+		constexpr const char* kWonderName[4] = { "Soulcaller's Staff", "Staff of Magnus", "Mutagen Staff", "Dragon Slayer" };  // (Noah: the Summoner's, Destruction's and the Alchemist's remade)
 		std::array<std::uint8_t, 4>  g_wStep{};    // per class: 0 not open, 1..3 the step under way, 4 earned
 		std::array<std::uint16_t, 4> g_wKills{};
 		std::array<std::uint32_t, 4> g_wTowns{};   // cities where a step was done (bits)
@@ -476,6 +476,7 @@ namespace bo3z::Classes
 			return n;
 		}
 		bool AfterSovngarde() { return Echo::DragonsSlain(); }  // (the story: the wonders' Legendary form - once the three dragons fall)
+		RE::TESObjectWEAP* Soulcaller() { auto* f = Lookup(gen::kSoulcaller, gen::kPlugin); return f ? f->As<RE::TESObjectWEAP>() : nullptr; }  // (the Summoner's wonder now)
 		RE::SpellItem* WyrmSpell() { auto* dh = RE::TESDataHandler::GetSingleton(); return dh ? dh->LookupForm<RE::SpellItem>(gen::kBoneHorn, gen::kPlugin) : nullptr; }  // (the Bone-Throne Horn)
 		RE::TESObjectWEAP* Magnus() { auto* f = Lookup(0x035369, "Skyrim.esm"); return f ? f->As<RE::TESObjectWEAP>() : nullptr; }  // (Destruction's wonder: Skyrim's own Staff of Magnus)
 		RE::SpellItem* TomeSpell() { auto* dh = RE::TESDataHandler::GetSingleton(); return dh ? dh->LookupForm<RE::SpellItem>(gen::kWonderTomeSpell, gen::kPlugin) : nullptr; }
@@ -508,8 +509,8 @@ namespace bo3z::Classes
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			if (!p) return;
 			switch (a_cls) {
-			case coffer::kSummoner:   // (Noah: "lets just make it a summon spell") the Call of the Violet Wyrm, a spell
-				if (auto* sp = WyrmSpell(); sp && !p->HasSpell(sp)) p->AddSpell(sp);
+			case coffer::kSummoner:   // (Noah: the Summoner's wonder "a staff from the weapons mod" - the Soulcaller's Staff)
+				GiveItem(p, Soulcaller(), 1, true);
 				break;
 			case coffer::kDestruction:
 				GiveItem(p, Magnus(), 1, true);
@@ -524,7 +525,7 @@ namespace bo3z::Classes
 		g_wStep[a_cls] = kWonderTaken;
 			Forms::Play(gen::Sound::shout_learned);
 			static constexpr const char* kText[4] = {
-				"A summoning spell, learned. Cast it and a violet wyrm flies in and burns the dead within 50 m of you for 90 seconds, circling and strafing. When it departs the call rests for a minute. Once the three dragons fall, a wyrmling answers beside it.",
+				"The Soulcaller's Staff. Hold its cast: the souls of the dead along your aim tear out of them into the staff. Let go and they return as spectral wolves that hunt for 20 seconds - one for each soul, up to eight.",
 				"The Staff of Magnus. Hold its beam on the dead: it drains them and feeds your magicka, and erupts where it ends. Hold it two seconds or more and the eruption leaves an orb of searing light that pulses on everything round it. Once the three dragons fall it burns hotter still.",
 				"The Mutagen Staff. A staff whose glass orb is fed by six vials of the elements. Hold attack to loose a beam from the orb: it pierces every one of the dead in its path, pouring each vial in turn for five seconds - fire, frost, lightning, acid, holy light and the void. Let go and the emptied vials refill; empty all six and they must refill completely. Once the three dragons fall, the beam burns stronger.",
 				"The Akaviri dragon slayer, two tiers above your blade. Every hit carries the last Spellsword spell you held. Once the three dragons fall it grows stronger again, and a power attack looses that spell on the dead round you." };
@@ -903,6 +904,28 @@ namespace bo3z::Classes
 				logger::info("summoner: the Call of the Violet Wyrm casts as {}", src->GetFullName());
 			}
 		}
+		// (Noah: the Soulcaller's Staff - Fulcimentum's Glass Staff, "the same casting animation as the staff of magnus") its look
+		// the Glass Staff's, its held cast the Staff of Magnus's beam; an old Call of the Violet Wyrm taken back
+		if (static bool soul = false; !soul) {
+			soul = true;
+			auto* sc = Soulcaller();
+			auto* gf = Lookup(0x000808, "Fulcimentum - More Staves and Wands of Skyrim.esp");
+			if (auto* gs = gf ? gf->As<RE::TESObjectWEAP>() : nullptr; sc && gs) {
+				auto* keep = sc->formEnchanting;
+				AdoptLook(sc, gs);
+				sc->formEnchanting = keep, sc->amountofEnchantment = 0;
+			}
+			auto* mg = Magnus();
+			auto* me = sc && sc->formEnchanting && !sc->formEnchanting->effects.empty() && sc->formEnchanting->effects[0] ? sc->formEnchanting->effects[0]->baseEffect : nullptr;
+			auto* src = mg && mg->formEnchanting && !mg->formEnchanting->effects.empty() && mg->formEnchanting->effects[0] ? mg->formEnchanting->effects[0]->baseEffect : nullptr;
+			if (me && src) {
+				me->data.projectileBase = src->data.projectileBase, me->data.castingArt = src->data.castingArt;
+				me->data.hitEffectArt = src->data.hitEffectArt, me->data.effectShader = src->data.effectShader;
+				me->data.castingType = RE::MagicSystem::CastingType::kConcentration, me->data.delivery = RE::MagicSystem::Delivery::kAimed;
+			}
+			logger::info("summoner: the Soulcaller's Staff wears the Glass Staff and casts the Staff of Magnus's beam");
+		}
+		if (auto* sp = WyrmSpell(); sp && p->HasSpell(sp)) { p->RemoveSpell(sp); logger::info("summoner: the Call of the Violet Wyrm taken back - the Soulcaller's Staff is the wonder now"); }
 		if (static bool beamed = false; !beamed) {
 			auto* mut = dh->LookupForm<RE::TESObjectWEAP>(gen::kFlaskItem[6], gen::kPlugin);
 			auto* mg = Magnus();
@@ -1347,9 +1370,9 @@ namespace bo3z::Classes
 		if (!p) return;
 		if (auto* m = Magnus(); m && p->GetItemCount(m) <= 0) GiveItem(p, m, 1, false);
 		GiveFlask(6);
-		if (auto* sp = WyrmSpell(); sp && !p->HasSpell(sp)) p->AddSpell(sp);   // (the Summoner's: the Call of the Violet Wyrm, a spell)
+		if (auto* sc = Soulcaller(); sc && p->GetItemCount(sc) <= 0) GiveItem(p, sc, 1, false);   // (the Summoner's: the Soulcaller's Staff)
 		for (int c = 0; c < 4; ++c) g_wStep[c] = kWonderTaken;   // (every class's wonder: the Dragon Slayer is given beside the kit)
-		logger::info("testkit: the four wonders - the Call of the Violet Wyrm, the Staff of Magnus, the Mutagen Staff, the Dragon Slayer");
+		logger::info("testkit: the four wonders - the Soulcaller's Staff, the Staff of Magnus, the Mutagen Staff, the Dragon Slayer");
 	}
 	void DevGiveWonder(int a_cls)
 	{
@@ -1392,7 +1415,7 @@ namespace bo3z::Classes
 			return true;
 		}
 		if (g_wStep[a_cls] == kWonderTaken && p) {  // (lost from the pack, or a new copy wanted: given again)
-			const bool have = a_cls == coffer::kSummoner ? (WyrmSpell() && p->HasSpell(WyrmSpell())) : a_cls == coffer::kDestruction ? (Magnus() && p->GetItemCount(Magnus()) > 0)
+			const bool have = a_cls == coffer::kSummoner ? (Soulcaller() && p->GetItemCount(Soulcaller()) > 0) : a_cls == coffer::kDestruction ? (Magnus() && p->GetItemCount(Magnus()) > 0)
 			                : a_cls == coffer::kAlchemist ? (FlaskItem(6) && p->GetItemCount(FlaskItem(6)) > 0) : (Slayer() && p->GetItemCount(Slayer()) > 0);
 			if (!have) {
 				// (the audit: a dropped bow or blade was given again for free - copies without end) a lost weapon is made
@@ -4038,6 +4061,68 @@ namespace bo3z::Classes
 			}
 		}
 	}
+	// (Noah: "Soulcaller's Staff": "hold the cast: souls rip out of the dead along your aim into the staff; release to throw them back
+	// as a swarm of spectral wolves that hunt for 20 s")
+	namespace
+	{
+		int g_souls = 0;
+		std::unordered_set<RE::FormID> g_soulTaken;
+		RE::TESNPC* SoulWolf()
+		{
+			static RE::TESNPC* wolf = nullptr;
+			if (wolf) return wolf;
+			for (int i = 0; i < 64 && !wolf; ++i) {
+				auto* sp = Arcana::Spell(i);
+				if (!sp || std::string_view(sp->GetName()) != "Conjure Wolf") continue;
+				for (auto* e : sp->effects) if (e && e->baseEffect && e->baseEffect->data.associatedForm) if (auto* n = e->baseEffect->data.associatedForm->As<RE::TESNPC>()) { wolf = n; break; }
+			}
+			if (!wolf) if (auto* f = RE::TESForm::LookupByID<RE::TESNPC>(0x00023ABE)) wolf = f;   // (Skyrim's own wolf)
+			return wolf;
+		}
+		void TickSoulcaller(float a_delta)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* sc = Soulcaller();
+			if (!p || !sc || !p->Is3DLoaded()) return;
+			auto* c = p->GetMagicCaster(RE::MagicSystem::CastingSource::kRightHand);
+			const bool casting = p->GetEquippedObject(false) == sc && p->AsActorState()->IsWeaponDrawn() && c && c->currentSpell && c->currentSpell == sc->formEnchanting &&
+			                     (c->state.get() == RE::MagicCaster::State::kCasting || c->state.get() == RE::MagicCaster::State::kCharging);
+			static float tick = 0;
+			if (casting) {
+				if ((tick -= a_delta) > 0) return;
+				tick = 0.25f;
+				const RE::NiPoint3 from = Gun::SwingFrom(), dir = Gun::SwingDir();
+				for (auto* f : Gun::LineHurt(from, from + dir * 1500.0f, 80.0f, 0.05f * UpgradeMult(kWonderUps))) {
+					if (g_souls >= 8 || !g_soulTaken.insert(f->GetFormID()).second) continue;
+					++g_souls;
+					if (auto* fx = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kHallGhostShader, gen::kPlugin)) f->ApplyEffectShader(fx, 1.2f);
+					Gun::Motes(6, f->GetPosition(), 0.5f, 1.0f);
+					Gun::LightningArc(f->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, from, 0.0f);
+					Hud::QuestBanner(fmt::format("Souls: {}", g_souls), 0.8f);
+				}
+				return;
+			}
+			tick = 0;
+			if (g_souls <= 0) { g_soulTaken.clear(); return; }
+			// let go: a wolf for each soul, round you, hunting for 20 s
+			const int n = g_souls;
+			g_souls = 0, g_soulTaken.clear();
+			auto* base = SoulWolf();
+			const float hp = Director::RoundHealth() * gen::kRounds.hpScale * 1.5f;
+			int made = 0;
+			for (int k = 0; k < n; ++k) {
+				const float a = 6.2832f * k / n;
+				const RE::NiPoint3 at = p->GetPosition() + RE::NiPoint3{ std::cos(a) * 140.0f, std::sin(a) * 140.0f, 0.0f };
+				if (auto* w = RaiseAlly(p, base, at, 20.0f, hp, 16)) {
+					if (auto* fx = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kHallGhostShader, gen::kPlugin)) w->ApplyEffectShader(fx, 20.0f);
+					Gun::Motes(6, at, 0.6f, 1.2f);
+					++made;
+				}
+			}
+			Gun::BlastSound("lightmassive", p->GetPosition(), 0.6f);
+			logger::info("summoner: the Soulcaller's Staff lets {} soul(s) go - {} spectral wolves hunt", n, made);
+		}
+	}
 	void TickAlchemy(float a_delta)
 	{
 		TickGoldClouds(a_delta);
@@ -4050,6 +4135,7 @@ namespace bo3z::Classes
 		// (Noah: "when swinging the whips, I don't see the whip uncoil") its chain told again each time it's drawn - the
 		// variable Animated Armoury's script sets on equipping doesn't outlive the weapon's 3D being put away and remade
 		TickScytheSwap();
+		TickSoulcaller(a_delta);
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (!p || !p->Is3DLoaded() || p->IsDead() || ItemMenusOpen()) return;
 		// (Noah: "turn off player voice grunts while casting the flasks") with a flask in hand your voice is quiet: its voice

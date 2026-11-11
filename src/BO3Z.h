@@ -781,7 +781,7 @@ namespace bo3z
 		void                  PurpleFire(const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life);
 		void                  Motes(int a_elem, const RE::NiPoint3& a_at, float a_scale, float a_life);  // fine motes rising off the ground over an area (the ElemBurst elements)
 		bool                  PlayerPowerAttack();   // your swing now a power attack (its attack data; the hit's own flag never comes with Precision)
-		void                  ElemBurst(int a_elem, const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life);  // an element's impact burst (0 fire 1 frost 2 shock 3 wind 4 sun 5 blood 6 void), here a moment  // the Horn's dragon's violet flame, here a moment  // the night's dead round a point lose a share of a whole zombie's health
+		void                  ElemBurst(int a_elem, const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life);  // an element's impact burst (0 fire 1 frost 2 shock 3 wind 4 sun 5 blood 6 void), 11 crimson (red), here a moment  // the Horn's dragon's violet flame, here a moment  // the night's dead round a point lose a share of a whole zombie's health
 		void                  Puddle(int a_elem, const RE::NiPoint3& a_at, float a_scale, float a_life);  // a pool of an element on the ground (0 fire 1 frost 2 shock 3 acid 4 sun 5 blood)
 		void                  SetLightOrb(bool a_on);
 		void                  DevFx(const std::string& a_path, const std::string& a_root, float a_side);

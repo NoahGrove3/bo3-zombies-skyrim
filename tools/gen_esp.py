@@ -69,6 +69,7 @@ cast_mgef('wandcast', 'Wand Cast', 1)
 # (Noah: the Carian Wand "point like a staff ... holding the attack should cast automatically every 2s") held: Skyrim's
 # staff concentration keeps the wand pointed while the attack is held; src/Classes.cpp TickWand looses the bolts
 cast_mgef('wandhold', 'Carian Bolt', 2, aimed=True)
+cast_mgef('soulcall', 'Soul Call', 2, aimed=True)   # (Noah: the Summoner's wonder - the Soulcaller's Staff, held: its beam the Staff of Magnus's, src/Classes.cpp)
 # (Noah: "lets just make it a summon spell") the Call of the Violet Wyrm's effect: a Conjuration cast (its look and sound
 # taken at runtime from Skyrim's Conjure Familiar - src/Classes.cpp), the wyrm called by src/WyrmHorn.inl WyrmCast
 cast_mgef('wyrmcall', 'Call of the Violet Wyrm', 1)
@@ -264,10 +265,28 @@ recs['ENCH'].append(record('ENCH', fid('ENCH', 'tabstaff'), [
     sub('EFID', struct.pack('<I', fid('MGEF', 'tabstaffcast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 # (Noah: "Destruction - Carian Wands, one per hand") the wands' enchantment: fire and forget on yourself, free - only so Skyrim
 # plays the cast; its Carian bolt is ours (src/Classes.cpp WandCast)
+recs['ENCH'].append(record('ENCH', fid('ENCH', 'soulcaller'), [
+    sub('EDID', z('UN_SoulcallerEnch')), sub('OBND', bytes(12)), sub('FULL', z('Soul Call')),
+    sub('ENIT', struct.pack('<iIIiIIfII', 0, 0x1, 2, 3000, 2, 0x0C, 0.0, 0, 0)),
+    sub('EFID', struct.pack('<I', fid('MGEF', 'soulcall'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 recs['ENCH'].append(record('ENCH', fid('ENCH', 'carianwand'), [
     sub('EDID', z('UN_CarianWandEnch')), sub('OBND', bytes(12)), sub('FULL', z('Carian Bolt')),
     sub('ENIT', struct.pack('<iIIiIIfII', 0, 0x1, 2, 3000, 2, 0x0C, 0.0, 0, 0)),
     sub('EFID', struct.pack('<I', fid('MGEF', 'wandhold'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
+# (Noah: "change the summoner class wonder to a staff from the weapons mod and the same casting animation as the staff of magnus" -
+# "Soulcaller's Staff") its look Fulcimentum's Glass Staff (src/Classes.cpp SoulcallerLook), its cast ours
+_sc = []
+for name, hx in T['weap_staff']['subs']:
+    b = bytes.fromhex(hx)
+    if name == 'EDID': b = z('UN_SoulcallerStaff')
+    elif name == 'FULL': b = z("Soulcaller's Staff")
+    elif name in ('MODT', 'EAMT'): continue
+    elif name == 'EITM': b = struct.pack('<I', fid('ENCH', 'soulcaller'))
+    elif name == 'DESC': b = z("The Summoner's wonder: a staff of green glass that calls to the dead. Hold its cast: souls tear out of the dead along your aim into the staff. Let go and they return as spectral wolves that hunt for 20 seconds - one for each soul, up to eight.")
+    elif name == 'DATA': b = struct.pack('<IfH', 0, 8.0, 10)
+    _sc.append(sub(name, b))
+    if name == 'MODL': _sc.append(sub('EAMT', struct.pack('<H', 0)))
+recs['WEAP'].append(record('WEAP', fid('WEAP', 'soulcaller'), _sc))
 for w in S['tablet']['rows']:
     if w['type'] == 'book': continue
     tmpl, anim, spd, reach, wt, kws = TB_KIND[w['type']]

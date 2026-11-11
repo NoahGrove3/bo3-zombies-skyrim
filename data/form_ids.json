@@ -1808,6 +1808,9 @@
   "ENCH:vae_molag": "0xf0c",
   "MGEF:vae_gold": "0xf0d",
   "ENCH:vae_gold": "0xf0e",
-  "ENCH:vae_gold_iceblue": "0xf0f"
+  "ENCH:vae_gold_iceblue": "0xf0f",
+  "MGEF:soulcall": "0xf10",
+  "ENCH:soulcaller": "0xf11",
+  "WEAP:soulcaller": "0xf12"
  }
 }

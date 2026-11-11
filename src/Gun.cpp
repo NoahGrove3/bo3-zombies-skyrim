@@ -2809,8 +2809,8 @@ namespace bo3z
 		}
 		void  ElemBurst(int a_elem, const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life)
 		{
-			static constexpr const char* kName[11] = { "fire", "frost", "shock", "wind", "sun", "blood", "void", "poison", "gold", "shadowfire", "holy" };
-			if (a_elem < 0 || a_elem >= 11) return;
+			static constexpr const char* kName[12] = { "fire", "frost", "shock", "wind", "sun", "blood", "void", "poison", "gold", "shadowfire", "holy", "crimson" };
+			if (a_elem < 0 || a_elem >= 12) return;
 			QueueFx(std::string("CurseOfAlduin\\fx\\burst_") + kName[a_elem] + ".nif", a_at, a_scale, a_delay, a_life, false);
 		}
 		// a pool of the element on the ground (tools/puddle.py): the Alchemist's flasks' Tier I

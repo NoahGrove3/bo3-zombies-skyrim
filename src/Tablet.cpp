@@ -563,7 +563,7 @@ namespace bo3z::Tablet
 			if (a_power) { Gun::Freeze(a_target, 1.5f); Gun::ElemBurst(2, Mid(a_target), 0.6f, 0.0f, 0.6f); }
 		} else if (id == "talons") {   // the bleed runs twice as deep in the dead; each kill heals you a little
 			Gun::Burn(a_target, S * 0.08f, 4.0f, -1);
-			Gun::ElemBurst(5, Mid(a_target), 0.4f, 0.0f, 0.5f);
+			Gun::ElemBurst(11, Mid(a_target), 0.4f, 0.0f, 0.5f);
 			if (a_target->IsDead() || a_target->AsActorValueOwner()->GetActorValue(RE::ActorValue::kHealth) <= 0) {
 				if (auto* av = p ? p->AsActorValueOwner() : nullptr) av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.03f);
 			}
@@ -593,7 +593,7 @@ namespace bo3z::Tablet
 			Gun::ElemBurst(6, Mid(a_target), 0.3f, 0.0f, 0.4f);
 		} else if (id == "wyrmtooth") {   // its hits bleed; a heavy sweep - the shockwave, the dead within 8 m staggered
 			Gun::Burn(a_target, S * 0.07f, 4.0f, -1);
-			Gun::ElemBurst(5, Mid(a_target), 0.35f, 0.0f, 0.5f);
+			Gun::ElemBurst(11, Mid(a_target), 0.35f, 0.0f, 0.5f);
 			if (a_power && g_splitCool <= 0 && p) {
 				g_splitCool = 1.5f;
 				Shockwave(S * 1.0f);
@@ -601,13 +601,13 @@ namespace bo3z::Tablet
 		} else if (id == "bloodmoon") {   // each hit drains a little of the dead's blood to you; a power sweep drains all it touches
 			auto heal = [&](float a_frac) { if (auto* av = p ? p->AsActorValueOwner() : nullptr) av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * a_frac); };
 			heal(0.005f);
-			Gun::ElemBurst(5, Mid(a_target), 0.3f, 0.0f, 0.4f);
+			Gun::ElemBurst(11, Mid(a_target), 0.3f, 0.0f, 0.4f);
 			if (a_power && g_slamCool <= 0 && p) {
 				g_slamCool = 1.2f;
 				int n = 0;
 				for (auto* o : Gun::FoesNear(p->GetPosition(), 280.0f)) {
 					if (o == a_target) continue;
-					Gun::HitShare(o, S * 0.6f), Gun::ElemBurst(5, Mid(o), 0.4f, 0.0f, 0.5f), ++n;
+					Gun::HitShare(o, S * 0.6f), Gun::ElemBurst(11, Mid(o), 0.4f, 0.0f, 0.5f), ++n;
 				}
 				heal(0.005f * n);
 			}
