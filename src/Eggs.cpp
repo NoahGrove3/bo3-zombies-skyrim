@@ -28,15 +28,21 @@ namespace bo3z::Eggs
 		bool Done(int e) { return Raw(e) >= kDone; }
 		int  Step(int e) { return Done(e) ? gen::kEggs[e].nSteps : std::clamp(Raw(e) / 1000, 0, std::max(0, static_cast<int>(gen::kEggs[e].nSteps) - 1)); }  // (the audit: a bad save or console edit never indexes past its steps)
 		int  Prog(int e) { return Done(e) ? 0 : Raw(e) % 1000; }
-		// your class's quest, once it is open (Classes: six cities freed) and not yet done
+		// (Noah, 2026-11-11: "Any class, all 4 quests") the quest under way: one at a time - your own class's first while it is
+		// open and not done, then the others in turn (each open once six cities are free, Classes)
 		int Active()
 		{
 			const int c = Classes::Get();
-			if (c < 0 || !Classes::WonderOpen()) return -1;
+			if (c < 0) return -1;
+			int pick = -1;
 			for (int e = 0; e < kCount; ++e) {
-				if (gen::kEggs[e].cls == c) return Done(e) ? -1 : e;
+				const int ec = gen::kEggs[e].cls;
+				const int st = Classes::WonderState(ec);
+				if (Done(e) || st < 1 || st > 3) continue;
+				if (ec == c) return e;
+				if (pick < 0) pick = e;
 			}
-			return -1;
+			return pick;
 		}
 		int  Towns(int e) { auto* g = Glob(gen::kEggs[e].townGlob); return g ? static_cast<int>(g->value) : 0; }
 		void SetTowns(int e, int v) { if (auto* g = Glob(gen::kEggs[e].townGlob)) g->value = static_cast<float>(v); }
@@ -499,13 +505,12 @@ namespace bo3z::Eggs
 	{
 		std::vector<std::string> out;
 		if (!Curse::Freed(a_town)) return out;
-		const int c = Classes::Get();
+		const int act = Active();
 		for (int e = 0; e < kCount; ++e) {
 			const auto& d = gen::kEggs[e];
-			if (d.cls != c) continue;
 			if (Done(e) || Gifted(e)) {
 				out.push_back(std::string(d.title) + " - done. " + (Classes::WonderState(d.cls) == 4 ? std::string(Classes::WonderName(d.cls)) + " is yours." : std::string(d.rewardText)));
-			} else if (Classes::WonderOpen()) {
+			} else if (e == act) {   // (the secret under way: its hints)
 				const int shown = std::clamp(Step(e) + 1, 1, d.nSteps);
 				for (int i = 0; i < shown; ++i) out.push_back(std::string(d.steps[i].hint));
 				if (g_plain && g_hintKey == e * 100 + Step(e)) out.push_back("Plainly: " + std::string(d.steps[Step(e)].text));
@@ -517,15 +522,13 @@ namespace bo3z::Eggs
 
 	std::string Line()  // the class guide's line: how far along your path's secret you are
 	{
-		const int c = Classes::Get();
-		for (int e = 0; e < kCount; ++e) {
-			const auto& d = gen::kEggs[e];
-			if (d.cls != c) continue;
-			if (Done(e)) return std::string(d.title) + " - done";
-			const int cur = CurTown(e);
-			return fmt::format("{} - step {} of {}{}", d.title, Step(e) + 1, d.nSteps, cur >= 0 && Prog(e) > 0 ? fmt::format(" (under way in {})", gen::kTowns[cur]) : std::string(" (listen to the altars' whispers)"));
-		}
-		return {};
+		const int act = Active();
+		int done = 0;
+		for (int e = 0; e < kCount; ++e) done += Done(e) ? 1 : 0;
+		if (act < 0) return done >= kCount ? "Every secret won" : std::string{};
+		const auto& d = gen::kEggs[act];
+		const int   cur = CurTown(act);
+		return fmt::format("{} - step {} of {}{}", d.title, Step(act) + 1, d.nSteps, cur >= 0 && Prog(act) > 0 ? fmt::format(" (under way in {})", gen::kTowns[cur]) : std::string(" (listen to the altars' whispers)"));
 	}
 
 	float DamageMult() { return 1.0f; }  // (Vaermina's Gift retired with the city quests)

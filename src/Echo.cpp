@@ -1,7 +1,7 @@
 // The story after the altars (sheet: echo).
 //
 // Act II - the Reliquary: once six cities are free each path's secret wakes (src/Eggs.cpp). Win it and the Greybeards
-// call: the path's wonder floats waiting in High Hrothgar's great hall, in front of a dragon relief over a bench (TickHall). A wonder answers only
+// call: the wonder floats waiting in High Hrothgar's great hall, in front of a dragon relief over a bench (TickHall). (Noah, 2026-11-11: any class wins and takes up any wonder.) A wonder answered only
 // to its own path.
 // Act III - the three dragons: with all four wonders won (yours, or pooled with your party), Alduin's three words wake
 // as dragons at their places - each comes at night after a siege of the dead, and each slain gives a lasting power.
@@ -489,8 +489,7 @@ namespace bo3z
 			}
 			if (a_i == 4) return Flag(kFlagBaneOut) ? "Forge Alduin's Bane again (10,000 Cursed Essence)" : "Take Alduin's Bane";
 			const std::string name(Classes::WonderName(a_i));
-			if (Classes::Get() != a_i) return name + " - it answers only to the " + PathName(a_i);
-			(void)a_p;
+			(void)a_p;   // (Noah, 2026-11-11: any class takes up any wonder it has won)
 			return "Take " + name;
 		}
 		std::vector<Hud::State::HallRow> HallRows()
@@ -662,7 +661,7 @@ namespace bo3z
 				Forms::Play(gen::Sound::ward_lit);
 			} else if (g_aim == 4) {
 				(void)TakeBane(a_p);  // (it keeps floating, lit: yours)
-			} else if (g_aim >= 0 && Classes::Get() == g_aim && Classes::TakeWonder(g_aim)) {
+			} else if (g_aim >= 0 && Classes::TakeWonder(g_aim)) {
 				logger::info("echo: {} taken up in the hall", Classes::WonderName(g_aim));
 			}
 			PushHallHud(a_p);
@@ -682,21 +681,13 @@ namespace bo3z
 			}
 			PushHallHud(a_p);
 		}
-		// a pedestal: its wonder taken up (it answers only to its own path), or how far that path's secret has come
+		// a pedestal: its wonder taken up, or how far its secret has come (Noah, 2026-11-11: "all the weapons/ wonders are usable
+		// for all classes" - any path takes up any wonder it has won)
 		void Pedestal(RE::PlayerCharacter* a_p, int a_c)
 		{
 			const std::string name(Classes::WonderName(a_c));
 			const int         st = Classes::WonderState(a_c);
-			const int         mine = Classes::Get();
-			if (st == 4 && mine != a_c) {
-				Hud::Banner(name + " is yours - it answers only to the " + PathName(a_c) + ".", 4.0f);
-				return;
-			}
 			if (st == 5 || st == 4) {
-				if (mine != a_c) {
-					Hud::Banner(name + " answers only to the " + PathName(a_c) + ". Change your path at an Echo Altar to take it up.", 5.0f);
-					return;
-				}
 				if (Classes::TakeWonder(a_c)) {
 					Gun::FxBlast("light", Room(gen::kRelPedestals[a_c].x, gen::kRelPedestals[a_c].y, gen::kRelPedestals[a_c].z + 140.0f));
 					BuildReliquary(a_p);
@@ -708,14 +699,13 @@ namespace bo3z
 			}
 			if ((Party::PartyWonders() >> a_c) & 1) {
 				// (the story audit: after the curse breaks there are no nights to win it in - the Brazier brings them back)
-				Hud::Banner(name + " was won by your party. Win it on your own path to carry it." +
+				Hud::Banner(name + " was won by your party. Win its secret yourself to carry it." +
 				                (Broken() && !Flag(kFlagEndless) ? std::string(" Light the Brazier of the Endless Night in the Hall to bring the nights back.") : std::string()),
 					6.0f);
 				return;
 			}
-			const auto line = Classes::WonderLine();
-			Hud::Banner(name + " - the " + PathName(a_c) + "'s wonder. " +
-			                (mine == a_c && !line.empty() ? line : std::string("It waits for that path's secret to be won.")),
+			Hud::Banner(name + " - first made for the " + PathName(a_c) + ", it answers to anyone who wins its secret." +
+			                (st >= 1 ? std::string(" Its secret is under way: listen to the freed altars.") : std::string(" Its secret wakes once six cities are free.")),
 				6.0f);
 		}
 
@@ -1207,7 +1197,7 @@ namespace bo3z
 			for (int c = 0; c < kWonders; ++c) if (Waiting(c) && (waiting < 0 || c == Classes::Get())) waiting = c;  // (your own path's first)
 			// in High Hrothgar's hall: your own wonder waiting over its bench, or Alduin's Bane over the fire
 			if (a_p->GetParentCell() == HH()) {
-				const int mine = Classes::Get();
+				const int mine = waiting;   // (any wonder won and waiting - your own class's first)
 				if (mine >= 0 && mine < kWonders && Waiting(mine)) {
 					a_at = FloatSpots()[mine].at + RE::NiPoint3{ 0, 0, 90.0f };
 					a_label = "Take up " + std::string(Classes::WonderName(mine));
@@ -1264,7 +1254,7 @@ namespace bo3z
 				if (best >= 0) {
 					const int st = Classes::WonderState(best);
 					a_title = Upper(std::string(Classes::WonderName(best))) + "  -  " + Upper(std::string(coffer::kClassName[best]));
-					a_goal = st == 5 ? (Classes::Get() == best ? std::string("Won - activate the pedestal to take it up") : "Won - it answers only to the " + PathName(best))
+					a_goal = st == 5 ? std::string("Won - activate the pedestal to take it up")
 					         : st == 4                         ? std::string("Won and taken up")
 					         : ((Party::PartyWonders() >> best) & 1) ? std::string("Won by your party")
 					         : st >= 1                         ? std::string("Its path's secret is under way")

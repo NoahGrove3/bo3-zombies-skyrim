@@ -1328,8 +1328,8 @@ def guide_text():
            "[pagebreak]", h("The Reliquary"),
            p("Behind a sealed door in the great hall of <b>High Hrothgar</b> lies the Reliquary of the Tongues: four pedestals, one for each path's wonder. "
              "It opens the first time the Greybeards call you."),
-           p("Win your path's secret and the Greybeards' shout rolls across Skyrim - your <b>wonder</b> waits on its pedestal. Go and take it up. "
-             "A wonder answers only to its own path: change class and come back to claim another."),
+           p("Win one of the four secrets and the Greybeards' shout rolls across Skyrim - its <b>wonder</b> waits on its pedestal. Go and take it up. "
+             "Every wonder answers to every class: win them all and mix your own build."),
            "[pagebreak]", h("The Wonder Weapons"),
            p("<b>Horn of the Spectral Wyrm</b> (Summoner) - blow it and a spectral dragon fights at your side."),
            p("<b>Tome of the Six Fires</b> (Battle-mage) - one cast looses the top spell of all six of your elements on the dead round you, every 8 seconds."),

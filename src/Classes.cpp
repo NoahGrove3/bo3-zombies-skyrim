@@ -695,13 +695,18 @@ namespace bo3z::Classes
 			}
 			if (how >= 0) Perks::OnClassKill(how, a_dying);  // (the class perks: Soul-Tether, Ember Heart, Mana-Siphon, Spellbinder)
 		}
-		if (const int c2 = g_class.load(); c2 >= 0 && c2 < 4) {
-			if (g_wStep[c2] >= 1 && g_wStep[c2] <= kWonderSteps && FreedCount() < kWonderOpensAt && !Echo::HallOpen()) g_wStep[c2] = 0;  // (the audit: never in a new cycle begun at the Seat)  // (an old save's three-city trial: shut again until six)
-			if (g_wStep[c2] == 0 && FreedCount() >= kWonderOpensAt) {
-				g_wStep[c2] = 1;
+		// (Noah, 2026-11-11: "Any class, all 4 quests") once six cities are free every path's secret wakes, for whoever plays -
+		// your own class's first (Eggs: one under way at a time), then the others
+		if (g_class.load() >= 0) {
+			bool woke = false;
+			for (int c2 = 0; c2 < 4; ++c2) {
+				if (g_wStep[c2] >= 1 && g_wStep[c2] <= kWonderSteps && FreedCount() < kWonderOpensAt && !Echo::HallOpen()) g_wStep[c2] = 0;  // (the audit: never in a new cycle begun at the Seat)  // (an old save's three-city trial: shut again until six)
+				if (g_wStep[c2] == 0 && FreedCount() >= kWonderOpensAt) g_wStep[c2] = 1, woke = true;
+			}
+			if (woke) {
 				Forms::Play(gen::Sound::quest_start);
-				Hud::Lore("YOUR PATH'S SECRET",
-					fmt::format("Six cities are free, and the {} stirs somewhere beneath the Echo Altars. Nobody will tell you how to win it. Stand at a freed altar and listen to its whispers.", kWonderName[c2]), 12.0f);
+				Hud::Lore("THE FOUR SECRETS",
+					"Six cities are free, and the four wonders stir somewhere beneath the Echo Altars - the Soulcaller's Staff, the Staff of Magnus, the Mutagen Staff and the Dragon Slayer. Any of you may win any of them. Nobody will tell you how. Stand at a freed altar and listen to its whispers.", 12.0f);
 			}
 		}
 		// (Noah's plan, the Spellsword's resonance) its touch spells climb on melee kills only - a power attack counts twice
@@ -1334,10 +1339,10 @@ namespace bo3z::Classes
 
 
 
-	bool WonderOpen()
+	bool WonderOpen()   // any path's secret under way (every class may win every wonder)
 	{
-		const int c = g_class.load();
-		return c >= 0 && c < 4 && g_wStep[c] >= 1 && g_wStep[c] <= kWonderSteps;
+		for (int c = 0; c < 4; ++c) if (g_wStep[c] >= 1 && g_wStep[c] <= kWonderSteps) return true;
+		return false;
 	}
 	// (Noah: "the sound effect that the grey beards use to call the dragon born should play when the Easter egg for the class
 	// wonder weapon is completed ... They should be retrieved at the reliquary in high hrothgar") a path's secret won: the
@@ -1364,7 +1369,7 @@ namespace bo3z::Classes
 		Points::Add(3000);
 		Tasks::Later(2.5f, [a_cls] {
 			Hud::Lore("DOVAHKIIN! THE GREYBEARDS CALL",
-				fmt::format("Your path's secret is won. The Greybeards' Voice rolls across Skyrim: the {} waits for you, floating in the great hall of High Hrothgar.", kWonderName[a_cls]),
+				fmt::format("A secret is won. The Greybeards' Voice rolls across Skyrim: the {} waits for you, floating in the great hall of High Hrothgar.", kWonderName[a_cls]),
 				14.0f);
 		});
 		logger::info("classes: wonder {} won - it waits in the Reliquary", kWonderName[a_cls]);
@@ -1461,8 +1466,15 @@ namespace bo3z::Classes
 	}
 	std::string WonderLineNow()
 	{
-		const int c = g_class.load();
+		// the wonder you're after: your own class's while it isn't yours, then whichever is next
+		int c = g_class.load();
 		if (c < 0) return {};
+		for (int k = 0; k < 4; ++k) if (g_wStep[k] == kWonderWaiting) return std::string(kWonderName[k]) + " waits in High Hrothgar's great hall";
+		if (g_wStep[c] >= kWonderTaken) {
+			c = -1;
+			for (int k = 0; k < 4 && c < 0; ++k) if (g_wStep[k] < kWonderTaken) c = k;
+			if (c < 0) return "All four wonders are yours";
+		}
 		const int st = g_wStep[c];
 		if (st == kWonderWaiting) return std::string(kWonderName[c]) + " waits in High Hrothgar's great hall";
 		if (st > kWonderSteps) return std::string(kWonderName[c]) + " is yours";
@@ -3998,7 +4010,7 @@ namespace bo3z::Classes
 	void MutagenBlock(bool a_down) { g_mq.block = a_down; }
 	void MutagenPower()
 	{
-		if (g_class.load() != coffer::kAlchemist) { Hud::QuestBanner("The Mutagen Staff answers only to an Alchemist", 2.0f); return; }
+		// (Noah, 2026-11-11: "make it so all the weapons/ wonders are usable for all classes") any class wields it
 		static auto last = std::chrono::steady_clock::now() - std::chrono::seconds(5);
 		const auto now = std::chrono::steady_clock::now();
 		if (now - last < std::chrono::milliseconds(400)) return;   // (one swing, heard once)
@@ -4019,11 +4031,6 @@ namespace bo3z::Classes
 		// "One every 0.5 s") block held: a flask every half second from the staff in your hands - fire, frost, storm, acid, holy
 		// water, void in turn
 		if (g_mq.block && g_mq.cool <= 0) {
-			if (g_class.load() != coffer::kAlchemist) {
-				Hud::QuestBanner("The Mutagen Staff answers only to an Alchemist", 2.0f);
-				g_mq.block = false;
-				return;
-			}
 			g_mq.cool = 0.5f;
 			const int el = g_mq.el;
 			g_mq.el = (g_mq.el + 1) % 6;
@@ -4036,8 +4043,8 @@ namespace bo3z::Classes
 	{
 		const int el = FlaskHeld(a_left);
 		if (el < 0 || Gun::Throwing()) return;
-		if (el != 6 && g_class.load() != coffer::kAlchemist) { Hud::QuestBanner("Only an Alchemist can throw the flasks", 2.0f); return; }   // (Noah: one inventory - "carry but class-locked")
-		if (el == 6 && g_class.load() != coffer::kAlchemist) { Hud::QuestBanner("The Mutagen Staff answers only to an Alchemist", 2.5f)   /* (Noah: "it won't let me throw it" - and nothing said why: always shown) */; return; }
+		// (Noah, 2026-11-11: "all the weapons/ wonders are usable for all classes. So people can mix and match their own builds
+		// with the loot available") the flasks and the Mutagen Staff answer to anyone
 		if (el == 6) { GauntletPress(a_left); return; }   // (Noah: the Mutagen Gauntlet's beam - held, not thrown)
 		float& cool = el == 6 ? g_philCool : g_flaskCool;
 		if (cool > 0) {
@@ -4119,7 +4126,7 @@ namespace bo3z::Classes
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			auto* sc = AlchemistKnife();
 			static RE::WEAPON_STATE was = RE::WEAPON_STATE::kSheathed;
-			if (!p || !sc || g_class.load() != coffer::kAlchemist || !p->Is3DLoaded() || ItemMenusOpen()) return;
+			if (!p || !sc || !p->Is3DLoaded() || ItemMenusOpen()) return;   // (any class: the scythe and the flasks swap for whoever holds them)
 			const auto now = p->AsActorState()->GetWeaponState();
 			const bool sheathedNow = now == RE::WEAPON_STATE::kSheathed && was != RE::WEAPON_STATE::kSheathed && was != RE::WEAPON_STATE::kWantToDraw;
 			was = now;
