@@ -942,15 +942,8 @@ namespace bo3z
 		void PlaceIfMissing(std::size_t a_index)
 		{
 			const auto& loc = gen::kLocations[a_index];
-			// (the Tablet of Mysteries stands at one freed city at a time: anywhere else it is taken away)
-			if (gen::kObjects[loc.object].kind == 7 && loc.town != Tablet::Town()) {
-				if (auto r = g_placed[a_index].get()) {
-					r->Disable(), r->SetDelete(true);
-					logger::info("shops: the tablet leaves {}", gen::kTowns[loc.town]);
-				}
-				g_placed[a_index] = {};
-				return;
-			}
+			// (Noah: "the base of the tablet model should be visible at all times where the tablet spawns are set") every
+			// city's tablet spot keeps its plinth; the tablet itself is shown only where and when it stands (src/Tablet.cpp)
 			if (auto ref = g_placed[a_index].get(); ref && !ref->IsDeleted()) {
 				// (Noah: "when I first open the door into a city the Echo Altar doesn't load in properly until I leave and
 				// come back") a station piece whose cell is up and in view but whose body never loaded is turned off and

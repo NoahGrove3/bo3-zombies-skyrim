@@ -2463,6 +2463,13 @@ namespace bo3z
 			std::erase_if(g_skyBeams, [](const SkyBeamLive& b) { return b.left <= 0; });
 		}
 		void DevFxReload() { FxMapLoad(); }
+		// a placed model's effect shaders laid over with a colour, the moment its model is in (the Tablet of Mysteries' beacon)
+		void TintRef(RE::TESObjectREFR* a_ref, float a_r, float a_g, float a_b)
+		{
+			FxPart fp;
+			fp.col = { a_r, a_g, a_b };
+			WatchTint(a_ref, fp);
+		}
 		void DevSwing(int a_power) { g_devSwing = a_power ? 2 : 1; }
 		void DevNodes()
 		{

@@ -1548,6 +1548,7 @@ namespace bo3z::gen
 		TabletWeapon{ "bloodmoon", "Bloodmoon Scythe", true, 8, 30, 0xEF3, 0xEEF, 0x000, "", 0x0, 0x0 },
 	} };
 	inline constexpr std::uint32_t kTabletArrow = 0xEC9;
+	inline constexpr std::uint32_t kTabletBeacon = 0xF15, kTabletMask = 0xF16;  // (the tablet's beam over it; the mask that sends it on)
 	struct EchoWonder { std::string_view id, label, text; std::uint32_t color, pedestal, gem; };
 	inline constexpr std::array<EchoWonder, 4> kEchoWonders{ {
 		EchoWonder{ "gravecaller", "Soulcaller's Staff", "A summoning spell. Cast it and a violet wyrm flies in and burns the dead within 50 m of you for 90 seconds, circling and strafing. The call rests a minute after the wyrm departs. Once the three dragons fall, a second, smaller wyrm answers with it.", 0x9CFF6A, 0xC44, 0xC4A },

@@ -156,6 +156,10 @@ def dressing(S):
     for el in ELEMENTS:   # the Coffer spells' element emblems (the shrine's roll in the world)
         records[('STAT', 'show_el_' + el)] = {'model': f"CurseOfAlduin\\fx\\el_{el}_icon.nif", 'color': '', 'radius': 0}
     records[('STAT', 'dragon_away')] = {'model': 'CurseOfAlduin\\fx\\dragon_away.nif', 'color': '', 'radius': 0}  # the glider's dragon, flying off
+    # (Noah: the Tablet of Mysteries "a beacon of light that shoots high so it can be seen in the distance", in the tablet's own
+    # glow; "a Dragon Priest mask rises" when it moves on) Skyrim's own wayshrine beam and Konahrik's mask
+    records[('STAT', 'tablet_beacon')] = {'model': 'DLC01\\Effects\\DLC1WayshrineLightBeam01.nif', 'color': '', 'radius': 0}
+    records[('STAT', 'tablet_mask')] = {'model': 'Armor\\DragonPriestHelms\\dragonhelm_ultra_go.nif', 'color': '', 'radius': 0}
     records[('STAT', 'whirlwind')] = {'model': 'CurseOfAlduin\\fx\\whirlwind.nif', 'color': '', 'radius': 0}  # Bond II's Updraft shout: the whirlwind round you
     records[('STAT', 'rise_fx')] = {'model': S['dressing']['show']['riseFxModel'], 'color': '', 'radius': 0}
     for w in S.get('tablet', {}).get('rows', []):   # (the Tablet of Mysteries: each weapon's model, shown rising out of it)

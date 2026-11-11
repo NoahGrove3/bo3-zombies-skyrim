@@ -1,8 +1,14 @@
 #include "BO3Z.h"
 
 // (Noah: "something like the mystery box from call of duty zombies" - the Tablet of Mysteries; docs/TABLET_OF_MYSTERIES.md)
-// The tablet stands at one freed city at a time (its spot: the city's tablet location, src/Shops.cpp places it there and
-// nowhere else) and is animated here, on its own model (tools/tablet.py), by its nodes' names:
+// (Noah, 2026-11-11: "accessible from night 1 ... only appears at night time ... a spawning in and leaving animation ... a beacon
+// of light that shoots high"; "it should start at riverwood and only moves when the dragon priest mask is rolled"; "the base of
+// the tablet model should be visible at all times where the tablet spawns are set") every city's tablet spot keeps its plinth;
+// the tablet itself stands in one city at a time - Riverwood first - and is there only from the night's first wave to dawn:
+// its beacon (Skyrim's wayshrine beam, in the tablet's amber) lights over the spot and the tablet comes down it and lands;
+// at dawn it is drawn back up. The Dragon Priest's mask (once the rolls are up) rises from the pool, laughs, and the tablet
+// goes up the beam and comes down at once in another city (named as it goes). An empty plinth, looked at or used, says where
+// the tablet is. It is animated here, on its own model (tools/tablet.py), by its nodes' names:
 //   idle  - the slab bobs and sways a little; its glyph rings drift; (in the model) the glyphs breathe, the pool swirls
 //   roll  - the rings grind round unevenly, stalling and lurching; the slab shudders; the eight gems light one by one;
 //           sparks spit from the cracks; the weapons' ghosts flicker in the pool; a battered win: gold light and a bell
@@ -21,7 +27,17 @@ namespace bo3z::Tablet
 		int   g_rolls = 0;          // rolls since it last moved
 		int   g_moveAfter = 6;      // (4..8) after this many the skull can come
 		int   g_steps = 0, g_night = -1;  // tonight's spins and repairs (the price's steps)
-		enum class Phase { Idle, Rolling, Offering } g_phase = Phase::Idle;
+		enum class Phase { Idle, Rolling, Offering, Mask } g_phase = Phase::Idle;
+		// (its nights) down in its city now; coming down the beam / going up it (seconds in, -1 not); the city it goes on to
+		bool  g_present = false;
+		float g_arriveT = -1.0f, g_leaveT = -1.0f;
+		int   g_moveTo = -1;
+		RE::ObjectRefHandle g_beacon;   // the beam over it
+		int   g_beaconTown = -1;
+		float g_sweep = 0.0f;           // (the other cities' plinths: their tablets kept hidden)
+		float g_lookCool = 0.0f;
+		RE::FormID g_lookedAt = 0;
+		constexpr float kBeamLead = 0.6f, kDropTime = 1.3f, kRiseTime = 1.6f, kDropHeight = 2600.0f, kMaskTime = 2.8f;
 		float g_t = 0.0f;           // into the phase
 		float g_clock = 0.0f;       // its own time (the idle's sway)
 		float g_ringO = 0.0f, g_ringI = 0.0f;      // the rings' turn (radians)
@@ -40,20 +56,19 @@ namespace bo3z::Tablet
 		constexpr float kPoolZ = 116.0f;
 		constexpr float kRollTime = 3.6f, kOfferTime = 12.0f;
 
-		int Freed()
+		// a city with a tablet spot for it (not the one it leaves) - freed or not
+		bool HasSpot(int a_town)
 		{
-			int n = 0;
-			for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) n += Curse::Freed(t) ? 1 : 0;
-			return n;
+			for (const auto& loc : gen::kLocations) if (loc.town == a_town && gen::kObjects[loc.object].kind == 7) return true;
+			return false;
 		}
-		// a freed city for it (not the one it leaves, when there is another)
 		int PickTown(int a_not)
 		{
 			std::vector<int> ok;
 			for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) {
-				if (Curse::Freed(t) && t != a_not) ok.push_back(t);
+				if (HasSpot(t) && t != a_not) ok.push_back(t);
 			}
-			if (ok.empty()) return Curse::Freed(a_not) ? a_not : -1;
+			if (ok.empty()) return a_not;
 			return ok[std::uniform_int_distribution<int>(0, static_cast<int>(ok.size()) - 1)(g_rng)];
 		}
 		void Night()
@@ -257,16 +272,44 @@ namespace bo3z::Tablet
 			if (!body) return;
 			const RE::NiPoint3 at = body->world * RE::NiPoint3{ 0.0f, -6.0f - 10.0f * a_rise, kPoolZ - 6.0f + 6.0f * a_rise };
 			auto r = g_show.get();
-			if (!r && g_prize >= 0 && gen::kTabletWeapons[g_prize].show) {
-				if (auto* base = Forms::Ours(gen::kTabletWeapons[g_prize].show) ? Forms::Ours(gen::kTabletWeapons[g_prize].show)->As<RE::TESBoundObject>() : nullptr) {
+			const std::uint32_t showId = g_phase == Phase::Mask ? gen::kTabletMask : g_prize >= 0 ? gen::kTabletWeapons[g_prize].show : 0;
+			if (!r && showId) {
+				if (auto* base = Forms::Ours(showId) ? Forms::Ours(showId)->As<RE::TESBoundObject>() : nullptr) {
 					if (auto ref = a_tab->PlaceObjectAtMe(base, false)) g_show = ref->CreateRefHandle(), r = ref;
 				}
 			}
 			if (!r) return;
 			r->SetPosition(at);
-			r->SetAngle({ 0.0f, 0.0f, a_tab->GetAngleZ() + g_clock * 0.9f });
+			// (the mask faces you out of the pool, turning a little; a weapon turns round)
+			r->SetAngle({ 0.0f, 0.0f, g_phase == Phase::Mask ? a_tab->GetAngleZ() + RE::NI_PI + 0.35f * std::sin(g_clock * 1.7f) : a_tab->GetAngleZ() + g_clock * 0.9f });
 		}
 
+		// how high over its plinth the tablet is: coming down the beam (falling faster and faster), going up it
+		float BodyLift()
+		{
+			if (g_arriveT >= 0) {
+				const float u = std::clamp((g_arriveT - kBeamLead) / kDropTime, 0.0f, 1.0f);
+				return kDropHeight * (1.0f - u * u);
+			}
+			if (g_leaveT >= 0) {
+				const float u = std::clamp(g_leaveT / kRiseTime, 0.0f, 1.0f);
+				return kDropHeight * u * u;
+			}
+			return 0.0f;
+		}
+		// the tablet itself seen: down, or on its way down or up the beam
+		bool BodyShown() { return (g_present && (g_arriveT < 0 || g_arriveT >= kBeamLead)) || (g_leaveT >= 0 && g_leaveT < kRiseTime); }
+		int TownOfRef(const RE::TESObjectREFR* a_ref)
+		{
+			for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) if (a_ref && Shops::Placed(t, 7) == a_ref) return t;
+			return -1;
+		}
+		std::string WhereLine(int a_here)
+		{
+			const std::string town = g_town >= 0 ? std::string(gen::kTowns[g_town]) : std::string("Riverwood");
+			if (g_town == a_here) return "The Tablet of Mysteries comes down here when the night's first wave begins";
+			return "The Tablet of Mysteries is in " + town + (g_present ? " tonight - follow its beam" : " - it comes down there at the night's first wave");
+		}
 		void Animate(RE::TESObjectREFR* a_ref, float a_delta)
 		{
 			auto* root = a_ref ? a_ref->Get3D() : nullptr;
@@ -281,7 +324,7 @@ namespace bo3z::Tablet
 				const float amp = 0.25f + 0.55f * k;
 				sx = std::uniform_real_distribution<float>(-amp, amp)(g_rng), sz = std::uniform_real_distribution<float>(-amp, amp)(g_rng);
 			}
-			body->local.translate = RE::NiPoint3{ sx, 0.0f, 2.6f * std::sin(g_clock * 0.9f) + sz };
+			body->local.translate = RE::NiPoint3{ sx, 0.0f, 2.6f * std::sin(g_clock * 0.9f) + sz + BodyLift() };
 			const float yaw = 0.055f * std::sin(g_clock * 0.33f);
 			RE::NiMatrix3 by;
 			by.entry[0][0] = std::cos(yaw), by.entry[0][1] = -std::sin(yaw), by.entry[0][2] = 0;
@@ -316,6 +359,103 @@ namespace bo3z::Tablet
 		}
 	}
 
+	namespace
+	{
+		void EndBeacon()
+		{
+			if (auto b = g_beacon.get()) b->Disable(), b->SetDelete(true);
+			g_beacon = {}, g_beaconTown = -1;
+		}
+		// (Noah: "a beacon of light that shoots high so it can be seen in the distance", "The tablet's own glow") Skyrim's
+		// wayshrine beam over the spot, in the tablet's amber, while it is there (and while it comes and goes)
+		void TickBeacon(RE::TESObjectREFR* a_tab)
+		{
+			const bool want = a_tab && (g_present || g_leaveT >= 0);
+			if (!want || g_beaconTown != g_town) EndBeacon();
+			if (!want || g_beacon.get() || !a_tab->Is3DLoaded()) return;
+			auto* base = Forms::Ours(gen::kTabletBeacon) ? Forms::Ours(gen::kTabletBeacon)->As<RE::TESBoundObject>() : nullptr;
+			if (!base) return;
+			if (auto b = a_tab->PlaceObjectAtMe(base, false)) {
+				b->SetPosition(a_tab->GetPosition() + RE::NiPoint3{ 0, 0, 120.0f });
+				b->GetReferenceRuntimeData().refScale = 45;   // (0.45: high over the roofs, a hand wide)
+				Gun::TintRef(b.get(), 1.0f, 0.78f, 0.45f);
+				g_beacon = b->CreateRefHandle(), g_beaconTown = g_town;
+			}
+		}
+		// the tablet's own node shown or hidden on a plinth (every city's plinth stands; the tablet only where it is, when it is)
+		void ShowBody(RE::TESObjectREFR* a_ref, bool a_on)
+		{
+			auto* root = a_ref && a_ref->Is3DLoaded() ? a_ref->Get3D() : nullptr;
+			if (auto* body = root ? root->GetObjectByName("TabletBody") : nullptr; body && body->GetAppCulled() == a_on) body->SetAppCulled(!a_on);
+		}
+		void TickNights(RE::PlayerCharacter* a_p, float a_delta)
+		{
+			// (Noah: "From the first wave to dawn") down when the night's fighting starts; drawn back up at dawn (once a roll or
+			// a waiting weapon is done)
+			const bool night = Director::Fighting();
+			if (night && !g_present && g_leaveT < 0) {
+				g_present = true, g_arriveT = 0.0f;
+				logger::info("tablet: comes down in {}", g_town >= 0 ? gen::kTowns[g_town] : "?");
+			}
+			if (!night && g_present && g_leaveT < 0 && g_phase == Phase::Idle) {
+				g_leaveT = 0.0f, g_arriveT = -1.0f, g_moveTo = -1;
+				if (auto* r = g_town >= 0 ? Shops::Placed(g_town, 7) : nullptr) Forms::PlayAt(gen::Sound::coffer_charge, r);
+				logger::info("tablet: drawn up at dawn from {}", g_town >= 0 ? gen::kTowns[g_town] : "?");
+			}
+			auto* ref = g_town >= 0 ? Shops::Placed(g_town, 7) : nullptr;
+			if (g_arriveT >= 0) {
+				const bool before = g_arriveT < kBeamLead + kDropTime;
+				g_arriveT += a_delta;
+				if (before && g_arriveT >= kBeamLead + kDropTime) {   // it lands: the ground cracks, a burst of its light
+					g_arriveT = -1.0f;
+					if (ref && ref->Is3DLoaded() && a_p->GetPosition().GetDistance(ref->GetPosition()) < 8000.0f) {
+						Gun::FxBlast("giantslam", ref->GetPosition());
+						Gun::QueueFx("CurseOfAlduin\\fx\\philosopher_burst.nif", ref->GetPosition() + RE::NiPoint3{ 0, 0, 90.0f }, 1.2f, 0.0f, 1.0f, false);
+						Forms::PlayAt(gen::Sound::boss_land, ref);
+						Forms::PlayAt(gen::Sound::coffer_land, ref);
+					}
+				}
+			}
+			if (g_leaveT >= 0 && (g_leaveT += a_delta) >= kRiseTime + 0.5f) {   // up and gone (the beam lingers a breath)
+				g_leaveT = -1.0f;
+				if (ref) ShowBody(ref, false);
+				if (g_moveTo >= 0 && g_moveTo != g_town) {   // (Noah: "Right away, same night") down at once in the next city
+					g_town = g_moveTo;
+					g_present = Director::Fighting(), g_arriveT = g_present ? 0.0f : -1.0f;
+					Hud::Banner(fmt::format("The Tablet of Mysteries comes down in {}", gen::kTowns[g_town]), 4.0f);
+				} else {
+					g_present = false;
+				}
+				g_moveTo = -1;
+				EndBeacon();
+				ref = g_town >= 0 ? Shops::Placed(g_town, 7) : nullptr;
+			}
+			TickBeacon(ref);
+			if (ref) ShowBody(ref, BodyShown());
+			// every other plinth: its tablet hidden (twice a second is plenty)
+			if ((g_sweep -= a_delta) <= 0) {
+				g_sweep = 0.5f;
+				for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) {
+					if (t == g_town) continue;
+					if (auto* o = Shops::Placed(t, 7)) ShowBody(o, false);
+				}
+			}
+			// (Noah: "when looking at the base with no tablet it shows a message saying where the tablet location is")
+			g_lookCool -= a_delta;
+			if (auto* pick = RE::CrosshairPickData::GetSingleton()) {
+				auto tgt = pick->GetActiveTarget().get();
+				const int here = tgt ? TownOfRef(tgt.get()) : -1;
+				const RE::FormID id = here >= 0 ? tgt->GetFormID() : 0;
+				if (id && id != g_lookedAt && g_lookCool <= 0 && (here != g_town || !g_present)) {
+					Hud::Banner(WhereLine(here), 3.5f);
+					g_lookCool = 4.0f;
+				}
+				g_lookedAt = id;
+			}
+		}
+	}
+
+	bool Present() { return g_present && g_arriveT < 0 && g_leaveT < 0; }
 	int Town() { return g_town; }
 	int Price()
 	{
@@ -334,6 +474,13 @@ namespace bo3z::Tablet
 	void OnActivate(RE::TESObjectREFR* a_ref)
 	{
 		if (!a_ref) return;
+		// (Noah: "if the tablet is not in that city ... it shows a message saying where the tablet location is") an empty plinth
+		if (const int here = TownOfRef(a_ref); here != g_town || !g_present || g_arriveT >= 0 || g_leaveT >= 0) {
+			if (here == g_town && (g_arriveT >= 0 || g_leaveT >= 0)) return;   // (on its way down or up)
+			Hud::Banner(WhereLine(here), 3.5f);
+			return;
+		}
+		if (g_phase == Phase::Mask) return;
 		if (g_phase == Phase::Rolling) { Hud::Banner("The tablet is still turning", 1.5f); return; }
 		if (g_phase == Phase::Offering) {   // the won weapon taken
 			if (g_prize >= 0) {
@@ -363,10 +510,6 @@ namespace bo3z::Tablet
 			Forms::PlayAt(gen::Sound::forge_upgrade, a_ref);
 			Hud::Banner(std::string(d.label) + "  -  mended  (next: " + Num(Price()) + ")", 3.0f);
 			logger::info("tablet: {} mended for {}", d.id, price);
-			return;
-		}
-		if (const int night = Save::Get(gen::kAV_round) + 1; night < 4 && !Gun::TestKitOn()) {  // (Noah: the tablet's rolls wait for night 4)
-			Hud::Banner("The tablet is dormant - it wakes on night 4 (tonight is night " + std::to_string(night) + ")", 2.5f);
 			return;
 		}
 		if (!Points::Spend(price)) { Hud::Banner("The tablet asks " + Num(price) + " Cursed Essence", 2.0f); return; }
@@ -885,9 +1028,9 @@ namespace bo3z::Tablet
 		g_slamCool -= a_delta, g_eclipseCool -= a_delta, g_splitCool -= a_delta;
 		if (g_salt.size() > 64) std::erase_if(g_salt, [](const auto& e) { return e.second < g_pclock; });
 		Night();
-		// where it stands: a freed city (chosen when the first is freed, and again should its city fall)
-		if ((g_town < 0 || !Curse::Freed(g_town)) && Freed() > 0) {
-			g_town = PickTown(-1), g_rolls = 0, g_moveAfter = std::uniform_int_distribution<int>(4, 8)(g_rng);
+		// where it stands: Riverwood first (Noah: "it should start at riverwood"), freed or not
+		if (g_town < 0) {
+			g_town = HasSpot(0) ? 0 : PickTown(-1), g_rolls = 0, g_moveAfter = std::uniform_int_distribution<int>(4, 8)(g_rng);
 			logger::info("tablet: stands in {}", g_town >= 0 ? gen::kTowns[g_town] : "nowhere");
 		}
 		auto* ref = g_town >= 0 ? Shops::Placed(g_town, 7) : nullptr;
@@ -896,14 +1039,9 @@ namespace bo3z::Tablet
 			if (g_phase == Phase::Rolling && g_t >= kRollTime) {
 				g_t = 0.0f;
 				auto r = g_ref.get();
-				if (g_skull) {   // the skull: the essence back, and the tablet goes to another freed city
-					Points::Refund(g_paid);
+				if (g_skull) {   // (Noah: "Yes, the mask rises") the Dragon Priest's mask rises out of the pool and laughs
 					if (r) Forms::PlayAt(gen::Sound::shout_quake, r.get());
-					const int from = g_town;
-					g_town = PickTown(from), g_rolls = 0, g_moveAfter = std::uniform_int_distribution<int>(4, 8)(g_rng);
-					Hud::Banner(fmt::format("A DRAGON PRIEST'S LAUGH - the tablet is gone. It waits in {} now  (+{})", g_town >= 0 ? gen::kTowns[g_town] : "?", Num(g_paid)), 5.0f);
-					logger::info("tablet: the skull - moved from {} to {}", from >= 0 ? gen::kTowns[from] : "?", g_town >= 0 ? gen::kTowns[g_town] : "?");
-					g_phase = Phase::Idle, g_skull = false;
+					g_phase = Phase::Mask;
 				} else {
 					g_phase = Phase::Offering;
 					if (r) {
@@ -916,8 +1054,22 @@ namespace bo3z::Tablet
 				ClearShow();
 				g_phase = Phase::Idle, g_t = 0.0f, g_gold = false, g_prize = -1;
 			}
+			if (g_phase == Phase::Mask && g_t >= kMaskTime) {   // the essence back, and the tablet goes up its beam to another city
+				ClearShow();
+				Points::Refund(g_paid);
+				const int from = g_town;
+				g_moveTo = PickTown(from), g_rolls = 0, g_moveAfter = std::uniform_int_distribution<int>(4, 8)(g_rng);
+				g_leaveT = 0.0f, g_arriveT = -1.0f;
+				if (auto r = g_ref.get()) Forms::PlayAt(gen::Sound::coffer_charge, r.get());
+				Hud::Banner(fmt::format("A DRAGON PRIEST'S LAUGH - the tablet leaves for {}  (+{})", g_moveTo >= 0 ? gen::kTowns[g_moveTo] : "?", Num(g_paid)), 5.0f);
+				logger::info("tablet: the mask - leaving {} for {}", from >= 0 ? gen::kTowns[from] : "?", g_moveTo >= 0 ? gen::kTowns[g_moveTo] : "?");
+				g_phase = Phase::Idle, g_t = 0.0f, g_skull = false, g_prize = -1;
+			}
 			if (g_phase == Phase::Offering) if (auto r = g_ref.get()) PoseShow(r.get(), std::clamp(g_t / 1.5f, 0.0f, 1.0f));
+			if (g_phase == Phase::Mask) if (auto r = g_ref.get()) PoseShow(r.get(), std::clamp(g_t / 1.2f, 0.0f, 1.0f));
 		}
+		TickNights(p, a_delta);
+		ref = g_town >= 0 ? Shops::Placed(g_town, 7) : nullptr;
 		if (ref && ref->Is3DLoaded() && ref->GetPosition().GetDistance(p->GetPosition()) < 6000.0f) Animate(ref, a_delta);
 		TickBook(p);
 		// (Noah: the test kit has every donated weapon) whichever of them you equip is the one carried - its power, the Codex
@@ -975,6 +1127,7 @@ namespace bo3z::Tablet
 	{
 		g_town = -1, g_rolls = 0, g_moveAfter = 6, g_steps = 0, g_night = -1;
 		g_phase = Phase::Idle, g_t = 0.0f, g_gold = false, g_prize = -1, g_held = -1, g_uses = 0;
+		g_present = false, g_arriveT = -1.0f, g_leaveT = -1.0f, g_moveTo = -1, g_beacon = {}, g_beaconTown = -1;
 		ClearShow();
 		if (a_n < 4) return;
 		g_town = static_cast<int>(a_v[0]) - 1;

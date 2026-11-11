@@ -1813,6 +1813,8 @@
   "ENCH:soulcaller": "0xf11",
   "WEAP:soulcaller": "0xf12",
   "MGEF:quickrevive": "0xf13",
-  "ALCH:quickrevive": "0xf14"
+  "ALCH:quickrevive": "0xf14",
+  "STAT:tablet_beacon": "0xf15",
+  "STAT:tablet_mask": "0xf16"
  }
 }

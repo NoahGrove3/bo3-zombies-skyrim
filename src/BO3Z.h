@@ -284,6 +284,7 @@ namespace bo3z
 		Type  Roll(int a_round);         // which of the risen dead this one is
 		float SpeedMult(Type a_type);
 		float HitDelay(RE::Actor* a_actor);   // seconds until its swing's claws meet you (0: none coming)
+		void  HoldSwing(RE::Actor* a_actor, float a_secs);  // a swing begun out of reach, stopped: no swing clip for it
 		void  FreshStep(RE::Actor* a_actor);  // its first steps (out of a portal) walked before it takes its own gait
 		void  SetPace(RE::Actor* a_actor, float a_scale);  // its round's pace (1 = round one): walker, runner or sprinter, its speed held at its gait's clip
 		float HealthMult(Type a_type);
@@ -788,6 +789,7 @@ namespace bo3z
 		void                  DevNodes();
 		void                  DevLook(const std::string& a_model, const std::string& a_mode, float a_scale, const std::string& a_pal, float a_secs);
 		void                  DevFxReload();
+		void                  TintRef(RE::TESObjectREFR* a_ref, float a_r, float a_g, float a_b);  // a placed model's effect shaders in a colour
 		void                  TintGold(RE::NiAVObject* a_root);   // every effect shader under a node in gold (once)
 		void                  TintPal(RE::NiAVObject* a_root, const std::string& a_pal, bool a_hideFlames);   // ... in any palette
 		void                  DevSwing(int a_power);
@@ -811,7 +813,8 @@ namespace bo3z
 		bool StarWandInHand();      // the Wandering Star (a wand now) drawn in your right hand
 		void StarButton(bool a_down);   // its attack held or let go (Gun's buttons)
 		void AdoptLooks();   // Tablet weapons that wear another mod's weapon (the Eclipse Edge: the Glass Pike)
-		int  Town();                                   // where it stands (-1: no city freed yet)
+		int  Town();                                   // the city it stands in (Riverwood first; the Dragon Priest's mask moves it on)
+		bool Present();                                // down in its city now (from the night's first wave to dawn)
 		int  Price();                                  // a spin (or a repair) now
 		void OnActivate(RE::TESObjectREFR* a_ref);
 		void Tick(float a_delta);

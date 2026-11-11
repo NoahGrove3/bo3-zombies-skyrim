@@ -123,6 +123,7 @@ namespace bo3z
 			std::atomic<bool>         turned{ false };       // (the Risen Dead, wounded: frenzied, its claws faster)
 			std::atomic<int>          wantSet{ -1 };         // (its row's own clips: SetEyes)
 			std::atomic<float>        danceT{ 0 };           // (the Dance Of Death: seconds of dancing left)
+			std::atomic<std::int64_t> noSwingUntil{ 0 };     // (a swing begun out of reach, stopped: none shown until then)
 			int                       danceK = 0;
 			float                     lateral = 0;           // its sideways share of its pace (-1 left .. 1 right)
 			float                     ahead = 1;             // its forward share of its pace (-1 backing off .. 1 straight on)
@@ -722,6 +723,10 @@ namespace bo3z
 			else if (cue == Undead::kCueCast) want = kCast;
 			else if (cue == Undead::kCueLeap) want = kLeap;
 			else if (cue == Undead::kCueScream || cue == Undead::kCueRoar) want = r.clipSet == 4 ? kSummon : kScream;
+			else if (attacking && !r.wasAttacking && std::chrono::steady_clock::now().time_since_epoch().count() < r.noSwingUntil.load(std::memory_order_relaxed)) {
+				// (Noah: "the enemies ... start trying to attack me from 5 meters or so away ... swinging in the air") a swing
+				// begun out of reach was stopped (Director::TickReach): no clip for it - the legs keep running
+			}
 			else if (attacking && !r.wasAttacking) {
 				// (Noah: each its own attacks) the Risen Dead claw left and right; the Brute swipes three ways and punches;
 				// the mage blasts; the zombie girl claws, and now and then brings both arms down
@@ -1322,6 +1327,12 @@ namespace bo3z
 			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, 0.01f);  // (so the new speed takes at once)
 			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, -0.01f);
 			m.gaitMod += step;
+		}
+		void HoldSwing(RE::Actor* a_actor, float a_secs)
+		{
+			if (auto r = a_actor ? RigOf(a_actor) : nullptr) {
+				r->noSwingUntil.store(std::chrono::steady_clock::now().time_since_epoch().count() + static_cast<std::int64_t>(a_secs * 1e9), std::memory_order_relaxed);
+			}
 		}
 		float HitDelay(RE::Actor* a_actor)
 		{

@@ -2837,6 +2837,43 @@ namespace bo3z
 				// (Noah: "they can hit me before I'm in range to hit them with my sword - make their melee range closer") a
 				// sword's reach, not a spear's: about the same distance your own blade lands from
 				const float reach = 95.0f + a->GetBoundRadius() * 0.5f;
+				// (Noah: "the enemies other than the wolves will start trying to attack me from 5 meters or so away which makes
+				// them stationary swinging in the air instead of trying to hit me up close") Skyrim's own combat judges its
+				// reach (Precision's reach hook, a long weapon, a big body): a swing it begins well out of ours is stopped, and
+				// the body is carried on in to you at a run for a moment (its legs running, a wall stops it) - it swings again
+				// once it's close
+				{
+					static std::unordered_map<RE::FormID, float> closing;  // seconds left of being carried in
+					const bool aiSwing = a->AsActorState()->GetAttackState() != RE::ATTACK_STATE_ENUM::kNone;
+					if (aiSwing && kind != 2 && t < 0 && dist > reach + 90.0f && dist < 900.0f && dz < 300.0f) {
+						a->NotifyAnimationGraph("attackStop");
+						Undead::HoldSwing(a.get(), 0.6f);
+						if (!closing.contains(a->GetFormID()) && closing.size() < 400) {
+							closing[a->GetFormID()] = 1.6f;
+							if (static int said = 0; said++ < 12) {
+								auto* race = a->GetRace();
+								auto* eq = a->GetEquippedObject(false);
+								auto* wpn = eq ? eq->As<RE::TESObjectWEAP>() : nullptr;
+								logger::info("undead: {} began a swing {:.0f} away (our reach {:.0f}) - stopped, carried in (scale {:.2f}, weapon {} reach {:.2f}, race {} unarmed reach {:.0f})",
+									a->GetName(), dist, reach, a->GetScale(), wpn ? wpn->GetName() : "none", wpn ? wpn->weaponData.reach : 0.0f,
+									race && race->GetFormEditorID() ? race->GetFormEditorID() : "?", race ? race->data.unarmedReach : 0.0f);
+							}
+						}
+					}
+					if (auto it = closing.find(a->GetFormID()); it != closing.end()) {
+						const RE::NiPoint3 dir{ (pp.x - ap.x) / std::max(1.0f, dist), (pp.y - ap.y) / std::max(1.0f, dist), 0.0f };
+						const RE::NiPoint3 chest = ap + RE::NiPoint3{ 0, 0, 70 };
+						if ((it->second -= a_delta) <= 0 || dist < reach - 10.0f || dz > 300.0f || RayBlocked(a->GetParentCell(), chest, chest + dir * 80.0f)) {
+							closing.erase(it);
+						} else {
+							a->SetHeading(std::atan2(dir.x, dir.y));
+							RE::NiPoint3 next = ap + dir * (std::min(320.0f, dist - reach + 20.0f) * a_delta * 1.0f);
+							next = OnGround(next);
+							if (std::abs(next.z - ap.z) > 60.0f) next.z = ap.z;
+							a->SetPosition(next, true);
+						}
+					}
+				}
 				if (t >= 0) {
 					if ((t -= a_delta) < 0) {
 						// (Noah: "the damage at the end of their contact swing, not the beginning") it waits for the claws to meet you
