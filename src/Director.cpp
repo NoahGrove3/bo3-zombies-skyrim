@@ -3365,6 +3365,12 @@ namespace bo3z
 				if (s.frenzy > 0) {
 					continue;  // turned on its own kind (TickFrenzy)
 				}
+				// (Noah: "currently the enemies freeze and then disappear or respawn somewhere else" - the Dance Of Death's dancers,
+				// standing still, were called caught on something and set down elsewhere) never moved while it dances
+				if (Undead::IsDancing(a.get())) {
+					s.still = 0, s.stuck = 0, s.behind = 0, s.lastDist = -1, s.lastPos = a->GetPosition();
+					continue;
+				}
 				// (the audit: a Dragon Priest holding its range was "stuck" and set back down every 10 s - it looked like fleeing;
 				// a champion out of its cell was replaced by a plain copy with no reward) champions and dragons are kept like the boss
 				const bool  champ = static_cast<bool>(g_champ.handle) && g_champ.handle.get().get() == a.get();
@@ -3952,13 +3958,15 @@ namespace bo3z
 			int n = 0;
 			for (auto& s : g_alive) {
 				auto a = s.handle.get();
-				if (!a || a->IsDead() || a->IsDisabled() || a->GetPosition().GetDistance(p->GetPosition()) > 1400.0f) continue;
+				// (Noah: "The shout effect range should be within 60 meters") 60 m, 4,200 units (20 m before)
+				if (!a || a->IsDead() || a->IsDisabled() || a->GetPosition().GetDistance(p->GetPosition()) > 4200.0f) continue;
 				n += Undead::Dance(a.get(), 20.0f) ? 1 : 0;
 			}
 			if (auto* snd = dh->LookupForm<RE::BGSSoundDescriptorForm>(gen::kDanceSong, gen::kPlugin)) {
 				static RE::BSSoundHandle h;
 				h.Stop();
-				if (auto* am = RE::BSAudioManager::GetSingleton(); am && am->GetSoundHandle(h, static_cast<RE::BSISoundDescriptor*>(snd))) h.Play();
+				// (Noah: "the music is too loud") at a third of its loudness
+				if (auto* am = RE::BSAudioManager::GetSingleton(); am && am->GetSoundHandle(h, static_cast<RE::BSISoundDescriptor*>(snd))) h.SetVolume(0.35f), h.Play();
 			}
 			Hud::Banner(n > 0 ? fmt::format("DANCE OF DEATH - {} of the dead dance", n) : std::string("DANCE OF DEATH - no one near enough to dance"), 3.5f);
 			logger::info("dance of death: {} dance (night {}, wave {})", n, g_current, g_wave);

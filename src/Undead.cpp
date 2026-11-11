@@ -312,7 +312,9 @@ namespace bo3z
 				}
 			}
 
-			if ((UsesClips(r.type) || r.wantSet.load(std::memory_order_relaxed) == 6) && ClipPose(a_actor, r, dt, attacking, cue)) {
+			// (Noah: "the enemies around me should be dancing with the animations we installed") every one of ours with a
+			// body the dance clips fit dances, not only the clip-driven kinds
+			if ((UsesClips(r.type) || r.wantSet.load(std::memory_order_relaxed) == 6 || r.danceT.load(std::memory_order_relaxed) > 0) && ClipPose(a_actor, r, dt, attacking, cue)) {
 				return;  // (the Mixamo clips moved it)
 			}
 			const float yaw = a_actor->GetAngleZ();
