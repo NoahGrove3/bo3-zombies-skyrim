@@ -128,6 +128,12 @@ sh = S['dressing']['show']
 o.append(f'\tinline constexpr std::uint32_t kShowCheese = 0x{IDS[("STAT", "show_cheese")]:03X}, kRiseFx = 0x{IDS[("STAT", "rise_fx")]:03X}, kDragonAway = 0x{IDS[("STAT", "dragon_away")]:03X}, kWhirlwind = 0x{IDS[("STAT", "whirlwind")]:03X};')
 o.append(f'\tinline constexpr std::uint32_t kUpdraftShout = 0x{IDS[("SHOU", "updraft")]:03X};  // Bond II: the Updraft shout')
 o.append(f'\tinline constexpr std::array<std::uint32_t, 3> kUpdraftWords{{ {{ {", ".join("0x%03X" % IDS[("WOOP", f"updraft_{n}")] for n in range(3))} }} }}, kUpdraftSpells{{ {{ {", ".join("0x%03X" % IDS[("SPEL", f"updraft_{n}")] for n in range(3))} }} }};')
+from esp_ids import VAE_COL as _VC, VAE_WEAP as _VW
+o.append('\tstruct VaeLook { std::uint32_t fx, ench, src; };  // a Visual Animated Enchants colour: our look-only effect and enchantment, and the mod\'s effect it copies')
+o.append(f'\tinline constexpr std::array<VaeLook, {len(_VC)}> kVaeLooks{{ {{ ' + ', '.join(f'VaeLook{{ 0x{IDS[("MGEF", "vae_" + c)]:03X}, 0x{IDS[("ENCH", "vae_" + c)]:03X}, 0x{v:06X} }}' for c, v in _VC.items()) + ' } };')
+_vcl = list(_VC)
+o.append(f'\tinline constexpr std::array<std::pair<std::uint32_t, int>, {len(_VW)}> kVaeWeapons{{ {{ ' + ', '.join(f'{{ 0x{IDS[("WEAP", k)]:03X}, {_vcl.index(c)} }}' for k, c in _VW.items()) + ' } };  // each melee weapon of ours: its colour')
+o.append(f'\tinline constexpr std::uint32_t kScytheKeyword = 0x{IDS[("KYWD", "scythe")]:03X};  // (the scythes: the MCO scythe moveset asks for it)')
 o.append(f'\tinline constexpr std::uint32_t kDanceShout = 0x{IDS[("SHOU", "dance")]:03X}, kDanceSong = 0x{IDS[("SNDR", "dance_song")]:03X};  // (Noah) the Dance Of Death')
 o.append(f'\tinline constexpr std::array<std::uint32_t, 3> kDanceWords{{ {{ {", ".join("0x%03X" % IDS[("WOOP", f"dance_{n}")] for n in range(3))} }} }}, kDanceSpells{{ {{ {", ".join("0x%03X" % IDS[("SPEL", f"dance_{n}")] for n in range(3))} }} }};')
 o.append(f'\tinline constexpr float kSkullScale = {F(sh["cheeseScale"])};')
@@ -287,8 +293,8 @@ o.append(f'\tinline constexpr std::uint32_t kArtIceShell = 0x{IDS[("ARTO", "fx_i
 EL8 = ['fire', 'frost', 'shock', 'poison', 'disease', 'sun', 'blood', 'arcane']
 SCID = [r['id'] for r in S['spellcraft']['rows']]
 TBW = S['tablet']['rows']
-o.append('\tstruct TabletWeapon { std::string_view id, label; bool battered; int type, uses; std::uint32_t form, show, gloves; std::string_view lookPlugin; std::uint32_t look, left; };  // look: another mod\'s weapon it wears (left: its left-hand twin)  // type: 0 fists 1 mace 2 dagger 3 battleaxe 4 bow 5 staff 6 greatsword 7 book')
-_TBT = ['fists', 'mace', 'dagger', 'battleaxe', 'bow', 'staff', 'greatsword', 'book']
+o.append('\tstruct TabletWeapon { std::string_view id, label; bool battered; int type, uses; std::uint32_t form, show, gloves; std::string_view lookPlugin; std::uint32_t look, left; };  // look: another mod\'s weapon it wears (left: its left-hand twin)  // type: 0 fists 1 mace 2 dagger 3 battleaxe 4 bow 5 staff 6 greatsword 7 book 8 scythe')
+_TBT = ['fists', 'mace', 'dagger', 'battleaxe', 'bow', 'staff', 'greatsword', 'book', 'scythe']
 o.append(f'\tinline constexpr std::array<TabletWeapon, {len(TBW)}> kTabletWeapons{{ {{')
 for w in TBW:
     form = IDS[('SPEL' if w['type'] == 'book' else 'WEAP', 'tab_' + w['id'])]
@@ -382,11 +388,12 @@ for _e, _c in _FLASKCOL.items():
                               "iconLabel": "weapon_staff" if _e == 'philosopher' else "default_potion", "iconColor": _c}})   # (Noah: the Mutagen Staff "still has the old potion icon instead of the staff icon")
 # (Noah: "the Radiant Quarterstaff says that the weapon type is Warhammer ... the weapon icon ... a hammer that's blue when it
 # should be the staff") the weapons that wear Animated Armoury's and Fulcimentum's looks: their own kind and icon
-_KINDS = [('riftblade', 'Quarterstaff', 'weapon_staff'), ('carianblade', 'Wand', 'weapon_staff'), ('alchknife', 'Whip', 'weapon_mace'),
+_KINDS = [('riftblade', 'Quarterstaff', 'weapon_staff'), ('carianblade', 'Wand', 'weapon_staff'), ('alchknife', 'Scythe', 'weapon_battleaxe'),
           ('madness', 'Rapier', 'weapon_sword'), ('tab_stormtalons', 'Claws', 'weapon_dagger'), ('tab_talons', 'Claws', 'weapon_dagger'),
           ('tab_cinderclaws', 'Claws', 'weapon_dagger'), ('tab_wyrmspine', 'Pike', 'weapon_greatsword'), ('tab_frostmourn', 'Rapier', 'weapon_sword'),
           ('tab_eclipse', 'Pike', 'weapon_greatsword'), ('tab_lanternwick', 'Quarterstaff', 'weapon_staff'), ('tab_riverstone', 'Halberd', 'weapon_battleaxe'),
-          ('tab_wanderstar', 'Quarterstaff', 'weapon_staff')]
+          ('tab_wanderstar', 'Quarterstaff', 'weapon_staff'), ('tab_silverscythe', 'Scythe', 'weapon_battleaxe'), ('tab_bonereaper', 'Scythe', 'weapon_battleaxe'),
+          ('tab_wyrmtooth', 'Scythe', 'weapon_battleaxe'), ('tab_bloodmoon', 'Scythe', 'weapon_battleaxe'), ('priest_vokun', 'Scythe', 'weapon_battleaxe')]
 for _k, _sub, _icon in _KINDS:
     if ('WEAP', _k) not in IDS: print('no WEAP', _k); continue
     _rules.append({"match": {"formType": "Weapon", "formId": {"anyOf": [f'CurseOfAlduin.esp|{IDS[("WEAP", _k)]:X}']}},

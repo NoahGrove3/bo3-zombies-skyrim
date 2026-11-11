@@ -227,7 +227,11 @@ PW_KIND = {   # template, animation type, speed, reach, weight, its keywords (We
     'battleaxe': ('weap_draugr_gs', 6, 0.7, 1.3, 24.0, (0x06D932, 0x08F958)),
     'warhammer': ('weap_draugr_gs', 6, 0.65, 1.3, 26.0, (0x06D930, 0x08F958)),
     'bow': ('weap_longbow', 7, 1.0, 1.0, 10.0, (0x01E715, 0x08F958)),
+    # (Noah: the scythes - Battle Scythe's models, the MCO scythe moveset) a two-handed axe that carries our scythe keyword: the
+    # moveset's DAR folders ask for it (tools/install_scythes), so other battleaxes and warhammers keep their own swings
+    'scythe': ('weap_draugr_gs', 6, 0.75, 1.4, 22.0, (0x06D932, 0x08F958, fid('KYWD', 'scythe'))),
 }
+recs['KYWD'] = [record('KYWD', fid('KYWD', 'scythe'), [sub('EDID', z('UN_WeapTypeScythe')), sub('CNAM', struct.pack('<I', 0x00B0A0C0))])]
 for _town, (pk, plabel, pmodel, pkind, pdmg, ptext) in PRIEST_WEAPONS.items():
     tmpl, anim, spd, reach, wt, kws = PW_KIND[pkind]
     subs = []
@@ -235,7 +239,7 @@ for _town, (pk, plabel, pmodel, pkind, pdmg, ptext) in PRIEST_WEAPONS.items():
         b = bytearray(bytes.fromhex(hx))
         if name == 'EDID': b = z('UN_Priest_' + pk)
         elif name == 'FULL': b = z(plabel)
-        elif name == 'MODL': b = z('CurseOfAlduin\\priests\\' + pmodel + '.nif')
+        elif name == 'MODL': b = z(pmodel if '\\' in pmodel else 'CurseOfAlduin\\priests\\' + pmodel + '.nif')
         elif name in ('MODT', 'EITM', 'EAMT'): continue
         elif name == 'KSIZ': b = struct.pack('<I', len(kws))
         elif name == 'KWDA': b = struct.pack(f'<{len(kws)}I', *kws)
@@ -608,7 +612,7 @@ KV = 'kv\\crystalsword\\'
 SWORD_DESC = {   # (Noah: "way too long" - the card tells what the sword is; each tier's line is added by src/Classes.cpp TickItemCard)
     'radiant': "The Summoner's blade: pale silver, burning with white sunlight.",
     'carian': "Destruction's wand, held in the right hand: hold its cast and it looses a bolt of raw sorcery every half second - fire, lightning and ice in turn.",
-    'alch': "The Alchemist's blade: daedric steel wreathed in purple shadowflame.",
+    'alch': "The Alchemist's scythe, wreathed in purple shadowflame. Sheathe it and your flasks come to hand; sheathe them and it comes back.",
     'ss_none': "The Spellsword's blade: it takes the element of the spell in your other hand.",
     'slayer': "The Akaviri dragon-hunters' blade. Swings 50% faster. Light swings: golden fire, twice the damage to dragons. Heavy attacks: a cyclone of golden dragonfire.",
 }
@@ -633,7 +637,7 @@ crystal_weapon('carianblade', 'UN_CarianBlade', 'Carian Wand', hip('carian'), '1
     SWORD_DESC['carian'],
     (900, 10.0, 10))
 
-crystal_weapon('alchknife', 'UN_AlchemistKnife', 'Shadowflame Whip', hip('shadowflame'), '1st_mace',
+crystal_weapon('alchknife', 'UN_AlchemistKnife', 'Shadowflame Scythe', hip('shadowflame'), '1st_mace',
     SWORD_DESC['alch'],
     (900, 10.0, 10))
 
@@ -809,6 +813,21 @@ for bkey, (fill, edge, keys) in BV_COL.items():
         struct.pack_into('<I', en, 0, 0); struct.pack_into('<I', en, 4, struct.unpack_from('<I', en, 4)[0] | 0x1)
         recs['ENCH'].append(record('ENCH', fid('ENCH', f'bv_{bkey}_{n}'), [sub('EDID', z(f'UN_BladeLookEnch_{bkey}{n}')), sub('OBND', bytes(12)), sub('FULL', z(TIER_NAME[tk] + ' ' + 'I' * n)),
             sub('ENIT', bytes(en)), sub('EFID', struct.pack('<I', fid('MGEF', f'bv_{bkey}_{n}'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
+
+# (Noah: Visual Animated Enchants on every melee weapon) a look-only enchantment per colour: a script effect with no script, nothing
+# done on a hit, hidden from the card; its shader and art are the mod's own effect's, taken at load (src/Classes.cpp VaeWeapons)
+from esp_ids import VAE_COL, VAE_WEAP
+for c in VAE_COL:
+    md = bytearray(tsub('mgef_enchfire', 'DATA'))
+    for off in (24, 32, 36, 96, 100): struct.pack_into('<I', md, off, 0)
+    struct.pack_into('<I', md, 64, 1); struct.pack_into('<I', md, 68, 0xFFFFFFFF)
+    struct.pack_into('<I', md, 0, struct.unpack_from('<I', md, 0)[0] | 0x8000)
+    recs['MGEF'].append(record('MGEF', fid('MGEF', 'vae_' + c), [sub('EDID', z('UN_VaeLookFx_' + c)), sub('FULL', z('')), sub('MDOB', tsub('mgef_enchfire', 'MDOB')),
+        sub('DATA', bytes(md)), sub('DNAM', z(''))]))
+    en = bytearray(tsub('ench_fire05', 'ENIT'))
+    struct.pack_into('<I', en, 0, 0); struct.pack_into('<I', en, 4, struct.unpack_from('<I', en, 4)[0] | 0x1)
+    recs['ENCH'].append(record('ENCH', fid('ENCH', 'vae_' + c), [sub('EDID', z('UN_VaeLook_' + c)), sub('OBND', bytes(12)), sub('FULL', z('')),
+        sub('ENIT', bytes(en)), sub('EFID', struct.pack('<I', fid('MGEF', 'vae_' + c))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 
 # (Noah: "make them required") Vibrant Weapons' own art (its files, read from the mod): the one-handed swords its sword art, the
 # Dragon Slayer its greatsword art - each look the element nearest its colour
@@ -1600,7 +1619,7 @@ out = record('TES4', 0, hdr, flags=0x200)  # ESL flag
 recs['CONT'] = [record('CONT', fid('CONT', 'classchest'), [
     sub('EDID', z('UN_ClassChest')), sub('OBND', bytes(12)), sub('FULL', z('Class Chest')), sub('MODL', z('Clutter\\Containers\\Chest01.nif')),
     sub('DATA', struct.pack('<Bf', 0, 0.0))])]
-for k in ['GLOB', 'FACT', 'VTYP', 'FSTS', 'LSCR', 'MUSC', 'MUST', 'ARTO', 'MGEF', 'BOOK', 'ENCH', 'SPEL', 'WOOP', 'SHOU', 'ACTI', 'ARMO', 'LIGH', 'STAT', 'WEAP', 'AMMO', 'NPC_', 'ALCH', 'PROJ', 'PERK', 'ARMA', 'SNDR', 'QUST', 'CONT']: out += group(k, recs[k])  # (PERK: the Summoner's command - it was never written before)  # Bethesda's group order: effects load before the spells that use them
+for k in ['KYWD', 'GLOB', 'FACT', 'VTYP', 'FSTS', 'LSCR', 'MUSC', 'MUST', 'ARTO', 'MGEF', 'BOOK', 'ENCH', 'SPEL', 'WOOP', 'SHOU', 'ACTI', 'ARMO', 'LIGH', 'STAT', 'WEAP', 'AMMO', 'NPC_', 'ALCH', 'PROJ', 'PERK', 'ARMA', 'SNDR', 'QUST', 'CONT']: out += group(k, recs[k])  # (PERK: the Summoner's command - it was never written before)  # Bethesda's group order: effects load before the spells that use them
 (ROOT / 'data').mkdir(exist_ok=True)
 (ROOT / 'data' / PLUGIN).write_bytes(out)
 print('wrote', PLUGIN, len(out), 'bytes,', count, 'records')

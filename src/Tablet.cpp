@@ -84,7 +84,8 @@ namespace bo3z::Tablet
 		RE::TESForm* FormOf(int a_w) { return a_w >= 0 && a_w < static_cast<int>(gen::kTabletWeapons.size()) ? Forms::Ours(gen::kTabletWeapons[a_w].form) : nullptr; }
 		// its name in the pack with its wear: "Gravebell Mace (62%)"
 		RE::TESObjectWEAP* LeftOf(int a_w);
-		std::unordered_map<RE::FormID, std::string> g_leftWas;  // (Animated Armoury's left claws: their own names, put back when ours go)
+		std::unordered_map<RE::FormID, std::string> g_leftWas;
+		std::unordered_map<RE::FormID, RE::EnchantmentItem*> g_leftEnchWas;  // (Animated Armoury's left claws: their own names, put back when ours go)
 		void Rename(int a_w, int a_uses)
 		{
 			auto* f = FormOf(a_w);
@@ -98,6 +99,9 @@ namespace bo3z::Tablet
 			if (auto* l = a_w == g_held ? LeftOf(a_w) : nullptr) {
 				if (!g_leftWas.contains(l->GetFormID())) g_leftWas[l->GetFormID()] = l->fullName.c_str();
 				l->fullName = fmt::format("{} Left", d.label);
+				// (its colour from Visual Animated Enchants, as the right claw wears it: src/Classes.cpp VaeWeapons)
+				if (!g_leftEnchWas.contains(l->GetFormID())) g_leftEnchWas[l->GetFormID()] = l->formEnchanting;
+				if (auto* rw = f ? f->As<RE::TESObjectWEAP>() : nullptr; rw && rw->formEnchanting) l->formEnchanting = rw->formEnchanting, l->amountofEnchantment = 0;
 			}
 		}
 		// the donated weapon taken off you and out of your pack (and the bows' arrows)
@@ -132,6 +136,7 @@ namespace bo3z::Tablet
 			if (!p || !f) return;
 			if (auto* l = LeftOf(a_w); l && p->GetItemCount(l) > 0) p->RemoveItem(l, p->GetItemCount(l), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
 			if (auto* l = LeftOf(a_w)) if (auto it = g_leftWas.find(l->GetFormID()); it != g_leftWas.end()) l->fullName = it->second;
+			if (auto* l = LeftOf(a_w)) if (auto it = g_leftEnchWas.find(l->GetFormID()); it != g_leftEnchWas.end()) l->formEnchanting = it->second;
 			if (auto* gl = GlovesOf(a_w); gl && p->GetItemCount(gl) > 0) {
 				p->RemoveItem(gl, p->GetItemCount(gl), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
 				if (auto* prev = g_prevGloves ? RE::TESForm::LookupByID<RE::TESObjectARMO>(g_prevGloves) : nullptr; prev && p->GetItemCount(prev) > 0) {
@@ -173,7 +178,7 @@ namespace bo3z::Tablet
 				em->EquipSpell(p, sp, right);
 			} else if (auto* b = f->As<RE::TESBoundObject>()) {
 				Forms::Give(p, b, 1);
-				em->EquipObject(p, b, nullptr, 1, d.type == 4 || d.type == 3 || d.type == 6 ? nullptr : right, false, false, false, true);
+				em->EquipObject(p, b, nullptr, 1, d.type == 4 || d.type == 3 || d.type == 6 || d.type == 8 ? nullptr : right, false, false, false, true);
 				GiveLeft(p, a_w);
 				if (auto* gl = GlovesOf(a_w)) {   // (the fists: their gloves on)
 					if (auto* worn = p->GetWornArmor(RE::BGSBipedObjectForm::BipedObjectSlot::kHands); worn && worn != gl) g_prevGloves = worn->GetFormID();
@@ -551,6 +556,42 @@ namespace bo3z::Tablet
 					for (auto* o : Gun::LineHurt(from, from + dir * 520.0f, 70.0f, S * 0.5f)) Gun::Burn(o, S * 0.06f, 4.0f, 0);
 					Gun::ElemBurst(0, from + dir * 260.0f, 0.5f, 0.05f * (k + 2), 0.6f);
 				}
+			}
+		} else if (id == "silverscythe") {   // (Noah: "add silver ... as a lower tier scythe") the dead cut a quarter deeper
+			Gun::HitShare(a_target, S * 0.25f);
+			Gun::ElemBurst(10, Mid(a_target), 0.3f, 0.0f, 0.4f);
+		} else if (id == "bonereaper") {   // one kill in four rises to fight for you
+			static std::mt19937 rng{ std::random_device{}() };
+			if (std::uniform_int_distribution<int>(0, 3)(rng) == 0) Classes::QueueThrall(a_target, 0);   // (it rises only if this blow kills)
+			Gun::ElemBurst(6, Mid(a_target), 0.3f, 0.0f, 0.4f);
+		} else if (id == "wyrmtooth") {   // its hits bleed; a power sweep bursts teeth out of the ground in an arc ahead
+			Gun::Burn(a_target, S * 0.07f, 4.0f, -1);
+			Gun::ElemBurst(5, Mid(a_target), 0.35f, 0.0f, 0.5f);
+			if (a_power && g_splitCool <= 0 && p) {
+				g_splitCool = 1.3f;
+				RE::NiPoint3 d = Gun::SwingDir(); d.z = 0;
+				if (d.Length() > 1e-3f) d = d * (1.0f / d.Length());
+				for (int k = -2; k <= 2; ++k) {
+					const float a = k * 0.35f;
+					const RE::NiPoint3 dir{ d.x * std::cos(a) - d.y * std::sin(a), d.x * std::sin(a) + d.y * std::cos(a), 0 };
+					const RE::NiPoint3 at = p->GetPosition() + dir * 260.0f;
+					Gun::FxBlast("giantslam", at);
+					Gun::AreaHurt(at, 120.0f, S * 0.8f, "");
+					for (auto* o : Gun::FoesNear(at, 120.0f)) Gun::Burn(o, S * 0.07f, 4.0f, -1);
+				}
+			}
+		} else if (id == "bloodmoon") {   // each hit drains a little of the dead's blood to you; a power sweep drains all it touches
+			auto heal = [&](float a_frac) { if (auto* av = p ? p->AsActorValueOwner() : nullptr) av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * a_frac); };
+			heal(0.005f);
+			Gun::ElemBurst(5, Mid(a_target), 0.3f, 0.0f, 0.4f);
+			if (a_power && g_slamCool <= 0 && p) {
+				g_slamCool = 1.2f;
+				int n = 0;
+				for (auto* o : Gun::FoesNear(p->GetPosition(), 280.0f)) {
+					if (o == a_target) continue;
+					Gun::HitShare(o, S * 0.6f), Gun::ElemBurst(5, Mid(o), 0.4f, 0.0f, 0.5f), ++n;
+				}
+				heal(0.005f * n);
 			}
 		} else if (id == "wyrmspine") {   // thrusts pierce through 2 more in a line; a heavy thrust drives a spike of bone up ahead
 			if (p) {

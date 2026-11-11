@@ -3012,7 +3012,7 @@ namespace bo3z
 			Director::LearnDance(false);  // (Noah: "all the echo alter rewards like the shout dance of death")
 			Kit::DevTestKit();    // (the four crystal swords and every flask at Tier III, the four Black Mage robes)
 			Classes::KitWonders();   // (the four wonders)
-			Tablet::DevKit();        // (Noah: the Tablet of Mysteries' eleven donated weapons)
+			Tablet::DevKit();        // (Noah: the Tablet of Mysteries' donated weapons)
 			if (auto* sl = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kSlayerWeap, gen::kPlugin); sl && p->GetItemCount(sl) <= 0) {
 				p->AddObjectToContainer(sl, nullptr, 1, nullptr);  // the Dragon Slayer greatsword
 			}
@@ -3035,7 +3035,7 @@ namespace bo3z
 			if (auto* av = p->AsActorValueOwner(); av && av->GetActorValue(RE::ActorValue::kCarryWeight) < 10000.0f) {
 				av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kCarryWeight, 10000.0f - av->GetActorValue(RE::ActorValue::kCarryWeight));
 			}
-			Hud::Banner(fmt::format("TEST KIT: the Echo Altar's {} spells, every class's spells, weapons, flasks and robes (Tier III), the four wonders, Dragon's Updraft and the Dance of Death, the ten Dragon Priest weapons, the Tablet's eleven weapons, Alduin's Bane, the glider, 150,000 Cursed Essence", spells), 8.0f);
+			Hud::Banner(fmt::format("TEST KIT: the Echo Altar's {} spells, every class's spells, weapons, flasks and robes (Tier III), the four wonders, Dragon's Updraft and the Dance of Death, the ten Dragon Priest weapons, the Tablet's weapons, Alduin's Bane, the glider, 150,000 Cursed Essence", spells), 8.0f);
 			std::string list;
 			for (auto& [el, c] : byEl) list += fmt::format("{} {}, ", el, c);
 			logger::info("testkit: {} altar spells ({}) - {} others taken away; essence {}", spells, list, removed, Points::Get());
@@ -3479,7 +3479,7 @@ namespace bo3z
 			if (!p || !a_t || a_t == p || !Director::IsFoe(a_t)) return;
 			const int w = PriestOf(a_src);
 			if (w < 0) return;
-			const bool bow = w == 0 || w == 8;
+			const bool bow = false;   // (Noah: the bows out of the loot - Vahlok's and Vokun's are melee now)
 			const auto now = std::chrono::steady_clock::now();
 			if (now - g_lastProc[w] < std::chrono::milliseconds(bow ? 50 : 250)) return;   // (one swing, one proc)
 			g_lastProc[w] = now;
@@ -3498,13 +3498,14 @@ namespace bo3z
 			if (w == 0 || w == 6) LightningArc(pp + RE::NiPoint3{ 0, 0, 80.0f }, Chest(a_t), 0.0f);   // (the Jailor's chain; the Grief Blade drinking your foe)
 			if (static int told = 0; told++ < 40) logger::info("priest weapon: {} struck {}{}", gen::kCityBosses[w].weaponName, a_t->GetName(), heavy ? " (heavy)" : "");
 			switch (w) {
-			case 0:   // Vahlok's Jailor's Bow: bound in place; the sixth arrow - spectral chains drag a group to you
-				ForAWhile(a_t, RE::ActorValue::kSpeedMult, -95.0f, 2.5f);
+			case 0:   // (Noah) Vahlok's Jailor's Keyhammer: shackled in place 2 s; a power attack - chains yank the dead within 6 m together
+				ForAWhile(a_t, RE::ActorValue::kSpeedMult, -95.0f, 2.0f);
 				ElemBurst(6, Chest(a_t), 0.4f, 0.0f, 0.5f);
 				if (heavy) {
-					for (auto* f : Foes(tp, 650.0f)) {
-						LightningArc(Chest(f), pp + RE::NiPoint3{ 0, 0, 80.0f }, 0.0f);
-						Drag(f, pp);
+					for (auto* f : Foes(tp, 420.0f)) {
+						if (f == a_t) continue;
+						LightningArc(Chest(f), Chest(a_t), 0.0f);
+						Drag(f, tp);
 						ForAWhile(f, RE::ActorValue::kSpeedMult, -95.0f, 2.0f);
 					}
 					BlastSound("lightmassive", tp, 0.8f);
@@ -3621,12 +3622,19 @@ namespace bo3z
 					MeteorImpact(pp, false, 0.8f);
 				}
 				break;
-			case 8:   // Vokun's Dreamer's Bow: put to sleep; the sixth arrow - a whole group asleep
-				Sleep(a_t, 3.0f);
+			case 8:   // (Noah) Vokun's Nightcaller's Scythe: asleep 1.5 s; a power sweep - a nightmare fog: the dead in it slowed and lost 6 s
+				Sleep(a_t, 1.5f);
 				Motes(6, tp, 0.5f, 2.0f);
 				if (heavy) {
-					for (auto* f : Foes(tp, 600.0f)) Sleep(f, 5.0f);
-					ElemBurst(6, tp, 1.4f, 0.0f, 1.0f);
+					const RE::NiPoint3 at = pp + fwd * 200.0f;
+					for (auto* f : Foes(at, 420.0f)) {
+						ForAWhile(f, RE::ActorValue::kSpeedMult, -60.0f, 6.0f);
+						ForAWhile(f, RE::ActorValue::kAttackDamageMult, -0.5f, 6.0f);
+						if (auto* fx = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kHallGhostShader, gen::kPlugin)) f->ApplyEffectShader(fx, 6.0f);
+						f->StopCombat();
+					}
+					Motes(6, at, 2.2f, 6.0f);
+					ElemBurst(6, at, 1.4f, 0.0f, 1.0f);
 				}
 				break;
 			case 9:   // Morokei's Arcane Maul: magic bursts where it strikes; heavy - a magicka shockwave

@@ -223,7 +223,7 @@ namespace bo3z::Classes
 				// (Noah: "replace it with the Alchemist class") the knife in the right hand, the Fire Flask in your pack (a hotkey throws it)
 				GiveItem(p, AlchemistKnife(), 1, true);
 				GiveFlask(0);
-				if (auto* em = RE::ActorEquipManager::GetSingleton(); em && FlaskItem(0)) em->EquipObject(p, FlaskItem(0), nullptr, 1, RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F43));  // (the Fire Flask in the left hand)
+				// (the scythe is two-handed: the Fire Flask waits in your pack - sheathe the scythe and it comes to hand, TickScytheSwap)
 				break;
 			case coffer::kSpellsword:
 				// (Noah, the altar rework: "remove shields entirely - a one-hand sword from one of the weapon mods, and a fire
@@ -2666,6 +2666,34 @@ namespace bo3z::Classes
 		}
 		return changed;
 	}
+	// a weapon made a scythe: a model of Battle Scythe's, held and swung two-handed as a battleaxe, with our scythe keyword (the
+	// MCO scythe moveset's); any whip's keywords Animated Armoury left on it taken off
+	bool ScytheLook(RE::TESObjectWEAP* a_w, const char* a_model)
+	{
+		if (!a_w || !a_model) return false;
+		const bool changed = std::string_view(a_w->GetModel()) != std::string_view(a_model);
+		a_w->SetModel(a_model);
+		a_w->firstPersonModelObject = nullptr;   // (the same model in first person)
+		a_w->weaponData.animationType = RE::WEAPON_TYPE::kTwoHandAxe;
+		a_w->weaponData.reach = 1.4f, a_w->weaponData.speed = 0.8f;
+		if (auto* both = RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F45)) a_w->SetEquipSlot(both);
+		std::vector<RE::BGSKeyword*> drop;
+		for (std::uint32_t i = 0; i < a_w->numKeywords; ++i) {
+			auto* k = a_w->keywords[i];
+			if (!k) continue;
+			auto* file = k->GetFile(0);
+			const std::string_view ed(k->GetFormEditorID() ? k->GetFormEditorID() : "");
+			if ((file && std::string_view(file->GetFilename()) == "NewArmoury.esp") || (ed.starts_with("WeapType") && ed != "WeapTypeBattleaxe")) drop.push_back(k);
+		}
+		if (!drop.empty()) a_w->RemoveKeywords(drop);
+		if (auto* k = RE::TESForm::LookupByID<RE::BGSKeyword>(0x06D932); k && !a_w->HasKeyword(k)) a_w->AddKeyword(k);   // WeapTypeBattleaxe
+		if (auto* k = RE::TESDataHandler::GetSingleton()->LookupForm<RE::BGSKeyword>(gen::kScytheKeyword, gen::kPlugin); k && !a_w->HasKeyword(k)) a_w->AddKeyword(k);
+		if (auto* ref = RE::TESForm::LookupByID<RE::TESObjectWEAP>(0x00013980); ref && ref->weaponData.animationType == RE::WEAPON_TYPE::kTwoHandAxe) {   // (the Iron Battleaxe's swings' sounds)
+			a_w->attackSound = ref->attackSound, a_w->attackSound2D = ref->attackSound2D, a_w->attackFailSound = ref->attackFailSound;
+			a_w->equipSound = ref->equipSound, a_w->unequipSound = ref->unequipSound, a_w->impactDataSet = ref->impactDataSet;
+		}
+		return changed;
+	}
 	// (Noah: "for the quarter staffs, wands, whips, and Rapier make it steel/iron, ebony, daedric, dragon bone for ascent
 	// upgrades") Base and Tier I steel or iron, Tier II ebony, Tier III daedric, Ascended dragonbone
 	bool AdoptTierLook(RE::TESObjectWEAP* a_w, int a_tier)
@@ -2685,7 +2713,17 @@ namespace bo3z::Classes
 			if (changed) logger::info("classes: the {} takes the look of {}", a_w->GetName(), s->GetName());
 			return changed;
 		}
-		const Src* src = c == 0 ? &kQStaff : c == 2 ? &kWhip : c == 3 ? &kRapier : nullptr;
+		// (Noah: the whip out, a scythe in - "Forsworn -> Falmer -> Dwarven -> Glass -> Dragon Priest") Battle Scythe's models, read
+		// from the install, swung with the MCO scythe moveset (its DAR folders ask for our scythe keyword)
+		if (c == 2) {
+			static constexpr const char* kScythe[5] = { "BattleScythe\\forsworn\\BScythe.nif", "BattleScythe\\falmer\\BScythe.nif", "BattleScythe\\dwarven\\BScythe.nif",
+				"BattleScythe\\glass\\BScythe.nif", "BattleScythe\\dragonpriest\\BScythe.nif" };
+			const bool changed = ScytheLook(a_w, kScythe[std::clamp(a_tier, 0, 4)]);
+			if (changed) logger::info("classes: the {} takes the look of {}", a_w->GetName(), kScythe[std::clamp(a_tier, 0, 4)]);
+			return changed;
+		}
+		(void)kWhip;
+		const Src* src = c == 0 ? &kQStaff : c == 3 ? &kRapier : nullptr;
 		if (!src) return false;
 		const int i = a_tier <= 1 ? 0 : a_tier == 2 ? 1 : a_tier == 3 ? 2 : 3;
 		auto* f = Lookup(src->id[i], src->plugin);
@@ -3132,8 +3170,37 @@ namespace bo3z::Classes
 		// colored sunlight, and purple should be purple flames") each look takes the whole of a Visual Animated Enchants effect's
 		// show - its enchantment shader on the blade and its animated art - from the effect of the mod's that looks that way (its
 		// own, or the vanilla enchantment it remade): the plugin needs no master of theirs; without the mod the looks keep their glow
+		// (Noah: "go through the mod that gives weapons effect animations and properly assign each one for every weapon in our
+		// mod") every melee weapon of ours wears a look-only enchantment in its colour, its shader and art Visual Animated
+		// Enchants' own (the plugin needs no master of theirs; without the mod the weapons are plain)
+		void VaeWeapons()
+		{
+			static bool done = false;
+			if (done) return;
+			done = true;
+			auto* dh = RE::TESDataHandler::GetSingleton();
+			if (!dh->LookupModByName("VisualAnimatedEnchants.esp")) { logger::info("weapons: Visual Animated Enchants is not installed - no weapon looks"); return; }
+			for (const auto& l : gen::kVaeLooks) {
+				auto* m = dh->LookupForm<RE::EffectSetting>(l.fx, gen::kPlugin);
+				auto* from = dh->LookupForm<RE::EffectSetting>(l.src, "VisualAnimatedEnchants.esp");
+				if (!m || !from) { logger::warn("weapons: Visual Animated Enchants' effect {:06X} not found", l.src); continue; }
+				m->data.enchantShader = from->data.enchantShader;
+				m->data.enchantEffectArt = from->data.enchantEffectArt;
+			}
+			int n = 0;
+			for (const auto& [id, c] : gen::kVaeWeapons) {
+				auto* w = dh->LookupForm<RE::TESObjectWEAP>(id, gen::kPlugin);
+				auto* e = dh->LookupForm<RE::EnchantmentItem>(gen::kVaeLooks[c].ench, gen::kPlugin);
+				if (!w || !e) continue;
+				if (w->formEnchanting && w->formEnchanting != e) { logger::info("weapons: {} keeps its own enchantment", w->GetName()); continue; }
+				w->formEnchanting = e, w->amountofEnchantment = 0;
+				++n;
+			}
+			logger::info("weapons: {} weapons wear Visual Animated Enchants' looks", n);
+		}
 		void PatchLookArt()
 		{
+			VaeWeapons();
 			static bool done = false;
 			if (done) return;
 			done = true;
@@ -3245,7 +3312,7 @@ namespace bo3z::Classes
 				{ "Tier I: light swings loose white sun balls that burn through the dead.", "Tier II: heavy attacks call a pillar of sunlight down on the one you strike.", "Tier III: heavy attacks call a great pillar of sunlight down." } },
 			{ "Carian Wand", "Destruction's wand: hold its cast and it looses a bolt every half second - fire, lightning and ice in turn.",
 				{ "Tier I: hold the cast for a bolt every half second - fire, lightning, ice in turn.", "Tier II: every 3rd bolt is a great bolt that pierces.", "Tier III: every 3rd bolt is a great bolt with a crossing volley either side." } },
-			{ "Shadowflame Whip", "The Alchemist's blade: daedric steel wreathed in purple shadowflame.",
+			{ "Shadowflame Scythe", "The Alchemist's scythe, wreathed in purple shadowflame. Sheathe it and your flasks come to hand.",
 				{ "Tier I: light swings loose bolts of shadowflame that set the dead burning.", "Tier II: heavy attacks loose a cyclone of purple fire.", "Tier III: heavy attacks loose a great cyclone of purple fire." } },
 			{ "Spellbound Rapier", "The Spellsword's blade: it takes the element of the spell in your other hand.",
 				{ "Tier I: light swings loose bolts of your spell's element.", "Tier II: heavy attacks loose a cyclone of it, casting your spell on all it catches.", "Tier III: heavy attacks loose a great cyclone of it." } },
@@ -3852,6 +3919,44 @@ namespace bo3z::Classes
 		}
 		}
 	}
+	// (Noah: the Alchemist's scythe is two-handed - "Swap by sheathing") sheathe the scythe and your flasks come to hand (the
+	// ones you held last, or those you carry), ready to draw and throw; sheathe them and the scythe comes back
+	namespace
+	{
+		RE::FormID g_lastFlask[2] = { 0, 0 };   // the flasks last in your hands: right, left
+		void TickScytheSwap()
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* sc = AlchemistKnife();
+			static RE::WEAPON_STATE was = RE::WEAPON_STATE::kSheathed;
+			if (!p || !sc || g_class.load() != coffer::kAlchemist || !p->Is3DLoaded() || ItemMenusOpen()) return;
+			const auto now = p->AsActorState()->GetWeaponState();
+			const bool sheathedNow = now == RE::WEAPON_STATE::kSheathed && was != RE::WEAPON_STATE::kSheathed && was != RE::WEAPON_STATE::kWantToDraw;
+			was = now;
+			for (bool left : { false, true }) if (const int el = FlaskHeld(left); el >= 0) g_lastFlask[left ? 1 : 0] = FlaskItem(el)->GetFormID();
+			if (!sheathedNow) return;
+			auto* em = RE::ActorEquipManager::GetSingleton();
+			if (!em) return;
+			auto* rightSlot = RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F42);
+			auto* leftSlot = RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F43);
+			if (p->GetEquippedObject(false) == sc) {
+				// the scythe put away: the flasks to hand - those held last, else the ones you carry, one in each hand
+				std::vector<RE::TESBoundObject*> pick;
+				for (auto id : g_lastFlask) if (auto* f = RE::TESForm::LookupByID<RE::TESBoundObject>(id); f && p->GetItemCount(f) > 0 && std::find(pick.begin(), pick.end(), f) == pick.end()) pick.push_back(f);
+				for (int el = 0; el < 7 && pick.size() < 2; ++el) if (auto* f = FlaskItem(el); f && p->GetItemCount(f) > 0 && std::find(pick.begin(), pick.end(), f) == pick.end()) pick.push_back(f);
+				if (pick.empty()) return;
+				em->UnequipObject(p, sc, nullptr, 1, nullptr, false, false, false, true);
+				em->EquipObject(p, pick[0], nullptr, 1, rightSlot, false, false, false, true);
+				if (pick.size() > 1) em->EquipObject(p, pick[1], nullptr, 1, leftSlot, false, false, false, true);
+				logger::info("classes: the scythe sheathed - {} flask(s) to hand", pick.size());
+			} else if (FlaskHeld(false) >= 0 || FlaskHeld(true) >= 0) {
+				// the flasks put away: the scythe back in both hands
+				if (p->GetItemCount(sc) <= 0) return;
+				em->EquipObject(p, sc, nullptr, 1, nullptr, false, false, false, true);
+				logger::info("classes: the flasks sheathed - the scythe to hand");
+			}
+		}
+	}
 	void TickAlchemy(float a_delta)
 	{
 		TickGoldClouds(a_delta);
@@ -3863,12 +3968,7 @@ namespace bo3z::Classes
 		TickClaws();
 		// (Noah: "when swinging the whips, I don't see the whip uncoil") its chain told again each time it's drawn - the
 		// variable Animated Armoury's script sets on equipping doesn't outlive the weapon's 3D being put away and remade
-		if (auto* pw = RE::PlayerCharacter::GetSingleton()) {
-			static bool wasDrawn = false;
-			const bool drawn = pw->AsActorState()->IsWeaponDrawn() && pw->GetEquippedObject(false) == AlchemistKnife();
-			if (drawn && !wasDrawn) Tasks::Later(0.3f, [] { if (auto* q = RE::PlayerCharacter::GetSingleton()) WhipEquipped(q, false); });
-			wasDrawn = drawn;
-		}
+		TickScytheSwap();
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (!p || !p->Is3DLoaded() || p->IsDead() || ItemMenusOpen()) return;
 		// (Noah: "turn off player voice grunts while casting the flasks") with a flask in hand your voice is quiet: its voice

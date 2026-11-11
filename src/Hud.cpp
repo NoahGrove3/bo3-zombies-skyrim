@@ -750,7 +750,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				{ "DESTRUCTION", "Battle-mage of the College of Winterhold", IM_COL32(255, 120, 60, 255), "Master the elements one at a time", "Ranged spells: fire, frost, shock, sun, blood and runes",
 				  "Your kit grows at the altar: each element, and the Carian Wand, to Legendary", "Firebolt, Ice Spike, the Carian Wand, the Destruction Set" },
 				{ "ALCHEMIST", "A wanderer of the Drifter's road", IM_COL32(150, 230, 90, 255), "Flasks of fire, frost, storm, acid and blood", "Thrown flask bombs that burst where they land - and a sword of shadowflame",
-				  "Your kit grows at the altar: each flask and the whip to Legendary", "The Shadowflame Whip, the Fire Flask, the Alchemist Set" },
+				  "Your kit grows at the altar: each flask and the scythe to Legendary", "The Shadowflame Scythe, the Fire Flask, the Alchemist Set" },
 				{ "SPELLSWORD", "A Vigilant of Stendarr", IM_COL32(120, 180, 255, 255), "Steel in one hand, a spell in the other", "A one-handed blade and touch spells - and the Vigilants' relic spells",
 				  "Your kit grows at the altar: the rapier and each spell to Legendary", "The Spellbound Rapier, Burning Touch, the Spellsword Set" } };
 			// (Noah: "the background for each class a photo of a character from the modded loading screens ... the selected box

@@ -1229,6 +1229,10 @@ namespace bo3z::gen
 	inline constexpr std::uint32_t kShowCheese = 0x870, kRiseFx = 0x8A2, kDragonAway = 0xC01, kWhirlwind = 0xC02;
 	inline constexpr std::uint32_t kUpdraftShout = 0xC09;  // Bond II: the Updraft shout
 	inline constexpr std::array<std::uint32_t, 3> kUpdraftWords{ { 0xC03, 0xC05, 0xC07 } }, kUpdraftSpells{ { 0xC04, 0xC06, 0xC08 } };
+	struct VaeLook { std::uint32_t fx, ench, src; };  // a Visual Animated Enchants colour: our look-only effect and enchantment, and the mod's effect it copies
+	inline constexpr std::array<VaeLook, 12> kVaeLooks{ { VaeLook{ 0xEF5, 0xEF6, 0x0038C7 }, VaeLook{ 0xEF7, 0xEF8, 0x000D71 }, VaeLook{ 0xEF9, 0xEFA, 0x000D74 }, VaeLook{ 0xEFB, 0xEFC, 0x000D73 }, VaeLook{ 0xEFD, 0xEFE, 0x000D70 }, VaeLook{ 0xEFF, 0xF00, 0x000D72 }, VaeLook{ 0xF01, 0xF02, 0x002892 }, VaeLook{ 0xF03, 0xF04, 0x00288C }, VaeLook{ 0xF05, 0xF06, 0x000D75 }, VaeLook{ 0xF07, 0xF08, 0x00438D }, VaeLook{ 0xF09, 0xF0A, 0x00288F }, VaeLook{ 0xF0B, 0xF0C, 0x00BA3F } } };
+	inline constexpr std::array<std::pair<std::uint32_t, int>, 24> kVaeWeapons{ { { 0xE88, 0 }, { 0xE89, 1 }, { 0xE8A, 2 }, { 0xE8B, 1 }, { 0xE8C, 6 }, { 0xE8D, 4 }, { 0xE8E, 5 }, { 0xE90, 7 }, { 0xE87, 0 }, { 0xE8F, 8 }, { 0xEE5, 1 }, { 0xEBE, 0 }, { 0xEE6, 4 }, { 0xEC0, 5 }, { 0xEE7, 10 }, { 0xEC2, 2 }, { 0xEE8, 3 }, { 0xEC4, 9 }, { 0xEE9, 2 }, { 0xEF0, 9 }, { 0xEF1, 0 }, { 0xEF2, 3 }, { 0xEF3, 4 }, { 0xC79, 11 } } };  // each melee weapon of ours: its colour
+	inline constexpr std::uint32_t kScytheKeyword = 0xEF4;  // (the scythes: the MCO scythe moveset asks for it)
 	inline constexpr std::uint32_t kDanceShout = 0xCF7, kDanceSong = 0xCF8;  // (Noah) the Dance Of Death
 	inline constexpr std::array<std::uint32_t, 3> kDanceWords{ { 0xCF1, 0xCF3, 0xCF5 } }, kDanceSpells{ { 0xCF2, 0xCF4, 0xCF6 } };
 	inline constexpr float kSkullScale = 0.3f;
@@ -1486,7 +1490,7 @@ namespace bo3z::gen
 	enum TrialId : int { kTrial_ward = 0, kTrial_culling = 1, kTrial_unbroken = 2, kTrial_steel = 3, kTrial_breath = 4 };
 	struct CityBoss { std::string_view name, row, text; float health; std::uint32_t weapon; std::string_view weaponName; };  // each city's Dragon Priest, the fourth step (health: in a zombie's night health); weapon: his drop (local id)
 	inline constexpr std::array<CityBoss, 10> kCityBosses{ {
-		CityBoss{ "Vahlok the Jailor", "priest_draugr", "Vahlok kept the cult's prisoners in the Merethic Era, and his oath to Alduin was the last he swore. It has brought him out of his tomb and across the sea to the barrow above Riverwood, to keep the valley's altar dark.", 20.0f, 0xE87, "Jailor's Bow" },
+		CityBoss{ "Vahlok the Jailor", "priest_draugr", "Vahlok kept the cult's prisoners in the Merethic Era, and his oath to Alduin was the last he swore. It has brought him out of his tomb and across the sea to the barrow above Riverwood, to keep the valley's altar dark.", 20.0f, 0xE87, "Jailor's Keyhammer" },
 		CityBoss{ "Nahkriin, Warden of Skuldafn", "priest_draman", "Nahkriin guarded Skuldafn, the gate to Sovngarde, for Alduin, and the mist that bars Sovngarde's door is his to keep. He has come down from the mountains to the plains, so that Whiterun's dead never find the way home.", 26.0f, 0xE88, "Mistblade" },
 		CityBoss{ "Volsung of Volskygge", "priest_draugr2", "Volsung ruled the peaks above Haafingar from Volskygge, and his mask let him breathe where no man could. He climbs down to Solitude now, and the dead of the Blue Palace's crypts rise at his word.", 26.0f, 0xE89, "Windcutter" },
 		CityBoss{ "Zahkriisos the Frost-Priest", "priest_draman2", "Zahkriisos lay in his tomb on Solstheim until Alduin's shout crossed the Sea of Ghosts. He walked over the ice to Windhelm's docks, and the cold he carries stops a heart.", 28.0f, 0xE8A, "Glacier Greatsword" },
@@ -1494,7 +1498,7 @@ namespace bo3z::gen
 		CityBoss{ "Rahgot of Forelhost", "priest_draman_anc", "Rahgot's followers poisoned themselves in Forelhost rather than surrender him to the Tongues. They rise with him now, and the Rift's dead follow them down to Riften's altar.", 22.0f, 0xE8C, "Sacrifice Knife" },
 		CityBoss{ "Krosis of Shearpoint", "priest_ancient2", "Krosis guarded the word at Shearpoint, mourning, for a thousand years. Alduin's shout gave him something to do with his sorrow: he comes down to Falkreath's graveyard to keep its children in the ground no longer.", 26.0f, 0xE8D, "Grief Blade" },
 		CityBoss{ "Hevnoraak of Valthume", "priest_draman_anc2", "Hevnoraak's servants sealed him in Valthume to stop him rising. The seal could not hold against SLEN TIID VO: he walks out of the marsh fog, and Hjaalmarch's drowned dead follow him.", 24.0f, 0xE8E, "Sealbreaker" },
-		CityBoss{ "Vokun of High Gate", "priest_mythic", "Vokun was a priest of shadows, and the Nightcaller's dreamers in Dawnstar dreamed his return a thousand years before it came. Kill him, and Dawnstar's nightmares end.", 22.0f, 0xE8F, "Dreamer's Bow" },
+		CityBoss{ "Vokun of High Gate", "priest_mythic", "Vokun was a priest of shadows, and the Nightcaller's dreamers in Dawnstar dreamed his return a thousand years before it came. Kill him, and Dawnstar's nightmares end.", 22.0f, 0xE8F, "Nightcaller's Scythe" },
 		CityBoss{ "Morokei of Labyrinthian", "priest_draman_myth", "Morokei once held the Staff of Magnus in Labyrinthian, and the College has feared him ever since. He has come to the cliffs above Winterhold, and the storm he calls has not finished yet.", 24.0f, 0xE90, "Arcane Maul" },
 	} };
 	inline constexpr std::uint32_t kCurseIntroGlobal = 0x996, kStandLayoutGlobal = 0x9DB, kDirgeBook = 0x9DC, kGuideBook = 0xC0A;
@@ -1522,8 +1526,8 @@ namespace bo3z::gen
 		SpellcraftDef{ "barrowhorn", "Horn of the Dragon Priests", 0xFFC45C, 0xFFF3D6, 8, 3, 1600.0f, 60.0f, 560.0f, 1, 0.0f, 5, 0.0f, 6, 13, "The War-Host Charges", 1600.0f, 110.0f, "A war-cry that hurls the dead back in a wave. Charged: the old war-host of the barrows charges down the line in front of you.", 0xC6E, 0xC6F },
 	} };
 	inline constexpr std::uint32_t kArtIceShell = 0xBC0, kArtRoots = 0xBC1, kArtBurn = 0xBC2, kArtPoison = 0xBC3, kArtPortal = 0xCB2, kArtPortalBig = 0xCB5;  // status looks on the struck
-	struct TabletWeapon { std::string_view id, label; bool battered; int type, uses; std::uint32_t form, show, gloves; std::string_view lookPlugin; std::uint32_t look, left; };  // look: another mod's weapon it wears (left: its left-hand twin)  // type: 0 fists 1 mace 2 dagger 3 battleaxe 4 bow 5 staff 6 greatsword 7 book
-	inline constexpr std::array<TabletWeapon, 11> kTabletWeapons{ {
+	struct TabletWeapon { std::string_view id, label; bool battered; int type, uses; std::uint32_t form, show, gloves; std::string_view lookPlugin; std::uint32_t look, left; };  // look: another mod's weapon it wears (left: its left-hand twin)  // type: 0 fists 1 mace 2 dagger 3 battleaxe 4 bow 5 staff 6 greatsword 7 book 8 scythe
+	inline constexpr std::array<TabletWeapon, 14> kTabletWeapons{ {
 		TabletWeapon{ "stormtalons", "Stormtalons", false, 2, 100, 0xEE5, 0xEE0, 0x000, "NewArmoury.esp", 0x19AAAA, 0x19AAE0 },
 		TabletWeapon{ "gravebell", "Gravebell Mace", false, 1, 100, 0xEBE, 0xEB5, 0x000, "", 0x0, 0x0 },
 		TabletWeapon{ "talons", "Talons of Woe", true, 2, 30, 0xEE6, 0xEE1, 0x000, "NewArmoury.esp", 0x19AAB2, 0x19AAEE },
@@ -1534,7 +1538,10 @@ namespace bo3z::gen
 		TabletWeapon{ "eclipse", "Eclipse Edge", true, 6, 30, 0xEC4, 0xEBA, 0x000, "NewArmoury.esp", 0x153BB0, 0x0 },
 		TabletWeapon{ "wanderstar", "The Wandering Star", true, 3, 30, 0xEC5, 0xEBB, 0x000, "Fulcimentum - More Staves and Wands of Skyrim.esp", 0x000808, 0x0 },
 		TabletWeapon{ "frostmourn", "Frostmourn Rapier", false, 2, 100, 0xEE9, 0xEE4, 0x000, "NewArmoury.esp", 0x01EE21, 0x0 },
-		TabletWeapon{ "codex", "The Unwritten Codex", true, 7, 30, 0xEC7, 0xECD, 0x000, "", 0x0, 0x0 },
+		TabletWeapon{ "silverscythe", "Silver Reaping Scythe", false, 8, 100, 0xEF0, 0xEEC, 0x000, "", 0x0, 0x0 },
+		TabletWeapon{ "bonereaper", "Bonereaper", true, 8, 30, 0xEF1, 0xEED, 0x000, "", 0x0, 0x0 },
+		TabletWeapon{ "wyrmtooth", "Wyrmtooth Scythe", false, 8, 100, 0xEF2, 0xEEE, 0x000, "", 0x0, 0x0 },
+		TabletWeapon{ "bloodmoon", "Bloodmoon Scythe", true, 8, 30, 0xEF3, 0xEEF, 0x000, "", 0x0, 0x0 },
 	} };
 	inline constexpr std::uint32_t kTabletArrow = 0xEC9;
 	struct EchoWonder { std::string_view id, label, text; std::uint32_t color, pedestal, gem; };
