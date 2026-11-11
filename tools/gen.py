@@ -307,6 +307,7 @@ for w in TBW:
 o.append('\t} };')
 o.append(f'\tinline constexpr std::uint32_t kTabletArrow = 0x{IDS[("AMMO", "tab_arrow")]:03X};')
 o.append('\tinline constexpr std::array<std::pair<std::string_view, std::uint32_t>, ' + str(len(esp_ids.SCYTHES)) + '> kScytheFirst{ { ' + ', '.join('{ ' + cs('CurseOfAlduin\\scythes\\' + n + '.nif') + ', 0x' + format(IDS[('STAT', '1st_scythe_' + n.lower())], '03X') + ' }' for n in esp_ids.SCYTHES) + ' } };  // (each scythe model: its first-person STAT, the item menu\'s view)')
+o.append(f'\tinline constexpr std::uint32_t kSpectralShader = 0x{IDS[("EFSH", "spectral")]:03X};  // (the Soulcaller\'s wolves)')
 o.append(f'\tinline constexpr std::uint32_t kTabletBeacon = 0x{IDS[("STAT", "tablet_beacon")]:03X}, kTabletMask = 0x{IDS[("STAT", "tablet_mask")]:03X};  // (the tablet\'s beam over it; the mask that sends it on)')
 # Stage 2 (sheet: echo): src/Echo.cpp
 EC = S['echo']

@@ -282,7 +282,7 @@ for name, hx in T['weap_staff']['subs']:
     elif name == 'FULL': b = z("Soulcaller's Staff")
     elif name in ('MODT', 'EAMT'): continue
     elif name == 'EITM': b = struct.pack('<I', fid('ENCH', 'soulcaller'))
-    elif name == 'DESC': b = z("The Summoner's wonder: a staff of green glass that calls to the dead. Hold its cast: souls tear out of the dead along your aim into the staff. Let go and they return as spectral wolves that hunt for 20 seconds - one for each soul, up to eight.")
+    elif name == 'DESC': b = z("The Summoner's wonder: a staff of green glass that calls to the dead. Hold its cast: its beam tears at the dead along your aim, and each one that dies while you hold it gives the staff its soul (up to eight, counted under your crosshair). Let go and the souls return as spectral wolves that hunt for 20 seconds - one for each soul.")
     elif name == 'DATA': b = struct.pack('<IfH', 0, 8.0, 10)
     _sc.append(sub(name, b))
     if name == 'MODL': _sc.append(sub('EAMT', struct.pack('<H', 0)))
@@ -897,6 +897,19 @@ for name, hx in T['efsh_enchpurple']['subs']:
     if name == 'EDID': continue
     subs.append(sub(name, bytes(d) if name == 'DATA' else bytes.fromhex(hx)))
 recs['EFSH'].append(record('EFSH', fid('EFSH', 'hallghost'), subs))
+# (Noah: the Soulcaller's wolves "should look like spectral wolves not normal ones") a pale blue ghost's membrane, bright and
+# steady, laid over the whole wolf (src/Classes.cpp SoulLook)
+d = bytearray(tsub('efsh_enchpurple', 'DATA'))
+d[0] |= 0x08
+struct.pack_into('<f', d, 0x20, 2.4)
+struct.pack_into('<f', d, 0x24, 0.0)
+d[0x10:0x13] = bytes((90, 190, 255))
+d[0x38:0x3B] = bytes((170, 235, 255))
+subs = [sub('EDID', z('UN_SpectralWolfShader'))]
+for name, hx in T['efsh_enchpurple']['subs']:
+    if name == 'EDID': continue
+    subs.append(sub(name, bytes(d) if name == 'DATA' else bytes.fromhex(hx)))
+recs['EFSH'].append(record('EFSH', fid('EFSH', 'spectral'), subs))
 
 # (Noah: "shadowflame ... should set enemies on fire with purple flames") Shadowflame on its victim: Skyrim's enchantment fire
 # wrapped round the whole body in violet - a burning membrane and a thick stream of violet flames rising off it - for as

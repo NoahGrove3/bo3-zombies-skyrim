@@ -2305,6 +2305,27 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 				Txt(dl, g_body, 12 * k, { a.x, b.y + 3 * k }, Fade(kParch, 0.8f), (s.tabletName + "  -  " + std::to_string(static_cast<int>(std::ceil(f * 100))) + "%").c_str());
 			}
+			// (Noah: "There should be some sort of indication how many souls are collected and the max amount") the Soulcaller's
+			// souls: a ring of pale flames under the crosshair, lit one by one, and the count
+			if (s.souls >= 0) {
+				const ImVec2 c{ size.x * 0.5f, size.y * 0.5f + 70 * k };
+				const int    mx = std::max(1, s.soulsMax);
+				const float  R = 26 * k, t = static_cast<float>(ImGui::GetTime());
+				for (int i = 0; i < mx; ++i) {
+					const float  a = -1.5708f + 6.2832f * i / mx;
+					const ImVec2 q{ c.x + std::cos(a) * R, c.y + std::sin(a) * R };
+					const bool   lit = i < s.souls;
+					if (lit) {
+						const float br = 0.75f + 0.25f * std::sin(t * 5.0f + i);
+						dl->AddCircleFilled(q, 7.0f * k, IM_COL32(120, 255, 210, static_cast<int>(70 * br)), 20);
+						dl->AddCircleFilled(q, 3.6f * k, IM_COL32(200, 255, 236, static_cast<int>(255 * br)), 16);
+					} else {
+						dl->AddCircle(q, 3.6f * k, IM_COL32(150, 190, 180, 110), 16, 1.2f * k);
+					}
+				}
+				TxtC(dl, g_num, 15 * k, c.x, c.y - 9 * k, s.souls >= mx ? IM_COL32(200, 255, 236, 255) : Fade(kParch, 0.9f), fmt::format("{}/{}", s.souls, mx));
+				TxtC(dl, g_body, 12 * k, c.x, c.y + R + 10 * k, Fade(kParch, 0.75f), s.souls >= mx ? "SOULS FULL - LET GO" : "SOULS");
+			}
 			if (s.hitTime > 0) {
 				const ImVec2 c{ size.x * 0.5f, size.y * 0.5f };
 				const float  a = 6 * k, b = (14 + 6 * (0.2f - s.hitTime) * 5) * k;

@@ -1088,6 +1088,8 @@ namespace bo3z
 			bool                  tabletOn{ false };   // the Tablet of Mysteries: where it stands (its map icon)
 			std::array<float, 3>  tabletAt{};
 			float                 tabletWear{ -1.0f }; // the donated weapon's uses left 0..1 (-1: none) - its durability bar
+			int                   souls{ -1 };         // (the Soulcaller's Staff) souls gathered, of soulsMax (-1: not drawn)
+			int                   soulsMax{ 8 };
 			std::string           tabletName;
 			int         trialDone{ 0 }, trialActive{ 0 }, trialSel{ 0 };
 			std::array<std::string, 5> trialDesc;

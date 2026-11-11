@@ -1549,6 +1549,7 @@ namespace bo3z::gen
 	} };
 	inline constexpr std::uint32_t kTabletArrow = 0xEC9;
 	inline constexpr std::array<std::pair<std::string_view, std::uint32_t>, 10> kScytheFirst{ { { "CurseOfAlduin\\scythes\\forsworn.nif", 0xF1C }, { "CurseOfAlduin\\scythes\\falmer.nif", 0xF1D }, { "CurseOfAlduin\\scythes\\dwarven.nif", 0xF1E }, { "CurseOfAlduin\\scythes\\glass.nif", 0xF1F }, { "CurseOfAlduin\\scythes\\dragonpriest.nif", 0xF20 }, { "CurseOfAlduin\\scythes\\silver.nif", 0xF21 }, { "CurseOfAlduin\\scythes\\Skeleton.nif", 0xF22 }, { "CurseOfAlduin\\scythes\\dragonTeeth.nif", 0xF23 }, { "CurseOfAlduin\\scythes\\vampire.nif", 0xF24 }, { "CurseOfAlduin\\scythes\\daedric.nif", 0xF25 } } };  // (each scythe model: its first-person STAT, the item menu's view)
+	inline constexpr std::uint32_t kSpectralShader = 0xF26;  // (the Soulcaller's wolves)
 	inline constexpr std::uint32_t kTabletBeacon = 0xF15, kTabletMask = 0xF16;  // (the tablet's beam over it; the mask that sends it on)
 	struct EchoWonder { std::string_view id, label, text; std::uint32_t color, pedestal, gem; };
 	inline constexpr std::array<EchoWonder, 4> kEchoWonders{ {
