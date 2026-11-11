@@ -2146,8 +2146,22 @@ namespace bo3z::Classes
 			for (auto& sp2 : mg->effectSounds) if (sp2.id == RE::MagicSystem::SoundID::kRelease && sp2.sound) return sp2.sound;
 			return nullptr;
 		}
+		// each of the five wands' tip along its model's +Y (Fulcimentum's SSS\\*Wand.nif): steel, stalhrim, glass, ebony, daedric
+		float WandTipY(RE::TESObjectWEAP* a_w)
+		{
+			static constexpr float kTipY[5] = { 20.0f, 37.5f, 33.5f, 39.0f, 36.0f };
+			return kTipY[std::clamp(a_w ? Kit::TierOfWeapon(a_w) : 0, 0, 4)];
+		}
 		RE::NiPoint3 WandTip(RE::PlayerCharacter* a_p)
 		{
+			// (the bolts loosed from the wand's own tip, where its orb hangs, in the body you're seen in)
+			auto* cam = RE::PlayerCamera::GetSingleton();
+			if (auto* root = a_p->Get3D(cam && cam->IsInFirstPerson())) {
+				if (auto* wn = root->GetObjectByName("WEAPON")) {
+					const auto at = wn->world.translate + (wn->world.rotate * RE::NiPoint3{ 0.0f, WandTipY(CarianBlade()), 0.0f }) * wn->world.scale;
+					if (at.GetDistance(a_p->GetPosition()) < 400.0f) return at;
+				}
+			}
 			if (auto* c = a_p->GetMagicCaster(RE::MagicSystem::CastingSource::kRightHand)) {
 				if (auto* n = c->GetMagicNode()) {
 					const auto at = n->world.translate;
@@ -2155,6 +2169,41 @@ namespace bo3z::Classes
 				}
 			}
 			return Gun::SwingFrom();
+		}
+	}
+	namespace
+	{
+		float g_wandPulse = 0.0f;   // a bolt just loosed: the tip flares
+		// (Noah: "only a small compact light blue orb looking like compact magic that brightens when casting at the very tip of
+		// the wand's model on each of the models") our little orb (tools/wandtip.py) hung on the wand itself, at its tip - each
+		// of the five wands' tip measured from its model (Fulcimentum's SSS\*Wand.nif: along +Y) - in both bodies
+		void TickWandTip(RE::PlayerCharacter* a_p, RE::TESObjectWEAP* a_w, bool a_inHand, bool a_held, float a_delta)
+		{
+			static RE::NiPointer<RE::NiAVObject> tip[2];
+			g_wandPulse = std::max(0.0f, g_wandPulse - a_delta * 3.0f);
+			static float t = 0;
+			t += a_delta;
+			const float glow = a_held ? 1.25f + 0.08f * std::sin(t * 9.0f) : 0.75f + 0.04f * std::sin(t * 2.5f);
+			for (int v = 0; v < 2; ++v) {
+				auto* root = a_p->Get3D(v == 1);
+				auto* wn = a_inHand && root ? root->GetObjectByName("WEAPON") : nullptr;
+				auto* node = wn ? wn->AsNode() : nullptr;
+				if (!node) {
+					if (tip[v] && tip[v]->parent) tip[v]->parent->DetachChild2(tip[v].get());
+					continue;
+				}
+				if (!tip[v]) tip[v] = Gun::LoadModel("CurseOfAlduin\\fx\\wandtip.nif");
+				if (!tip[v]) continue;
+				if (tip[v]->parent != node) {
+					if (tip[v]->parent) tip[v]->parent->DetachChild2(tip[v].get());
+					node->AttachChild(tip[v].get(), true);
+				}
+				tip[v]->local.translate = RE::NiPoint3{ 0.0f, WandTipY(a_w), 0.0f };
+				tip[v]->local.rotate = RE::NiMatrix3{};
+				tip[v]->local.scale = glow + 0.6f * g_wandPulse;
+				RE::NiUpdateData ud;
+				tip[v]->Update(ud);
+			}
 		}
 	}
 	void WandCast()
@@ -2222,17 +2271,13 @@ namespace bo3z::Classes
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		auto* w = CarianBlade();
 		if (!p || !w || !p->Is3DLoaded()) return;
-		// (Noah: "make the tip of the wand glow while casting") the held cast wears Sparks' casting glow and light - Skyrim hangs
-		// a staff's casting art on its tip
-		if (static bool glow = false; !glow && w->formEnchanting && !w->formEnchanting->effects.empty() && w->formEnchanting->effects[0]) {
-			glow = true;
-			auto* me = w->formEnchanting->effects[0]->baseEffect;
-			auto* sparks = RE::TESForm::LookupByID<RE::SpellItem>(0x0002DD29);
-			auto* src = sparks && !sparks->effects.empty() && sparks->effects[0] ? sparks->effects[0]->baseEffect : nullptr;
-			if (me && src) {
-				me->data.castingArt = src->data.castingArt;
-				me->data.light = src->data.light;
-				logger::info("classes: the Carian Wand's tip glows as {} while its cast is held", src->GetFullName());
+		// (Noah: "the wands shouldn't have an element animation on the wand in hand") its held cast hangs no casting art or light
+		// on the hand - the little blue orb at its tip is its only look (TickWandTip)
+		if (static bool bare = false; !bare && w->formEnchanting && !w->formEnchanting->effects.empty() && w->formEnchanting->effects[0]) {
+			bare = true;
+			if (auto* me = w->formEnchanting->effects[0]->baseEffect) {
+				me->data.castingArt = nullptr, me->data.light = nullptr, me->data.enchantShader = nullptr, me->data.enchantEffectArt = nullptr;
+				logger::info("classes: the Carian Wand's cast shows nothing on the hand - its tip's orb only");
 			}
 		}
 		bool held = false;
@@ -2242,8 +2287,10 @@ namespace bo3z::Classes
 			auto* c = p->GetMagicCaster(RE::MagicSystem::CastingSource::kRightHand);
 			const bool casting = c && c->currentSpell && w->formEnchanting && c->currentSpell == w->formEnchanting &&
 			                     (c->state.get() == RE::MagicCaster::State::kCasting || c->state.get() == RE::MagicCaster::State::kCharging);
-			// (Noah: "the carian wand won't cast for me") the attack held is enough - Skyrim's own staff cast or not
-			held = casting || g_wandButton;
+			// (Noah: "Letting go of casting should stop the wand from casting and holding attack should start the casting") the
+			// attack button alone says: held, it casts; let go, it stops - Skyrim's own staff cast cut short with it
+			held = g_wandButton;
+			if (!held && casting && c) c->InterruptCast(false);
 			if (static float said = 0; g_wandButton && (said -= a_delta) <= 0) {
 				said = 1.0f;
 				logger::info("classes: the Carian Wand held - its cast {} (state {}, spell {:08X})", casting ? "plays" : "doesn't play",
@@ -2258,6 +2305,7 @@ namespace bo3z::Classes
 		if (held && heldFor >= 0.3f) {
 			if (g_wandNext <= 0.0f) {   // (Noah: "attack every half a second without being able to spam them. You have to hold them down")
 				g_wandNext = 0.5f;
+				g_wandPulse = 1.0f;
 				// (Noah: "It's supposed to cast whatever spell I have on my left hand ... it shoots 1 per second without using
 				// mana") the spell in your left hand, loosed from the wand's tip, free; no spell there: the Carian bolts
 				auto* left = p->GetEquippedObject(true);
@@ -2275,6 +2323,7 @@ namespace bo3z::Classes
 			}
 		}
 		g_wandHeld = held;
+		TickWandTip(p, w, inHand, held, a_delta);
 		// (Noah: "only allowed to hold one wand at a time") never in the left hand, never two in the pack
 		if (ItemMenusOpen()) return;
 		static float check = 0.0f;
@@ -3231,11 +3280,12 @@ namespace bo3z::Classes
 						// (Noah: "I want the blade to show the element of the spell in my other hand") the element looks (4-8) wear the
 						// mod's element shader and art again; the bare look (3) none - the static red was our own dark-red Madfire
 						// (Props::TickMad), gone now
-						if (k == 3) m->data.enchantShader = nullptr;
+						// (Noah: "the wands shouldn't have an element animation on the wand in hand") the Carian Wand's looks (1) bare
+						if (k == 3 || k == 1) m->data.enchantShader = nullptr;
 						else if (from->data.enchantShader) m->data.enchantShader = from->data.enchantShader;
 						// (Noah: "the red glow on the blade removed") the mod's animated art stayed on the Spellbound Rapier, glowing
 						// red whatever its element, after its spell was gone: its looks keep Vibrant Weapons' element art alone
-						if (k == 3) m->data.enchantEffectArt = nullptr;
+						if (k == 3 || k == 1) m->data.enchantEffectArt = nullptr;
 						else if (from->data.enchantEffectArt) m->data.enchantEffectArt = from->data.enchantEffectArt;
 						++n;
 					}
@@ -3645,6 +3695,7 @@ namespace bo3z::Classes
 			int key = cls >= 0 && t >= 1 ? LookKey(cls) : -1;
 			if (w && w == Slayer()) key = 9;
 			if (key == 3) key = -1;   // (the Spellbound Rapier bare-handed: no look)
+			if (key == 1) key = -1;   // (Noah: the wands - no element look in the hand, only the tip's orb)
 			// (Noah: "the ice effect ... was floating" - the Radiant Quarterstaff put away on the back, its art still hung where the
 			// hand was) the art along the blade only while it's drawn
 			if (!p->AsActorState()->IsWeaponDrawn()) key = -1;
