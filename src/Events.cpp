@@ -1371,6 +1371,8 @@ namespace bo3z
 			for (int c = 0; c < 4; ++c) if (auto* w = Classes::ClassWeapon(c)) Classes::AdoptTierLook(w, 0);
 			Classes::MutagenLook();
 			Classes::WandReady();
+			Director::QuietWind();
+			Director::ShoutLooks();
 			FreeBowMovement();
 			Undead::InstallHooks();
 			Hud::InstallInputGate();

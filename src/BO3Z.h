@@ -141,6 +141,8 @@ namespace bo3z
 	namespace Director
 	{
 		void LearnDance(bool a_announce);  // Dance of Death taught (Solitude freed, or the test kit)
+		void QuietWind();                   // (data loaded) the ambient wind 12 dB down
+		void ShoutLooks();                  // (data loaded) our shouts shown in the Magic menu as Skyrim's are
 		void             Tick(float a_delta);
 		bool             Scouting();
 		bool             Rising(RE::Actor* a_actor);    // still climbing out of the ground (not to be fought yet)                     // (Noah) scout mode: flying, unhurt, no undead - arrows mark spawn points

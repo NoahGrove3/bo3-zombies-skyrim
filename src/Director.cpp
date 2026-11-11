@@ -3982,6 +3982,45 @@ namespace bo3z
 			}
 			if (n > 0) logger::info("sound: {} of Whiterun's small-rapids hiss silenced", n);
 		}
+		// (Noah: "Can you turn down the wind sound effects" - "A quarter as loud") Skyrim's ambient wind loops and gusts
+		// (Skyrim.esm AMBWind* / AMBrWind*; an audio mod's overrides of them too), 12 dB down
+		void QuietWind()
+		{
+			static constexpr RE::FormID kWind[] = { 0x000F82, 0x000F81, 0x000F80, 0x000F7F, 0x10FEFB, 0x10CBCA, 0x0FF4C7, 0x0D78BF, 0x0C2936, 0x01646D,
+				0x01646C, 0x0DCE87, 0x0DB6DF, 0x0DB6DE, 0x0DB6DD, 0x0D4046, 0x0D4045, 0x0D4044, 0x0D2067, 0x0D2066, 0x0D2065, 0x0CF2CA, 0x0CF2C7,
+				0x09173F, 0x08F95D, 0x08F3DE, 0x08F3DD, 0x08D5E1, 0x04044E, 0x040435, 0x03F405, 0x03F3FD, 0x03F3FC, 0x03E606, 0x03E602, 0x03D0D1,
+				0x03C891, 0x03C88E, 0x03C709 };
+			static bool done = false;
+			if (done) return;
+			done = true;
+			int n = 0;
+			for (auto id : kWind) {
+				auto* f = RE::TESForm::LookupByID<RE::BGSSoundDescriptorForm>(id);
+				auto* sd = f && f->soundDescriptor ? skyrim_cast<RE::BGSStandardSoundDef*>(f->soundDescriptor) : nullptr;
+				if (!sd) continue;   // (a compound or other kind: left)
+				auto& ch = sd->soundCharacteristics;
+				ch.staticAttenuation = static_cast<std::uint16_t>(std::min(10000, ch.staticAttenuation + 1200));
+				++n;
+			}
+			logger::info("sound: {} wind sounds 12 dB quieter", n);
+		}
+		// (Noah: "give the dance of death and dragon updraft shout a viewable model in the inventory like the other shouts in
+		// Skyrim") the Magic menu's model: Unrelenting Force's, the one every Skyrim shout shows
+		void ShoutLooks()
+		{
+			auto* uf = RE::TESForm::LookupByID<RE::TESShout>(0x013E07);
+			auto* look = uf ? uf->menuDispObject : nullptr;
+			if (!look) {
+				logger::warn("shouts: Unrelenting Force has no menu model - ours left bare");
+				return;
+			}
+			auto* dh = RE::TESDataHandler::GetSingleton();
+			int   n = 0;
+			for (auto id : { gen::kDanceShout, gen::kUpdraftShout }) {
+				if (auto* sh = dh->LookupForm<RE::TESShout>(id, gen::kPlugin); sh && !sh->menuDispObject) sh->menuDispObject = look, ++n;
+			}
+			logger::info("shouts: {} of ours given the shouts' menu model ({:08X})", n, look->GetFormID());
+		}
 		void TickDanceShout(float a_delta)
 		{
 			static float t = 0;
