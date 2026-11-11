@@ -93,7 +93,7 @@ _sid = [x['id'] for x in S['sounds']['rows']]
 _gs = lambda pre, w: str(_sid.index(pre + w.get('soundAs', w['id']))) if (pre + w.get('soundAs', w['id'])) in _sid else '-1'  # (the wonders borrow a spell's sounds: soundAs)
 k = S['melee']['rows'][0]
 effects = {'health': 0, 'magicka': 1, 'speed': 2, 'bounty': 3, 'last_stand': 4, 'essence': 5, 'shout_recovery': 6, 'summon_command': 7, 'summon_might': 8, 'bone_burst': 9,
-           'overflow': 10, 'dest_echo': 11, 'mana_font': 12, 'flask_radius': 13, 'flask_speed': 14, 'catalyst': 15, 'ss_bladesong': 16, 'ss_spellbind': 17, 'ss_spellguard': 18}
+           'overflow': 10, 'dest_echo': 11, 'mana_font': 12, 'flask_radius': 13, 'flask_speed': 14, 'catalyst': 15, 'ss_bladesong': 16, 'ss_spellbind': 17, 'ss_spellguard': 18, 'quick_revive': 19}
 P = S['perks']['rows']
 o.append('\tstruct PerkDef { std::string_view id, label; int cost, effect; float value; std::uint32_t mgefId, alchId; };')
 o.append(f'\tinline constexpr std::array<PerkDef, {len(P)}> kPerks{{ {{')
@@ -102,6 +102,7 @@ o.append('\t} };')
 for i, p in enumerate(P): o.append(f'\tinline constexpr int kPerk_{p["id"]} = {i};')
 o.append(f'\tinline constexpr std::array<std::string_view, {len(P)}> kPerkDesc{{ {{ {", ".join(cs(p["description"]) for p in P)} }} }};')
 o.append(f'\tinline constexpr int kMaxPerks = {S["perks"]["limits"]["maxPerks"]};')
+o.append('\tinline constexpr std::array<int, 4> kPerkSlotNights{ ' + ', '.join(str(n) for n in S['perks']['limits']['slotNights']) + ' };  // (the nights each perk slot opens)')
 _PCLS = {'': -1, 'summoner': 0, 'destruction': 1, 'alchemist': 2, 'spellsword': 3}
 o.append(f'\tinline constexpr std::array<int, {len(P)}> kPerkClass{{ {{ {", ".join(str(_PCLS[p.get("cls", "")]) for p in P)} }} }};  // the class a perk belongs to (-1: every class)')
 C = S['crew']['rows']; passives = {'gun_damage_mult': 0, 'bonus_health': 1, 'knife_damage_mult': 2, 'box_cost': 3}

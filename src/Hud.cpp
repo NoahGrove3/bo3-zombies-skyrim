@@ -1984,7 +1984,21 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					n += (s.perks >> i) & 1;
 				}
 				const float r = 19 * k, pg = 48 * k;
-				float       x = cx - (n - 1) * pg * 0.5f;
+				// (Noah: "the perk slots should be visible somewhere like maybe an outline of the perk icons greyed out and barely
+				// visible centered above the health bar") all four slots in the row: the held brews first, then the open slots as a
+				// faint outline, the locked ones fainter still
+				const int   slotsAll = gen::kMaxPerks, slotsOpen = std::clamp(s.perkSlots, 0, slotsAll);
+				{
+					const float py = y - 46 * k;
+					float       sx = cx - (std::max(n, slotsAll) - 1) * pg * 0.5f + n * pg;
+					for (int q = n; q < slotsAll; ++q, sx += pg) {
+						const bool open = q < slotsOpen;
+						dl->AddCircleFilled({ sx, py }, r + 5 * k, IM_COL32(8, 7, 9, open ? 70 : 35), 40);
+						dl->AddCircle({ sx, py }, r + 5 * k, Fade(kGoldDim, open ? 0.35f : 0.14f), 40, 1.2f * k);
+						dl->AddCircle({ sx, py }, r * 0.72f, Fade(kGoldDim, open ? 0.22f : 0.08f), 32, 1.0f * k);
+					}
+				}
+				float       x = cx - (std::max(n, slotsAll) - 1) * pg * 0.5f;
 				for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) {
 					if (!((s.perks >> i) & 1)) {
 						continue;
@@ -3025,7 +3039,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const auto perkMenu = Perks::Menu();
 				int perksOwned = 0;
 				for (int q = 0; q < static_cast<int>(gen::kPerks.size()) && q < static_cast<int>(s.perkStacks.size()); ++q) perksOwned += s.perkStacks[q] > 0 ? 1 : 0;  // (every brew you own takes a slot, another class's too)
-				if (section(212, "PERKS", fmt::format("{} of {} held", perksOwned, gen::kMaxPerks), false)) {
+				if (section(212, "PERKS", fmt::format("{} of {} held", perksOwned, s.perkSlots), false)) {
 					const auto& menu = perkMenu;  // (Noah: each class its own perks) the shared draughts, then your class's
 					const int  n = std::max(1, static_cast<int>(menu.size()));
 					const int  owned = perksOwned;
@@ -3033,9 +3047,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const auto& p = gen::kPerks[sel];
 					const int  have = s.perkStacks[sel];
 					focusRow(3, y - 6 * k, y + 36 * k + std::min(44 * k, (Rr - L) / n - 4 * k) + 12 * k + 72 * k);
-					bullet({ L, y + 2 * k }, 3, have > 0 || (s.points >= p.cost && owned < gen::kMaxPerks));
+					bullet({ L, y + 2 * k }, 3, have > 0 || (s.points >= p.cost && owned < s.perkSlots));
 					Txt(dl, g_title, 19 * k, { L + 36 * k, y + 3 * k }, kParch, "TAKE A PERK");
-					const std::string rule = owned >= gen::kMaxPerks ? "all slots full - refund one to take another" : "kept through death - refund for half";
+					const std::string rule = owned >= s.perkSlots ? (s.perkSlots < gen::kMaxPerks ? "all open slots full - more open with the nights" : "all slots full - refund one to take another") : "kept through death - refund for half";
 					Txt(dl, g_body, 16 * k, { Rr - Measure(g_body, 16 * k, rule).x, y + 6 * k }, IM_COL32(170, 156, 132, 220), rule);
 					y += 36 * k;
 					const float d = std::min(44 * k, (Rr - L) / n - 4 * k), gap = ((Rr - L) - d * n) / std::max(1, n - 1);

@@ -122,9 +122,9 @@
       "hpCapRound": 60,
       "hpGrowthAfterCap": 1.03,
       "skyrimHitShare": {
-        "melee": 0.2,
-        "bow": 0.3,
-        "spell": 0.12
+        "melee": 0.47,
+        "bow": 0.7,
+        "spell": 0.28
       },
       "chaseRelocateDist": 4000,
       "chaseRelocateSeconds": 3.0,
@@ -133,7 +133,8 @@
       "manaRegenPerSecond": 0.4,
       "manaRegenDelay": 3.0,
       "cycleMinutes": 25,
-      "dayMinutes": 20
+      "dayMinutes": 20,
+      "skyrimHitShareNote": "(Noah, 2026-11-11: \"2-3 hits\" - a common zombie on night 1 at Apprentice falls to 2-3 blows of the class weapon: melee 0.47 of a night's health x (0.7 + 0.3 x the altar's power, ~0.5 on night 1); bows and Skyrim's own spells raised alike)"
     }
   ]
 }

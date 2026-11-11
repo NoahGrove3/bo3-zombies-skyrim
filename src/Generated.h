@@ -1144,7 +1144,7 @@ namespace bo3z::gen
 	inline constexpr int kSpell_look_turnundead = 30;
 	inline constexpr int kSpell_look_deadthrall = 31;
 	struct PerkDef { std::string_view id, label; int cost, effect; float value; std::uint32_t mgefId, alchId; };
-	inline constexpr std::array<PerkDef, 19> kPerks{ {
+	inline constexpr std::array<PerkDef, 20> kPerks{ {
 		PerkDef{ "trollshide", "Troll's Hide Mead", 3000, 0, 50.0f, 0x800, 0x820 },
 		PerkDef{ "wellspring", "Wellspring Draught", 3000, 1, 50.0f, 0xE92, 0xEA3 },
 		PerkDef{ "stormrunner", "Stormrunner Brew", 3000, 2, 15.0f, 0xE93, 0xEA4 },
@@ -1164,6 +1164,7 @@ namespace bo3z::gen
 		PerkDef{ "bladesong", "Bladesong Mead", 3000, 16, 0.05f, 0xCC0, 0xCCB },
 		PerkDef{ "spellbinder", "Spellbinder's Draught", 3000, 17, 1.25f, 0xEA1, 0xEB2 },
 		PerkDef{ "spellguard", "Spellguard Ale", 3000, 18, 1.0f, 0xEA2, 0xEB3 },
+		PerkDef{ "quickrevive", "Quick Revive Draught", 3000, 19, 0.5f, 0xF13, 0xF14 },
 	} };
 	inline constexpr int kPerk_trollshide = 0;
 	inline constexpr int kPerk_wellspring = 1;
@@ -1184,9 +1185,11 @@ namespace bo3z::gen
 	inline constexpr int kPerk_bladesong = 16;
 	inline constexpr int kPerk_spellbinder = 17;
 	inline constexpr int kPerk_spellguard = 18;
-	inline constexpr std::array<std::string_view, 19> kPerkDesc{ { "+50 maximum health.", "+50 maximum magicka.", "You move 15% faster.", "Elites and mini-bosses give twice the Cursed Essence.", "Below 25% health, you take 25% less damage.", "+15% Cursed Essence from kills.", "Your shouts recharge 25% faster.", "You can have one more summon out at a time.", "Your summons deal 25% more damage.", "When one of your summons dies it explodes, hurting the enemies around it.", "Every 3rd Destruction spell you cast is free.", "Enemies you kill with Destruction spells explode, hurting the enemies around them.", "Your magicka refills 40% faster.", "Your flasks' bursts reach 25% wider.", "You throw your flasks 25% faster.", "Enemies hit by one of your flasks take 15% more damage for 5 seconds.", "Each melee hit you land on an enemy heals you 5% of your maximum health.", "The spell carried on your blade hits 25% harder.", "Blocking costs no stamina." } };
-	inline constexpr int kMaxPerks = 5;
-	inline constexpr std::array<int, 19> kPerkClass{ { -1, -1, -1, -1, -1, -1, -1, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3 } };  // the class a perk belongs to (-1: every class)
+	inline constexpr int kPerk_quickrevive = 19;
+	inline constexpr std::array<std::string_view, 20> kPerkDesc{ { "+50 maximum health.", "+50 maximum magicka.", "You move 15% faster.", "Elites and mini-bosses give twice the Cursed Essence.", "Below 25% health, you take 25% less damage.", "+15% Cursed Essence from kills.", "Your shouts recharge 25% faster.", "You can have one more summon out at a time.", "Your summons deal 25% more damage.", "When one of your summons dies it explodes, hurting the enemies around it.", "Every 3rd Destruction spell you cast is free.", "Enemies you kill with Destruction spells explode, hurting the enemies around them.", "Your magicka refills 40% faster.", "Your flasks' bursts reach 25% wider.", "You throw your flasks 25% faster.", "Enemies hit by one of your flasks take 15% more damage for 5 seconds.", "Each melee hit you land on an enemy heals you 5% of your maximum health.", "The spell carried on your blade hits 25% harder.", "Blocking costs no stamina.", "Revive friends twice as fast. Fall once and you rise where you stand - the draught is spent and its slot opens again." } };
+	inline constexpr int kMaxPerks = 4;
+	inline constexpr std::array<int, 4> kPerkSlotNights{ 3, 7, 12, 18 };  // (the nights each perk slot opens)
+	inline constexpr std::array<int, 20> kPerkClass{ { -1, -1, -1, -1, -1, -1, -1, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, -1 } };  // the class a perk belongs to (-1: every class)
 	inline constexpr std::string_view kText_mode = "The Curse of Alduin";
 	inline constexpr std::string_view kText_tagline = "Every night the dead rise. Every night, more of them.";
 	inline constexpr std::string_view kText_box = "The Echo Altar";
@@ -1238,7 +1241,7 @@ namespace bo3z::gen
 	inline constexpr std::array<std::uint32_t, 3> kDanceWords{ { 0xCF1, 0xCF3, 0xCF5 } }, kDanceSpells{ { 0xCF2, 0xCF4, 0xCF6 } };
 	inline constexpr float kSkullScale = 0.3f;
 	inline constexpr float kShowRise = 45.0f, kShowSpin = 4.2f, kShowOffer = 12.0f;
-	inline constexpr std::array<std::uint32_t, 19> kPerkColor{ { 0xD02020FF, 0x3A6BFFFF, 0x8FE0FFFF, 0xE0B040FF, 0xA01818FF, 0xFFD24AFF, 0xC04020FF, 0x9A6BFFFF, 0x7A4BDFFF, 0xD8D0C0FF, 0xFF8A30FF, 0xFF5A20FF, 0x4A8BFFFF, 0x7CFF3CFF, 0xB0FF70FF, 0x50D0A0FF, 0xB4C8FFFF, 0x6080FFFF, 0xC0C8D8FF } };
+	inline constexpr std::array<std::uint32_t, 20> kPerkColor{ { 0xD02020FF, 0x3A6BFFFF, 0x8FE0FFFF, 0xE0B040FF, 0xA01818FF, 0xFFD24AFF, 0xC04020FF, 0x9A6BFFFF, 0x7A4BDFFF, 0xD8D0C0FF, 0xFF8A30FF, 0xFF5A20FF, 0x4A8BFFFF, 0x7CFF3CFF, 0xB0FF70FF, 0x50D0A0FF, 0xB4C8FFFF, 0x6080FFFF, 0xC0C8D8FF, 0x6EC8FFFF } };
 	inline constexpr std::array<std::string_view, 10> kTowns{ { "Riverwood", "Whiterun", "Solitude", "Windhelm", "Markarth", "Riften", "Falkreath", "Morthal", "Dawnstar", "Winterhold" } };
 	struct SlotDef { float x, y, faceDeg; };
 	inline constexpr std::array<SlotDef, 8> kSlots{ { SlotDef{ 0.0f, 0.0f, 0.0f }, SlotDef{ 175.0f, 0.0f, 90.0f }, SlotDef{ 0.0f, 0.0f, 180.0f }, SlotDef{ 0.0f, 175.0f, 0.0f }, SlotDef{ -200.0f, -120.0f, 180.0f }, SlotDef{ 200.0f, -120.0f, 180.0f }, SlotDef{ 0.0f, -150.0f, 180.0f }, SlotDef{ -175.0f, 0.0f, 270.0f } } };
@@ -1418,7 +1421,7 @@ namespace bo3z::gen
 	inline constexpr std::uint32_t kKey2_crew3 = 4;
 	inline constexpr std::uint32_t kKey2_crew4 = 5;
 	inline constexpr std::uint32_t kKey2_confirm = 28;
-	inline constexpr float kHpCapRound = 60.0f, kHpGrowthAfterCap = 1.03f, kShareMelee = 0.2f, kShareBow = 0.3f, kShareSpell = 0.12f;
+	inline constexpr float kHpCapRound = 60.0f, kHpGrowthAfterCap = 1.03f, kShareMelee = 0.47f, kShareBow = 0.7f, kShareSpell = 0.28f;
 	namespace boss { inline constexpr float spawnDelay = 10.0f; inline constexpr float healthMult = 30.0f; inline constexpr float minHealth = 18000.0f; inline constexpr float breathEvery = 9.0f; inline constexpr float breathRange = 1400.0f; inline constexpr float roarEvery = 12.0f; inline constexpr float roarRange = 1800.0f; inline constexpr float summonEvery = 22.0f; inline constexpr float summonCount = 5.0f; inline constexpr float stepEvery = 26.0f; inline constexpr float slamEvery = 5.0f; inline constexpr float slamRange = 260.0f; inline constexpr float slamDamage = 0.18f; inline constexpr float enrageAt = 0.5f; inline constexpr float enrageSpeed = 35.0f; inline constexpr float enrageCooldownMult = 0.65f; inline constexpr float comboEvery = 6.0f; inline constexpr float clawHit = 0.05f; inline constexpr float clawLast = 0.1f; inline constexpr float leapDamage = 0.14f; inline constexpr float eruptionDamage = 0.08f; inline constexpr float breathStrength = 0.45f; inline constexpr float meleeShare = 0.14f; inline constexpr float killPoints = 2875.0f; }
 	inline constexpr int kForgeMax = 3; inline constexpr float kForgeStep = 0.6f;
 	inline constexpr std::array<int, 3> kForgeCost{ { 5000, 8000, 12000 } };

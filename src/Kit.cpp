@@ -166,6 +166,7 @@ namespace bo3z::Kit
 			return static_cast<int>(std::lround(base * Director::PriceScale() / 50.0f)) * 50;   // (Noah, the essence economy: 3% more a night after night 10)
 		}
 		int UpgradeGate(int a_next) { return a_next <= 1 ? 0 : a_next == 2 ? 2 : a_next == 3 ? 4 : 6; }
+		int NightNow() { return Save::Get(gen::kAV_round) + 1; }
 		constexpr int kMaxTier = 3 + 10;  // (ten Ascends at most)
 		int ArmoryCost(int a_at)
 		{
@@ -352,6 +353,9 @@ namespace bo3z::Kit
 				if (freed < gate && !Testing()) {
 					l.info = fmt::format("{} - next at {} cities freed ({} of {})", TierLabel(t), gate, freed, gate);
 					l.cost = -1;
+				} else if (NightLocked(next)) {
+					l.info = fmt::format("{} - next opens on night {}", TierLabel(t), NightGate(next));
+					l.cost = -1;
 				} else {
 					l.info = std::string(TierLabel(t)) + "  ->  " + (next <= 3 ? std::string(TierLabel(next)) : "Ascend " + std::to_string(next - 3));
 					l.can = pts >= l.cost;
@@ -377,6 +381,11 @@ namespace bo3z::Kit
 		}
 		a_h.armorBonus = ArmorResist();
 	}
+
+	// (Noah, 2026-11-11: "more powerful weapons aren't able to be obtained before a certain amount of nights survived";
+	// "Slower") Tier I from night 3, Tier II from 7, Tier III from 12, an Ascend from 18 - the altar's spells alike
+	int NightGate(int a_next) { return a_next <= 0 ? 0 : a_next == 1 ? 3 : a_next == 2 ? 7 : a_next == 3 ? 12 : 18; }
+	bool NightLocked(int a_next) { return !Testing() && NightNow() < NightGate(a_next); }
 
 	bool Select(int a_id, RE::TESObjectREFR* a_altar)
 	{
@@ -412,6 +421,10 @@ namespace bo3z::Kit
 		if (t >= kMaxTier) { Hud::Banner(ItemName(c, item) + " has ascended as far as it goes", 2.5f); return false; }
 		if (freed < UpgradeGate(t + 1) && !Testing()) {
 			Hud::Banner(fmt::format("{}'s next tier waits for {} cities freed ({} of {})", ItemName(c, item), UpgradeGate(t + 1), freed, UpgradeGate(t + 1)), 3.0f);
+			return false;
+		}
+		if (NightLocked(t + 1)) {
+			Hud::Banner(fmt::format("{}'s {} opens on night {} (tonight is night {})", ItemName(c, item), t + 1 <= 3 ? std::string(TierLabel(t + 1)) : std::string("next Ascend"), NightGate(t + 1), NightNow()), 3.0f);
 			return false;
 		}
 		if (ItemMenusOpen() || !Points::Spend(UpgradeCost(t + 1))) return false;
@@ -454,7 +467,7 @@ namespace bo3z::Kit
 		for (int i = 0; i < static_cast<int>(defs.size()); ++i) {
 			if (!(st.owned >> i & 1) || defs[i].at >= kGone) continue;
 			const int t = ItemTier(c, i);
-			if (t < 0 || t >= kMaxTier || (freed < UpgradeGate(t + 1) && !Testing())) continue;
+			if (t < 0 || t >= kMaxTier || (freed < UpgradeGate(t + 1) && !Testing()) || NightLocked(t + 1)) continue;
 			if (low < 0 || t < ItemTier(c, low)) low = i;
 		}
 		if (low >= 0) {

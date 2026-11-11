@@ -235,7 +235,8 @@ namespace bo3z::Tablet
 		// never the one you already carry
 		int Pick()
 		{
-			const bool battered = std::uniform_int_distribution<int>(0, 99)(g_rng) < 15;
+			// (Noah: "Tablet worn weapons from night 4, battered from night 8") before night 8 only the worn
+			const bool battered = (Gun::TestKitOn() || Save::Get(gen::kAV_round) + 1 >= 8) && std::uniform_int_distribution<int>(0, 99)(g_rng) < 15;
 			std::vector<int> pool;
 			for (int i = 0; i < static_cast<int>(gen::kTabletWeapons.size()); ++i) {
 				if (gen::kTabletWeapons[i].battered == battered && i != g_held) pool.push_back(i);
@@ -362,6 +363,10 @@ namespace bo3z::Tablet
 			Forms::PlayAt(gen::Sound::forge_upgrade, a_ref);
 			Hud::Banner(std::string(d.label) + "  -  mended  (next: " + Num(Price()) + ")", 3.0f);
 			logger::info("tablet: {} mended for {}", d.id, price);
+			return;
+		}
+		if (const int night = Save::Get(gen::kAV_round) + 1; night < 4 && !Gun::TestKitOn()) {  // (Noah: the tablet's rolls wait for night 4)
+			Hud::Banner("The tablet is dormant - it wakes on night 4 (tonight is night " + std::to_string(night) + ")", 2.5f);
 			return;
 		}
 		if (!Points::Spend(price)) { Hud::Banner("The tablet asks " + Num(price) + " Cursed Essence", 2.0f); return; }

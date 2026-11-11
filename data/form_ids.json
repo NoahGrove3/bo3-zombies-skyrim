@@ -1811,6 +1811,8 @@
   "ENCH:vae_gold_iceblue": "0xf0f",
   "MGEF:soulcall": "0xf10",
   "ENCH:soulcaller": "0xf11",
-  "WEAP:soulcaller": "0xf12"
+  "WEAP:soulcaller": "0xf12",
+  "MGEF:quickrevive": "0xf13",
+  "ALCH:quickrevive": "0xf14"
  }
 }

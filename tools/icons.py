@@ -143,6 +143,12 @@ DRAW.update({'wellspring': mammoth, 'stormrunner': windrunner, 'bountyhunter': e
              'emberecho': emberheart, 'manafont': hawkeye, 'volatile': splitshot, 'quickhand': steelwind, 'catalyst': siphon,
              'spellbinder': spellbind, 'spellguard': frostbite})
 
+def quickrevive(d):  # a heart with a rising arrow through it: back on your feet
+    d.polygon(P((.5, .8), (.24, .54), (.22, .4), (.3, .3), (.42, .3), (.5, .4), (.58, .3), (.7, .3), (.78, .4), (.76, .54)), outline=W, width=18)
+    d.line(P((.5, .7), (.5, .2)), fill=W, width=16)
+    d.polygon(P((.5, .1), (.62, .26), (.38, .26)), fill=W)
+DRAW['quickrevive'] = quickrevive
+
 def medallion(color, glyph):
     """Dark fantasy medallion: hammered black iron, a bronze rim chased with knotwork dots, the perk's sigil cut
     into the face and burning with its colour."""

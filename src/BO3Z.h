@@ -858,12 +858,16 @@ namespace bo3z
 		bool Grant(int a_perk);    // bought: applied at once (one of each)
 		bool Refund(int a_perk);   // given back at the altar: off you, half its price back
 		int  RefundOtherClasses(int a_keep);  // (a class switch) the other classes' brews off you, half their price back; the shared ones stay
+		int  SlotsNow();        // the perk slots open tonight (the nights open them: gen::kPerkSlotNights)
+		int  NextSlotNight();   // the night the next opens (0: all open)
 		std::vector<std::uint8_t> TakeAll();                         // (a class left) its brews off you
 		void                      GiveBack(const std::vector<std::uint8_t>& a_stacks);  // (a class taken up again) back on
 		void OnZombieHit(RE::Actor* a_zombie);  // a round zombie hit the player
 		float SinceZombieHit(RE::FormID a_zombie);  // seconds since this one's blow last landed (large: never)
 		void Tick();
 		bool SelfRevive();         // just risen: a killing blow is caught for a moment
+		bool QuickRevive();        // (Quick Revive Draught) a fall caught once: up where you stand, the draught spent
+		float ReviveSecondsMult(); // (Quick Revive Draught) reviving a friend takes half as long
 		void SelfHit();            // your own spell hit you: what it took is given back
 		void RearmAfterLoad();     // a moment after a load: the first-person hands rebuilt
 		void DamagePlayer(float a_amount);
@@ -1046,6 +1050,7 @@ namespace bo3z
 			std::string styleTag;         // a style bonus ("+40 MULTI-KILL") by the septims
 			float       styleTime{ 0 };
 			std::uint32_t perks{ 0 };    // bitmask
+			int           perkSlots{ 4 };   // the slots open tonight (the rest shown faint, locked)
 			std::array<int, 32> perkStacks{};  // how many of each blessing (they stack)
 			float       countdown{ 0 };  // seconds until the next night starts (0 = none)
 			float       hp{ 0 }, hpMax{ 0 }, mp{ 0 }, mpMax{ 0 }, sp{ 0 }, spMax{ 0 };
@@ -1216,6 +1221,8 @@ namespace bo3z
 		void  Fill(Hud::State& a_h);              // the altar's lines (under the Hud lock)
 		std::vector<int> Rows();                  // the altar's rows for the kit (their ids, in order: kit, Armory)
 		bool  Select(int a_id, RE::TESObjectREFR* a_altar);  // a kit row taken: upgrade (or take it out of the chest); an Armory row: buy
+		int   NightGate(int a_next);              // the night a tier opens (1 Tier I: 3, 2: 7, 3 Legendary: 12, 4+ Ascend: 18)
+		bool  NightLocked(int a_next);            // that tier not yet open tonight (the test kit: never)
 		void  OnPriestSlain();                    // a Dragon Priest fell: 3,000 Essence
 		int   Tier(int a_item);                   // its upgrades (0 Base .. 3 Legendary, then Ascends); -1 not owned
 		int   TierOfWeapon(const RE::TESForm* a_w);   // a kit weapon's upgrades (-1: not one)

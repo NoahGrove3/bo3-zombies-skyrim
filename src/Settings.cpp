@@ -245,7 +245,9 @@ namespace bo3z::Settings
 		// (Noah: "Novice very easy, Apprentice easy, Adept normal, Expert hard, Master very hard, Legendary almost
 		// impossible") the dead's health; and as your gear climbs the one upgrade curve (x6.5 at three upgrades) the dead
 		// hold on with your progress: 30% more for each Echo Altar freed (to ten)
-		constexpr float kUndeadHp[6] = { 0.5f, 0.75f, 1.0f, 1.5f, 2.2f, 3.2f };
+		// (Noah: "Novice very easy, Apprentice normal, Adept hard, Expert very hard, Master extremely hard, Legendary nearly
+		// impossible" - his table: enemy health 0.6 / 1 / 1.4 / 1.9 / 2.6 / 3.5)
+		constexpr float kUndeadHp[6] = { 0.6f, 1.0f, 1.4f, 1.9f, 2.6f, 3.5f };
 	}
 
 	float Brightness() { Ensure(); return g_bright; }

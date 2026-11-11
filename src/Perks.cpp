@@ -154,6 +154,22 @@ namespace bo3z
 		// (Noah: "When switching from one class to another, if perks were bought on the class that's being switched out for,
 		// it should automatically refund those perks ... and 3 slots opened ... The universal perks stay though"; at half
 		// price, like a refund by hand) every class brew not of the class you take up comes off you, half its price back
+		// (Noah: "more powerful weapons aren't able to be obtained before a certain amount of nights" - the perks' share: "more slots
+		// each step") the slots open with the nights: 1 at night 3, 2 at 7, 3 at 12, 4 at 18 (the test kit: all)
+		int SlotsNow()
+		{
+			if (Gun::TestKitOn()) return gen::kMaxPerks;
+			const int night = Save::Get(gen::kAV_round) + 1;
+			int n = 0;
+			for (const int at : gen::kPerkSlotNights) n += night >= at ? 1 : 0;
+			return std::min(n, gen::kMaxPerks);
+		}
+		int NextSlotNight()
+		{
+			const int night = Save::Get(gen::kAV_round) + 1;
+			for (const int at : gen::kPerkSlotNights) if (night < at) return at;
+			return 0;
+		}
 		int RefundOtherClasses(int a_keep)
 		{
 			int n = 0, back = 0;
@@ -310,6 +326,25 @@ namespace bo3z
 			a_player->NotifyAnimationGraph("bleedOutStop");
 			a_player->NotifyAnimationGraph("IdleForceDefaultState");
 		}
+		// (Noah: Quick Revive - "gives the player one life if killed they will be revived one time"; "It's used up") the blow
+		// that would have felled you is caught: you are up where you stand, whole, kept on your feet a moment; the draught is
+		// spent and its slot opens again
+		bool QuickRevive()
+		{
+			auto* pl = RE::PlayerCharacter::GetSingleton();
+			if (!pl || pl->IsDead() || !Live(gen::kPerk_quickrevive)) return false;
+			Save::SetPerkStacks(gen::kPerk_quickrevive, 0);
+			g_grace = 3.0f;
+			Stand(pl);
+			auto* av = pl->AsActorValueOwner();
+			av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth));
+			av->RestoreActorValue(RE::ActorValue::kStamina, av->GetPermanentActorValue(RE::ActorValue::kStamina));
+			Forms::Play(gen::Sound::drink);
+			Hud::Banner("QUICK REVIVE  -  back on your feet (the draught is spent: its slot is open)", 4.0f);
+			logger::info("perk: quickrevive spent - a fall caught");
+			return true;
+		}
+		float ReviveSecondsMult() { return Live(gen::kPerk_quickrevive) ? 1.0f - gen::kPerks[gen::kPerk_quickrevive].value : 1.0f; }
 		// your own spells never hurt you: a harmful effect you cast that lands on yourself is lifted at once, and a hit
 		// from your own blast gives back what it took (src/Events.cpp HitWatch calls SelfHit)
 		float g_lastHp = -1;
@@ -443,6 +478,7 @@ namespace bo3z
 			if (g_grace > 0) {
 				return;
 			}
+			if (QuickRevive()) return;  // (the killing blow, caught)
 			if (p->GetActorRuntimeData().boolFlags.any(RE::Actor::BOOL_FLAGS::kEssential)) {
 				av->DamageActorValue(RE::ActorValue::kHealth, std::max(0.0f, hp - 1.0f));  // (to the edge: the party's fall takes it from there)
 				return;

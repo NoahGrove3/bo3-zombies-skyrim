@@ -1596,8 +1596,10 @@ namespace bo3z
 			for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) {
 				held += Save::PerkStacks(i) > 0 ? 1 : 0;
 			}
-			if (held >= gen::kMaxPerks) {
-				Hud::Banner("Your perk slots are full (" + std::to_string(gen::kMaxPerks) + " of " + std::to_string(gen::kMaxPerks) + ")", 2.5f);
+			if (const int slots = Perks::SlotsNow(); held >= slots) {
+				if (slots < gen::kMaxPerks && Perks::NextSlotNight() > 0) Hud::Banner(slots == 0 ? fmt::format("Your first perk slot opens on night {}", Perks::NextSlotNight())
+					: fmt::format("Your perk slots are full ({} of {}) - another opens on night {}", held, slots, Perks::NextSlotNight()), 3.0f);
+				else Hud::Banner("Your perk slots are full (" + std::to_string(slots) + " of " + std::to_string(slots) + ")", 2.5f);
 				return;
 			}
 			if (!Points::Spend(gen::kPerks[perk].cost)) {

@@ -345,7 +345,9 @@ namespace bo3z::Party
 			if (g_soloT < 0.0f) {
 				// (Helgen's own hold, and the grace after rising, see to a fall themselves)
 				if (!Save::Flag(Save::kFlagMoved) || Perks::SelfRevive()) return;
-				if (hp <= 1.0f || p->AsActorState()->IsBleedingOut()) SoloFall(p);
+				if (hp <= 1.0f || p->AsActorState()->IsBleedingOut()) {
+					if (!Perks::QuickRevive()) SoloFall(p);
+				}
 				return;
 			}
 			// (real seconds: the slowed world doesn't slow the screen)
@@ -479,7 +481,7 @@ namespace bo3z::Party
 		// fallen: zero health (Skyrim holds an essential player in bleedout instead of killing them)
 		auto*       av = p->AsActorValueOwner();
 		const float hp = av->GetActorValue(RE::ActorValue::kHealth);
-		if (g_life == Life::Alive && (hp <= 1.0f || p->AsActorState()->IsBleedingOut())) {
+		if (g_life == Life::Alive && (hp <= 1.0f || p->AsActorState()->IsBleedingOut()) && !Perks::SelfRevive() && !Perks::QuickRevive()) {
 			g_life = Life::Down, g_left = kDownSeconds;
 			Tablet::OnFell();   // (Noah: the donated weapon is lost if you fall)
 			// ("YOU ARE DOWN" is on the screen itself)
@@ -567,7 +569,7 @@ namespace bo3z::Party
 			if (nearId != g_reviveWho) {
 				g_reviveWho = nearId, g_reviveT = 0;
 			}
-			if ((g_reviveT += a_delta) >= kReviveSeconds) {
+			if ((g_reviveT += a_delta) >= kReviveSeconds * Perks::ReviveSecondsMult()) {  // (Quick Revive Draught: half as long)
 				g_outRevive.resize(8);
 				std::memcpy(g_outRevive.data(), &nearId, 8);
 				Hud::Banner("You revived " + g_remote[nearId].name, 2.5f);
@@ -642,7 +644,7 @@ namespace bo3z::Party
 		v.life = g_life;
 		v.left = g_left;
 		v.watching = g_watchName;
-		v.reviveFrac = g_reviveWho ? std::clamp(g_reviveT / kReviveSeconds, 0.0f, 1.0f) : -1.0f;
+		v.reviveFrac = g_reviveWho ? std::clamp(g_reviveT / (kReviveSeconds * Perks::ReviveSecondsMult()), 0.0f, 1.0f) : -1.0f;
 		if (g_reviveWho && g_remote.contains(g_reviveWho)) {
 			v.reviveName = g_remote[g_reviveWho].name;
 		}

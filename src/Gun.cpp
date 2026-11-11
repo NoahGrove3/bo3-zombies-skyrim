@@ -391,7 +391,7 @@ namespace bo3z
 			const auto  tid = a_target->GetFormID();
 			// (the difficulty reaches the night's dead through their health alone - Settings::UndeadHealthMult; Skyrim's
 			// own enemies take our scripted blows scaled by it here, as Skyrim scales yours)
-			float       damage = a_bo3Damage * Eggs::DamageMult() * Perks::TakenMult(a_target) * (Director::IsRoundUndead(a_target) ? 1.0f : Difficulty::Dealt()) / gen::kRounds.hpScale;  // (Catalyst Philter)
+			float       damage = a_bo3Damage * Eggs::DamageMult() * Perks::TakenMult(a_target) * Difficulty::Dealt() / gen::kRounds.hpScale;  // (Catalyst Philter)
 			if (!Director::IsRoundUndead(a_target)) {
 				// Skyrim's own enemies (bandits, draugr, dragons) are tuned to the player's level, not to the night: our
 				// weapons hit them like gear of your level would (half strength at level 1, full at 25, 1.5x at 50+).
@@ -3218,6 +3218,10 @@ namespace bo3z
 						Hud::Banner(name + " ascends once six Echo Altars are freed (" + std::to_string(freed) + " of 6)", 3.0f);
 						return false;
 					}
+					if (Kit::NightLocked(4)) {  // (Noah: the altar's spells on the kit's schedule - an Ascend from night 18)
+						Hud::Banner(name + " can ascend from night " + std::to_string(Kit::NightGate(4)), 3.0f);
+						return false;
+					}
 					if (const int have = Classes::Mastery(sp), want = Classes::MasteryNeed(sp); have < want) {
 						Hud::Banner(name + ": " + std::to_string(have) + " / " + std::to_string(want) + " kills with it before it can ascend", 3.0f);
 						return false;
@@ -3236,6 +3240,12 @@ namespace bo3z
 				const int need = Arcana::TierOf(next) >= 3 ? 6 : Arcana::RungOf(next) >= 3 ? 4 : 0;
 				if (freed < need && !TestKitOn()) {
 					Hud::Banner(std::string(Arcana::Name(next)) + " waits until " + std::to_string(need) + " Echo Altars are freed (" + std::to_string(freed) + " of " + std::to_string(need) + ")", 3.0f);
+					return false;
+				}
+				// (Noah: "Altar spell upgrades follow the same schedule") the second rung Tier I's night (3), the third Tier II's (7),
+				// a Legendary Tier III's (12)
+				if (const int tier = Arcana::TierOf(next) >= 3 ? 3 : Arcana::RungOf(next) >= 3 ? 2 : 1; Kit::NightLocked(tier)) {
+					Hud::Banner(std::string(Arcana::Name(next)) + " can be raised from night " + std::to_string(Kit::NightGate(tier)), 3.0f);
 					return false;
 				}
 				if (const int have = Classes::Mastery(sp), want = Classes::MasteryNeed(sp); have < want) {
@@ -3842,6 +3852,7 @@ namespace bo3z
 			auto& h = Hud::Edit();
 			h.points = Points::Get();
 			h.perks = Save::PerkBits();
+			h.perkSlots = Perks::SlotsNow();
 			for (int i = 0; i < static_cast<int>(gen::kPerks.size()) && i < 32; ++i) {
 				h.perkStacks[i] = Save::PerkStacks(i);
 			}
@@ -4136,8 +4147,14 @@ namespace bo3z::Difficulty
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		return p ? std::clamp(static_cast<int>(p->GetGameStatsData().difficulty), 0, 5) : 2;
 	}
-	float Dealt() { static constexpr float k[6] = { 1.4f, 1.2f, 1.0f, 0.9f, 0.8f, 0.7f }; return k[Level()]; }
-	float Taken() { static constexpr float k[6] = { 0.4f, 0.65f, 1.0f, 1.4f, 1.9f, 2.6f }; return Settings::FollowDifficulty() ? k[Level()] : 1.0f; }  // (the night's blows: the only place the difficulty touches them)
+	// (Noah: "the difficulty slider in the Skyrim settings should change everything in the game so it's consistent with the
+	// selected difficulty ... every weapon spell enemy boss elite ALL OF IT" - his table, Apprentice the normal one):
+	//                 Novice  Apprentice  Adept  Expert  Master  Legendary
+	// enemy health     0.6      1.0        1.4    1.9     2.6     3.5      (Settings::UndeadHealthMult, FoeToughness)
+	// their damage     0.5      1.0        1.4    1.9     2.6     3.5      (Taken; Skyrim's own foes: fDiffMultHPToPC*)
+	// your damage      1.5      1.0        0.9    0.8     0.7     0.6      (Dealt: every blow and spell of ours; Skyrim's own: fDiffMultHPByPC*)
+	float Dealt() { static constexpr float k[6] = { 1.5f, 1.0f, 0.9f, 0.8f, 0.7f, 0.6f }; return k[Level()]; }
+	float Taken() { static constexpr float k[6] = { 0.5f, 1.0f, 1.4f, 1.9f, 2.6f, 3.5f }; return Settings::FollowDifficulty() ? k[Level()] : 1.0f; }  // (the night's blows: the only place the difficulty touches them)
 	float Mana() { static constexpr float k[6] = { 0.8f, 0.9f, 1.0f, 1.08f, 1.16f, 1.25f }; return k[Level()]; }
 	int Freed()
 	{
@@ -4156,25 +4173,26 @@ namespace bo3z::Difficulty
 	{
 		// (Noah: the difficulty pass) Skyrim's own and the modded foes, against your altar gear: the same steps as the dead,
 		// and the same 30% more with each Echo Altar freed (your gear's upgrade curve)
-		static constexpr float k[6] = { 0.7f, 0.85f, 1.0f, 1.4f, 1.9f, 2.6f };
+		static constexpr float k[6] = { 0.6f, 1.0f, 1.4f, 1.9f, 2.6f, 3.5f };   // (Noah's table: enemy health)
 		return k[Level()] * (1.0f + 0.3f * static_cast<float>(std::min(Freed(), 10)));
 	}
 	// and how much harder they hit: Skyrim's own damage-to-you settings (each difficulty's) raised with your progress
 	void TickFoeDamage()
 	{
+		// (Noah's table replaces Skyrim's own difficulty steps) the damage Skyrim's own foes deal you, and that you deal them,
+		// set to the table - not Skyrim's 0.5x .. 3x on top of ours
 		static constexpr const char* kNames[6] = { "fDiffMultHPToPCVE", "fDiffMultHPToPCE", "fDiffMultHPToPCN", "fDiffMultHPToPCH", "fDiffMultHPToPCVH", "fDiffMultHPToPCL" };
-		static constexpr float       kExtra[6] = { 0.8f, 0.9f, 1.0f, 1.15f, 1.3f, 1.5f };  // (on Skyrim's own 0.5x .. 3x)
-		static float orig[6] = { -1, -1, -1, -1, -1, -1 };
+		static constexpr const char* kBy[6] = { "fDiffMultHPByPCVE", "fDiffMultHPByPCE", "fDiffMultHPByPCN", "fDiffMultHPByPCH", "fDiffMultHPByPCVH", "fDiffMultHPByPCL" };
+		static constexpr float       kTo[6] = { 0.5f, 1.0f, 1.4f, 1.9f, 2.6f, 3.5f };
+		static constexpr float       kByV[6] = { 1.5f, 1.0f, 0.9f, 0.8f, 0.7f, 0.6f };
 		static float applied = -1;
 		auto* gs = RE::GameSettingCollection::GetSingleton();
 		if (!gs) return;
 		const float prog = 1.0f + 0.06f * static_cast<float>(std::min(Freed(), 12));
 		if (std::abs(prog - applied) < 1e-3f) return;
 		for (int i = 0; i < 6; ++i) {
-			auto* st = gs->GetSetting(kNames[i]);
-			if (!st) continue;
-			if (orig[i] < 0) orig[i] = st->GetFloat();
-			st->data.f = orig[i] * kExtra[i] * prog;
+			if (auto* st = gs->GetSetting(kNames[i])) st->data.f = kTo[i] * prog;
+			if (auto* st = gs->GetSetting(kBy[i])) st->data.f = kByV[i];
 		}
 		if (applied < 0 || std::abs(prog - applied) > 1e-3f) logger::info("difficulty: Skyrim's foes hit x{:.2f} (on top of the difficulty's own), and hold x{:.2f} against your class's weapons", prog, FoeToughness());
 		applied = prog;

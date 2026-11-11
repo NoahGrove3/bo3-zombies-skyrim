@@ -812,10 +812,17 @@ namespace bo3z::Classes
 		}
 		out.push_back(fmt::format("<b>Echo Altars freed: {} of {}</b>{}", freed, gen::kTowns.size(), towns.empty() ? std::string(" - none yet. Start with Riverwood's altar.") : " (" + towns + ")."));
 		// (the consistency pass: every class was told of a Legendary row only the Summoner has) the forge's gates, as they are
-		out.push_back(fmt::format("Your kit's tiers (the Echo Altar): Tier I open. Tier II: {}. Tier III (Legendary): {}. Ascends: {}. Your armor set's damage reduction: +{:.0f}%.",
-			freed >= 2 ? std::string("<b>open</b>") : fmt::format("at 2 freed cities ({} to go)", 2 - freed),
-			freed >= 4 ? std::string("<b>open</b>") : fmt::format("at 4 freed cities ({} to go)", 4 - freed),
-			freed >= 6 ? std::string("<b>open</b>") : fmt::format("at 6 freed cities ({} to go)", 6 - freed), Kit::ArmorResist() * 100.0f));
+		// (Noah, 2026-11-11: the night locks) each tier also waits for its night: I from 3, II from 7, III from 12, Ascends from 18
+		const auto gate = [&](int a_tier, int a_cities) {
+			const bool c = freed >= a_cities, n = !Kit::NightLocked(a_tier);
+			if (c && n) return std::string("<b>open</b>");
+			std::string w;
+			if (!c) w = fmt::format("{} freed cities ({} to go)", a_cities, a_cities - freed);
+			if (!n) w += (w.empty() ? "" : " and ") + fmt::format("night {}", Kit::NightGate(a_tier));
+			return "at " + w;
+		};
+		out.push_back(fmt::format("Your kit's tiers (the Echo Altar): Tier I: {}. Tier II: {}. Tier III (Legendary): {}. Ascends: {}. Your armor set's damage reduction: +{:.0f}%. Perk slots open on nights 3, 7, 12 and 18 ({} of {} open).",
+			gate(1, 0), gate(2, 2), gate(3, 4), gate(4, 6), Kit::ArmorResist() * 100.0f, Perks::SlotsNow(), gen::kMaxPerks));
 		// the spells you carry: where each stands on its ladder, and the kills it still needs
 		bool any = false;
 		for (int i : Arcana::Carried()) {

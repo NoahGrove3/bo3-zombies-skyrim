@@ -241,9 +241,28 @@
       "description": "Blocking costs no stamina.",
       "color": "C0C8D8",
       "verify": []
+    },
+    {
+      "id": "quickrevive",
+      "label": "Quick Revive Draught",
+      "cls": "",
+      "cost": 3000,
+      "effect": "quick_revive",
+      "value": 0.5,
+      "potionModel": "Clutter\\Potions\\PotionHealthGreat.nif",
+      "description": "Revive friends twice as fast. Fall once and you rise where you stand - the draught is spent and its slot opens again.",
+      "color": "6EC8FF",
+      "verify": []
     }
   ],
   "limits": {
-    "maxPerks": 5
+    "maxPerks": 4,
+    "slotNights": [
+      3,
+      7,
+      12,
+      18
+    ],
+    "note": "(Noah, 2026-11-11: \"more slots each step\" - 1 slot from night 3, 2 from night 7, 3 from night 12, 4 from night 18; shown as faint outlines above the health bar)"
   }
 }
