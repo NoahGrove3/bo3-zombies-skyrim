@@ -171,9 +171,9 @@
         }
       },
       "assign": {
-        "subTypeDisplay": "Whip",
+        "subTypeDisplay": "Scythe",
         "iconSource": "skyui/icons_item_psychosteve.swf",
-        "iconLabel": "weapon_mace",
+        "iconLabel": "weapon_battleaxe",
         "iconColor": "#e8e8e8"
       }
     },
@@ -334,6 +334,86 @@
         "subTypeDisplay": "Quarterstaff",
         "iconSource": "skyui/icons_item_psychosteve.swf",
         "iconLabel": "weapon_staff",
+        "iconColor": "#e8e8e8"
+      }
+    },
+    {
+      "match": {
+        "formType": "Weapon",
+        "formId": {
+          "anyOf": [
+            "CurseOfAlduin.esp|EF0"
+          ]
+        }
+      },
+      "assign": {
+        "subTypeDisplay": "Scythe",
+        "iconSource": "skyui/icons_item_psychosteve.swf",
+        "iconLabel": "weapon_battleaxe",
+        "iconColor": "#e8e8e8"
+      }
+    },
+    {
+      "match": {
+        "formType": "Weapon",
+        "formId": {
+          "anyOf": [
+            "CurseOfAlduin.esp|EF1"
+          ]
+        }
+      },
+      "assign": {
+        "subTypeDisplay": "Scythe",
+        "iconSource": "skyui/icons_item_psychosteve.swf",
+        "iconLabel": "weapon_battleaxe",
+        "iconColor": "#e8e8e8"
+      }
+    },
+    {
+      "match": {
+        "formType": "Weapon",
+        "formId": {
+          "anyOf": [
+            "CurseOfAlduin.esp|EF2"
+          ]
+        }
+      },
+      "assign": {
+        "subTypeDisplay": "Scythe",
+        "iconSource": "skyui/icons_item_psychosteve.swf",
+        "iconLabel": "weapon_battleaxe",
+        "iconColor": "#e8e8e8"
+      }
+    },
+    {
+      "match": {
+        "formType": "Weapon",
+        "formId": {
+          "anyOf": [
+            "CurseOfAlduin.esp|EF3"
+          ]
+        }
+      },
+      "assign": {
+        "subTypeDisplay": "Scythe",
+        "iconSource": "skyui/icons_item_psychosteve.swf",
+        "iconLabel": "weapon_battleaxe",
+        "iconColor": "#e8e8e8"
+      }
+    },
+    {
+      "match": {
+        "formType": "Weapon",
+        "formId": {
+          "anyOf": [
+            "CurseOfAlduin.esp|E8F"
+          ]
+        }
+      },
+      "assign": {
+        "subTypeDisplay": "Scythe",
+        "iconSource": "skyui/icons_item_psychosteve.swf",
+        "iconLabel": "weapon_battleaxe",
         "iconColor": "#e8e8e8"
       }
     },
