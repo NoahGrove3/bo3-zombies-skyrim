@@ -3969,9 +3969,15 @@ namespace bo3z
 			static float t = 0;
 			if ((t += a_delta) < 5.0f) return;
 			t = 0;
+			if (Curse::Freed(2)) LearnDance(true);  // (2: Solitude)
+		}
+		// (Noah: "make sure the test kit has all the echo alter rewards like the shout dance of death") taught by Solitude's
+		// freeing, or by the test kit (quietly)
+		void LearnDance(bool a_announce)
+		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			auto* sh = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESShout>(gen::kDanceShout, gen::kPlugin);
-			if (!p || !sh || !Curse::Freed(2) || p->HasShout(sh)) return;  // (2: Solitude)
+			if (!p || !sh || p->HasShout(sh)) return;
 			for (auto w : gen::kDanceWords) {
 				if (auto* f = RE::TESDataHandler::GetSingleton()->LookupForm(w, gen::kPlugin)) {
 					Gun::Console(fmt::format("player.teachword {:08X}", f->GetFormID()));
@@ -3979,6 +3985,10 @@ namespace bo3z
 				}
 			}
 			p->AddShout(sh);
+			if (!a_announce) {
+				logger::info("testkit: Dance of Death");
+				return;
+			}
 			Forms::Play(gen::Sound::shout_learned);
 			Hud::Lore("DANCE OF DEATH", "The Bards of Solitude remember an old song the dead cannot resist. Shout it, and the Curse's dead within twenty paces dance for twenty seconds - unable to move or strike, and taking half again as much harm. Once a wave.", 12.0f);
 			logger::info("dance of death: learned");

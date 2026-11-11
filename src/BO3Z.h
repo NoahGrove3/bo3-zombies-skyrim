@@ -140,6 +140,7 @@ namespace bo3z
 
 	namespace Director
 	{
+		void LearnDance(bool a_announce);  // Dance of Death taught (Solitude freed, or the test kit)
 		void             Tick(float a_delta);
 		bool             Scouting();
 		bool             Rising(RE::Actor* a_actor);    // still climbing out of the ground (not to be fought yet)                     // (Noah) scout mode: flying, unhurt, no undead - arrows mark spawn points
