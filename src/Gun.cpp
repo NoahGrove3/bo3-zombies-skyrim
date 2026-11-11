@@ -1706,6 +1706,9 @@ namespace bo3z
 		std::vector<RE::Actor*> FoesNear(const RE::NiPoint3& a_at, float a_radius) { return Foes(a_at, a_radius); }
 		void HitShare(RE::Actor* a_target, float a_share) { if (a_target && !a_target->IsDead()) Damage(a_target, Director::RoundHealth() * gen::kRounds.hpScale * a_share, false, false, true); }
 		void Freeze(RE::Actor* a_target, float a_seconds) { if (a_target && !a_target->IsDead()) FreezeSolid(a_target, a_seconds); }
+		// (Noah: "the heavy attack for Sealbreaker doesn't do anything" - with Precision and MCO the hit's power-attack flag never
+		// came: no "(heavy)" in the log all night) a power attack told by the swing your body is making
+		bool PlayerPowerAttack() { auto* p = RE::PlayerCharacter::GetSingleton(); return p && PowerAttacking(p); }
 		void Singularity(const RE::NiPoint3& a_at, float a_radius, float a_crush, float a_share, bool a_dark)
 		{
 			g_zones.push_back({ a_dark ? 5 : 6, a_at, a_radius, a_crush + 0.5f, 0.0f, Director::RoundHealth() * gen::kRounds.hpScale * a_share, 0.0f, false, a_crush });
@@ -3271,6 +3274,11 @@ namespace bo3z
 					else if (up) Classes::WandButton(false);
 					return false;
 				}
+				if (!left && Tablet::StarWandInHand()) {   // (the Wandering Star: a wand, its stars while the attack is held)
+					if (down) Tablet::StarButton(true);
+					else if (up) Tablet::StarButton(false);
+					return false;
+				}
 				// (Noah: the Mutagen Staff "just like a quarter staff") swung as one; the block button held looses its beam
 				if (Classes::MutagenInHand()) {
 					if (left && down) Classes::MutagenBlock(true);
@@ -3499,27 +3507,30 @@ namespace bo3z
 			if (static int told = 0; told++ < 40) logger::info("priest weapon: {} struck {}{}", gen::kCityBosses[w].weaponName, a_t->GetName(), heavy ? " (heavy)" : "");
 			switch (w) {
 			case 0:   // (Noah) Vahlok's Jailor's Keyhammer: shackled in place 2 s; a power attack - chains yank the dead within 6 m together
-				ForAWhile(a_t, RE::ActorValue::kSpeedMult, -95.0f, 2.0f);
+				// (Noah: "the abilities also don't work for this weapon" - a speed taken off for a while is put back by the night's own
+				// pacing of the dead) held as a web holds them, which the night respects
+				Director::Web(a_t->GetPosition(), 45.0f, 2.0f, 97.0f, false);
+				LightningArc(pp + RE::NiPoint3{ 0, 0, 80.0f }, Chest(a_t), 0.0f);
 				ElemBurst(6, Chest(a_t), 0.4f, 0.0f, 0.5f);
 				if (heavy) {
 					for (auto* f : Foes(tp, 420.0f)) {
 						if (f == a_t) continue;
 						LightningArc(Chest(f), Chest(a_t), 0.0f);
 						Drag(f, tp);
-						ForAWhile(f, RE::ActorValue::kSpeedMult, -95.0f, 2.0f);
+						Tasks::Later(0.6f, [h = f->GetHandle()] { if (auto x = h.get(); x && !x->IsDead()) Director::Web(x->GetPosition(), 45.0f, 2.0f, 97.0f, false); });
 					}
 					BlastSound("lightmassive", tp, 0.8f);
 				}
 				break;
 			case 1:   // Nahkriin's Mistblade: blinded (slowed, their blows weak); heavy - a fog where they wander lost
-				ForAWhile(a_t, RE::ActorValue::kSpeedMult, -45.0f, 3.0f);
+				Director::Web(a_t->GetPosition(), 45.0f, 3.0f, 45.0f, false);
 				ForAWhile(a_t, RE::ActorValue::kAttackDamageMult, -0.5f, 3.0f);
 				// (Noah: you couldn't see it work) the blinded wrapped in pale mist while it lasts
 				if (auto* fx = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kHallGhostShader, gen::kPlugin)) a_t->ApplyEffectShader(fx, heavy ? 6.0f : 3.0f);
 				Motes(3, tp, 0.5f, 2.0f);
 				if (heavy) {
 					for (auto* f : Foes(tp, 600.0f)) {
-						ForAWhile(f, RE::ActorValue::kSpeedMult, -60.0f, 6.0f);
+						Director::Web(f->GetPosition(), 45.0f, 6.0f, 60.0f, false);
 						ForAWhile(f, RE::ActorValue::kAttackDamageMult, -0.6f, 6.0f);
 						if (auto* fx = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kHallGhostShader, gen::kPlugin)) f->ApplyEffectShader(fx, 6.0f);
 						f->StopCombat();
@@ -3528,17 +3539,28 @@ namespace bo3z
 					ElemBurst(3, tp, 1.4f, 0.0f, 1.0f);
 				}
 				break;
-			case 2: {   // Volsung's Windcutter: a wind slash flies on through the line; heavy - a dash through them
+			case 2: {   // (Noah) Volsung's Windcutter: "send gust blasts on light attack that stagger enemies and heavy attack is a larger
+				// gust blast that knocks enemies on the ground" - light: a gust 8 m on ahead; heavy: a wide cone of wind 12 m out
 				const auto from = pp + RE::NiPoint3{ 0, 0, 80.0f };
-				LineHurt(from, from + fwd * 650.0f, 60.0f, 0.3f);
-				ElemBurst(3, from + fwd * 400.0f, 0.6f, 0.0f, 0.5f);
-				if (heavy) {
-					const RE::NiPoint3 eye = pp + RE::NiPoint3{ 0, 0, 90.0f };
-					const float hit = Spellcraft::WorldHit(eye, eye + fwd * 520.0f);
-					const float d = std::max(0.0f, (hit <= 1.0f ? hit * 520.0f : 520.0f) - 60.0f);
-					LineHurt(eye, eye + fwd * d, 90.0f, 1.2f);
-					p->SetPosition(pp + fwd * d, true);
-					ElemBurst(3, pp + fwd * (d * 0.5f), 1.2f, 0.0f, 0.6f);
+				if (!heavy) {
+					for (auto* f : LineHurt(from, from + fwd * 560.0f, 110.0f, 0.3f)) Stagger(f, 0.6f);
+					for (int k = 1; k <= 3; ++k) ElemBurst(3, from + fwd * (140.0f * k), 0.5f + 0.15f * k, 0.06f * k, 0.5f);
+					BlastSound("light", pp + fwd * 300.0f, 0.4f);
+				} else {
+					for (auto* f : Foes(pp, 840.0f)) {
+						RE::NiPoint3 off = f->GetPosition() - pp; off.z = 0;
+						const float len = off.Length();
+						if (len < 1.0f || (off.x * fwd.x + off.y * fwd.y) / len < 0.5f) continue;   // (a cone about 120 degrees wide ahead of you)
+						AreaHurt(f->GetPosition(), 40.0f, 0.6f, "");
+						Spellcraft::Fling(f, pp, 3.0f);
+					}
+					for (int k = 1; k <= 5; ++k) {
+						ElemBurst(3, from + fwd * (160.0f * k), 0.8f + 0.25f * k, 0.05f * k, 0.6f);
+						const RE::NiPoint3 side{ -fwd.y, fwd.x, 0.0f };
+						ElemBurst(3, from + fwd * (150.0f * k) + side * (70.0f * k), 0.6f + 0.2f * k, 0.05f * k, 0.6f);
+						ElemBurst(3, from + fwd * (150.0f * k) - side * (70.0f * k), 0.6f + 0.2f * k, 0.05f * k, 0.6f);
+					}
+					BlastSound("lightmassive", pp + fwd * 400.0f, 0.8f);
 				}
 				break;
 			}
@@ -3606,7 +3628,7 @@ namespace bo3z
 				if (heavy) {
 					for (auto* f : Foes(pp, 700.0f)) {
 						ForAWhile(f, RE::ActorValue::kAttackDamageMult, -0.4f, 8.0f);
-						ForAWhile(f, RE::ActorValue::kSpeedMult, -30.0f, 8.0f);
+						Director::Web(f->GetPosition(), 45.0f, 8.0f, 30.0f, false);
 						ForAWhile(f, RE::ActorValue::kDamageResist, -150.0f, 8.0f);
 					}
 					ElemBurst(4, pp + RE::NiPoint3{ 0, 0, 60.0f }, 1.6f, 0.0f, 0.8f);
@@ -3623,12 +3645,15 @@ namespace bo3z
 				}
 				break;
 			case 8:   // (Noah) Vokun's Nightcaller's Scythe: asleep 1.5 s; a power sweep - a nightmare fog: the dead in it slowed and lost 6 s
-				Sleep(a_t, 1.5f);
+				// (Noah: "the night caller scythe abilities don't work" - Paralysis set by hand lays no one down) held where they
+				// stand, as a web holds them, wrapped in the dream's pale mist
+				Director::Web(a_t->GetPosition(), 45.0f, 1.5f, 97.0f, false);
+				if (auto* fx = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kHallGhostShader, gen::kPlugin)) a_t->ApplyEffectShader(fx, 1.5f);
 				Motes(6, tp, 0.5f, 2.0f);
 				if (heavy) {
 					const RE::NiPoint3 at = pp + fwd * 200.0f;
 					for (auto* f : Foes(at, 420.0f)) {
-						ForAWhile(f, RE::ActorValue::kSpeedMult, -60.0f, 6.0f);
+						Director::Web(f->GetPosition(), 45.0f, 6.0f, 60.0f, false);
 						ForAWhile(f, RE::ActorValue::kAttackDamageMult, -0.5f, 6.0f);
 						if (auto* fx = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kHallGhostShader, gen::kPlugin)) f->ApplyEffectShader(fx, 6.0f);
 						f->StopCombat();
@@ -3638,8 +3663,13 @@ namespace bo3z
 				}
 				break;
 			case 9:   // Morokei's Arcane Maul: magic bursts where it strikes; heavy - a magicka shockwave
-				AreaHurt(tp, 160.0f, 0.35f, "");
-				ElemBurst(6, Chest(a_t), 0.6f, 0.0f, 0.5f);
+				// (Noah: "the arcane maul doesn't have any effect for light attack") a burst of arcane light you can see, and its
+				// sound, where it lands - the dead round it hurt and staggered
+				AreaHurt(tp, 200.0f, 0.35f, "");
+				QueueFx("CurseOfAlduin\\fx\\arcane_ring.nif", tp, 0.45f, 0.0f, 1.0f, true);
+				ElemBurst(6, Chest(a_t), 1.0f, 0.0f, 0.6f);
+				BlastSound("runeshock", tp, 0.5f);
+				for (auto* f : Foes(tp, 200.0f)) Stagger(f, 0.4f);
 				if (heavy) {
 					AreaHurt(pp, 600.0f, 1.5f, "");
 					QueueFx("CurseOfAlduin\\fx\\arcane_ring.nif", pp, 1.2f, 0.0f, 2.0f, true);

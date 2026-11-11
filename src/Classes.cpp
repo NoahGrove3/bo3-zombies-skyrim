@@ -2743,6 +2743,17 @@ namespace bo3z::Classes
 		}
 		return changed;
 	}
+	// (Noah: "the dragon slayer swords gold color animations aren't visible ... change this weapon to ... the glass katana" -
+	// "Yes, one-handed katana") the Dragon Slayer wears Animated Armoury's Glass Katana: its model, swings and reach; its gold
+	// dragonfire looks and powers its own
+	void SlayerLook()
+	{
+		auto* w = Slayer();
+		auto* f = Lookup(0x344731, "NewArmoury.esp");
+		auto* s = f ? f->As<RE::TESObjectWEAP>() : nullptr;
+		if (!w || !s) { logger::warn("classes: the Dragon Slayer's katana look not found (Animated Armoury's Glass Katana)"); return; }
+		if (AdoptLook(w, s)) logger::info("classes: the Dragon Slayer takes the look of {}", s->GetName());
+	}
 	// a weapon made a scythe: a model of Battle Scythe's, held and swung two-handed as a battleaxe, with our scythe keyword (the
 	// MCO scythe moveset's); any whip's keywords Animated Armoury left on it taken off
 	bool ScytheLook(RE::TESObjectWEAP* a_w, const char* a_model)
@@ -2793,8 +2804,9 @@ namespace bo3z::Classes
 		// (Noah: the whip out, a scythe in - "Forsworn -> Falmer -> Dwarven -> Glass -> Dragon Priest") Battle Scythe's models, read
 		// from the install, swung with the MCO scythe moveset (its DAR folders ask for our scythe keyword)
 		if (c == 2) {
-			static constexpr const char* kScythe[5] = { "BattleScythe\\forsworn\\BScythe.nif", "BattleScythe\\falmer\\BScythe.nif", "BattleScythe\\dwarven\\BScythe.nif",
-				"BattleScythe\\glass\\BScythe.nif", "BattleScythe\\dragonpriest\\BScythe.nif" };
+			// (Noah: "all scythes should be smaller" - 60%: tools/scythes.sh makes them on your machine from your own Battle Scythe)
+			static constexpr const char* kScythe[5] = { "CurseOfAlduin\\scythes\\forsworn.nif", "CurseOfAlduin\\scythes\\falmer.nif", "CurseOfAlduin\\scythes\\dwarven.nif",
+				"CurseOfAlduin\\scythes\\glass.nif", "CurseOfAlduin\\scythes\\dragonpriest.nif" };
 			const bool changed = ScytheLook(a_w, kScythe[std::clamp(a_tier, 0, 4)]);
 			if (changed) logger::info("classes: the {} takes the look of {}", a_w->GetName(), kScythe[std::clamp(a_tier, 0, 4)]);
 			return changed;
@@ -3265,9 +3277,9 @@ namespace bo3z::Classes
 				m->data.enchantEffectArt = from->data.enchantEffectArt;
 			}
 			int n = 0;
-			for (const auto& [id, c] : gen::kVaeWeapons) {
+			for (const auto& [id, en] : gen::kVaeWeapons) {
 				auto* w = dh->LookupForm<RE::TESObjectWEAP>(id, gen::kPlugin);
-				auto* e = dh->LookupForm<RE::EnchantmentItem>(gen::kVaeLooks[c].ench, gen::kPlugin);
+				auto* e = dh->LookupForm<RE::EnchantmentItem>(en, gen::kPlugin);
 				if (!w || !e) continue;
 				if (w->formEnchanting && w->formEnchanting != e) { logger::info("weapons: {} keeps its own enchantment", w->GetName()); continue; }
 				w->formEnchanting = e, w->amountofEnchantment = 0;
@@ -3893,30 +3905,20 @@ namespace bo3z::Classes
 		const bool ok = p && MutagenInHand() && !p->IsDead() && !ItemMenusOpen() && !(ui && ui->GameIsPaused());
 		if (!ok) { g_mq.block = false; MutagenBeamStop(); return; }
 		g_mq.cool = std::max(0.0f, g_mq.cool - a_delta);
-		if (g_mq.beam <= 0 && g_mq.block && g_mq.cool <= 0) {
+		MutagenBeamStop();   // (Noah: "remove the beam")
+		// (Noah: "when holding block it should be throwing the flasks from the center of the staff alternating through all of them" -
+		// "One every 0.5 s") block held: a flask every half second from the staff in your hands - fire, frost, storm, acid, holy
+		// water, void in turn
+		if (g_mq.block && g_mq.cool <= 0) {
 			if (g_class.load() != coffer::kAlchemist) {
 				Hud::QuestBanner("The Mutagen Staff answers only to an Alchemist", 2.0f);
 				g_mq.block = false;
 				return;
 			}
-			g_mq.beam = 2.0f, g_mq.beamEl = g_mq.el, g_mq.tick = 0, g_mq.burst = 0;   // a 2 s beam of the next vial
+			g_mq.cool = 0.5f;
+			const int el = g_mq.el;
 			g_mq.el = (g_mq.el + 1) % 6;
-			static constexpr const char* kSnd[6] = { "fireball", "frost", "runeshock", "poisongas", "light", "lightmassive" };
-			Gun::BlastSound(kSnd[g_mq.beamEl], MutagenTip(p), 0.8f);
-			Audio::At(gen::Sound::release_power, p, 0.9f);
-			logger::info("alchemist: the Mutagen Staff's beam - vial {}", g_mq.beamEl);
-		}
-		if (g_mq.beam > 0) {
-			g_mq.beam -= a_delta;
-			const int e = g_mq.beamEl;
-			const RE::NiPoint3 from = MutagenTip(p);
-			RE::NiPoint3 to;
-			if (Gun::StaffBeam(e, kGbWidth, from, to)) {
-				Audio::LoopAt(kMqLoop, gen::Sound::rite_hum, from, 0.9f);
-				if ((g_mq.tick -= a_delta) <= 0) { g_mq.tick = 0.2f; GbStrike(e, from, to, 0.2f); }   // (every one of the dead along it)
-				if ((g_mq.burst -= a_delta) <= 0) { g_mq.burst = 0.45f; Gun::ElemBurst(kFlaskBurst[e], to, 0.7f, 0.0f, 0.6f); }
-			}
-			if (g_mq.beam <= 0) { MutagenBeamStop(); g_mq.cool = 0.35f; }   // (held on: the next vial's beam after a breath)
+			ThrowFlaskEl(el, false);
 		}
 	}
 	// (Noah: "hold it in my left or right hand with an underhand throwing animation ... it should feel like a weapon") the

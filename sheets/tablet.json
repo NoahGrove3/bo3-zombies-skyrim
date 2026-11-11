@@ -153,17 +153,17 @@
       "id": "wanderstar",
       "label": "The Wandering Star",
       "grade": "battered",
-      "type": "battleaxe",
+      "type": "staff",
       "uses": 30,
       "model": "CurseOfAlduin\\tablet\\wanderstar.nif",
-      "power": "A dim star caught in a cage on a glass staff, swung as a quarterstaff. A heavy blow that lands lets it out to bounce between up to 8 of the dead.",
+      "power": "A wand of pale wood with a dim star caught at its tip. Hold its cast and it looses a star every half second, bouncing on through two more of the dead.",
       "owner": "Found at the bottom of the College's collapsed well.",
       "verify": [],
       "show": "CurseOfAlduin\\tablet\\wanderstar.nif",
       "gloves": [],
       "look": {
         "plugin": "Fulcimentum - More Staves and Wands of Skyrim.esp",
-        "id": "0x000808"
+        "id": "0x800"
       }
     },
     {
@@ -189,11 +189,11 @@
       "grade": "worn",
       "type": "scythe",
       "uses": 100,
-      "model": "BattleScythe\\silver\\BScythe.nif",
+      "model": "CurseOfAlduin\\scythes\\silver.nif",
       "power": "A plain scythe edged in silver, the kind the Vigilants carried. It cuts the dead deeper: every hit on one of the curse's dead strikes a quarter harder.",
       "owner": "Left at the Hall of the Vigilant after it burned.",
       "verify": [],
-      "show": "BattleScythe\\silver\\BScythe.nif",
+      "show": "CurseOfAlduin\\scythes\\silver.nif",
       "gloves": []
     },
     {
@@ -202,11 +202,11 @@
       "grade": "battered",
       "type": "scythe",
       "uses": 30,
-      "model": "BattleScythe\\Skeleton\\BScythe.nif",
+      "model": "CurseOfAlduin\\scythes\\Skeleton.nif",
       "power": "A scythe of bound skeletal hands. One kill in four raises the fallen to fight for you for 20 seconds.",
       "owner": "Dug out of a necromancer's grave outside Falkreath.",
       "verify": [],
-      "show": "BattleScythe\\Skeleton\\BScythe.nif",
+      "show": "CurseOfAlduin\\scythes\\Skeleton.nif",
       "gloves": []
     },
     {
@@ -215,11 +215,11 @@
       "grade": "worn",
       "type": "scythe",
       "uses": 100,
-      "model": "BattleScythe\\dragonTeeth\\BScythe.nif",
+      "model": "CurseOfAlduin\\scythes\\dragonTeeth.nif",
       "power": "A blade of dragon teeth on a black haft. Its hits make the dead bleed; a power sweep bursts teeth out of the ground in an arc ahead of you.",
       "owner": "Pulled from a dragon mound's bones.",
       "verify": [],
-      "show": "BattleScythe\\dragonTeeth\\BScythe.nif",
+      "show": "CurseOfAlduin\\scythes\\dragonTeeth.nif",
       "gloves": []
     },
     {
@@ -228,11 +228,11 @@
       "grade": "battered",
       "type": "scythe",
       "uses": 30,
-      "model": "BattleScythe\\vampire\\BScythe.nif",
+      "model": "CurseOfAlduin\\scythes\\vampire.nif",
       "power": "A Volkihar reaper's scythe. Every hit drains a little of the dead's blood into you; a power sweep drains everything it touches.",
       "owner": "Taken from a vampire lord who hunted the cursed for sport.",
       "verify": [],
-      "show": "BattleScythe\\vampire\\BScythe.nif",
+      "show": "CurseOfAlduin\\scythes\\vampire.nif",
       "gloves": []
     }
   ]

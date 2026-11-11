@@ -132,7 +132,7 @@ from esp_ids import VAE_COL as _VC, VAE_WEAP as _VW
 o.append('\tstruct VaeLook { std::uint32_t fx, ench, src; };  // a Visual Animated Enchants colour: our look-only effect and enchantment, and the mod\'s effect it copies')
 o.append(f'\tinline constexpr std::array<VaeLook, {len(_VC)}> kVaeLooks{{ {{ ' + ', '.join(f'VaeLook{{ 0x{IDS[("MGEF", "vae_" + c)]:03X}, 0x{IDS[("ENCH", "vae_" + c)]:03X}, 0x{v:06X} }}' for c, v in _VC.items()) + ' } };')
 _vcl = list(_VC)
-o.append(f'\tinline constexpr std::array<std::pair<std::uint32_t, int>, {len(_VW)}> kVaeWeapons{{ {{ ' + ', '.join(f'{{ 0x{IDS[("WEAP", k)]:03X}, {_vcl.index(c)} }}' for k, c in _VW.items()) + ' } };  // each melee weapon of ours: its colour')
+o.append(f'\tinline constexpr std::array<std::pair<std::uint32_t, std::uint32_t>, {len(_VW)}> kVaeWeapons{{ {{ ' + ', '.join(f'{{ 0x{IDS[("WEAP", k)]:03X}, 0x{IDS[("ENCH", "vae_" + c.replace("+", "_"))]:03X} }}' for k, c in _VW.items()) + ' } };  // each melee weapon of ours: its look\'s enchantment')
 o.append(f'\tinline constexpr std::uint32_t kScytheKeyword = 0x{IDS[("KYWD", "scythe")]:03X};  // (the scythes: the MCO scythe moveset asks for it)')
 o.append(f'\tinline constexpr std::uint32_t kDanceShout = 0x{IDS[("SHOU", "dance")]:03X}, kDanceSong = 0x{IDS[("SNDR", "dance_song")]:03X};  // (Noah) the Dance Of Death')
 o.append(f'\tinline constexpr std::array<std::uint32_t, 3> kDanceWords{{ {{ {", ".join("0x%03X" % IDS[("WOOP", f"dance_{n}")] for n in range(3))} }} }}, kDanceSpells{{ {{ {", ".join("0x%03X" % IDS[("SPEL", f"dance_{n}")] for n in range(3))} }} }};')
@@ -392,7 +392,7 @@ _KINDS = [('riftblade', 'Quarterstaff', 'weapon_staff'), ('carianblade', 'Wand',
           ('madness', 'Rapier', 'weapon_sword'), ('tab_stormtalons', 'Claws', 'weapon_dagger'), ('tab_talons', 'Claws', 'weapon_dagger'),
           ('tab_cinderclaws', 'Claws', 'weapon_dagger'), ('tab_wyrmspine', 'Pike', 'weapon_greatsword'), ('tab_frostmourn', 'Rapier', 'weapon_sword'),
           ('tab_eclipse', 'Pike', 'weapon_greatsword'), ('tab_lanternwick', 'Quarterstaff', 'weapon_staff'), ('tab_riverstone', 'Halberd', 'weapon_battleaxe'),
-          ('tab_wanderstar', 'Quarterstaff', 'weapon_staff'), ('tab_silverscythe', 'Scythe', 'weapon_battleaxe'), ('tab_bonereaper', 'Scythe', 'weapon_battleaxe'),
+          ('tab_wanderstar', 'Wand', 'weapon_staff'), ('tab_silverscythe', 'Scythe', 'weapon_battleaxe'), ('tab_bonereaper', 'Scythe', 'weapon_battleaxe'),
           ('tab_wyrmtooth', 'Scythe', 'weapon_battleaxe'), ('tab_bloodmoon', 'Scythe', 'weapon_battleaxe'), ('priest_vokun', 'Scythe', 'weapon_battleaxe')]
 for _k, _sub, _icon in _KINDS:
     if ('WEAP', _k) not in IDS: print('no WEAP', _k); continue

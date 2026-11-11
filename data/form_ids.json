@@ -1805,6 +1805,9 @@
   "MGEF:vae_fear": "0xf09",
   "ENCH:vae_fear": "0xf0a",
   "MGEF:vae_molag": "0xf0b",
-  "ENCH:vae_molag": "0xf0c"
+  "ENCH:vae_molag": "0xf0c",
+  "MGEF:vae_gold": "0xf0d",
+  "ENCH:vae_gold": "0xf0e",
+  "ENCH:vae_gold_iceblue": "0xf0f"
  }
 }

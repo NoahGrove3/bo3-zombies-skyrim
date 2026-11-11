@@ -403,6 +403,7 @@ namespace bo3z::Tablet
 		if (t == 7) mine = f->GetFormID() == a_spell;
 		else if (t == 5) if (auto* w = f->As<RE::TESObjectWEAP>(); w && w->formEnchanting && w->formEnchanting->GetFormID() == a_spell) mine = true;
 		if (!mine) return;
+		if (gen::kTabletWeapons[g_held].id == "wanderstar") return;   // (a wand now: its stars are loosed while the cast is held, TickStarWand)
 		CastPower();
 		if (Gun::TestKitOn()) return;   // (the test kit's: they never wear)
 		if (--g_uses <= 0) Break(); else Rename(g_held, g_uses);
@@ -523,16 +524,39 @@ namespace bo3z::Tablet
 			}, 4.0f, 500.0f);
 		}
 	}
+	namespace
+	{
+		// (Noah: "Wyrm spine spike heavy attack should be a shockwave that staggers enemies within 8 meters. Same heavy attack should
+		// be used on the wyrm tooth scythe") the ground struck: a ring of force out from you, the dead within 8 m staggered and hurt
+		void Shockwave(float a_share)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p) return;
+			const RE::NiPoint3 at = p->GetPosition();
+			Gun::FxBlast("giantslam", at);
+			Gun::Ring("white", at, 40.0f, 560.0f, 0.6f);
+			Gun::AreaHurt(at, 560.0f, a_share, "");
+			for (auto* o : Gun::FoesNear(at, 560.0f)) Gun::Knock(o, 1.0f);
+		}
+	}
 	void OnStrike(RE::Actor* a_target, RE::FormID a_source, bool a_power, bool a_arrow)
 	{
-		auto* f = FormOf(g_held);
-		auto* lt = LeftOf(g_held);
-		if (!a_target || !f || (f->GetFormID() != a_source && (!lt || lt->GetFormID() != a_source)) || !Director::IsFoe(a_target)) return;
+		// (Noah: "the storm lion talons don't do anything" - the test kit hands you every donated weapon, but only the one the
+		// tablet gave you was asked about) whichever donated weapon struck - the one held from the tablet, or any other
+		int held = -1;
+		for (int i = 0; i < static_cast<int>(gen::kTabletWeapons.size()) && held < 0; ++i) {
+			auto* fi = FormOf(i);
+			auto* li = LeftOf(i);
+			if ((fi && fi->GetFormID() == a_source) || (li && li->GetFormID() == a_source)) held = i;
+		}
+		if (held < 0) return;
+		auto* f = FormOf(held);
+		if (!a_target || !f || !Director::IsFoe(a_target)) return;
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		const float S = Share();
 		const RE::NiPoint3 tp = a_target->GetPosition();
-		const std::string_view id = gen::kTabletWeapons[g_held].id;
-		if (g_countFor != g_held) g_countFor = g_held, g_count = 0;   // (a new weapon counts afresh)
+		const std::string_view id = gen::kTabletWeapons[held].id;
+		if (g_countFor != held) g_countFor = held, g_count = 0;   // (a new weapon counts afresh)
 		++g_count;
 		if (id == "stormtalons") {   // every 3rd hit jumps lightning to 2 more; a heavy hit stuns the one struck
 			if (g_count % 3 == 0) for (auto* o : Others(a_target, tp, 420.0f, 2)) { Gun::LightningArc(Mid(a_target), Mid(o), 0.0f); Gun::HitShare(o, S * 0.6f); }
@@ -557,28 +581,22 @@ namespace bo3z::Tablet
 					Gun::ElemBurst(0, from + dir * 260.0f, 0.5f, 0.05f * (k + 2), 0.6f);
 				}
 			}
-		} else if (id == "silverscythe") {   // (Noah: "add silver ... as a lower tier scythe") the dead cut a quarter deeper
-			Gun::HitShare(a_target, S * 0.25f);
-			Gun::ElemBurst(10, Mid(a_target), 0.3f, 0.0f, 0.4f);
+		} else if (id == "silverscythe") {   // (Noah: "too strong for a weaker weapon" - "Light silver burst") every 4th hit flashes
+			// silver, the one struck slowed a moment
+			if (g_count % 4 == 0) {
+				Gun::ElemBurst(10, Mid(a_target), 0.45f, 0.0f, 0.5f);
+				Director::Web(a_target->GetPosition(), 45.0f, 1.5f, 50.0f, false);
+			}
 		} else if (id == "bonereaper") {   // one kill in four rises to fight for you
 			static std::mt19937 rng{ std::random_device{}() };
 			if (std::uniform_int_distribution<int>(0, 3)(rng) == 0) Classes::QueueThrall(a_target, 0);   // (it rises only if this blow kills)
 			Gun::ElemBurst(6, Mid(a_target), 0.3f, 0.0f, 0.4f);
-		} else if (id == "wyrmtooth") {   // its hits bleed; a power sweep bursts teeth out of the ground in an arc ahead
+		} else if (id == "wyrmtooth") {   // its hits bleed; a heavy sweep - the shockwave, the dead within 8 m staggered
 			Gun::Burn(a_target, S * 0.07f, 4.0f, -1);
 			Gun::ElemBurst(5, Mid(a_target), 0.35f, 0.0f, 0.5f);
 			if (a_power && g_splitCool <= 0 && p) {
-				g_splitCool = 1.3f;
-				RE::NiPoint3 d = Gun::SwingDir(); d.z = 0;
-				if (d.Length() > 1e-3f) d = d * (1.0f / d.Length());
-				for (int k = -2; k <= 2; ++k) {
-					const float a = k * 0.35f;
-					const RE::NiPoint3 dir{ d.x * std::cos(a) - d.y * std::sin(a), d.x * std::sin(a) + d.y * std::cos(a), 0 };
-					const RE::NiPoint3 at = p->GetPosition() + dir * 260.0f;
-					Gun::FxBlast("giantslam", at);
-					Gun::AreaHurt(at, 120.0f, S * 0.8f, "");
-					for (auto* o : Gun::FoesNear(at, 120.0f)) Gun::Burn(o, S * 0.07f, 4.0f, -1);
-				}
+				g_splitCool = 1.5f;
+				Shockwave(S * 1.0f);
 			}
 		} else if (id == "bloodmoon") {   // each hit drains a little of the dead's blood to you; a power sweep drains all it touches
 			auto heal = [&](float a_frac) { if (auto* av = p ? p->AsActorValueOwner() : nullptr) av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * a_frac); };
@@ -604,10 +622,7 @@ namespace bo3z::Tablet
 				}
 				if (a_power && g_splitCool <= 0) {
 					g_splitCool = 1.5f;
-					const RE::NiPoint3 at = p->GetPosition() + d * 280.0f;
-					Gun::FxBlast("giantslam", at);
-					Gun::AreaHurt(at, 180.0f, S * 1.6f, "");
-					for (auto* o : Gun::FoesNear(at, 180.0f)) Gun::Knock(o, 2.0f);
+					Shockwave(S * 1.2f);
 				}
 			}
 		} else if (id == "frostmourn") {   // thrusts slow everything they touch; a heavy thrust freezes a ring around you
@@ -647,10 +662,26 @@ namespace bo3z::Tablet
 				Gun::FxBlast("light", Mid(a_target));
 				Chain(a_target, Mid(a_target), 8, S * 1.4f, 4);
 			}
-		} else if (id == "lanternwick") {   // (now a quarterstaff) a heavy attack that lands throws the orb
-			if (a_power && g_slamCool <= 0) {
-				g_slamCool = 2.5f;
-				LanternOrb(S);
+		} else if (id == "lanternwick") {   // (Noah: "start a blizzard on heavy attack and freeze on light attack") light: frozen 3 s;
+			// heavy: a blizzard 10 m round where it lands, 6 s - the dead in it slowed, chilled and frozen by turns
+			if (!a_power) {
+				Gun::Freeze(a_target, 3.0f);
+				Gun::ElemBurst(1, Mid(a_target), 0.5f, 0.0f, 0.6f);
+			} else if (g_slamCool <= 0) {
+				g_slamCool = 6.5f;
+				const RE::NiPoint3 at = tp;
+				Gun::CycloneSpec cs;
+				cs.model = "CurseOfAlduin\\fx\\cyclone_frost.nif";
+				cs.from = at, cs.fwd = { 0, 1, 0 }, cs.dist = 0.0f, cs.life = 6.0f, cs.size = 3.2f, cs.fec = 1, cs.share = S * 0.12f, cs.noPull = true;
+				Gun::ElemCyclone(std::move(cs));
+				Director::Web(at, 700.0f, 6.0f, 55.0f, true);
+				for (int k = 0; k < 6; ++k) {
+					Tasks::Later(1.0f * k, [at, S]() {
+						Gun::AreaHurt(at, 700.0f, S * 0.12f, "");
+						Gun::Motes(1, at, 2.6f, 1.2f);
+					});
+				}
+				Gun::BlastSound("frost", at, 0.9f);
 			}
 		} else if (id == "riverstone") {   // hits knock the dead back; a heavy attack splits the ground in a line
 			Gun::Knock(a_target, 1.2f);
@@ -677,15 +708,33 @@ namespace bo3z::Tablet
 					for (auto* o : Gun::FoesNear(land, 280.0f)) Gun::Burn(o, Director::RoundHealth() * S * 0.2f, 4.0f, 0);
 				}, 0.0f, 120.0f);
 			}
-		} else if (id == "eclipse") {   // light slashes by turns sun and moon; a heavy attack calls a 6 s eclipse
-			if (g_count % 2) { Gun::Burn(a_target, Director::RoundHealth() * S * 0.15f, 3.0f, 0); Gun::ElemBurst(4, Mid(a_target), 0.5f, 0.0f, 0.6f); }
-			else { Gun::Freeze(a_target, 0.8f); Gun::ElemBurst(1, Mid(a_target), 0.5f, 0.0f, 0.6f); }
+		} else if (id == "eclipse") {   // (Noah) frost and sun: light strikes by turns frost and sun; a heavy attack - an ice shockwave,
+			// then a sun one, 10 m round where it lands
+			if (g_count % 2) {
+				Gun::HitShare(a_target, S * 0.3f);
+				Gun::ElemBurst(4, Mid(a_target), 0.6f, 0.0f, 0.6f);
+				Gun::BlastSound("light", tp, 0.4f);
+			} else {
+				Gun::HitShare(a_target, S * 0.3f);
+				Gun::Freeze(a_target, 0.8f);
+				Gun::ElemBurst(1, Mid(a_target), 0.6f, 0.0f, 0.6f);
+				Gun::BlastSound("frost", tp, 0.4f);
+			}
 			if (a_power && g_eclipseCool <= 0 && p) {
-				g_eclipseCool = 10.0f;
-				Gun::FxBlast("darkmassive", p->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f });
-				Gun::Ring("purple", p->GetPosition(), 40.0f, 650.0f, 1.0f);
-				Hud::Banner("ECLIPSE", 1.5f);
-				for (auto* o : Gun::FoesNear(p->GetPosition(), 650.0f)) { Gun::Freeze(o, 6.0f); Gun::Knock(o, 0.6f); }
+				g_eclipseCool = 3.0f;
+				const RE::NiPoint3 at = tp;
+				Gun::Ring("frost", at, 40.0f, 700.0f, 0.7f);
+				Gun::ElemBurst(1, at + RE::NiPoint3{ 0, 0, 40.0f }, 2.4f, 0.0f, 0.9f);
+				Gun::BlastSound("frost", at, 0.9f);
+				Gun::AreaHurt(at, 700.0f, S * 0.9f, "");
+				for (auto* o : Gun::FoesNear(at, 700.0f)) Gun::Freeze(o, 1.0f);
+				Tasks::Later(0.45f, [at, S]() {
+					Gun::Ring("gold", at, 40.0f, 700.0f, 0.7f);
+					Gun::ElemBurst(4, at + RE::NiPoint3{ 0, 0, 40.0f }, 2.6f, 0.0f, 0.9f);
+					Gun::BlastSound("lightmassive", at, 0.9f);
+					Gun::AreaHurt(at, 700.0f, S * 0.9f, "");
+					for (auto* o : Gun::FoesNear(at, 700.0f)) Gun::Knock(o, 0.8f);
+				});
 			}
 		} else if (id == "whisperwood") {   // arrows root the dead; each held heals you a little
 			Gun::Freeze(a_target, 3.0f);
@@ -781,10 +830,52 @@ namespace bo3z::Tablet
 	float Wear() { return g_held >= 0 ? static_cast<float>(g_uses) / std::max(1, gen::kTabletWeapons[g_held].uses) : -1.0f; }
 	std::string_view HeldName() { return g_held >= 0 ? gen::kTabletWeapons[g_held].label : std::string_view{}; }
 
+	// (Noah: "the wandering star weapon should be a wand that casts star looking magic" - "Hold to cast, like the Carian Wand")
+	// held: a star every half second from the wand's tip, bouncing on to two more of the dead
+	namespace
+	{
+		bool g_starButton = false;
+		int StarIndex()
+		{
+			for (int i = 0; i < static_cast<int>(gen::kTabletWeapons.size()); ++i) if (gen::kTabletWeapons[i].id == "wanderstar") return i;
+			return -1;
+		}
+		void TickStarWand(RE::PlayerCharacter* a_p, float a_delta)
+		{
+			static float heldFor = 0, next = 0;
+			next = std::max(0.0f, next - a_delta);
+			const bool held = g_starButton && StarWandInHand();
+			heldFor = held ? heldFor + a_delta : 0.0f;
+			if (!held || heldFor < 0.3f || next > 0.0f) return;
+			next = 0.5f;
+			const int si = StarIndex();
+			const float S = Share() * 0.7f;
+			RE::Actor* t = nullptr;
+			const RE::NiPoint3 at = AimPoint(&t);
+			if (!t) { auto v = Gun::FoesNear(at, 700.0f); if (!v.empty()) t = v.front(); }
+			const RE::NiPoint3 tip = Gun::SwingFrom() + Gun::SwingDir() * 60.0f;
+			Gun::FxBlast("light", tip);
+			Gun::ElemBurst(4, tip, 0.25f, 0.0f, 0.3f);
+			Chain(t, tip, 3, S, 4);
+			if (si >= 0 && si == g_held && !Gun::TestKitOn()) {
+				if (--g_uses <= 0) Break(); else Rename(g_held, g_uses);
+			}
+			(void)a_p;
+		}
+	}
+	bool StarWandInHand()
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		const int si = StarIndex();
+		auto* f = si >= 0 ? FormOf(si) : nullptr;
+		return p && f && p->GetEquippedObject(false) == f && p->AsActorState()->IsWeaponDrawn();
+	}
+	void StarButton(bool a_down) { g_starButton = a_down; }
 	void Tick(float a_delta)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (!p) return;
+		TickStarWand(p, a_delta);
 		g_pclock += a_delta;
 		g_slamCool -= a_delta, g_eclipseCool -= a_delta, g_splitCool -= a_delta;
 		if (g_salt.size() > 64) std::erase_if(g_salt, [](const auto& e) { return e.second < g_pclock; });
@@ -926,17 +1017,7 @@ namespace bo3z::Tablet
 			auto* w = Forms::Ours(d.form) ? Forms::Ours(d.form)->As<RE::TESObjectWEAP>() : nullptr;
 			if (!s || !w) { logger::warn("tablet: {} can't wear {:06X} of {} - is the mod installed?", d.label, d.look, d.lookPlugin); continue; }
 			Classes::AdoptLook(w, s);
-			// (Noah: "the Wandering Star weapon also needs the quarterstaff attack animations") the Fulcimentum glass staff's look,
-			// swung as Animated Armoury's quarterstaffs are (the Glass Quarterstaff's how-it's-held, its reach and sounds)
-			if (std::string_view(d.id) == "wanderstar") {
-				if (auto* qf = RE::TESDataHandler::GetSingleton()->LookupForm(0x18B75D, "NewArmoury.esp"); qf && qf->As<RE::TESObjectWEAP>()) {
-					const std::string model = w->GetModel();
-					auto* first = w->firstPersonModelObject;
-					Classes::AdoptLook(w, qf->As<RE::TESObjectWEAP>());
-					w->SetModel(model.c_str()), w->firstPersonModelObject = first;
-					w->formEnchanting = nullptr, w->amountofEnchantment = 0;
-				}
-			}
+			// (Noah: "the wandering star weapon should be a wand") Fulcimentum's wood wand, held and cast as a wand (its held cast: TickStarWand)
 			if (auto* show = Forms::Ours(d.show) ? Forms::Ours(d.show)->As<RE::TESObjectSTAT>() : nullptr) show->SetModel(s->GetModel());
 			logger::info("tablet: the {} takes the look of {}", d.label, s->GetName());
 		}

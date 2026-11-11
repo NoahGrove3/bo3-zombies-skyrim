@@ -14,9 +14,9 @@ BLADE_VIZ = ('alch', 'carian', 'radiant', 'ss_none', 'ss_fire', 'ss_frost', 'ss_
 # (docs/DRAGON_PRIEST_WEAPONS.md; models: tools/priestweapons.py, tools/priestbows.py): town -> key, name, model, kind,
 # damage, its line in the inventory
 PRIEST_WEAPONS = {
-    # (Noah: "I want to remove bows ... out of the loot pool" - "New melee weapons") Vahlok's Keyhammer: the Draugr Royal Guard
-    # Warhammer (azCreatures, read from the install); Vokun's Nightcaller's Scythe: Battle Scythe's Daedric scythe
-    'Riverwood': ('vahlok', "Jailor's Keyhammer", 'azCreatures\\Draugr\\Special\\QueenPotema\\azRoyalGuardWarhammer01.nif', 'warhammer', 42, "Vahlok the Jailor's warhammer, its head a great iron key. Every hit shackles the dead in place. Power attack: chains yank the dead around you together."),
+    # (Noah: "I want to remove bows ... out of the loot pool" - "New melee weapons") Vahlok's Keyhammer: the Stendarr warhammer
+    # (Noah, after the Royal Guard's was unseen in the hands: "H3"; armor_replacer, read from the install); Vokun's Nightcaller's Scythe: Battle Scythe's Daedric scythe
+    'Riverwood': ('vahlok', "Jailor's Keyhammer", 'armor_replacer\\1_stendarr\\weapon\\warhammer.nif', 'warhammer', 42, "Vahlok the Jailor's warhammer, its head a great iron key. Every hit shackles the dead in place. Power attack: chains yank the dead around you together."),
     'Whiterun': ('nahkriin', 'Mistblade', 'nahkriin_mistblade', 'sword', 26, "Nahkriin's blade of pale mist. Every hit blinds: the foe slows and its blows weaken. Power attack: a fog where the dead around wander lost, slowed and weakened."),
     'Solitude': ('volsung', 'Windcutter', 'volsung_windcutter', 'sword', 26, "Volsung's sabre. Every hit sends a wind slash on through the dead ahead. Power attack: you dash forward through them, cutting all in your path."),
     'Windhelm': ('zahkriisos', 'Glacier Greatsword', 'zahkriisos_greatsword', 'greatsword', 38, "Zahkriisos' greatsword of glacier ice. Every hit freezes and slows. Power attack: every frozen foe around you shatters."),
@@ -24,20 +24,20 @@ PRIEST_WEAPONS = {
     'Riften': ('rahgot', 'Sacrifice Knife', 'rahgot_dagger', 'dagger', 20, "Rahgot's ritual knife of black obsidian. Every hit poisons, and the poison passes on to the next foe. Power attack: every poisoned foe around you bursts."),
     'Falkreath': ('krosis', 'Grief Blade', 'krosis_griefblade', 'sword', 26, "Krosis' sword, weeping light. Every hit heals you. Power attack: a wail that weakens all the dead around you, their blows feebler and their bodies easier to hurt."),
     'Morthal': ('hevnoraak', 'Sealbreaker', 'hevnoraak_sealbreaker', 'battleaxe', 40, "Hevnoraak's battleaxe, cut from his tomb's cracked seal. Every hit shatters armour. Power attack: a shockwave through the ground that hurts and staggers all around you."),
-    'Dawnstar': ('vokun', "Nightcaller's Scythe", 'BattleScythe\\daedric\\BScythe.nif', 'scythe', 40, "Vokun's scythe of black daedric steel, cold with dreams. Every hit puts the dead to sleep. Power attack: a sweep that leaves a nightmare fog, where the dead are slowed and lost."),
+    'Dawnstar': ('vokun', "Nightcaller's Scythe", 'CurseOfAlduin\\scythes\\daedric.nif', 'scythe', 40, "Vokun's scythe of black daedric steel, cold with dreams. Every hit puts the dead to sleep. Power attack: a sweep that leaves a nightmare fog, where the dead are slowed and lost."),
     'Winterhold': ('morokei', 'Arcane Maul', 'morokei_maul', 'warhammer', 42, "Morokei's maul of floating crystal. Every hit bursts with magic. Power attack: a magicka shockwave around you that also restores your magicka."),
 }
 # (Noah: "the mod that gives weapons effect animations ... properly assign each one for every weapon in our mod") Visual Animated
 # Enchants' looks: each colour our own look-only enchantment (its shader and art taken at load from the mod's effect: src/Classes.cpp
 # VaeWeapons), the mod's effect it copies; and every melee weapon's colour (Noah: Mistblade white, Sealbreaker green)
-VAE_COL = {'white': 0x0038C7, 'blue': 0x000D71, 'iceblue': 0x000D74, 'orange': 0x000D73, 'red': 0x000D70, 'green': 0x000D72, 'poison': 0x002892,
-           'drainmagicka': 0x00288C, 'purple': 0x000D75, 'moon': 0x00438D, 'fear': 0x00288F, 'molag': 0x00BA3F}
+VAE_COL = {'white': 0x00438D, 'blue': 0x000D71, 'iceblue': 0x000D74, 'orange': 0x000D73, 'red': 0x000D70, 'green': 0x000D72, 'poison': 0x002892,
+           'drainmagicka': 0x00288C, 'purple': 0x000D75, 'moon': 0x00438D, 'fear': 0x00288F, 'molag': 0x00BA3F, 'gold': 0x00184E}
 VAE_WEAP = {'priest_nahkriin': 'white', 'priest_volsung': 'blue', 'priest_zahkriisos': 'iceblue', 'priest_otar': 'blue', 'priest_rahgot': 'poison',
             'priest_krosis': 'red', 'priest_hevnoraak': 'green', 'priest_morokei': 'drainmagicka', 'priest_vahlok': 'white', 'priest_vokun': 'purple',
             'tab_stormtalons': 'blue', 'tab_gravebell': 'white', 'tab_talons': 'red', 'tab_riverstone': 'green', 'tab_wyrmspine': 'fear',
-            'tab_lanternwick': 'iceblue', 'tab_cinderclaws': 'orange', 'tab_eclipse': 'moon', 'tab_frostmourn': 'iceblue', 'tab_silverscythe': 'moon',
-            'tab_bonereaper': 'white', 'tab_wyrmtooth': 'orange', 'tab_bloodmoon': 'red', 'fang': 'molag'}
-PRIEST_FIRST = {'vahlok': 'azCreatures\\Draugr\\Special\\QueenPotema\\az1stRoyalGuardWarhammer01.nif'}   # (a first-person model of its own)
+            'tab_lanternwick': 'iceblue', 'tab_cinderclaws': 'orange', 'tab_eclipse': 'gold+iceblue', 'tab_frostmourn': 'iceblue', 'tab_silverscythe': 'moon',
+            'tab_bonereaper': 'white', 'tab_wyrmtooth': 'orange', 'tab_bloodmoon': 'red', 'fang': 'orange'}
+PRIEST_FIRST = {}   # (a first-person model of its own)
 def sheets():
     return {json.load(open(p))['sheet']: json.load(open(p)) for p in sorted((ROOT / 'sheets').glob('*.json'))}
 def assign(S=None, write=False):
@@ -65,7 +65,7 @@ def assign(S=None, write=False):
              [('PERK', f'summon_cap_{n}') for n in (2, 3, 4, 5, 6, 7, 8)] + [('MGEF', 'tomecast'), ('SPEL', 'wonder_tome')] + \
              [('WEAP', 'vortex'), ('AMMO', 'vortexarrow'), ('PROJ', 'vortexarrow'), ('ACTI', 'vortexfx'), ('ACTI', 'purplefire'), ('WEAP', 'slayer'), ('PROJ', 'throwdagger'), ('MGEF', 'throwdagger'), ('SPEL', 'throwdagger'), ('MGEF', 'throwdaggers'), ('SPEL', 'throwdaggers')] + [('EFSH', 'bowskin_' + e) for e in ('fire', 'frost', 'shock', 'wind', 'sun', 'blood', 'void')] + [('ACTI', 'burst_' + e) for e in ('fire', 'frost', 'shock', 'wind', 'sun', 'blood', 'void', 'poison', 'gold')] + [(k, 'flask_' + e) for e in ('fire', 'frost', 'shock', 'poison', 'sun', 'blood', 'philosopher') for k in ('PROJ', 'MGEF', 'SPEL')] + [('SPEL', 'throw_' + e) for e in ('fire', 'frost', 'shock', 'poison', 'sun', 'blood', 'philosopher')] + [('MGEF', 'flaskcast'), ('WEAP', 'alchknife'), ('SPEL', 'bonehorn')] + [('ALCH', 'flaskitem_' + e) for e in ('fire', 'frost', 'shock', 'poison', 'sun', 'blood', 'philosopher')] + [('EFSH', f'armglow_{c}_{t}') for c in range(4) for t in (1, 2, 3, 4, 5, 6)] + [('WEAP', 'flaskweap_' + e) for e in ('fire', 'frost', 'shock', 'poison', 'sun', 'blood', 'philosopher')] + [('BOOK', 'guide_' + c) for c in ('summoner', 'destruction', 'ranger', 'spellsword')] + [('PERK', 'steady'), ('CONT', 'classchest')] + [('MUST', 'night'), ('MUSC', 'night')] + [('WEAP', 'xbow_' + e) for e in ('fire', 'frost', 'shock')] + [('LIGH', 'lantern')] + [('WEAP', 'riftblade'), ('MGEF', 'reanimatebolt')] + [(k, f'rift{w}{n}') for n in (1, 2, 3) for k, w in (('EFSH', 'shader'), ('MGEF', 'fire'), ('ENCH', 'fire'))] + [('SPEL', f'reanimate_{n}') for n in (1, 2, 3)] + \
              [('WEAP', 'madness'), ('STAT', 'madness_1st'), ('ARMO', 'lantern'), ('ARMA', 'lantern'), ('MGEF', 'lanternlight'), ('SPEL', 'lanternlight')] + [(k, f'mad{w}{n}') for n in (1, 2, 3) for k, w in (('EFSH', 'shader'), ('MGEF', 'glow'), ('ENCH', 'glow'))] + [(k, 'tb_' + v) for v in ('mangled', 'foul', 'putrid', 'malignant', 'relentless', 'dread_putrid') for k in ('NPC_', 'ARMO', 'ARMA')] + [('MGEF', 'set_swift'), ('SPEL', 'set_swift')] + \
-             [(k, f'cm_{c}_{a}') for c in CLASS_ARMOUR for a in CLASS_ARMAS for k in ('ARMA',)] + [('ARMO', f'cm_{c}_{pc}') for c in CLASS_ARMOUR for pc in CLASS_PIECES] + [('WEAP', 'carianblade')] + [(k, f'bv_{b}_{t}') for b in BLADE_VIZ for t in (1, 2, 3) for k in ('EFSH', 'MGEF', 'ENCH')] + [('EFSH', 'shadowburn')] + [(k, f'vw_{b}') for b in BLADE_VIZ for k in ('LIGH', 'ARTO', 'MGEF', 'SPEL')] + [('EFSH', 'hallghost'), ('KYWD', 'scythe')] + [(k, 'vae_' + c) for c in VAE_COL for k in ('MGEF', 'ENCH')]   # (Noah: the four crystal swords and the Dragon Slayer - their tier looks)
+             [(k, f'cm_{c}_{a}') for c in CLASS_ARMOUR for a in CLASS_ARMAS for k in ('ARMA',)] + [('ARMO', f'cm_{c}_{pc}') for c in CLASS_ARMOUR for pc in CLASS_PIECES] + [('WEAP', 'carianblade')] + [(k, f'bv_{b}_{t}') for b in BLADE_VIZ for t in (1, 2, 3) for k in ('EFSH', 'MGEF', 'ENCH')] + [('EFSH', 'shadowburn')] + [(k, f'vw_{b}') for b in BLADE_VIZ for k in ('LIGH', 'ARTO', 'MGEF', 'SPEL')] + [('EFSH', 'hallghost'), ('KYWD', 'scythe')] + [(k, 'vae_' + c) for c in VAE_COL for k in ('MGEF', 'ENCH')] + [('ENCH', 'vae_' + c.replace('+', '_')) for c in sorted(set(VAE_WEAP.values())) if '+' in c]   # (Noah: the four crystal swords and the Dragon Slayer - their tier looks)
     for kind, key in wanted:
         k = f'{kind}:{key}'
         if k not in frozen:

@@ -903,7 +903,7 @@ namespace bo3z
 				const bool fangHit = a_event && player && a_event->cause.get() == player && fangId && a_event->source == fangId;
 				if (fangHit && a_event->target) {
 					if (auto* t = a_event->target->As<RE::Actor>(); t && t != player && Director::IsFoe(t)) {
-						Gun::FangHit(t, a_event->flags.any(RE::TESHitEvent::Flag::kPowerAttack));
+						Gun::FangHit(t, a_event->flags.any(RE::TESHitEvent::Flag::kPowerAttack) || Gun::PlayerPowerAttack());
 					}
 				}
 				// (Noah: "my summons start to kill me if I am damaging them") your blow on your own summon: it doesn't hold it
@@ -927,10 +927,11 @@ namespace bo3z
 					if (auto* t = a_event->target->As<RE::Actor>(); t && OurEnemy(t)) g_ourFoeAt = NowMs();
 					if (auto* t = a_event->target->As<RE::Actor>(); t && Classes::IsRiftblade(a_event->source)) Classes::RiftHit(t);
 					if (auto* t = a_event->target->As<RE::Actor>(); t && a_event->source) Kit::OnPlayerHit(t, RE::TESForm::LookupByID(a_event->source));  // (the Spellsword set's magicka)
-					if (auto* t = a_event->target->As<RE::Actor>()) Classes::NoteHit(t, a_event->source, a_event->flags.any(RE::TESHitEvent::Flag::kPowerAttack));
+					if (auto* t = a_event->target->As<RE::Actor>()) Classes::NoteHit(t, a_event->source, a_event->flags.any(RE::TESHitEvent::Flag::kPowerAttack) || Gun::PlayerPowerAttack());
 					if (a_event->source && !a_event->projectile) Tablet::OnHit(a_event->source);  // (a donated weapon's use)
-					if (auto* t = a_event->target->As<RE::Actor>(); t && a_event->source) Tablet::OnStrike(t, a_event->source, a_event->flags.any(RE::TESHitEvent::Flag::kPowerAttack), a_event->projectile != 0);   // (its power)
-					if (auto* t = a_event->target->As<RE::Actor>(); t && a_event->source) Gun::PriestHit(t, a_event->source, a_event->flags.any(RE::TESHitEvent::Flag::kPowerAttack));  // (the Dragon Priests' weapons)
+					const bool heavyHit = a_event->flags.any(RE::TESHitEvent::Flag::kPowerAttack) || Gun::PlayerPowerAttack();
+					if (auto* t = a_event->target->As<RE::Actor>(); t && a_event->source) Tablet::OnStrike(t, a_event->source, heavyHit, a_event->projectile != 0);   // (its power)
+					if (auto* t = a_event->target->As<RE::Actor>(); t && a_event->source) Gun::PriestHit(t, a_event->source, heavyHit);  // (the Dragon Priests' weapons)
 					auto* src = a_event->source ? RE::TESForm::LookupByID(a_event->source) : nullptr;
 					const bool spellHit = src && src->As<RE::MagicItem>();  // (the charge's own lightning never sets off another charge)
 					if (auto* t = a_event->target->As<RE::Actor>(); t && !spellHit && Director::IsFoe(t)) {
@@ -1361,6 +1362,7 @@ namespace bo3z
 			Classes::MutagenLook();
 			Classes::WandReady();
 			Director::QuietWind();
+			Classes::SlayerLook();
 			Director::ShoutLooks();
 			FreeBowMovement();
 			Undead::InstallHooks();

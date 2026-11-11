@@ -283,7 +283,7 @@ for w in S['tablet']['rows']:
         elif name in ('MODT', 'EAMT', 'BIDS', 'BAMT', 'INAM'): continue
         elif name == 'EITM':
             if w['type'] != 'staff': continue
-            b = struct.pack('<I', fid('ENCH', 'tabstaff'))   # (its cast is ours: the orb, the star)
+            b = struct.pack('<I', fid('ENCH', 'carianwand' if w['id'] == 'wanderstar' else 'tabstaff'))   # (its cast is ours: the orb; the Wandering Star a held wand's cast)
         elif name == 'KSIZ': b = struct.pack('<I', len(kws))
         elif name == 'KWDA': b = struct.pack(f'<{len(kws)}I', *kws)
         elif name == 'DESC': b = z(desc)
@@ -828,11 +828,18 @@ for c in VAE_COL:
     struct.pack_into('<I', en, 0, 0); struct.pack_into('<I', en, 4, struct.unpack_from('<I', en, 4)[0] | 0x1)
     recs['ENCH'].append(record('ENCH', fid('ENCH', 'vae_' + c), [sub('EDID', z('UN_VaeLook_' + c)), sub('OBND', bytes(12)), sub('FULL', z('')),
         sub('ENIT', bytes(en)), sub('EFID', struct.pack('<I', fid('MGEF', 'vae_' + c))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
+for combo in sorted(set(v for v in VAE_WEAP.values() if '+' in v)):   # (Noah: the Eclipse Edge "gold and light blue") two looks at once
+    en = bytearray(tsub('ench_fire05', 'ENIT'))
+    struct.pack_into('<I', en, 0, 0); struct.pack_into('<I', en, 4, struct.unpack_from('<I', en, 4)[0] | 0x1)
+    efs = []
+    for c in combo.split('+'): efs += [sub('EFID', struct.pack('<I', fid('MGEF', 'vae_' + c))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]
+    recs['ENCH'].append(record('ENCH', fid('ENCH', 'vae_' + combo.replace('+', '_')), [sub('EDID', z('UN_VaeLook_' + combo.replace('+', '_'))), sub('OBND', bytes(12)), sub('FULL', z('')),
+        sub('ENIT', bytes(en))] + efs))
 
 # (Noah: "make them required") Vibrant Weapons' own art (its files, read from the mod): the one-handed swords its sword art, the
 # Dragon Slayer its greatsword art - each look the element nearest its colour
 VW_ART = {k: 'vibrant weapons\\magic\\' + v + '.nif' for k, v in {'alch': 'ShockSwordR', 'carian': 'ShockSwordR', 'radiant': 'FrostSwordR', 'ss_none': 'FireSwordR',
-          'ss_fire': 'FireSwordR', 'ss_frost': 'FrostSwordR', 'ss_shock': 'ShockSwordR', 'ss_sun': 'FireSwordR', 'ss_blood': 'FrostSwordR', 'slayer': 'FireGreatsword'}.items()}
+          'ss_fire': 'FireSwordR', 'ss_frost': 'FrostSwordR', 'ss_shock': 'ShockSwordR', 'ss_sun': 'FireSwordR', 'ss_blood': 'FrostSwordR', 'slayer': 'FireSwordR'}.items()}
 # (Noah: "for the weapon effects around the swords in hand use the effects mod we downloaded for that" - "Both layered") each
 # look also wears Vibrant Weapons' art along the blade and a
 # small light of its colour: an ability of a light effect carrying the art, laid on you while the sword is in your hand

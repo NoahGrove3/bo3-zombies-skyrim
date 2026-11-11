@@ -410,6 +410,7 @@ namespace bo3z
 		// throw flasks cycling through each flask") Animated Armoury's Dwarven Quarterstaff's look and swings; block held: a 2 s
 		// piercing beam, the next vial's element each; a power attack throws the next flask
 		void               DevClawRot(float a_x, float a_y, float a_z, bool a_on, bool a_third);
+		void               SlayerLook();   // (data loaded) the Dragon Slayer as Animated Armoury's Glass Katana
 		void               DevClawForm(RE::FormID a_local, float a_x, float a_y, float a_z);  // one claw's own turn (its NewArmoury id)
 		void               WandButton(bool a_down);   // the attack pressed / let go with the Carian Wand drawn
 		bool               WandInHand();
@@ -779,6 +780,7 @@ namespace bo3z
 		void                  LightningArc(const RE::NiPoint3& a_from, const RE::NiPoint3& a_to, float a_delay);  // a bolt of lightning between two points  // a meteor of ours (tools/meteorfx.py) falling from high above onto a point
 		void                  PurpleFire(const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life);
 		void                  Motes(int a_elem, const RE::NiPoint3& a_at, float a_scale, float a_life);  // fine motes rising off the ground over an area (the ElemBurst elements)
+		bool                  PlayerPowerAttack();   // your swing now a power attack (its attack data; the hit's own flag never comes with Precision)
 		void                  ElemBurst(int a_elem, const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life);  // an element's impact burst (0 fire 1 frost 2 shock 3 wind 4 sun 5 blood 6 void), here a moment  // the Horn's dragon's violet flame, here a moment  // the night's dead round a point lose a share of a whole zombie's health
 		void                  Puddle(int a_elem, const RE::NiPoint3& a_at, float a_scale, float a_life);  // a pool of an element on the ground (0 fire 1 frost 2 shock 3 acid 4 sun 5 blood)
 		void                  SetLightOrb(bool a_on);
@@ -806,6 +808,8 @@ namespace bo3z
 	// (Noah: the mystery box) the Tablet of Mysteries: one freed city at a time; its roll animated on its model (Tablet.cpp)
 	namespace Tablet
 	{
+		bool StarWandInHand();      // the Wandering Star (a wand now) drawn in your right hand
+		void StarButton(bool a_down);   // its attack held or let go (Gun's buttons)
 		void AdoptLooks();   // Tablet weapons that wear another mod's weapon (the Eclipse Edge: the Glass Pike)
 		int  Town();                                   // where it stands (-1: no city freed yet)
 		int  Price();                                  // a spin (or a repair) now
