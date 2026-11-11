@@ -2262,12 +2262,17 @@ namespace bo3z
 			RE::NiPoint3 head = p->GetPosition() + RE::NiPoint3{ 0, 0, 128.0f };
 			if (auto* h = root->GetObjectByName("NPC Head [Head]")) head = h->world.translate;
 			const float t = g_orb.t;
-			const RE::NiPoint3 want = head + RE::NiPoint3{ std::cos(t * 0.9f) * 9.0f, std::sin(t * 0.9f) * 9.0f, 52.0f + std::sin(t * 1.7f) * 2.5f };  // (at 30 it sat in the hair: unseen)
+			// (Noah: "make the animation and orb size smaller in 3rd person I think it's distracting when fighting") in third
+			// person a smaller orb, in a tighter circle with a smaller bob
+			auto*       cam = RE::PlayerCamera::GetSingleton();
+			const bool  third = !(cam && cam->IsInFirstPerson());
+			const float circ = third ? 3.5f : 9.0f, bob = third ? 1.0f : 2.5f;
+			const RE::NiPoint3 want = head + RE::NiPoint3{ std::cos(t * 0.9f) * circ, std::sin(t * 0.9f) * circ, (third ? 40.0f : 52.0f) + std::sin(t * 1.7f) * bob };  // (at 30 it sat in the hair: unseen)
 			g_orb.at = g_orb.placed ? g_orb.at + (want - g_orb.at) * std::min(1.0f, a_delta * 12.0f) : want;  // (it follows you a touch softly)
 			g_orb.placed = true;
 			RE::NiMatrix3 turn;
 			turn.SetEulerAnglesXYZ(0.0f, 0.0f, t * 0.6f);
-			g_orb.fx.Place(g_orb.at, turn, 1.05f);  // (Noah: "a little bit smaller" - 1.5 before; its light is its own, the same 15 m)
+			g_orb.fx.Place(g_orb.at, turn, third ? 0.55f : 1.05f);  // (Noah: "a little bit smaller" - 1.5 before; its light is its own, the same 15 m)
 			// (Noah: the game crashed twice a few seconds after loading into Dragonsreach - the light had been moved onto a node of
 			// our own hung on the scene's root) the light rides your body's own root, as the belt lantern's did for weeks without
 			// trouble, a little over your head in the body's frame; hung again when the game takes it down or the body is rebuilt

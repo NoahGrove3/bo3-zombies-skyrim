@@ -4101,8 +4101,13 @@ namespace bo3z::Classes
 			return;
 		}
 		// (the Battle-mage's set: the earlier look's pieces go as the new ones come)
+		// (Noah: "I don't see the destruction class's full armor set in my inventory, I only see the destruction hood" - the
+		// Alchemist's old look was the Destruction set's robes and boots, taken back when the test kit gave the Alchemist's
+		// set after it) no class's current set is ever taken back
+		std::vector<RE::TESObjectARMO*> keep;
+		for (int k = 0; k < 4; ++k) for (auto* a : SetForms(k, 0)) keep.push_back(a);
 		for (auto* a : AllSetForms(a_cls)) {
-			if (std::find(want.begin(), want.end(), a) != want.end()) continue;
+			if (std::find(want.begin(), want.end(), a) != want.end() || std::find(keep.begin(), keep.end(), a) != keep.end()) continue;
 			if (const int n = p->GetItemCount(a); n > 0) p->RemoveItem(a, n, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
 		}
 		for (auto* a : want) GiveItem(p, a, p->GetItemCount(a) > 0 ? 0 : 1, a_wear);

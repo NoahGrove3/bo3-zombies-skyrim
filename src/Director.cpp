@@ -3964,6 +3964,24 @@ namespace bo3z
 			logger::info("dance of death: {} dance (night {}, wave {})", n, g_current, g_wave);
 			return true;
 		}
+		// (Noah: "I also noticed the static sound in white run from the water please fix this") Whiterun's small-rapids loops
+		// (Skyrim.esm AMBWaterfallRapidsSmall, by its streams) hiss like static - silenced while you're there; found by hushing
+		// them in game ("Static is gone")
+		void TickWhiterunHiss(float a_delta)
+		{
+			static float t = 0;
+			if ((t += a_delta) < 3.0f) return;
+			t = 0;
+			static constexpr RE::FormID kRefs[] = { 0x0F4C7D, 0x1095F7, 0x0F4C7B, 0x0F4C7A, 0x0F4C7C, 0x0F4C79, 0x0F4C75, 0x0E9E05 };
+			int n = 0;
+			for (auto id : kRefs) {
+				auto* r = RE::TESForm::LookupByID<RE::TESObjectREFR>(id);
+				if (!r || r->IsDisabled() || !r->GetBaseObject() || r->GetBaseObject()->GetFormID() != 0x0B73EB) continue;
+				r->Disable();
+				++n;
+			}
+			if (n > 0) logger::info("sound: {} of Whiterun's small-rapids hiss silenced", n);
+		}
 		void TickDanceShout(float a_delta)
 		{
 			static float t = 0;
@@ -5685,6 +5703,7 @@ namespace bo3z
 			Echo::Tick(a_delta);
 			Eggs::Tick(a_delta);
 			TickDanceShout(a_delta);
+			TickWhiterunHiss(a_delta);
 			if (!Allowed(player)) {
 				return;
 			}
