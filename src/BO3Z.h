@@ -414,6 +414,10 @@ namespace bo3z
 		void               SlayerLook();   // (data loaded) the Dragon Slayer as Animated Armoury's Glass Katana
 		void               DevClawForm(RE::FormID a_local, float a_x, float a_y, float a_z);  // one claw's own turn (its NewArmoury id)
 		void               WandButton(bool a_down);   // the attack pressed / let go with the Carian Wand drawn
+		void               WandKick(int a_slot);      // a wand's cast: its tip flares, the hand kicks (0 the class wand, 1 the Wandering Star)
+		RE::NiPoint3       WandTipAt(float a_tipY);   // a wand's tip (along its model's +Y) in the body you're seen in
+		void               WandOrb(int a_slot, float a_tipY, bool a_inHand, bool a_held, float a_delta);   // its tip's blue orb, every frame
+		void               PoseWand(RE::PlayerCharacter* a_p);   // (Gun's pose hook) the kick
 		bool               WandInHand();
 		void               WandReady();   // (data loaded) the Carian Wand carries its cast at every tier   // (dev: clawrot) the claws' turn in first person
 		// (Noah: the Codex redesign - "progress first") the class book's live page: your nights, cities, Essence, wonder and
@@ -790,6 +794,8 @@ namespace bo3z
 		void                  DevLook(const std::string& a_model, const std::string& a_mode, float a_scale, const std::string& a_pal, float a_secs);
 		void                  DevFxReload();
 		void                  TintRef(RE::TESObjectREFR* a_ref, float a_r, float a_g, float a_b);  // a placed model's effect shaders in a colour
+		void                  SetSwingFrom(const RE::NiPoint3* a_at);   // (a wand's cast) SwingFrom is this point until cleared (nullptr)
+		void                  Fling(RE::Actor* a_target, const RE::NiPoint3& a_from, float a_mag);   // thrown from a point (ragdolled)
 		void                  TintGold(RE::NiAVObject* a_root);   // every effect shader under a node in gold (once)
 		void                  TintPal(RE::NiAVObject* a_root, const std::string& a_pal, bool a_hideFlames);   // ... in any palette
 		void                  DevSwing(int a_power);

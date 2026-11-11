@@ -306,7 +306,9 @@ for w in S['tablet']['rows']:
         elif name == 'KSIZ': b = struct.pack('<I', len(kws))
         elif name == 'KWDA': b = struct.pack(f'<{len(kws)}I', *kws)
         elif name == 'DESC': b = z(desc)
-        elif name == 'WNAM': continue
+        elif name == 'WNAM':
+            if not (w.get('model') and not w.get('look')): continue
+            b = struct.pack('<I', fid('STAT', '1st_tab_' + w['id']))   # (its first-person model: the item menu shows it by this)
         elif name == 'DATA': b = struct.pack('<IfH', 0, wt, 20)
         elif name == 'DNAM':
             if w['type'] not in ('bow', 'staff'): b[0] = anim; struct.pack_into('<ff', b, 4, spd, reach)

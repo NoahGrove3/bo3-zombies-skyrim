@@ -890,16 +890,35 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// rising: a ring that fills on its own; once it may, a press rises at once
 			const ImVec2 rc{ size.x * 0.5f, py + ph + 118 * k };
 			const float  R = 26 * k;
-			dl->AddCircle(rc, R, Fade(kRuneDim, ni), 48, 2.0f * k);
-			if (s.deathRise > 0.001f) {
-				dl->PathArcTo(rc, R, -1.5708f, -1.5708f + 6.2832f * std::clamp(s.deathRise, 0.0f, 1.0f), 48);
+			dl->AddCircle(rc, R, Fade(kRuneDim, ni), 128, 2.0f * k);
+			// (Noah: "the loading circle on the you have fallen screen should be smoother and fill up as the load is finishing") one
+			// ring, drawn fine and filled smoothly clockwise with a soft glow and a bright head: while you wait, how near rising is;
+			// once the save is being loaded, it fills the rest of the way in the moment before the load (Party: 1.2 s), full as
+			// the loading screen comes
+			static float loadFrom = -1.0f, loadAt = 0.0f, shown = 0.0f;
+			if (s.deathLoading && loadFrom < 0.0f) loadFrom = std::clamp(s.deathRise, 0.0f, 1.0f), loadAt = now;
+			if (!s.deathLoading) loadFrom = -1.0f;
+			float want = std::clamp(s.deathRise, 0.0f, 1.0f);
+			if (loadFrom >= 0.0f) {
+				const float u = std::clamp((now - loadAt) / 1.1f, 0.0f, 1.0f);
+				want = loadFrom + (1.0f - loadFrom) * (u * u * (3.0f - 2.0f * u));
+			}
+			if (std::abs(want - shown) > 0.5f || want < shown - 0.001f) shown = want;   // (a fresh fall: from where it is)
+			shown += (want - shown) * std::min(1.0f, ImGui::GetIO().DeltaTime * 14.0f);
+			if (shown > 0.002f) {
+				const float a1 = -1.5708f + 6.2832f * shown;
+				dl->PathArcTo(rc, R, -1.5708f, a1, 160);
+				dl->PathStroke(Fade(kGold, 0.22f * ni), 0, 8.0f * k);   // (its glow)
+				dl->PathArcTo(rc, R, -1.5708f, a1, 160);
 				dl->PathStroke(Fade(kGold, ni), 0, 3.0f * k);
+				const ImVec2 head{ rc.x + std::cos(a1) * R, rc.y + std::sin(a1) * R };
+				dl->AddCircleFilled(head, 4.5f * k, Fade(kGold, 0.35f * ni), 24);
+				dl->AddCircleFilled(head, 2.4f * k, Fade(kParch, ni), 16);
 			}
 			const float pulse = 0.75f + 0.25f * std::sin(now * 4.0f);
 			if (s.deathLoading) {
-				// (its ring turning while the save loads)
-				dl->PathArcTo(rc, R, now * 5.0f, now * 5.0f + 4.2f, 40);
-				dl->PathStroke(Fade(kGold, ni), 0, 3.0f * k);
+				// (full: it breathes until the loading screen takes over)
+				if (shown > 0.995f) dl->AddCircle(rc, R + 3.0f * k, Fade(kGold, 0.25f * ni * pulse), 128, 2.0f * k);
 			} else if (s.deathReady) {
 				if (g_padLast) {
 					PadGlyph(dl, rc, 13 * k, "A", ni);

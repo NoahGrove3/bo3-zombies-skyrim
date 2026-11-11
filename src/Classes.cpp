@@ -2195,13 +2195,15 @@ namespace bo3z::Classes
 			static constexpr float kTipY[5] = { 20.0f, 37.5f, 33.5f, 39.0f, 36.0f };
 			return kTipY[std::clamp(a_w ? Kit::TierOfWeapon(a_w) : 0, 0, 4)];
 		}
-		RE::NiPoint3 WandTip(RE::PlayerCharacter* a_p)
+		RE::NiPoint3 WandTipAtY(RE::PlayerCharacter* a_p, float a_tipY);
+		RE::NiPoint3 WandTip(RE::PlayerCharacter* a_p) { return WandTipAtY(a_p, WandTipY(CarianBlade())); }
+		RE::NiPoint3 WandTipAtY(RE::PlayerCharacter* a_p, float a_tipY)
 		{
 			// (the bolts loosed from the wand's own tip, where its orb hangs, in the body you're seen in)
 			auto* cam = RE::PlayerCamera::GetSingleton();
 			if (auto* root = a_p->Get3D(cam && cam->IsInFirstPerson())) {
 				if (auto* wn = root->GetObjectByName("WEAPON")) {
-					const auto at = wn->world.translate + (wn->world.rotate * RE::NiPoint3{ 0.0f, WandTipY(CarianBlade()), 0.0f }) * wn->world.scale;
+					const auto at = wn->world.translate + (wn->world.rotate * RE::NiPoint3{ 0.0f, a_tipY, 0.0f }) * wn->world.scale;
 					if (at.GetDistance(a_p->GetPosition()) < 400.0f) return at;
 				}
 			}
@@ -2216,37 +2218,85 @@ namespace bo3z::Classes
 	}
 	namespace
 	{
-		float g_wandPulse = 0.0f;   // a bolt just loosed: the tip flares
-		// (Noah: "only a small compact light blue orb looking like compact magic that brightens when casting at the very tip of
-		// the wand's model on each of the models") our little orb (tools/wandtip.py) hung on the wand itself, at its tip - each
-		// of the five wands' tip measured from its model (Fulcimentum's SSS\*Wand.nif: along +Y) - in both bodies
-		void TickWandTip(RE::PlayerCharacter* a_p, RE::TESObjectWEAP* a_w, bool a_inHand, bool a_held, float a_delta)
-		{
-			static RE::NiPointer<RE::NiAVObject> tip[2];
-			g_wandPulse = std::max(0.0f, g_wandPulse - a_delta * 3.0f);
-			static float t = 0;
-			t += a_delta;
-			const float glow = a_held ? 1.25f + 0.08f * std::sin(t * 9.0f) : 0.75f + 0.04f * std::sin(t * 2.5f);
-			for (int v = 0; v < 2; ++v) {
-				auto* root = a_p->Get3D(v == 1);
-				auto* wn = a_inHand && root ? root->GetObjectByName("WEAPON") : nullptr;
-				auto* node = wn ? wn->AsNode() : nullptr;
-				if (!node) {
-					if (tip[v] && tip[v]->parent) tip[v]->parent->DetachChild2(tip[v].get());
-					continue;
-				}
-				if (!tip[v]) tip[v] = Gun::LoadModel("CurseOfAlduin\\fx\\wandtip.nif");
-				if (!tip[v]) continue;
-				if (tip[v]->parent != node) {
-					if (tip[v]->parent) tip[v]->parent->DetachChild2(tip[v].get());
-					node->AttachChild(tip[v].get(), true);
-				}
-				tip[v]->local.translate = RE::NiPoint3{ 0.0f, WandTipY(a_w), 0.0f };
-				tip[v]->local.rotate = RE::NiMatrix3{};
-				tip[v]->local.scale = glow + 0.6f * g_wandPulse;
-				RE::NiUpdateData ud;
-				tip[v]->Update(ud);
+		// (Noah: "The wands spells needs to come from the wand tip and pulse and have slight recoil on each cast") each wand's
+		// tip orb (0 the class wand, 1 the Wandering Star), its flare and its kick
+		struct WandFx { RE::NiPointer<RE::NiAVObject> tip[2]; float pulse = 0.0f, kick = 0.0f, t = 0.0f; };
+		WandFx g_wfx[2];
+	}
+	void WandKick(int a_slot)
+	{
+		if (a_slot < 0 || a_slot > 1) return;
+		g_wfx[a_slot].pulse = 1.0f, g_wfx[a_slot].kick = 1.0f;
+	}
+	RE::NiPoint3 WandTipAt(float a_tipY)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		return p ? WandTipAtY(p, a_tipY) : RE::NiPoint3{};
+	}
+	// (Noah: "only a small compact light blue orb looking like compact magic that brightens when casting at the very tip of the
+	// wand's model on each of the models") our little orb (tools/wandtip.py) hung on the wand itself, at its tip, in both bodies -
+	// held, it glows and breathes; each cast it flares
+	void WandOrb(int a_slot, float a_tipY, bool a_inHand, bool a_held, float a_delta)
+	{
+		if (a_slot < 0 || a_slot > 1) return;
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (!p) return;
+		auto& F = g_wfx[a_slot];
+		F.pulse = std::max(0.0f, F.pulse - a_delta * 4.0f);
+		F.kick = std::max(0.0f, F.kick - a_delta * 9.0f);
+		F.t += a_delta;
+		const float glow = a_held ? 1.25f + 0.08f * std::sin(F.t * 9.0f) : 0.75f + 0.04f * std::sin(F.t * 2.5f);
+		for (int v = 0; v < 2; ++v) {
+			auto* root = p->Get3D(v == 1);
+			auto* wn = a_inHand && root ? root->GetObjectByName("WEAPON") : nullptr;
+			auto* node = wn ? wn->AsNode() : nullptr;
+			if (!node) {
+				if (F.tip[v] && F.tip[v]->parent) F.tip[v]->parent->DetachChild2(F.tip[v].get());
+				continue;
 			}
+			if (!F.tip[v]) F.tip[v] = Gun::LoadModel("CurseOfAlduin\\fx\\wandtip.nif");
+			if (!F.tip[v]) continue;
+			if (F.tip[v]->parent != node) {
+				if (F.tip[v]->parent) F.tip[v]->parent->DetachChild2(F.tip[v].get());
+				node->AttachChild(F.tip[v].get(), true);
+			}
+			F.tip[v]->local.translate = RE::NiPoint3{ 0.0f, a_tipY, 0.0f };
+			F.tip[v]->local.rotate = RE::NiMatrix3{};
+			F.tip[v]->local.scale = glow + 1.1f * F.pulse;
+			RE::NiUpdateData ud;
+			F.tip[v]->Update(ud);
+		}
+	}
+	// after the animation each frame (Gun's pose hook): a cast's kick - the wand hand tipped up and back a moment
+	void PoseWand(RE::PlayerCharacter* a_p)
+	{
+		const float k = std::max(g_wfx[0].kick, g_wfx[1].kick);
+		if (!a_p || k < 0.01f) return;
+		auto* cam = RE::PlayerCamera::GetSingleton();
+		if (!cam || !cam->cameraRoot) return;
+		const auto& cw = cam->cameraRoot->world.rotate;
+		RE::NiPoint3 ax{ cw.entry[0][0], cw.entry[1][0], cw.entry[2][0] };   // (the camera's right: tipped about it, the tip lifts)
+		const RE::NiPoint3 fwd{ cw.entry[0][1], cw.entry[1][1], cw.entry[2][1] };
+		if (ax.Length() < 1e-3f) return;
+		ax.Unitize();
+		const float e = k * k * (3.0f - 2.0f * k);   // (sharp out, eased back)
+		const float a = 0.17f * e, c = std::cos(a), sn = std::sin(a), t = 1.0f - c;
+		RE::NiMatrix3 M;
+		M.entry[0][0] = t * ax.x * ax.x + c, M.entry[0][1] = t * ax.x * ax.y - sn * ax.z, M.entry[0][2] = t * ax.x * ax.z + sn * ax.y;
+		M.entry[1][0] = t * ax.x * ax.y + sn * ax.z, M.entry[1][1] = t * ax.y * ax.y + c, M.entry[1][2] = t * ax.y * ax.z - sn * ax.x;
+		M.entry[2][0] = t * ax.x * ax.z - sn * ax.y, M.entry[2][1] = t * ax.y * ax.z + sn * ax.x, M.entry[2][2] = t * ax.z * ax.z + c;
+		for (const bool first : { false, true }) {
+			auto* root = a_p->Get3D(first);
+			auto* hand = root ? root->GetObjectByName("NPC R Hand [RHnd]") : nullptr;
+			auto* par = hand ? hand->parent : nullptr;
+			if (!hand || !par) continue;
+			const RE::NiMatrix3 world = M * hand->world.rotate;
+			const RE::NiPoint3  at = hand->world.translate - fwd * (3.0f * e);
+			const RE::NiMatrix3 pt = par->world.rotate.Transpose();
+			hand->local.rotate = pt * world;
+			hand->local.translate = (pt * (at - par->world.translate)) / std::max(0.01f, par->world.scale);
+			RE::NiUpdateData ud;
+			hand->Update(ud);
 		}
 	}
 	void WandCast()
@@ -2348,7 +2398,11 @@ namespace bo3z::Classes
 		if (held && heldFor >= 0.3f) {
 			if (g_wandNext <= 0.0f) {   // (Noah: "attack every half a second without being able to spam them. You have to hold them down")
 				g_wandNext = 0.5f;
-				g_wandPulse = 1.0f;
+				WandKick(0);
+				// (Noah: "The spells should not be coming from the center of my screen") everything this cast looses starts at the tip
+				const RE::NiPoint3 tipAt = WandTip(p);
+				Gun::SetSwingFrom(&tipAt);
+				struct Clear { ~Clear() { Gun::SetSwingFrom(nullptr); } } clear;
 				// (Noah: "It's supposed to cast whatever spell I have on my left hand ... it shoots 1 per second without using
 				// mana") the spell in your left hand, loosed from the wand's tip, free; no spell there: the Carian bolts
 				auto* left = p->GetEquippedObject(true);
@@ -2368,6 +2422,10 @@ namespace bo3z::Classes
 						ld.castingSource = RE::MagicSystem::CastingSource::kRightHand;
 						RE::ProjectileHandle h;
 						RE::Projectile::Launch(&h, ld);
+						if (static int said = 0; said++ < 6) {
+							auto pr = h.get();
+							logger::info("classes: the wand's {} launched {:.0f} from its tip", sp->GetName(), pr ? pr->GetPosition().GetDistance(tipAt) : -1.0f);
+						}
 					} else if (auto* ic = p->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)) {
 						ic->CastSpellImmediate(sp, false, nullptr, 1.0f, false, 0.0f, p);
 					}
@@ -2381,7 +2439,7 @@ namespace bo3z::Classes
 			}
 		}
 		g_wandHeld = held;
-		TickWandTip(p, w, inHand, held, a_delta);
+		WandOrb(0, WandTipY(w), inHand, held, a_delta);
 		// (Noah: "only allowed to hold one wand at a time") never in the left hand, never two in the pack
 		if (ItemMenusOpen()) return;
 		static float check = 0.0f;
@@ -2779,9 +2837,10 @@ namespace bo3z::Classes
 	void SlayerLook()
 	{
 		auto* w = Slayer();
-		auto* f = Lookup(0x344731, "NewArmoury.esp");
+		// (Noah, 2026-11-11: "the dragon bone katana") Animated Armoury's Dragonbone Katana
+		auto* f = Lookup(0x34473D, "NewArmoury.esp");
 		auto* s = f ? f->As<RE::TESObjectWEAP>() : nullptr;
-		if (!w || !s) { logger::warn("classes: the Dragon Slayer's katana look not found (Animated Armoury's Glass Katana)"); return; }
+		if (!w || !s) { logger::warn("classes: the Dragon Slayer's katana look not found (Animated Armoury's Dragonbone Katana)"); return; }
 		if (AdoptLook(w, s)) logger::info("classes: the Dragon Slayer takes the look of {}", s->GetName());
 	}
 	// a weapon made a scythe: a model of Battle Scythe's, held and swung two-handed as a battleaxe, with our scythe keyword (the
@@ -2791,7 +2850,15 @@ namespace bo3z::Classes
 		if (!a_w || !a_model) return false;
 		const bool changed = std::string_view(a_w->GetModel()) != std::string_view(a_model);
 		a_w->SetModel(a_model);
-		a_w->firstPersonModelObject = nullptr;   // (the same model in first person)
+		// (Noah: "The scythes still don't have an inventory model") the item menu shows a weapon by its first-person model: the
+		// same model's own STAT (sheets: 1st_scythe_*), never none
+		a_w->firstPersonModelObject = nullptr;
+		for (const auto& [m, id] : gen::kScytheFirst) {
+			if (_stricmp(std::string(m).c_str(), a_model) == 0) {
+				if (auto* st = Forms::Ours(id) ? Forms::Ours(id)->As<RE::TESObjectSTAT>() : nullptr) a_w->firstPersonModelObject = st;
+				break;
+			}
+		}
 		a_w->weaponData.animationType = RE::WEAPON_TYPE::kTwoHandAxe;
 		a_w->weaponData.reach = 1.4f, a_w->weaponData.speed = 0.8f;
 		if (auto* both = RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F45)) a_w->SetEquipSlot(both);
@@ -3831,11 +3898,13 @@ namespace bo3z::Classes
 		if (static float sl = 0; (sl -= a_delta) <= 0) {
 			sl = 2.0f;
 			if (auto* d = Slayer(); d && p) {
-				// (Noah: "remove the flames on the sword itself when holding it. So it's just the golden circular animation on the blade
-				// itself") no enchantment's flames on it: only its art circling the blade (TickSwords), in gold
-				if (RE::EnchantmentItem* want = nullptr; d->formEnchanting != want) {
+				// (Noah, 2026-11-11: "The dragon slayer sword should be the dragon bone katana with a golden fire weapon animation")
+				// Visual Animated Enchants' golden fire along the blade again (its Dawnbreaker sunfire, at the look's height), with
+				// its art circling the blade (TickSwords); a little charge so Skyrim draws it, and its looks cost none
+				if (auto* want = RE::TESDataHandler::GetSingleton()->LookupForm<RE::EnchantmentItem>(gen::kBladeViz[9][2], gen::kPlugin); want && d->formEnchanting != want) {
+					PatchLookArt();
 					d->formEnchanting = want;
-					d->amountofEnchantment = 0;
+					d->amountofEnchantment = 100;
 					auto* em = RE::ActorEquipManager::GetSingleton();
 					if (em && p->GetEquippedObject(false) == d && !ItemMenusOpen()) {
 						em->UnequipObject(p, d, nullptr, 1, nullptr, false, false, false, true);

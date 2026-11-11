@@ -118,6 +118,9 @@ MASTERS = ['Skyrim.esm', 'Update.esm', 'Dawnguard.esm', 'Dragonborn.esm', 'mihai
 
 POWERUPS = [('instakill', 'FF3030'), ('double', 'FFD040'), ('kaboom', 'FF8A20'), ('firesale', 'B060FF'), ('maxammo', '46C8FF'), ('shadow', '8040E0'), ('thuum', 'D0E8FF'), ('mercy', '50E070')]
 
+SCYTHES = ['forsworn', 'falmer', 'dwarven', 'glass', 'dragonpriest', 'silver', 'Skeleton', 'dragonTeeth', 'vampire', 'daedric']
+
+
 def dressing(S):
     """Expand the dressing sheet into concrete pieces: one per (dressing row x town object it applies to)
     for '$' rows, one shared record otherwise. Returns (records, pieces):
@@ -158,6 +161,13 @@ def dressing(S):
     records[('STAT', 'dragon_away')] = {'model': 'CurseOfAlduin\\fx\\dragon_away.nif', 'color': '', 'radius': 0}  # the glider's dragon, flying off
     # (Noah: the Tablet of Mysteries "a beacon of light that shoots high so it can be seen in the distance", in the tablet's own
     # glow; "a Dragon Priest mask rises" when it moves on) Skyrim's own wayshrine beam and Konahrik's mask
+    # (Noah: "The scythes still don't have an inventory model same goes for the gravebell mace") the item menu shows a weapon by its
+    # first-person model: the donated weapons wearing their own model, and every scythe, get one (the same model)
+    for w in S['tablet']['rows']:
+        if w['type'] != 'book' and w.get('model') and not w.get('look'):
+            records[('STAT', '1st_tab_' + w['id'])] = {'model': w['model'], 'color': '', 'radius': 0}
+    for n in SCYTHES:
+        records[('STAT', '1st_scythe_' + n.lower())] = {'model': 'CurseOfAlduin\\scythes\\' + n + '.nif', 'color': '', 'radius': 0}
     records[('STAT', 'tablet_beacon')] = {'model': 'DLC01\\Effects\\DLC1WayshrineLightBeam01.nif', 'color': '', 'radius': 0}
     records[('STAT', 'tablet_mask')] = {'model': 'Armor\\DragonPriestHelms\\dragonhelm_ultra_go.nif', 'color': '', 'radius': 0}
     records[('STAT', 'whirlwind')] = {'model': 'CurseOfAlduin\\fx\\whirlwind.nif', 'color': '', 'radius': 0}  # Bond II's Updraft shout: the whirlwind round you

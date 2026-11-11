@@ -306,6 +306,7 @@ for w in TBW:
     o.append(f'\t\tTabletWeapon{{ {cs(w["id"])}, {cs(w["label"])}, {str(w["grade"] == "battered").lower()}, {_TBT.index(w["type"])}, {w["uses"]}, 0x{form:03X}, 0x{show:03X}, 0x{gloves:03X}, {cs(lk.get("plugin", ""))}, {lk.get("id", "0x0")}, {lk.get("left", "0x0")} }},')
 o.append('\t} };')
 o.append(f'\tinline constexpr std::uint32_t kTabletArrow = 0x{IDS[("AMMO", "tab_arrow")]:03X};')
+o.append('\tinline constexpr std::array<std::pair<std::string_view, std::uint32_t>, ' + str(len(esp_ids.SCYTHES)) + '> kScytheFirst{ { ' + ', '.join('{ ' + cs('CurseOfAlduin\\scythes\\' + n + '.nif') + ', 0x' + format(IDS[('STAT', '1st_scythe_' + n.lower())], '03X') + ' }' for n in esp_ids.SCYTHES) + ' } };  // (each scythe model: its first-person STAT, the item menu\'s view)')
 o.append(f'\tinline constexpr std::uint32_t kTabletBeacon = 0x{IDS[("STAT", "tablet_beacon")]:03X}, kTabletMask = 0x{IDS[("STAT", "tablet_mask")]:03X};  // (the tablet\'s beam over it; the mask that sends it on)')
 # Stage 2 (sheet: echo): src/Echo.cpp
 EC = S['echo']

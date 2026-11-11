@@ -1815,6 +1815,21 @@
   "MGEF:quickrevive": "0xf13",
   "ALCH:quickrevive": "0xf14",
   "STAT:tablet_beacon": "0xf15",
-  "STAT:tablet_mask": "0xf16"
+  "STAT:tablet_mask": "0xf16",
+  "STAT:1st_tab_gravebell": "0xf17",
+  "STAT:1st_tab_silverscythe": "0xf18",
+  "STAT:1st_tab_bonereaper": "0xf19",
+  "STAT:1st_tab_wyrmtooth": "0xf1a",
+  "STAT:1st_tab_bloodmoon": "0xf1b",
+  "STAT:1st_scythe_forsworn": "0xf1c",
+  "STAT:1st_scythe_falmer": "0xf1d",
+  "STAT:1st_scythe_dwarven": "0xf1e",
+  "STAT:1st_scythe_glass": "0xf1f",
+  "STAT:1st_scythe_dragonpriest": "0xf20",
+  "STAT:1st_scythe_silver": "0xf21",
+  "STAT:1st_scythe_skeleton": "0xf22",
+  "STAT:1st_scythe_dragonteeth": "0xf23",
+  "STAT:1st_scythe_vampire": "0xf24",
+  "STAT:1st_scythe_daedric": "0xf25"
  }
 }

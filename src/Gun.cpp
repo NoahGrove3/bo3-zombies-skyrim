@@ -1688,6 +1688,7 @@ namespace bo3z
 					if constexpr (kPalmHold) PlaceHeldFlask(a_this);
 					Movement::PoseGlideArms(a_this);
 					Movement::SwingBody(a_this);
+					Classes::PoseWand(a_this);
 				} catch (...) {
 				}
 			}
@@ -2103,8 +2104,13 @@ namespace bo3z
 			d.Unitize();
 			return d;
 		}
+		// (Noah: "The spells should not be coming from the center of my screen") while a wand casts, every swing-born look and
+		// bolt starts at its tip
+		bool         g_fromSet = false;
+		RE::NiPoint3 g_fromAt{};
 		RE::NiPoint3 SwingFrom()
 		{
+			if (g_fromSet) return g_fromAt;
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			auto* cam = RE::PlayerCamera::GetSingleton();
 			RE::NiPoint3 cp{};
@@ -2463,6 +2469,8 @@ namespace bo3z
 			std::erase_if(g_skyBeams, [](const SkyBeamLive& b) { return b.left <= 0; });
 		}
 		void DevFxReload() { FxMapLoad(); }
+		void SetSwingFrom(const RE::NiPoint3* a_at) { g_fromSet = a_at != nullptr; if (a_at) g_fromAt = *a_at; }
+		void Fling(RE::Actor* a_target, const RE::NiPoint3& a_from, float a_mag) { Spellcraft::Fling(a_target, a_from, a_mag); }
 		// a placed model's effect shaders laid over with a colour, the moment its model is in (the Tablet of Mysteries' beacon)
 		void TintRef(RE::TESObjectREFR* a_ref, float a_r, float a_g, float a_b)
 		{

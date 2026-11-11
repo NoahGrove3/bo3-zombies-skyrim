@@ -988,23 +988,78 @@ namespace bo3z::Tablet
 			for (int i = 0; i < static_cast<int>(gen::kTabletWeapons.size()); ++i) if (gen::kTabletWeapons[i].id == "wanderstar") return i;
 			return -1;
 		}
+		// (Noah: "This wand should shoot a small golden ball that does a TON of knock back every 5th hit on enemies. Naturally it
+		// does base damage that bounces to up to 4 enemies if they're standing close together. The projectile needs to be seen
+		// bouncing to each enemy") a ball of golden light from the wand's tip (Fulcimentum's wood wand: its point 63 down its -Y)
+		constexpr float kStarTipY = -63.0f;
+		int g_starHits = 0;
+		void StarHop(const RE::NiPoint3& a_from, const RE::NiPoint3& a_dir, float a_range, float a_share, int a_left, std::shared_ptr<std::vector<RE::FormID>> a_hit)
+		{
+			Gun::SlashSpec sl;
+			sl.model = "CurseOfAlduin\\fx\\star_ball.nif";
+			sl.from = a_from, sl.dir = a_dir;
+			sl.roll = Gun::SwingRoll(a_dir);
+			sl.range = a_range, sl.speed = 1500.0f, sl.radius = 70.0f, sl.scale = 1.0f;
+			sl.bolt = true, sl.stopOnHit = true, sl.share = a_share;
+			sl.onHit = [a_share, a_left, a_hit, a_from](RE::Actor* a, bool) {
+				if (!a) return;
+				a_hit->push_back(a->GetFormID());
+				const RE::NiPoint3 at = Mid(a);
+				Gun::QueueFx("CurseOfAlduin\\fx\\philosopher_burst.nif", at, 0.35f, 0.0f, 0.6f, false);   // (a small burst of gold)
+				Gun::BlastSound("light", at, 0.5f);
+				// every fifth of the dead it strikes is thrown far
+				if (++g_starHits % 5 == 0) {
+					RE::NiPoint3 back = a->GetPosition() - a_from;
+					back.z = 0;
+					if (back.Length() > 1.0f) back.Unitize();
+					const RE::ActorHandle h = a->GetHandle();
+					const RE::NiPoint3 push = a->GetPosition() - back * 150.0f - RE::NiPoint3{ 0, 0, 60.0f };
+					Tasks::Add([h, push] { if (auto t = h.get(); t && !t->IsDead()) Gun::Fling(t.get(), push, 14.0f); });
+					Gun::QueueFx("CurseOfAlduin\\fx\\philosopher_burst.nif", at, 0.9f, 0.0f, 0.8f, false);
+				}
+				if (a_left <= 1) return;
+				// on to the next of the dead standing close by (never one it already struck)
+				RE::Actor* next = nullptr;
+				for (auto* f : Others(a, a->GetPosition(), 450.0f, 8)) {
+					if (std::find(a_hit->begin(), a_hit->end(), f->GetFormID()) == a_hit->end()) { next = f; break; }
+				}
+				if (!next) return;
+				RE::NiPoint3 d = Mid(next) - at;
+				const float len = d.Length();
+				if (len < 1.0f) return;
+				d.Unitize();
+				const RE::NiPoint3 from = at + d * std::min(80.0f, len * 0.4f);
+				const float range = len + 60.0f;
+				const float share = a_share;
+				const int left = a_left - 1;
+				auto hit = a_hit;
+				Tasks::Add([from, d, range, share, left, hit] { StarHop(from, d, range, share, left, hit); });
+			};
+			Gun::Slash(sl);
+		}
 		void TickStarWand(RE::PlayerCharacter* a_p, float a_delta)
 		{
 			static float heldFor = 0, next = 0;
 			next = std::max(0.0f, next - a_delta);
-			const bool held = g_starButton && StarWandInHand();
+			const bool inHand = StarWandInHand();
+			const bool held = g_starButton && inHand;
 			heldFor = held ? heldFor + a_delta : 0.0f;
+			Classes::WandOrb(1, kStarTipY, inHand, held, a_delta);   // (Noah: "The tip of this wand also needs to have the animated blue glowing tip")
 			if (!held || heldFor < 0.3f || next > 0.0f) return;
 			next = 0.5f;
 			const int si = StarIndex();
 			const float S = Share() * 0.7f;
+			Classes::WandKick(1);
+			const RE::NiPoint3 tip = Classes::WandTipAt(kStarTipY);
+			Gun::SetSwingFrom(&tip);
 			RE::Actor* t = nullptr;
-			const RE::NiPoint3 at = AimPoint(&t);
-			if (!t) { auto v = Gun::FoesNear(at, 700.0f); if (!v.empty()) t = v.front(); }
-			const RE::NiPoint3 tip = Gun::SwingFrom() + Gun::SwingDir() * 60.0f;
-			Gun::FxBlast("light", tip);
-			Gun::ElemBurst(4, tip, 0.25f, 0.0f, 0.3f);
-			Chain(t, tip, 3, S, 4);
+			AimPoint(&t);
+			RE::NiPoint3 dir = t ? Mid(t) - tip : Gun::SwingDir();
+			Gun::SetSwingFrom(nullptr);
+			if (dir.Length() < 1.0f) dir = Gun::SwingDir();
+			dir.Unitize();
+			StarHop(tip, dir, 2200.0f, S, 4, std::make_shared<std::vector<RE::FormID>>());
+			Gun::BlastSound("light", tip, 0.35f);
 			if (si >= 0 && si == g_held && !Gun::TestKitOn()) {
 				if (--g_uses <= 0) Break(); else Rename(g_held, g_uses);
 			}
