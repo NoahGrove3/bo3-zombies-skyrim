@@ -1539,7 +1539,7 @@ namespace bo3z::gen
 		TabletWeapon{ "talons", "Talons of Woe", true, 2, 30, 0xEE6, 0xEE1, 0x000, "NewArmoury.esp", 0x19AAB2, 0x19AAEE },
 		TabletWeapon{ "riverstone", "Riverstone Halberd", false, 3, 100, 0xEC0, 0xEB7, 0x000, "NewArmoury.esp", 0x16801F, 0x0 },
 		TabletWeapon{ "wyrmspine", "Wyrmspine Pike", true, 6, 30, 0xEE7, 0xEE2, 0x000, "NewArmoury.esp", 0x153BB9, 0x0 },
-		TabletWeapon{ "lanternwick", "Rimewick Quarterstaff", false, 3, 100, 0xEC2, 0xEB9, 0x000, "NewArmoury.esp", 0x18B765, 0x0 },
+		TabletWeapon{ "lanternwick", "Rimewick Quarterstaff", true, 3, 30, 0xEC2, 0xEB9, 0x000, "NewArmoury.esp", 0x18B765, 0x0 },
 		TabletWeapon{ "cinderclaws", "Cinderclaws", false, 2, 100, 0xEE8, 0xEE3, 0x000, "NewArmoury.esp", 0x19AAAC, 0x19AAE8 },
 		TabletWeapon{ "eclipse", "Eclipse Edge", true, 6, 30, 0xEC4, 0xEBA, 0x000, "NewArmoury.esp", 0x153BB0, 0x0 },
 		TabletWeapon{ "wanderstar", "The Wandering Star", true, 5, 30, 0xEC5, 0xEBB, 0x000, "Fulcimentum - More Staves and Wands of Skyrim.esp", 0x800, 0x0 },

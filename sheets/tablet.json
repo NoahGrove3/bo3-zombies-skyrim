@@ -100,9 +100,9 @@
     {
       "id": "lanternwick",
       "label": "Rimewick Quarterstaff",
-      "grade": "worn",
+      "grade": "battered",
       "type": "battleaxe",
-      "uses": 100,
+      "uses": 30,
       "model": "CurseOfAlduin\\tablet\\lanternwick.nif",
       "power": "Light: freezes for 3 s. Heavy: a blizzard, 10 m for 6 s.",
       "owner": "Carried by a lamplighter of Riften until the lamps went out.",

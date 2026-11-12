@@ -1329,6 +1329,7 @@ namespace bo3z::Tablet
 			g_held = static_cast<int>(a_v[4]) - 1;
 			if (g_held >= static_cast<int>(gen::kTabletWeapons.size())) g_held = -1;
 			g_uses = a_v[5] | (a_v[6] << 8);
+			if (g_held >= 0) g_uses = std::min(g_uses, gen::kTabletWeapons[g_held].uses);   // (a weapon made rarer since: its fewer uses)
 			if (g_held >= 0) Rename(g_held, g_uses);
 		}
 	}
