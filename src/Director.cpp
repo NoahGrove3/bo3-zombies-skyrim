@@ -4971,6 +4971,61 @@ namespace bo3z
 		}
 		std::vector<RE::ObjectRefHandle> g_sheltered;
 		bool  g_shelterOn = false;   // (the night's shelter under way)
+		// (Noah: "people hurrying indoors, a door shuts" - "Build real run-home") at dusk the townsfolk near you run to the
+		// nearest house door and go in through it; those with no door near them still fade
+		struct Runner
+		{
+			RE::ObjectRefHandle who, door;
+			float               t = 0.0f;
+			bool                in = false;
+		};
+		std::vector<Runner> g_runners;
+		RE::TESObjectREFR* NearestDoor(RE::Actor* a_who)
+		{
+			RE::TESObjectREFR* best = nullptr;
+			float              bestD = 2600.0f;
+			RE::TES::GetSingleton()->ForEachReferenceInRange(a_who, 2600.0f, [&](RE::TESObjectREFR* r) {
+				if (!r || r->IsDisabled() || !r->GetBaseObject() || r->GetBaseObject()->GetFormType() != RE::FormType::Door ||
+					!r->extraList.HasType(RE::ExtraDataType::kTeleport)) return RE::BSContainer::ForEachResult::kContinue;
+				const float d = r->GetPosition().GetDistance(a_who->GetPosition());
+				if (d < bestD) bestD = d, best = r;
+				return RE::BSContainer::ForEachResult::kContinue;
+			});
+			return best;
+		}
+		void RunHome(RE::Actor* a_who, RE::TESObjectREFR* a_door)
+		{
+			auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+			if (!vm) return;
+			const auto hd = vm->GetObjectHandlePolicy()->GetHandleForObject(a_who->GetFormType(), a_who);
+			RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> none;
+			vm->DispatchMethodCall(hd, "Actor", "PathToReference", RE::MakeFunctionArguments(static_cast<RE::TESObjectREFR*>(a_door), 1.0f), none);
+		}
+		void TickRunners(float a_delta)
+		{
+			for (auto it = g_runners.begin(); it != g_runners.end();) {
+				auto a = it->who.get();
+				auto d = it->door.get();
+				it->t += a_delta;
+				if (!a || a->IsDisabled() || a->IsDead() || !d) { it = g_runners.erase(it); continue; }
+				auto* actor = a->As<RE::Actor>();
+				const bool there = a->GetPosition().GetDistance(d->GetPosition()) < 190.0f;
+				if (there && !it->in) {
+					it->in = true, it->t = 0.0f;
+					d->ActivateRef(a.get(), 0, nullptr, 0, false);   // (the door opens and they go through it)
+					static int told = 0;
+					if (told++ < 20) logger::info("shelter: {} ran home through a door", a->GetName());
+				} else if ((it->in && it->t > 1.5f && a->GetParentCell() && !a->GetParentCell()->IsInteriorCell()) || (!it->in && it->t > 16.0f)) {
+					FadeShow(a.get(), false);   // (still out: the door didn't take them, or they never reached it)
+					it = g_runners.erase(it);
+					continue;
+				} else if (!it->in && actor && std::fmod(it->t, 3.0f) < a_delta) {
+					RunHome(actor, d.get());   // (kept running: a package may have taken them back)
+				}
+				if (it->in && it->t > 1.5f) { it = g_runners.erase(it); continue; }
+				++it;
+			}
+		}
 		float g_duskFade = 0.0f;           // (its first seconds: those already out fade; later comers vanish at once)
 		void TickShelter(RE::PlayerCharacter* a_player, float a_delta)
 		{
@@ -5005,8 +5060,10 @@ namespace bo3z
 					dawnTalk = 4.0f;
 				}
 				g_fading.clear();
+				g_runners.clear();
 				return;
 			}
+			TickRunners(a_delta);
 			// (Noah: townsfolk who live through it) those already told to go in fade out one by one, not all at once
 			for (auto& f : g_fading) {
 				if (f.second > -50.0f && (f.second -= a_delta) <= 0) {
@@ -5068,6 +5125,13 @@ namespace bo3z
 				// (the near ones hurry off and fade from sight over a few seconds as night falls; the far ones - and anyone who turns
 				// up once the night is under way - are simply gone, silent)
 				if (g_duskFade > 0.0f && a->GetPosition().GetDistance(a_player->GetPosition()) < 3500.0f) {
+					if (std::any_of(g_runners.begin(), g_runners.end(), [&](const Runner& r) { return r.who.get().get() == a.get(); })) continue;
+					if (auto* door = std::none_of(g_fading.begin(), g_fading.end(), [&](const auto& f) { return f.first.get().get() == a.get(); }) ? NearestDoor(a.get()) : nullptr) {
+						g_runners.push_back({ a->CreateRefHandle(), door->CreateRefHandle(), 0.0f, false });
+						RunHome(a.get(), door);
+						++n;
+						continue;
+					}
 					if (std::none_of(g_fading.begin(), g_fading.end(), [&](const auto& f) { return f.first.get().get() == a.get(); })) {
 						g_fading.push_back({ a->CreateRefHandle(), 1.0f + 6.0f * static_cast<float>(Pick(100)) / 100.0f });
 						g_sheltered.push_back(a->CreateRefHandle());
