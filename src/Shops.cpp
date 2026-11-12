@@ -2034,7 +2034,9 @@ namespace bo3z
 							if (auto hr = g_glowHeart.get()) HeartGlow(hr.get(), 1.0f);
 							g_glowHeart = {};
 							const auto at = r->GetPosition() + RE::NiPoint3{ 0, 0, 175.0f };
-							Gun::FxBlast("lightmassive", at);
+							// (Noah: "make the green explosion blue in color instead of green but keep the same effect") Skyrim's mass
+							// light burst itself, in blue (fxmap.ini altar_burst)
+							Gun::QueueFx("CurseOfAlduin\\fx\\altar_burst.nif", at, 1.0f, 0.0f, 3.0f, false);
 							Gun::FxBlast("shoutarea", at, 0.3f);
 							Forms::Play(gen::Sound::nuke);
 							Forms::PlayAt(gen::Sound::shout_toll, r.get());
@@ -2048,7 +2050,9 @@ namespace bo3z
 						}
 						if (g_pulse->burst) {
 							// the motes fade in, the golden runes grow (eased: quick at first, settling into place)
-							const float g = std::clamp((el - kPulseCharge - 0.2f) / kPulseGrow, 0.0f, 1.0f);
+							// (Noah: "I also want the golden rune to fade in after the green explosion") the runes wait for the burst to
+							// spend itself, then fade in slowly as they grow
+							const float g = std::clamp((el - kPulseCharge - 1.3f) / (kPulseGrow - 0.6f), 0.0f, 1.0f);
 							const float ease = 1.0f - (1.0f - g) * (1.0f - g) * (1.0f - g);
 							RE::TES::GetSingleton()->ForEachReferenceInRange(r.get(), 500.0f, [&](RE::TESObjectREFR* x) {
 								auto* b = x ? x->GetBaseObject() : nullptr;
@@ -2057,7 +2061,7 @@ namespace bo3z
 								if (auto* o = x->Get3D()) {
 									const float full = x->GetScale();
 									o->local.scale = full * (runes ? std::max(0.001f, ease) : 1.0f);
-									Fade(o, runes ? std::min(1.0f, g * 2.5f) : g);
+									Fade(o, runes ? g * g : g);
 									RE::NiUpdateData ud;
 									o->Update(ud);
 								}
@@ -2154,9 +2158,12 @@ namespace bo3z
 				if (g_pulse && g_pulse->started) {
 					if (auto pr = g_pulse->shrine.get()) spinAt = pr->GetPosition();
 					const float el = kPulseSeconds - g_pulse->t;
-					target = el < kPulseCharge ? 1.0f + 5.0f * (el / kPulseCharge) : el < kPulseCharge + 1.5f ? 6.0f : 1.0f;
+					// (Noah, again 2026-11-11: "I want the stones to spin faster as the animation is playing then slow down to normal
+					// speed") far faster - up to twenty-five times their turn, wound up through the charge, held through the burst
+					const float u = std::clamp(el / kPulseCharge, 0.0f, 1.0f);
+					target = el < kPulseCharge ? 1.0f + 24.0f * u * u : el < kPulseCharge + 2.0f ? 25.0f : 1.0f;
 				}
-				const float rate = target > spinBoost ? 3.0f : 0.5f;   // (quick to wind up, slow to settle)
+				const float rate = target > spinBoost ? 2.5f : 0.6f;   // (quick to wind up, slow to settle)
 				spinBoost += (target - spinBoost) * std::min(1.0f, rate * a_delta);
 			}
 			for (auto& s : g_spinners) {
