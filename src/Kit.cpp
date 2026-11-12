@@ -526,7 +526,8 @@ namespace bo3z::Kit
 	// (the Alchemist) a flask's tier (0 fire .. 5 blood), -1 not owned (not the Alchemist, or not yet)
 	int FlaskTier(int a_el)
 	{
-		if (Cls() != 2) return -1;
+		// (Noah: "The holy water beam from the sky animation isn't playing" - every class throws the flasks now, but their tier
+		// was read only for an Alchemist: anyone else's were tier 0, and the Legendary burst never came) the Alchemist kit's own tier
 		const auto defs = Defs(2);
 		for (int i = 0; i < static_cast<int>(defs.size()); ++i) if (defs[i].kind == Kind::Bomb && Elem(defs[i]) == a_el) return ItemTier(2, i);
 		return -1;

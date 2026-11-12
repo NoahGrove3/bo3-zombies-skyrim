@@ -3798,6 +3798,9 @@ namespace bo3z::Classes
 			// each chasing one of the dead near you (TickGoldRain); a swing during it starts the five seconds over
 			g_goldRain = 5.0f, g_goldNext = 0.0f;
 			Gun::BlastSound("fireball", p->GetPosition(), 0.7f);
+			// (Noah: "the dragon slayer sword isn't casting its golden fire tornado") and the Spellsword blade's tornado, two tiers
+			// above it: a great one of golden fire rolling out ahead of you
+			ClassCyclone(3, 7, 3, UpgradeMult(kWonderUps) * (0.7f + 0.3f * Arcana::Power()), nullptr, p->GetPosition(), Gun::SwingDir());
 			logger::info("swords: the Dragon Slayer calls down five seconds of golden fireballs");
 			return;
 		}
