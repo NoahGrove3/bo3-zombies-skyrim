@@ -256,4 +256,63 @@ namespace bo3z::RaceTidy
 			if (told++ < 12) logger::info("race menu: tidied ({} tab lists, {} sliders moved)", tabs, moved);
 		}
 	}
+
+	// (Noah: "Can you make enter on keyboard the done, which is when you would create the name for the character, and make
+	// the navigation for keyboard and mouse WASD, and the light should be Q. And zoom out should be E on keyboard and mouse
+	// ... We don't need the mouse cursor") in the character creator, before its menu reads them: W A S D become the arrow
+	// keys; Enter, Q and E press RaceMenu's own Done, Light and Zoom. While the name is being typed, every key is the name's.
+	namespace
+	{
+		std::atomic<bool> g_typing{ false };
+		void Press(const char* a_fn)
+		{
+			SKSE::GetTaskInterface()->AddUITask([fn = std::string(a_fn)] {
+				auto* ui = RE::UI::GetSingleton();
+				auto  menu = ui ? ui->GetMenu(RE::RaceSexMenu::MENU_NAME) : nullptr;
+				auto* mv = menu ? menu->uiMovie.get() : nullptr;
+				RE::GFxValue panels;
+				if (!mv || !mv->GetVariable(&panels, "_root.RaceSexMenuBaseInstance.RaceSexPanelsInstance")) return;
+				bool ok = panels.Invoke(fn.c_str());
+				for (const char* sub : { "bottomBar", "racePanel", "bottomBar.buttonPanel" }) {   // (wherever RaceMenu keeps it)
+					if (ok) break;
+					RE::GFxValue c;
+					if (mv->GetVariable(&c, (std::string("_root.RaceSexMenuBaseInstance.RaceSexPanelsInstance.") + sub).c_str()) && c.IsObject()) ok = c.Invoke(fn.c_str());
+				}
+				static int told = 0;
+				if (told++ < 20) logger::info("race menu: {} pressed from the keyboard ({})", fn, ok ? "done" : "not found");
+			});
+		}
+	}
+	void Keys(RE::InputEvent* a_ev)
+	{
+		auto* ui = RE::UI::GetSingleton();
+		if (!ui || !ui->IsMenuOpen(RE::RaceSexMenu::MENU_NAME)) return;
+		// the name box up: hands off (its letters are the name)
+		{
+			auto  menu = ui->GetMenu(RE::RaceSexMenu::MENU_NAME);
+			auto* mv = menu ? menu->uiMovie.get() : nullptr;
+			RE::GFxValue te, vis;
+			g_typing = mv && mv->GetVariable(&te, "_root.RaceSexMenuBaseInstance.RaceSexPanelsInstance.textEntry") && te.IsDisplayObject() &&
+			           te.GetMember("_visible", &vis) && vis.IsBool() && vis.GetBool();
+		}
+		if (g_typing) return;
+		auto* ue = RE::UserEvents::GetSingleton();
+		for (auto* e = a_ev; e; e = e->next) {
+			auto* b = e->AsButtonEvent();
+			if (!b || b->GetDevice() != RE::INPUT_DEVICE::kKeyboard) continue;
+			const auto id = b->GetIDCode();
+			switch (id) {
+			case 0x11: b->SetIDCode(0xC8), b->SetUserEvent(ue->up); break;      // W
+			case 0x1F: b->SetIDCode(0xD0), b->SetUserEvent(ue->down); break;    // S
+			case 0x1E: b->SetIDCode(0xCB), b->SetUserEvent(ue->left); break;    // A
+			case 0x20: b->SetIDCode(0xCD), b->SetUserEvent(ue->right); break;   // D
+			case 0x1C: case 0x9C: case 0x10: case 0x12: {   // Enter (and the keypad's), Q, E: ours, and nothing else's
+				if (b->IsDown()) Press(id == 0x10 ? "onLightClicked" : id == 0x12 ? "onZoomClicked" : "onDoneClicked");
+				b->SetIDCode(0xFF), b->SetUserEvent(RE::BSFixedString(""));
+				break;
+			}
+			default: break;
+			}
+		}
+	}
 }

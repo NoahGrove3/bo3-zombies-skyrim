@@ -6507,6 +6507,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		{
 			static RE::BSEventNotifyControl thunk(RE::MenuControls* a_this, RE::InputEvent* const* a_ev, RE::BSTEventSource<RE::InputEvent*>* a_src)
 			{
+				if (a_ev && *a_ev) RaceTidy::Keys(*a_ev);
 				if (g_partyOpen && a_ev && *a_ev) {
 					auto* ui = RE::UI::GetSingleton();
 					if (ui && (ui->IsMenuOpen(RE::JournalMenu::MENU_NAME) || ui->IsMenuOpen(RE::MainMenu::MENU_NAME))) {

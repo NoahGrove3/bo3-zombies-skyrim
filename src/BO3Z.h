@@ -818,6 +818,7 @@ namespace bo3z
 	namespace RaceTidy
 	{
 		void Tick();   // RaceMenu's tabs and sliders regrouped while the character creator is open
+		void Keys(RE::InputEvent* a_ev);   // its keyboard: WASD to move, Enter done, Q light, E zoom
 	}
 
 	namespace Tablet
