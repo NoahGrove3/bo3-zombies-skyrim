@@ -6433,10 +6433,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// Frame cap (sheet: movement.fps_cap): sleep most of the gap, spin the last bit for an even pace.
 			// (Noah: "make the fps cap in the menu 60fps so i dont overwork my pc with unlimited") the menus - the main menu, the
 			// game paused under any menu (inventory, map, the altars) - held to 60; play itself stays unlimited
+			// (Noah: "can you increase the menu FPS to 120?") held to 120 now
 			float cap = gen::kFpsCap;
 			if (cap <= 0) {
 				auto* ui = RE::UI::GetSingleton();
-				if (ui && (ui->GameIsPaused() || ui->IsMenuOpen(RE::MainMenu::MENU_NAME) || ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME))) cap = 60.0f;   // (loading screens too: they'd spin the GPU at full tilt)
+				if (ui && (ui->GameIsPaused() || ui->IsMenuOpen(RE::MainMenu::MENU_NAME) || ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME))) cap = 120.0f;   // (loading screens too: they'd spin the GPU at full tilt)
 			}
 			if (cap > 0) {
 				using C = std::chrono::steady_clock;
