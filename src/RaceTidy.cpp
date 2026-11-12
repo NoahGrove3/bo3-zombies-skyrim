@@ -252,8 +252,10 @@ namespace bo3z::RaceTidy
 	void Mouse(float a_dx, float a_dy)
 	{
 		if (!g_lookOn) return;
-		g_lookX = std::clamp(g_lookX.load() + a_dx * 1.6f, -450.0f, 450.0f);
-		g_lookY = std::clamp(g_lookY.load() - a_dy * 1.6f, -300.0f, 300.0f);
+		// (Noah: "He's either looking all the way one way or all the way the other way") gentler: a small, slow sweep
+		// about the camera, so the head turns part way and back
+		g_lookX = std::clamp(g_lookX.load() + a_dx * 0.18f, -110.0f, 110.0f);
+		g_lookY = std::clamp(g_lookY.load() - a_dy * 0.18f, -70.0f, 70.0f);
 	}
 
 	void Tick()
