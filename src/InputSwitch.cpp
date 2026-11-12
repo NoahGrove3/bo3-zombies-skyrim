@@ -82,9 +82,9 @@ namespace bo3z::InputSwitch
 				const auto& g = st.Gamepad;
 				if (!kbm || !wasKbm || !have[i]) { rest[i] = g, have[i] = true; continue; }   // (the resting place, taken as the switch happens)
 				const auto& r = rest[i];
-				const auto far = [](SHORT a, SHORT b) { return std::abs(static_cast<int>(a) - static_cast<int>(b)) > 9000; };
+				const auto away = [](SHORT a, SHORT b) { return std::abs(static_cast<int>(a) - static_cast<int>(b)) > 9000; };
 				const bool pressed = (g.wButtons & ~r.wButtons) != 0 || g.bLeftTrigger > r.bLeftTrigger + 80 || g.bRightTrigger > r.bRightTrigger + 80;
-				const bool moved = far(g.sThumbLX, r.sThumbLX) || far(g.sThumbLY, r.sThumbLY) || far(g.sThumbRX, r.sThumbRX) || far(g.sThumbRY, r.sThumbRY);
+				const bool moved = away(g.sThumbLX, r.sThumbLX) || away(g.sThumbLY, r.sThumbLY) || away(g.sThumbRX, r.sThumbRX) || away(g.sThumbRY, r.sThumbRY);
 				if (pressed || moved) Set(false, pressed ? "a controller button" : "a controller stick");
 			}
 			wasKbm = kbm;
