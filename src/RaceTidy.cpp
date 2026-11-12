@@ -51,6 +51,15 @@ namespace bo3z::RaceTidy
 			if (t == "scars") return Place{ kHead, 20 };
 			if (Has(t, { "scars0" })) return Place{ kHead, 21 };
 			if (Has(t, { "ears" })) return Place{ kHead, 30 };
+			// (Noah: "the face tab is missing the face coloring on their skin, like the eyeshadow" - "Next to their feature")
+			// each face color right under its feature
+			if (t == "forehead color") return Place{ kFace, -1 };
+			if (t == "nose color") return Place{ kFace, 3 };
+			if (t == "cheek color" || t == "cheek color lower" || t == "laugh lines") return Place{ kFace, t == "cheek color" ? 11 : t == "cheek color lower" ? 12 : 13 };
+			if (t == "chin color") return Place{ kFace, 31 };
+			if (t == "lip color") return Place{ kFace, 42 };
+			if (t == "eyeliner color" || t == "eye shadow" || t == "eye tint") return Place{ kEyes, t == "eyeliner color" ? 4 : t == "eye shadow" ? 5 : 6 };
+			if (t == "neck color") return Place{ kHead, 40 };
 			// FACE (nose, cheeks, jaw, chin, mouth)
 			if (Has(t, { "nose type" })) return Place{ kFace, 0 };
 			if (Has(t, { "nose height" })) return Place{ kFace, 1 };
@@ -78,15 +87,18 @@ namespace bo3z::RaceTidy
 			if (cb == "changeheight" || t == "$height") return Place{ kBody, 0 };
 			if (t == "weight") return Place{ kBody, 1 };
 			if (cb.rfind("rsm_bodymorph", 0) == 0 || cb.find("morph") != std::string::npos || a_flag == 0) {
-				if (Has(t, { "body -", "overall", "preset" })) return Place{ kBody, 100 };
-				if (Has(t, { "torso - back", "back" })) return Place{ kBody, 400 };
-				if (Has(t, { "torso", "waist", "hip", "rib", "sternum", "clavicle", "chest" })) return Place{ kBody, 200 };
-				if (Has(t, { "pec", "breast" })) return Place{ kBody, 300 };
-				if (Has(t, { "belly", "abs" })) return Place{ kBody, 350 };
-				if (Has(t, { "trap", "shoulder", "delt", "bicep", "tricep", "forearm", "arm", "hand", "neck" })) return Place{ kBody, 500 };
-				if (Has(t, { "butt", "glute" })) return Place{ kBody, 600 };
-				if (Has(t, { "leg", "femur", "thigh", "knee", "calf", "calve", "shin", "ankle", "feet", "foot" })) return Place{ kBody, 700 };
-				return Place{ kBody, 900 };
+				// (Noah: "There are way too many sliders in the bodies tab" - "Essentials") about a dozen kept, the rest hidden:
+				// the men's (HIMBO) by name; the women's (CBBE) by the same few areas
+				static const std::vector<std::pair<std::string, int>> kKeep{
+					{ "overall mass", 100 }, { "body - hugh", 110 }, { "body - hideo", 111 }, { "body - hassan", 112 }, { "body - hector", 113 },
+					{ "body - hank", 114 }, { "shoulders - enlarge", 200 }, { "biceps - size", 210 }, { "torso - width", 220 }, { "legs - size", 230 },
+					// (CBBE)
+					{ "breasts", 300 }, { "waist", 310 }, { "hips", 320 }, { "butt", 330 }, { "arms", 340 }, { "shoulderwidth", 350 },
+					{ "shoulder width", 350 }, { "thighs", 360 }, { "legs", 370 } };
+				for (const auto& [name, order] : kKeep) {
+					if (t == name) return Place{ kBody, order };
+				}
+				return Place{ kHidden, 0 };
 			}
 			// what's left keeps its own tab, if that tab is still shown
 			if (a_flag & (kRace | kHead | kFace | kEyes | kHair | kBody | kExpr)) return std::nullopt;
