@@ -664,7 +664,7 @@ namespace bo3z
 						if (auto* mm = static_cast<RE::MouseMoveEvent*>(e)) {
 							Hud::OnMouseMove(static_cast<float>(mm->mouseInputX), static_cast<float>(mm->mouseInputY));
 							RaceTidy::Mouse(static_cast<float>(mm->mouseInputX), static_cast<float>(mm->mouseInputY));
-							if (std::abs(mm->mouseInputX) + std::abs(mm->mouseInputY) > 6) InputSwitch::OnKeyboardOrMouse(true);
+							InputSwitch::OnMouseMove(mm->mouseInputX, mm->mouseInputY);
 						}
 					}
 					if (e->GetEventType() == RE::INPUT_EVENT_TYPE::kThumbstick) {

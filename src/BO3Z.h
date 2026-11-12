@@ -819,6 +819,7 @@ namespace bo3z
 	{
 		void Install();                          // keyboard/mouse or controller mode, by whichever was used last
 		void OnKeyboardOrMouse(bool a_moved);    // a key, a click or the mouse moving
+		void OnMouseMove(int a_dx, int a_dy);    // the mouse's movement, added up
 		void Tick();                             // the controller read; menus told of a change
 		bool KeyboardMouse();                    // keyboard and mouse mode now
 	}

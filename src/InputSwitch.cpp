@@ -53,6 +53,17 @@ namespace bo3z::InputSwitch
 
 	// keyboard keys and the mouse (from the input sink)
 	void OnKeyboardOrMouse(bool a_moved) { Set(true, a_moved ? "the mouse moved" : "a key or click"); }
+	// (the main menu: the mouse moved slowly, a count or two a frame, never reached one big step) its movement added up over
+	// half a second - a real move, not a nudge of the desk
+	void OnMouseMove(int a_dx, int a_dy)
+	{
+		static auto  since = std::chrono::steady_clock::now();
+		static float acc = 0.0f;
+		const auto   now = std::chrono::steady_clock::now();
+		if (now - since > std::chrono::milliseconds(500)) acc = 0.0f, since = now;
+		acc += static_cast<float>(std::abs(a_dx) + std::abs(a_dy));
+		if (acc > 25.0f) Set(true, "the mouse moved"), acc = 0.0f;
+	}
 
 	// each frame: the controller read directly; a menu told when the mode changed (its buttons, its cursor)
 	void Tick()
@@ -75,9 +86,31 @@ namespace bo3z::InputSwitch
 			auto* ui = RE::UI::GetSingleton();
 			if (!ui) return;
 			bool cursor = false;
+			const bool kbm = g_kbm.load();
 			for (auto& [name, entry] : ui->menuMap) {
 				if (entry.menu && ui->IsMenuOpen(name)) {
 					entry.menu->RefreshPlatform();
+					// (the main menu was opened in controller mode: no cursor flag, its lists on the controller's platform) a
+					// menu that follows the platform gets the cursor flag with it, and its own lists told directly
+					if (entry.menu->menuFlags.any(RE::IMenu::Flag::kUpdateUsesCursor)) {
+						if (kbm) entry.menu->menuFlags.set(RE::IMenu::Flag::kUsesCursor);
+						else entry.menu->menuFlags.reset(RE::IMenu::Flag::kUsesCursor);
+					}
+					if (name == RE::MainMenu::MENU_NAME && entry.menu->uiMovie) {
+						RE::GFxValue mc;
+						if (entry.menu->uiMovie->GetVariable(&mc, "_root.MenuHolder.Menu_mc") && mc.IsObject()) {
+							RE::GFxValue args[2]{ RE::GFxValue(kbm ? 0.0 : 1.0), RE::GFxValue(false) };
+							const bool ok = mc.Invoke("SetPlatform", nullptr, args, 2);
+							for (const char* l : { "MainList", "MainListHolder.List_mc" }) {
+								RE::GFxValue list;
+								if (entry.menu->uiMovie->GetVariable(&list, (std::string("_root.MenuHolder.Menu_mc.") + l).c_str()) && list.IsObject()) {
+									list.Invoke("SetPlatform", nullptr, args, 2);
+									list.SetMember("bMouseDrivenNav", RE::GFxValue(kbm));
+								}
+							}
+							logger::info("input: the main menu told it's on {} ({})", kbm ? "keyboard and mouse" : "controller", ok ? "done" : "no SetPlatform");
+						}
+					}
 					if (entry.menu->UsesCursor()) cursor = true;
 				}
 			}
