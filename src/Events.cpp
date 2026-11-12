@@ -309,6 +309,7 @@ namespace bo3z
 			}
 			static inline REL::Relocation<decltype(thunk)> func;
 		};
+		std::chrono::steady_clock::time_point g_playerTicked{};
 		struct PlayerUpdate
 		{
 			static void thunk(RE::PlayerCharacter* a_this, float a_delta)
@@ -330,7 +331,14 @@ namespace bo3z
 				++trace;
 				Watchdog::PlayerTicked();
 				T("game");
+				g_playerTicked = std::chrono::steady_clock::now();
 				func(a_this, a_delta);
+				Ours(a_this, a_delta, T);
+			}
+			// everything of ours each frame, after the game's own update of you
+			template <class Trace>
+			static void Ours(RE::PlayerCharacter* a_this, float a_delta, Trace& T)
+			{
 				// (Noah: crashes at the loading screen after dying) nothing of ours runs while a load is under way (the world
 				// is being torn down under it), and once you are dead only the party, the HUD's sound and the audio go on
 				if (auto* ui = RE::UI::GetSingleton(); ui && ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME)) {
@@ -397,6 +405,27 @@ namespace bo3z
 			}
 			static inline REL::Relocation<decltype(thunk)> func;
 		};
+
+		// (Noah: "The night never started" / "the echo altar stones aren't moving. They're frozen" - both in the free camera)
+		// Skyrim stops updating you while its free camera (tfc) is on, and the whole mod ran from that update: the night's
+		// clock, the altars, the dead all stood still. With the free camera on, the mod's frame runs from the screen's frame
+		// instead (never while a menu pauses the game or a load is under way)
+		void FreeCamTickImpl()
+		{
+			auto* cam = RE::PlayerCamera::GetSingleton();
+			auto* pc = RE::PlayerCharacter::GetSingleton();
+			auto* ui = RE::UI::GetSingleton();
+			if (!cam || !pc || !ui || !cam->IsInFreeCameraMode() || ui->GameIsPaused() || ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME)) return;
+			const auto now = std::chrono::steady_clock::now();
+			if (now - g_playerTicked < std::chrono::milliseconds(150)) return;   // (the game still updates you: nothing to stand in for)
+			static auto last = now;
+			const float dt = std::clamp(std::chrono::duration<float>(now - last).count(), 0.0f, 0.1f);
+			last = now;
+			static bool told = false;
+			if (!told) told = true, logger::info("free camera: the mod's frame runs from the screen's frame while you aren't updated");
+			auto T = [](const char*) {};
+			PlayerUpdate::Ours(pc, dt * RE::BSTimer::QGlobalTimeMultiplier(), T);
+		}
 
 		class MenuWatch : public RE::BSTEventSink<RE::MenuOpenCloseEvent>
 		{
@@ -1579,6 +1608,7 @@ namespace bo3z
 
 	namespace Events
 	{
+		void FreeCamTick() { FreeCamTickImpl(); }
 		void InstallLoadGuard()
 		{
 			// the ExtraGlobal branch of the reference loader (ID 12095): its call that adds the new extra

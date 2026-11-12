@@ -1240,6 +1240,7 @@ namespace bo3z
 	{
 		void InstallMenuWatch();
 		void InstallLoadGuard();  // (a save holding an extra twice no longer crashes as it loads)
+		void FreeCamTick();       // (the free camera: the mod's frame from the screen's frame, since Skyrim stops updating you)
 	}
 
 	// (Noah: "each class has its set starting gear that can be scaled as the player progresses") the altar rework: your
