@@ -8030,6 +8030,27 @@
       "atten": 2,
       "loop": true,
       "use": "Alchemist: a fire flask's flames, burning on as long as its fire does (Skyrim's own fire loop)"
+    },
+    {
+      "id": "wand_pulse",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wand_pulse",
+      "file": "fx\\CurseOfAlduin\\un\\wand_thrum_0.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\un\\wand_thrum_0.wav",
+        "fx\\CurseOfAlduin\\un\\wand_thrum_1.wav",
+        "fx\\CurseOfAlduin\\un\\wand_thrum_2.wav",
+        "fx\\CurseOfAlduin\\un\\wand_thrum_3.wav"
+      ],
+      "shift": 6,
+      "layer": "none",
+      "atten": 0,
+      "cat": "sfx",
+      "loop": false,
+      "use": "(Noah: \"Deep arcane thrum\") each wand cast, with the tip's flare (tools/wandsfx.py)"
     }
   ]
 }

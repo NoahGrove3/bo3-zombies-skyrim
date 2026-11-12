@@ -834,7 +834,10 @@ namespace bo3z
 					auto at = a->GetPosition();
 					float ground = r.floorZ;
 					if (const auto top = WalkTop(a->GetParentCell(), { at.x, at.y, r.floorZ }, 60.0f); top && std::abs(*top - r.floorZ) < 90.0f) ground = *top;
-					if (at.z < ground - 35.0f && r.resets < 2) {
+					// (Noah's tablet-night crash, 02:14: one body set back twice in two frames - two moves queued over each other
+					// while its AI was being switched off and on, and a worker thread's job crashed 0.17 s later) once only now,
+					// and the move given longer either side
+					if (at.z < ground - 35.0f && r.resets < 1) {
 						++r.resets;
 						at.z = ground + 4.0f;
 						// (Noah's crash: a worker thread's pathing/animation job read freed memory 0.7 s after one of these) set
@@ -842,12 +845,12 @@ namespace bo3z
 						// woken a moment after that
 						a->EnableAI(false);
 						const auto h = a->GetHandle();
-						Tasks::Later(0.12f, [h, at] {
+						Tasks::Later(0.25f, [h, at] {
 							auto b = h.get();
 							if (!b || b->IsDead() || b->IsDisabled() || b->IsDeleted() || !b->Is3DLoaded()) { if (b && !b->IsDead() && !b->IsDisabled()) b->EnableAI(true); return; }
 							b->SetPosition(at, true);
 							b->SetCollision(true);
-							Tasks::Later(0.12f, [h] { if (auto c = h.get(); c && !c->IsDead() && !c->IsDisabled() && !c->IsDeleted()) c->EnableAI(true); });
+							Tasks::Later(0.25f, [h] { if (auto c = h.get(); c && !c->IsDead() && !c->IsDisabled() && !c->IsDeleted()) c->EnableAI(true); });
 						});
 						static int told = 0;
 						if (told++ < 10) logger::info("night: {:08X} sank into the ground after rising - set back on the floor", a->GetFormID());

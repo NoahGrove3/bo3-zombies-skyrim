@@ -1831,6 +1831,7 @@
   "STAT:1st_scythe_dragonteeth": "0xf23",
   "STAT:1st_scythe_vampire": "0xf24",
   "STAT:1st_scythe_daedric": "0xf25",
-  "EFSH:spectral": "0xf26"
+  "EFSH:spectral": "0xf26",
+  "SNDR:wand_pulse": "0xf27"
  }
 }

@@ -2305,6 +2305,26 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 				Txt(dl, g_body, 12 * k, { a.x, b.y + 3 * k }, Fade(kParch, 0.8f), (s.tabletName + "  -  " + std::to_string(static_cast<int>(std::ceil(f * 100))) + "%").c_str());
 			}
+			// (Noah: "Holding the action key on the tablet should start the roll") the Tablet's hold: a gold ring filling under
+			// the crosshair, "Hold [E] to roll"
+			if (s.holdFrac >= 0.0f && !s.holdText.empty()) {
+				const ImVec2 c{ size.x / 2, size.y * 0.6f };
+				dl->AddCircle(c, 26 * k, IM_COL32(20, 16, 10, 200), 48, 6 * k);
+				if (s.holdFrac > 0) {
+					dl->PathArcTo(c, 26 * k, -1.5708f, -1.5708f + 6.2832f * s.holdFrac, 48);
+					dl->PathStroke(kGold, 0, 6 * k);
+				}
+				const float tw = Measure(g_title, 22 * k, s.holdText).x, gw = 34 * k;
+				const float x0 = c.x - (tw + gw + 60 * k) / 2;
+				TxtC(dl, g_title, 22 * k, x0 + 22 * k, c.y + 38 * k, kParch, "Hold");
+				if (g_padLast) {
+					PadGlyph(dl, { x0 + 52 * k + gw / 2, c.y + 52 * k }, 14 * k, "A");
+				} else {
+					dl->AddRect({ x0 + 52 * k, c.y + 38 * k }, { x0 + 52 * k + gw - 6 * k, c.y + 66 * k }, kGold, 3 * k, 0, 1.4f * k);
+					TxtC(dl, g_num, 18 * k, x0 + 52 * k + (gw - 6 * k) / 2, c.y + 41 * k, kParch, "E");
+				}
+				Txt(dl, g_title, 22 * k, { x0 + 60 * k + gw, c.y + 38 * k }, kParch, s.holdText);
+			}
 			// (Noah: "There should be some sort of indication how many souls are collected and the max amount") the Soulcaller's
 			// souls: a ring of pale flames under the crosshair, lit one by one, and the count
 			if (s.souls >= 0) {

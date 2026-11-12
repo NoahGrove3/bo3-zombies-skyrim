@@ -635,6 +635,7 @@ namespace bo3z::Party
 		return true;
 	}
 
+	bool ActivateHeld() { return g_activateHeld; }
 	Life State() { return g_life; }
 
 	View Now()

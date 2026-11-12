@@ -282,7 +282,7 @@ for name, hx in T['weap_staff']['subs']:
     elif name == 'FULL': b = z("Soulcaller's Staff")
     elif name in ('MODT', 'EAMT'): continue
     elif name == 'EITM': b = struct.pack('<I', fid('ENCH', 'soulcaller'))
-    elif name == 'DESC': b = z("Summoner's wonder. Hold to cast: each of the dead the beam kills gives a soul (max 8). Release: a spectral wolf per soul for 20 s.")
+    elif name == 'DESC': b = z("Summoner's wonder. Hold to cast: each of the dead the beam kills gives a soul (max 6). Release: a spectral wolf per soul for 20 s.")
     elif name == 'DATA': b = struct.pack('<IfH', 0, 8.0, 10)
     _sc.append(sub(name, b))
     if name == 'MODL': _sc.append(sub('EAMT', struct.pack('<H', 0)))

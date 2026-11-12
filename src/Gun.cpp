@@ -3569,7 +3569,8 @@ namespace bo3z
 				const auto from = pp + RE::NiPoint3{ 0, 0, 80.0f };
 				if (!heavy) {
 					for (auto* f : LineHurt(from, from + fwd * 560.0f, 110.0f, 0.3f)) Stagger(f, 0.6f);
-					for (int k = 1; k <= 3; ++k) ElemBurst(3, from + fwd * (140.0f * k), 0.5f + 0.15f * k, 0.06f * k, 0.5f);
+					// (Noah: "The windgale swords wind animations are way too dense and its overwhelming") one light gust
+					ElemBurst(3, from + fwd * 260.0f, 0.45f, 0.04f, 0.4f);
 					BlastSound("light", pp + fwd * 300.0f, 0.4f);
 				} else {
 					for (auto* f : Foes(pp, 840.0f)) {
@@ -3579,12 +3580,8 @@ namespace bo3z
 						AreaHurt(f->GetPosition(), 40.0f, 0.6f, "");
 						Spellcraft::Fling(f, pp, 3.0f);
 					}
-					for (int k = 1; k <= 5; ++k) {
-						ElemBurst(3, from + fwd * (160.0f * k), 0.8f + 0.25f * k, 0.05f * k, 0.6f);
-						const RE::NiPoint3 side{ -fwd.y, fwd.x, 0.0f };
-						ElemBurst(3, from + fwd * (150.0f * k) + side * (70.0f * k), 0.6f + 0.2f * k, 0.05f * k, 0.6f);
-						ElemBurst(3, from + fwd * (150.0f * k) - side * (70.0f * k), 0.6f + 0.2f * k, 0.05f * k, 0.6f);
-					}
+					// (lighter: three gusts down the middle of the cone, not fifteen)
+					for (int k = 1; k <= 3; ++k) ElemBurst(3, from + fwd * (240.0f * k), 0.6f + 0.15f * k, 0.07f * k, 0.5f);
 					BlastSound("lightmassive", pp + fwd * 400.0f, 0.8f);
 				}
 				break;

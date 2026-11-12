@@ -54,7 +54,14 @@ namespace bo3z::Tablet
 
 		// the model's measures (tools/tablet.py): the pool's centre on the face (x 0, z Z0 + 42)
 		constexpr float kPoolZ = 116.0f;
-		constexpr float kRollTime = 3.6f, kOfferTime = 12.0f;
+		// (Noah: "the weapon rolled should dissapear after 10 seconds if not picked up")
+		constexpr float kRollTime = 3.6f, kOfferTime = 10.0f;
+		// (Noah: "Holding the action key on the tablet should start the roll and holding action on the weapon rolled should
+		// pick it up") how long Activate is held; a hold done must be let go before the next
+		constexpr float kHoldTime = 0.6f;
+		float g_holdT = 0.0f;
+		bool  g_holdLatched = false;
+		std::chrono::steady_clock::time_point g_holdDoneAt{};
 
 		// a city with a tablet spot for it (not the one it leaves) - freed or not
 		bool HasSpot(int a_town)
@@ -482,6 +489,17 @@ namespace bo3z::Tablet
 		}
 		if (g_phase == Phase::Mask) return;
 		if (g_phase == Phase::Rolling) { Hud::Banner("The tablet is still turning", 1.5f); return; }
+		// a press alone does nothing now: the roll and the taking are held (TickHold) - a tap is told so
+		if (std::chrono::steady_clock::now() - g_holdDoneAt < std::chrono::milliseconds(1200)) return;   // (the hold's own release)
+		if (g_phase == Phase::Offering) Hud::Banner("Hold Activate to take it", 1.5f);
+		else Hud::Banner("Hold Activate - " + Num(Price()) + " Cursed Essence", 1.5f);
+	}
+
+	// the hold done: the roll, the mending or the taking
+	void Act(RE::TESObjectREFR* a_ref)
+	{
+		if (!a_ref || !Present() || g_phase == Phase::Mask || g_phase == Phase::Rolling) return;
+		logger::info("tablet: hold done ({})", g_phase == Phase::Offering ? "take" : "roll");
 		if (g_phase == Phase::Offering) {   // the won weapon taken
 			if (g_prize >= 0) {
 				Give(g_prize);
@@ -1075,6 +1093,41 @@ namespace bo3z::Tablet
 		return p && f && p->GetEquippedObject(false) == f && p->AsActorState()->IsWeaponDrawn();
 	}
 	void StarButton(bool a_down) { g_starButton = a_down; }
+
+	// holding Activate on the tablet (or the weapon risen from it): a ring fills under the crosshair, and full, it acts
+	void TickHold(float a_delta)
+	{
+		RE::TESObjectREFR* on = nullptr;
+		if (Present() && (g_phase == Phase::Idle || g_phase == Phase::Offering)) {
+			auto* tab = g_town >= 0 ? Shops::Placed(g_town, 7) : nullptr;
+			if (auto* pick = tab ? RE::CrosshairPickData::GetSingleton() : nullptr) {
+				auto tgt = pick->GetActiveTarget().get();
+				auto show = g_show.get();
+				if (tgt && (tgt.get() == tab || (show && tgt.get() == show.get()))) on = tab;
+			}
+		}
+		const bool held = on && Party::ActivateHeld();
+		if (!held) g_holdLatched = false;
+		float frac = -1.0f;
+		std::string what;
+		if (held && !g_holdLatched) {
+			g_holdT += a_delta;
+			frac = std::clamp(g_holdT / kHoldTime, 0.0f, 1.0f);
+			what = g_phase == Phase::Offering && g_prize >= 0 ? "to take the " + std::string(gen::kTabletWeapons[g_prize].label)
+				: g_held >= 0 && Carrying() && g_uses < gen::kTabletWeapons[g_held].uses ? "to mend it  (" + Num(Price()) + ")"
+				: "to roll  (" + Num(Price()) + ")";
+			if (g_holdT >= kHoldTime) {
+				g_holdLatched = true, g_holdT = 0.0f, frac = -1.0f;
+				g_holdDoneAt = std::chrono::steady_clock::now();
+				Act(on);
+			}
+		} else {
+			g_holdT = 0.0f;
+		}
+		std::scoped_lock l(Hud::Lock());
+		auto& h = Hud::Edit();
+		h.holdFrac = frac, h.holdText = std::move(what);
+	}
 	void Tick(float a_delta)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
@@ -1125,6 +1178,7 @@ namespace bo3z::Tablet
 			if (g_phase == Phase::Mask) if (auto r = g_ref.get()) PoseShow(r.get(), std::clamp(g_t / 1.2f, 0.0f, 1.0f));
 		}
 		TickNights(p, a_delta);
+		TickHold(a_delta);
 		ref = g_town >= 0 ? Shops::Placed(g_town, 7) : nullptr;
 		if (ref && ref->Is3DLoaded() && ref->GetPosition().GetDistance(p->GetPosition()) < 6000.0f) Animate(ref, a_delta);
 		TickBook(p);
@@ -1209,7 +1263,7 @@ namespace bo3z::Tablet
 			if (auto* r = g_town >= 0 ? Shops::Placed(g_town, 7) : nullptr) {
 				g_phase = Phase::Idle;
 				Points::Refund(Price());   // (a dev roll is free)
-				OnActivate(r);
+				Act(r);
 				if (a_what == "gold" && g_prize >= 0) {
 					std::vector<int> b;
 					for (int i = 0; i < static_cast<int>(gen::kTabletWeapons.size()); ++i) if (gen::kTabletWeapons[i].battered) b.push_back(i);

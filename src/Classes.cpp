@@ -525,7 +525,7 @@ namespace bo3z::Classes
 		g_wStep[a_cls] = kWonderTaken;
 			Forms::Play(gen::Sound::shout_learned);
 			static constexpr const char* kText[4] = {   // (Noah, 2026-11-12: short and to the point)
-				"Hold to cast: each of the dead the beam kills gives a soul (max 8). Release: a spectral wolf per soul for 20 s.",
+				"Hold to cast: each of the dead the beam kills gives a soul (max 6). Release: a spectral wolf per soul for 20 s.",
 				"Hold its beam on the dead: it drains them and feeds your magicka, and erupts where it ends.",
 				"Hold block: throws a flask every 0.5 s, cycling the six elements. Power attack: throws the next flask.",
 				"Light: a golden fireball, 2x damage to dragons. Heavy: 5 s of golden fireballs on the dead within 20 m." };
@@ -2249,6 +2249,7 @@ namespace bo3z::Classes
 	{
 		if (a_slot < 0 || a_slot > 1) return;
 		g_wfx[a_slot].pulse = 1.0f;   // (Noah: "remove the wand recoil effect" - the tip's flare alone)
+		Forms::Play(gen::Sound::wand_pulse);   // (Noah: "a sound effect while casting that matches the pulsing animation" - a deep arcane thrum)
 	}
 	RE::NiPoint3 WandTipAt(float a_tipY)
 	{
@@ -4184,9 +4185,14 @@ namespace bo3z::Classes
 		// (Noah: "Each wolf needs one enemy you've killed while gathering souls") the cast held, its beam tears at the dead along
 		// your aim; each of them that dies while you still hold it gives a soul (up to 8), shown under the crosshair
 		std::vector<std::pair<RE::ActorHandle, float>> g_soulWolves;   // the pack: seconds since each was called
+		constexpr int kPack = 6;   // (Noah: "it should spawn max 6 (a Pack) at a time")
+		// (Noah: "needs to spawn spectral wolves they still look like normal ones") Skyrim's own wolf-spirit shader (the
+		// Companions' spirit wolves) - ours, made from a weapon's enchantment shader, never showed on a body
 		void SoulLook(RE::Actor* a_w, float a_secs)
 		{
-			if (auto* fx = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kSpectralShader, gen::kPlugin)) a_w->ApplyEffectShader(fx, a_secs);
+			static auto* spirit = RE::TESForm::LookupByID<RE::TESEffectShader>(0x0FE68D);   // GhostWolfSpiritFXShader
+			auto* fx = spirit ? spirit : RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kSpectralShader, gen::kPlugin);
+			if (fx) a_w->ApplyEffectShader(fx, a_secs);
 		}
 		void TickSoulcaller(float a_delta)
 		{
@@ -4213,7 +4219,7 @@ namespace bo3z::Classes
 			{
 				std::scoped_lock l(Hud::Lock());
 				auto& h = Hud::Edit();
-				h.souls = inHand && (casting || g_souls > 0) ? g_souls : -1, h.soulsMax = 8;
+				h.souls = inHand && (casting || g_souls > 0) ? g_souls : -1, h.soulsMax = kPack;
 			}
 			static float tick = 0;
 			if (casting) {
@@ -4222,7 +4228,7 @@ namespace bo3z::Classes
 					auto* f = RE::TESForm::LookupByID<RE::Actor>(*it);
 					if (!f || f->IsDeleted() || f->IsDisabled()) { it = g_soulTaken.erase(it); continue; }
 					if (f->IsDead()) {
-						if (g_souls < 8) {
+						if (g_souls < kPack) {
 							++g_souls;
 							Gun::Motes(6, f->GetPosition(), 0.5f, 1.0f);
 							Gun::LightningArc(f->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, Gun::SwingFrom(), 0.0f);
@@ -4245,7 +4251,7 @@ namespace bo3z::Classes
 			g_soulTaken.clear();
 			if (g_souls <= 0) return;
 			// let go: a spectral wolf for each soul, round you, hunting for 20 s
-			const int n = std::min(g_souls, 8);
+			const int n = std::min(g_souls, kPack);
 			g_souls = 0;
 			auto* base = SoulWolf();
 			const float hp = Director::RoundHealth() * gen::kRounds.hpScale * 1.5f;
@@ -4255,6 +4261,8 @@ namespace bo3z::Classes
 				const RE::NiPoint3 at = p->GetPosition() + RE::NiPoint3{ std::cos(a) * 140.0f, std::sin(a) * 140.0f, 0.0f };
 				if (auto* w = RaiseAlly(p, base, at, 20.0f, hp, 12)) {
 					g_soulWolves.push_back({ w->GetHandle(), 0.0f });
+					// (and Skyrim's own ghost ability: the pale, see-through look its ghosts wear)
+					if (static auto* ghost = RE::TESForm::LookupByID<RE::SpellItem>(0x05030B); ghost) w->AddSpell(ghost);
 					Gun::Motes(6, at, 0.6f, 1.2f);
 					++made;
 				}

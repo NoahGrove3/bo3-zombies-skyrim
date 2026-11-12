@@ -603,6 +603,7 @@ namespace bo3z
 		void OnLoad();                                 // a save is loading: the fall's screen and hold let go
 		void Tick(float a_delta);                      // game thread
 		bool OnButton(const RE::ButtonEvent* a_b);     // Activate held (revive); arrows switch whom you watch
+		bool ActivateHeld();                           // Activate (E / A) is down right now
 		Life State();
 		View Now();
 		Out  Outgoing();                               // Net: what to tell the party
@@ -1091,6 +1092,8 @@ namespace bo3z
 			int                   souls{ -1 };         // (the Soulcaller's Staff) souls gathered, of soulsMax (-1: not drawn)
 			int                   soulsMax{ 8 };
 			std::string           tabletName;
+			float                 holdFrac{ -1.0f };   // (the Tablet: hold Activate) 0..1 while held (-1: not drawn)
+			std::string           holdText;            // what holding does ("to roll the tablet")
 			int         trialDone{ 0 }, trialActive{ 0 }, trialSel{ 0 };
 			std::array<std::string, 5> trialDesc;
 			std::string trialCity, trialBoss, trialBossLine, trialLock;  // (trialLock: why the altar's trials are shut)
