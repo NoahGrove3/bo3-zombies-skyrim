@@ -27,7 +27,9 @@ namespace bo3z
 				static REL::Relocation<std::uintptr_t> hudData{ RE::VTABLE_HUDData[0] };
 				if (a_msg.type == RE::UI_MESSAGE_TYPE::kUpdate && a_msg.data && *reinterpret_cast<std::uintptr_t*>(a_msg.data) == hudData.address()) {
 					auto* d = static_cast<RE::HUDData*>(a_msg.data);
-					if (d->type == RE::HUD_MESSAGE_TYPE::kNotification && d->text.c_str() && Drop(d->text.c_str())) {
+					// (Noah: "there's a pop-up that flashes really quickly, and then it says, I receive an iron War Axe") nothing
+					// shown while the new character's black is up
+					if (d->type == RE::HUD_MESSAGE_TYPE::kNotification && d->text.c_str() && (Drop(d->text.c_str()) || Hud::IntroBusy())) {
 						logger::info("hid notification: {}", d->text.c_str());
 						return RE::UI_MESSAGE_RESULTS::kHandled;
 					}

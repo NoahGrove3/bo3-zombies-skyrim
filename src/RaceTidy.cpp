@@ -276,9 +276,30 @@ namespace bo3z::RaceTidy
 		g_lookY = std::clamp(g_lookY.load() - a_dy * 0.18f, -70.0f, 70.0f);
 	}
 
+	// (Noah: "after accepting a character name, can you make it fade black as soon as they accept? And then unfade black
+	// when everything's loaded in" / "Can you make that camera movement stop?") the name taken = black at once, over
+	// RaceMenu's camera swinging back behind you; the menu's close keeps it black until the game has settled
+	void Named()
+	{
+		static std::string was;
+		static bool        open = false;
+		auto* ui = RE::UI::GetSingleton();
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		const bool now = ui && p && ui->IsMenuOpen(RE::RaceSexMenu::MENU_NAME);
+		if (!now) { open = false; return; }
+		const std::string name = p->GetName() ? p->GetName() : "";
+		if (!open) { open = true, was = name; return; }
+		if (name != was) {
+			was = name;
+			Hud::IntroVeil(8.0f, true);
+			logger::info("race menu: named '{}' - black at once", name);
+		}
+	}
+
 	void Tick()
 	{
 		Look();
+		Named();
 		static auto last = std::chrono::steady_clock::now();
 		const auto  now = std::chrono::steady_clock::now();
 		if (now - last < std::chrono::milliseconds(150)) return;

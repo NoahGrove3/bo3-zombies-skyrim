@@ -6144,7 +6144,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						g_outroBusy = t;
 					}
 					const float since = std::chrono::duration<float>(t - g_outroStart).count(), quiet = std::chrono::duration<float>(t - g_outroBusy).count();
-					if (since > 5.0f || (since > 1.2f && quiet > 0.5f)) {
+					// (Noah: "unfade black when everything's loaded in") held until the first second's pop-ups (the survival
+					// question, the menu registrations) are past: at least 4.5 s, then 0.8 s quiet, never past 8 s
+					if (since > 8.0f || (since > 4.5f && quiet > 0.8f)) {
 						g_outro = false;
 						logger::info("intro: into the game after {:.1f}s of black", since);
 						if (g_saveAfterFilm) {  // the new character's first save: a death now reloads this character, never an older one

@@ -68,18 +68,26 @@ namespace bo3z::InputSwitch
 	// each frame: the controller read directly; a menu told when the mode changed (its buttons, its cursor)
 	void Tick()
 	{
-		if (g_getState && g_kbm.load()) {
-			static DWORD lastPacket[4]{};
-			static bool  primed[4]{};
+		// (the log: keyboard-and-mouse, then 11 ms later "the controller was used" - a stick that never rests at the middle)
+		// the controller counts only when it moves away from where it lay when the keyboard and mouse took over: a button
+		// newly pressed, a trigger squeezed, a stick pushed well past where it sat
+		if (g_getState) {
+			static XINPUT_GAMEPAD rest[4]{};
+			static bool           have[4]{};
+			static bool           wasKbm = false;
+			const bool            kbm = g_kbm.load();
 			for (DWORD i = 0; i < 4; ++i) {
-				XINPUT_STATE s{};
-				if (g_getState(i, &s) != ERROR_SUCCESS) continue;
-				const auto& g = s.Gamepad;
-				const bool moved = std::abs(g.sThumbLX) > 12000 || std::abs(g.sThumbLY) > 12000 || std::abs(g.sThumbRX) > 12000 || std::abs(g.sThumbRY) > 12000;
-				const bool pressed = g.wButtons != 0 || g.bLeftTrigger > 60 || g.bRightTrigger > 60;
-				if (primed[i] && s.dwPacketNumber != lastPacket[i] && (moved || pressed)) Set(false, "the controller was used");
-				lastPacket[i] = s.dwPacketNumber, primed[i] = true;
+				XINPUT_STATE st{};
+				if (g_getState(i, &st) != ERROR_SUCCESS) { have[i] = false; continue; }
+				const auto& g = st.Gamepad;
+				if (!kbm || !wasKbm || !have[i]) { rest[i] = g, have[i] = true; continue; }   // (the resting place, taken as the switch happens)
+				const auto& r = rest[i];
+				const auto far = [](SHORT a, SHORT b) { return std::abs(static_cast<int>(a) - static_cast<int>(b)) > 9000; };
+				const bool pressed = (g.wButtons & ~r.wButtons) != 0 || g.bLeftTrigger > r.bLeftTrigger + 80 || g.bRightTrigger > r.bRightTrigger + 80;
+				const bool moved = far(g.sThumbLX, r.sThumbLX) || far(g.sThumbLY, r.sThumbLY) || far(g.sThumbRX, r.sThumbRX) || far(g.sThumbRY, r.sThumbRY);
+				if (pressed || moved) Set(false, pressed ? "a controller button" : "a controller stick");
 			}
+			wasKbm = kbm;
 		}
 		if (!g_changed.exchange(false)) return;
 		SKSE::GetTaskInterface()->AddUITask([] {
