@@ -395,6 +395,32 @@ namespace bo3z::Tablet
 			auto* root = a_ref && a_ref->Is3DLoaded() ? a_ref->Get3D() : nullptr;
 			if (auto* body = root ? root->GetObjectByName("TabletBody") : nullptr; body && body->GetAppCulled() == a_on) body->SetAppCulled(!a_on);
 		}
+		// (Noah's crash: "my game crashed when I tried to use the Tablet") the tablet's model has no collision, so Skyrim's
+		// crosshair never finds it (no prompt, no activation): it is aimed at the way the Echo Altar's orb is - the camera's
+		// line passing close by its face or its plinth, within reach
+		RE::TESObjectREFR* AimedTablet(RE::PlayerCharacter* a_p)
+		{
+			auto* cam = RE::PlayerCamera::GetSingleton();
+			if (!a_p || !cam || !cam->cameraRoot) return nullptr;
+			const auto& w = cam->cameraRoot->world;
+			const RE::NiPoint3 eye = w.translate, fwd{ w.rotate.entry[0][1], w.rotate.entry[1][1], w.rotate.entry[2][1] };
+			RE::TESObjectREFR* best = nullptr;
+			float bestMiss = 1e9f;
+			for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) {
+				auto* r = Shops::Placed(t, 7);
+				if (!r || !r->Is3DLoaded() || r->IsDisabled() || r->GetPosition().GetDistance(a_p->GetPosition()) > 420.0f) continue;
+				const float s = r->GetScale();
+				for (const float z : { 125.0f, 40.0f }) {   // (its face, its plinth)
+					const RE::NiPoint3 at = r->GetPosition() + RE::NiPoint3{ 0.0f, 0.0f, z * s };
+					const RE::NiPoint3 to = at - eye;
+					const float along = to.Dot(fwd);
+					if (along <= 0 || along > 600.0f) continue;
+					const float miss = (eye + fwd * along).GetDistance(at);
+					if (miss < 75.0f * s && miss < bestMiss) bestMiss = miss, best = r;
+				}
+			}
+			return best;
+		}
 		void TickNights(RE::PlayerCharacter* a_p, float a_delta)
 		{
 			// (Noah: "From the first wave to dawn") down when the night's fighting starts; drawn back up at dawn (once a roll or
@@ -449,9 +475,9 @@ namespace bo3z::Tablet
 			}
 			// (Noah: "when looking at the base with no tablet it shows a message saying where the tablet location is")
 			g_lookCool -= a_delta;
-			if (auto* pick = RE::CrosshairPickData::GetSingleton()) {
-				auto tgt = pick->GetActiveTarget().get();
-				const int here = tgt ? TownOfRef(tgt.get()) : -1;
+			{
+				auto* tgt = AimedTablet(a_p);
+				const int here = tgt ? TownOfRef(tgt) : -1;
 				const RE::FormID id = here >= 0 ? tgt->GetFormID() : 0;
 				if (id && id != g_lookedAt && g_lookCool <= 0 && (here != g_town || !g_present)) {
 					Hud::Banner(WhereLine(here), 3.5f);
@@ -1098,25 +1124,21 @@ namespace bo3z::Tablet
 	void TickHold(float a_delta)
 	{
 		RE::TESObjectREFR* on = nullptr;
-		if (Present() && (g_phase == Phase::Idle || g_phase == Phase::Offering)) {
+		if (Present() && (g_phase == Phase::Idle || g_phase == Phase::Offering) && !ItemMenusOpen()) {
 			auto* tab = g_town >= 0 ? Shops::Placed(g_town, 7) : nullptr;
-			if (auto* pick = tab ? RE::CrosshairPickData::GetSingleton() : nullptr) {
-				auto tgt = pick->GetActiveTarget().get();
-				auto show = g_show.get();
-				if (tgt && (tgt.get() == tab || (show && tgt.get() == show.get()))) on = tab;
-			}
+			if (tab && AimedTablet(RE::PlayerCharacter::GetSingleton()) == tab) on = tab;
 		}
 		const bool held = on && Party::ActivateHeld();
 		if (!held) g_holdLatched = false;
 		float frac = -1.0f;
 		std::string what;
-		if (held && !g_holdLatched) {
-			g_holdT += a_delta;
+		if (on && !g_holdLatched) {   // (aimed at: the prompt and its empty ring; held: the ring fills)
+			g_holdT = held ? g_holdT + a_delta : 0.0f;
 			frac = std::clamp(g_holdT / kHoldTime, 0.0f, 1.0f);
 			what = g_phase == Phase::Offering && g_prize >= 0 ? "to take the " + std::string(gen::kTabletWeapons[g_prize].label)
 				: g_held >= 0 && Carrying() && g_uses < gen::kTabletWeapons[g_held].uses ? "to mend it  (" + Num(Price()) + ")"
 				: "to roll  (" + Num(Price()) + ")";
-			if (g_holdT >= kHoldTime) {
+			if (held && g_holdT >= kHoldTime) {
 				g_holdLatched = true, g_holdT = 0.0f, frac = -1.0f;
 				g_holdDoneAt = std::chrono::steady_clock::now();
 				Act(on);
