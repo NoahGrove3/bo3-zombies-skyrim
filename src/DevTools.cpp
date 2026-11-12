@@ -859,6 +859,30 @@ namespace bo3z
 					if (race && hp->validRaces && hp->validRaces->HasForm(race)) ++row[2];
 				}
 				for (auto& [f, r] : by) logger::info("dev: hairs {} - male {} female {} your race ({}) {}", f, r[0], r[1], race ? race->GetFormEditorID() : "?", r[2]);
+			} else if (cmd == "despawn" && player) {
+				// despawn <words of a name> [range]: every living actor whose name holds the words, within range (default 20000),
+				// taken out (trailer staging: "Can you despawn the dragon?")
+				std::string rest;
+				std::getline(in, rest);
+				float range = 20000.0f;
+				if (auto sp = rest.find_last_of(' '); sp != std::string::npos) {
+					try { range = std::stof(rest.substr(sp + 1)); rest = rest.substr(0, sp); } catch (...) {}
+				}
+				while (!rest.empty() && rest.front() == ' ') rest.erase(0, 1);
+				std::string want = rest;
+				std::ranges::transform(want, want.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+				int n = 0;
+				for (auto* list : { &RE::ProcessLists::GetSingleton()->highActorHandles, &RE::ProcessLists::GetSingleton()->middleHighActorHandles }) {
+					for (auto& h : *list) {
+						auto a = h.get();
+						if (!a || a.get() == player || a->IsDisabled() || !a->GetName()) continue;
+						std::string nm = a->GetName();
+						std::ranges::transform(nm, nm.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+						if (want.empty() || nm.find(want) == std::string::npos || a->GetPosition().GetDistance(player->GetPosition()) > range) continue;
+						a->Disable(), a->SetDelete(true), ++n;
+					}
+				}
+				logger::info("dev: despawn '{}' - {} taken out", rest, n);
 			} else if (cmd == "near" && player) {
 				// near [range]: the trees, rocks and plants nearest you - model, who placed it, who last moved it, its height
 				// over the ground (Noah: stand by a floating one)
