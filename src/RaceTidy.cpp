@@ -229,7 +229,7 @@ namespace bo3z::RaceTidy
 		{
 			auto* ui = RE::UI::GetSingleton();
 			auto* p = RE::PlayerCharacter::GetSingleton();
-			const bool open = ui && p && ui->IsMenuOpen(RE::RaceSexMenu::MENU_NAME);
+			const bool open = ui && p && ui->IsMenuOpen(RE::RaceSexMenu::MENU_NAME) && !InputSwitch::KeyboardMouse();
 			if (!open) {
 				if (g_lookOn && p) p->SetGraphVariableBool("IsNPC", false);
 				g_lookOn = false, g_lookX = 0.0f, g_lookY = 0.0f;

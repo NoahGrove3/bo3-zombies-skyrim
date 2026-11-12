@@ -815,6 +815,14 @@ namespace bo3z
 	}
 
 	// (Noah: the mystery box) the Tablet of Mysteries: one freed city at a time; its roll animated on its model (Tablet.cpp)
+	namespace InputSwitch
+	{
+		void Install();                          // keyboard/mouse or controller mode, by whichever was used last
+		void OnKeyboardOrMouse(bool a_moved);    // a key, a click or the mouse moving
+		void Tick();                             // the controller read; menus told of a change
+		bool KeyboardMouse();                    // keyboard and mouse mode now
+	}
+
 	namespace RaceTidy
 	{
 		void Tick();   // RaceMenu's tabs and sliders regrouped while the character creator is open

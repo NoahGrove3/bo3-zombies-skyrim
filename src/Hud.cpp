@@ -6082,6 +6082,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			const int  clicks = g_clicks.exchange(0);
 			AnswerStartPrompts(uiM);
 			RaceTidy::Tick();
+			InputSwitch::Tick();
 			if (g_filmReq && !g_filmOn) {  // the film waits until the world has settled (the move to Riverwood loads a cell)
 				static auto settled = std::chrono::steady_clock::now();
 				if (!InGame()) {

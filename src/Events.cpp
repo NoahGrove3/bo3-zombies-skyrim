@@ -664,6 +664,7 @@ namespace bo3z
 						if (auto* mm = static_cast<RE::MouseMoveEvent*>(e)) {
 							Hud::OnMouseMove(static_cast<float>(mm->mouseInputX), static_cast<float>(mm->mouseInputY));
 							RaceTidy::Mouse(static_cast<float>(mm->mouseInputX), static_cast<float>(mm->mouseInputY));
+							if (std::abs(mm->mouseInputX) + std::abs(mm->mouseInputY) > 6) InputSwitch::OnKeyboardOrMouse(true);
 						}
 					}
 					if (e->GetEventType() == RE::INPUT_EVENT_TYPE::kThumbstick) {
@@ -672,6 +673,7 @@ namespace bo3z
 						if (auto* ts = static_cast<RE::ThumbstickEvent*>(e); ts && std::abs(ts->xValue) + std::abs(ts->yValue) > 0.35f) Hud::NotePad();
 					}
 					if (auto* b = e->AsButtonEvent()) {
+						if ((b->GetDevice() == RE::INPUT_DEVICE::kKeyboard || b->GetDevice() == RE::INPUT_DEVICE::kMouse) && b->IsDown()) InputSwitch::OnKeyboardOrMouse(false);
 						if (b->GetDevice() == RE::INPUT_DEVICE::kMouse && b->GetIDCode() == 0 && b->IsDown()) {
 							Hud::OnClick();
 						}
@@ -1380,6 +1382,7 @@ namespace bo3z
 			FreeBowMovement();
 			Undead::InstallHooks();
 			Hud::InstallInputGate();
+			InputSwitch::Install();
 			// (Noah: "the hoarfrost casting animation is very bright, hard to see when casting") Mysticism's Hoarfrost
 			// wears Skyrim's own Frostbite in the hands (its art and its light), not its blinding own
 			if (auto* dh = RE::TESDataHandler::GetSingleton()) {
