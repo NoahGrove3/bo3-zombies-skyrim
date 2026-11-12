@@ -587,7 +587,7 @@ namespace bo3z
 				if (auto* ui = RE::UI::GetSingleton()) {
 					for (auto& [name, entry] : ui->menuMap) {
 						if (entry.menu && ui->IsMenuOpen(name)) {
-							open += std::string(name.c_str()) + ", ";
+							open += fmt::format("{} [flags {:X}], ", name.c_str(), entry.menu->menuFlags.underlying());
 						}
 					}
 					logger::info("dev: menus open: {} (pauses {})", open, ui->numPausesGame);

@@ -87,17 +87,7 @@ namespace bo3z::RaceTidy
 			if (cb == "changeheight" || t == "$height") return Place{ kBody, 0 };
 			if (t == "weight") return Place{ kBody, 1 };
 			if (cb.rfind("rsm_bodymorph", 0) == 0 || cb.find("morph") != std::string::npos || a_flag == 0) {
-				// (Noah: "There are way too many sliders in the bodies tab" - "Essentials") about a dozen kept, the rest hidden:
-				// the men's (HIMBO) by name; the women's (CBBE) by the same few areas
-				static const std::vector<std::pair<std::string, int>> kKeep{
-					{ "overall mass", 100 }, { "body - hugh", 110 }, { "body - hideo", 111 }, { "body - hassan", 112 }, { "body - hector", 113 },
-					{ "body - hank", 114 }, { "shoulders - enlarge", 200 }, { "biceps - size", 210 }, { "torso - width", 220 }, { "legs - size", 230 },
-					// (CBBE)
-					{ "breasts", 300 }, { "waist", 310 }, { "hips", 320 }, { "butt", 330 }, { "arms", 340 }, { "shoulderwidth", 350 },
-					{ "shoulder width", 350 }, { "thighs", 360 }, { "legs", 370 } };
-				for (const auto& [name, order] : kKeep) {
-					if (t == name) return Place{ kBody, order };
-				}
+				// (Noah: "in the body slider, I only want to keep height and weight. Remove the rest") every body mod slider hidden
 				return Place{ kHidden, 0 };
 			}
 			// what's left keeps its own tab, if that tab is still shown
@@ -206,9 +196,18 @@ namespace bo3z::RaceTidy
 				if (!(e.GetMember("caTidy", &mark) && mark.IsBool())) fresh = true;
 				double f = 0, type = 0;
 				Num(e, "filterFlag", f), Num(e, "type", type);
+				// (Noah: "I don't see the slider ... where I can change the color under my eyes") RaceMenu's two eye-socket colors
+				// named for what they paint; routed by their first names
+				std::string text = Str(e, "caText");
+				if (text.empty()) {
+					text = Str(e, "text");
+					e.SetMember("caText", RE::GFxValue(text.c_str()));
+					if (text == "Eye Shadow") e.SetMember("text", RE::GFxValue("Upper Eye Color"));
+					else if (text == "Eye Tint") e.SetMember("text", RE::GFxValue("Under-Eye Color"));
+				}
 				double done = 0;
 				if (Num(e, "caFlag", done)) f = done;   // (moved already: from where it first was)
-				const auto to = Route(Str(e, "text"), Str(e, "callbackName"), static_cast<std::uint32_t>(f), static_cast<int>(type));
+				const auto to = Route(text, Str(e, "callbackName"), static_cast<std::uint32_t>(f), static_cast<int>(type));
 				rows.push_back({ e, to ? to->flag : static_cast<std::uint32_t>(f), to ? to->order : 1000, i });
 				if (!mark.IsBool()) e.SetMember("caFlag", RE::GFxValue(f));
 			}
