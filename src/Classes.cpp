@@ -4190,8 +4190,11 @@ namespace bo3z::Classes
 		// Companions' spirit wolves) - ours, made from a weapon's enchantment shader, never showed on a body
 		void SoulLook(RE::Actor* a_w, float a_secs)
 		{
+			// (Noah: "Currently, they glow red ... can you make them glow purple? Same with the glow effect that it gives the
+			// enemies") that shader's violet copy, ours
+			static auto* violet = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kSoulPurple, gen::kPlugin);
 			static auto* spirit = RE::TESForm::LookupByID<RE::TESEffectShader>(0x0FE68D);   // GhostWolfSpiritFXShader
-			auto* fx = spirit ? spirit : RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kSpectralShader, gen::kPlugin);
+			auto* fx = violet ? violet : spirit ? spirit : RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kSpectralShader, gen::kPlugin);
 			if (fx) a_w->ApplyEffectShader(fx, a_secs);
 		}
 		void TickSoulcaller(float a_delta)
@@ -4222,7 +4225,9 @@ namespace bo3z::Classes
 				h.souls = inHand && (casting || g_souls > 0) ? g_souls : -1, h.soulsMax = kPack;
 			}
 			static float tick = 0;
+			static bool  held = false;   // (the souls go out once, as the cast is let go - never on their own later)
 			if (casting) {
+				held = true;
 				// a soul for each of the dead the beam touched that has died since
 				for (auto it = g_soulTaken.begin(); it != g_soulTaken.end();) {
 					auto* f = RE::TESForm::LookupByID<RE::Actor>(*it);
@@ -4249,10 +4254,21 @@ namespace bo3z::Classes
 			}
 			tick = 0;
 			g_soulTaken.clear();
-			if (g_souls <= 0) return;
+			if (!std::exchange(held, false) || g_souls <= 0) return;
 			// let go: a spectral wolf for each soul, round you, hunting for 20 s
-			const int n = std::min(g_souls, kPack);
-			g_souls = 0;
+			// (Noah: "There should only be 6 that can exist maximum at a single time. Right now, if I just keep casting and getting
+			// kills, I can infinitely spawn wolves") only as many as the pack has room for; souls left over stay in the staff
+			// for when some of the pack is gone
+			const int alive = static_cast<int>(std::count_if(g_soulWolves.begin(), g_soulWolves.end(), [](const auto& e) {
+				auto w = e.first.get();
+				return w && !w->IsDead() && !w->IsDisabled() && e.second < 20.5f;
+			}));
+			const int n = std::min(g_souls, kPack - alive);
+			if (n <= 0) {
+				Hud::Banner("THE PACK IS FULL", 1.5f);
+				return;
+			}
+			g_souls -= n;
 			auto* base = SoulWolf();
 			const float hp = Director::RoundHealth() * gen::kRounds.hpScale * 1.5f;
 			int made = 0;

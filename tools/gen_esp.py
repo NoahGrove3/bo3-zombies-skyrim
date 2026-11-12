@@ -5,7 +5,7 @@ import json, struct, pathlib
 from esp_ids import ROOT, sheets, assign, PLUGIN, MASTERS, dressing, blasts
 S = sheets(); IDS, NEXT = assign(S, write=True)
 SELF = len(MASTERS) << 24
-T = {n: json.load(open(ROOT / 'tools/templates' / (n + '.json'))) for n in ['npc_necro_tmpl', 'weap_draugr_gs', 'mgef', 'alch', 'weap_crossbow', 'weap_dwarven', 'acti', 'sndr_ui', 'sndr_3d', 'ligh', 'weap_staff', 'arma_skin', 'armo_skin', 'npc_draugr', 'proj_bullet', 'spel_firebolt', 'mgef_firebolt', 'weap_longbow', 'ammo_iron', 'proj_arrow', 'weap_daedricdagger', 'efsh_enchfire', 'mgef_enchfire', 'ench_fire05', 'weap_madness', 'stat_madness1st', 'efsh_enchpurple', 'npc_mihailzombie', 'weap_daedricmace']}
+T = {n: json.load(open(ROOT / 'tools/templates' / (n + '.json'))) for n in ['npc_necro_tmpl', 'weap_draugr_gs', 'mgef', 'alch', 'weap_crossbow', 'weap_dwarven', 'acti', 'sndr_ui', 'sndr_3d', 'ligh', 'weap_staff', 'arma_skin', 'armo_skin', 'npc_draugr', 'proj_bullet', 'spel_firebolt', 'mgef_firebolt', 'weap_longbow', 'ammo_iron', 'proj_arrow', 'weap_daedricdagger', 'efsh_enchfire', 'mgef_enchfire', 'ench_fire05', 'weap_madness', 'stat_madness1st', 'efsh_enchpurple', 'efsh_ghostwolf', 'npc_mihailzombie', 'weap_daedricmace']}
 def tsub(t, name): return bytes.fromhex(dict(T[t]['subs'])[name])
 def z(s): return s.encode('cp1252') + b'\0'
 def sub(name, data):
@@ -910,6 +910,17 @@ for name, hx in T['efsh_enchpurple']['subs']:
     if name == 'EDID': continue
     subs.append(sub(name, bytes(d) if name == 'DATA' else bytes.fromhex(hx)))
 recs['EFSH'].append(record('EFSH', fid('EFSH', 'spectral'), subs))
+# (Noah: the Soulcaller's wolves "glow red, and it looks really good. But can you make them glow purple? Same with the glow
+# effect that it gives the enemies") Skyrim's own wolf-spirit shader (GhostWolfSpiritFXShader, red) copied, its red ghost
+# gradient swapped for Skyrim's violet one and its red edge turned violet (src/Classes.cpp SoulLook)
+d = bytearray(tsub('efsh_ghostwolf', 'DATA'))
+d[0x38:0x3B] = bytes((130, 0, 190))
+subs = [sub('EDID', z('UN_SoulPurpleShader'))]
+for name, hx in T['efsh_ghostwolf']['subs']:
+    if name == 'EDID': continue
+    b = bytes(d) if name == 'DATA' else z('Effects\\GhostShaderVioletGrad.dds') if name == 'ICON' else bytes.fromhex(hx)
+    subs.append(sub(name, b))
+recs['EFSH'].append(record('EFSH', fid('EFSH', 'soulpurple'), subs))
 # (Noah: the Tablet's roll "with green being a common weapon and gold being a legendary") the reel's little weapons glow in
 # their rarity: worn green, battered gold (src/Tablet.cpp)
 for key, fill, edge in (('tabletgreen', (40, 200, 70), (130, 255, 150)), ('tabletgold', (235, 165, 30), (255, 225, 120))):
@@ -1675,6 +1686,12 @@ out = record('TES4', 0, hdr, flags=0x200)  # ESL flag
 recs['CONT'] = [record('CONT', fid('CONT', 'classchest'), [
     sub('EDID', z('UN_ClassChest')), sub('OBND', bytes(12)), sub('FULL', z('Class Chest')), sub('MODL', z('Clutter\\Containers\\Chest01.nif')),
     sub('DATA', struct.pack('<Bf', 0, 0.0))])]
+# (the effect shaders were made but never written into the plugin - every one of them looked up as nothing in game) those
+# Noah has asked to see are written now: the Soulcaller's violet glow and the Tablet reel's green and gold. The rest (the
+# blade, bow and armour glows, Shadowflame's burn, the rift and madness shaders, the hall ghost) wait for his word, since
+# turning them on changes how those things look today
+_efsh_on = {fid('EFSH', k) for k in ('soulpurple', 'tabletgreen', 'tabletgold')}
+out += group('EFSH', [r for r in recs['EFSH'] if struct.unpack_from('<I', r, 12)[0] in _efsh_on])
 for k in ['KYWD', 'GLOB', 'FACT', 'VTYP', 'FSTS', 'LSCR', 'MUSC', 'MUST', 'ARTO', 'MGEF', 'BOOK', 'ENCH', 'SPEL', 'WOOP', 'SHOU', 'ACTI', 'ARMO', 'LIGH', 'STAT', 'WEAP', 'AMMO', 'NPC_', 'ALCH', 'PROJ', 'PERK', 'ARMA', 'SNDR', 'QUST', 'CONT']: out += group(k, recs[k])  # (PERK: the Summoner's command - it was never written before)  # Bethesda's group order: effects load before the spells that use them
 (ROOT / 'data').mkdir(exist_ok=True)
 (ROOT / 'data' / PLUGIN).write_bytes(out)
