@@ -297,6 +297,31 @@ namespace bo3z::RaceTidy
 			if (mv->GetVariable(&cats, (std::string(kPanel) + p).c_str()) && cats.IsObject() && TidyTabs(mv, cats)) ++tabs;
 		}
 		const int moved = haveItems ? TidySliders(items) : 0;
+		// (Noah: "when I load into a new character, the race menu shows a bunch of random sliders under the race until I move
+		// to a new tab") the list kept the filter of the tab that sat at the selected place before the tabs were regrouped
+		// (ALL): the selected tab's own filter put back on the list
+		if ((tabs || moved) && haveItems) {
+			RE::GFxValue cats, sel, entries, e, flag, chain, f0;
+			if (mv->GetVariable(&cats, (std::string(kPanel) + ".categoryButtons.categoryList").c_str()) && cats.IsObject() &&
+				(cats.GetMember("_selectedIndex", &sel) || cats.GetMember("selectedIndex", &sel)) && sel.IsNumber() &&
+				cats.GetMember("_entryList", &entries) && entries.IsArray()) {
+				const auto n = entries.GetArraySize();
+				auto at = static_cast<std::int64_t>(sel.GetNumber());
+				if (at < 0 || at >= static_cast<std::int64_t>(n)) at = 0;
+				if (entries.GetElement(static_cast<std::uint32_t>(at), &e) && e.IsObject() && e.GetMember("flag", &flag) && flag.IsNumber()) {
+					RE::GFxValue en;
+					if (items.GetMember("listEnumeration", &en) && en.IsObject() && en.GetMember("_filterChain", &chain) && chain.IsArray() &&
+						chain.GetArraySize() && chain.GetElement(0, &f0) && f0.IsObject()) {
+						f0.SetMember("_itemFilter", flag);
+						f0.SetMember("itemFilter", flag);   // (SkyUI's setter: it tells the list the filter changed)
+					}
+					if (at != static_cast<std::int64_t>(sel.GetNumber())) cats.SetMember("_selectedIndex", RE::GFxValue(static_cast<double>(at)));
+					items.Invoke("InvalidateData");
+					static int told = 0;
+					if (told++ < 6) logger::info("race menu: the list filtered to the selected tab (#{}, bits {})", at, flag.GetNumber());
+				}
+			}
+		}
 		// (Noah: "on the top right, are you able to hide sliders, presets, camera, and sculpt, so that players are only able to
 		// access the character creation sliders") RaceMenu's mode tabs hidden; and its overlay counter ("(4/15)" - paint layers
 		// in use, read as a tab count) with them
