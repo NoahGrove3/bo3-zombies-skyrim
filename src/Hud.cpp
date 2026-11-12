@@ -5914,6 +5914,13 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			if (auto m = a_ui->GetMenu(RE::BookMenu::MENU_NAME); m && m->uiMovie && m->uiMovie->GetVisible()) {
 				m->uiMovie->SetVisible(false);  // Skyrim's book under ours never shows
 			}
+			// (Noah: "When I open the Curse of Alduin book, I can still see the old pages in the background") the open 3D
+			// book itself - its pages drawn on the model - hidden too
+			if (auto m = a_ui->GetMenu(RE::BookMenu::MENU_NAME)) {
+				if (auto& model = static_cast<RE::BookMenu*>(m.get())->GetRuntimeData().bookModel; model && !model->GetFlags().any(RE::NiAVObject::Flag::kHidden)) {
+					model->GetFlags().set(RE::NiAVObject::Flag::kHidden);
+				}
+			}
 			return true;
 		}
 
