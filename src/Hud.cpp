@@ -3511,6 +3511,15 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		std::atomic<int> g_mainAccept{ 0 };
 		bool PartyInMainList(int a_clicks)
 		{
+			// (Noah: "when I'm at the main menu, I can't select continue, new, or any of the buttons with my mouse") a test
+			// switch: SKSE/CurseOfAlduin-noparty.flag leaves Edge UI's list alone
+			static const bool off = [] {
+				auto d = SKSE::log::log_directory();
+				const bool f = d && std::filesystem::exists(*d / "CurseOfAlduin-noparty.flag");
+				if (f) logger::info("party: CurseOfAlduin-noparty.flag - the main menu's list left alone");
+				return f;
+			}();
+			if (off) return true;
 			auto* ui = RE::UI::GetSingleton();
 			auto  menu = ui ? ui->GetMenu(RE::MainMenu::MENU_NAME) : nullptr;
 			RE::GFxMovieView* mv = menu ? menu->uiMovie.get() : nullptr;
@@ -6072,6 +6081,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			const bool escJournal = uiM && uiM->IsMenuOpen(RE::JournalMenu::MENU_NAME) && !uiM->IsMenuOpen(RE::MainMenu::MENU_NAME);  // Esc: Quests / Stats / System
 			const int  clicks = g_clicks.exchange(0);
 			AnswerStartPrompts(uiM);
+			RaceTidy::Tick();
 			if (g_filmReq && !g_filmOn) {  // the film waits until the world has settled (the move to Riverwood loads a cell)
 				static auto settled = std::chrono::steady_clock::now();
 				if (!InGame()) {

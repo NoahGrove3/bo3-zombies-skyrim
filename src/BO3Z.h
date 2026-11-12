@@ -815,6 +815,11 @@ namespace bo3z
 	}
 
 	// (Noah: the mystery box) the Tablet of Mysteries: one freed city at a time; its roll animated on its model (Tablet.cpp)
+	namespace RaceTidy
+	{
+		void Tick();   // RaceMenu's tabs and sliders regrouped while the character creator is open
+	}
+
 	namespace Tablet
 	{
 		bool StarWandInHand();      // the Wandering Star (a wand now) drawn in your right hand
