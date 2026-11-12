@@ -437,7 +437,7 @@ for n, (w, tr) in enumerate(DANCE_WORDS):
         sub('ETYP', struct.pack('<I', 0x025BEE)), sub('DESC', z('')), sub('SPIT', sp),
         sub('EFID', struct.pack('<I', fid('MGEF', 'shoutcast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 recs['SHOU'].append(record('SHOU', fid('SHOU', 'dance'), [sub('EDID', z('UN_Shout_dance')), sub('FULL', z('Dance Of Death')),
-    sub('DESC', z("The Curse's dead within twenty paces dance for twenty seconds: they cannot move or strike, and your blows hurt them 50% more. Once a wave."))] +
+    sub('DESC', z("The Curse's dead within twenty paces dance for twenty seconds: they cannot move or strike, and they take 50% more damage. Once a wave."))] +
     [sub('SNAM', struct.pack('<IIf', fid('WOOP', f'dance_{n}'), fid('SPEL', f'dance_{n}'), 5.0)) for n in range(3)]))
 
 SCRAFT = {r['id']: r for r in S['spellcraft']['rows']}
@@ -1299,7 +1299,7 @@ def lore_text():
            "<b>VO</b> on Mount Anthor. Slay all three, wake every altar, and only his <b>Echo</b> is left, on the summit of the Throat of the World. End it, and the Curse is broken.</p>",
            "[pagebreak]", "<p align='center'><font size='24'>VI. The Voices of the Holds</font></p>",
            "<p><b>Whiterun</b>: <i>Dragon's Updraft</i>. A whirlwind lifts you high - and a dragon to carry you.</p>",
-           "<p><b>Solitude</b>: <i>Dance of Death</i>. The dead near you dance for twenty seconds, unable to move or strike, and every blow you land on them does half again its harm. Once a wave.</p>"]
+           "<p><b>Solitude</b>: <i>Dance of Death</i>. The dead near you dance for twenty seconds, unable to move or strike, and they take 50% more damage. Once a wave.</p>"]
     out += [
             "[pagebreak]", f"<p>{S['curse']['freedAll']}</p>", "<p align='right'><i>- written in the silence of High Hrothgar</i></p>", "</font>"]
     return '\n'.join(out)
@@ -1355,7 +1355,7 @@ def guide_text():
            p("With all four wonders won (a party pools theirs), Alduin's three words wake as dragons, each at its own place: <b>SLEN</b> - Slenvahrin, at the cult's old shrine in the Reach; "
              "<b>TIID</b> - Tiidrah, in the courtyard of Labyrinthian; <b>VO</b> - Vonahlok, on Mount Anthor. Your compass marks them."),
            p("Go there at night. The dead rise round you in waves; when the last wave falls, the dragon comes. Slay it and its word is silenced for good, its power yours: "
-             "<b>SLEN</b> - everything you wield hits 15% harder; <b>TIID</b> - the night's blows hurt you 20% less; <b>VO</b> - your magicka returns half again as fast."),
+             "<b>SLEN</b> - everything you wield hits 15% harder; <b>TIID</b> - the night's blows hurt you 20% less; <b>VO</b> - your magicka returns 50% faster."),
            p("Leave the place, or let dawn come, and the siege falls quiet until you return."),
            "[pagebreak]", h("The Echo of Alduin"),
            p("With the three dragons dead and every Echo Altar awake, the <b>Echo of Alduin</b> waits on the summit of the Throat of the World. Climb it at night: the dead of all Skyrim answer him one last time. "
@@ -1366,7 +1366,7 @@ def guide_text():
              "<b>The First Dragonborn's Regalia</b> - while you wear its robes, everything you wield hits 25% harder, every blow on you is 25% softer, and your magic costs a quarter less and returns faster. "
              "<b>The Bone-Wyrm's Skull</b> - your dragon wears Alduin's bones (touch it again to change back)."),
            p("<b>Brazier of the Endless Night</b> - while it burns the curse comes back and never sleeps: each night's last wave brings the next night at once. A freed city is still safe. "
-             "<b>Seat of the Awakened</b> - begin again: every city falls back under the curse and the nights start over, the dead half again as tough each cycle. "
+             "<b>Seat of the Awakened</b> - begin again: every city falls back under the curse and the nights start over, the dead 50% tougher each cycle. "
              "Your wonders, powers and gear stay yours; free the altars again and the Echo returns."),
            "[pagebreak]", h("Whispers of the Altars"),
            p("Each path keeps a secret, and it is the only road to the path's <b>wonder</b>. It wakes once six cities are free, and nobody will tell you what to do. Stand at a freed altar and its <b>whispers</b> show in its menu - another line for each step you find. When it is won, the Greybeards call you to High Hrothgar. "
