@@ -112,7 +112,7 @@ namespace bo3z::RaceTidy
 			if (t == "hair") return Tab{ "HAIR", kHair, -875 };
 			if (t == "body") return Tab{ "BODY", kBody, -850 };
 			if (t == "$colors" || t == "colors") return Tab{ "SKIN & PAINT", kSkin, -825 };
-			if (t == "$expressions" || t == "expressions") return Tab{ "", kExpr, -800 };   // (kept: its own name)
+			// ("the expressions tab has no sliders in it") hidden with the rest
 			(void)a_flag;
 			return Tab{ nullptr, 0, 0 };   // all else hidden: ALL, BROW, MOUTH, EXTRA, MAKEUP, the paints, BODY SCALES, the morph tabs
 		}
@@ -136,11 +136,14 @@ namespace bo3z::RaceTidy
 			RE::GFxValue entries;
 			if (!a_list.GetMember("_entryList", &entries) || !entries.IsArray()) return false;
 			const auto n = entries.GetArraySize();
-			RE::GFxValue first;
-			if (n && entries.GetElement(0, &first) && first.IsObject()) {
-				RE::GFxValue mark;
-				if (first.GetMember("caTidy", &mark) && mark.IsBool()) return false;   // (done, and not rebuilt since)
+			// (Noah: "it still shows himbo morphs") the body mods' tabs are added after RaceMenu's own: any tab not yet seen
+			// means another pass
+			bool fresh = false;
+			for (std::uint32_t i = 0; i < n && !fresh; ++i) {
+				RE::GFxValue e, mark;
+				if (entries.GetElement(i, &e) && e.IsObject() && !(e.GetMember("caTidy", &mark) && mark.IsBool())) fresh = true;
 			}
+			if (!fresh) return false;
 			std::vector<std::pair<int, RE::GFxValue>> keep;
 			for (std::uint32_t i = 0; i < n; ++i) {
 				RE::GFxValue e;
@@ -235,6 +238,19 @@ namespace bo3z::RaceTidy
 			if (mv->GetVariable(&cats, (std::string(kPanel) + p).c_str()) && cats.IsObject() && TidyTabs(mv, cats)) ++tabs;
 		}
 		const int moved = haveItems ? TidySliders(items) : 0;
+		// (Noah: "on the top right, are you able to hide sliders, presets, camera, and sculpt, so that players are only able to
+		// access the character creation sliders") RaceMenu's mode tabs hidden; and its overlay counter ("(4/15)" - paint layers
+		// in use, read as a tab count) with them
+		for (const char* p : { "_root.RaceSexMenuBaseInstance.RaceSexPanelsInstance.modeSelect", "_root.RaceSexMenuBaseInstance.RaceSexPanelsInstance.racePanel.tintCount" }) {
+			RE::GFxValue c;
+			if (mv->GetVariable(&c, p) && c.IsDisplayObject()) {
+				RE::GFxValue vis;
+				if (!c.GetMember("_visible", &vis) || !vis.IsBool() || vis.GetBool()) {
+					c.SetMember("_visible", RE::GFxValue(false));
+					c.SetMember("enabled", RE::GFxValue(false));
+				}
+			}
+		}
 		if (tabs || moved) {
 			static int told = 0;
 			if (told++ < 12) logger::info("race menu: tidied ({} tab lists, {} sliders moved)", tabs, moved);
