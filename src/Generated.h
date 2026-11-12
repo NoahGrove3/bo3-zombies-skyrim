@@ -1394,7 +1394,7 @@ namespace bo3z::gen
 		LocationDef{ 8, 0x01773A, 0, 0, false, 0.0f, 0.0f, 0.0f, 0.0f, 0x000000 },
 		LocationDef{ 9, 0x0177EF, 0, 0, false, 0.0f, 0.0f, 0.0f, 0.0f, 0x000000 },
 		LocationDef{ 0, 0x0162A4, 1, 3, true, 21645.0f, -41598.0f, -151.0f, 28.0f, 0x00003C },
-		LocationDef{ 1, 0x01B1F1, 1, 3, true, 20369.0f, -7484.0f, -3651.0f, 259.0f, 0x01A26F },
+		LocationDef{ 1, 0x01B1F1, 1, 3, true, 20729.0f, -6847.0f, -3596.0f, 291.0f, 0x01A26F },
 		LocationDef{ 2, 0x01C386, 1, 3, true, -58948.0f, 104758.0f, -8464.0f, 210.0f, 0x037EDF },
 		LocationDef{ 3, 0x055FCB, 1, 3, true, 134242.0f, 40283.0f, -11921.0f, 254.0f, 0x01691D },
 		LocationDef{ 4, 0x01C389, 1, 3, true, -172706.0f, 2718.0f, -3850.0f, 147.0f, 0x016D71 },
