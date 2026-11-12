@@ -48,6 +48,15 @@ namespace bo3z::Tablet
 		int   g_prize = -1;         // the weapon offered (kTabletWeapons), -1 none / the skull
 		bool  g_skull = false;
 		RE::ObjectRefHandle g_show; // its model, rising out of the pool
+		bool  g_showGlow = false;   // (its rarity glow laid on once its model is up)
+		// (Noah: "the roll animation should cycle through all the weapons with a mini model of the weapon visibile in the
+		// center of the tablet with green being a common weapon and gold being a legendary") the reel
+		RE::ObjectRefHandle g_reel;
+		int   g_reelAt = -1;        // the weapon it shows (kTabletWeapons)
+		int   g_reelStep = 0;
+		float g_reelNext = 0.0f;
+		bool  g_reelGlow = false;
+		std::vector<int> g_reelOrder;
 		int   g_held = -1;          // the donated weapon you carry (kTabletWeapons), -1 none
 		int   g_uses = 0;           // its uses left
 		int   g_paid = 0;           // the last spin's price (the skull gives it back)
@@ -266,10 +275,56 @@ namespace bo3z::Tablet
 			if (pool.empty()) return 0;
 			return pool[std::uniform_int_distribution<int>(0, static_cast<int>(pool.size()) - 1)(g_rng)];
 		}
+		void ClearReel()
+		{
+			if (auto r = g_reel.get()) r->Disable(), r->SetDelete(true);
+			g_reel = {}, g_reelAt = -1, g_reelGlow = false;
+		}
 		void ClearShow()
 		{
 			if (auto r = g_show.get()) r->Disable(), r->SetDelete(true);
-			g_show = {};
+			g_show = {}, g_showGlow = false;
+			ClearReel();
+		}
+		// a weapon's rarity glow: worn green, battered gold
+		void Glow(RE::TESObjectREFR* a_r, int a_w, bool& a_done)
+		{
+			if (a_done || !a_r || a_w < 0 || !a_r->Is3DLoaded()) return;
+			auto* sh = Forms::Ours(gen::kTabletWeapons[a_w].battered ? gen::kTabletGold : gen::kTabletGreen);
+			if (auto* e = sh ? sh->As<RE::TESEffectShader>() : nullptr) a_r->ApplyEffectShader(e, -1.0f);
+			a_done = true;
+		}
+		// the reel: every weapon in turn, a little one turning in the pool in its rarity's glow - quick at first, slowing,
+		// and landing on the one won (the mask's roll: it runs out and the mask rises instead)
+		void TickReel(RE::TESObjectREFR* a_tab, RE::NiAVObject* a_body, float a_k, float a_delta)
+		{
+			if (g_phase != Phase::Rolling || a_k >= 0.97f) { ClearReel(); return; }
+			if (g_reelOrder.empty()) {
+				for (int i = 0; i < static_cast<int>(gen::kTabletWeapons.size()); ++i) g_reelOrder.push_back(i);
+				std::shuffle(g_reelOrder.begin(), g_reelOrder.end(), g_rng);
+			}
+			g_reelNext -= a_delta;
+			int want = g_reelAt;
+			if (g_reelAt < 0 || g_reelNext <= 0.0f) {
+				// (the last turns: the won weapon itself, so the reel lands on it)
+				const bool last = a_k > 0.78f && g_prize >= 0;
+				want = last ? g_prize : g_reelOrder[(g_reelStep++) % g_reelOrder.size()];
+				if (!last && want == g_reelAt) want = g_reelOrder[(g_reelStep++) % g_reelOrder.size()];
+				g_reelNext = last ? 99.0f : 0.09f + 0.32f * a_k * a_k;
+			}
+			if (want != g_reelAt) {
+				ClearReel();
+				auto* base = Forms::Ours(gen::kTabletWeapons[want].show) ? Forms::Ours(gen::kTabletWeapons[want].show)->As<RE::TESBoundObject>() : nullptr;
+				if (auto ref = base ? a_tab->PlaceObjectAtMe(base, false) : nullptr) {
+					ref->GetReferenceRuntimeData().refScale = 32;   // (a little one: a third of its size)
+					g_reel = ref->CreateRefHandle(), g_reelAt = want;
+				}
+			}
+			auto r = g_reel.get();
+			if (!r) return;
+			r->SetPosition(a_body->world * RE::NiPoint3{ 0.0f, -10.0f, kPoolZ });
+			r->SetAngle({ 0.0f, 0.0f, a_tab->GetAngleZ() + g_clock * 2.4f });
+			Glow(r.get(), g_reelAt, g_reelGlow);
 		}
 		// the won weapon's model rising out of the pool and turning there (placed in the world before the tablet's face)
 		void PoseShow(RE::TESObjectREFR* a_tab, float a_rise)
@@ -289,6 +344,7 @@ namespace bo3z::Tablet
 			r->SetPosition(at);
 			// (the mask faces you out of the pool, turning a little; a weapon turns round)
 			r->SetAngle({ 0.0f, 0.0f, g_phase == Phase::Mask ? a_tab->GetAngleZ() + RE::NI_PI + 0.35f * std::sin(g_clock * 1.7f) : a_tab->GetAngleZ() + g_clock * 0.9f });
+			if (g_phase == Phase::Offering) Glow(r.get(), g_prize, g_showGlow);
 		}
 
 		// how high over its plinth the tablet is: coming down the beam (falling faster and faster), going up it
@@ -359,10 +415,11 @@ namespace bo3z::Tablet
 				const bool on = rolling && std::fmod(g_t * (1.3f + 0.21f * i) + i * 0.37f, 1.0f) < 0.35f;
 				Show(root, fmt::format("Spark{}_bb", i).c_str(), on);
 			}
-			Show(root, "Ghost", rolling && k < 0.92f);           // (the reel's ghosts, until it lands)
+			Show(root, "Ghost", false);   // (the old white glyph reel: the little weapons now, TickReel)
 			Show(root, "GoldFlare_bb", g_gold && (g_phase == Phase::Offering || (rolling && k > 0.85f)));
 			RE::NiUpdateData ud;
 			body->Update(ud);
+			TickReel(a_ref, body, k, a_delta);
 		}
 	}
 
@@ -561,6 +618,7 @@ namespace bo3z::Tablet
 		g_paid = price;
 		g_ref = a_ref->CreateRefHandle();
 		g_phase = Phase::Rolling, g_t = 0.0f, g_bell = false;
+		ClearReel(), g_reelOrder.clear(), g_reelStep = 0, g_reelNext = 0.0f;
 		// (Noah: after a random 4-8 rolls the skull can come: the essence back, and the tablet moves)
 		g_skull = g_rolls > g_moveAfter;
 		g_prize = g_skull ? -1 : Pick();

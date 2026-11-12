@@ -910,6 +910,20 @@ for name, hx in T['efsh_enchpurple']['subs']:
     if name == 'EDID': continue
     subs.append(sub(name, bytes(d) if name == 'DATA' else bytes.fromhex(hx)))
 recs['EFSH'].append(record('EFSH', fid('EFSH', 'spectral'), subs))
+# (Noah: the Tablet's roll "with green being a common weapon and gold being a legendary") the reel's little weapons glow in
+# their rarity: worn green, battered gold (src/Tablet.cpp)
+for key, fill, edge in (('tabletgreen', (40, 200, 70), (130, 255, 150)), ('tabletgold', (235, 165, 30), (255, 225, 120))):
+    d = bytearray(tsub('efsh_enchpurple', 'DATA'))
+    d[0] |= 0x08
+    struct.pack_into('<f', d, 0x20, 2.0)
+    struct.pack_into('<f', d, 0x24, 0.15)
+    d[0x10:0x13] = bytes(fill)
+    d[0x38:0x3B] = bytes(edge)
+    subs = [sub('EDID', z('UN_Tablet_' + key))]
+    for name, hx in T['efsh_enchpurple']['subs']:
+        if name == 'EDID': continue
+        subs.append(sub(name, bytes(d) if name == 'DATA' else bytes.fromhex(hx)))
+    recs['EFSH'].append(record('EFSH', fid('EFSH', key), subs))
 
 # (Noah: "shadowflame ... should set enemies on fire with purple flames") Shadowflame on its victim: Skyrim's enchantment fire
 # wrapped round the whole body in violet - a burning membrane and a thick stream of violet flames rising off it - for as

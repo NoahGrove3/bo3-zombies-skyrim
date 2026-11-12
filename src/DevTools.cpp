@@ -787,6 +787,20 @@ namespace bo3z
 				std::string files;
 				for (auto& [f, c] : byFile) files += fmt::format("{} {}, ", f, c);
 				logger::info("dev: floaters {} of {} within {:.0f} - by the plugin that last moved them: {}", n, all, range, files);
+			} else if (cmd == "hairs" && player) {
+				// hairs: the playable hairs Skyrim loaded, by plugin - for men, for women, and for your race (Noah: "I didnt see any
+				// of the new hairstyles")
+				std::map<std::string, std::array<int, 3>> by;
+				auto* race = player->GetRace();
+				for (auto* hp : RE::TESDataHandler::GetSingleton()->GetFormArray<RE::BGSHeadPart>()) {
+					if (!hp || hp->type.get() != RE::BGSHeadPart::HeadPartType::kHair || !hp->flags.any(RE::BGSHeadPart::Flag::kPlayable)) continue;
+					auto* f = hp->GetFile(0);
+					auto& row = by[f ? std::string(f->GetFilename()) : "?"];
+					if (hp->flags.any(RE::BGSHeadPart::Flag::kMale)) ++row[0];
+					if (hp->flags.any(RE::BGSHeadPart::Flag::kFemale)) ++row[1];
+					if (race && hp->validRaces && hp->validRaces->HasForm(race)) ++row[2];
+				}
+				for (auto& [f, r] : by) logger::info("dev: hairs {} - male {} female {} your race ({}) {}", f, r[0], r[1], race ? race->GetFormEditorID() : "?", r[2]);
 			} else if (cmd == "near" && player) {
 				// near [range]: the trees, rocks and plants nearest you - model, who placed it, who last moved it, its height
 				// over the ground (Noah: stand by a floating one)

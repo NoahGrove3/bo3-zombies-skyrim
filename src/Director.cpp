@@ -735,6 +735,7 @@ namespace bo3z
 					continue;
 				}
 				r.t += a_delta;
+				if (r.hidden && a->IsDead()) ShowRiser(a.get(), true), r.hidden = false;   // (killed before it showed: never an unseen body)
 				// the draugr's own summoned-from-the-grave animation (Undead Summons Emerge from the Ground replaces it):
 				// any of the dead on a draugr skeleton (draugr, skeletons, ...) plays it standing on the floor; the rest climb
 				// (Noah's plan: every one of the night's dead comes through the Curse's red portal; elites and bosses a bigger

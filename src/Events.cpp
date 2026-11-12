@@ -1355,6 +1355,18 @@ namespace bo3z
 			// (the class-coloured Black Mage robes are gone - each class wears its lookbook set as its mod made it - so ArmorForge::Build no longer runs)
 			ArmorForge::BuildHipBlades();
 			Tablet::AdoptLooks();
+			// (Noah: "the projectile started breaking instantly after casting but it wasnt hitting anything") the night's dead
+			// lying about (their ragdolls: Skyrim's DeadBip layer) stopped every bolt, arrow and spell short - shots now pass
+			// through bodies, as they always should have in a horde
+			if (auto* cf = RE::bhkCollisionFilter::GetSingleton()) {
+				const auto dead = static_cast<std::uint32_t>(RE::COL_LAYER::kDeadBip);
+				for (const auto l : { RE::COL_LAYER::kProjectile, RE::COL_LAYER::kSpell, RE::COL_LAYER::kConeProjectile }) {
+					const auto i = static_cast<std::uint32_t>(l);
+					cf->layerBitfields[i] &= ~(1ull << dead);
+					cf->layerBitfields[dead] &= ~(1ull << i);
+				}
+				logger::info("events: shots pass through the dead's bodies now");
+			}
 			Classes::NameSetPieces();
 			// (Noah: "a random sword on his hip ... It said I had the quarterstaff equipped") the class weapons wear their
 			// Base look from the start - before any is given or equipped (their tiers' looks follow on a load)
