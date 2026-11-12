@@ -524,11 +524,11 @@ namespace bo3z::Classes
 			}
 		g_wStep[a_cls] = kWonderTaken;
 			Forms::Play(gen::Sound::shout_learned);
-			static constexpr const char* kText[4] = {
-				"The Soulcaller's Staff. Hold its cast: its beam tears at the dead along your aim, and each one that dies while you hold it gives the staff its soul (up to eight, counted under your crosshair). Let go and the souls return as spectral wolves that hunt for 20 seconds - one for each soul.",
-				"The Staff of Magnus. Hold its beam on the dead: it drains them and feeds your magicka, and erupts where it ends. Hold it two seconds or more and the eruption leaves an orb of searing light that pulses on everything round it. Once the three dragons fall it burns hotter still.",
-				"The Mutagen Staff. A staff whose glass orb is fed by six vials of the elements. Hold attack to loose a beam from the orb: it pierces every one of the dead in its path, pouring each vial in turn for five seconds - fire, frost, lightning, acid, holy light and the void. Let go and the emptied vials refill; empty all six and they must refill completely. Once the three dragons fall, the beam burns stronger.",
-				"The Akaviri dragon slayer, two tiers above your blade. Every hit carries the last Spellsword spell you held. Once the three dragons fall it grows stronger again, and a power attack looses that spell on the dead round you." };
+			static constexpr const char* kText[4] = {   // (Noah, 2026-11-12: short and to the point)
+				"Hold to cast: each of the dead the beam kills gives a soul (max 8). Release: a spectral wolf per soul for 20 s.",
+				"Hold its beam on the dead: it drains them and feeds your magicka, and erupts where it ends.",
+				"Hold block: throws a flask every 0.5 s, cycling the six elements. Power attack: throws the next flask.",
+				"Light: a golden fireball, 2x damage to dragons. Heavy: 5 s of golden fireballs on the dead within 20 m." };
 			std::string up(kWonderName[a_cls]);
 			for (auto& ch : up) ch = static_cast<char>(std::toupper(static_cast<unsigned char>(ch)));
 			Hud::Lore(up, kText[a_cls], 12.0f);
@@ -3517,37 +3517,34 @@ namespace bo3z::Classes
 		if (!card->obj.GetMember("name", &name) || !name.IsString() || !name.GetString()) return;
 		const std::string nm = name.GetString();
 		struct Card { const char* name; const char* base; const char* tier[3]; };
+		// (Noah, 2026-11-12: "update all the weapons descriptions so they are short and to the point")
 		static const Card kCards[] = {
-			{ "Radiant Quarterstaff", "The Summoner's blade: pale silver, burning with white sunlight.",
-				{ "Tier I: light swings loose white sun balls that burn through the dead.", "Tier II: heavy attacks call a pillar of sunlight down on the one you strike.", "Tier III: heavy attacks call a great pillar of sunlight down." } },
-			{ "Carian Wand", "Destruction's wand: hold its cast and it looses a bolt every half second - fire, lightning and ice in turn.",
-				{ "Tier I: hold the cast for a bolt every half second - fire, lightning, ice in turn.", "Tier II: every 3rd bolt is a great bolt that pierces.", "Tier III: every 3rd bolt is a great bolt with a crossing volley either side." } },
-			{ "Shadowflame Scythe", "The Alchemist's scythe, wreathed in purple shadowflame. Sheathe it and your flasks come to hand.",
-				{ "Tier I: light swings loose bolts of shadowflame that set the dead burning.", "Tier II: heavy attacks loose a cyclone of purple fire.", "Tier III: heavy attacks loose a great cyclone of purple fire." } },
-			{ "Spellbound Rapier", "The Spellsword's blade: it takes the element of the spell in your other hand.",
-				{ "Tier I: light swings loose bolts of your spell's element.", "Tier II: heavy attacks loose a cyclone of it, casting your spell on all it catches.", "Tier III: heavy attacks loose a great cyclone of it." } },
+			{ "Radiant Quarterstaff", "Summoner's blade of white sunlight.",
+				{ "Tier I: light swings fire sun balls.", "Tier II: heavy calls a sunbeam on your target.", "Tier III: heavy calls a great sunbeam." } },
+			{ "Carian Wand", "Destruction's wand. Hold to cast a bolt every 0.5 s: fire, lightning, ice.",
+				{ "Tier I: a bolt every 0.5 s.", "Tier II: every 3rd bolt pierces.", "Tier III: every 3rd bolt is a great bolt with a volley either side." } },
+			{ "Shadowflame Scythe", "Alchemist's scythe. Sheathe it to swap to your flasks.",
+				{ "Tier I: light swings fire burning shadowflame bolts.", "Tier II: heavy: a purple fire tornado.", "Tier III: heavy: a great purple fire tornado." } },
+			{ "Spellbound Rapier", "Spellsword's blade: takes the element of your other hand's spell.",
+				{ "Tier I: light swings fire bolts of that element.", "Tier II: heavy: a tornado that casts your spell on all it hits.", "Tier III: heavy: a great tornado." } },
 		};
-		// (Noah: "Now do the same thing for the flasks and the armor for each class") the flasks: what each is, and its tier's
-		// gift; the class sets: what each is, and the power its tier has woken
 		static const Card kFlasks[] = {
-			{ "Fire Flask", "A flask of liquid fire: it shatters and bursts in flame.", {} },
-			{ "Frost Flask", "A flask of frozen brine: it shatters into killing cold.", {} },
-			{ "Shock Flask", "A flask of bottled storm: it shatters into arcing lightning.", {} },
-			{ "Acid Flask", "A flask of green acid: it shatters into a corroding splash.", {} },
-			{ "Holy Water", "Blessed water of Stendarr: it shatters into searing light; the dead burn in it.", {} },
-			{ "Voidglass Flask", "A flask of bottled void: it shatters and drags the dead in to where it broke.", {} },
+			{ "Fire Flask", "Bursts in flame.", {} },
+			{ "Frost Flask", "Bursts into killing cold.", {} },
+			{ "Shock Flask", "Bursts into arcing lightning.", {} },
+			{ "Acid Flask", "Bursts into a corroding splash.", {} },
+			{ "Holy Water", "Bursts into searing holy light.", {} },
+			{ "Voidglass Flask", "Drags the dead in to where it breaks.", {} },
 		};
-		static constexpr const char* kFlaskTier[3] = { "Tier I: its burst reaches half again as wide.", "Tier II: a chain reaction - the dead it kills burst in its element too.",
-			"Legendary: a greater burst of its element." };
-		// (each flask's own Legendary, Noah 2026-11-05)
-		static constexpr const char* kFlaskLegend[6] = { "Legendary: a ring of fire spreads out from where it breaks.", "Legendary: a freezing nova slows the dead to half speed for 5 seconds.",
-			"Legendary: three bolts of lightning strike from the sky around it.", "Legendary: it splits into three more acid splashes.",
-			"Legendary: a pillar of sunlight strikes down where it breaks.", "Legendary: after the pull, a lunar tide blasts the dead back out." };
+		static constexpr const char* kFlaskTier[3] = { "Tier I: 50% wider burst.", "Tier II: its kills burst too.", "Legendary: a greater burst." };
+		static constexpr const char* kFlaskLegend[6] = { "Legendary: a ring of fire.", "Legendary: a nova that halves their speed for 5 s.",
+			"Legendary: 3 lightning strikes from the sky.", "Legendary: splits into 3 more splashes.",
+			"Legendary: a beam of sunlight from the sky.", "Legendary: then a lunar tide blasts them out." };
 		static const Card kSets[] = {
-			{ "Summoner Set", "The Summoner's armor: a conjurer's robe, hood and boots, stitched with binding sigils that steady the bond between you and what you call.", { "Tier I: your summons take a fifth less harm.", "Tier II: one more summon slot.", "Tier III: your summons' kills heal you." } },
-			{ "Destruction Set", "The Destruction mage's armor: dark College robes, hood and boots, woven to carry raw magicka from the heart to the hands.", { "Tier I: your spells cost 10% less.", "Tier II: your magicka comes back faster.", "Tier III: your spells cost a quarter less." } },
-			{ "Alchemist Set", "The Alchemist's armor: a ranger's cuirass, hood and boots, light and hard-wearing, with loops at the belt for flasks.", { "Tier I: you throw 15% faster.", "Tier II: your flasks' bursts reach 20% wider.", "Tier III: each flask kill heals you 2%." } },
-			{ "Spellsword Set", "The Spellsword's armor: black plate etched with runes - cuirass, helm, gauntlets and sabatons - for the one who fights with blade and spell together.", { "Tier I: you mend in a fight.", "Tier II: your blade's hits put magicka back.", "Tier III: your blade hits 15% harder." } },
+			{ "Summoner Set", "Summoner's robes.", { "Tier I: summons take 20% less harm.", "Tier II: one more summon slot.", "Tier III: your summons' kills heal you." } },
+			{ "Destruction Set", "Destruction robes.", { "Tier I: spells cost 10% less.", "Tier II: faster magicka regen.", "Tier III: spells cost 25% less." } },
+			{ "Alchemist Set", "Alchemist's armour.", { "Tier I: throw 15% faster.", "Tier II: flask bursts 20% wider.", "Tier III: flask kills heal you 2%." } },
+			{ "Spellsword Set", "Spellsword's plate.", { "Tier I: you mend in a fight.", "Tier II: blade hits restore magicka.", "Tier III: blade hits 15% harder." } },
 		};
 		std::string want;
 		const Card* c = nullptr;
@@ -3560,7 +3557,7 @@ namespace bo3z::Classes
 		for (int e = 0; !c && e < 6; ++e) if (nm == kFlasks[e].name) {
 			c = &kFlasks[e];
 			const int t = std::clamp(Kit::FlaskTier(e), 0, 3);
-			want = std::string(c->base) + (t >= 3 ? std::string(" ") + kFlaskLegend[e] : t >= 1 ? std::string(" ") + kFlaskTier[t - 1] : std::string{}) + " Attack to throw it; it never runs out.";
+			want = std::string(c->base) + (t >= 3 ? std::string(" ") + kFlaskLegend[e] : t >= 1 ? std::string(" ") + kFlaskTier[t - 1] : std::string{}) + " Never runs out.";
 		}
 		for (int k = 0; !c && k < 4; ++k) if (nm.rfind(kSets[k].name, 0) == 0) {
 			c = &kSets[k];
@@ -3798,9 +3795,7 @@ namespace bo3z::Classes
 			// each chasing one of the dead near you (TickGoldRain); a swing during it starts the five seconds over
 			g_goldRain = 5.0f, g_goldNext = 0.0f;
 			Gun::BlastSound("fireball", p->GetPosition(), 0.7f);
-			// (Noah: "the dragon slayer sword isn't casting its golden fire tornado") and the Spellsword blade's tornado, two tiers
-			// above it: a great one of golden fire rolling out ahead of you
-			ClassCyclone(3, 7, 3, UpgradeMult(kWonderUps) * (0.7f + 0.3f * Arcana::Power()), nullptr, p->GetPosition(), Gun::SwingDir());
+			// (Noah, 2026-11-12: "Correction for dragon slayer sword can you remove the tornado") the rain alone
 			logger::info("swords: the Dragon Slayer calls down five seconds of golden fireballs");
 			return;
 		}

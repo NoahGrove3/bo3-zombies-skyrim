@@ -16,16 +16,16 @@ BLADE_VIZ = ('alch', 'carian', 'radiant', 'ss_none', 'ss_fire', 'ss_frost', 'ss_
 PRIEST_WEAPONS = {
     # (Noah: "I want to remove bows ... out of the loot pool" - "New melee weapons") Vahlok's Keyhammer: the Stendarr warhammer
     # (Noah, after the Royal Guard's was unseen in the hands: "H3"; armor_replacer, read from the install); Vokun's Nightcaller's Scythe: Battle Scythe's Daedric scythe
-    'Riverwood': ('vahlok', "Jailor's Keyhammer", 'armor_replacer\\1_stendarr\\weapon\\warhammer.nif', 'warhammer', 42, "Vahlok the Jailor's warhammer, its head a great iron key. Every hit shackles the dead in place. Power attack: chains yank the dead around you together."),
-    'Whiterun': ('nahkriin', 'Mistblade', 'nahkriin_mistblade', 'sword', 26, "Nahkriin's blade of pale mist. Every hit blinds: the foe slows and its blows weaken. Power attack: a fog where the dead around wander lost, slowed and weakened."),
-    'Solitude': ('volsung', 'Windcutter', 'volsung_windcutter', 'sword', 26, "Volsung's sabre. Every hit sends a wind slash on through the dead ahead. Power attack: you dash forward through them, cutting all in your path."),
-    'Windhelm': ('zahkriisos', 'Glacier Greatsword', 'zahkriisos_greatsword', 'greatsword', 38, "Zahkriisos' greatsword of glacier ice. Every hit freezes and slows. Power attack: every frozen foe around you shatters."),
-    'Markarth': ('otar', 'Storm Blade', 'otar_stormblade', 'sword', 26, "Otar the Mad's storm-steel sword. Every hit leaps as lightning to two more of the dead. Power attack: lightning arcs out to all around you."),
-    'Riften': ('rahgot', 'Sacrifice Knife', 'rahgot_dagger', 'dagger', 20, "Rahgot's ritual knife of black obsidian. Every hit poisons, and the poison passes on to the next foe. Power attack: every poisoned foe around you bursts."),
-    'Falkreath': ('krosis', 'Grief Blade', 'krosis_griefblade', 'sword', 26, "Krosis' sword, weeping light. Every hit heals you. Power attack: a wail that weakens all the dead around you, their blows feebler and their bodies easier to hurt."),
-    'Morthal': ('hevnoraak', 'Sealbreaker', 'hevnoraak_sealbreaker', 'battleaxe', 40, "Hevnoraak's battleaxe, cut from his tomb's cracked seal. Every hit shatters armour. Power attack: a shockwave through the ground that hurts and staggers all around you."),
-    'Dawnstar': ('vokun', "Nightcaller's Scythe", 'CurseOfAlduin\\scythes\\daedric.nif', 'scythe', 40, "Vokun's scythe of black daedric steel, cold with dreams. Every hit puts the dead to sleep. Power attack: a sweep that leaves a nightmare fog, where the dead are slowed and lost."),
-    'Winterhold': ('morokei', 'Arcane Maul', 'morokei_maul', 'warhammer', 42, "Morokei's maul of floating crystal. Every hit bursts with magic. Power attack: a magicka shockwave around you that also restores your magicka."),
+    'Riverwood': ('vahlok', "Jailor's Keyhammer", 'armor_replacer\\1_stendarr\\weapon\\warhammer.nif', 'warhammer', 42, "Hits shackle the dead in place. Heavy: chains yank the nearby dead together."),
+    'Whiterun': ('nahkriin', 'Mistblade', 'nahkriin_mistblade', 'sword', 26, "Hits blind: the dead slow and hit weaker. Heavy: a fog where they wander lost."),
+    'Solitude': ('volsung', 'Windcutter', 'volsung_windcutter', 'sword', 26, "Light: a gust that staggers the dead 8 m ahead. Heavy: a 12 m cone that knocks them down."),
+    'Windhelm': ('zahkriisos', 'Glacier Greatsword', 'zahkriisos_greatsword', 'greatsword', 38, "Hits freeze the dead until they die. Heavy: shatters every frozen foe around you."),
+    'Markarth': ('otar', 'Storm Blade', 'otar_stormblade', 'sword', 26, "Hits chain lightning to 2 more. Heavy: lightning arcs to all around you."),
+    'Riften': ('rahgot', 'Sacrifice Knife', 'rahgot_dagger', 'dagger', 20, "Hits poison, spreading to the next foe. Heavy: every poisoned foe bursts."),
+    'Falkreath': ('krosis', 'Grief Blade', 'krosis_griefblade', 'sword', 26, "Hits heal you 1%. Heavy: a wail that weakens the dead around you."),
+    'Morthal': ('hevnoraak', 'Sealbreaker', 'hevnoraak_sealbreaker', 'battleaxe', 40, "Hits shatter armour. Heavy: a shockwave that staggers all around you."),
+    'Dawnstar': ('vokun', "Nightcaller's Scythe", 'CurseOfAlduin\\scythes\\daedric.nif', 'scythe', 40, "Hits put the dead to sleep. Heavy: a nightmare fog that slows them."),
+    'Winterhold': ('morokei', 'Arcane Maul', 'morokei_maul', 'warhammer', 42, "Hits burst with magic. Heavy: a magicka shockwave that refills your magicka."),
 }
 # (Noah: "the mod that gives weapons effect animations ... properly assign each one for every weapon in our mod") Visual Animated
 # Enchants' looks: each colour our own look-only enchantment (its shader and art taken at load from the mod's effect: src/Classes.cpp
