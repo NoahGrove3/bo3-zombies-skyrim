@@ -218,8 +218,47 @@ namespace bo3z::RaceTidy
 		}
 	}
 
+	// (Noah: "in the race menu, the player's head when creating a character should follow the mouse cursor, but the mouse
+	// cursor is invisible") the game sits in its controller mode there (no cursor, so RaceMenu's own look-at never moves):
+	// the mouse's own movement turns the head instead - a point before the camera, moved by the mouse, looked at
+	namespace
+	{
+		std::atomic<float> g_lookX{ 0.0f }, g_lookY{ 0.0f };
+		bool g_lookOn = false;
+		void Look()
+		{
+			auto* ui = RE::UI::GetSingleton();
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			const bool open = ui && p && ui->IsMenuOpen(RE::RaceSexMenu::MENU_NAME);
+			if (!open) {
+				if (g_lookOn && p) p->SetGraphVariableBool("IsNPC", false);
+				g_lookOn = false, g_lookX = 0.0f, g_lookY = 0.0f;
+				return;
+			}
+			auto* cam = RE::PlayerCamera::GetSingleton();
+			auto* proc = p->GetActorRuntimeData().currentProcess;
+			if (!cam || !cam->cameraRoot || !proc) return;
+			if (!g_lookOn) {
+				p->SetGraphVariableBool("IsNPC", true);   // (the player's head turns only as an NPC's does)
+				g_lookOn = true;
+			}
+			const auto& w = cam->cameraRoot->world;
+			const RE::NiPoint3 eye = w.translate, right{ w.rotate.entry[0][0], w.rotate.entry[1][0], w.rotate.entry[2][0] },
+			                   up{ w.rotate.entry[0][2], w.rotate.entry[1][2], w.rotate.entry[2][2] };
+			RE::NiPoint3 at = eye + right * g_lookX.load() + up * g_lookY.load();
+			proc->SetHeadtrackTarget(p, at);
+		}
+	}
+	void Mouse(float a_dx, float a_dy)
+	{
+		if (!g_lookOn) return;
+		g_lookX = std::clamp(g_lookX.load() + a_dx * 1.6f, -450.0f, 450.0f);
+		g_lookY = std::clamp(g_lookY.load() - a_dy * 1.6f, -300.0f, 300.0f);
+	}
+
 	void Tick()
 	{
+		Look();
 		static auto last = std::chrono::steady_clock::now();
 		const auto  now = std::chrono::steady_clock::now();
 		if (now - last < std::chrono::milliseconds(150)) return;

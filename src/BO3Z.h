@@ -819,6 +819,7 @@ namespace bo3z
 	{
 		void Tick();   // RaceMenu's tabs and sliders regrouped while the character creator is open
 		void Keys(RE::InputEvent* a_ev);   // its keyboard: WASD to move, Enter done, Q light, E zoom
+		void Mouse(float a_dx, float a_dy);   // the mouse turns the head there
 	}
 
 	namespace Tablet

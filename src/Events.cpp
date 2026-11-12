@@ -663,6 +663,7 @@ namespace bo3z
 					if (e->GetEventType() == RE::INPUT_EVENT_TYPE::kMouseMove) {
 						if (auto* mm = static_cast<RE::MouseMoveEvent*>(e)) {
 							Hud::OnMouseMove(static_cast<float>(mm->mouseInputX), static_cast<float>(mm->mouseInputY));
+							RaceTidy::Mouse(static_cast<float>(mm->mouseInputX), static_cast<float>(mm->mouseInputY));
 						}
 					}
 					if (e->GetEventType() == RE::INPUT_EVENT_TYPE::kThumbstick) {
