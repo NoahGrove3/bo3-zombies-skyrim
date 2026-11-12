@@ -1172,7 +1172,9 @@ namespace bo3z
 					it->second->danceT.store(a_seconds);
 				}
 			}
-			a_actor->EnableAI(false);
+			// (Noah: "The dance of Death just makes all the enemies stand still" - with its mind switched off a body's animation
+			// stops too, and the dance clip with it) its mind is left on: out of its fight, held where it stands (Director's web),
+			// its swings never shown or landed while the dance plays
 			a_actor->StopCombat();
 			for (auto& d : g_dancers) {
 				if (d.first.get().get() == a_actor) { d.second = a_seconds; return true; }
@@ -1193,7 +1195,9 @@ namespace bo3z
 			for (auto& d : g_dancers) {
 				d.second -= a_delta;
 				if (d.second <= 0) {
-					if (auto a = d.first.get(); a && !a->IsDead()) a->EnableAI(true);
+					if (auto a = d.first.get(); a && !a->IsDead() && !a->IsAIEnabled()) a->EnableAI(true);   // (a dancer from an older build)
+				} else if (auto a = d.first.get(); a && !a->IsDead() && a->IsInCombat()) {
+					a->StopCombat();
 				}
 			}
 			std::erase_if(g_dancers, [](const auto& d) { return d.second <= 0; });

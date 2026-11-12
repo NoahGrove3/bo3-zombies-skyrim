@@ -2248,7 +2248,7 @@ namespace bo3z::Classes
 	void WandKick(int a_slot)
 	{
 		if (a_slot < 0 || a_slot > 1) return;
-		g_wfx[a_slot].pulse = 1.0f, g_wfx[a_slot].kick = 1.0f;
+		g_wfx[a_slot].pulse = 1.0f;   // (Noah: "remove the wand recoil effect" - the tip's flare alone)
 	}
 	RE::NiPoint3 WandTipAt(float a_tipY)
 	{
@@ -2346,6 +2346,7 @@ namespace bo3z::Classes
 			sl.roll = Gun::SwingRoll(d);
 			sl.range = 1400.0f + 200.0f * std::min(t, 3);
 			sl.bolt = true, sl.speed = 1150.0f;
+			sl.keepFrom = true;   // (Noah: "make sure the spells come from the wands tip and not the players chest")
 			sl.scale = (1.1f + 0.15f * std::min(t, 3)) * sizeMul;
 			sl.share = BladeShare(w) * (0.7f + 0.3f * Arcana::Power()) * (t >= 1 ? UpgradeMult(t) / std::max(0.01f, UpgradeMult(1)) : 0.6f) * shareMul;
 			sl.flingKill = 16.0f;
@@ -3425,7 +3426,7 @@ namespace bo3z::Classes
 				{ 0x00184D, true, "lightning" },                // ss_shock
 				{ 0x010B53, true, "sunfire" },                  // ss_sun (its Dawnbreaker)
 				{ 0x00438D, true, "arcane white light" },       // ss_blood: now the Arcane blade (zzOverflowingmoon1)
-				{ 0x010B53, true, "sunfire" } };                // slayer (its Dawnbreaker)
+				{ 0x00184E, true, "golden fire" } };            // slayer (Noah: "should have a gold fire weapon effect not the green" - zzOverflowingYellow1)
 			auto* dh = RE::TESDataHandler::GetSingleton();
 			if (!dh->LookupModByName("VisualAnimatedEnchants.esp")) { logger::info("swords: Visual Animated Enchants is not installed - the looks keep their glow"); return; }
 			int n = 0;
@@ -4088,7 +4089,11 @@ namespace bo3z::Classes
 		if (!p || !cam || !p->Is3DLoaded()) return;
 		static RE::BGSKeyword* claw = RE::TESDataHandler::GetSingleton()->LookupForm<RE::BGSKeyword>(0x19AAB4, "NewArmoury.esp");
 		if (!claw) return;
-		static std::unordered_map<RE::NiAVObject*, RE::NiMatrix3> was;   // (each claw's model: how it sat before)
+		// (each claw's model: how it sat before, and how we left it - Noah: the Stormtalons "upside down and the blades facing the
+		// wrong direction", the very turn that set them right live: a model made where an older claw's had been was handed that
+		// one's old seat. A model whose turn isn't the one we left is taken as it now sits)
+		struct Seat { RE::NiMatrix3 orig, applied; };
+		static std::unordered_map<RE::NiAVObject*, Seat> was;
 		if (was.size() > 64) was.clear();
 		for (const bool third : { false, true }) {
 		auto* root = p->Get3D(!third);
@@ -4107,11 +4112,17 @@ namespace bo3z::Classes
 			}
 			for (auto& ch : nn->GetChildren()) {
 				if (!ch) continue;
-				auto [it, fresh] = was.try_emplace(ch.get(), ch->local.rotate);
+				auto [it, fresh] = was.try_emplace(ch.get(), Seat{ ch->local.rotate, ch->local.rotate });
+				auto same = [](const RE::NiMatrix3& a, const RE::NiMatrix3& b) {
+					for (int i = 0; i < 3; ++i) for (int j = 0; j < 3; ++j) if (std::abs(a.entry[i][j] - b.entry[i][j]) > 1e-3f) return false;
+					return true;
+				};
+				if (!fresh && !same(ch->local.rotate, it->second.applied)) it->second.orig = ch->local.rotate;
 				RE::NiMatrix3 turn;
 				const float d = 0.0174533f;
 				turn.SetEulerAnglesXYZ(r.x * d, r.y * d, r.z * d);
-				ch->local.rotate = g_clawRotOn ? it->second * turn : it->second;
+				ch->local.rotate = g_clawRotOn ? it->second.orig * turn : it->second.orig;
+				it->second.applied = ch->local.rotate;
 			}
 		}
 		}

@@ -1943,7 +1943,7 @@ namespace bo3z
 				if (l.wait > 0) {
 					if ((l.wait -= a_delta) > 0) continue;
 					l.s.roll = SwingRoll(l.s.dir);
-					if (!l.s.sideways) l.at = SwingFrom();
+					if (!l.s.sideways && !l.s.keepFrom) l.at = SwingFrom();
 				}
 				if (!l.fx.ok) {
 					l.fx = WorldFx(l.s.model);

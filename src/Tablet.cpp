@@ -1001,6 +1001,7 @@ namespace bo3z::Tablet
 			sl.roll = Gun::SwingRoll(a_dir);
 			sl.range = a_range, sl.speed = 1500.0f, sl.radius = 70.0f, sl.scale = 1.0f;
 			sl.bolt = true, sl.stopOnHit = true, sl.share = a_share;
+			sl.keepFrom = true;   // (from the tip, then from each of the dead it bounces off)
 			sl.onHit = [a_share, a_left, a_hit, a_from](RE::Actor* a, bool) {
 				if (!a) return;
 				a_hit->push_back(a->GetFormID());

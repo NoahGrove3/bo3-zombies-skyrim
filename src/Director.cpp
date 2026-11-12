@@ -1999,7 +1999,9 @@ namespace bo3z
 		{
 			const float pr = NightProgress();
 			if (pr < 0) return 0.0f;
-			const float base = ThemeNowImpl() == gen::kEvent_bloodfog ? 1.3f : std::clamp((pr - 0.5f) * 2.0f, 0.0f, 1.0f);
+			// (Noah, 2026-11-11: "remove the fog on the ground from the nights" - "Keep it on Blood Fog") Blood Fog's alone
+			const float base = ThemeNowImpl() == gen::kEvent_bloodfog ? 1.3f : 0.0f;
+			(void)pr;
 			return base * Settings::FogStrength();
 		}
 		int g_mistRings = 0;
@@ -2814,7 +2816,7 @@ namespace bo3z
 			const auto pp = a_player->GetPosition();
 			for (auto& s : g_alive) {
 				auto a = s.handle.get();
-				if (!a || a->IsDead() || a->IsDisabled() || !a->Is3DLoaded() || s.frenzy > 0) continue;
+				if (!a || a->IsDead() || a->IsDisabled() || !a->Is3DLoaded() || s.frenzy > 0 || Undead::IsDancing(a.get())) continue;  // (a dancer lands no blow)
 				const int kind = gen::kEnemies[s.enemy].kind;
 				if (Director::IsBoss(a.get()) || s.dash > 0 || s.stun > 0 || (kind == 1 && s.windup >= 0)) continue;  // (the bosses have their own blows; a brute mid-move is busy)
 				auto&       t = swing.try_emplace(a->GetFormID(), -1.0f).first->second;
@@ -3997,7 +3999,10 @@ namespace bo3z
 				auto a = s.handle.get();
 				// (Noah: "The shout effect range should be within 60 meters") 60 m, 4,200 units (20 m before)
 				if (!a || a->IsDead() || a->IsDisabled() || a->GetPosition().GetDistance(p->GetPosition()) > 4200.0f) continue;
-				n += Undead::Dance(a.get(), 20.0f) ? 1 : 0;
+				if (Undead::Dance(a.get(), 20.0f)) {
+					++n;
+					Web(a->GetPosition(), 60.0f, 20.0f, 100.0f, false);   // (held where it dances)
+				}
 			}
 			if (auto* snd = dh->LookupForm<RE::BGSSoundDescriptorForm>(gen::kDanceSong, gen::kPlugin)) {
 				static RE::BSSoundHandle h;
@@ -4961,6 +4966,8 @@ namespace bo3z
 			vm->DispatchMethodCall(hd, "ObjectReference", a_show ? "Enable" : "Disable", RE::MakeFunctionArguments(true), none);  // (fading)
 		}
 		std::vector<RE::ObjectRefHandle> g_sheltered;
+		bool  g_shelterOn = false;   // (the night's shelter under way)
+		float g_duskFade = 0.0f;           // (its first seconds: those already out fade; later comers vanish at once)
 		void TickShelter(RE::PlayerCharacter* a_player, float a_delta)
 		{
 			static float scan = 0;
@@ -4977,6 +4984,7 @@ namespace bo3z
 			else if (backIn > 0) backIn -= a_delta;
 			if (!night && backIn > 0) return;
 			if (!night) {
+				g_shelterOn = false;
 				if (!g_sheltered.empty()) {
 					for (auto& h : g_sheltered) {
 						if (auto r = h.get(); r && r->IsDisabled()) {
@@ -5010,10 +5018,13 @@ namespace bo3z
 					}
 				}
 			}
+			if (!g_shelterOn) g_duskFade = 12.0f;
+			g_shelterOn = true;
+			g_duskFade = std::max(0.0f, g_duskFade - a_delta);
 			if ((scan -= a_delta) > 0) {
 				return;
 			}
-			scan = 1.0f;
+			scan = 0.25f;
 			static auto* npcKw = RE::TESForm::LookupByID<RE::BGSKeyword>(0x013794);  // ActorTypeNPC
 			auto inTown = [](RE::Actor* a) {
 				auto* cell = a->GetParentCell();
@@ -5038,7 +5049,11 @@ namespace bo3z
 					continue;
 				}
 				auto* race = a->GetRace();
-				if (!race || (npcKw && !race->HasKeyword(npcKw)) || a->IsHostileToActor(a_player) || !inTown(a.get())) {
+				// (Noah: "I can still hear NPC's talking during a night and i can sometimes see them when they walk into the city or
+				// outside of a building") anyone near you is taken in too - on the road into town, just out of a door - not only
+				// those standing inside a town's bounds
+				const bool nearYou = a->GetParentCell() && !a->GetParentCell()->IsInteriorCell() && a->GetPosition().GetDistance(a_player->GetPosition()) < 8000.0f;
+				if (!race || (npcKw && !race->HasKeyword(npcKw)) || a->IsHostileToActor(a_player) || (!inTown(a.get()) && !nearYou)) {
 					if (const char* nm = a->GetName(); nm && std::string_view(nm).find("Guard") != std::string_view::npos) {
 						static int told = 0;
 						if (told++ < 12) logger::info("shelter: {} {:08X} stays out (race {}, hostile {}, in town {})", nm, a->GetFormID(), race && (!npcKw || race->HasKeyword(npcKw)), a->IsHostileToActor(a_player), inTown(a.get()));
@@ -5046,8 +5061,9 @@ namespace bo3z
 					continue;
 				}
 				a->StopCombat();
-				// (the near ones hurry off and fade from sight over a few seconds; the far ones are simply gone)
-				if (a->GetPosition().GetDistance(a_player->GetPosition()) < 3500.0f) {
+				// (the near ones hurry off and fade from sight over a few seconds as night falls; the far ones - and anyone who turns
+				// up once the night is under way - are simply gone, silent)
+				if (g_duskFade > 0.0f && a->GetPosition().GetDistance(a_player->GetPosition()) < 3500.0f) {
 					if (std::none_of(g_fading.begin(), g_fading.end(), [&](const auto& f) { return f.first.get().get() == a.get(); })) {
 						g_fading.push_back({ a->CreateRefHandle(), 1.0f + 6.0f * static_cast<float>(Pick(100)) / 100.0f });
 						g_sheltered.push_back(a->CreateRefHandle());
