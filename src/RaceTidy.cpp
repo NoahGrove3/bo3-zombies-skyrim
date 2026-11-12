@@ -152,7 +152,14 @@ namespace bo3z::RaceTidy
 				if (!entries.GetElement(i, &e) || !e.IsObject()) continue;
 				double f = 0;
 				Num(e, "flag", f);
-				const auto tab = Retab(Str(e, "text"), static_cast<std::uint32_t>(f));
+				// (Noah: "the only tabs I see are race, head, face, hair, and body") a second pass (a tab added late) read the
+				// renamed tabs by their new names and hid them: each tab is judged by its first name
+				std::string first = Str(e, "caText");
+				if (first.empty()) {
+					first = Str(e, "text");
+					e.SetMember("caText", RE::GFxValue(first.c_str()));
+				}
+				const auto tab = Retab(first, static_cast<std::uint32_t>(f));
 				if (!tab || !tab->name) continue;
 				if (*tab->name) e.SetMember("text", RE::GFxValue(tab->name));
 				e.SetMember("flag", RE::GFxValue(static_cast<double>(tab->flag)));
