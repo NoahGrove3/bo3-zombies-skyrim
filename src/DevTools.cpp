@@ -524,6 +524,64 @@ namespace bo3z
 						logger::warn("dev: gfx: menu '{}' not open or has no delegate", menu);
 					}
 				}
+			} else if (cmd == "gfxtree") {
+				// gfxtree <menu, '_' for spaces> [depth]: a menu's Scaleform tree written out (clips, arrays and their entries'
+				// plain members) to SKSE/CurseOfAlduin-gfxtree.txt - (Noah: "organize all the tabs and all of the sliders in
+				// each tab in the race menu") RaceMenu's categories and sliders as they are
+				std::string menu;
+				int depth = 7;
+				in >> menu >> depth;
+				std::replace(menu.begin(), menu.end(), '_', ' ');
+				auto* ui = RE::UI::GetSingleton();
+				auto m = ui ? ui->GetMenu(menu) : nullptr;
+				RE::GFxValue root;
+				if (!m || !m->uiMovie || !m->uiMovie->GetVariable(&root, "_root")) {
+					logger::warn("dev: gfxtree: menu '{}' not open", menu);
+				} else {
+					auto dir = SKSE::log::log_directory();
+					std::ofstream out(dir ? *dir / "CurseOfAlduin-gfxtree.txt" : std::filesystem::path("CurseOfAlduin-gfxtree.txt"), std::ios::trunc);
+					int lines = 0;
+					auto prim = [](const RE::GFxValue& v) -> std::string {
+						if (v.IsString()) return std::string("\"") + v.GetString() + "\"";
+						if (v.IsNumber()) return fmt::format("{:g}", v.GetNumber());
+						if (v.IsBool()) return v.GetBool() ? "true" : "false";
+						return {};
+					};
+					std::function<void(const RE::GFxValue&, const std::string&, int)> walk = [&](const RE::GFxValue& v, const std::string& path, int d) {
+						if (lines > 60000 || d > depth) return;
+						v.VisitMembers([&](const char* name, const RE::GFxValue& c) {
+							if (lines > 60000 || !name) return;
+							const std::string p2 = path + "." + name;
+							if (c.IsDisplayObject()) {
+								out << std::string(d * 2, ' ') << "[clip] " << p2 << "\n", ++lines;
+								walk(c, p2, d + 1);
+							} else if (c.IsArray()) {
+								const auto n = c.GetArraySize();
+								out << std::string(d * 2, ' ') << "[array " << n << "] " << p2 << "\n", ++lines;
+								for (std::uint32_t i = 0; i < n && i < 600; ++i) {
+									RE::GFxValue e;
+									if (!c.GetElement(i, &e)) continue;
+									std::string row = prim(e);
+									if (e.IsObject() && !e.IsDisplayObject()) {
+										e.VisitMembers([&](const char* k, const RE::GFxValue& x) {
+											if (auto s2 = prim(x); !s2.empty() && k) row += std::string(k) + "=" + s2 + " ";
+										});
+									} else if (e.IsDisplayObject()) {
+										row = "(clip)";
+									}
+									out << std::string(d * 2 + 2, ' ') << i << ": " << row << "\n", ++lines;
+								}
+							} else if (c.IsObject() && d < depth) {
+								out << std::string(d * 2, ' ') << "[obj] " << p2 << "\n", ++lines;
+								walk(c, p2, d + 1);
+							} else if (auto s2 = prim(c); !s2.empty()) {
+								out << std::string(d * 2, ' ') << p2 << " = " << s2 << "\n", ++lines;
+							}
+						});
+					};
+					walk(root, "_root", 0);
+					logger::info("dev: gfxtree {} - {} lines written", menu, lines);
+				}
 			} else if (cmd == "menus") {
 				std::string open;
 				if (auto* ui = RE::UI::GetSingleton()) {
@@ -923,7 +981,7 @@ namespace bo3z
 					g_shotName = s.substr(5);
 				} else if (s.rfind("rec ", 0) == 0) {
 					g_recRequest = s.substr(4);
-				} else if (s.rfind("key ", 0) == 0 || s.rfind("type ", 0) == 0 || s.rfind("gfx ", 0) == 0 || s.rfind("menus", 0) == 0 || s.rfind("mouse ", 0) == 0 || s.rfind("hold ", 0) == 0 || s.rfind("keyhold ", 0) == 0 || s.rfind("close ", 0) == 0) {
+				} else if (s.rfind("key ", 0) == 0 || s.rfind("type ", 0) == 0 || s.rfind("gfx ", 0) == 0 || s.rfind("gfxtree ", 0) == 0 || s.rfind("menus", 0) == 0 || s.rfind("mouse ", 0) == 0 || s.rfind("hold ", 0) == 0 || s.rfind("keyhold ", 0) == 0 || s.rfind("close ", 0) == 0) {
 					g_mainQueue.push_back(s);
 				} else {
 					g_gameQueue.push_back(s);
