@@ -172,6 +172,8 @@ def dressing(S):
     records[('STAT', 'tablet_mask')] = {'model': 'Armor\\DragonPriestHelms\\dragonhelm_ultra_go.nif', 'color': '', 'radius': 0}
     records[('STAT', 'whirlwind')] = {'model': 'CurseOfAlduin\\fx\\whirlwind.nif', 'color': '', 'radius': 0}  # Bond II's Updraft shout: the whirlwind round you
     records[('STAT', 'rise_fx')] = {'model': S['dressing']['show']['riseFxModel'], 'color': '', 'radius': 0}
+    # (Noah: "dust and debris coming from where they're clawing up from, like dirt") a cloud of dust with the ground's burst
+    records[('STAT', 'rise_dust')] = {'model': S['dressing']['show']['riseDustModel'], 'color': '', 'radius': 0}
     for w in S.get('tablet', {}).get('rows', []):   # (the Tablet of Mysteries: each weapon's model, shown rising out of it)
         if w.get('show') or w['model']: records[('STAT', 'tabshow_' + w['id'])] = {'model': w.get('show') or w['model'], 'color': '', 'radius': 0}
     return records, pieces

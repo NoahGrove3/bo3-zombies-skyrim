@@ -1231,7 +1231,7 @@ namespace bo3z::gen
 	inline constexpr std::uint32_t kFreedRunes = 0xC84, kHeartMotes = 0xC89;  // a freed altar's golden rune circle and its rising motes (they grow / fade in as it is freed)
 	inline constexpr std::array<std::uint32_t, 6> kPillarRock{ { 0xC8B, 0xC8C, 0xC8D, 0xC8E, 0xC8F, 0xC90 } };  // the rune stones over its columns
 	inline constexpr std::array<std::uint32_t, 8> kShowElement{ { 0xBC5, 0xBC6, 0xBC7, 0xBC8, 0xBC9, 0xBCA, 0xBCB, 0xBCC } };  // Coffer spells: the roll shows the element
-	inline constexpr std::uint32_t kShowCheese = 0x870, kRiseFx = 0x8A2, kDragonAway = 0xC01, kWhirlwind = 0xC02;
+	inline constexpr std::uint32_t kShowCheese = 0x870, kRiseFx = 0x8A2, kRiseDust = 0xF2A, kDragonAway = 0xC01, kWhirlwind = 0xC02;
 	inline constexpr std::uint32_t kUpdraftShout = 0xC09;  // Bond II: the Updraft shout
 	inline constexpr std::array<std::uint32_t, 3> kUpdraftWords{ { 0xC03, 0xC05, 0xC07 } }, kUpdraftSpells{ { 0xC04, 0xC06, 0xC08 } };
 	struct VaeLook { std::uint32_t fx, ench, src; };  // a Visual Animated Enchants colour: our look-only effect and enchantment, and the mod's effect it copies

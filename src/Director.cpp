@@ -654,6 +654,21 @@ namespace bo3z
 			int             resets = 0;      // times set back on the floor after rising
 		};
 		std::vector<Riser> g_risers;
+		// (Noah: "I want there to be like dust and debris coming from where they're clawing up from, like dirt") where one of
+		// the dead breaks the ground: the earth bursts (the draugr's own grave burst) and a cloud of dust and grit rolls off it
+		void RiseDirt(RE::Actor* a_a, const RE::NiPoint3& a_at)
+		{
+			for (const auto [id, life] : { std::pair{ gen::kRiseFx, 3.0f }, std::pair{ gen::kRiseDust, 4.0f } }) {
+				auto* fx = Forms::Ours(id);
+				if (!fx || g_fx.size() >= 32) continue;
+				if (auto puff = a_a->PlaceObjectAtMe(fx, false)) {
+					puff->SetPosition(a_at);
+					g_fx.push_back({ puff->CreateRefHandle(), life });
+				}
+			}
+			// (an elite lost its portal and the portal's warning with it) it still announces itself as it claws up
+			if (g_elites.contains(a_a->GetFormID())) Forms::PlayAt(gen::Sound::champ_telegraph, a_a);
+		}
 		constexpr float    kRiseDepth = 115.0f, kRiseTime = 1.5f;
 		void StartRise(RE::Actor* a_actor, RE::PlayerCharacter* a_player)
 		{
@@ -755,14 +770,16 @@ namespace bo3z
 						if (auto* art = dh->LookupForm<RE::BGSArtObject>(big ? gen::kArtPortalBig : gen::kArtPortal, gen::kPlugin)) a->ApplyArtObject(art, big ? 3.0f : 2.4f);
 					}
 				};
-				const bool summoned = g_summoned.contains(a->GetFormID()) || Director::IsBoss(a.get()) || g_elites.contains(a->GetFormID());
 				if (r.anim == 0) {
 					if (a->Is3DLoaded()) {
 						ShowRiser(a.get(), false), r.hidden = true;  // (unseen until the emerge has it in hand)
 					}
-					if (summoned && a->Is3DLoaded() && r.t > 0.05f) {
-						// (elites, bosses, champions, trial elites) never out of the ground: the Curse's portal opens and it steps
-						// out of it, its summoning shown
+					// (Noah: "Are we able to make the enemies crawl from up out of the ground instead of the conjuration portal
+					// spawn?") only the great bosses still step out of the Curse's portal; every other one - elites, champions and
+					// the trials' dead too - claws up out of the ground in a burst of dirt and dust
+					const bool viaPortal = Director::IsBoss(a.get());
+					if (viaPortal && a->Is3DLoaded() && r.t > 0.05f) {
+						// (the bosses) never out of the ground: the Curse's portal opens and it steps out of it, its summoning shown
 						r.anim = 2, r.t = 0;
 						auto f = a->GetPosition();
 						f.z = r.floorZ + 2.0f;
@@ -774,7 +791,7 @@ namespace bo3z
 						if (great) Forms::PlayAt(gen::Sound::champ_telegraph, a.get());
 						continue;
 					}
-					if (!summoned && a->Is3DLoaded() && Undead::HasClips(a.get())) {
+					if (!viaPortal && a->Is3DLoaded() && Undead::HasClips(a.get())) {
 						// (Noah: the dead "come from the ground") lying in the earth it bursts from, it drags itself up - the
 						// Mixamo stand-up - and only then runs at you
 						r.anim = 3, r.t = 0;
@@ -784,15 +801,10 @@ namespace bo3z
 						a->SetCollision(true);
 						r.standFor = Undead::StandUpSeconds();
 						Undead::CueFor(a.get(), Undead::kCueStandUp, r.standFor);
-						if (auto* fx = Forms::Ours(gen::kRiseFx); fx && g_fx.size() < 24) {
-							if (auto puff = a->PlaceObjectAtMe(fx, false)) {
-								puff->SetPosition({ f.x, f.y, r.floorZ });
-								g_fx.push_back({ puff->CreateRefHandle(), 3.0f });
-							}
-						}
+						RiseDirt(a.get(), { f.x, f.y, r.floorZ });
 						continue;
 					}
-					if (!summoned && a->Is3DLoaded() && a->NotifyAnimationGraph("summonStart")) {
+					if (!viaPortal && a->Is3DLoaded() && a->NotifyAnimationGraph("summonStart")) {
 						// (Noah: the dead "come from the ground") the emerge-from-the-ground animation; no portal for the
 						// common dead - the ground bursts instead
 						r.anim = 1, r.t = 0;
@@ -800,13 +812,8 @@ namespace bo3z
 						f.z = r.floorZ + 2.0f;
 						a->SetPosition(f, true);
 						a->SetCollision(true);
-						if (auto* fx = Forms::Ours(gen::kRiseFx); fx && g_fx.size() < 24) {
-							if (auto puff = a->PlaceObjectAtMe(fx, false)) {
-								puff->SetPosition({ f.x, f.y, r.floorZ });
-								g_fx.push_back({ puff->CreateRefHandle(), 3.0f });
-							}
-						}
-					} else if (!summoned && r.t > 0.4f && a->Is3DLoaded()) {
+						RiseDirt(a.get(), { f.x, f.y, r.floorZ });
+					} else if (!viaPortal && r.t > 0.4f && a->Is3DLoaded()) {
 						// no emerge animation for this body: it climbs out of the ground (our own rise, below)
 						r.anim = -1, r.t = 0;
 						ShowRiser(a.get(), true), r.hidden = false;
@@ -910,12 +917,7 @@ namespace bo3z
 				a->SetPosition(at, true);
 				if (!r.burst && u > 0.45f) {  // the second burst as the shoulders break the ground
 					r.burst = true;
-					if (auto* fx = Forms::Ours(gen::kRiseFx); fx && g_fx.size() < 24) {
-						if (auto puff = a->PlaceObjectAtMe(fx, false)) {
-							puff->SetPosition({ at.x, at.y, r.floorZ });
-							g_fx.push_back({ puff->CreateRefHandle(), 3.0f });
-						}
-					}
+					RiseDirt(a.get(), { at.x, at.y, r.floorZ });
 				}
 			}
 			for (auto& r : g_risers) {

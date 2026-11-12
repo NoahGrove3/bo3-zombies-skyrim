@@ -1834,6 +1834,7 @@
   "EFSH:spectral": "0xf26",
   "SNDR:wand_pulse": "0xf27",
   "EFSH:tabletgreen": "0xf28",
-  "EFSH:tabletgold": "0xf29"
+  "EFSH:tabletgold": "0xf29",
+  "STAT:rise_dust": "0xf2a"
  }
 }
