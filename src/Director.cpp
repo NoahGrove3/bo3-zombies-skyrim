@@ -4101,7 +4101,7 @@ namespace bo3z
 				return;
 			}
 			Forms::Play(gen::Sound::shout_learned);
-			Hud::Lore("DANCE OF DEATH", "The Bards of Solitude remember an old song the dead cannot resist. Shout it, and the Curse's dead within twenty paces dance for twenty seconds - unable to move or strike, and taking half again as much harm. Once a wave.", 12.0f);
+			Hud::Lore("DANCE OF DEATH", "The Bards of Solitude remember an old song the dead cannot resist. Shout it, and the Curse's dead within twenty paces dance for twenty seconds - unable to move or strike, and your blows hurt them 50% more. Once a wave.", 12.0f);
 			logger::info("dance of death: learned");
 			Hud::ShoutLearned("Dance of Death", "the dead near you dance, helpless, for twenty seconds");
 		}

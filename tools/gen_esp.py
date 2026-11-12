@@ -437,7 +437,7 @@ for n, (w, tr) in enumerate(DANCE_WORDS):
         sub('ETYP', struct.pack('<I', 0x025BEE)), sub('DESC', z('')), sub('SPIT', sp),
         sub('EFID', struct.pack('<I', fid('MGEF', 'shoutcast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 recs['SHOU'].append(record('SHOU', fid('SHOU', 'dance'), [sub('EDID', z('UN_Shout_dance')), sub('FULL', z('Dance Of Death')),
-    sub('DESC', z("The Curse's dead within twenty paces dance for twenty seconds: they cannot move or strike, and take half again as much harm. Once a wave."))] +
+    sub('DESC', z("The Curse's dead within twenty paces dance for twenty seconds: they cannot move or strike, and your blows hurt them 50% more. Once a wave."))] +
     [sub('SNAM', struct.pack('<IIf', fid('WOOP', f'dance_{n}'), fid('SPEL', f'dance_{n}'), 5.0)) for n in range(3)]))
 
 SCRAFT = {r['id']: r for r in S['spellcraft']['rows']}
@@ -1272,16 +1272,17 @@ def lore_text():
            "<p>His mist also covers the door of <b>Sovngarde</b>, so the dead of Skyrim cannot pass on. They lie restless in the ground. "
            "By day they sleep. When the sun goes down, they rise.</p>",
            "[pagebreak]", "<p align='center'><font size='24'>II. The Dead</font></p>", img('graves', 300, 176),
-           "<p>Each night the dead come in <b>waves</b>, more of them and harder to kill as the nights go on. They claw up out of open ground - "
-           "roads and fields, never inside a house - and come at you from every side. Dawn comes only when the last wave falls.</p>",
-           "<p>The curse's whole host walks with them, each under its own name. Mihail's zombies and the Thriceborn come first with the Rag Draugr, rotten skeletons and plague wolves; "
-           "then Bonemen, skeleton mages and the necromancers who serve the curse - kill those first, for they raise more; then Hulking Draugr, Draugr Liches, Draman Brutes, Ash Spawn and werewolves; "
-           "and at the last the Daedra and the Overlords.</p>",
-           "<p>Some nights the noise you make draws a hunter that comes through a portal and pounces. "
-           "The Curse's champions and great ones step out of portals too - and their names burn gold over their heads.</p>",
+           "<p>Each night the dead come in <b>waves</b>, more of them and harder to kill as the nights go on. Each one steps out of the Curse's red portal "
+           "on open ground - roads and fields, never inside a house - and comes at you from every side. Dawn comes only when the last wave falls.</p>",
+           "<p>The first nights belong to the dead and the beasts: Mihail's zombies and the Thriceborn, the Rag Draugr, rotten skeletons and plague wolves. "
+           "Then come Bonemen and the draugr warlords, Draman Brutes, Ash Spawn and werewolves. From the tenth night the <b>nightwalkers</b> join them, far faster than the rest, "
+           "and at the last the Daedra - Clannfear, Daedroth, Dremora - and the Overlords.</p>",
+           "<p>The night's dead never cast spells, loose arrows or shout; they come at you with tooth and blade. "
+           "Every fifth night a great <b>boss</b> walks with them, and the champions and great ones step out of a larger portal.</p>",
            "[pagebreak]", "<p align='center'><font size='24'>III. The Echo Altars</font></p>", img('wards', 300, 176),
            "<p>Long ago the <b>Tongues</b>, the first masters of the Voice, raised an altar in every hold to hold Alduin's shout back. "
-           "Every mage who fell in the Dragon War gave a last spell to them, which is why an altar still has spells, bows and gifts to give.</p>",
+           "Every mage who fell in the Dragon War gave a last spell to them, which is why an altar can still make your weapons and spells stronger, "
+           "brew your draughts and call your dragon.</p>",
            "<p>Alduin's return woke the altars only halfway. Each one is held silent by a <b>Dragon Priest</b>, still bound by his old oath to Alduin.</p>",
            "[pagebreak]", "<p align='center'><font size='24'>IV. Waking an Altar</font></p>",
            "<p>Stand at an altar and it sets you <b>trials</b>: hold its rune circle, cull the dead in its streets, hold the altar through a night's waves, "
@@ -1292,13 +1293,13 @@ def lore_text():
            "<p>The Curse walks beside your own story; it does not replace it.</p>",
            "<p><b>Riverwood's</b> altar, nearest Helgen, wakes first. <b>Whiterun's</b> answers your first dragon soul and gives you a dragon to ride - and its Thu'um, "
            "<i>Dragon's Updraft</i>. <b>Solitude's</b> bards give you the <i>Dance of Death</i>.</p>",
-           "<p>Free six cities and each path's <b>secret</b> wakes. Win it and the Greybeards call you to <b>High Hrothgar</b>: your path's <b>wonder</b> waits on its pedestal "
-           "in the Reliquary beneath the great hall.</p>",
+           "<p>Free six cities and the four paths' <b>secrets</b> wake, one at a time. Win one and the Greybeards call you to <b>High Hrothgar</b>: its <b>wonder</b> floats waiting "
+           "in the great hall, and any path may take it up.</p>",
            "<p>With all four wonders won - alone or with friends - Alduin's three Words wake as <b>dragons</b>: <b>SLEN</b> in the Reach, <b>TIID</b> at Labyrinthian and "
            "<b>VO</b> on Mount Anthor. Slay all three, wake every altar, and only his <b>Echo</b> is left, on the summit of the Throat of the World. End it, and the Curse is broken.</p>",
            "[pagebreak]", "<p align='center'><font size='24'>VI. The Voices of the Holds</font></p>",
            "<p><b>Whiterun</b>: <i>Dragon's Updraft</i>. A whirlwind lifts you high - and a dragon to carry you.</p>",
-           "<p><b>Solitude</b>: <i>Dance of Death</i>. The dead near you dance, helpless, and take half again as much harm. Once a wave.</p>"]
+           "<p><b>Solitude</b>: <i>Dance of Death</i>. The dead near you dance for twenty seconds, unable to move or strike, and every blow you land on them does half again its harm. Once a wave.</p>"]
     out += [
             "[pagebreak]", f"<p>{S['curse']['freedAll']}</p>", "<p align='right'><i>- written in the silence of High Hrothgar</i></p>", "</font>"]
     return '\n'.join(out)
