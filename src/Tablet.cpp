@@ -327,7 +327,7 @@ namespace bo3z::Tablet
 			if (!r) return;
 			// (Noah: "the larger weapons ... poke through the tablet") before its face, stood on end (a weapon's model lies along
 			// its length: tipped up, it turns about itself and never sweeps into the slab)
-			r->SetPosition(a_body->world * RE::NiPoint3{ 0.0f, -kFront, kPoolZ - 22.0f });
+			r->SetPosition(a_body->world * RE::NiPoint3{ 0.0f, -kFront, kPoolZ - 14.0f });
 			r->SetAngle({ -RE::NI_HALF_PI, 0.0f, a_tab->GetAngleZ() + g_clock * 2.4f });
 			Glow(r.get(), g_reelAt, g_reelGlow);
 		}
@@ -341,7 +341,7 @@ namespace bo3z::Tablet
 			// the slab, its grip at the pool's foot; the mask still comes out of the pool itself
 			const bool mask = g_phase == Phase::Mask;
 			const RE::NiPoint3 at = mask ? body->world * RE::NiPoint3{ 0.0f, -6.0f - 10.0f * a_rise, kPoolZ - 6.0f + 6.0f * a_rise }
-			                             : body->world * RE::NiPoint3{ 0.0f, -kFront - 8.0f, kPoolZ - 95.0f + 40.0f * a_rise };
+			                             : body->world * RE::NiPoint3{ 0.0f, -kFront - 8.0f, kPoolZ - 75.0f + 35.0f * a_rise };   // (Noah: "right in front of the tablet, not at the floor": its grip under the pool, the weapon over its face)
 			auto r = g_show.get();
 			const std::uint32_t showId = g_phase == Phase::Mask ? gen::kTabletMask : g_prize >= 0 ? gen::kTabletWeapons[g_prize].show : 0;
 			if (!r && showId) {
