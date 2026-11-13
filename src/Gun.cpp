@@ -3754,54 +3754,26 @@ namespace bo3z
 		// his clip: "it's not the beam. It's just an orb" and it "disappears before it hits the ground") a true beam: a thin
 		// column of red light whose tip drives down out of the sky to the ground over kRedBeamFall (eased: quick, then slowing
 		// as it nears), held a moment as the body appears in it, then gone - no burst, no ring
-		// (Noah, the third time: "the red beams that are supposed to be coming from the sky where the enemies spawn are stuck
-		// towards the ground, and they're really small" - Auriel's sunbeam drew a hand's height of red at the ground, our drawn
-		// column never showed at all) the Tablet's beacon itself - Dawnguard's wayshrine beam, a column of light the whole way
-		// up the sky, seen in game every night - narrower, painted blood red, for the moment each of the dead comes down it
-		struct RedColumn
-		{
-			RE::ObjectRefHandle ref;
-			RE::NiPoint3        at;
-			float               t = 0, scale = 0.24f;
-			bool                landed = false;
-		};
-		std::vector<RedColumn> g_redCols;
-		constexpr float kRedHold = 1.1f, kRedThin = 0.35f;
+		// (Noah: "It worked when we first added it. Can you go back to that ... But just remove the explosions when the beam is
+		// hitting the ground") the first red Sky Beam again: its bolt of light dropping out of the sky onto the point (through
+		// anything, the way the meteors fall), its pillar standing a moment and the motes rising - no burst where it lands
 		void RedBeamImpl(const RE::NiPoint3& a_at)
 		{
-			if (g_redCols.size() >= 24) return;
-			auto* p = RE::PlayerCharacter::GetSingleton();
-			auto* base = Forms::Ours(gen::kTabletBeacon) ? Forms::Ours(gen::kTabletBeacon)->As<RE::TESBoundObject>() : nullptr;
-			if (!p || !base) return;
-			auto r = p->PlaceObjectAtMe(base, false);
-			if (!r) return;
-			r->SetPosition(a_at);
-			r->GetReferenceRuntimeData().refScale = 24;
-			TintRef(r.get(), 1.0f, 0.06f, 0.04f);
-			g_redCols.push_back({ r->CreateRefHandle(), a_at });
-			if (static int n = 0; n++ < 12) logger::info("redbeam: the beacon's column, red, at ({:.0f},{:.0f},{:.0f})", a_at.x, a_at.y, a_at.z);
-		}
-		void TickRedColumns(float a_delta)
-		{
-			if (g_redCols.empty()) return;
-			for (auto& c : g_redCols) {
-				c.t += a_delta;
-				// (Noah: "give them like a beam impact sound effect that's not loud, very subtle") as it strikes
-				if (!c.landed) c.landed = true, Audio::AtPoint(gen::Sound::hit_drill, c.at, 0.0f, 0.3f);
-				auto r = c.ref.get();
-				if (!r) continue;
-				if (c.t > kRedHold) {   // (thinning away to nothing)
-					const float k = std::max(0.0f, 1.0f - (c.t - kRedHold) / kRedThin);
-					if (auto* o = r->Get3D()) {
-						o->local.scale = std::max(0.001f, c.scale * k);
-						RE::NiUpdateData ud;
-						o->Update(ud);
-					}
+			Lob("CurseOfAlduin\\fx\\red_bolt.nif", a_at + RE::NiPoint3{ 0, 0, 1800.0f }, RE::NiPoint3{ 0, 0, -4200.0f }, 0.8f, [](const RE::NiPoint3& at) {
+				if (g_cyclones.size() < 4) {
+					CycloneSpec cs;
+					cs.model = "CurseOfAlduin\\fx\\red_pillar.nif";
+					cs.from = at, cs.fwd = { 0, 1, 0 }, cs.dist = 0.0f, cs.life = 0.9f, cs.size = 0.6f, cs.fec = -1, cs.share = 0.0f, cs.noPull = true;
+					ElemCyclone(std::move(cs));
 				}
-				if (c.t > kRedHold + kRedThin) r->Disable(), r->SetDelete(true);
-			}
-			std::erase_if(g_redCols, [](const RedColumn& c) { return c.t > kRedHold + kRedThin; });
+				QueueFx("CurseOfAlduin\\fx\\red_motes.nif", at, 0.7f, 0.1f, 1.2f, false);
+				// (Noah: "give them like a beam impact sound effect that's not loud, very subtle")
+				Audio::AtPoint(gen::Sound::hit_drill, at, 0.0f, 0.3f);
+			}, 0.0f, 0.0f);
+			if (!g_lobs.empty()) g_lobs.back().meteor = true, g_lobs.back().target = a_at;
+			if (static int n = 0; n++ < 12) logger::info("redbeam: the red Sky Beam falls at ({:.0f},{:.0f},{:.0f})", a_at.x, a_at.y, a_at.z);
 		}
+		void TickRedColumns(float) {}
 		struct SoulFallFx { RE::NiPoint3 from, to, last; float t = 0, dur = 0.7f, ember = 0; };
 		std::vector<SoulFallFx> g_soulFalls;
 		void SoulFallImpl(const RE::NiPoint3& a_at, float a_secs)
