@@ -3752,18 +3752,10 @@ namespace bo3z
 		// small and short so a crowd of arrivals stays readable; about 0.4 s from the call to the strike (kRedBeamFall)
 		void RedBeamImpl(const RE::NiPoint3& a_at)
 		{
-			Lob("CurseOfAlduin\\fx\\red_bolt.nif", a_at + RE::NiPoint3{ 0, 0, 1800.0f }, RE::NiPoint3{ 0, 0, -4200.0f }, 0.8f, [](const RE::NiPoint3& at) {
-				QueueFx("CurseOfAlduin\\fx\\red_burst.nif", at, 0.7f, 0.0f, 1.4f, false);
-				if (g_cyclones.size() < 4) {
-					CycloneSpec cs;
-					cs.model = "CurseOfAlduin\\fx\\red_pillar.nif";
-					cs.from = at, cs.fwd = { 0, 1, 0 }, cs.dist = 0.0f, cs.life = 0.9f, cs.size = 0.6f, cs.fec = -1, cs.share = 0.0f, cs.noPull = true;
-					ElemCyclone(std::move(cs));
-				}
-				QueueFx("CurseOfAlduin\\fx\\red_motes.nif", at, 0.7f, 0.1f, 1.2f, false);
-			}, 0.0f, 0.0f);
-			// (the log: they came down two metres up, on the waiting body's head - a lob stops on the dead it passes) it falls
-			// onto its point, through anything, the way the meteors do
+			// (Noah: "remove the red explosion when the beam impacts the ground and the circle that's on the floor ... it should
+			// just be the beam that falls from the sky, and make it fall slower from the sky so it's more telegraphed") only the
+			// bolt of red light, falling 1800 units over about a second (kRedBeamFall), onto its point through anything
+			Lob("CurseOfAlduin\\fx\\red_bolt.nif", a_at + RE::NiPoint3{ 0, 0, 1800.0f }, RE::NiPoint3{ 0, 0, -1700.0f }, 0.8f, nullptr, 0.0f, 0.0f);
 			if (!g_lobs.empty()) g_lobs.back().meteor = true, g_lobs.back().target = a_at;
 		}
 		struct SoulFallFx { RE::NiPoint3 from, to, last; float t = 0, dur = 0.7f, ember = 0; };
