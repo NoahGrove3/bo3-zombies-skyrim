@@ -85,7 +85,7 @@ def echo_ids(S):
     ids += [('GLOB', 'echo_kill_' + p['id']) for p in E['parts'] if p['how'] == 'kill']
     ids += [('ACTI', 'rel_door_in'), ('ACTI', 'rel_door_out')] + [('ACTI', 'rel_ped_' + w['id']) for w in E['wonders']]
     ids += [('STAT', 'rel_room'), ('STAT', 'rel_relic'), ('STAT', 'rel_brazier'), ('STAT', 'rel_banner'), ('ACTI', 'rel_portal')] + [('STAT', 'rel_gem_' + w['id']) for w in E['wonders']]
-    ids += [('LIGH', 'rel_blue'), ('LIGH', 'rel_warm'), ('LIGH', 'rel_relic')]
+    ids += [('LIGH', 'rel_blue'), ('LIGH', 'rel_warm'), ('LIGH', 'rel_relic'), ('LIGH', 'tablet_lamp')]
     # Stage 5: the Hall of the Awakened (the Reliquary once the curse is broken) and Alduin's Fang
     ids += [('ACTI', 'hall_' + k) for k in ('fang', 'robes', 'skull', 'endless', 'throne')]
     ids += [('STAT', 'hall_fang_show'), ('STAT', '1st_fang'), ('WEAP', 'fang')]

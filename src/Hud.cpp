@@ -6365,6 +6365,17 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					}
 				}
 			}
+			// (Noah: "I can see the old Skyrim cursor crosshair icon when I look at a certain angle on the altar" - with the HUD
+			// hidden for filming, the hiding above never ran, and Skyrim shows its reticle again each time it finds something
+			// to use) Skyrim's crosshair kept hidden every frame, whether our HUD is up or off
+			if (InGame()) {
+				if (auto hud = uiM ? uiM->GetMenu(RE::HUDMenu::MENU_NAME) : nullptr; hud && hud->uiMovie) {
+					for (const char* v : { "_root.HUDMovieBaseInstance.CrosshairInstance", "_root.HUDMovieBaseInstance.CrosshairAlert" }) {
+						hud->uiMovie->SetVariable((std::string(v) + "._alpha").c_str(), RE::GFxValue(0.0));
+						hud->uiMovie->SetVariable((std::string(v) + "._visible").c_str(), RE::GFxValue(false));
+					}
+				}
+			}
 			// (Noah: "my map cursor is invisible") on the world map ours always shows - with a pad too (the map is steered by
 			// it: the cursor stands in the middle), and in the middle if Skyrim's cursor hasn't been placed yet
 			const bool onMap = uiM && uiM->IsMenuOpen(RE::MapMenu::MENU_NAME);

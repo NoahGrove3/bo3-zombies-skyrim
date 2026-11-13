@@ -310,6 +310,7 @@ o.append('\tinline constexpr std::array<std::pair<std::string_view, std::uint32_
 o.append(f'\tinline constexpr std::uint32_t kSpectralShader = 0x{IDS[("EFSH", "spectral")]:03X};  // (the Soulcaller\'s wolves)')
 o.append(f'\tinline constexpr std::uint32_t kSoulPurple = 0x{IDS[("EFSH", "soulpurple")]:03X};  // (the Soulcaller\'s violet ghost glow: its wolves and the dead its beam holds)')
 o.append(f'\tinline constexpr std::uint32_t kTabletGreen = 0x{IDS[("EFSH", "tabletgreen")]:03X}, kTabletGold = 0x{IDS[("EFSH", "tabletgold")]:03X};  // the Tablet reel\'s rarity glows')
+o.append(f'\tinline constexpr std::uint32_t kTabletLamp = 0x{IDS[("LIGH", "tablet_lamp")]:03X};  // (a bright white light before the tablet\'s face while it rolls and offers)')
 o.append(f'\tinline constexpr std::uint32_t kTabletBeacon = 0x{IDS[("STAT", "tablet_beacon")]:03X}, kTabletMask = 0x{IDS[("STAT", "tablet_mask")]:03X};  // (the tablet\'s beam over it; the mask that sends it on)')
 # Stage 2 (sheet: echo): src/Echo.cpp
 EC = S['echo']

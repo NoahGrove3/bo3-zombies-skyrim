@@ -1556,6 +1556,7 @@ namespace bo3z::gen
 	inline constexpr std::uint32_t kSpectralShader = 0xF26;  // (the Soulcaller's wolves)
 	inline constexpr std::uint32_t kSoulPurple = 0xF2B;  // (the Soulcaller's violet ghost glow: its wolves and the dead its beam holds)
 	inline constexpr std::uint32_t kTabletGreen = 0xF28, kTabletGold = 0xF29;  // the Tablet reel's rarity glows
+	inline constexpr std::uint32_t kTabletLamp = 0xF2D;  // (a bright white light before the tablet's face while it rolls and offers)
 	inline constexpr std::uint32_t kTabletBeacon = 0xF15, kTabletMask = 0xF16;  // (the tablet's beam over it; the mask that sends it on)
 	struct EchoWonder { std::string_view id, label, text; std::uint32_t color, pedestal, gem; };
 	inline constexpr std::array<EchoWonder, 4> kEchoWonders{ {

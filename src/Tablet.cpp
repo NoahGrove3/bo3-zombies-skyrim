@@ -68,6 +68,9 @@ namespace bo3z::Tablet
 		// (Noah: "Holding the action key on the tablet should start the roll and holding action on the weapon rolled should
 		// pick it up") how long Activate is held; a hold done must be let go before the next
 		constexpr float kHoldTime = 0.6f;
+		constexpr float kReach = 145.0f;   // (2 m, from you to its plinth)
+		constexpr float kFront = 48.0f;    // (Noah: "have the rolling animation a little bit in front of the tablet so nothing pokes through")
+		RE::ObjectRefHandle g_lamp;        // (Noah: "It needs more lighting so you can see what you roll") a white light before its face
 		float g_holdT = 0.0f;
 		bool  g_holdLatched = false;
 		std::chrono::steady_clock::time_point g_holdDoneAt{};
@@ -322,8 +325,10 @@ namespace bo3z::Tablet
 			}
 			auto r = g_reel.get();
 			if (!r) return;
-			r->SetPosition(a_body->world * RE::NiPoint3{ 0.0f, -10.0f, kPoolZ });
-			r->SetAngle({ 0.0f, 0.0f, a_tab->GetAngleZ() + g_clock * 2.4f });
+			// (Noah: "the larger weapons ... poke through the tablet") before its face, stood on end (a weapon's model lies along
+			// its length: tipped up, it turns about itself and never sweeps into the slab)
+			r->SetPosition(a_body->world * RE::NiPoint3{ 0.0f, -kFront, kPoolZ - 22.0f });
+			r->SetAngle({ -RE::NI_HALF_PI, 0.0f, a_tab->GetAngleZ() + g_clock * 2.4f });
 			Glow(r.get(), g_reelAt, g_reelGlow);
 		}
 		// the won weapon's model rising out of the pool and turning there (placed in the world before the tablet's face)
@@ -332,7 +337,11 @@ namespace bo3z::Tablet
 			auto* root = a_tab ? a_tab->Get3D() : nullptr;
 			auto* body = root ? root->GetObjectByName("TabletBody") : nullptr;
 			if (!body) return;
-			const RE::NiPoint3 at = body->world * RE::NiPoint3{ 0.0f, -6.0f - 10.0f * a_rise, kPoolZ - 6.0f + 6.0f * a_rise };
+			// (Noah: "we can have the weapon standing upright in front of the tablet to be claimed") a weapon rises on end before
+			// the slab, its grip at the pool's foot; the mask still comes out of the pool itself
+			const bool mask = g_phase == Phase::Mask;
+			const RE::NiPoint3 at = mask ? body->world * RE::NiPoint3{ 0.0f, -6.0f - 10.0f * a_rise, kPoolZ - 6.0f + 6.0f * a_rise }
+			                             : body->world * RE::NiPoint3{ 0.0f, -kFront - 8.0f, kPoolZ - 95.0f + 40.0f * a_rise };
 			auto r = g_show.get();
 			const std::uint32_t showId = g_phase == Phase::Mask ? gen::kTabletMask : g_prize >= 0 ? gen::kTabletWeapons[g_prize].show : 0;
 			if (!r && showId) {
@@ -343,10 +352,38 @@ namespace bo3z::Tablet
 			if (!r) return;
 			r->SetPosition(at);
 			// (the mask faces you out of the pool, turning a little; a weapon turns round)
-			r->SetAngle({ 0.0f, 0.0f, g_phase == Phase::Mask ? a_tab->GetAngleZ() + RE::NI_PI + 0.35f * std::sin(g_clock * 1.7f) : a_tab->GetAngleZ() + g_clock * 0.9f });
+			r->SetAngle({ mask ? 0.0f : -RE::NI_HALF_PI, 0.0f, mask ? a_tab->GetAngleZ() + RE::NI_PI + 0.35f * std::sin(g_clock * 1.7f) : a_tab->GetAngleZ() + g_clock * 0.9f });
 			if (g_phase == Phase::Offering) Glow(r.get(), g_prize, g_showGlow);
 		}
 
+		// (Noah: "it's very hard to see what the item is. Are you able to make it glow around the item that it lands on? ... It needs
+		// more lighting so you can see what you roll") through a roll and while the win waits: a bright white light stands
+		// before the slab's face, and round the weapon won, motes of its rarity's colour rise (worn green, battered gold)
+		void TickLamp(RE::TESObjectREFR* a_tab, float a_delta)
+		{
+			const bool want = a_tab && a_tab->Is3DLoaded() && (g_phase == Phase::Rolling || g_phase == Phase::Offering || g_phase == Phase::Mask);
+			auto lamp = g_lamp.get();
+			if (!want) {
+				if (lamp) lamp->Disable(), lamp->SetDelete(true);
+				g_lamp = {};
+				return;
+			}
+			auto* body = a_tab->Get3D() ? a_tab->Get3D()->GetObjectByName("TabletBody") : nullptr;
+			if (!body) return;
+			const RE::NiPoint3 at = body->world * RE::NiPoint3{ 0.0f, -kFront - 70.0f, kPoolZ + 10.0f };
+			if (!lamp) {
+				auto* base = Forms::Ours(gen::kTabletLamp) ? Forms::Ours(gen::kTabletLamp)->As<RE::TESBoundObject>() : nullptr;
+				if (auto l = base ? a_tab->PlaceObjectAtMe(base, false) : nullptr) l->SetPosition(at), g_lamp = l->CreateRefHandle(), lamp = l;
+			} else if (lamp->GetPosition().GetDistance(at) > 20.0f) {
+				lamp->SetPosition(at);
+			}
+			static float next = 0.0f;
+			if ((next -= a_delta) > 0.0f) return;
+			next = 0.45f;
+			const int w = g_phase == Phase::Offering ? g_prize : g_phase == Phase::Rolling ? g_reelAt : -1;
+			auto sh = g_phase == Phase::Offering ? g_show.get() : g_reel.get();
+			if (w >= 0 && sh) Gun::Motes(gen::kTabletWeapons[w].battered ? 8 : 7, sh->GetPosition() + RE::NiPoint3{ 0, 0, g_phase == Phase::Offering ? 40.0f : 10.0f }, g_phase == Phase::Offering ? 0.45f : 0.25f, 1.1f);
+		}
 		// how high over its plinth the tablet is: coming down the beam (falling faster and faster), going up it
 		float BodyLift()
 		{
@@ -465,7 +502,9 @@ namespace bo3z::Tablet
 			float bestMiss = 1e9f;
 			for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) {
 				auto* r = Shops::Placed(t, 7);
-				if (!r || !r->Is3DLoaded() || r->IsDisabled() || r->GetPosition().GetDistance(a_p->GetPosition()) > 420.0f) continue;
+				// (Noah: "I want the hold X to roll icon to pop up when you get within 2 meters of the tablet instead of far away")
+				if (!r || !r->Is3DLoaded() || r->IsDisabled()) continue;
+				if (const auto d = r->GetPosition() - a_p->GetPosition(); std::hypot(d.x, d.y) > kReach) continue;
 				const float s = r->GetScale();
 				for (const float z : { 125.0f, 40.0f }) {   // (its face, its plinth)
 					const RE::NiPoint3 at = r->GetPosition() + RE::NiPoint3{ 0.0f, 0.0f, z * s };
@@ -1261,6 +1300,7 @@ namespace bo3z::Tablet
 		TickHold(a_delta);
 		ref = g_town >= 0 ? Shops::Placed(g_town, 7) : nullptr;
 		if (ref && ref->Is3DLoaded() && ref->GetPosition().GetDistance(p->GetPosition()) < 6000.0f) Animate(ref, a_delta);
+		TickLamp(ref, a_delta);
 		TickBook(p);
 		// (Noah: the test kit has every donated weapon) whichever of them you equip is the one carried - its power, the Codex
 		// on your palm, the fists' gloves - at its full uses, never wearing

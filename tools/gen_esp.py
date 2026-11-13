@@ -1529,13 +1529,13 @@ for name, hx in T['weap_draugr_gs']['subs']:
     elif name == 'DATA': b = bytearray(struct.pack('<IfH', 5000, 16.0, 38))
     ws.append(sub(name, bytes(b)))
 recs['WEAP'].append(record('WEAP', fid('WEAP', 'fang'), ws))
-for key, col, radius in (('rel_blue', '5AA8FF', 620), ('rel_warm', 'FFD9A0', 1100), ('rel_relic', '6AB8FF', 700), ('lantern', 'FFD48A', 700)):  # (Noah, 2026-11-11: the Light Orb "radius to 10 meters around the player and make it slightly dimmer")  # (Noah: "a soft, warm light that makes everywhere around me visible, but not blindingly bright, within 15 meters")
+for key, col, radius in (('rel_blue', '5AA8FF', 620), ('rel_warm', 'FFD9A0', 1100), ('rel_relic', '6AB8FF', 700), ('lantern', 'FFD48A', 700), ('tablet_lamp', 'FFF3E0', 340)):  # (Noah: the Tablet "needs more lighting so you can see what you roll")  # (Noah, 2026-11-11: the Light Orb "radius to 10 meters around the player and make it slightly dimmer")  # (Noah: "a soft, warm light that makes everywhere around me visible, but not blindingly bright, within 15 meters")
     data = bytearray(tsub('ligh', 'DATA')); c = int(col, 16)
     struct.pack_into('<I', data, 4, radius); struct.pack_into('<BBBB', data, 8, c >> 16, (c >> 8) & 255, c & 255, 0)
     # (the Light Orb: a steady light, no flicker. Its omnidirectional shadows (0x1000, added with the orb) went with the crash
     # that came after a while in a lamp-heavy interior (Dragonsreach, three times): a plain dynamic light, as the belt lantern's was)
-    if key == 'lantern': struct.pack_into('<I', data, 12, 0x1)
-    recs['LIGH'].append(record('LIGH', fid('LIGH', key), [sub('EDID', z('UN_' + key)), sub('OBND', tsub('ligh', 'OBND')), sub('DATA', bytes(data)), sub('FNAM', struct.pack('<f', 1.2 if key == 'lantern' else 1.0))]))  # (soft: a warm fill, not a glare)
+    if key in ('lantern', 'tablet_lamp'): struct.pack_into('<I', data, 12, 0x1)
+    recs['LIGH'].append(record('LIGH', fid('LIGH', key), [sub('EDID', z('UN_' + key)), sub('OBND', tsub('ligh', 'OBND')), sub('DATA', bytes(data)), sub('FNAM', struct.pack('<f', 1.2 if key == 'lantern' else 2.2 if key == 'tablet_lamp' else 1.0))]))  # (soft: a warm fill, not a glare)
 
 # (Noah: "the belt lantern should be an equipable item like the book for battle mage classes - when unequipped it shouldn't
 # give illumination, when equipped it should"; "a Skyrim-looking smaller lantern attached by a chain from your body at your

@@ -26,7 +26,7 @@ namespace bo3z
 		// runic symbol grow above the altar") a freed altar's moment, in three parts: the charge (the six rune stones strike
 		// the heart one after another with the roll's lightning, its runes burning brighter), the burst (the curse breaks:
 		// the freed look is put up), then the motes fade in and the golden rune circle grows from nothing over the altar
-		struct Pulse { RE::ObjectRefHandle shrine; float t; int town; bool burst; bool started; bool toldGrow = false; };
+		struct Pulse { RE::ObjectRefHandle shrine; float t; int town; bool burst; bool started; bool toldGrow = false; float burstAt = 0; };
 		std::optional<Pulse>                     g_pulse;  // a freed shrine's moment (FreedPulse); t counts down
 		constexpr float                          kPulseSeconds = 9.0f, kPulseCharge = 3.6f, kPulseGrow = 3.2f;
 		// the freed look waits for the burst (the charge plays on the cursed altar)
@@ -2040,6 +2040,16 @@ namespace bo3z
 							Gun::FxBlast("shoutarea", at, 0.3f);
 							Forms::Play(gen::Sound::nuke);
 							Forms::PlayAt(gen::Sound::shout_toll, r.get());
+							// (Noah: "I don't see the particles coming from the echo altar base or the golden rune" - 2 found by the altar,
+							// both with a model, neither drawn: a model given to a piece by hand never joined the scene) the rune and
+							// motes from before are taken away here and laid again fresh, so the game gives them their models
+							// itself, as it does on coming back to the city
+							RE::TES::GetSingleton()->ForEachReferenceInRange(r.get(), 700.0f, [&](RE::TESObjectREFR* x) {
+								auto* b = x ? x->GetBaseObject() : nullptr;
+								if (b && (b == Forms::Ours(gen::kFreedRunes) || b == Forms::Ours(gen::kHeartMotes)) && !x->IsDisabled()) x->Disable(), x->SetDelete(true);
+								return RE::BSContainer::ForEachResult::kContinue;
+							});
+							g_pulse->burstAt = el;
 							for (std::size_t i = 0; i < gen::kLocations.size(); ++i) {
 								if (gen::kLocations[i].town == g_pulse->town) {
 									g_dressed[i] = false;
@@ -2057,15 +2067,15 @@ namespace bo3z
 							// (Noah: "I can only see the gold rune and particles fade in if I leave the city and come back" - the screenshots:
 							// nothing over the altar after the burst; the pieces had no model in the world) one without its model is given it
 							// here, at once, so it grows and fades in as part of the freeing
-							int seen = 0, built = 0;
+							int seen = 0, built = 0, joined = 0;
 							RE::TES::GetSingleton()->ForEachReferenceInRange(r.get(), 700.0f, [&](RE::TESObjectREFR* x) {
 								auto* b = x ? x->GetBaseObject() : nullptr;
 								const bool runes = b && b == Forms::Ours(gen::kFreedRunes), motes = b && b == Forms::Ours(gen::kHeartMotes);
-								if (!runes && !motes) return RE::BSContainer::ForEachResult::kContinue;
+								if ((!runes && !motes) || x->IsDisabled()) return RE::BSContainer::ForEachResult::kContinue;
 								++seen;
-								if (!x->IsDisabled() && !x->Get3D()) x->Load3D(false);
 								if (auto* o = x->Get3D()) {
 									++built;
+									if (o->parent) ++joined;
 									const float full = x->GetScale();
 									o->local.scale = full * (runes ? std::max(0.001f, ease) : 1.0f);
 									Fade(o, runes ? g * g : g);
@@ -2076,7 +2086,8 @@ namespace bo3z
 							});
 							if (static int told = 0; g > 0.0f && !g_pulse->toldGrow && told++ < 20) {
 								g_pulse->toldGrow = true;
-								logger::info("shops: {}'s rune and motes grow - {} found by the altar, {} with their model", gen::kTowns[g_pulse->town], seen, built);
+								logger::info("shops: {}'s rune and motes grow - {} found by the altar, {} with their model, {} of them in the scene ({:.1f} s after the burst)",
+									gen::kTowns[g_pulse->town], seen, built, joined, el - g_pulse->burstAt);
 							}
 						}
 					}
@@ -2098,7 +2109,6 @@ namespace bo3z
 								if (b && (b == Forms::Ours(gen::kFreedRunes) || b == Forms::Ours(gen::kHeartMotes))) {
 									// (everything at its own size and light; the off-and-on that used to follow left them with no model
 									// until you left the city and came back)
-									if (!x->IsDisabled() && !x->Get3D()) x->Load3D(false);
 									if (auto* o = x->Get3D()) o->local.scale = x->GetScale(), Fade(o, 1.0f);
 								}
 								return RE::BSContainer::ForEachResult::kContinue;
