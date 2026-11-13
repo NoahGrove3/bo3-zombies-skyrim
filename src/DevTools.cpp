@@ -184,6 +184,11 @@ namespace bo3z
 				in >> look;
 				Director::DevSky(look);
 				logger::info("dev: sky {}", look);
+			} else if (cmd == "night") {  // night <n>: the next night to fall is night n (Noah: "just start me at night 10")
+				int n = 1;
+				in >> n;
+				Save::Set(gen::kAV_round, std::max(0, n - 1));
+				logger::info("dev: the next night is night {}", std::max(1, n));
 			} else if (cmd == "lure") {  // lure on|off
 				std::string v;
 				in >> v;
