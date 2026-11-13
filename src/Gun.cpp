@@ -3754,54 +3754,53 @@ namespace bo3z
 		// his clip: "it's not the beam. It's just an orb" and it "disappears before it hits the ground") a true beam: a thin
 		// column of red light whose tip drives down out of the sky to the ground over kRedBeamFall (eased: quick, then slowing
 		// as it nears), held a moment as the body appears in it, then gone - no burst, no ring
+		// (Noah, the third time: "the red beams that are supposed to be coming from the sky where the enemies spawn are stuck
+		// towards the ground, and they're really small" - Auriel's sunbeam drew a hand's height of red at the ground, our drawn
+		// column never showed at all) the Tablet's beacon itself - Dawnguard's wayshrine beam, a column of light the whole way
+		// up the sky, seen in game every night - narrower, painted blood red, for the moment each of the dead comes down it
 		struct RedColumn
 		{
-			RE::NiPoint3 at;
-			float        t = 0, fall = 1.0f;
-			bool         landed = false, told = false;
-			std::unique_ptr<Spellcraft::Beam> glow, core;   // (Noah: "there's no red beams on the sky when they spawn" - a streak made new every
-			                                                // frame never finished loading before it was gone: one beam kept, laid again each frame)
+			RE::ObjectRefHandle ref;
+			RE::NiPoint3        at;
+			float               t = 0, scale = 0.24f;
+			bool                landed = false;
 		};
 		std::vector<RedColumn> g_redCols;
+		constexpr float kRedHold = 1.1f, kRedThin = 0.35f;
 		void RedBeamImpl(const RE::NiPoint3& a_at)
 		{
-			// Auriel's sunbeam, red: a real beam out of the sky (fxmap red_sunbeam); the drawn column below kept with it
-			QueueFx("CurseOfAlduin\\fx\\red_sunbeam.nif", a_at, 1.0f, 0.0f, 1.8f, false);
 			if (g_redCols.size() >= 24) return;
-			RedColumn c{ a_at };
-			c.glow = std::make_unique<Spellcraft::Beam>(), c.core = std::make_unique<Spellcraft::Beam>();
-			c.glow->row = c.core->row = RedRow();
-			g_redCols.push_back(std::move(c));
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* base = Forms::Ours(gen::kTabletBeacon) ? Forms::Ours(gen::kTabletBeacon)->As<RE::TESBoundObject>() : nullptr;
+			if (!p || !base) return;
+			auto r = p->PlaceObjectAtMe(base, false);
+			if (!r) return;
+			r->SetPosition(a_at);
+			r->GetReferenceRuntimeData().refScale = 24;
+			TintRef(r.get(), 1.0f, 0.06f, 0.04f);
+			g_redCols.push_back({ r->CreateRefHandle(), a_at });
+			if (static int n = 0; n++ < 12) logger::info("redbeam: the beacon's column, red, at ({:.0f},{:.0f},{:.0f})", a_at.x, a_at.y, a_at.z);
 		}
 		void TickRedColumns(float a_delta)
 		{
 			if (g_redCols.empty()) return;
 			for (auto& c : g_redCols) {
 				c.t += a_delta;
-				const float u = std::min(1.0f, c.t / c.fall), e = 1.0f - (1.0f - u) * (1.0f - u);
-				const RE::NiPoint3 top = c.at + RE::NiPoint3{ 0, 0, 2000.0f };
-				const RE::NiPoint3 tip = top + (c.at - top) * std::max(0.02f, e);
-				const float fade = c.t <= c.fall ? 1.0f : std::max(0.0f, 1.0f - (c.t - c.fall) / 0.35f);   // (held, then thinning out)
-				if (fade > 0.0f) {
-					c.glow->Lay(top, tip, 2.4f * fade, false);
-					c.core->Lay(top, tip, 0.9f * fade, false);
-				}
-				if (!c.told && c.t > 0.3f) {
-					c.told = true;
-					if (static int n = 0; n++ < 20) {
-						const auto* s0 = c.glow->segs.empty() ? nullptr : c.glow->segs[0].obj.get();
-						logger::info("redbeam: at ({:.0f},{:.0f},{:.0f}) glow {} segs, core {} segs, first seg {} parent {} culled {}", c.at.x, c.at.y, c.at.z, c.glow->segs.size(), c.core->segs.size(),
-							s0 ? "made" : "none", s0 && s0->parent ? "yes" : "no", s0 && s0->GetAppCulled());
+				// (Noah: "give them like a beam impact sound effect that's not loud, very subtle") as it strikes
+				if (!c.landed) c.landed = true, Audio::AtPoint(gen::Sound::hit_drill, c.at, 0.0f, 0.3f);
+				auto r = c.ref.get();
+				if (!r) continue;
+				if (c.t > kRedHold) {   // (thinning away to nothing)
+					const float k = std::max(0.0f, 1.0f - (c.t - kRedHold) / kRedThin);
+					if (auto* o = r->Get3D()) {
+						o->local.scale = std::max(0.001f, c.scale * k);
+						RE::NiUpdateData ud;
+						o->Update(ud);
 					}
 				}
-				// (Noah: "give them like a beam impact sound effect that's not loud, very subtle, that sounds cool") as it touches down
-				if (!c.landed && u >= 1.0f) {
-					c.landed = true;
-					Audio::AtPoint(gen::Sound::hit_drill, c.at, 0.0f, 0.3f);
-				}
+				if (c.t > kRedHold + kRedThin) r->Disable(), r->SetDelete(true);
 			}
-			for (auto& c : g_redCols) if (c.t > c.fall + 0.35f) c.glow->Clear(), c.core->Clear();
-			std::erase_if(g_redCols, [](const RedColumn& c) { return c.t > c.fall + 0.35f; });
+			std::erase_if(g_redCols, [](const RedColumn& c) { return c.t > kRedHold + kRedThin; });
 		}
 		struct SoulFallFx { RE::NiPoint3 from, to, last; float t = 0, dur = 0.7f, ember = 0; };
 		std::vector<SoulFallFx> g_soulFalls;
