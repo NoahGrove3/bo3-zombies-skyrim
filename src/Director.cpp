@@ -703,6 +703,12 @@ namespace bo3z
 		// (Noah: stuck or left behind) set at a spawn point near you, on the navmesh, and climbs out of the ground there
 		// like a fresh one - never a body popping into place
 		void ShowRiser(RE::Actor* a_a, bool a_show);
+		// (the risers' log: which way each came up, and how far over its floor it stood as it began)
+		void RiserLog(RE::Actor* a_a, const char* a_how, const Riser& a_r)
+		{
+			static int told = 0;
+			if (told++ < 40) logger::info("riser: {:08X} {} rises by {} (at {:.0f} over its floor, 3D {})", a_a->GetFormID(), a_a->GetName(), a_how, a_a->GetPositionZ() - a_r.floorZ, a_a->Is3DLoaded());
+		}
 		void Resurface(RE::Actor* a_a, RE::PlayerCharacter* a_player)
 		{
 			std::erase_if(g_risers, [&](const Riser& r) { return r.h.get().get() == a_a; });
@@ -808,6 +814,7 @@ namespace bo3z
 						a->SetCollision(true);
 						r.standFor = Undead::StandUpSeconds();
 						Undead::CueFor(a.get(), Undead::kCueStandUp, r.standFor);
+						RiserLog(a.get(), "the stand-up clip", r);
 						// (Noah: "The enemies spawn stationary, floating above the ground, and then they get teleported under the
 						// ground, and then they start the crawling animation") its body is unhidden (so it is posed) but faded out
 						// entirely, and only faded in once it is posed lying in the clip - the first thing seen is the crawl
@@ -823,11 +830,18 @@ namespace bo3z
 						f.z = r.floorZ + 2.0f;
 						a->SetPosition(f, true);
 						a->SetCollision(true);
+						// (Noah: "spawn stationary, floating above the ground, and then they get teleported under the ground") a
+						// hidden body isn't animated, so the emerge only began once it showed - a frame standing, then snapped
+						// under: now shown to the animation but faded out, faded in once the emerge has it under the ground
+						a->SetAlpha(0.0f);
+						ShowRiser(a.get(), true), r.hidden = false, r.faded = true;
 						RiseDirt(a.get(), { f.x, f.y, r.floorZ });
+						RiserLog(a.get(), "the draugr's emerge", r);
 					} else if (!viaPortal && r.t > 0.4f && a->Is3DLoaded()) {
 						// no emerge animation for this body: it climbs out of the ground (our own rise, below)
 						r.anim = -1, r.t = 0;
 						ShowRiser(a.get(), true), r.hidden = false;
+						RiserLog(a.get(), "our climb", r);
 					} else if (!viaPortal && r.t < 6.0f) {
 						// (Noah: "I shouldn't see any enemies that are floating or crawling out of the air") its body not built
 						// yet: it waits, unseen under the ground, for the body - never a portal or a pop instead
@@ -862,6 +876,7 @@ namespace bo3z
 					// and the move given longer either side
 					if (at.z < ground - 35.0f && r.resets < 1) {
 						++r.resets;
+						const float sunk = ground - at.z;
 						at.z = ground + 4.0f;
 						// (Noah's crash: a worker thread's pathing/animation job read freed memory 0.7 s after one of these) set
 						// back the way the stuck are: its AI stopped first (its path requests dropped), moved a moment later,
@@ -876,7 +891,7 @@ namespace bo3z
 							Tasks::Later(0.25f, [h] { if (auto c = h.get(); c && !c->IsDead() && !c->IsDisabled() && !c->IsDeleted()) c->EnableAI(true); });
 						});
 						static int told = 0;
-						if (told++ < 10) logger::info("night: {:08X} sank into the ground after rising - set back on the floor", a->GetFormID());
+						if (told++ < 30) logger::info("night: {:08X} {} sank {:.0f} into the ground {:.1f} s after rising - set back on the floor", a->GetFormID(), a->GetName(), sunk, r.t);
 					}
 					continue;
 				}
@@ -910,8 +925,11 @@ namespace bo3z
 				}
 				if (r.anim == 1) {
 					if (r.hidden && (r.t >= 0.15f || a->IsDead())) ShowRiser(a.get(), true), r.hidden = false;  // (the emerge's first pose is under the ground)
+					if (r.faded && (r.t >= 0.35f || a->IsDead())) a->SetAlpha(1.0f), r.faded = false;
 					if (r.t >= 2.6f || a->IsDead()) {
 						// (Noah: "I don't want any zombies to get stuck under the floor") stood on the floor, whatever the animation did
+						if (r.faded) a->SetAlpha(1.0f), r.faded = false;
+						if (static int told = 0; told++ < 30) logger::info("riser: {:08X} emerge ended {:.0f} from the floor", a->GetFormID(), a->GetPositionZ() - r.floorZ);
 						if (auto at = a->GetPosition(); at.z < r.floorZ - 20.0f) {
 							at.z = r.floorZ + 4.0f;
 							a->SetPosition(at, true);
