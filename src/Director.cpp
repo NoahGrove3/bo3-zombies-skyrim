@@ -26,6 +26,7 @@ namespace bo3z
 			float           lastDist{ -1 };
 			RE::NiPoint3    lastPos{};      // (Noah: "stuck on porches and behind houses") where it stood a few seconds ago
 			float           still{ 0 };     // seconds it has barely moved while out of reach
+			bool            freed{ false }; // (its graph already set back once from the emerge's animation-driven state)
 			float           ability{ 4.0f };   // Iron Reaper: next reap / Necromancer: next summon
 			float           windup{ -1.0f };   // Iron Reaper: seconds until the telegraphed sweep lands
 			float           mounted{ 0 };      // the extra speed it has while the player rides (MountChase)
@@ -706,6 +707,18 @@ namespace bo3z
 		// (Noah: stuck or left behind) set at a spawn point near you, on the navmesh, and climbs out of the ground there
 		// like a fresh one - never a body popping into place
 		void ShowRiser(RE::Actor* a_a, bool a_show);
+		// (Noah: "they get stuck, and then they teleport underground" - the log: most of the "caught" ones still had the
+		// emerge's bAnimationDriven set, combat package and target you, AI on: the behaviour graph never left the summon's
+		// animation-driven state, so its legs couldn't move it) the graph forced back to its default state once it's out
+		bool FreeFromEmerge(RE::Actor* a_a)
+		{
+			bool driven = false;
+			if (!a_a || !a_a->Is3DLoaded() || !a_a->GetGraphVariableBool("bAnimationDriven", driven) || !driven) return false;
+			a_a->NotifyAnimationGraph("IdleForceDefaultState");
+			static int told = 0;
+			if (told++ < 20) logger::info("riser: {:08X} {} still animation-driven after rising - its graph set back to default", a_a->GetFormID(), a_a->GetName());
+			return true;
+		}
 		// (the risers' log: which way each came up, and how far over its floor it stood as it began)
 		void RiserLog(RE::Actor* a_a, const char* a_how, const Riser& a_r)
 		{
@@ -865,6 +878,7 @@ namespace bo3z
 				}
 				if (r.anim == 9) {  // risen: for two seconds more, anyone found sunk under the floor is set back on it
 					if (r.t >= 2.0f || a->IsDead()) {
+						if (!a->IsDead()) FreeFromEmerge(a.get());
 						r.t = 99;
 						continue;
 					}
@@ -933,6 +947,7 @@ namespace bo3z
 						// (Noah: "I don't want any zombies to get stuck under the floor") stood on the floor, whatever the animation did
 						if (r.faded) a->SetAlpha(1.0f), r.faded = false;
 						if (static int told = 0; told++ < 30) logger::info("riser: {:08X} emerge ended {:.0f} from the floor", a->GetFormID(), a->GetPositionZ() - r.floorZ);
+						FreeFromEmerge(a.get());
 						if (auto at = a->GetPosition(); at.z < r.floorZ - 20.0f) {
 							at.z = r.floorZ + 4.0f;
 							a->SetPosition(at, true);
@@ -3609,6 +3624,10 @@ namespace bo3z
 					const float dx = zp.x - pp.x, dy = zp.y - pp.y, len = std::max(1.0f, std::hypot(dx, dy));
 					const float facing = (dx * std::sin(yaw) + dy * std::cos(yaw)) / len;  // 1 straight ahead
 					inView = facing > 0.45f && dist < 2500.0f && !RayBlocked(a_player->GetParentCell(), pp + RE::NiPoint3{ 0, 0, 110.0f }, zp + RE::NiPoint3{ 0, 0, 90.0f });
+				}
+				if (pinned && !s.freed && FreeFromEmerge(a.get())) {
+					s.freed = true, s.still = 0, s.lastPos = a->GetPosition();   // (its legs given back first: reburied only if it still won't move)
+					continue;
 				}
 				if ((pinned || s.stuck >= 10.0f) && !inView && grounded >= 1.5f && relocGap <= 0 && !IsRising(a.get())) {
 					// (Noah: "they get stuck, and then they teleport underground" - over a hundred a night: Find why they freeze)
