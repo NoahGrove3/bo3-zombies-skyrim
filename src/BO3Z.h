@@ -169,6 +169,7 @@ namespace bo3z
 		bool             NightNow();  // night hours (the undead are out)
 		void             TintMoons(); // (the blood moon) the moons' colour, after the sky's own update
 		void             DevSky(std::string_view a_look);  // dev: blood | twilight | off
+		std::optional<float> GroundUnder(RE::TESObjectCELL* a_cell, const RE::NiPoint3& a_from);  // the first thing a ray straight down from a point meets
 		float            RoundHealth();  // a zombie's full health this round (Skyrim units)
 		float            KillEssenceScale();  // (the essence economy) a kill's essence after night 10: tapering as the dead multiply
 		float            PriceScale();        // the repeat buys' prices: 3% more a night after night 10

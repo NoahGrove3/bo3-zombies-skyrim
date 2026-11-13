@@ -124,15 +124,28 @@ namespace bo3z
 				return;
 			}
 			if (!hid) hide(true);
-			(void)next;
-			if (!g_lureMove) return;
-			g_lureMove = false;
+			// (Noah: "I want to be able to move the camera though, and the enemies follow me without it lagging") the body's place
+			// written straight in, ten times a second, onto the ground under the camera - no teleport (a teleport of you is what
+			// made Skyrim re-settle the world); its character controller set with it, so the dead path to where it now is
 			const auto c = pcam->cameraRoot->world.translate;
 			const float yaw = std::atan2(pcam->cameraRoot->world.rotate.entry[0][1], pcam->cameraRoot->world.rotate.entry[1][1]);
-			p->SetPosition({ c.x, c.y, c.z }, true);
-			p->MoveToNearestNavmesh();   // (down onto the walkable ground nearest the camera)
-			p->SetAngle({ 0.0f, 0.0f, yaw });   // (facing the way the camera looks: what's raised 'in front of you' comes up in view)
-			logger::info("dev: lure - your body set under the camera ({:.0f},{:.0f}), facing {:.0f} deg", c.x, c.y, yaw * 57.2958f);
+			if (g_lureMove) {
+				g_lureMove = false;
+				p->SetAngle({ 0.0f, 0.0f, yaw });   // (facing the way the camera looks: what's raised 'in front of you' comes up in view)
+			}
+			const auto now = std::chrono::steady_clock::now();
+			if (now < next) return;
+			next = now + std::chrono::milliseconds(100);
+			if (std::hypot(c.x - p->GetPositionX(), c.y - p->GetPositionY()) < 40.0f) return;
+			const auto ground = Director::GroundUnder(p->GetParentCell(), c);
+			if (!ground || c.z - *ground > 3000.0f) return;   // (nothing under the camera: left where it is)
+			const RE::NiPoint3 to{ c.x, c.y, *ground + 4.0f };
+			p->data.location = to;
+			if (auto* cc = p->GetCharController()) {
+				const float s = RE::bhkWorld::GetWorldScale();
+				cc->SetPositionImpl(RE::hkVector4(to.x * s, to.y * s, to.z * s, 0.0f), false, true);
+			}
+			p->Update3DPosition(true);
 		}
 		struct Lapse { bool on = false; float from = 0, to = 0, dur = 1; std::chrono::steady_clock::time_point t0; };
 		Lapse g_lapse;

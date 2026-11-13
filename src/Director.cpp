@@ -4407,6 +4407,7 @@ namespace bo3z
 			return -1;
 		}
 		void TintMoons() { TickBloodMoon(); }
+		std::optional<float> GroundUnder(RE::TESObjectCELL* a_cell, const RE::NiPoint3& a_from) { return WalkTop(a_cell, a_from, 0.0f); }
 		void DevSky(std::string_view a_look)   // (sky blood | twilight | off: the night skies, for filming and checks)
 		{
 			if (a_look == "off") {
