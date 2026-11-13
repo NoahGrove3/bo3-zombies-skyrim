@@ -654,6 +654,8 @@ namespace bo3z
 			float           standFor = 0;    // the stand-up clip's length (anim 3)
 			int             resets = 0;      // times set back on the floor after rising
 			bool            faded = false;   // (the stand-up) faded out until its clip has it
+			float           delay = 0;       // (the bolt) when it strikes
+			bool            struck = false;
 		};
 		std::vector<Riser> g_risers;
 		// (Noah: "I want there to be like dust and debris coming from where they're clawing up from, like dirt") where one of
@@ -680,7 +682,7 @@ namespace bo3z
 			// (an elite lost its portal and the portal's warning with it) it still announces itself as it claws up
 			if (g_elites.contains(a_a->GetFormID())) Forms::PlayAt(gen::Sound::champ_telegraph, a_a);
 		}
-		constexpr float    kRiseDepth = 115.0f, kRiseTime = 1.5f;
+		constexpr float    kRiseDepth = 115.0f, kRiseTime = 1.5f, kSoulFallSecs = 0.8f;
 		void StartRise(RE::Actor* a_actor, RE::PlayerCharacter* a_player)
 		{
 			if (!a_actor || g_risers.size() > 40) {
@@ -801,80 +803,60 @@ namespace bo3z
 				};
 				if (r.anim == 0) {
 					if (a->Is3DLoaded()) {
-						ShowRiser(a.get(), false), r.hidden = true;  // (unseen until the emerge has it in hand)
+						ShowRiser(a.get(), false), r.hidden = true;  // (unseen until it arrives)
 					}
-					// (Noah: "Are we able to make the enemies crawl from up out of the ground instead of the conjuration portal
-					// spawn?") only the great bosses still step out of the Curse's portal; every other one - elites, champions and
-					// the trials' dead too - claws up out of the ground in a burst of dirt and dust
-					const bool viaPortal = Director::IsBoss(a.get());
-					if (viaPortal && a->Is3DLoaded() && r.t > 0.05f) {
-						// (the bosses) never out of the ground: the Curse's portal opens and it steps out of it, its summoning shown
-						r.anim = 2, r.t = 0;
+					// (Noah: "Red Lightning Strike for all the other enemies" and "Soulfall for elites and bosses" - the crawl out
+					// of the ground kept breaking: standing first, snapping under, frozen in its animation after) each now
+					// stands on its floor unseen, and appears in the flash of its arrival: a small blood-red bolt for the
+					// common dead, a red falling star from the sky for the elites and bosses
+					if (a->Is3DLoaded() && r.t > 0.05f) {
 						auto f = a->GetPosition();
 						f.z = r.floorZ + 2.0f;
 						a->SetPosition(f, true);
 						a->SetCollision(true);
-						r.hidden = true;  // (unseen a breath while the portal opens round it, then it steps out)
-						openPortal();
+						a->SetAlpha(0.0f);
+						ShowRiser(a.get(), true), r.hidden = false, r.faded = true;
 						const bool great = Director::IsBoss(a.get()) || g_elites.contains(a->GetFormID());
-						if (great) Forms::PlayAt(gen::Sound::champ_telegraph, a.get());
+						r.t = 0;
+						if (great) {
+							r.anim = 5;
+							Gun::SoulFall({ f.x, f.y, r.floorZ }, kSoulFallSecs);
+							if (static int told = 0; told++ < 20) logger::info("riser: {:08X} {} arrives by a soulfall", a->GetFormID(), a->GetName());
+						} else {
+							r.anim = 4, r.delay = Uniform(0.0f, 0.3f);   // (a crowd's bolts never all at once)
+						}
 						continue;
 					}
-					if (!viaPortal && a->Is3DLoaded() && Undead::HasClips(a.get())) {
-						// (Noah: the dead "come from the ground") lying in the earth it bursts from, it drags itself up - the
-						// Mixamo stand-up - and only then runs at you
-						r.anim = 3, r.t = 0;
-						auto f = a->GetPosition();
-						f.z = r.floorZ + 2.0f;
-						a->SetPosition(f, true);
-						a->SetCollision(true);
-						r.standFor = Undead::StandUpSeconds();
-						Undead::CueFor(a.get(), Undead::kCueStandUp, r.standFor);
-						RiserLog(a.get(), "the stand-up clip", r);
-						// (Noah: "The enemies spawn stationary, floating above the ground, and then they get teleported under the
-						// ground, and then they start the crawling animation") its body is unhidden (so it is posed) but faded out
-						// entirely, and only faded in once it is posed lying in the clip - the first thing seen is the crawl
-						a->SetAlpha(0.0f);
-						ShowRiser(a.get(), true), r.hidden = false, r.faded = true;
-						continue;
+					if (r.t < 6.0f) continue;   // (its body not built yet: it waits, unseen)
+					// no body after 6 s: it simply stands there when it comes (nothing to show an arrival on)
+					ShowRiser(a.get(), true), r.hidden = false;
+					auto f = a->GetPosition();
+					f.z = r.floorZ + 4.0f;
+					a->SetPosition(f, true);
+					a->SetCollision(true);
+					a->EnableAI(true);
+					r.anim = 9, r.t = 0;
+					continue;
+				}
+				if (r.anim == 4 || r.anim == 5) {  // the bolt / the falling star: it shows in the flash, and hunts at once
+					const float at = r.anim == 4 ? r.delay : kSoulFallSecs;
+					if (r.anim == 4 && !r.struck && r.t >= at) {
+						r.struck = true;
+						Gun::RedStrike({ a->GetPositionX(), a->GetPositionY(), r.floorZ });
 					}
-					if (!viaPortal && a->Is3DLoaded() && a->NotifyAnimationGraph("summonStart")) {
-						// (Noah: the dead "come from the ground") the emerge-from-the-ground animation; no portal for the
-						// common dead - the ground bursts instead
-						r.anim = 1, r.t = 0;
-						auto f = a->GetPosition();
-						f.z = r.floorZ + 2.0f;
-						a->SetPosition(f, true);
-						a->SetCollision(true);
-						// (Noah: "spawn stationary, floating above the ground, and then they get teleported under the ground") a
-						// hidden body isn't animated, so the emerge only began once it showed - a frame standing, then snapped
-						// under: now shown to the animation but faded out, faded in once the emerge has it under the ground
-						a->SetAlpha(0.0f);
-						ShowRiser(a.get(), true), r.hidden = false, r.faded = true;
-						RiseDirt(a.get(), { f.x, f.y, r.floorZ });
-						RiserLog(a.get(), "the draugr's emerge", r);
-					} else if (!viaPortal && r.t > 0.4f && a->Is3DLoaded()) {
-						// no emerge animation for this body: it climbs out of the ground (our own rise, below)
-						r.anim = -1, r.t = 0;
-						ShowRiser(a.get(), true), r.hidden = false;
-						RiserLog(a.get(), "our climb", r);
-					} else if (!viaPortal && r.t < 6.0f) {
-						// (Noah: "I shouldn't see any enemies that are floating or crawling out of the air") its body not built
-						// yet: it waits, unseen under the ground, for the body - never a portal or a pop instead
-						continue;
-					} else if (r.t > 0.4f) {
-						// (Noah: the night's spawns look conjured) no draugr rise for this one: it steps out of a portal
-						r.anim = 2, r.t = 0;
-						auto f = a->GetPosition();
-						f.z = r.floorZ + 2.0f;
-						a->SetPosition(f, true);
-						a->SetCollision(true);
-						ShowRiser(a.get(), true), r.hidden = false;
-						if (a->Is3DLoaded()) openPortal();  // (the audit: no portal art on a body not built yet)
-						continue;
-					} else {
-						continue;
+					if (r.t >= at + 0.05f || a->IsDead()) {
+						if (r.faded) a->SetAlpha(1.0f), r.faded = false;
+						a->EnableAI(true);
+						if (auto* pc = RE::PlayerCharacter::GetSingleton(); pc && !a->IsDead()) {
+							const auto d = pc->GetPosition() - a->GetPosition();
+							a->SetAngle({ 0.0f, 0.0f, std::atan2(d.x, d.y) });
+							a->StopCombat();
+							SafeCombat(a, pc);
+						}
+						if (r.anim == 5 && g_elites.contains(a->GetFormID())) Forms::PlayAt(gen::Sound::champ_telegraph, a.get());
+						r.anim = 9, r.t = 0;
 					}
+					continue;
 				}
 				if (r.anim == 9) {  // risen: for two seconds more, anyone found sunk under the floor is set back on it
 					if (r.t >= 2.0f || a->IsDead()) {
@@ -1289,7 +1271,6 @@ namespace bo3z
 			// (Noah: "something better for the spawns instead of coming from the ground - it's constantly looking broken; summon
 			// portals with really low audio at the spawn points") every one of the night's dead steps out of the Curse's red
 			// portal now, its whoosh barely above a breath (no ground burst, no climbing out)
-			if (Director::IsBoss(actor)) Audio::At(gen::Sound::rise, actor, 0.22f);   // (the portal's breath: only the bosses still come through it)
 			g_summoned.insert(actor->GetFormID());
 			StartRise(actor, a_player);
 			return true;

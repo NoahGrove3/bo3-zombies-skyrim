@@ -786,6 +786,8 @@ namespace bo3z
 		void                  FxBlastSized(std::string_view a_name, const RE::NiPoint3& a_at, float a_scale);   // one of Skyrim's explosions at a size
 		void                  QueueFx(std::string a_path, const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life, bool a_flat);   // one of our effect models (or its effects-map stand-ins) set off at a point   // a cyclone of an element carried along the ground (FireCyclone's, any look)
 		void                  FireCyclone(const RE::NiPoint3& a_from, const RE::NiPoint3& a_fwd, float a_dist, float a_life, float a_share, std::function<void(RE::Actor*)> a_touch, std::function<void(const RE::NiPoint3&)> a_burst);  // a tornado of violet fire carried along the ground
+		void                  RedStrike(const RE::NiPoint3& a_at);                 // (the night's dead arrive) a small blood-red bolt onto the ground
+		void                  SoulFall(const RE::NiPoint3& a_at, float a_secs);    // (elites and bosses arrive) a red falling star from the sky, landing in a_secs
 		void                  LightningArc(const RE::NiPoint3& a_from, const RE::NiPoint3& a_to, float a_delay);  // a bolt of lightning between two points  // a meteor of ours (tools/meteorfx.py) falling from high above onto a point
 		void                  PurpleFire(const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life);
 		void                  Motes(int a_elem, const RE::NiPoint3& a_at, float a_scale, float a_life);  // fine motes rising off the ground over an area (the ElemBurst elements)

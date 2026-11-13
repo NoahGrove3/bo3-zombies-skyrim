@@ -2675,6 +2675,10 @@ namespace bo3z
 			std::erase_if(g_grows, [](const GrowFx& r) { return r.t > r.life; });
 		}
 		void LightningArc(const RE::NiPoint3& a_from, const RE::NiPoint3& a_to, float a_delay) { g_arcs.push_back({ a_from, a_to, a_delay }); }
+		void RedStrikeImpl(const RE::NiPoint3& a_at);
+		void SoulFallImpl(const RE::NiPoint3& a_at, float a_secs);
+		void RedStrike(const RE::NiPoint3& a_at) { RedStrikeImpl(a_at); }
+		void SoulFall(const RE::NiPoint3& a_at, float a_secs) { SoulFallImpl(a_at, a_secs); }
 		void Knock(RE::Actor* a_a, float a_mag) { if (a_a && !a_a->IsDead()) Stagger(a_a, a_mag); }
 		int  FecElem(int a_elem) { const int was = g_fecElem; g_fecElem = a_elem; return was; }
 		void FireDeath(RE::Actor* a_a, int a_elem) { FecMark(a_a, a_elem); }
@@ -3715,6 +3719,59 @@ namespace bo3z
 			}
 			return std::max(row, 0);
 		}
+		// (Noah: "I love the Red Lightning Strike and the Soulfall ... Soulfall for elites and bosses, and Red Lightning Strike
+		// for all the other enemies. Don't make the lightning strike too big, otherwise it'll be distracting when a bunch of
+		// enemies are spawning in at once") how the night's dead arrive
+		int RedRow()
+		{
+			static int row = -1;
+			for (int r = 0; row < 0 && r < static_cast<int>(gen::kSpellcraft.size()); ++r) {
+				if (gen::kSpellcraft[r].id == "drill") row = r;   // (its colour: blood red)
+			}
+			return std::max(row, 0);
+		}
+		void RedStrikeImpl(const RE::NiPoint3& a_at)
+		{
+			const int row = RedRow();
+			const RE::NiPoint3 top = a_at + RE::NiPoint3{ static_cast<float>(std::rand() % 120 - 60), static_cast<float>(std::rand() % 120 - 60), 1100.0f };
+			Spellcraft::StreakAt(row, top, a_at, 0.9f, 0.22f, true);
+			Spellcraft::StreakAt(row, top + RE::NiPoint3{ 25.0f, -18.0f, -90.0f }, a_at, 0.45f, 0.16f, true);
+			Spellcraft::BurstAt(row, a_at + RE::NiPoint3{ 0, 0, 10.0f }, 14.0f, 0.22f);
+			Ring("blood", a_at, 8.0f, 70.0f, 0.35f);
+			Audio::AtPoint(gen::Sound::hit_stormcaller, a_at, 0.0f, 0.35f);
+		}
+		struct SoulFallFx { RE::NiPoint3 from, to, last; float t = 0, dur = 0.7f, ember = 0; };
+		std::vector<SoulFallFx> g_soulFalls;
+		void SoulFallImpl(const RE::NiPoint3& a_at, float a_secs)
+		{
+			if (g_soulFalls.size() >= 8) return;
+			// (from the moon's side of the sky: high and well off to one side, so it reads as a falling star)
+			const float a = static_cast<float>(std::rand() % 628) / 100.0f;
+			const RE::NiPoint3 from = a_at + RE::NiPoint3{ std::cos(a) * 1400.0f, std::sin(a) * 1400.0f, 2600.0f };
+			g_soulFalls.push_back({ from, a_at, from, 0.0f, std::max(0.2f, a_secs), 0.0f });
+			Audio::AtPoint(gen::Sound::rise, a_at, 0.0f, 0.5f);
+		}
+		void TickSoulFalls(float a_delta)
+		{
+			if (g_soulFalls.empty()) return;
+			const int row = RedRow();
+			for (auto& f : g_soulFalls) {
+				f.t += a_delta;
+				const float u = std::min(1.0f, f.t / f.dur), e = u * u;   // (gathering speed as it falls)
+				const RE::NiPoint3 p = f.from + (f.to - f.from) * e;
+				Spellcraft::StreakAt(row, f.last, p, 1.6f, 0.4f, false);   // (its tail: each step's streak fading behind it)
+				if ((f.ember -= a_delta) <= 0) f.ember = 0.05f, Spellcraft::BurstAt(row, p, 6.0f, 0.18f);   // (its burning head)
+				f.last = p;
+				if (u >= 1.0f) {
+					ElemBurst(11, f.to + RE::NiPoint3{ 0, 0, 30.0f }, 0.8f, 0.0f, 0.6f);   // (crimson)
+					Motes(5, f.to, 0.6f, 1.6f);                                               // (embers of blood rising)
+					Ring("blood", f.to, 20.0f, 160.0f, 0.5f);
+					Spellcraft::BurstAt(row, f.to + RE::NiPoint3{ 0, 0, 20.0f }, 30.0f, 0.35f);
+					Audio::AtPoint(gen::Sound::boom_drill, f.to, 0.0f, 0.45f);
+				}
+			}
+			std::erase_if(g_soulFalls, [](const SoulFallFx& f) { return f.t >= f.dur; });
+		}
 		void TickStorm(float a_delta)
 		{
 			for (auto& a : g_arcs) {
@@ -3760,6 +3817,7 @@ namespace bo3z
 				}
 			}
 			TickStorm(a_delta);
+			TickSoulFalls(a_delta);
 			Props::TickGauntlet(a_delta);
 			Props::TickFang(a_delta);
 			TickZones(a_delta);

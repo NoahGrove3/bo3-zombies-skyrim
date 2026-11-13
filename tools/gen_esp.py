@@ -1283,13 +1283,13 @@ def lore_text():
            "<p>His mist also covers the door of <b>Sovngarde</b>, so the dead of Skyrim cannot pass on. They lie restless in the ground. "
            "By day they sleep. When the sun goes down, they rise.</p>",
            "[pagebreak]", "<p align='center'><font size='24'>II. The Dead</font></p>", img('graves', 300, 176),
-           "<p>Each night the dead come in <b>waves</b>, more of them and harder to kill as the nights go on. Each one claws its way up out of the earth "
+           "<p>Each night the dead come in <b>waves</b>, more of them and harder to kill as the nights go on. Each one arrives in a blood-red bolt of lightning "
            "on open ground - roads and fields, never inside a house - and comes at you from every side. Dawn comes only when the last wave falls.</p>",
            "<p>The first nights belong to the dead and the beasts: Mihail's zombies and the Thriceborn, the Rag Draugr, rotten skeletons and plague wolves. "
            "Then come Bonemen and the draugr warlords, Draman Brutes, Ash Spawn and werewolves. From the tenth night the <b>nightwalkers</b> join them, far faster than the rest, "
            "and at the last the Daedra - Clannfear, Daedroth, Dremora - and the Overlords.</p>",
            "<p>The night's dead never cast spells, loose arrows or shout; they come at you with tooth and blade. "
-           "Every fifth night a great <b>boss</b> walks with them, stepping out of the Curse's red portal.</p>",
+           "Every fifth night a great <b>boss</b> walks with them; it and the champions fall out of the sky like red stars.</p>",
            "[pagebreak]", "<p align='center'><font size='24'>III. The Echo Altars</font></p>", img('wards', 300, 176),
            "<p>Long ago the <b>Tongues</b>, the first masters of the Voice, raised an altar in every hold to hold Alduin's shout back. "
            "Every mage who fell in the Dragon War gave a last spell to them, which is why an altar can still make your weapons and spells stronger, "
