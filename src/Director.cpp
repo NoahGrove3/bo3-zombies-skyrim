@@ -682,7 +682,7 @@ namespace bo3z
 			// (an elite lost its portal and the portal's warning with it) it still announces itself as it claws up
 			if (g_elites.contains(a_a->GetFormID())) Forms::PlayAt(gen::Sound::champ_telegraph, a_a);
 		}
-		constexpr float    kRiseDepth = 115.0f, kRiseTime = 1.5f, kSoulFallSecs = 0.8f;
+		constexpr float    kRiseDepth = 115.0f, kRiseTime = 1.5f, kSoulFallSecs = 0.8f, kRedBeamFall = 0.45f;
 		void StartRise(RE::Actor* a_actor, RE::PlayerCharacter* a_player)
 		{
 			if (!a_actor || g_risers.size() > 40) {
@@ -805,10 +805,11 @@ namespace bo3z
 					if (a->Is3DLoaded()) {
 						ShowRiser(a.get(), false), r.hidden = true;  // (unseen until it arrives)
 					}
-					// (Noah: "Red Lightning Strike for all the other enemies" and "Soulfall for elites and bosses" - the crawl out
-					// of the ground kept breaking: standing first, snapping under, frozen in its animation after) each now
-					// stands on its floor unseen, and appears in the flash of its arrival: a small blood-red bolt for the
-					// common dead, a red falling star from the sky for the elites and bosses
+					// (Noah - the crawl out of the ground kept breaking: standing first, snapping under, frozen in its animation
+					// after - then: "the lightning strikes are elites and bosses, a red lightning strike ... the normal enemies to be
+					// the sunbeam from the sky animation that we made ... painted red instead of gold") each now stands on its floor
+					// unseen and appears in the flash of its arrival: the Sky Beam in red for the common dead, a blood-red bolt of
+					// lightning for the elites and bosses
 					if (a->Is3DLoaded() && r.t > 0.05f) {
 						auto f = a->GetPosition();
 						f.z = r.floorZ + 2.0f;
@@ -820,10 +821,10 @@ namespace bo3z
 						r.t = 0;
 						if (great) {
 							r.anim = 5;
-							Gun::SoulFall({ f.x, f.y, r.floorZ }, kSoulFallSecs);
-							if (static int told = 0; told++ < 20) logger::info("riser: {:08X} {} arrives by a soulfall", a->GetFormID(), a->GetName());
+							Gun::RedStrike({ f.x, f.y, r.floorZ });
+							if (static int told = 0; told++ < 20) logger::info("riser: {:08X} {} arrives in a red lightning strike", a->GetFormID(), a->GetName());
 						} else {
-							r.anim = 4, r.delay = Uniform(0.0f, 0.3f);   // (a crowd's bolts never all at once)
+							r.anim = 4, r.delay = Uniform(0.0f, 0.3f);   // (a crowd's beams never all at once)
 						}
 						continue;
 					}
@@ -838,13 +839,13 @@ namespace bo3z
 					r.anim = 9, r.t = 0;
 					continue;
 				}
-				if (r.anim == 4 || r.anim == 5) {  // the bolt / the falling star: it shows in the flash, and hunts at once
-					const float at = r.anim == 4 ? r.delay : kSoulFallSecs;
-					if (r.anim == 4 && !r.struck && r.t >= at) {
+				if (r.anim == 4 || r.anim == 5) {  // the red beam / the red bolt: it shows in the flash, and hunts at once
+					if (r.anim == 4 && !r.struck && r.t >= r.delay) {
 						r.struck = true;
-						Gun::RedStrike({ a->GetPositionX(), a->GetPositionY(), r.floorZ });
+						Gun::RedBeam({ a->GetPositionX(), a->GetPositionY(), r.floorZ });
 					}
-					if (r.t >= at + 0.05f || a->IsDead()) {
+					const float shows = r.anim == 4 ? r.delay + kRedBeamFall : 0.05f;
+					if (((r.anim == 5 || r.struck) && r.t >= shows) || a->IsDead()) {
 						if (r.faded) a->SetAlpha(1.0f), r.faded = false;
 						a->EnableAI(true);
 						if (auto* pc = RE::PlayerCharacter::GetSingleton(); pc && !a->IsDead()) {

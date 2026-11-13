@@ -2676,7 +2676,9 @@ namespace bo3z
 		}
 		void LightningArc(const RE::NiPoint3& a_from, const RE::NiPoint3& a_to, float a_delay) { g_arcs.push_back({ a_from, a_to, a_delay }); }
 		void RedStrikeImpl(const RE::NiPoint3& a_at);
+		void RedBeamImpl(const RE::NiPoint3& a_at);
 		void SoulFallImpl(const RE::NiPoint3& a_at, float a_secs);
+		void RedBeam(const RE::NiPoint3& a_at) { RedBeamImpl(a_at); }
 		void RedStrike(const RE::NiPoint3& a_at) { RedStrikeImpl(a_at); }
 		void SoulFall(const RE::NiPoint3& a_at, float a_secs) { SoulFallImpl(a_at, a_secs); }
 		void Knock(RE::Actor* a_a, float a_mag) { if (a_a && !a_a->IsDead()) Stagger(a_a, a_mag); }
@@ -3730,15 +3732,36 @@ namespace bo3z
 			}
 			return std::max(row, 0);
 		}
+		// (Noah, then: "the lightning strikes are elites and bosses, a red lightning strike") the great ones come down in a
+		// blood-red bolt - three jagged strands, a burst, a blood ring racing out, the crack of it - a size above a common arrival
 		void RedStrikeImpl(const RE::NiPoint3& a_at)
 		{
 			const int row = RedRow();
-			const RE::NiPoint3 top = a_at + RE::NiPoint3{ static_cast<float>(std::rand() % 120 - 60), static_cast<float>(std::rand() % 120 - 60), 1100.0f };
-			Spellcraft::StreakAt(row, top, a_at, 0.9f, 0.22f, true);
-			Spellcraft::StreakAt(row, top + RE::NiPoint3{ 25.0f, -18.0f, -90.0f }, a_at, 0.45f, 0.16f, true);
-			Spellcraft::BurstAt(row, a_at + RE::NiPoint3{ 0, 0, 10.0f }, 14.0f, 0.22f);
-			Ring("blood", a_at, 8.0f, 70.0f, 0.35f);
-			Audio::AtPoint(gen::Sound::hit_stormcaller, a_at, 0.0f, 0.35f);
+			const RE::NiPoint3 top = a_at + RE::NiPoint3{ static_cast<float>(std::rand() % 160 - 80), static_cast<float>(std::rand() % 160 - 80), 1500.0f };
+			Spellcraft::StreakAt(row, top, a_at, 1.8f, 0.3f, true);
+			Spellcraft::StreakAt(row, top + RE::NiPoint3{ 30.0f, -22.0f, -120.0f }, a_at, 1.0f, 0.24f, true);
+			Spellcraft::StreakAt(row, top + RE::NiPoint3{ -26.0f, 30.0f, -60.0f }, a_at, 0.6f, 0.2f, true);
+			Spellcraft::BurstAt(row, a_at + RE::NiPoint3{ 0, 0, 14.0f }, 34.0f, 0.35f);
+			ElemBurst(11, a_at + RE::NiPoint3{ 0, 0, 30.0f }, 0.7f, 0.0f, 0.5f);   // (crimson)
+			Ring("blood", a_at, 20.0f, 170.0f, 0.5f);
+			Motes(5, a_at, 0.6f, 1.4f);
+			Audio::AtPoint(gen::Sound::hit_stormcaller, a_at, 0.0f, 0.7f);
+		}
+		// (Noah: "I want the normal enemies to be the sunbeam from the sky animation that we made ... but painted red instead of
+		// gold") the Sky Beam's bolt of light dropping out of the sky, its burst, its pillar and rising motes - all red, and kept
+		// small and short so a crowd of arrivals stays readable; about 0.4 s from the call to the strike (kRedBeamFall)
+		void RedBeamImpl(const RE::NiPoint3& a_at)
+		{
+			Lob("CurseOfAlduin\\fx\\red_bolt.nif", a_at + RE::NiPoint3{ 0, 0, 1800.0f }, RE::NiPoint3{ 0, 0, -4200.0f }, 0.8f, [](const RE::NiPoint3& at) {
+				QueueFx("CurseOfAlduin\\fx\\red_burst.nif", at, 0.7f, 0.0f, 1.4f, false);
+				if (g_cyclones.size() < 4) {
+					CycloneSpec cs;
+					cs.model = "CurseOfAlduin\\fx\\red_pillar.nif";
+					cs.from = at, cs.fwd = { 0, 1, 0 }, cs.dist = 0.0f, cs.life = 0.9f, cs.size = 0.6f, cs.fec = -1, cs.share = 0.0f, cs.noPull = true;
+					ElemCyclone(std::move(cs));
+				}
+				QueueFx("CurseOfAlduin\\fx\\red_motes.nif", at, 0.7f, 0.1f, 1.2f, false);
+			}, 0.0f, 0.0f);
 		}
 		struct SoulFallFx { RE::NiPoint3 from, to, last; float t = 0, dur = 0.7f, ember = 0; };
 		std::vector<SoulFallFx> g_soulFalls;
