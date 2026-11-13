@@ -26,7 +26,7 @@ namespace bo3z
 		// runic symbol grow above the altar") a freed altar's moment, in three parts: the charge (the six rune stones strike
 		// the heart one after another with the roll's lightning, its runes burning brighter), the burst (the curse breaks:
 		// the freed look is put up), then the motes fade in and the golden rune circle grows from nothing over the altar
-		struct Pulse { RE::ObjectRefHandle shrine; float t; int town; bool burst; bool started; bool toldGrow = false; float burstAt = 0; };
+		struct Pulse { RE::ObjectRefHandle shrine; float t; int town; bool burst; bool started; bool toldGrow = false; float burstAt = 0; bool hung = false; };
 		std::optional<Pulse>                     g_pulse;  // a freed shrine's moment (FreedPulse); t counts down
 		constexpr float                          kPulseSeconds = 9.0f, kPulseCharge = 3.6f, kPulseGrow = 3.2f;
 		// the freed look waits for the burst (the charge plays on the cursed altar)
@@ -2075,6 +2075,13 @@ namespace bo3z
 								++seen;
 								if (auto* o = x->Get3D()) {
 									++built;
+									// (the log: "2 with their model, 0 of them in the scene" - laid fresh or not, their models never
+									// joined the city's own; until you came back to it) hung in its cell's scene by hand
+									if (!o->parent) {
+										auto* cell = x->GetParentCell();
+										auto* ld = cell ? cell->GetRuntimeData().loadedData : nullptr;
+										if (ld && ld->cell3D) ld->cell3D->AttachChild(o, true), g_pulse->hung = true;
+									}
 									if (o->parent) ++joined;
 									const float full = x->GetScale();
 									o->local.scale = full * (runes ? std::max(0.001f, ease) : 1.0f);
@@ -2086,8 +2093,8 @@ namespace bo3z
 							});
 							if (static int told = 0; g > 0.0f && !g_pulse->toldGrow && told++ < 20) {
 								g_pulse->toldGrow = true;
-								logger::info("shops: {}'s rune and motes grow - {} found by the altar, {} with their model, {} of them in the scene ({:.1f} s after the burst)",
-									gen::kTowns[g_pulse->town], seen, built, joined, el - g_pulse->burstAt);
+								logger::info("shops: {}'s rune and motes grow - {} found by the altar, {} with their model, {} of them in the scene{} ({:.1f} s after the burst)",
+									gen::kTowns[g_pulse->town], seen, built, joined, g_pulse->hung ? " (hung there by hand)" : "", el - g_pulse->burstAt);
 							}
 						}
 					}
