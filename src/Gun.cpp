@@ -3765,6 +3765,8 @@ namespace bo3z
 		std::vector<RedColumn> g_redCols;
 		void RedBeamImpl(const RE::NiPoint3& a_at)
 		{
+			// Auriel's sunbeam, red: a real beam out of the sky (fxmap red_sunbeam); the drawn column below kept with it
+			QueueFx("CurseOfAlduin\\fx\\red_sunbeam.nif", a_at, 1.0f, 0.0f, 1.8f, false);
 			if (g_redCols.size() >= 24) return;
 			RedColumn c{ a_at };
 			c.glow = std::make_unique<Spellcraft::Beam>(), c.core = std::make_unique<Spellcraft::Beam>();
