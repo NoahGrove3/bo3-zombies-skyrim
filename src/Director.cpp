@@ -814,7 +814,9 @@ namespace bo3z
 						auto f = a->GetPosition();
 						f.z = r.floorZ + 2.0f;
 						a->SetPosition(f, true);
-						a->SetCollision(true);
+						// (the log: the red beams came down two metres over the ground - they stop on the first thing they meet,
+						// and that was the waiting body itself) no collision until it shows
+						a->SetCollision(false);
 						a->SetAlpha(0.0f);
 						ShowRiser(a.get(), true), r.hidden = false, r.faded = true;
 						const bool great = Director::IsBoss(a.get()) || g_elites.contains(a->GetFormID());
@@ -847,6 +849,7 @@ namespace bo3z
 					const float shows = r.anim == 4 ? r.delay + kRedBeamFall : 0.05f;
 					if (((r.anim == 5 || r.struck) && r.t >= shows) || a->IsDead()) {
 						if (r.faded) a->SetAlpha(1.0f), r.faded = false;
+						a->SetCollision(true);
 						a->EnableAI(true);
 						if (auto* pc = RE::PlayerCharacter::GetSingleton(); pc && !a->IsDead()) {
 							const auto d = pc->GetPosition() - a->GetPosition();

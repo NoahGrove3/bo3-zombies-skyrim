@@ -3762,6 +3762,9 @@ namespace bo3z
 				}
 				QueueFx("CurseOfAlduin\\fx\\red_motes.nif", at, 0.7f, 0.1f, 1.2f, false);
 			}, 0.0f, 0.0f);
+			// (the log: they came down two metres up, on the waiting body's head - a lob stops on the dead it passes) it falls
+			// onto its point, through anything, the way the meteors do
+			if (!g_lobs.empty()) g_lobs.back().meteor = true, g_lobs.back().target = a_at;
 		}
 		struct SoulFallFx { RE::NiPoint3 from, to, last; float t = 0, dur = 0.7f, ember = 0; };
 		std::vector<SoulFallFx> g_soulFalls;
