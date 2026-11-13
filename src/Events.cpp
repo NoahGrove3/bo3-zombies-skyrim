@@ -1486,6 +1486,14 @@ namespace bo3z
 			// Movement::Tick, never switched off - with bBloodSplatterEnabled off the game never builds its splatter node, and
 			// opening the map, which hides that node, crashed the game)
 			DarkenNights();
+			// (Noah: "Can you remove the flinch screen effect when I get hit?") Skyrim's own get-hit image-space flash (GetHit,
+			// and its older GetHitOLD) given no time to play
+			for (const RE::FormID id : { 0x00000162u, 0x000639A8u }) {
+				if (auto* m = RE::TESForm::LookupByID<RE::TESImageSpaceModifier>(id)) {
+					m->data.duration = 0.0f;
+					logger::info("hit: Skyrim's get-hit screen flash {:08X} switched off", id);
+				}
+			}
 			OnlyCompendiumScreens();
 			NoUndeadTaunts();
 			// (Noah: "Obtain the Spellsword Manual" still in the journal) the Spellsword mod's start quest never starts on a
