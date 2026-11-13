@@ -851,6 +851,13 @@ namespace bo3z
 					const float shows = r.anim == 4 ? r.delay + kRedBeamFall : 0.05f;
 					if (((r.anim == 5 || r.struck) && r.t >= shows) || a->IsDead()) {
 						if (r.faded) a->SetAlpha(1.0f), r.faded = false;
+						// (the log: "sank 50-80 into the ground" a moment after showing - with no collision while it waited it had
+						// settled under the floor) set back on its floor as it shows, then solid
+						if (!a->IsDead()) {
+							auto f = a->GetPosition();
+							f.z = r.floorZ + 4.0f;
+							a->SetPosition(f, true);
+						}
 						a->SetCollision(true);
 						a->EnableAI(true);
 						if (auto* pc = RE::PlayerCharacter::GetSingleton(); pc && !a->IsDead()) {
@@ -3656,11 +3663,15 @@ namespace bo3z
 					const float facing = (dx * std::sin(yaw) + dy * std::cos(yaw)) / len;  // 1 straight ahead
 					inView = facing > 0.45f && dist < 2500.0f && !RayBlocked(a_player->GetParentCell(), pp + RE::NiPoint3{ 0, 0, 110.0f }, zp + RE::NiPoint3{ 0, 0, 90.0f });
 				}
-				if (pinned && !s.freed && FreeFromEmerge(a.get())) {
+				// (filming: in the free camera your body isn't updated and the dead can't always reach it - each one called stuck was
+				// reburied and came again, over and over, "less of them spawning") no reburials while the free camera is out
+				const bool filming = RE::PlayerCamera::GetSingleton() && RE::PlayerCamera::GetSingleton()->IsInFreeCameraMode();
+				if (filming) s.still = 0, s.stuck = 0;
+				if (!filming && pinned && !s.freed && FreeFromEmerge(a.get())) {
 					s.freed = true, s.still = 0, s.lastPos = a->GetPosition();   // (its legs given back first: reburied only if it still won't move)
 					continue;
 				}
-				if ((pinned || s.stuck >= 10.0f) && !inView && grounded >= 1.5f && relocGap <= 0 && !IsRising(a.get())) {
+				if (!filming && (pinned || s.stuck >= 10.0f) && !inView && grounded >= 1.5f && relocGap <= 0 && !IsRising(a.get())) {
 					// (Noah: "they get stuck, and then they teleport underground" - over a hundred a night: Find why they freeze)
 					// what one called stuck was doing, for the first ones each session
 					if (static int told = 0; told++ < 40) {
