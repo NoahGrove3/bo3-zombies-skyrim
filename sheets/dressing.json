@@ -388,7 +388,7 @@
     "riseUnits": 45,
     "spinSeconds": 4.2,
     "offerSeconds": 12,
-    "riseFxModel": "DLC01\\Effects\\DraugrEmergeGround01.nif",
+    "riseFxModel": "Effects\\ImpactEffects\\ImpactArrowDirt01.nif",
     "riseDustModel": "Effects\\ImpactEffects\\FXDragonTailStompDust.nif",
     "cheeseScale": 0.3
   }

@@ -660,14 +660,17 @@ namespace bo3z
 		void RiseDirt(RE::Actor* a_a, const RE::NiPoint3& a_at)
 		{
 			// (Noah: "the dirt effect ... needs to be a lot smaller, like just the size of their chest in radius on the surface of
-			// where they're crawling up from") both kept to a chest's width, flat on the ground
-			for (const auto [id, life, scale] : { std::tuple{ gen::kRiseFx, 3.0f, 0.4f }, std::tuple{ gen::kRiseDust, 4.0f, 0.15f } }) {
-				auto* fx = Forms::Ours(id);
-				if (!fx || g_fx.size() >= 32) continue;
-				if (auto puff = a_a->PlaceObjectAtMe(fx, false)) {
-					puff->SetScale(scale);
-					puff->SetPosition(a_at);
-					g_fx.push_back({ puff->CreateRefHandle(), life });
+			// where they're crawling up from" - scaled down, the grave burst's and the dust's smoke kept their size: he picked
+			// Skyrim's arrow-in-dirt spray instead) three little sprays of earth round the hole, a chest's width, no smoke
+			if (auto* fx = Forms::Ours(gen::kRiseFx)) {
+				const float turn = Uniform(0.0f, 6.2832f);
+				for (int k = 0; k < 3 && g_fx.size() < 32; ++k) {
+					const float ang = turn + 2.0944f * static_cast<float>(k);
+					if (auto puff = a_a->PlaceObjectAtMe(fx, false)) {
+						puff->SetPosition({ a_at.x + std::cos(ang) * 22.0f, a_at.y + std::sin(ang) * 22.0f, a_at.z + 2.0f });
+						puff->SetAngle({ 0.0f, 0.0f, ang });
+						g_fx.push_back({ puff->CreateRefHandle(), 2.0f });
+					}
 				}
 			}
 			// (Noah: "give the enemy spawning a sound effect ... subtle but recognizable and makes sense with crawling out of the
@@ -3608,6 +3611,25 @@ namespace bo3z
 					inView = facing > 0.45f && dist < 2500.0f && !RayBlocked(a_player->GetParentCell(), pp + RE::NiPoint3{ 0, 0, 110.0f }, zp + RE::NiPoint3{ 0, 0, 90.0f });
 				}
 				if ((pinned || s.stuck >= 10.0f) && !inView && grounded >= 1.5f && relocGap <= 0 && !IsRising(a.get())) {
+					// (Noah: "they get stuck, and then they teleport underground" - over a hundred a night: Find why they freeze)
+					// what one called stuck was doing, for the first ones each session
+					if (static int told = 0; told++ < 40) {
+						auto*       ac = a.get();
+						auto        tgt = ac->GetActorRuntimeData().currentCombatTarget.get();
+						auto*       pkg = ac->GetCurrentPackage();
+						bool        animDriven = false, bInJump = false;
+						ac->GetGraphVariableBool("bAnimationDriven", animDriven);
+						ac->GetGraphVariableBool("bInJumpState", bInJump);
+						const auto  here = ac->GetPosition();
+						auto*       nav = ac->GetParentCell();
+						logger::info("stuck: {} {:08X} still {:.1f} s, {:.0f} away | ai {} combat {} target {} | package {:08X} type {} | alpha-faded {} hidden3D {} | anim-driven {} jump {} | sit {} | speed {:.0f} | z {:.0f} (you {:.0f}) cell {}",
+							gen::kEnemies[s.enemy].id, ac->GetFormID(), s.still, dist, ac->IsAIEnabled(), ac->IsInCombat(),
+							tgt ? (tgt.get() == a_player ? std::string("you") : fmt::format("{:08X}", tgt->GetFormID())) : std::string("none"),
+							pkg ? pkg->GetFormID() : 0u, pkg ? static_cast<int>(pkg->packData.packType.get()) : -1,
+							ac->Get3D() ? false : true, ac->Get3D() && ac->Get3D()->GetFlags().any(RE::NiAVObject::Flag::kHidden),
+							animDriven, bInJump, static_cast<int>(ac->AsActorState()->GetSitSleepState()), ac->AsActorValueOwner()->GetActorValue(RE::ActorValue::kSpeedMult),
+							here.z, a_player->GetPositionZ(), nav ? nav->GetFormEditorID() : "");
+					}
 					relocGap = 2.5f, s.stuck = 0, s.stall = 0, s.still = 0, s.lastDist = -1;  // (no more than one set down every 2.5 s)
 					Resurface(a.get(), a_player);
 					s.lastPos = a->GetPosition();
