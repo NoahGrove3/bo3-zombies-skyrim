@@ -127,6 +127,11 @@ namespace bo3z
 					cal->gameHour->value = h;
 					logger::info("dev: hour set to {}", h);
 				}
+			} else if (cmd == "sky") {  // sky <blood|twilight|off>
+				std::string look;
+				in >> look;
+				Director::DevSky(look);
+				logger::info("dev: sky {}", look);
 			} else if (cmd == "lapse") {
 				float to = 0, secs = 8;
 				in >> to >> secs;

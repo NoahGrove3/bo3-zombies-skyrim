@@ -2126,42 +2126,80 @@ namespace bo3z
 
 		// The night's sky and sound; Fog Night brings Grimmvar out of the mist.
 		// (Noah: "Real red sky in game" - the Blood Fog's sky was its weather's own grey, its red only a haze at the screen's
-		// edges) while a Blood Fog night lasts its weather's colours are blood red - sky, horizon, fog, the light it casts -
-		// and the sky turns to it over the weather's own change, not at a cut; the weather's own colours come back after
-		RE::TESWeather* g_redWeather = nullptr;
-		RE::Color       g_redSaved[RE::TESWeather::ColorTypes::kTotal][RE::TESWeather::ColorTimes::kTotal]{};
-		void RedSky(RE::TESWeather* a_w, bool a_on)
+		// edges) a night's sky recoloured for as long as it lasts - sky, horizon, fog, clouds, the light it casts - and the sky
+		// turns to it over the weather's own change, not at a cut; the weather's own colours (and flags) come back after.
+		// (Noah: "when it's a blood moon, make the rest of the sky red, but not too bright" - the Blood Fog nights; "the
+		// Special Nights should get a Twilight Sky. Something else that looks cool") the special nights: deep indigo over a
+		// violet-rose horizon, the aurora drawn across it
+		enum class SkyLook { kBlood, kTwilight };
+		RE::TESWeather* g_skyWeather = nullptr;
+		RE::Color       g_skySaved[RE::TESWeather::ColorTypes::kTotal][RE::TESWeather::ColorTimes::kTotal]{};
+		std::uint8_t    g_skyFlags = 0;
+		void TintSky(RE::TESWeather* a_w, SkyLook a_look)
 		{
 			using CT = RE::TESWeather::ColorTypes;
-			if (a_on) {
-				if (!a_w || g_redWeather == a_w) return;
-				if (g_redWeather) RedSky(nullptr, false);
-				g_redWeather = a_w;
-				std::memcpy(g_redSaved, a_w->colorData, sizeof(g_redSaved));
-				const auto set = [&](CT::ColorType t, int r, int g, int b) {
-					for (int tm = 0; tm < RE::TESWeather::ColorTimes::kTotal; ++tm) {
-						const float k = tm == RE::TESWeather::ColorTimes::kDay ? 1.6f : tm == RE::TESWeather::ColorTimes::kNight ? 1.0f : 1.3f;
-						auto& c = a_w->colorData[t][tm];
-						c.red = static_cast<std::uint8_t>(std::min(255.0f, r * k)), c.green = static_cast<std::uint8_t>(std::min(255.0f, g * k)), c.blue = static_cast<std::uint8_t>(std::min(255.0f, b * k));
-					}
-				};
-				set(CT::kSkyUpper, 46, 4, 6);
-				set(CT::kSkyLower, 120, 12, 10);
-				set(CT::kHorizon, 150, 18, 12);
-				set(CT::kFogNear, 92, 10, 9);
-				set(CT::kFogFar, 118, 14, 11);
-				set(CT::kCloudLODDiffuse, 110, 16, 14);
-				set(CT::kCloudLODAmbient, 60, 8, 8);
-				set(CT::kSkyStatics, 80, 12, 12);
-				set(CT::kAmbient, 70, 30, 30);
-				set(CT::kSunlight, 110, 30, 26);
-				set(CT::kEffectLighting, 110, 30, 26);
-				set(CT::kMoonGlare, 170, 30, 24);
-				logger::info("event: the Blood Fog's sky turned blood red");
-			} else if (g_redWeather) {
-				std::memcpy(g_redWeather->colorData, g_redSaved, sizeof(g_redSaved));
-				g_redWeather = nullptr;
+			if (!a_w || g_skyWeather == a_w) return;
+			if (g_skyWeather) {
+				std::memcpy(g_skyWeather->colorData, g_skySaved, sizeof(g_skySaved));
+				g_skyWeather->data.flags = static_cast<RE::TESWeather::WeatherDataFlag>(g_skyFlags);
 			}
+			g_skyWeather = a_w;
+			std::memcpy(g_skySaved, a_w->colorData, sizeof(g_skySaved));
+			g_skyFlags = static_cast<std::uint8_t>(a_w->data.flags.underlying());
+			const auto set = [&](CT::ColorType t, int r, int g, int b) {
+				for (int tm = 0; tm < RE::TESWeather::ColorTimes::kTotal; ++tm) {
+					const float k = tm == RE::TESWeather::ColorTimes::kDay ? 1.6f : tm == RE::TESWeather::ColorTimes::kNight ? 1.0f : 1.3f;
+					auto& c = a_w->colorData[t][tm];
+					c.red = static_cast<std::uint8_t>(std::min(255.0f, r * k)), c.green = static_cast<std::uint8_t>(std::min(255.0f, g * k)), c.blue = static_cast<std::uint8_t>(std::min(255.0f, b * k));
+				}
+			};
+			if (a_look == SkyLook::kBlood) {   // (darker than the first: a deep blood red, never bright)
+				set(CT::kSkyUpper, 22, 2, 3);
+				set(CT::kSkyLower, 68, 7, 6);
+				set(CT::kHorizon, 86, 10, 8);
+				set(CT::kFogNear, 52, 6, 6);
+				set(CT::kFogFar, 66, 8, 7);
+				set(CT::kCloudLODDiffuse, 62, 10, 9);
+				set(CT::kCloudLODAmbient, 34, 5, 5);
+				set(CT::kSkyStatics, 46, 8, 8);
+				set(CT::kAmbient, 48, 22, 22);
+				set(CT::kSunlight, 70, 22, 20);
+				set(CT::kEffectLighting, 70, 22, 20);
+				set(CT::kMoonGlare, 150, 26, 20);
+			} else {                            // twilight: indigo above, violet and rose low on the horizon, the aurora on
+				set(CT::kSkyUpper, 10, 8, 34);
+				set(CT::kSkyLower, 46, 22, 78);
+				set(CT::kHorizon, 92, 38, 104);
+				set(CT::kFogNear, 30, 20, 56);
+				set(CT::kFogFar, 52, 30, 82);
+				set(CT::kCloudLODDiffuse, 70, 44, 110);
+				set(CT::kCloudLODAmbient, 26, 18, 50);
+				set(CT::kSkyStatics, 40, 30, 70);
+				set(CT::kAmbient, 36, 32, 62);
+				set(CT::kSunlight, 60, 48, 100);
+				set(CT::kEffectLighting, 80, 60, 130);
+				set(CT::kStars, 200, 190, 255);
+				set(CT::kMoonGlare, 150, 40, 70);
+				a_w->data.flags.set(RE::TESWeather::WeatherDataFlag::kPermAurora);
+			}
+			logger::info("sky: the night's sky turned {}", a_look == SkyLook::kBlood ? "blood red" : "to twilight");
+		}
+		void UntintSky()
+		{
+			if (!g_skyWeather) return;
+			std::memcpy(g_skyWeather->colorData, g_skySaved, sizeof(g_skySaved));
+			g_skyWeather->data.flags = static_cast<RE::TESWeather::WeatherDataFlag>(g_skyFlags);
+			g_skyWeather = nullptr;
+		}
+		// the special night's twilight: Skyrim's clear sky, recoloured, the aurora across it
+		void TwilightNight()
+		{
+			auto* w = RE::TESForm::LookupByID<RE::TESWeather>(0x0000081A);   // SkyrimClear
+			auto* sky = RE::Sky::GetSingleton();
+			if (!w || !sky) return;
+			TintSky(w, SkyLook::kTwilight);
+			sky->SetWeather(w, true, false);
+			g_weatherForced = true;
 		}
 		void StartEvent(int a_event)
 		{
@@ -2169,7 +2207,7 @@ namespace bo3z
 			if (auto* w = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESWeather>(ev.weatherId, ev.weatherPlugin)) {
 				if (auto* sky = RE::Sky::GetSingleton()) {
 					if (a_event == gen::kEvent_bloodfog) {
-						RedSky(w, true);
+						TintSky(w, SkyLook::kBlood);
 						sky->SetWeather(w, true, false);   // (the sky turns to it, not cut)
 					} else {
 						sky->ForceWeather(w, true);
@@ -2198,7 +2236,7 @@ namespace bo3z
 				}
 				g_weatherForced = false;
 			}
-			RedSky(nullptr, false);
+			UntintSky();
 			g_event = -1;
 		}
 
@@ -2392,6 +2430,7 @@ namespace bo3z
 				Hud::Banner("NIGHT " + std::to_string(a_round) + " - " + std::string(ev.banner), 6.0f);
 			} else {
 				Forms::Play(g_special ? gen::Sound::event_bloodmoon : gen::Sound::night_start);
+				if (g_special && !Coop::Client()) TwilightNight();
 				Hud::Banner(fmt::format("NIGHT {} - WAVE 1 OF {}{}", a_round, g_waves, g_special ? " - THE HOUNDS ARE LOOSE" : ""));
 			}
 			Stats::NightBegins(a_round);
@@ -4376,6 +4415,20 @@ namespace bo3z
 			return -1;
 		}
 		void TintMoons() { TickBloodMoon(); }
+		void DevSky(std::string_view a_look)   // (sky blood | twilight | off: the night skies, for filming and checks)
+		{
+			if (a_look == "off") {
+				EndEvent();
+				return;
+			}
+			if (a_look == "twilight") {
+				TwilightNight();
+				return;
+			}
+			const auto& ev = gen::kEvents[gen::kEvent_bloodfog];
+			auto*       w = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESWeather>(ev.weatherId, ev.weatherPlugin);
+			if (auto* sky = RE::Sky::GetSingleton(); w && sky) TintSky(w, SkyLook::kBlood), sky->SetWeather(w, true, false), g_weatherForced = true;
+		}
 		bool NightNow() { return IsNight(); }
 		constexpr float kNightMinutes = 10.0f;  // a night's real minutes, dusk to the hold before dawn
 		// ---- (Noah: "the wait screen in 12-hour time, the circle marking when the Curse wakes, when the dead start and

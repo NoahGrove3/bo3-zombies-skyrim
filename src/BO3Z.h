@@ -168,6 +168,7 @@ namespace bo3z
 		void             Frenzy(RE::Actor* a_actor, float a_seconds);  // Mindbreaker: turns on its own kind  // night truce: townsfolk and followers can't be hurt
 		bool             NightNow();  // night hours (the undead are out)
 		void             TintMoons(); // (the blood moon) the moons' colour, after the sky's own update
+		void             DevSky(std::string_view a_look);  // dev: blood | twilight | off
 		float            RoundHealth();  // a zombie's full health this round (Skyrim units)
 		float            KillEssenceScale();  // (the essence economy) a kill's essence after night 10: tapering as the dead multiply
 		float            PriceScale();        // the repeat buys' prices: 3% more a night after night 10
