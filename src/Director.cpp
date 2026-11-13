@@ -2626,7 +2626,10 @@ namespace bo3z
 				// each at the next spawn point in turn
 				const int   field = std::max(g_toSpawn, 10 + 4 * (std::max(1, g_wave) - 1) + 2 * (std::max(1, g_current) - 1));
 				const int   want = std::min({ static_cast<int>(field * Curse::SpawnBoost()), R.maxAlive * 3 / 2, g_waveSize });
-				if (g_pause <= 0 && (g_spawnTimer -= a_delta) <= 0 && static_cast<int>(g_alive.size()) < want && !Movement::Gliding() && !a_player->IsInMidair()) {  // (none dropped in under you while you fly: the crash)
+				// (Noah, filming night 10: "there's only like 4 zombies" - in the free camera your body isn't updated, and with its place
+				// written under the camera Skyrim took it for in mid-air: no one was raised) in the free camera the mid-air rule is off
+				const bool filmCam = RE::PlayerCamera::GetSingleton() && RE::PlayerCamera::GetSingleton()->IsInFreeCameraMode();
+				if (g_pause <= 0 && (g_spawnTimer -= a_delta) <= 0 && static_cast<int>(g_alive.size()) < want && !Movement::Gliding() && (filmCam || !a_player->IsInMidair())) {  // (none dropped in under you while you fly: the crash)
 					const int th = ThemeNowImpl();
 					const int fin = th >= 0 ? gen::kEvents[th].finale : -1;
 					const bool last = g_waveSpawned == g_waveSize - 1;

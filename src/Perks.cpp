@@ -451,6 +451,9 @@ namespace bo3z
 			if (!p || p->IsDead() || a_amount <= 0 || std::chrono::steady_clock::now() < g_dodgeUntil) {
 				return;  // (mid-roll: the blow misses)
 			}
+			// (Noah, filming night 10 in god mode: "you fell" to the Hunting Ground King - the boss's blasts, slams and breath came
+			// this way, not past the god-mode check the dead's hands have) console god mode: nothing of the night's lands
+			if (RE::PlayerCharacter::IsGodMode()) return;
 			if (Echo::WordSilenced(1)) {
 				a_amount *= 0.8f;  // (TIID silenced: borrowed time)
 			}
