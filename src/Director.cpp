@@ -2133,25 +2133,30 @@ namespace bo3z
 			g_skyWeather = a_w;
 			std::memcpy(g_skySaved, a_w->colorData, sizeof(g_skySaved));
 			g_skyFlags = static_cast<std::uint8_t>(a_w->data.flags.underlying());
+			// (Noah, of the Blood Fog's sky: "make it not as red ... more transparent. So there's like a red hue, but it's not fully
+			// red") the blood sky is a red laid over the weather's own colours, under half strength; twilight replaces them
+			const float mix = a_look == SkyLook::kBlood ? 0.42f : 1.0f;
 			const auto set = [&](CT::ColorType t, int r, int g, int b) {
 				for (int tm = 0; tm < RE::TESWeather::ColorTimes::kTotal; ++tm) {
 					const float k = tm == RE::TESWeather::ColorTimes::kDay ? 1.6f : tm == RE::TESWeather::ColorTimes::kNight ? 1.0f : 1.3f;
 					auto& c = a_w->colorData[t][tm];
-					c.red = static_cast<std::uint8_t>(std::min(255.0f, r * k)), c.green = static_cast<std::uint8_t>(std::min(255.0f, g * k)), c.blue = static_cast<std::uint8_t>(std::min(255.0f, b * k));
+					const auto& o = g_skySaved[t][tm];
+					const auto blend = [&](std::uint8_t was, int want) { return static_cast<std::uint8_t>(std::clamp(was * (1.0f - mix) + std::min(255.0f, want * k) * mix, 0.0f, 255.0f)); };
+					c.red = blend(o.red, r), c.green = blend(o.green, g), c.blue = blend(o.blue, b);
 				}
 			};
-			if (a_look == SkyLook::kBlood) {   // (darker than the first: a deep blood red, never bright)
-				set(CT::kSkyUpper, 22, 2, 3);
-				set(CT::kSkyLower, 68, 7, 6);
-				set(CT::kHorizon, 86, 10, 8);
-				set(CT::kFogNear, 52, 6, 6);
-				set(CT::kFogFar, 66, 8, 7);
-				set(CT::kCloudLODDiffuse, 62, 10, 9);
-				set(CT::kCloudLODAmbient, 34, 5, 5);
-				set(CT::kSkyStatics, 46, 8, 8);
-				set(CT::kAmbient, 48, 22, 22);
-				set(CT::kSunlight, 70, 22, 20);
-				set(CT::kEffectLighting, 70, 22, 20);
+			if (a_look == SkyLook::kBlood) {   // (a red hue over the night's own sky, never a wall of red)
+				set(CT::kSkyUpper, 30, 3, 4);
+				set(CT::kSkyLower, 80, 8, 7);
+				set(CT::kHorizon, 100, 12, 9);
+				set(CT::kFogNear, 60, 8, 7);
+				set(CT::kFogFar, 76, 10, 8);
+				set(CT::kCloudLODDiffuse, 72, 12, 10);
+				set(CT::kCloudLODAmbient, 38, 6, 6);
+				set(CT::kSkyStatics, 52, 10, 9);
+				set(CT::kAmbient, 50, 26, 26);
+				set(CT::kSunlight, 76, 26, 22);
+				set(CT::kEffectLighting, 76, 26, 22);
 				set(CT::kMoonGlare, 150, 26, 20);
 			} else {                            // twilight: indigo above, violet and rose low on the horizon, the aurora on
 				set(CT::kSkyUpper, 10, 8, 34);
