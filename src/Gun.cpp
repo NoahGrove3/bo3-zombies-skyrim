@@ -3754,27 +3754,43 @@ namespace bo3z
 		// his clip: "it's not the beam. It's just an orb" and it "disappears before it hits the ground") a true beam: a thin
 		// column of red light whose tip drives down out of the sky to the ground over kRedBeamFall (eased: quick, then slowing
 		// as it nears), held a moment as the body appears in it, then gone - no burst, no ring
-		struct RedColumn { RE::NiPoint3 at; float t = 0, fall = 1.0f; };
+		struct RedColumn
+		{
+			RE::NiPoint3 at;
+			float        t = 0, fall = 1.0f;
+			bool         landed = false;
+			std::unique_ptr<Spellcraft::Beam> glow, core;   // (Noah: "there's no red beams on the sky when they spawn" - a streak made new every
+			                                                // frame never finished loading before it was gone: one beam kept, laid again each frame)
+		};
 		std::vector<RedColumn> g_redCols;
 		void RedBeamImpl(const RE::NiPoint3& a_at)
 		{
-			if (g_redCols.size() < 24) g_redCols.push_back({ a_at, 0.0f, 1.0f });
+			if (g_redCols.size() >= 24) return;
+			RedColumn c{ a_at };
+			c.glow = std::make_unique<Spellcraft::Beam>(), c.core = std::make_unique<Spellcraft::Beam>();
+			c.glow->row = c.core->row = RedRow();
+			g_redCols.push_back(std::move(c));
 		}
 		void TickRedColumns(float a_delta)
 		{
 			if (g_redCols.empty()) return;
-			const int row = RedRow();
 			for (auto& c : g_redCols) {
 				c.t += a_delta;
 				const float u = std::min(1.0f, c.t / c.fall), e = 1.0f - (1.0f - u) * (1.0f - u);
-				const RE::NiPoint3 top = c.at + RE::NiPoint3{ 0, 0, 2400.0f };
-				const RE::NiPoint3 tip = top + (c.at - top) * e;
+				const RE::NiPoint3 top = c.at + RE::NiPoint3{ 0, 0, 2000.0f };
+				const RE::NiPoint3 tip = top + (c.at - top) * std::max(0.02f, e);
 				const float fade = c.t <= c.fall ? 1.0f : std::max(0.0f, 1.0f - (c.t - c.fall) / 0.35f);   // (held, then thinning out)
 				if (fade > 0.0f) {
-					Spellcraft::StreakAt(row, top, tip, 2.4f * fade, 0.03f, false);   // (laid fresh each frame from the sky to its tip)
-					Spellcraft::StreakAt(row, top, tip, 0.9f * fade, 0.03f, false);   // (its brighter core)
+					c.glow->Lay(top, tip, 2.4f * fade, false);
+					c.core->Lay(top, tip, 0.9f * fade, false);
+				}
+				// (Noah: "give them like a beam impact sound effect that's not loud, very subtle, that sounds cool") as it touches down
+				if (!c.landed && u >= 1.0f) {
+					c.landed = true;
+					Audio::AtPoint(gen::Sound::hit_drill, c.at, 0.0f, 0.3f);
 				}
 			}
+			for (auto& c : g_redCols) if (c.t > c.fall + 0.35f) c.glow->Clear(), c.core->Clear();
 			std::erase_if(g_redCols, [](const RedColumn& c) { return c.t > c.fall + 0.35f; });
 		}
 		struct SoulFallFx { RE::NiPoint3 from, to, last; float t = 0, dur = 0.7f, ember = 0; };
