@@ -310,6 +310,17 @@ namespace bo3z
 			static inline REL::Relocation<decltype(thunk)> func;
 		};
 		std::chrono::steady_clock::time_point g_playerTicked{};
+		// (Noah: "it needs to be a blood moon") the moons coloured right after the sky's own update of them, so its colour is
+		// the last word each frame (Director::TintMoons)
+		struct MoonUpdate
+		{
+			static void thunk(RE::Moon* a_this, RE::Sky* a_sky, float a_arg)
+			{
+				func(a_this, a_sky, a_arg);
+				Director::TintMoons();
+			}
+			static inline REL::Relocation<decltype(thunk)> func;
+		};
 		struct PlayerUpdate
 		{
 			static void thunk(RE::PlayerCharacter* a_this, float a_delta)
@@ -1501,6 +1512,10 @@ namespace bo3z
 			}
 			REL::Relocation<std::uintptr_t> vtbl{ RE::VTABLE_PlayerCharacter[0] };
 			PlayerUpdate::func = vtbl.write_vfunc(0xAD, PlayerUpdate::thunk);
+			{
+				REL::Relocation<std::uintptr_t> moon{ RE::VTABLE_Moon[0] };
+				MoonUpdate::func = moon.write_vfunc(0x3, MoonUpdate::thunk);
+			}
 			PlayerKill::func = vtbl.write_vfunc(0x10E, PlayerKill::thunk);
 			PlayerUseSkill::func = vtbl.write_vfunc(0xF7, PlayerUseSkill::thunk);
 			PlayerSelfHarm::func = vtbl.write_vfunc(0x104, PlayerSelfHarm::thunk);

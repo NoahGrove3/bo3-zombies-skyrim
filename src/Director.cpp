@@ -3751,6 +3751,27 @@ namespace bo3z
 		};
 		Sunrise g_sunrise;
 		constexpr float kSunriseBreath = 2.0f, kSunriseSeconds = 8.0f, kSunriseAfterDawn = 0.75f;
+		// (Noah: "it needs to be a blood moon") while the Curse holds Skyrim its moons are blood red - Masser deep red,
+		// Secunda a paler rose - their sky shader's colour held there every frame; white again once the curse is broken
+		void TickBloodMoon()  // (Director::TintMoons, from the moons' own update)
+		{
+			auto* sky = RE::Sky::GetSingleton();
+			if (!sky) return;
+			const bool want = !Echo::CurseBroken() || Echo::EndlessNight();
+			static bool was = false;
+			if (!want && !was) return;
+			for (auto* m : { sky->masser, sky->secunda }) {
+				if (!m || !m->moonMesh) continue;
+				auto* p = netimmerse_cast<RE::BSSkyShaderProperty*>(m->moonMesh->GetGeometryRuntimeData().shaderProperty.get());
+				if (!p) continue;
+				const bool big = m == sky->masser;
+				p->kBlendColor.red = 1.0f;
+				p->kBlendColor.green = want ? (big ? 0.16f : 0.30f) : 1.0f;
+				p->kBlendColor.blue = want ? (big ? 0.10f : 0.24f) : 1.0f;
+			}
+			if (want && !was) logger::info("sky: the moons run red under the Curse");
+			was = want;
+		}
 		void TickSunrise()
 		{
 			auto& r = g_sunrise;
@@ -4335,6 +4356,7 @@ namespace bo3z
 			}
 			return -1;
 		}
+		void TintMoons() { TickBloodMoon(); }
 		bool NightNow() { return IsNight(); }
 		constexpr float kNightMinutes = 10.0f;  // a night's real minutes, dusk to the hold before dawn
 		// ---- (Noah: "the wait screen in 12-hour time, the circle marking when the Curse wakes, when the dead start and

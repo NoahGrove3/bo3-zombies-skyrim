@@ -92,6 +92,21 @@ namespace bo3z
 			std::chrono::steady_clock::time_point t0{};
 		};
 		CamAnim g_camAnim;
+		// (Noah: "speed up time so it gradually goes from evening to night within an 8-second clip" - stepped from outside, "the
+		// moon ... was jittery, like teleporting. It needs to be smooth") lapse <to hour> <seconds>: the clock eased there,
+		// set every frame
+		struct Lapse { bool on = false; float from = 0, to = 0, dur = 1; std::chrono::steady_clock::time_point t0; };
+		Lapse g_lapse;
+		void TickLapse()
+		{
+			if (!g_lapse.on) return;
+			auto* cal = RE::Calendar::GetSingleton();
+			if (!cal || !cal->gameHour) return;
+			const float u = std::clamp(std::chrono::duration<float>(std::chrono::steady_clock::now() - g_lapse.t0).count() / g_lapse.dur, 0.0f, 1.0f);
+			const float e = u * u * (3.0f - 2.0f * u);
+			cal->gameHour->value = std::fmod(g_lapse.from + (g_lapse.to - g_lapse.from) * e, 24.0f);
+			if (u >= 1.0f) g_lapse.on = false, logger::info("dev: lapse done at {:.2f}", cal->gameHour->value);
+		}
 		RE::FreeCameraState* FreeCam()
 		{
 			auto* pc = RE::PlayerCamera::GetSingleton();
@@ -111,6 +126,15 @@ namespace bo3z
 				if (auto* cal = RE::Calendar::GetSingleton(); cal && cal->gameHour) {
 					cal->gameHour->value = h;
 					logger::info("dev: hour set to {}", h);
+				}
+			} else if (cmd == "lapse") {
+				float to = 0, secs = 8;
+				in >> to >> secs;
+				if (auto* cal = RE::Calendar::GetSingleton(); cal && cal->gameHour) {
+					g_lapse.from = cal->gameHour->value;
+					g_lapse.to = to < g_lapse.from ? to + 24.0f : to;
+					g_lapse.dur = std::max(0.1f, secs), g_lapse.t0 = std::chrono::steady_clock::now(), g_lapse.on = true;
+					logger::info("dev: lapse {:.2f} -> {:.2f} over {:.1f} s", g_lapse.from, to, secs);
 				}
 			} else if (cmd == "state" && player) {
 				const auto p = player->GetPosition();
@@ -1240,6 +1264,7 @@ namespace bo3z
 		{
 			FeedKeys();
 			TickCamAnim();
+			TickLapse();
 			// the game queue normally runs from the player's update; when that stops (free camera, a stuck menu)
 			// its lines still run from here after a moment, so the test channel can never lock itself out
 			if (std::chrono::steady_clock::now() - g_lastGameTick > std::chrono::milliseconds(1500)) {

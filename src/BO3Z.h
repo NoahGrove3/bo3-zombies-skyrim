@@ -167,6 +167,7 @@ namespace bo3z
 		bool             IsFoe(RE::Actor* a_actor);  // the night's undead, or anything of Skyrim's out to hurt you (bandits, wolves, trolls...) - never townsfolk, followers or friends
 		void             Frenzy(RE::Actor* a_actor, float a_seconds);  // Mindbreaker: turns on its own kind  // night truce: townsfolk and followers can't be hurt
 		bool             NightNow();  // night hours (the undead are out)
+		void             TintMoons(); // (the blood moon) the moons' colour, after the sky's own update
 		float            RoundHealth();  // a zombie's full health this round (Skyrim units)
 		float            KillEssenceScale();  // (the essence economy) a kill's essence after night 10: tapering as the dead multiply
 		float            PriceScale();        // the repeat buys' prices: 3% more a night after night 10
