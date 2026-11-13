@@ -655,6 +655,7 @@ namespace bo3z
 			int             resets = 0;      // times set back on the floor after rising
 			bool            faded = false;   // (the stand-up) faded out until its clip has it
 			float           delay = 0;       // (the bolt) when it strikes
+			float           built = 0;       // seconds its body has been in
 			bool            struck = false;
 		};
 		std::vector<Riser> g_risers;
@@ -810,13 +811,14 @@ namespace bo3z
 					// the sunbeam from the sky animation that we made ... painted red instead of gold") each now stands on its floor
 					// unseen and appears in the flash of its arrival: the Sky Beam in red for the common dead, a blood-red bolt of
 					// lightning for the elites and bosses
-					if (a->Is3DLoaded() && r.t > 0.05f) {
+					// (Noah's crash, 22:09: a worker thread fell over two seconds into a night, as the first arrivals' bodies came
+					// in) a body is left a third of a second after it is built before it is moved and faded - its loading jobs
+					// done - and its collision (off since it went under) is not touched again until it shows
+					if (a->Is3DLoaded()) r.built += a_delta;
+					if (r.built >= 0.35f) {
 						auto f = a->GetPosition();
 						f.z = r.floorZ + 2.0f;
 						a->SetPosition(f, true);
-						// (the log: the red beams came down two metres over the ground - they stop on the first thing they meet,
-						// and that was the waiting body itself) no collision until it shows
-						a->SetCollision(false);
 						a->SetAlpha(0.0f);
 						ShowRiser(a.get(), true), r.hidden = false, r.faded = true;
 						const bool great = Director::IsBoss(a.get()) || g_elites.contains(a->GetFormID());
