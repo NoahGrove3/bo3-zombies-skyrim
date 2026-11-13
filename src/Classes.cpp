@@ -934,6 +934,13 @@ namespace bo3z::Classes
 				me->data.projectileBase = src->data.projectileBase, me->data.castingArt = src->data.castingArt;
 				me->data.hitEffectArt = src->data.hitEffectArt, me->data.effectShader = src->data.effectShader;
 				me->data.castingType = RE::MagicSystem::CastingType::kConcentration, me->data.delivery = RE::MagicSystem::Delivery::kAimed;
+				// (Noah: "When using the soul caller staff, when I'm casting, it makes my screen blue" - and the Staff of Magnus
+				// not either) the beam's hit explosion (ExplosionShockMass01) carries an image-space tint 7000 units wide, laid
+				// on again with every hit while the beam is held; the beam and its sparks stay, the tint goes
+				if (auto* pj = src->data.projectileBase; pj && pj->data.explosionType && pj->data.explosionType->imageSpaceModifying) {
+					pj->data.explosionType->imageSpaceModifying = nullptr, pj->data.explosionType->data.imageSpaceRadius = 0.0f;
+					logger::info("summoner: the Magnus beam's hit no longer tints the screen blue");
+				}
 			}
 			logger::info("summoner: the Soulcaller's Staff wears the Glass Staff and casts the Staff of Magnus's beam");
 		}
