@@ -3758,7 +3758,7 @@ namespace bo3z
 		{
 			RE::NiPoint3 at;
 			float        t = 0, fall = 1.0f;
-			bool         landed = false;
+			bool         landed = false, told = false;
 			std::unique_ptr<Spellcraft::Beam> glow, core;   // (Noah: "there's no red beams on the sky when they spawn" - a streak made new every
 			                                                // frame never finished loading before it was gone: one beam kept, laid again each frame)
 		};
@@ -3783,6 +3783,14 @@ namespace bo3z
 				if (fade > 0.0f) {
 					c.glow->Lay(top, tip, 2.4f * fade, false);
 					c.core->Lay(top, tip, 0.9f * fade, false);
+				}
+				if (!c.told && c.t > 0.3f) {
+					c.told = true;
+					if (static int n = 0; n++ < 20) {
+						const auto* s0 = c.glow->segs.empty() ? nullptr : c.glow->segs[0].obj.get();
+						logger::info("redbeam: at ({:.0f},{:.0f},{:.0f}) glow {} segs, core {} segs, first seg {} parent {} culled {}", c.at.x, c.at.y, c.at.z, c.glow->segs.size(), c.core->segs.size(),
+							s0 ? "made" : "none", s0 && s0->parent ? "yes" : "no", s0 && s0->GetAppCulled());
+					}
 				}
 				// (Noah: "give them like a beam impact sound effect that's not loud, very subtle, that sounds cool") as it touches down
 				if (!c.landed && u >= 1.0f) {

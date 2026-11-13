@@ -833,6 +833,7 @@ namespace bo3z
 						continue;
 					}
 					if (r.t < 6.0f) continue;   // (its body not built yet: it waits, unseen)
+					if (static int told = 0; told++ < 20) logger::info("riser: {:08X} {} had no body after 6 s - stands without an arrival", a->GetFormID(), a->GetName());
 					// no body after 6 s: it simply stands there when it comes (nothing to show an arrival on)
 					ShowRiser(a.get(), true), r.hidden = false;
 					auto f = a->GetPosition();
@@ -847,6 +848,7 @@ namespace bo3z
 					if (r.anim == 4 && !r.struck && r.t >= r.delay) {
 						r.struck = true;
 						Gun::RedBeam({ a->GetPositionX(), a->GetPositionY(), r.floorZ });
+						if (static int told = 0; told++ < 20) logger::info("riser: {:08X} {} arrives in a red beam at ({:.0f},{:.0f},{:.0f})", a->GetFormID(), a->GetName(), a->GetPositionX(), a->GetPositionY(), r.floorZ);
 					}
 					const float shows = r.anim == 4 ? r.delay + kRedBeamFall : 0.05f;
 					if (((r.anim == 5 || r.struck) && r.t >= shows) || a->IsDead()) {

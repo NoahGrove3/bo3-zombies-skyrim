@@ -189,6 +189,17 @@ namespace bo3z
 				in >> n;
 				Save::Set(gen::kAV_round, std::max(0, n - 1));
 				logger::info("dev: the next night is night {}", std::max(1, n));
+			} else if (cmd == "beamtest") {  // beamtest: a red arrival beam 6 m ahead of the camera (or of you)
+				RE::NiPoint3 at = player->GetPosition();
+				float        yaw = player->GetAngleZ();
+				if (auto* pcam = RE::PlayerCamera::GetSingleton(); pcam && pcam->cameraRoot) {
+					at = pcam->cameraRoot->world.translate;
+					yaw = std::atan2(pcam->cameraRoot->world.rotate.entry[0][1], pcam->cameraRoot->world.rotate.entry[1][1]);
+				}
+				at += RE::NiPoint3{ std::sin(yaw) * 450.0f, std::cos(yaw) * 450.0f, 0.0f };
+				if (const auto g = Director::GroundUnder(player->GetParentCell(), at + RE::NiPoint3{ 0, 0, 300.0f })) at.z = *g;
+				Gun::RedBeam(at);
+				logger::info("dev: beamtest at ({:.0f},{:.0f},{:.0f})", at.x, at.y, at.z);
 			} else if (cmd == "lure") {  // lure on|off
 				std::string v;
 				in >> v;
