@@ -96,9 +96,12 @@ namespace bo3z
 		// moon ... was jittery, like teleporting. It needs to be smooth") lapse <to hour> <seconds>: the clock eased there,
 		// set every frame
 		// (Noah: "Are you able to make the enemies follow me while I'm in free cam? Because right now they're just attacking where
-		// my body was") lure on: while the free camera is out, your (unseen) body is kept on the walkable ground under the
-		// camera, so the dead hunt the camera; lure off: your body back in sight where it stands
-		bool g_lure = false;
+		// my body was") lure: your (unseen) body set once on the walkable ground under the free camera, so the dead run at the
+		// camera; lure off: your body back in sight where it stands.
+		// (Noah: "my frames are really choppy ... meshes on the ground are spawning in and then despawning over and over" - the
+		// body was moved every 0.4 s, and every move of you makes Skyrim re-settle the world round you) moved once per command,
+		// never again on its own
+		bool g_lure = false, g_lureMove = false;
 		void TickLure()
 		{
 			static bool hid = false;
@@ -121,13 +124,15 @@ namespace bo3z
 				return;
 			}
 			if (!hid) hide(true);
-			const auto now = std::chrono::steady_clock::now();
-			if (now < next) return;
-			next = now + std::chrono::milliseconds(400);
+			(void)next;
+			if (!g_lureMove) return;
+			g_lureMove = false;
 			const auto c = pcam->cameraRoot->world.translate;
-			if (std::hypot(c.x - p->GetPositionX(), c.y - p->GetPositionY()) < 120.0f) return;   // (close enough: left alone)
+			const float yaw = std::atan2(pcam->cameraRoot->world.rotate.entry[0][1], pcam->cameraRoot->world.rotate.entry[1][1]);
 			p->SetPosition({ c.x, c.y, c.z }, true);
 			p->MoveToNearestNavmesh();   // (down onto the walkable ground nearest the camera)
+			p->SetAngle({ 0.0f, 0.0f, yaw });   // (facing the way the camera looks: what's raised 'in front of you' comes up in view)
+			logger::info("dev: lure - your body set under the camera ({:.0f},{:.0f}), facing {:.0f} deg", c.x, c.y, yaw * 57.2958f);
 		}
 		struct Lapse { bool on = false; float from = 0, to = 0, dur = 1; std::chrono::steady_clock::time_point t0; };
 		Lapse g_lapse;
@@ -169,7 +174,7 @@ namespace bo3z
 			} else if (cmd == "lure") {  // lure on|off
 				std::string v;
 				in >> v;
-				g_lure = v != "off";
+				g_lure = v != "off", g_lureMove = g_lure;
 				logger::info("dev: lure {}", g_lure ? "on - the dead hunt the free camera" : "off");
 			} else if (cmd == "lapse") {
 				float to = 0, secs = 8;
