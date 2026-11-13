@@ -5108,6 +5108,24 @@
       "use": "the dead climb out of the earth (Noah: quieter)"
     },
     {
+      "id": "rise_dig",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_rise_dig",
+      "file": "fx\\npc\\mudcrab\\npc_mudcrab_dig_out_01.wav",
+      "space": "3d",
+      "verify": [],
+      "files": [
+        "fx\\npc\\mudcrab\\npc_mudcrab_dig_out_01.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 6,
+      "cat": "sfx",
+      "loop": false,
+      "use": "(Noah: \"a sound effect ... subtle but recognizable ... crawling out of the ground\" - he chose the mudcrab dig-out) the earth churned as one of the dead claws up (Skyrim's own)"
+    },
+    {
       "id": "step_shambler",
       "plugin": "CurseOfAlduin.esp",
       "localId": "auto",

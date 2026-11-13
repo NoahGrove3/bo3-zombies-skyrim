@@ -1836,6 +1836,7 @@
   "EFSH:tabletgreen": "0xf28",
   "EFSH:tabletgold": "0xf29",
   "STAT:rise_dust": "0xf2a",
-  "EFSH:soulpurple": "0xf2b"
+  "EFSH:soulpurple": "0xf2b",
+  "SNDR:rise_dig": "0xf2c"
  }
 }

@@ -670,6 +670,9 @@ namespace bo3z
 					g_fx.push_back({ puff->CreateRefHandle(), life });
 				}
 			}
+			// (Noah: "give the enemy spawning a sound effect ... subtle but recognizable and makes sense with crawling out of the
+			// ground" - the mudcrab's dig-out, his pick) the earth churns where it breaks
+			Audio::At(gen::Sound::rise_dig, a_a, 0.7f);
 			// (an elite lost its portal and the portal's warning with it) it still announces itself as it claws up
 			if (g_elites.contains(a_a->GetFormID())) Forms::PlayAt(gen::Sound::champ_telegraph, a_a);
 		}
@@ -1250,7 +1253,7 @@ namespace bo3z
 			// (Noah: "something better for the spawns instead of coming from the ground - it's constantly looking broken; summon
 			// portals with really low audio at the spawn points") every one of the night's dead steps out of the Curse's red
 			// portal now, its whoosh barely above a breath (no ground burst, no climbing out)
-			Audio::At(gen::Sound::rise, actor, 0.22f);
+			if (Director::IsBoss(actor)) Audio::At(gen::Sound::rise, actor, 0.22f);   // (the portal's breath: only the bosses still come through it)
 			g_summoned.insert(actor->GetFormID());
 			StartRise(actor, a_player);
 			return true;
@@ -2086,12 +2089,55 @@ namespace bo3z
 		}
 
 		// The night's sky and sound; Fog Night brings Grimmvar out of the mist.
+		// (Noah: "Real red sky in game" - the Blood Fog's sky was its weather's own grey, its red only a haze at the screen's
+		// edges) while a Blood Fog night lasts its weather's colours are blood red - sky, horizon, fog, the light it casts -
+		// and the sky turns to it over the weather's own change, not at a cut; the weather's own colours come back after
+		RE::TESWeather* g_redWeather = nullptr;
+		RE::Color       g_redSaved[RE::TESWeather::ColorTypes::kTotal][RE::TESWeather::ColorTimes::kTotal]{};
+		void RedSky(RE::TESWeather* a_w, bool a_on)
+		{
+			using CT = RE::TESWeather::ColorTypes;
+			if (a_on) {
+				if (!a_w || g_redWeather == a_w) return;
+				if (g_redWeather) RedSky(nullptr, false);
+				g_redWeather = a_w;
+				std::memcpy(g_redSaved, a_w->colorData, sizeof(g_redSaved));
+				const auto set = [&](CT::ColorType t, int r, int g, int b) {
+					for (int tm = 0; tm < RE::TESWeather::ColorTimes::kTotal; ++tm) {
+						const float k = tm == RE::TESWeather::ColorTimes::kDay ? 1.6f : tm == RE::TESWeather::ColorTimes::kNight ? 1.0f : 1.3f;
+						auto& c = a_w->colorData[t][tm];
+						c.red = static_cast<std::uint8_t>(std::min(255.0f, r * k)), c.green = static_cast<std::uint8_t>(std::min(255.0f, g * k)), c.blue = static_cast<std::uint8_t>(std::min(255.0f, b * k));
+					}
+				};
+				set(CT::kSkyUpper, 46, 4, 6);
+				set(CT::kSkyLower, 120, 12, 10);
+				set(CT::kHorizon, 150, 18, 12);
+				set(CT::kFogNear, 92, 10, 9);
+				set(CT::kFogFar, 118, 14, 11);
+				set(CT::kCloudLODDiffuse, 110, 16, 14);
+				set(CT::kCloudLODAmbient, 60, 8, 8);
+				set(CT::kSkyStatics, 80, 12, 12);
+				set(CT::kAmbient, 70, 30, 30);
+				set(CT::kSunlight, 110, 30, 26);
+				set(CT::kEffectLighting, 110, 30, 26);
+				set(CT::kMoonGlare, 170, 30, 24);
+				logger::info("event: the Blood Fog's sky turned blood red");
+			} else if (g_redWeather) {
+				std::memcpy(g_redWeather->colorData, g_redSaved, sizeof(g_redSaved));
+				g_redWeather = nullptr;
+			}
+		}
 		void StartEvent(int a_event)
 		{
 			const auto& ev = gen::kEvents[a_event];
 			if (auto* w = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESWeather>(ev.weatherId, ev.weatherPlugin)) {
 				if (auto* sky = RE::Sky::GetSingleton()) {
-					sky->ForceWeather(w, true);
+					if (a_event == gen::kEvent_bloodfog) {
+						RedSky(w, true);
+						sky->SetWeather(w, true, false);   // (the sky turns to it, not cut)
+					} else {
+						sky->ForceWeather(w, true);
+					}
 					g_weatherForced = true;
 				}
 			} else {
@@ -2116,6 +2162,7 @@ namespace bo3z
 				}
 				g_weatherForced = false;
 			}
+			RedSky(nullptr, false);
 			g_event = -1;
 		}
 
