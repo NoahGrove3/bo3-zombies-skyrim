@@ -3750,13 +3750,32 @@ namespace bo3z
 		// (Noah: "I want the normal enemies to be the sunbeam from the sky animation that we made ... but painted red instead of
 		// gold") the Sky Beam's bolt of light dropping out of the sky, its burst, its pillar and rising motes - all red, and kept
 		// small and short so a crowd of arrivals stays readable; about 0.4 s from the call to the strike (kRedBeamFall)
+		// (Noah: "remove the red explosion ... it should just be the beam that falls from the sky, and make it fall slower" - then,
+		// his clip: "it's not the beam. It's just an orb" and it "disappears before it hits the ground") a true beam: a thin
+		// column of red light whose tip drives down out of the sky to the ground over kRedBeamFall (eased: quick, then slowing
+		// as it nears), held a moment as the body appears in it, then gone - no burst, no ring
+		struct RedColumn { RE::NiPoint3 at; float t = 0, fall = 1.0f; };
+		std::vector<RedColumn> g_redCols;
 		void RedBeamImpl(const RE::NiPoint3& a_at)
 		{
-			// (Noah: "remove the red explosion when the beam impacts the ground and the circle that's on the floor ... it should
-			// just be the beam that falls from the sky, and make it fall slower from the sky so it's more telegraphed") only the
-			// bolt of red light, falling 1800 units over about a second (kRedBeamFall), onto its point through anything
-			Lob("CurseOfAlduin\\fx\\red_bolt.nif", a_at + RE::NiPoint3{ 0, 0, 1800.0f }, RE::NiPoint3{ 0, 0, -1700.0f }, 0.8f, nullptr, 0.0f, 0.0f);
-			if (!g_lobs.empty()) g_lobs.back().meteor = true, g_lobs.back().target = a_at;
+			if (g_redCols.size() < 24) g_redCols.push_back({ a_at, 0.0f, 1.0f });
+		}
+		void TickRedColumns(float a_delta)
+		{
+			if (g_redCols.empty()) return;
+			const int row = RedRow();
+			for (auto& c : g_redCols) {
+				c.t += a_delta;
+				const float u = std::min(1.0f, c.t / c.fall), e = 1.0f - (1.0f - u) * (1.0f - u);
+				const RE::NiPoint3 top = c.at + RE::NiPoint3{ 0, 0, 2400.0f };
+				const RE::NiPoint3 tip = top + (c.at - top) * e;
+				const float fade = c.t <= c.fall ? 1.0f : std::max(0.0f, 1.0f - (c.t - c.fall) / 0.35f);   // (held, then thinning out)
+				if (fade > 0.0f) {
+					Spellcraft::StreakAt(row, top, tip, 2.4f * fade, 0.03f, false);   // (laid fresh each frame from the sky to its tip)
+					Spellcraft::StreakAt(row, top, tip, 0.9f * fade, 0.03f, false);   // (its brighter core)
+				}
+			}
+			std::erase_if(g_redCols, [](const RedColumn& c) { return c.t > c.fall + 0.35f; });
 		}
 		struct SoulFallFx { RE::NiPoint3 from, to, last; float t = 0, dur = 0.7f, ember = 0; };
 		std::vector<SoulFallFx> g_soulFalls;
@@ -3836,6 +3855,7 @@ namespace bo3z
 			}
 			TickStorm(a_delta);
 			TickSoulFalls(a_delta);
+			TickRedColumns(a_delta);
 			Props::TickGauntlet(a_delta);
 			Props::TickFang(a_delta);
 			TickZones(a_delta);
