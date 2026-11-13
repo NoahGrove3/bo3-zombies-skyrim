@@ -95,6 +95,40 @@ namespace bo3z
 		// (Noah: "speed up time so it gradually goes from evening to night within an 8-second clip" - stepped from outside, "the
 		// moon ... was jittery, like teleporting. It needs to be smooth") lapse <to hour> <seconds>: the clock eased there,
 		// set every frame
+		// (Noah: "Are you able to make the enemies follow me while I'm in free cam? Because right now they're just attacking where
+		// my body was") lure on: while the free camera is out, your (unseen) body is kept on the walkable ground under the
+		// camera, so the dead hunt the camera; lure off: your body back in sight where it stands
+		bool g_lure = false;
+		void TickLure()
+		{
+			static bool hid = false;
+			static auto next = std::chrono::steady_clock::now();
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* pcam = RE::PlayerCamera::GetSingleton();
+			if (!p || !pcam) return;
+			const bool on = g_lure && pcam->IsInFreeCameraMode() && pcam->cameraRoot;
+			auto hide = [&](bool a_hide) {
+				for (const bool first : { false, true }) {
+					if (auto* root = p->Get3D(first)) {
+						if (a_hide) root->GetFlags().set(RE::NiAVObject::Flag::kHidden);
+						else root->GetFlags().reset(RE::NiAVObject::Flag::kHidden);
+					}
+				}
+				hid = a_hide;
+			};
+			if (!on) {
+				if (hid) hide(false);
+				return;
+			}
+			if (!hid) hide(true);
+			const auto now = std::chrono::steady_clock::now();
+			if (now < next) return;
+			next = now + std::chrono::milliseconds(400);
+			const auto c = pcam->cameraRoot->world.translate;
+			if (std::hypot(c.x - p->GetPositionX(), c.y - p->GetPositionY()) < 120.0f) return;   // (close enough: left alone)
+			p->SetPosition({ c.x, c.y, c.z }, true);
+			p->MoveToNearestNavmesh();   // (down onto the walkable ground nearest the camera)
+		}
 		struct Lapse { bool on = false; float from = 0, to = 0, dur = 1; std::chrono::steady_clock::time_point t0; };
 		Lapse g_lapse;
 		void TickLapse()
@@ -132,6 +166,11 @@ namespace bo3z
 				in >> look;
 				Director::DevSky(look);
 				logger::info("dev: sky {}", look);
+			} else if (cmd == "lure") {  // lure on|off
+				std::string v;
+				in >> v;
+				g_lure = v != "off";
+				logger::info("dev: lure {}", g_lure ? "on - the dead hunt the free camera" : "off");
 			} else if (cmd == "lapse") {
 				float to = 0, secs = 8;
 				in >> to >> secs;
@@ -919,11 +958,15 @@ namespace bo3z
 				in >> range;
 				struct Row { float d; std::string line; };
 				std::vector<Row> rows;
-				RE::TES::GetSingleton()->ForEachReferenceInRange(player, range, [&](RE::TESObjectREFR* r) {
+				// (Noah: "a floating lamp that's not attached to anything", seen through the free camera) in the free camera it's what
+				// is near the camera that's listed, lights (lanterns) too
+				RE::NiPoint3 from = player->GetPosition();
+				if (auto* pcam = RE::PlayerCamera::GetSingleton(); pcam && pcam->IsInFreeCameraMode() && pcam->cameraRoot) from = pcam->cameraRoot->world.translate;
+				RE::TES::GetSingleton()->ForEachReference([&](RE::TESObjectREFR* r) {
 					auto* base = r ? r->GetBaseObject() : nullptr;
-					if (!base || r == player || r->IsDisabled() || r->IsDeleted()) return RE::BSContainer::ForEachResult::kContinue;
+					if (!base || r == player || r->IsDisabled() || r->IsDeleted() || r->GetPosition().GetDistance(from) > range) return RE::BSContainer::ForEachResult::kContinue;
 					const auto ft = base->GetFormType();
-					if (ft != RE::FormType::Tree && ft != RE::FormType::Static && ft != RE::FormType::Flora && ft != RE::FormType::MovableStatic && ft != RE::FormType::Activator) return RE::BSContainer::ForEachResult::kContinue;
+					if (ft != RE::FormType::Tree && ft != RE::FormType::Static && ft != RE::FormType::Flora && ft != RE::FormType::MovableStatic && ft != RE::FormType::Activator && ft != RE::FormType::Light) return RE::BSContainer::ForEachResult::kContinue;
 					auto* mdl = base->As<RE::TESModel>();
 					const auto pos = r->GetPosition();
 					float land = 0;
@@ -932,7 +975,7 @@ namespace bo3z
 					auto* first = r->GetFile(0);
 					auto* bf = base->GetFile(0);
 					auto* bl = base->GetDescriptionOwnerFile();
-					const float d = pos.GetDistance(player->GetPosition());
+					const float d = pos.GetDistance(from);
 					rows.push_back({ d, fmt::format("dev: near {:08X} d {:.0f} base {:08X} [{} / last {}] model '{}' z {:.0f} land {:.0f} ({:+.0f}) scale {:.2f} 3d {} placed by {} last moved by {}", r->GetFormID(), d,
 						base->GetFormID(), bf ? bf->GetFilename() : "?", bl ? bl->GetFilename() : "?", mdl ? mdl->GetModel() : "", pos.z, got ? land : 0.0f, got ? pos.z - land : 0.0f, r->GetScale(),
 						r->Get3D() != nullptr, first ? first->GetFilename() : "?", last ? last->GetFilename() : "?") });
@@ -1270,6 +1313,7 @@ namespace bo3z
 			FeedKeys();
 			TickCamAnim();
 			TickLapse();
+			TickLure();
 			// the game queue normally runs from the player's update; when that stops (free camera, a stuck menu)
 			// its lines still run from here after a moment, so the test channel can never lock itself out
 			if (std::chrono::steady_clock::now() - g_lastGameTick > std::chrono::milliseconds(1500)) {
