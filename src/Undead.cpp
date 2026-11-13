@@ -141,6 +141,7 @@ namespace bo3z
 			std::atomic<float>        gaitV{ 0 };            // the clip speed its legs play now (0: standing or a full-body move)
 			RE::NiPoint3              locoLast{};
 			bool                      startDone = false;
+			std::atomic<int>          standPosed{ 0 };       // frames posed in the stand-up clip (the riser shows only once it lies in it)
 		};
 		std::shared_mutex                                    g_lock;
 		std::unordered_map<RE::FormID, std::shared_ptr<Rig>> g_rigs;  // (shared: the animation threads keep theirs alive while the game thread replaces or drops it)
@@ -755,6 +756,7 @@ namespace bo3z
 			g_clipPosed.fetch_add(1, std::memory_order_relaxed);
 			const int clipWas = P.clip;
 			P.Play(want, want == kRun ? 1.0f : RateFor(r, want), S);
+			if (P.clip == kStandUp) r.standPosed.fetch_add(1, std::memory_order_relaxed);
 			if (P.clip != clipWas && (P.clip == kAttack || P.clip == kAttackL || P.clip == kAttack2 || P.clip == kAttack3 || P.clip == kPunch) && S.Has(P.clip)) {
 				// a new swing: its blow lands two-thirds of the way through the clip, where the claws meet you
 				const float secs = S.c[P.clip].Seconds() / std::max(0.2f, P.rate) * 0.62f;
@@ -1388,6 +1390,13 @@ namespace bo3z
 			if (!r || !UsesClips(r->type)) return false;
 			LoadClips();
 			return g_clipSets[SkeletonOf(a_actor)].ok;
+		}
+		int StandUpPosed(RE::Actor* a_actor)
+		{
+			if (!a_actor) return 0;
+			std::shared_lock l(g_lock);
+			const auto it = g_rigs.find(a_actor->GetFormID());
+			return it != g_rigs.end() ? it->second->standPosed.load(std::memory_order_relaxed) : 0;
 		}
 		float StandUpSeconds()
 		{

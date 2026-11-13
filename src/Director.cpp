@@ -652,16 +652,20 @@ namespace bo3z
 			bool            hidden = false;  // (Noah: it showed standing on the ground a moment before the emerge took it under) unseen till the emerge has begun
 			float           standFor = 0;    // the stand-up clip's length (anim 3)
 			int             resets = 0;      // times set back on the floor after rising
+			bool            faded = false;   // (the stand-up) faded out until its clip has it
 		};
 		std::vector<Riser> g_risers;
 		// (Noah: "I want there to be like dust and debris coming from where they're clawing up from, like dirt") where one of
 		// the dead breaks the ground: the earth bursts (the draugr's own grave burst) and a cloud of dust and grit rolls off it
 		void RiseDirt(RE::Actor* a_a, const RE::NiPoint3& a_at)
 		{
-			for (const auto [id, life] : { std::pair{ gen::kRiseFx, 3.0f }, std::pair{ gen::kRiseDust, 4.0f } }) {
+			// (Noah: "the dirt effect ... needs to be a lot smaller, like just the size of their chest in radius on the surface of
+			// where they're crawling up from") both kept to a chest's width, flat on the ground
+			for (const auto [id, life, scale] : { std::tuple{ gen::kRiseFx, 3.0f, 0.4f }, std::tuple{ gen::kRiseDust, 4.0f, 0.15f } }) {
 				auto* fx = Forms::Ours(id);
 				if (!fx || g_fx.size() >= 32) continue;
 				if (auto puff = a_a->PlaceObjectAtMe(fx, false)) {
+					puff->SetScale(scale);
 					puff->SetPosition(a_at);
 					g_fx.push_back({ puff->CreateRefHandle(), life });
 				}
@@ -801,7 +805,11 @@ namespace bo3z
 						a->SetCollision(true);
 						r.standFor = Undead::StandUpSeconds();
 						Undead::CueFor(a.get(), Undead::kCueStandUp, r.standFor);
-						RiseDirt(a.get(), { f.x, f.y, r.floorZ });
+						// (Noah: "The enemies spawn stationary, floating above the ground, and then they get teleported under the
+						// ground, and then they start the crawling animation") its body is unhidden (so it is posed) but faded out
+						// entirely, and only faded in once it is posed lying in the clip - the first thing seen is the crawl
+						a->SetAlpha(0.0f);
+						ShowRiser(a.get(), true), r.hidden = false, r.faded = true;
 						continue;
 					}
 					if (!viaPortal && a->Is3DLoaded() && a->NotifyAnimationGraph("summonStart")) {
@@ -817,6 +825,10 @@ namespace bo3z
 						// no emerge animation for this body: it climbs out of the ground (our own rise, below)
 						r.anim = -1, r.t = 0;
 						ShowRiser(a.get(), true), r.hidden = false;
+					} else if (!viaPortal && r.t < 6.0f) {
+						// (Noah: "I shouldn't see any enemies that are floating or crawling out of the air") its body not built
+						// yet: it waits, unseen under the ground, for the body - never a portal or a pop instead
+						continue;
 					} else if (r.t > 0.4f) {
 						// (Noah: the night's spawns look conjured) no draugr rise for this one: it steps out of a portal
 						r.anim = 2, r.t = 0;
@@ -865,9 +877,13 @@ namespace bo3z
 					}
 					continue;
 				}
-				if (r.anim == 3) {  // getting up off the ground (its first moment hidden: the clip starts lying down)
-					if (r.hidden && (r.t >= 0.08f || a->IsDead())) ShowRiser(a.get(), true), r.hidden = false;
+				if (r.anim == 3) {  // getting up off the ground (unseen till the clip has it lying down)
+					if (r.faded && (Undead::StandUpPosed(a.get()) >= 3 || r.t >= 0.6f || a->IsDead())) {
+						a->SetAlpha(1.0f), r.faded = false;
+						RiseDirt(a.get(), { a->GetPositionX(), a->GetPositionY(), r.floorZ });   // (the ground breaks as it shows)
+					}
 					if (r.t >= r.standFor || a->IsDead()) {
+						if (r.faded) a->SetAlpha(1.0f), r.faded = false;
 						a->EnableAI(true);
 						r.anim = 9, r.t = 0;  // (then watched a moment: it must stay on the floor)
 					}
@@ -921,9 +937,9 @@ namespace bo3z
 				}
 			}
 			for (auto& r : g_risers) {
-				if (r.t >= 99 && r.hidden) {
-					if (auto a = r.h.get()) ShowRiser(a.get(), true);
-					r.hidden = false;
+				if (r.t >= 99 && (r.hidden || r.faded)) {
+					if (auto a = r.h.get()) ShowRiser(a.get(), true), a->SetAlpha(1.0f);
+					r.hidden = false, r.faded = false;
 				}
 			}
 			std::erase_if(g_risers, [](const Riser& r) { return r.t >= 99; });
@@ -933,6 +949,7 @@ namespace bo3z
 			for (auto& r : g_risers) {
 				if (auto a = r.h.get(); a && !a->IsDisabled() && !a->IsDeleted()) {  // (the audit: not the ones just vanished)
 					ShowRiser(a.get(), true);
+					if (r.faded) a->SetAlpha(1.0f);
 					auto at = a->GetPosition();
 					at.z = r.floorZ + 4.0f;
 					a->SetPosition(at, true);
@@ -4985,8 +5002,8 @@ namespace bo3z
 		RE::TESObjectREFR* NearestDoor(RE::Actor* a_who)
 		{
 			RE::TESObjectREFR* best = nullptr;
-			float              bestD = 2600.0f;
-			RE::TES::GetSingleton()->ForEachReferenceInRange(a_who, 2600.0f, [&](RE::TESObjectREFR* r) {
+			float              bestD = 4000.0f;
+			RE::TES::GetSingleton()->ForEachReferenceInRange(a_who, 4000.0f, [&](RE::TESObjectREFR* r) {
 				if (!r || r->IsDisabled() || !r->GetBaseObject() || r->GetBaseObject()->GetFormType() != RE::FormType::Door ||
 					!r->extraList.HasType(RE::ExtraDataType::kTeleport)) return RE::BSContainer::ForEachResult::kContinue;
 				const float d = r->GetPosition().GetDistance(a_who->GetPosition());
@@ -5103,6 +5120,12 @@ namespace bo3z
 				return false;
 			};
 			int n = 0;
+			// (Noah, filming at Whiterun's gate: "The NPCs just disappeared ... they didn't try to run into the house") in the free
+			// camera, near means near what you are looking from - your body may stand far back down the road - and the near
+			// ones run for a door up to 40 m off
+			RE::NiPoint3 eye = a_player->GetPosition();
+			if (auto* pcam = RE::PlayerCamera::GetSingleton(); pcam && pcam->IsInFreeCameraMode() && pcam->cameraRoot) eye = pcam->cameraRoot->world.translate;
+			int ran = 0, faded = 0, gone = 0;
 			for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
 				auto a = h.get();
 				if (!a || a.get() == a_player || a->IsDead() || a->IsDisabled() || a->IsPlayerTeammate() || IsOurs(a.get()) || Party::IsFriend(a.get()) ||
@@ -5115,7 +5138,7 @@ namespace bo3z
 				// (Noah: "I can still hear NPC's talking during a night and i can sometimes see them when they walk into the city or
 				// outside of a building") anyone near you is taken in too - on the road into town, just out of a door - not only
 				// those standing inside a town's bounds
-				const bool nearYou = a->GetParentCell() && !a->GetParentCell()->IsInteriorCell() && a->GetPosition().GetDistance(a_player->GetPosition()) < 8000.0f;
+				const bool nearYou = a->GetParentCell() && !a->GetParentCell()->IsInteriorCell() && (a->GetPosition().GetDistance(a_player->GetPosition()) < 8000.0f || a->GetPosition().GetDistance(eye) < 8000.0f);
 				if (!race || (npcKw && !race->HasKeyword(npcKw)) || a->IsHostileToActor(a_player) || (!inTown(a.get()) && !nearYou)) {
 					if (const char* nm = a->GetName(); nm && std::string_view(nm).find("Guard") != std::string_view::npos) {
 						static int told = 0;
@@ -5126,27 +5149,28 @@ namespace bo3z
 				a->StopCombat();
 				// (the near ones hurry off and fade from sight over a few seconds as night falls; the far ones - and anyone who turns
 				// up once the night is under way - are simply gone, silent)
-				if (g_duskFade > 0.0f && a->GetPosition().GetDistance(a_player->GetPosition()) < 3500.0f) {
+				if (g_duskFade > 0.0f && std::min(a->GetPosition().GetDistance(a_player->GetPosition()), a->GetPosition().GetDistance(eye)) < 5000.0f) {
 					if (std::any_of(g_runners.begin(), g_runners.end(), [&](const Runner& r) { return r.who.get().get() == a.get(); })) continue;
 					if (auto* door = std::none_of(g_fading.begin(), g_fading.end(), [&](const auto& f) { return f.first.get().get() == a.get(); }) ? NearestDoor(a.get()) : nullptr) {
 						g_runners.push_back({ a->CreateRefHandle(), door->CreateRefHandle(), 0.0f, false });
 						RunHome(a.get(), door);
-						++n;
+						++n, ++ran;
 						continue;
 					}
 					if (std::none_of(g_fading.begin(), g_fading.end(), [&](const auto& f) { return f.first.get().get() == a.get(); })) {
 						g_fading.push_back({ a->CreateRefHandle(), 1.0f + 6.0f * static_cast<float>(Pick(100)) / 100.0f });
 						g_sheltered.push_back(a->CreateRefHandle());
-						++n;
+						++n, ++faded;
+						if (static int told = 0; told++ < 20) logger::info("shelter: {} has no door within 40 m - fades", a->GetName());
 					}
 					continue;
 				}
 				a->Disable();
 				g_sheltered.push_back(a->CreateRefHandle());
-				++n;
+				++n, ++gone;
 			}
 			if (n) {
-				logger::info("shelter: {} townsfolk went indoors for the night", n);
+				logger::info("shelter: {} townsfolk went indoors for the night ({} ran for a door, {} fade, {} far off gone at once)", n, ran, faded, gone);
 			}
 		}
 

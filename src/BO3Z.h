@@ -272,6 +272,7 @@ namespace bo3z
 		enum Cue { kCueNone = 0, kCueRoar, kCueScream, kCueGrab, kCueSwipeL, kCueSwipeR, kCueCrouch, kCueChannel, kCueStandUp, kCueCast, kCueLeap };
 		bool  HasClips(RE::Actor* a_actor);    // moves by the Mixamo clips (Data/SKSE/Plugins/CurseOfAlduin/anims)
 		float StandUpSeconds();                 // the stand-up clip's length as it plays
+		int   StandUpPosed(RE::Actor* a_actor); // frames it has been posed in the stand-up clip so far
 		void  OnHit(RE::Actor* a_actor);       // a hit landed on it: its flinch (now and then)
 		void  SetVolatile(RE::Actor* a_actor); // the Volatile: its own fast claws, and it pounces
 		void  Assign(RE::Actor* a_actor, Type a_type);
