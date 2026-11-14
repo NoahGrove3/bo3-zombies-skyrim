@@ -2506,7 +2506,7 @@ namespace bo3z
 		// (Noah: the Alchemist's flasks "explode right in front of my face - there's no travel, it doesn't arc") a thrown
 		// flask is flown here: its model hung in the scene, carried along its arc under gravity, tumbling; it comes down on
 		// the first body or wall or ground its path crosses, and its burst is called there
-		struct Lobbed { Spellcraft::Fx fx; RE::ObjectRefHandle ref; RE::NiPoint3 p, v; float t = 0, spin = 12.0f, scale = 1.0f; std::function<void(const RE::NiPoint3&)> land; bool done = false; bool meteor = false; RE::NiPoint3 target; RE::NiMatrix3 turn; std::vector<std::pair<RE::ObjectRefHandle, FxPart>> trail; RE::ActorHandle chase; float grav = 900.0f; };
+		struct Lobbed { Spellcraft::Fx fx; RE::ObjectRefHandle ref; RE::NiPoint3 p, v; float t = 0, spin = 12.0f, scale = 1.0f; std::function<void(const RE::NiPoint3&)> land; bool done = false; bool meteor = false; RE::NiPoint3 target; RE::NiMatrix3 turn; std::vector<std::pair<RE::ObjectRefHandle, FxPart>> trail; RE::ActorHandle chase; float grav = 900.0f; float hold = 0; bool held = false; };
 		std::vector<Lobbed> g_lobs;
 		void TickLobs(float a_delta)
 		{
@@ -2548,12 +2548,20 @@ namespace bo3z
 						if (Spellcraft::PointSeg(c, l.p, next) < 62.0f) hit = c, down = true;
 					}
 				}
+				// (Noah: "Make the beam slower and linger a little longer") one that lingers stands where it struck a moment -
+				// its landing called at the touch - then goes
+				if (down && l.hold > 0.0f) {
+					if (!l.held) l.held = true, l.p = hit, landed.push_back({ l.land, hit });
+					l.v = { 0, 0, -1.0f };
+					if ((l.hold -= dt) > 0.0f) goto placed;
+					l.land = nullptr;
+				}
 				if (down) {
 					l.fx.Detach();
 					if (auto r = l.ref.get()) r->Disable(), r->SetDelete(true);
 					for (auto& [h, fp] : l.trail) if (auto r = h.get()) r->Disable(), r->SetDelete(true);
 					l.done = true;
-					landed.push_back({ l.land, hit });
+					if (l.land) landed.push_back({ l.land, hit });
 					continue;
 				}
 				l.p = next;
@@ -3759,18 +3767,19 @@ namespace bo3z
 		// anything, the way the meteors fall), its pillar standing a moment and the motes rising - no burst where it lands
 		void RedBeamImpl(const RE::NiPoint3& a_at)
 		{
-			Lob("CurseOfAlduin\\fx\\red_bolt.nif", a_at + RE::NiPoint3{ 0, 0, 1800.0f }, RE::NiPoint3{ 0, 0, -4200.0f }, 0.8f, [](const RE::NiPoint3& at) {
+			// (Noah: "Make the beam slower and linger a little longer") about 0.9 s down (was 0.4) and a second standing there
+			Lob("CurseOfAlduin\\fx\\red_bolt.nif", a_at + RE::NiPoint3{ 0, 0, 1800.0f }, RE::NiPoint3{ 0, 0, -2000.0f }, 0.8f, [](const RE::NiPoint3& at) {
 				if (g_cyclones.size() < 4) {
 					CycloneSpec cs;
 					cs.model = "CurseOfAlduin\\fx\\red_pillar.nif";
-					cs.from = at, cs.fwd = { 0, 1, 0 }, cs.dist = 0.0f, cs.life = 0.9f, cs.size = 0.6f, cs.fec = -1, cs.share = 0.0f, cs.noPull = true;
+					cs.from = at, cs.fwd = { 0, 1, 0 }, cs.dist = 0.0f, cs.life = 1.6f, cs.size = 0.6f, cs.fec = -1, cs.share = 0.0f, cs.noPull = true;
 					ElemCyclone(std::move(cs));
 				}
-				QueueFx("CurseOfAlduin\\fx\\red_motes.nif", at, 0.7f, 0.1f, 1.2f, false);
+				QueueFx("CurseOfAlduin\\fx\\red_motes.nif", at, 0.7f, 0.1f, 1.8f, false);
 				// (Noah: "give them like a beam impact sound effect that's not loud, very subtle")
 				Audio::AtPoint(gen::Sound::hit_drill, at, 0.0f, 0.3f);
 			}, 0.0f, 0.0f);
-			if (!g_lobs.empty()) g_lobs.back().meteor = true, g_lobs.back().target = a_at;
+			if (!g_lobs.empty()) g_lobs.back().meteor = true, g_lobs.back().target = a_at, g_lobs.back().hold = 1.0f;
 			if (static int n = 0; n++ < 12) logger::info("redbeam: the red Sky Beam falls at ({:.0f},{:.0f},{:.0f})", a_at.x, a_at.y, a_at.z);
 		}
 		void TickRedColumns(float) {}
