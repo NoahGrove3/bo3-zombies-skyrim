@@ -339,26 +339,18 @@ namespace Props
 		last = now;
 		if (!a_power) return;   // (Noah: the light attack is the meteor on each hit - FangHit; no slash)
 		// (Noah, then: "change Alduin's Bane heavy attack to a wind shockwave instead of a lingering tornado" - "Both together")
-		// one burst from you: Skyrim's Unrelenting Force blast rolling out all round, and a bright white ring racing across
-		// the ground behind it; every one of the dead within 7 m struck as the wave reaches it and thrown far off (the
-		// whirlwind's own blow and throw)
+		// (Noah: "make the heavy attack one wind circle instead of 5 the attack range should be within 10m of the player")
+		// one wave: a single white ring racing out to 10 m over the Thu'um's blast at your feet
 		const RE::NiPoint3 c = p->GetPosition();
-		const int force = BlastIndex("shoutarea");
-		Blast(force, c + RE::NiPoint3{ 0, 0, 60.0f }, 0.0f, 0.9f);
-		for (int k = 0; k < 6; ++k) {   // (the wave's front, out on every side)
-			const float yaw = k * (RE::NI_TWO_PI / 6.0f);
-			Blast(force, c + RE::NiPoint3{ std::cos(yaw) * 260.0f, std::sin(yaw) * 260.0f, 50.0f }, 0.08f, 0.5f);
-		}
-		Gun::Ring("white", c, 30.0f, 520.0f, 0.55f);
-		Gun::Ring("white", c, 20.0f, 340.0f, 0.4f);
+		Blast(BlastIndex("shoutarea"), c + RE::NiPoint3{ 0, 0, 60.0f }, 0.0f, 0.9f);
+		Gun::Ring("white", c, 30.0f, 700.0f, 0.6f);
 		Gun::BlastSound("lightmassive", c, 0.7f);
-		for (auto* f : Foes(c, 500.0f)) {
+		for (auto* f : Foes(c, 700.0f)) {
 			const float d = f->GetPosition().GetDistance(c);
-			Tasks::Later(0.05f + d / 1100.0f, [h = f->GetHandle()]() {   // (struck as the wave reaches it)
+			Tasks::Later(0.05f + d / 1170.0f, [h = f->GetHandle()]() {   // (struck as the wave reaches it)
 				auto a = h.get();
 				auto* pl = RE::PlayerCharacter::GetSingleton();
 				if (!a || !pl || a->IsDead()) return;
-				Gun::ElemBurst(3, a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, 0.5f, 0.0f, 0.4f);   // (wind)
 				const bool killed = Damage(a.get(), FangBase() * BaneMult() * 1.6f, false, false, true);
 				Spellcraft::Fling(a.get(), pl->GetPosition() - RE::NiPoint3{ 0, 0, 80.0f }, killed ? 26.0f : 20.0f);
 				if (killed) BaneKilled(pl);

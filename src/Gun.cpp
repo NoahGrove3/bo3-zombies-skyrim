@@ -573,7 +573,7 @@ namespace bo3z
 		// instead; s= its size; r= degrees about x,y,z; z= raised; play: its own animation started; `none`: nothing drawn).
 		// Read at load and again on the dev command `fxreload`, so a look can be tried in the running game.
 		int BlastIndex(std::string_view a_name);
-		struct FxPart { std::string model, pal; RE::NiPoint3 col{ -1, -1, -1 }; float scale = 1.0f, dz = 0.0f; RE::NiMatrix3 rot; bool play = false, none = false, noparticles = false; int blast = -1; float orbitR = 0, orbitSpeed = 0, phase = 0; };
+		struct FxPart { std::string model, pal; RE::NiPoint3 col{ -1, -1, -1 }; float scale = 1.0f, dz = 0.0f; RE::NiMatrix3 rot; bool play = false, none = false, noparticles = false, nomesh = false; int blast = -1; float orbitR = 0, orbitSpeed = 0, phase = 0; };
 		std::unordered_map<std::string, std::vector<FxPart>> g_fxMap;
 		std::string FxKey(std::string a)
 		{
@@ -624,6 +624,7 @@ namespace bo3z
 							else if (k == "noplay") fp.play = false;
 							else if (k == "play") fp.play = true;
 							else if (k == "noparticles") fp.noparticles = true;
+							else if (k == "nomesh") fp.nomesh = true;   // (only its particles drawn: the red Sky Beam's trail without the glowing ball at its head)
 							else if (k == "orbit") std::sscanf(v.c_str(), "%f,%f,%f", &fp.orbitR, &fp.orbitSpeed, &fp.phase);   // (circling its middle: radius, turns a second, where it starts)   // (its particles hidden: a whirlwind's thrown debris, flickering all round)   // (its controller manager's first sequence started: only where a model stands still without it)
 							else if (k == "col") std::sscanf(v.c_str(), "%f,%f,%f", &fp.col.x, &fp.col.y, &fp.col.z);
 							else if (k == "r") std::sscanf(v.c_str(), "%f,%f,%f", &rx, &ry, &rz);
@@ -1306,6 +1307,12 @@ namespace bo3z
 							if (pc.part.play) pc.len = PlayOwn(r.get(), o), pc.played = std::chrono::steady_clock::now();
 							if (pc.part.noparticles) RE::BSVisit::TraverseScenegraphObjects(o, [](RE::NiAVObject* x) {
 								if (netimmerse_cast<RE::NiParticleSystem*>(x)) x->GetFlags().set(RE::NiAVObject::Flag::kHidden);
+								return RE::BSVisit::BSVisitControl::kContinue;
+							});
+							// (Noah: "remove the red orbs so its just the beam" - the beam is the bolt's trail of particles, the orb its
+							// own glowing shapes) every shape that isn't a particle system hidden
+							if (pc.part.nomesh) RE::BSVisit::TraverseScenegraphObjects(o, [](RE::NiAVObject* x) {
+								if (x->AsGeometry() && !netimmerse_cast<RE::NiParticleSystem*>(x)) x->GetFlags().set(RE::NiAVObject::Flag::kHidden);
 								return RE::BSVisit::BSVisitControl::kContinue;
 							});
 							if (static int said = 0; said++ < 40) logger::info("worldfx: {}{} drawn at ({:.0f},{:.0f},{:.0f}) scale {:.2f}", pc.part.model, pc.part.model == model ? "" : " (for " + model + ")", at.x, at.y, at.z, a_scale * pc.part.scale);
