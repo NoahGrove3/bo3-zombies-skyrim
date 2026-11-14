@@ -3779,7 +3779,7 @@ namespace bo3z
 				// (Noah: "give them like a beam impact sound effect that's not loud, very subtle")
 				Audio::AtPoint(gen::Sound::hit_drill, at, 0.0f, 0.3f);
 			}, 0.0f, 0.0f);
-			if (!g_lobs.empty()) g_lobs.back().meteor = true, g_lobs.back().target = a_at, g_lobs.back().hold = 1.0f;
+			if (!g_lobs.empty()) g_lobs.back().meteor = true, g_lobs.back().target = a_at, g_lobs.back().hold = 0.2f;   // (Noah: "The orbs are lingering for way too long at the end of the red beam")
 			if (static int n = 0; n++ < 12) logger::info("redbeam: the red Sky Beam falls at ({:.0f},{:.0f},{:.0f})", a_at.x, a_at.y, a_at.z);
 		}
 		void TickRedColumns(float) {}
