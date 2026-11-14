@@ -351,8 +351,16 @@ namespace Props
 				auto a = h.get();
 				auto* pl = RE::PlayerCharacter::GetSingleton();
 				if (!a || !pl || a->IsDead()) return;
+				// (Noah: "Make the knockback strength for alduins banes heavy attack insanely strong") hurled first - so the slain
+				// fly too - four times the old throw, from below and behind, so they go up and far out over the field
+				if (auto* proc = pl->GetActorRuntimeData().currentProcess) {
+					RE::NiPoint3 away = a->GetPosition() - pl->GetPosition();
+					away.z = 0;
+					if (away.Length() < 1.0f) away = { 0, 1, 0 };
+					away.Unitize();
+					proc->KnockExplosion(a.get(), a->GetPosition() - away * 120.0f - RE::NiPoint3{ 0, 0, 90.0f }, 85.0f);
+				}
 				const bool killed = Damage(a.get(), FangBase() * BaneMult() * 1.6f, false, false, true);
-				Spellcraft::Fling(a.get(), pl->GetPosition() - RE::NiPoint3{ 0, 0, 80.0f }, killed ? 26.0f : 20.0f);
 				if (killed) BaneKilled(pl);
 			});
 		}
