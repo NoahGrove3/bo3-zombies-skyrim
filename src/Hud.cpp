@@ -1142,6 +1142,76 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				TxtWrap(dl, g_body, px, { x0 + 24 * k, A.y + head }, Fade(kParch, a), s.loreText, w - 48 * k, 7);
 			}
 		}
+		// one blood stroke of the night tallies from a to b (t: how much of it is cut so far) - thick in the middle and
+		// tapering at the ends, wet: a dull glow round it, a sheen sliding along it, a drop gathering at its foot and falling
+		void BloodStroke(ImDrawList* dl, ImVec2 a, ImVec2 b, float w, float t, int i, bool fresh, float k, float now)
+		{
+			const ImVec2 e{ a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t };
+			const float  dx = e.x - a.x, dy = e.y - a.y, len = std::max(1.0f, std::sqrt(dx * dx + dy * dy));
+			const ImVec2 nrm{ -dy / len, dx / len };
+			constexpr int N = 10;
+			ImVec2        pts[2 * N + 2];
+			const auto shape = [&](float wmul, ImU32 col) {
+				for (int q = 0; q <= N; ++q) {
+					const float u = static_cast<float>(q) / N, ww = w * wmul * (0.18f + 0.82f * std::pow(std::sin(3.1416f * u), 0.55f));
+					const ImVec2 c{ a.x + dx * u, a.y + dy * u };
+					pts[q] = { c.x + nrm.x * ww, c.y + nrm.y * ww };
+					pts[2 * N + 1 - q] = { c.x - nrm.x * ww, c.y - nrm.y * ww };
+				}
+				float area = 0;
+				for (int q = 0; q < 2 * N + 2; ++q) {
+					const ImVec2& p0 = pts[q];
+					const ImVec2& p1 = pts[(q + 1) % (2 * N + 2)];
+					area += p0.x * p1.y - p1.x * p0.y;
+				}
+				if (area < 0) {
+					std::reverse(pts, pts + 2 * N + 2);  // (ImGui fills clockwise shapes: the other way round they draw hollow)
+				}
+				dl->AddConvexPolyFilled(pts, 2 * N + 2, col);
+			};
+			const float glow = 0.55f + 0.45f * std::sin(now * 1.7f + i * 0.9f);
+			shape(1.9f, IM_COL32(150, 0, 0, static_cast<int>((fresh ? 110 : 40) * glow)));   // a dull glow round it
+			shape(1.0f, fresh ? IM_COL32(255, 70, 40, 255) : IM_COL32(150, 12, 14, 255));     // the blood
+			shape(0.45f, fresh ? IM_COL32(255, 170, 120, 255) : IM_COL32(200, 40, 34, 255));   // its wet core
+			// the sheen sliding along it
+			const float sp = std::fmod(now * 0.35f + i * 0.37f, 1.0f);
+			if (t >= 1.0f) {
+				const ImVec2 sc{ a.x + dx * sp, a.y + dy * sp };
+				dl->AddCircleFilled(sc, w * 0.35f, IM_COL32(255, 210, 190, static_cast<int>(90 * std::sin(3.1416f * sp))), 10);
+			}
+			// a drop gathering at its foot and falling
+			if (t >= 1.0f && dy > 0) {
+				const float cyc = std::fmod(now * 0.28f + i * 0.61f, 1.0f), fall = cyc < 0.7f ? 0.0f : (cyc - 0.7f) / 0.3f;
+				const float grow = std::min(1.0f, cyc / 0.7f);
+				const ImVec2 foot{ e.x, e.y };
+				dl->AddLine(foot, { foot.x, foot.y + 6 * k * grow }, IM_COL32(150, 12, 14, 255), w * 0.5f);
+				dl->AddCircleFilled({ foot.x, foot.y + 6 * k * grow + 30 * k * fall * fall }, w * 0.42f * (0.6f + 0.4f * grow), IM_COL32(170, 16, 16, static_cast<int>(255 * (1.0f - fall))), 10);
+			}
+		}
+		// (Noah: "Where it says the night number on the top left, can you change that to tally marks? Really high quality ones
+		// that match the UI and the night design" - "Tallies to 10, then numbers", "Blood brush strokes") the nights cut in
+		// blood: four strokes and the fifth struck through them, the newest cut in with a flare as its night begins. Its
+		// width (to lay what comes after it); a_draw false only measures
+		float BloodTallies(ImDrawList* dl, ImVec2 a_at, float a_h, float a_step, float a_gap, float a_w, int a_count, float a_cut, bool a_fresh, float k, float now, bool a_draw = true)
+		{
+			auto  jit = [](int i, int j) { return static_cast<float>(((i * 73 + j * 151) % 17) - 8) / 8.0f; };
+			float x = a_at.x, adv = 0;
+			for (int i = 0; i < a_count; ++i) {
+				const int   inGroup = i % 5;
+				const bool  newest = i == a_count - 1;
+				const float t = newest ? a_cut : 1.0f;
+				const bool  fresh = newest && a_fresh;
+				const float j = a_h / 64.0f;   // (the jitter scaled to the marks' height)
+				if (inGroup < 4) {
+					if (a_draw) BloodStroke(dl, { x + jit(i, 1) * 2 * k * j, a_at.y + jit(i, 2) * 3 * k * j }, { x + jit(i, 3) * 3 * k * j, a_at.y + a_h + jit(i, 4) * 3 * k * j }, a_w, t, i, fresh, k * j, now);
+					x += adv = a_step;
+				} else {  // the fifth strikes through the four
+					if (a_draw) BloodStroke(dl, { x - 4 * a_step - a_step * 0.35f, a_at.y + a_h * 0.80f }, { x + a_step * 0.12f, a_at.y + a_h * 0.16f }, a_w * 1.1f, t, i, fresh, k * j, now);
+					x += adv = a_gap;
+				}
+			}
+			return a_count > 0 ? x - a_at.x - adv + a_w * 2.0f : 0.0f;
+		}
 		void DrawBody(const Hud::State& s, ImVec2 size);
 		void Draw(const Hud::State& s, ImVec2 size)
 		{
@@ -1678,7 +1748,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const std::string sub = !waveOn ? std::string() : s.waveRest > 0 ? fmt::format("Next wave in {:.0f}", std::ceil(s.waveRest)) : fmt::format("{} left to fall", std::max(0, s.waveLeft));
 				const std::string evLab = ev ? Upper(std::string(gen::kEvents[s.nightEvent].label)) : std::string();
 				const float tx = moon.x + cr + 22 * k;
-				const float numW = Measure(g_num, 26 * k, num).x;
+				// (Noah: tally marks for the night, "Tallies to 10, then numbers") nights 1-10 cut in blood, from 11 the numeral
+				const bool  tallies = s.round <= 10;
+				const float tH = 27 * k, tStep = 9.5f * k, tGap = 15 * k, tW = 2.7f * k;
+				const float numW = tallies ? BloodTallies(dl, {}, tH, tStep, tGap, tW, s.round, 1.0f, false, k, now, false) : Measure(g_num, 26 * k, num).x;
 				float w = tx + std::max({ numW + (waveOn ? 18 * k + Measure(g_title, 15 * k, wave).x : 0.0f), Measure(g_body, 11 * k, label).x + (ev ? 14 * k + Measure(g_body, 11 * k, evLab).x : 0.0f),
 				                          waveOn ? numW + 18 * k + Measure(g_body, 13 * k, sub).x : 0.0f });
 				const float foot = moon.y + hh + (s.waveTheme.empty() || !waveOn ? 10 : 30) * k;
@@ -1718,7 +1791,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const ImU32 c = IM_COL32(std::min(255, static_cast<int>(((t >> 24) & 0xFF) * 1.6f) + 60), std::min(255, static_cast<int>(((t >> 16) & 0xFF) * 1.6f) + 60), std::min(255, static_cast<int>(((t >> 8) & 0xFF) * 1.6f) + 60), 255);
 					Txt(dl, g_body, 11 * k, { tx + 1 * k + Measure(g_body, 11 * k, label).x + 14 * k, moon.y - 23 * k }, c, evLab, 1 * k, IM_COL32(0, 0, 0, 200));
 				}
-				Txt(dl, g_num, 26 * k, { tx, moon.y - 9 * k }, flash > 0 ? IM_COL32(255, 200, 185, 255) : kParch, num, flash > 0 ? 2 * k * flash + 1.2f * k : 1.2f * k, flash > 0 ? IM_COL32(220, 40, 25, 255) : IM_COL32(0, 0, 0, 220));
+				if (tallies) BloodTallies(dl, { tx + tW, moon.y - 8 * k }, tH, tStep, tGap, tW, s.round, std::clamp(1.0f - (roundFlash - 1.5f), 0.0f, 1.0f), roundFlash > 0, k, now);
+				else Txt(dl, g_num, 26 * k, { tx, moon.y - 9 * k }, flash > 0 ? IM_COL32(255, 200, 185, 255) : kParch, num, flash > 0 ? 2 * k * flash + 1.2f * k : 1.2f * k, flash > 0 ? IM_COL32(220, 40, 25, 255) : IM_COL32(0, 0, 0, 220));
 				if (waveOn) {
 					const float wx = tx + numW + 18 * k;
 					Txt(dl, g_title, 15 * k, { wx, moon.y - 10 * k }, kParch, wave, 1 * k, IM_COL32(0, 0, 0, 200));
@@ -1736,65 +1810,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				Txt(dl, g_title, 19 * k, { p.x + 4 * k, p.y + 2 * k }, Fade(kGold, 0.9f), s.nightActive ? "NIGHT" : "NIGHTS SURVIVED");
 				dl->AddLine({ p.x + 4 * k, p.y + 27 * k }, { p.x + plateW - 14 * k, p.y + 27 * k }, Fade(kGoldDim, 0.7f), 1.0f * k);
 				const float draw = std::clamp(1.0f - (roundFlash - 1.5f), 0.0f, 1.0f);  // the newest is cut in
-				auto        jit = [](int i, int j) { return static_cast<float>(((i * 73 + j * 151) % 17) - 8) / 8.0f; };
-				// one stroke from a to b (t: how much of it is cut so far)
-				const auto stroke = [&](ImVec2 a, ImVec2 b, float w, float t, int i, bool fresh) {
-					const ImVec2 e{ a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t };
-					const float  dx = e.x - a.x, dy = e.y - a.y, len = std::max(1.0f, std::sqrt(dx * dx + dy * dy));
-					const ImVec2 nrm{ -dy / len, dx / len };
-					constexpr int N = 10;
-					ImVec2        pts[2 * N + 2];
-					const auto shape = [&](float wmul, ImU32 col) {
-						for (int q = 0; q <= N; ++q) {
-							const float u = static_cast<float>(q) / N, ww = w * wmul * (0.18f + 0.82f * std::pow(std::sin(3.1416f * u), 0.55f));
-							const ImVec2 c{ a.x + dx * u, a.y + dy * u };
-							pts[q] = { c.x + nrm.x * ww, c.y + nrm.y * ww };
-							pts[2 * N + 1 - q] = { c.x - nrm.x * ww, c.y - nrm.y * ww };
-						}
-						float area = 0;
-						for (int q = 0; q < 2 * N + 2; ++q) {
-							const ImVec2& p0 = pts[q];
-							const ImVec2& p1 = pts[(q + 1) % (2 * N + 2)];
-							area += p0.x * p1.y - p1.x * p0.y;
-						}
-						if (area < 0) {
-							std::reverse(pts, pts + 2 * N + 2);  // (ImGui fills clockwise shapes: the other way round they draw hollow)
-						}
-						dl->AddConvexPolyFilled(pts, 2 * N + 2, col);
-					};
-					const float glow = 0.55f + 0.45f * std::sin(now * 1.7f + i * 0.9f);
-					shape(1.9f, IM_COL32(150, 0, 0, static_cast<int>((fresh ? 110 : 40) * glow)));   // a dull glow round it
-					shape(1.0f, fresh ? IM_COL32(255, 70, 40, 255) : IM_COL32(150, 12, 14, 255));     // the blood
-					shape(0.45f, fresh ? IM_COL32(255, 170, 120, 255) : IM_COL32(200, 40, 34, 255));   // its wet core
-					// the sheen sliding along it
-					const float sp = std::fmod(now * 0.35f + i * 0.37f, 1.0f);
-					if (t >= 1.0f) {
-						const ImVec2 sc{ a.x + dx * sp, a.y + dy * sp };
-						dl->AddCircleFilled(sc, w * 0.35f, IM_COL32(255, 210, 190, static_cast<int>(90 * std::sin(3.1416f * sp))), 10);
-					}
-					// a drop gathering at its foot and falling
-					if (t >= 1.0f && dy > 0) {
-						const float cyc = std::fmod(now * 0.28f + i * 0.61f, 1.0f), fall = cyc < 0.7f ? 0.0f : (cyc - 0.7f) / 0.3f;
-						const float grow = std::min(1.0f, cyc / 0.7f);
-						const ImVec2 foot{ e.x, e.y };
-						dl->AddLine(foot, { foot.x, foot.y + 6 * k * grow }, IM_COL32(150, 12, 14, 255), w * 0.5f);
-						dl->AddCircleFilled({ foot.x, foot.y + 6 * k * grow + 30 * k * fall * fall }, w * 0.42f * (0.6f + 0.4f * grow), IM_COL32(170, 16, 16, static_cast<int>(255 * (1.0f - fall))), 10);
-					}
-				};
-				float x = p.x + 12 * k;
-				for (int i = 0; i < shown; ++i) {
-					const int   inGroup = i % 5;
-					const bool  newest = i == s.round - 1;
-					const float t = newest ? draw : 1.0f;
-					const bool  fresh = newest && roundFlash > 0;
-					if (inGroup < 4) {
-						stroke({ x + jit(i, 1) * 2 * k, top + jit(i, 2) * 3 * k }, { x + jit(i, 3) * 3 * k, top + h + jit(i, 4) * 3 * k }, 4.2f * k, t, i, fresh);
-						x += step;
-					} else {  // the fifth strikes through the four
-						stroke({ x - 4 * step - 6 * k, top + h * 0.80f }, { x + 2 * k, top + h * 0.16f }, 4.6f * k, t, i, fresh);
-						x += gap;
-					}
-				}
+				BloodTallies(dl, { p.x + 12 * k, top }, h, step, gap, 4.2f * k, shown, std::clamp(1.0f - (roundFlash - 1.5f), 0.0f, 1.0f), roundFlash > 0, k, now);
 				if (s.round > 10) {  // from night 11: the count in blood-red numerals, breathing
 					const float  br = 0.75f + 0.25f * std::sin(now * 1.6f);
 					const ImU32  col = roundFlash > 0 ? IM_COL32(255, 60, 40, 255) : IM_COL32(170, 18, 18, 255);
