@@ -3774,20 +3774,23 @@ namespace bo3z
 		// anything, the way the meteors fall), its pillar standing a moment and the motes rising - no burst where it lands
 		void RedBeamImpl(const RE::NiPoint3& a_at)
 		{
-			// (Noah: "Make the beam slower and linger a little longer") about 0.9 s down (was 0.4) and a second standing there
-			Lob("CurseOfAlduin\\fx\\red_bolt.nif", a_at + RE::NiPoint3{ 0, 0, 1800.0f }, RE::NiPoint3{ 0, 0, -2000.0f }, 0.8f, [](const RE::NiPoint3& at) {
-				if (g_cyclones.size() < 4) {
-					CycloneSpec cs;
-					cs.model = "CurseOfAlduin\\fx\\red_pillar.nif";
-					cs.from = at, cs.fwd = { 0, 1, 0 }, cs.dist = 0.0f, cs.life = 1.6f, cs.size = 0.6f, cs.fec = -1, cs.share = 0.0f, cs.noPull = true;
-					ElemCyclone(std::move(cs));
-				}
-				QueueFx("CurseOfAlduin\\fx\\red_motes.nif", at, 0.7f, 0.1f, 1.8f, false);
+			// (Noah: "Okay, I see the beams now. They look good, but they're not starting from the sky" - and, thrown like a bolt,
+			// "spawning in sideways ... very large") the red pillar itself, upright as it stands, let down out of the sky onto
+			// the point over 0.9 s, then standing there a moment and a half
+			if (g_cyclones.size() >= 40) return;
+			CycloneSpec cs;
+			cs.model = "CurseOfAlduin\\fx\\red_pillar.nif";
+			cs.from = a_at + RE::NiPoint3{ 0, 0, 1800.0f }, cs.fwd = { 0, 0, -1.0f }, cs.dist = 1800.0f, cs.life = 0.9f, cs.size = 0.6f, cs.fec = -1, cs.share = 0.0f, cs.noPull = true;
+			ElemCyclone(std::move(cs));
+			Tasks::Later(0.9f, [a_at]() {
+				CycloneSpec st;
+				st.model = "CurseOfAlduin\\fx\\red_pillar.nif";
+				st.from = a_at, st.fwd = { 0, 1, 0 }, st.dist = 0.0f, st.life = 1.6f, st.size = 0.6f, st.fec = -1, st.share = 0.0f, st.noPull = true;
+				ElemCyclone(std::move(st));
 				// (Noah: "give them like a beam impact sound effect that's not loud, very subtle")
-				Audio::AtPoint(gen::Sound::hit_drill, at, 0.0f, 0.3f);
-			}, 0.0f, 0.0f);
-			if (!g_lobs.empty()) g_lobs.back().meteor = true, g_lobs.back().target = a_at, g_lobs.back().hold = 0.2f;   // (Noah: "The orbs are lingering for way too long at the end of the red beam")
-			if (static int n = 0; n++ < 12) logger::info("redbeam: the red Sky Beam falls at ({:.0f},{:.0f},{:.0f})", a_at.x, a_at.y, a_at.z);
+				Audio::AtPoint(gen::Sound::hit_drill, a_at, 0.0f, 0.3f);
+			});
+			if (static int n = 0; n++ < 12) logger::info("redbeam: the red pillar comes down at ({:.0f},{:.0f},{:.0f})", a_at.x, a_at.y, a_at.z);
 		}
 		void TickRedColumns(float) {}
 		struct SoulFallFx { RE::NiPoint3 from, to, last; float t = 0, dur = 0.7f, ember = 0; };
