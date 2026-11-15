@@ -852,7 +852,10 @@ namespace bo3z
 					}
 					const float shows = r.anim == 4 ? r.delay + kRedBeamFall : 0.05f;
 					if (((r.anim == 5 || r.struck) && r.t >= shows) || a->IsDead()) {
-						if (r.faded) a->SetAlpha(1.0f), r.faded = false;
+						// (Noah: "they are half way into the ground then teleport to the surface then start moving ... make the enemies
+						// fade in when they spawn so its not instant") still unseen as it's set on its floor; it fades in over the next
+						// 0.6 s, a moment after the move has been made (anim 9)
+						if (a->IsDead() && r.faded) a->SetAlpha(1.0f), r.faded = false;
 						// (the log: "sank 50-80 into the ground" a moment after showing - with no collision while it waited it had
 						// settled under the floor) set back on its floor as it shows, then solid
 						if (!a->IsDead()) {
@@ -869,12 +872,18 @@ namespace bo3z
 							SafeCombat(a, pc);
 						}
 						if (r.anim == 5 && g_elites.contains(a->GetFormID())) Forms::PlayAt(gen::Sound::champ_telegraph, a.get());
-						r.anim = 9, r.t = 0;
+						r.anim = 9, r.t = 0, r.delay = 0.15f;   // (its fade-in starts 0.15 s on)
 					}
 					continue;
 				}
 				if (r.anim == 9) {  // risen: for two seconds more, anyone found sunk under the floor is set back on it
-					if (r.t >= 2.0f || a->IsDead()) {
+					if (r.faded) {   // (fading in: unseen for the first 0.15 s - its move made - then to whole over 0.6 s)
+						const float al = std::clamp((r.t - r.delay) / 0.6f, 0.0f, 1.0f);
+						a->SetAlpha(a->IsDead() ? 1.0f : al * al * (3.0f - 2.0f * al));
+						if (al >= 1.0f || a->IsDead()) r.faded = false;
+					}
+					if ((r.t >= 2.0f && !r.faded) || r.t >= 3.5f || a->IsDead()) {
+						if (r.faded) a->SetAlpha(1.0f), r.faded = false;
 						if (!a->IsDead()) FreeFromEmerge(a.get());
 						r.t = 99;
 						continue;
@@ -890,6 +899,7 @@ namespace bo3z
 					// and the move given longer either side
 					if (at.z < ground - 35.0f && r.resets < 1) {
 						++r.resets;
+						if (r.faded) r.delay = r.t + 0.6f, a->SetAlpha(0.0f);   // (still fading in: back to unseen until it's set back on the floor)
 						const float sunk = ground - at.z;
 						at.z = ground + 4.0f;
 						// (Noah's crash: a worker thread's pathing/animation job read freed memory 0.7 s after one of these) set
