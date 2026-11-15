@@ -4616,9 +4616,9 @@ namespace bo3z::Classes
 			static float renew = 0;
 			static int   was = 0;
 			renew -= 1.0f;
-			if (renew <= 0 || at != was) {
-				renew = 2.0f, was = at;
-				if (auto* fx = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kArmGlow[c * 6 + at - 1], gen::kPlugin)) p->ApplyEffectShader(fx, 3.2f, nullptr, false, false, nullptr, false);
+			if (renew <= 0 || at != was) {   // (laid on rarely and long: a shader laid over and over on a body is what crashed with the wolves)
+				renew = 20.0f, was = at;
+				if (auto* fx = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kArmGlow[c * 6 + at - 1], gen::kPlugin)) p->ApplyEffectShader(fx, 21.0f, nullptr, false, false, nullptr, false);
 			}
 		}
 		// (the Gondorian set, Tier I) the Ranger's stride: 10% faster
