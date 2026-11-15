@@ -573,7 +573,7 @@ namespace bo3z
 		// instead; s= its size; r= degrees about x,y,z; z= raised; play: its own animation started; `none`: nothing drawn).
 		// Read at load and again on the dev command `fxreload`, so a look can be tried in the running game.
 		int BlastIndex(std::string_view a_name);
-		struct FxPart { std::string model, pal; RE::NiPoint3 col{ -1, -1, -1 }; float scale = 1.0f, dz = 0.0f; RE::NiMatrix3 rot; bool play = false, none = false, noparticles = false, nomesh = false; int blast = -1; float orbitR = 0, orbitSpeed = 0, phase = 0; };
+		struct FxPart { std::string model, pal; RE::NiPoint3 col{ -1, -1, -1 }; float scale = 1.0f, dz = 0.0f; RE::NiMatrix3 rot; bool play = false, none = false, noparticles = false, nomesh = false; std::vector<std::string> hide; int blast = -1; float orbitR = 0, orbitSpeed = 0, phase = 0; };
 		std::unordered_map<std::string, std::vector<FxPart>> g_fxMap;
 		std::string FxKey(std::string a)
 		{
@@ -624,7 +624,12 @@ namespace bo3z
 							else if (k == "noplay") fp.play = false;
 							else if (k == "play") fp.play = true;
 							else if (k == "noparticles") fp.noparticles = true;
-							else if (k == "nomesh") fp.nomesh = true;   // (only its particles drawn: the red Sky Beam's trail without the glowing ball at its head)
+							else if (k == "nomesh") fp.nomesh = true;
+							else if (k == "hide") for (std::size_t a = 0; a <= v.size();) {   // (named parts of the model not drawn: hide=Plane03,CoalsBase)
+								const auto b = std::min(v.find(',', a), v.size());
+								if (b > a) fp.hide.push_back(v.substr(a, b - a));
+								a = b + 1;
+							}   // (only its particles drawn: the red Sky Beam's trail without the glowing ball at its head)
 							else if (k == "orbit") std::sscanf(v.c_str(), "%f,%f,%f", &fp.orbitR, &fp.orbitSpeed, &fp.phase);   // (circling its middle: radius, turns a second, where it starts)   // (its particles hidden: a whirlwind's thrown debris, flickering all round)   // (its controller manager's first sequence started: only where a model stands still without it)
 							else if (k == "col") std::sscanf(v.c_str(), "%f,%f,%f", &fp.col.x, &fp.col.y, &fp.col.z);
 							else if (k == "r") std::sscanf(v.c_str(), "%f,%f,%f", &rx, &ry, &rz);
@@ -1311,6 +1316,7 @@ namespace bo3z
 							});
 							// (Noah: "remove the red orbs so its just the beam" - the beam is the bolt's trail of particles, the orb its
 							// own glowing shapes) every shape that isn't a particle system hidden
+							for (auto& nm : pc.part.hide) if (auto* x = o->GetObjectByName(nm)) x->GetFlags().set(RE::NiAVObject::Flag::kHidden);
 							if (pc.part.nomesh) RE::BSVisit::TraverseScenegraphObjects(o, [](RE::NiAVObject* x) {
 								if (x->AsGeometry() && !netimmerse_cast<RE::NiParticleSystem*>(x)) x->GetFlags().set(RE::NiAVObject::Flag::kHidden);
 								return RE::BSVisit::BSVisitControl::kContinue;
@@ -3772,27 +3778,48 @@ namespace bo3z
 		// (Noah: "It worked when we first added it. Can you go back to that ... But just remove the explosions when the beam is
 		// hitting the ground") the first red Sky Beam again: its bolt of light dropping out of the sky onto the point (through
 		// anything, the way the meteors fall), its pillar standing a moment and the motes rising - no burst where it lands
+		// (Noah: "remove the summon circle at the base of the red beam ... I just want it to be the light. The light should take 1
+		// second before it touches the ground coming from the sky. And then after it touches the ground for 1 second, the enemy
+		// will spawn and the beam should disappear from the ground to the sky in the last second. So in total, a 3-second
+		// animation time") the red light of the College's fire pillar alone (its coals, ground plane and swirling arms hidden,
+		// fxmap.ini red_beam.nif), upright and still: let down out of the sky over a second, standing a second, drawn back up
+		// over the last; Director brings the body out at 2 s
+		struct RedColumn { WorldFx fx; RE::NiPoint3 at; float t = 0; bool landed = false; };
+		std::vector<RedColumn> g_redCols;
+		constexpr float kRedDrop = 1.0f, kRedStand = 1.0f, kRedLift = 1.0f, kRedHigh = 1800.0f, kRedSize = 0.6f;
 		void RedBeamImpl(const RE::NiPoint3& a_at)
 		{
-			// (Noah: "Okay, I see the beams now. They look good, but they're not starting from the sky" - and, thrown like a bolt,
-			// "spawning in sideways ... very large") the red pillar itself, upright as it stands, let down out of the sky onto
-			// the point over 0.9 s, then standing there a moment and a half
-			if (g_cyclones.size() >= 40) return;
-			CycloneSpec cs;
-			cs.model = "CurseOfAlduin\\fx\\red_pillar.nif";
-			cs.from = a_at + RE::NiPoint3{ 0, 0, 1800.0f }, cs.fwd = { 0, 0, -1.0f }, cs.dist = 1800.0f, cs.life = 0.9f, cs.size = 0.6f, cs.fec = -1, cs.share = 0.0f, cs.noPull = true;
-			ElemCyclone(std::move(cs));
-			Tasks::Later(0.9f, [a_at]() {
-				CycloneSpec st;
-				st.model = "CurseOfAlduin\\fx\\red_pillar.nif";
-				st.from = a_at, st.fwd = { 0, 1, 0 }, st.dist = 0.0f, st.life = 1.6f, st.size = 0.6f, st.fec = -1, st.share = 0.0f, st.noPull = true;
-				ElemCyclone(std::move(st));
-				// (Noah: "give them like a beam impact sound effect that's not loud, very subtle")
-				Audio::AtPoint(gen::Sound::hit_drill, a_at, 0.0f, 0.3f);
-			});
-			if (static int n = 0; n++ < 12) logger::info("redbeam: the red pillar comes down at ({:.0f},{:.0f},{:.0f})", a_at.x, a_at.y, a_at.z);
+			if (g_redCols.size() >= 40) return;
+			RedColumn c{ WorldFx("CurseOfAlduin\\fx\\red_beam.nif"), a_at };
+			if (!c.fx.ok) { if (static int n = 0; n++ < 4) logger::warn("redbeam: red_beam.nif has no look"); return; }
+			g_redCols.push_back(std::move(c));
+			if (static int n = 0; n++ < 12) logger::info("redbeam: the red light comes down at ({:.0f},{:.0f},{:.0f})", a_at.x, a_at.y, a_at.z);
 		}
-		void TickRedColumns(float) {}
+		void TickRedColumns(float a_delta)
+		{
+			if (g_redCols.empty()) return;
+			static const RE::NiMatrix3 upright;
+			for (auto& c : g_redCols) {
+				c.t += a_delta;
+				float up = 0.0f;
+				if (c.t < kRedDrop) {
+					const float f = c.t / kRedDrop;
+					up = kRedHigh * (1.0f - f) * (1.0f - f);   // (falling faster as it nears the ground)
+				} else if (c.t > kRedDrop + kRedStand) {
+					const float f = std::min(1.0f, (c.t - kRedDrop - kRedStand) / kRedLift);
+					up = kRedHigh * f * f;   // (drawn back up, gathering speed)
+				}
+				if (!c.landed && c.t >= kRedDrop) {
+					c.landed = true;
+					// (Noah: "give them like a beam impact sound effect that's not loud, very subtle")
+					Audio::AtPoint(gen::Sound::hit_drill, c.at, 0.0f, 0.3f);
+				}
+				c.fx.Place(c.at + RE::NiPoint3{ 0, 0, up }, upright, kRedSize);
+			}
+			for (auto& c : g_redCols) if (c.t >= kRedDrop + kRedStand + kRedLift) c.fx.Detach();
+			std::erase_if(g_redCols, [](const RedColumn& c) { return c.t >= kRedDrop + kRedStand + kRedLift; });
+		}
+
 		struct SoulFallFx { RE::NiPoint3 from, to, last; float t = 0, dur = 0.7f, ember = 0; };
 		std::vector<SoulFallFx> g_soulFalls;
 		void SoulFallImpl(const RE::NiPoint3& a_at, float a_secs)

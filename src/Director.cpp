@@ -683,7 +683,7 @@ namespace bo3z
 			// (an elite lost its portal and the portal's warning with it) it still announces itself as it claws up
 			if (g_elites.contains(a_a->GetFormID())) Forms::PlayAt(gen::Sound::champ_telegraph, a_a);
 		}
-		constexpr float    kRiseDepth = 115.0f, kRiseTime = 1.5f, kSoulFallSecs = 0.8f, kRedBeamFall = 1.9f;   // (Noah: "make the enemy spawn in a second after the beam touches the ground" - it lands ~0.9 s after the call)
+		constexpr float    kRiseDepth = 115.0f, kRiseTime = 1.5f, kSoulFallSecs = 0.8f, kRedBeamFall = 2.0f;   // (Noah: "make the enemy spawn in a second after the beam touches the ground" - it lands 1 s after the call; 3 s in all)
 		void StartRise(RE::Actor* a_actor, RE::PlayerCharacter* a_player)
 		{
 			if (!a_actor || g_risers.size() > 40) {
