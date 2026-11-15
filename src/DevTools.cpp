@@ -409,8 +409,11 @@ namespace bo3z
 				Eggs::DevStep(t);
 			} else if (cmd == "miniboss") {
 				Director::DevMiniBoss();
-			} else if (cmd == "testkit") {
-				Gun::TestKit();
+			} else if (cmd == "testkit") {   // testkit [off]
+				std::string v;
+				in >> v;
+				if (v == "off") Gun::TestKitOff();
+				else Gun::TestKit();
 			} else if (cmd == "tp" && player) {
 				std::string town;
 				in >> town;

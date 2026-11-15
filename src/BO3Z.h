@@ -956,6 +956,7 @@ namespace bo3z
 		void DevTakeOff();  // dev: Bond II's Updraft shout
 		bool OnSpellCast(RE::FormID a_spell);  // the Updraft shout spoken: true if it was
 		void TestKit();     // dev: Dragon's Updraft and all three bonds
+		void TestKitOff();  // dev: the kit off - the spells cost their own again
 		void DevUnlockGlider();  // dev: the glider unlocked on this computer (a flag file) and Dragon's Updraft
 		void GiveUpdraft();
 		bool DevGliderFlag();

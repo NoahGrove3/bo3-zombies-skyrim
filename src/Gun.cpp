@@ -3085,6 +3085,14 @@ namespace bo3z
 			for (auto& [el, c] : byEl) list += fmt::format("{} {}, ", el, c);
 			logger::info("testkit: {} altar spells ({}) - {} others taken away; essence {}", spells, list, removed, Points::Get());
 		}
+		// (Noah: "right now everything costs 0 unless that's just for the test kit?" - it is: the kit keeps every altar spell at 0
+		// for as long as it's on, and it stays on in the save) the kit turned off: the spells cost what they should again at once
+		void TestKitOff()
+		{
+			if (auto* g = KitGlobal()) g->value = 0.0f;
+			Arcana::ReapplyAll();
+			logger::info("testkit: off - the spells cost their own again");
+		}
 		bool TestKitOn()
 		{
 			auto* g = KitGlobal();
