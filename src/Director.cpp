@@ -104,6 +104,8 @@ namespace bo3z
 			int             tries = 0;
 		};
 		std::vector<Settle> g_settle;
+		struct Floater { RE::ActorHandle h; float age = 0; int stage = 0; };
+		std::vector<Floater> g_floaters;   // (the dead watched a moment for a body left hanging in the air)
 		std::unordered_map<RE::FormID, std::size_t> g_ours;  // every undead we raised -> enemy row
 		bool IsOursRaw(RE::Actor* a) { return a && g_ours.contains(a->GetFormID()); }
 		std::vector<std::pair<RE::ObjectRefHandle, float>> g_fx;
@@ -2886,6 +2888,7 @@ namespace bo3z
 					g_corpses.push_back(it->handle);
 					g_fading.push_back({ it->handle, Settings::CorpseSeconds() });  // the body lies there 10 s (MCM), then crumbles
 					g_settle.push_back({ it->handle, 0.0f });
+					g_floaters.push_back({ it->handle });
 					Curse::OnUndeadDeath(a.get());
 					it = g_alive.erase(it);
 				} else {
@@ -2951,6 +2954,46 @@ namespace bo3z
 				}
 			}
 			std::erase_if(g_settle, [](const Settle& c) { return c.age > 3.0f || c.tries > 5; });
+		}
+
+		// (Noah: "sometimes like every 10 zombies killed the body stays floating then despawns 10s later it just looks tacky") a
+		// body still hanging over the ground 1.5 s after it fell is made solid again and pushed down from above; if it still
+		// hangs a moment later it crumbles to dust there and then rather than float out its ten seconds
+		void TickFloaters(RE::PlayerCharacter* a_player, float a_delta)
+		{
+			if (g_floaters.empty()) return;
+			auto* proc = a_player->GetActorRuntimeData().currentProcess;
+			for (auto& f : g_floaters) {
+				f.age += a_delta;
+				auto a = f.h.get();
+				if (!a || a->IsDisabled() || !a->Is3DLoaded()) { f.stage = 9; continue; }
+				if (f.age < 1.5f || (f.stage == 1 && f.age < 2.6f)) continue;
+				auto* root = a->Get3D();
+				auto* pelvis = root ? root->GetObjectByName("NPC Pelvis [Pelv]") : nullptr;
+				const RE::NiPoint3 at = pelvis ? pelvis->world.translate : a->GetPosition();
+				const auto top = WalkTop(a->GetParentCell(), at, 5.0f);
+				if (!top || at.z - *top < 70.0f) { f.stage = 9; continue; }   // (on the ground)
+				if (f.stage == 0) {
+					a->SetCollision(true);
+					if (proc) proc->KnockExplosion(a.get(), at + RE::NiPoint3{ 0, 0, 140.0f }, 2.0f);
+					f.stage = 1;
+					if (static int told = 0; told++ < 20) logger::info("night: {:08X} {} hangs {:.0f} over the ground after dying - pushed down", a->GetFormID(), a->GetName(), at.z - *top);
+				} else {
+					if (auto* fx = Forms::Ours(gen::kRiseFx)) {   // (a puff of grave-dust, as every body crumbles)
+						if (auto puff = a->PlaceObjectAtMe(fx, false)) {
+							puff->SetPosition({ at.x, at.y, *top });
+							g_fx.push_back({ puff->CreateRefHandle(), 2.0f });
+						}
+					}
+					if (static int told = 0; told++ < 20) logger::info("night: {:08X} {} still hanging - crumbled at once", a->GetFormID(), a->GetName());
+					const auto h = f.h;
+					Vanish(a.get());
+					std::erase_if(g_corpses, [&](const RE::ActorHandle& c) { return c == h; });
+					std::erase_if(g_fading, [&](const auto& e) { return e.first == h; });
+					f.stage = 9;
+				}
+			}
+			std::erase_if(g_floaters, [](const Floater& f) { return f.stage == 9 || f.age > 4.0f; });
 		}
 
 		// ---- night's champions: the Iron Reaper's sweep and the Necromancer's raised dead ----
@@ -3493,6 +3536,7 @@ namespace bo3z
 		void KeepThemComing(RE::PlayerCharacter* a_player, float a_delta)
 		{
 			SettleCorpses(a_player, a_delta);
+			TickFloaters(a_player, a_delta);
 			TickFading(a_delta);
 			// (Noah: crashes while gliding) the left-behind dead were being moved after you every frame you flew - a dozen
 			// actors dropped into cells still loading under a gliding player. Now: never while you glide or fall, only once
