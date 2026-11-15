@@ -4221,15 +4221,21 @@ namespace bo3z::Classes
 			if (!p || !sc || !p->Is3DLoaded()) return;
 			// (Noah: "They should look like spectral wolves not normal ones") the ghost's shader laid on once each body is in (it
 			// was laid on before - while there was no body yet), and again every few seconds, never past their time
-			static float relook = 0;
-			const bool look = (relook -= a_delta) <= 0;
-			if (look) relook = 3.0f;
+			// (two crashes inside Skyrim, each a moment after the pack was called or while it fought: the ghost shader was laid on
+			// six bodies at once and again every 3 s) each wolf's shader laid on once, for its whole time, a frame apart from the
+			// next wolf's
+			static float stagger = 0;
+			stagger = std::max(0.0f, stagger - a_delta);
 			for (auto& [h, age] : g_soulWolves) {
-				const bool fresh = age < 0.4f;
+				const bool fresh = age < 0.5f;
 				age += a_delta;
 				auto w = h.get();
-				if (!w || w->IsDead() || !w->Is3DLoaded()) continue;
-				if (age < 18.0f && (look || (fresh && age >= 0.4f))) SoulLook(w.get(), 3.4f);
+				if (!w || w->IsDead() || !w->Is3DLoaded() || !w->Get3D()) continue;
+				if (fresh && age >= 0.5f) {
+					if (stagger > 0.0f) { age = 0.49f; continue; }   // (its turn next frame)
+					SoulLook(w.get(), 19.0f);
+					stagger = 0.05f;
+				}
 			}
 			std::erase_if(g_soulWolves, [](const auto& e) { auto w = e.first.get(); return !w || w->IsDisabled() || e.second > 21.0f; });
 			auto* c = p->GetMagicCaster(RE::MagicSystem::CastingSource::kRightHand);
