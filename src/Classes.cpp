@@ -4233,11 +4233,17 @@ namespace bo3z::Classes
 				if (!w || w->IsDead() || !w->Is3DLoaded() || !w->Get3D()) continue;
 				if (fresh && age >= 0.5f) {
 					if (stagger > 0.0f) { age = 0.49f; continue; }   // (its turn next frame)
-					SoulLook(w.get(), 19.0f);
+					SoulLook(w.get(), 21.0f);
 					stagger = 0.05f;
 				}
 			}
-			std::erase_if(g_soulWolves, [](const auto& e) { auto w = e.first.get(); return !w || w->IsDisabled() || e.second > 21.0f; });
+			// (Noah: "only 6 wolves at a time ... a slot only frees up when a wolf dies or despawns after 20 seconds") each wolf
+			// sent off at 20 s if it hasn't gone itself; a slot is held until it is dead or gone - whatever its age
+			for (auto& [h, age] : g_soulWolves) {
+				auto w = h.get();
+				if (w && !w->IsDead() && !w->IsDisabled() && age >= 20.0f) EndThrall(w.get());
+			}
+			std::erase_if(g_soulWolves, [](const auto& e) { auto w = e.first.get(); return !w || w->IsDisabled() || w->IsDead(); });
 			auto* c = p->GetMagicCaster(RE::MagicSystem::CastingSource::kRightHand);
 			const bool inHand = p->GetEquippedObject(false) == sc && p->AsActorState()->IsWeaponDrawn();
 			const bool casting = inHand && c && c->currentSpell && c->currentSpell == sc->formEnchanting &&
@@ -4284,7 +4290,7 @@ namespace bo3z::Classes
 			// for when some of the pack is gone
 			const int alive = static_cast<int>(std::count_if(g_soulWolves.begin(), g_soulWolves.end(), [](const auto& e) {
 				auto w = e.first.get();
-				return w && !w->IsDead() && !w->IsDisabled() && e.second < 20.5f;
+				return w && !w->IsDead() && !w->IsDisabled();
 			}));
 			const int n = std::min(g_souls, kPack - alive);
 			if (n <= 0) {
@@ -4300,8 +4306,8 @@ namespace bo3z::Classes
 				const RE::NiPoint3 at = p->GetPosition() + RE::NiPoint3{ std::cos(a) * 140.0f, std::sin(a) * 140.0f, 0.0f };
 				if (auto* w = RaiseAlly(p, base, at, 20.0f, hp, 12)) {
 					g_soulWolves.push_back({ w->GetHandle(), 0.0f });
-					// (and Skyrim's own ghost ability: the pale, see-through look its ghosts wear)
-					if (static auto* ghost = RE::TESForm::LookupByID<RE::SpellItem>(0x05030B); ghost) w->AddSpell(ghost);
+					// (Noah: "the spectral wolves kind of change colors ... just make it a solid one color, purple") no longer Skyrim's
+					// ghost ability too - its pale blue shader came and went over our violet one
 					Gun::Motes(6, at, 0.6f, 1.2f);
 					++made;
 				}

@@ -918,7 +918,9 @@ d[0x38:0x3B] = bytes((130, 0, 190))
 subs = [sub('EDID', z('UN_SoulPurpleShader'))]
 for name, hx in T['efsh_ghostwolf']['subs']:
     if name == 'EDID': continue
-    b = bytes(d) if name == 'DATA' else z('Effects\\GhostShaderVioletGrad.dds') if name == 'ICON' else bytes.fromhex(hx)
+    # (Noah: "the spectral wolves kind of change colors. Can you just make it a solid one color, purple?") our one violet ramp,
+    # not Skyrim's violet ghost gradient (pink through blue)
+    b = bytes(d) if name == 'DATA' else z('CurseOfAlduin\\fx\\pal_violet.dds') if name == 'ICON' else bytes.fromhex(hx)
     subs.append(sub(name, b))
 recs['EFSH'].append(record('EFSH', fid('EFSH', 'soulpurple'), subs))
 # (Noah: the Tablet's roll "with green being a common weapon and gold being a legendary") the reel's little weapons glow in
