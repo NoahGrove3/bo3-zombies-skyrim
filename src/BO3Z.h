@@ -730,6 +730,7 @@ namespace bo3z
 		void                  Singularity(const RE::NiPoint3& a_at, float a_radius, float a_crush, float a_share, bool a_dark);   // draws the dead in for a_crush seconds, then bursts (dark: the void's look; else light's)
 		void                  Tick(float a_delta);
 		void                  Reset();
+		void                  TestKitOff();  // dev: the kit off - the spells cost their own again
 		void                  TestKit();  // dev: every mod's attack spell (named by element), every bow and shout, the glider, 150,000 septims
 		bool                  TestKitOn();         // a test character (UN_TestKit): the glider unlocked, its spells named by element
 		void                  TestKitIfFlagged();  // a new character: the kit, if CurseOfAlduin-testkit.flag is beside the log
@@ -956,7 +957,6 @@ namespace bo3z
 		void DevTakeOff();  // dev: Bond II's Updraft shout
 		bool OnSpellCast(RE::FormID a_spell);  // the Updraft shout spoken: true if it was
 		void TestKit();     // dev: Dragon's Updraft and all three bonds
-		void TestKitOff();  // dev: the kit off - the spells cost their own again
 		void DevUnlockGlider();  // dev: the glider unlocked on this computer (a flag file) and Dragon's Updraft
 		void GiveUpdraft();
 		bool DevGliderFlag();
