@@ -1690,7 +1690,8 @@ recs['CONT'] = [record('CONT', fid('CONT', 'classchest'), [
 # Noah has asked to see are written now: the Soulcaller's violet glow and the Tablet reel's green and gold. The rest (the
 # blade, bow and armour glows, Shadowflame's burn, the rift and madness shaders, the hall ghost) wait for his word, since
 # turning them on changes how those things look today
-_efsh_on = {fid('EFSH', k) for k in ('soulpurple', 'tabletgreen', 'tabletgold')}
+# (Noah: "I'm not seeing any of the aura on the class armor sets") the armour sets' auras written too
+_efsh_on = {fid('EFSH', k) for k in ('soulpurple', 'tabletgreen', 'tabletgold')} | {fid('EFSH', f'armglow_{c}_{t}') for c in range(4) for t in (1, 2, 3, 4, 5, 6)}
 out += group('EFSH', [r for r in recs['EFSH'] if struct.unpack_from('<I', r, 12)[0] in _efsh_on])
 for k in ['KYWD', 'GLOB', 'FACT', 'VTYP', 'FSTS', 'LSCR', 'MUSC', 'MUST', 'ARTO', 'MGEF', 'BOOK', 'ENCH', 'SPEL', 'WOOP', 'SHOU', 'ACTI', 'ARMO', 'LIGH', 'STAT', 'WEAP', 'AMMO', 'NPC_', 'ALCH', 'PROJ', 'PERK', 'ARMA', 'SNDR', 'QUST', 'CONT']: out += group(k, recs[k])  # (PERK: the Summoner's command - it was never written before)  # Bethesda's group order: effects load before the spells that use them
 (ROOT / 'data').mkdir(exist_ok=True)
