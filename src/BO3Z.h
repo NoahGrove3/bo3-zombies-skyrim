@@ -731,6 +731,7 @@ namespace bo3z
 		void                  Tick(float a_delta);
 		void                  Reset();
 		void                  TestKitOff();  // dev: the kit off - the spells cost their own again
+		void                  PaintAura(RE::NiAVObject* a_root, const char* a_pal, float a_strength);   // an art painted in one of our colour ramps, dimmed
 		void                  TestKit();  // dev: every mod's attack spell (named by element), every bow and shout, the glider, 150,000 septims
 		bool                  TestKitOn();         // a test character (UN_TestKit): the glider unlocked, its spells named by element
 		void                  TestKitIfFlagged();  // a new character: the kit, if CurseOfAlduin-testkit.flag is beside the log

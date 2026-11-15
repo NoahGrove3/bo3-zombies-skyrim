@@ -1838,6 +1838,7 @@
   "STAT:rise_dust": "0xf2a",
   "EFSH:soulpurple": "0xf2b",
   "SNDR:rise_dig": "0xf2c",
-  "LIGH:tablet_lamp": "0xf2d"
+  "LIGH:tablet_lamp": "0xf2d",
+  "ARTO:armaura": "0xf2e"
  }
 }

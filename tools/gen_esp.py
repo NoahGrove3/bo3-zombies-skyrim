@@ -444,6 +444,9 @@ SCRAFT = {r['id']: r for r in S['spellcraft']['rows']}
 def arto(key, model, kind):
     recs['ARTO'].append(record('ARTO', fid('ARTO', key), [sub('EDID', z('UN_Art_' + key)), sub('OBND', struct.pack('<6h', -20, -20, -20, 20, 20, 20)),
         sub('MODL', z(model)), sub('DNAM', struct.pack('<I', kind))]))
+# (Noah: "The Aura needs to look like a super Saiyan around the player but not blinding thats fully animated" - "Flame Cloak")
+# Skyrim's Flame Cloak hung on you as a hit effect's art (src/Classes.cpp TickArmour paints it in the class's colour)
+arto('armaura', 'magic\\fxfirecloak01.nif', 1)
 for r in SCRAFT.values():
     arto('fx_' + r['id'] + '_hand', 'CurseOfAlduin\\fx\\' + r['id'] + '_hand.nif', 0)          # magic casting art
     recs['STAT'].append(record('STAT', fid('STAT', 'fx_' + r['id'] + '_orb'), [sub('EDID', z('UN_Orb_' + r['id'])), sub('OBND', struct.pack('<6h', -30, -30, -30, 30, 30, 30)),
@@ -1692,8 +1695,9 @@ recs['CONT'] = [record('CONT', fid('CONT', 'classchest'), [
 # Noah has asked to see are written now: the Soulcaller's violet glow and the Tablet reel's green and gold. The rest (the
 # blade, bow and armour glows, Shadowflame's burn, the rift and madness shaders, the hall ghost) wait for his word, since
 # turning them on changes how those things look today
-# (Noah: "I'm not seeing any of the aura on the class armor sets") the armour sets' auras written too
-_efsh_on = {fid('EFSH', k) for k in ('soulpurple', 'tabletgreen', 'tabletgold')} | {fid('EFSH', f'armglow_{c}_{t}') for c in range(4) for t in (1, 2, 3, 4, 5, 6)}
+# (the armour sets' glows were written for a night - Noah: "the marks on the armor are actually on my players skin" - "Remove it,
+# aura only": the aura is the Flame Cloak's art now)
+_efsh_on = {fid('EFSH', k) for k in ('soulpurple', 'tabletgreen', 'tabletgold')}
 out += group('EFSH', [r for r in recs['EFSH'] if struct.unpack_from('<I', r, 12)[0] in _efsh_on])
 for k in ['KYWD', 'GLOB', 'FACT', 'VTYP', 'FSTS', 'LSCR', 'MUSC', 'MUST', 'ARTO', 'MGEF', 'BOOK', 'ENCH', 'SPEL', 'WOOP', 'SHOU', 'ACTI', 'ARMO', 'LIGH', 'STAT', 'WEAP', 'AMMO', 'NPC_', 'ALCH', 'PROJ', 'PERK', 'ARMA', 'SNDR', 'QUST', 'CONT']: out += group(k, recs[k])  # (PERK: the Summoner's command - it was never written before)  # Bethesda's group order: effects load before the spells that use them
 (ROOT / 'data').mkdir(exist_ok=True)

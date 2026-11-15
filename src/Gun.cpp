@@ -3093,6 +3093,20 @@ namespace bo3z
 			Arcana::ReapplyAll();
 			logger::info("testkit: off - the spells cost their own again");
 		}
+		// (Noah: the armour's aura "like a super Saiyan around the player but not blinding") an art on a body painted with one of
+		// our colour ramps, its light turned down to a_strength of the model's own
+		void PaintAura(RE::NiAVObject* a_root, const char* a_pal, float a_strength)
+		{
+			if (!a_root) return;
+			FxPart fp;
+			fp.pal = std::string("textures\\CurseOfAlduin\\fx\\pal_") + a_pal + ".dds";
+			TintTree(a_root, fp);
+			RE::BSVisit::TraverseScenegraphGeometries(a_root, [&](RE::BSGeometry* g) {
+				auto* ep = netimmerse_cast<RE::BSEffectShaderProperty*>(g->GetGeometryRuntimeData().shaderProperty.get());
+				if (auto* m = ep ? static_cast<RE::BSEffectShaderMaterial*>(ep->material) : nullptr) m->baseColorScale *= a_strength;
+				return RE::BSVisit::BSVisitControl::kContinue;
+			});
+		}
 		bool TestKitOn()
 		{
 			auto* g = KitGlobal();

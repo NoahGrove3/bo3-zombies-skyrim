@@ -2372,7 +2372,13 @@ namespace bo3z::Classes
 				if (!a) return;
 				static constexpr const char* kHit[3] = { "fireball", "frost", "runeshock" };
 				Gun::BlastSound(kHit[std::clamp(bolt - 4, 0, 2)], a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, 0.6f);
-				if (!killed) Gun::ElemBurst(bolt - 4, a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, 0.35f, 0.0f, 0.4f);
+				// (Noah: "the carian wand impact animations need to be 50% smaller I also noticed Only Ice doesnt have a impact
+				// animation") half the size; ice's own burst (Skyrim's small frost impact) too small to see at that: the Ice
+				// Storm's impact in its place (fxmap.ini burst_wandfrost.nif)
+				if (!killed) {
+					if (bolt == 5) Gun::QueueFx("CurseOfAlduin\\fx\\burst_wandfrost.nif", a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, 0.5f, 0.0f, 0.6f, false);
+					else Gun::ElemBurst(bolt - 4, a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, 0.175f, 0.0f, 0.4f);
+				}
 			};
 			Gun::Slash(sl);
 		};
@@ -4618,13 +4624,36 @@ namespace bo3z::Classes
 		// (Noah: "the upgraded version to make the item look enchanted") the set's glow, its class's colour, from Tier I
 		// (Noah: "give the player an aura when the armor is upgraded", faint to blazing) Tier I a sheen, Tier II wisps rising off you,
 		// Tier III a full aura, each Ascend (three steps) brighter
-		if (const int at = std::min(6, Kit::ArmourTier(c)); at >= 1 && p->Is3DLoaded() && !p->IsDead()) {
-			static float renew = 0;
-			static int   was = 0;
-			renew -= 1.0f;
-			if (renew <= 0 || at != was) {   // (laid on rarely and long: a shader laid over and over on a body is what crashed with the wolves)
-				renew = 20.0f, was = at;
-				if (auto* fx = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kArmGlow[c * 6 + at - 1], gen::kPlugin)) p->ApplyEffectShader(fx, 21.0f, nullptr, false, false, nullptr, false);
+		// (Noah: "The Aura needs to look like a super Saiyan around the player but not blinding thats fully animated 60 fps not a
+		// pulse every 20 seconds" - "Flame Cloak", "Remove it, aura only") Skyrim's Flame Cloak hung on you for good, flames
+		// licking up round your body in your class's colour: Tier I faint, each tier and Ascend a little brighter and bigger;
+		// laid on again only if it went (a load, a death), painted once each time its model is made
+		{
+			const int at = std::min(6, Kit::ArmourTier(c));
+			auto* art = RE::TESDataHandler::GetSingleton()->LookupForm<RE::BGSArtObject>(gen::kArmAura, gen::kPlugin);
+			static RE::NiAVObject* painted = nullptr;
+			static int paintedAt = -1, paintedCls = -1;
+			RE::ModelReferenceEffect* mine = nullptr;
+			if (art) if (auto* pl = RE::ProcessLists::GetSingleton()) pl->ForEachModelEffect([&](RE::ModelReferenceEffect* e) {
+				if (e && e->artObject == art && e->target.get().get() == p && !e->finished) mine = e;
+				return RE::BSContainer::ForEachResult::kContinue;
+			});
+			const bool want = art && at >= 1 && p->Is3DLoaded() && !p->IsDead();
+			if (!want) {
+				if (mine) mine->finished = true, mine->lifetime = 0.0f;
+			} else if (!mine) {
+				p->ApplyArtObject(art, -1.0f);
+				painted = nullptr;
+			} else if (auto* o = mine->artObject3D.get(); o && (o != painted || paintedAt != at || paintedCls != c)) {
+				if (o != painted) {   // (a fresh model: painted in the class's colour; its light turned down to the tier's)
+					static constexpr const char* kPal[4] = { "violet", "fire", "poison", "blue" };
+					Gun::PaintAura(o, kPal[std::clamp(c, 0, 3)], 0.35f + 0.1f * at);
+				} else {   // (the same model, a new tier: laid on again fresh, painted at the new strength)
+					mine->finished = true, mine->lifetime = 0.0f;
+				}
+				o->local.scale = 0.95f + 0.03f * at;
+				painted = o, paintedAt = at, paintedCls = c;
+				if (static int said = 0; said++ < 6) logger::info("classes: the armour's aura - the Flame Cloak in the class's colour, tier {}", at);
 			}
 		}
 		// (the Gondorian set, Tier I) the Ranger's stride: 10% faster
