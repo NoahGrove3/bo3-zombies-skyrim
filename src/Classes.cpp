@@ -2335,15 +2335,25 @@ namespace bo3z::Classes
 		auto* w = CarianBlade();
 		if (!p || !w) return;
 		const int t = std::max(0, Kit::TierOfWeapon(w));
-		static int turn = 0, casts = 0;
+		static int turn = 0, casts = 0, last = -1;
 		++casts;
-		const bool third = casts % 3 == 0;
+		// (Noah: "instead of it firing a great bolt every third cast, it should be every other cast. And it should shoot randomly
+		// between fire, lightning, and ice ... so that all the elements are cycled through with the great cast") every 2nd bolt
+		// the great one, its element in turn - fire, lightning, ice - so each comes round; the bolts between them at random
+		// (never the same element twice running)
+		const bool third = casts % 2 == 0;
 		const bool great = t >= 2 && third;
 		const RE::NiPoint3 dir = Gun::SwingDir();
 		const RE::NiPoint3 from = WandTip(p);
 		static constexpr int kOrder[3] = { 4, 6, 5 };                                     // fire, lightning, ice (ArcModel's bolts)
 		static constexpr RE::FormID kSnd[3] = { 0x0012FCD5, 0x0002DD2A, 0x0002B96C };    // Firebolt, Lightning Bolt, Ice Spike
-		const int k = turn++ % 3;
+		int k = 0;
+		if (third) k = turn++ % 3;
+		else {
+			static std::mt19937 rng{ std::random_device{}() };
+			do k = static_cast<int>(rng() % 3); while (k == last);
+		}
+		last = k;
 		const int bolt = kOrder[k];
 		if (auto* snd = ReleaseSound(kSnd[k])) Audio::Game(snd->GetFormID(), p, great ? 1.0f : 0.85f);
 		auto fire = [&](const RE::NiPoint3& d, float sizeMul, float shareMul) {
@@ -3530,7 +3540,7 @@ namespace bo3z::Classes
 			{ "Radiant Quarterstaff", "Summoner's blade of white sunlight.",
 				{ "Tier I: light swings fire sun balls.", "Tier II: heavy calls a sunbeam on your target.", "Tier III: heavy calls a great sunbeam." } },
 			{ "Carian Wand", "Destruction's wand. Hold to cast a bolt every 0.5 s: fire, lightning, ice.",
-				{ "Tier I: a bolt every 0.5 s.", "Tier II: every 3rd bolt pierces.", "Tier III: every 3rd bolt is a great bolt with a volley either side." } },
+				{ "Tier I: a bolt every 0.5 s.", "Tier II: every 2nd bolt is a great bolt that pierces.", "Tier III: every 2nd bolt is a great bolt with a volley either side." } },
 			{ "Shadowflame Scythe", "Alchemist's scythe. Sheathe it to swap to your flasks.",
 				{ "Tier I: light swings fire burning shadowflame bolts.", "Tier II: heavy: a purple fire tornado.", "Tier III: heavy: a great purple fire tornado." } },
 			{ "Spellbound Rapier", "Spellsword's blade: takes the element of your other hand's spell.",

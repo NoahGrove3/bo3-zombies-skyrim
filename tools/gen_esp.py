@@ -639,7 +639,7 @@ SWORD_DESC = {   # (Noah, 2026-11-12: "update all the weapons descriptions so th
 }
 TIER_TEXT = {   # (the look's enchantment on the item card: what this tier adds)
     'radiant': ("Light: white sun balls.", "Light: sun balls. Heavy: a sunbeam on your target.", "Light: sun balls. Heavy: a great sunbeam."),
-    'carian': ("A bolt every 0.5 s.", "Every 3rd bolt is a piercing great bolt.", "Every 3rd bolt is a great bolt with a volley either side."),
+    'carian': ("A bolt every 0.5 s.", "Every 2nd bolt is a piercing great bolt.", "Every 2nd bolt is a great bolt with a volley either side."),
     'alch': ("Light: shadowflame bolts that burn.", "Light: shadowflame bolts. Heavy: a purple fire tornado.", "Light: shadowflame bolts. Heavy: a great purple fire tornado."),
     'ss': ("Light: bolts of your spell's element.", "Light: element bolts. Heavy: a tornado that casts your spell.", "Light: element bolts. Heavy: a great tornado that casts your spell."),
     'slayer': ("Light: golden fireballs. Heavy: a rain of golden fireballs.",) * 3,
