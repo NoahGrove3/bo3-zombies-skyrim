@@ -675,6 +675,7 @@ namespace bo3z
 			float           delay = 0;       // (the bolt) when it strikes
 			float           built = 0;       // seconds its body has been in
 			bool            struck = false;
+			bool            beamed = false;   // (came down a red beam: stood where it waited, never "set back")
 		};
 		std::vector<Riser> g_risers;
 		// (Noah: "I want there to be like dust and debris coming from where they're clawing up from, like dirt") where one of
@@ -835,9 +836,11 @@ namespace bo3z
 					// done - and its collision (off since it went under) is not touched again until it shows
 					if (a->Is3DLoaded()) r.built += a_delta;
 					if (r.built >= 0.35f) {
+						// (Noah: "the enemies are frozen still when they first spawn in" - shown at alpha 0 to wait for its beam, it
+						// could still be seen standing) kept wholly hidden until its beam has come
 						const auto f = a->GetPosition();
 						a->SetAlpha(0.0f);
-						ShowRiser(a.get(), true), r.hidden = false, r.faded = true;
+						r.faded = true;
 						const bool great = Director::IsBoss(a.get()) || g_elites.contains(a->GetFormID());
 						r.t = 0;
 						if (great) {
@@ -876,6 +879,8 @@ namespace bo3z
 						// (the log: "sank 50-80 into the ground" a moment after showing - with no collision while it waited it had
 						// settled under the floor) set back on its floor as it shows, then solid
 						a->SetCollision(true);   // (never off now; kept for one that was)
+						if (r.hidden) a->SetAlpha(0.0f), ShowRiser(a.get(), true), r.hidden = false;   // (now in sight - at nothing, to fade in)
+						if (!a->IsDead()) FreeFromEmerge(a.get());   // (no graph left mid-animation: it moves as it fades in)
 						a->EnableAI(true);
 						if (auto* pc = RE::PlayerCharacter::GetSingleton(); pc && !a->IsDead()) {
 							const auto d = pc->GetPosition() - a->GetPosition();
@@ -884,7 +889,7 @@ namespace bo3z
 							SafeCombat(a, pc);
 						}
 						if (r.anim == 5 && g_elites.contains(a->GetFormID())) Forms::PlayAt(gen::Sound::champ_telegraph, a.get());
-						r.anim = 9, r.t = 0, r.delay = 0.15f;   // (its fade-in starts 0.15 s on)
+						r.anim = 9, r.t = 0, r.delay = 0.0f, r.beamed = true;   // (it fades in at once, over 0.6 s)
 					}
 					continue;
 				}
@@ -900,6 +905,10 @@ namespace bo3z
 						r.t = 99;
 						continue;
 					}
+					// (Noah: "they disappear and then reappear a second later and then start moving" - the check below found them
+					// "sunk" 60-80 though nothing had moved them, and hid them while it set them back) not for those that came
+					// down a beam: they stand where they waited
+					if (r.beamed) continue;
 					// (Noah: "stuck in the floor for a moment") measured against the ground under it now - a ray from just over
 					// its head - not the floor it rose from, and set back at most twice (a third time means the floor it
 					// rose to was wrong: the body's own fall is right, and fighting it is the stutter)
