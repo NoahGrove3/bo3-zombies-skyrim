@@ -2562,8 +2562,36 @@ namespace bo3z::Classes
 	// every frame: the spells' costs, the summons, the flasks, the Staff of Magnus, cooldowns
 	// (Noah: "I can't see anything in first person") the armour aura's model, hidden every frame you look out of your own eyes
 	RE::NiPointer<RE::NiAVObject> g_auraNode;
+	// (Noah: "when I equip my armor set, it flashes the aura in the size that it was originally, and then it shrinks it") the
+	// aura laid on is looked for every frame until its model is in, and painted and drawn in the frame it appears
+	bool               g_auraWait = false;
+	int                g_auraTier = 0, g_auraCls = 0;
+	RE::NiAVObject*    g_auraPainted = nullptr;
+	int                g_auraPaintedAt = -1, g_auraPaintedCls = -1;
+	void PaintAuraModel(RE::NiAVObject* a_o, int a_cls, int a_tier)
+	{
+		static constexpr const char* kPal[4] = { "violet", "fire", "poison", "blue" };
+		// (Noah: "make it a lot smaller ... just on the outside of the armor set, but not too big to where it limits your view in
+		// third person. It should be very subtle") a faint glow close to the body: its light a fifth to two fifths of the
+		// model's, the whole of it drawn in to 55%
+		Gun::PaintAura(a_o, kPal[std::clamp(a_cls, 0, 3)], 0.16f + 0.04f * a_tier);
+		a_o->local.scale = 0.55f;
+		RE::NiUpdateData ud;
+		a_o->Update(ud);
+		g_auraPainted = a_o, g_auraPaintedAt = a_tier, g_auraPaintedCls = a_cls;
+	}
 	void TickFast(float a_delta)
 	{
+		if (g_auraWait) {
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* art = RE::TESDataHandler::GetSingleton()->LookupForm<RE::BGSArtObject>(gen::kArmAura, gen::kPlugin);
+			if (p && art) if (auto* pl = RE::ProcessLists::GetSingleton()) pl->ForEachModelEffect([&](RE::ModelReferenceEffect* e) {
+				if (e && e->artObject == art && e->target.get().get() == p && !e->finished) {
+					if (auto* o = e->artObject3D.get(); o && o != g_auraPainted) PaintAuraModel(o, g_auraCls, g_auraTier), g_auraWait = false;
+				}
+				return RE::BSContainer::ForEachResult::kContinue;
+			});
+		}
 		if (auto* o = g_auraNode.get()) {
 			const bool first = RE::PlayerCamera::GetSingleton() && RE::PlayerCamera::GetSingleton()->IsInFirstPerson();
 			if (first != o->GetFlags().any(RE::NiAVObject::Flag::kHidden)) {
@@ -4646,8 +4674,6 @@ namespace bo3z::Classes
 			bool worn = false;
 			if (auto* body = p->GetWornArmor(RE::BGSBipedObjectForm::BipedObjectSlot::kBody)) for (auto* a : SetForms(c, 0)) worn = worn || a == body;
 			auto* art = RE::TESDataHandler::GetSingleton()->LookupForm<RE::BGSArtObject>(gen::kArmAura, gen::kPlugin);
-			static RE::NiAVObject* painted = nullptr;
-			static int paintedAt = -1, paintedCls = -1;
 			RE::ModelReferenceEffect* mine = nullptr;
 			if (art) if (auto* pl = RE::ProcessLists::GetSingleton()) pl->ForEachModelEffect([&](RE::ModelReferenceEffect* e) {
 				if (e && e->artObject == art && e->target.get().get() == p && !e->finished) mine = e;
@@ -4659,19 +4685,10 @@ namespace bo3z::Classes
 				if (mine) mine->finished = true, mine->lifetime = 0.0f;
 			} else if (!mine) {
 				p->ApplyArtObject(art, -1.0f);
-				painted = nullptr;
-			} else if (auto* o = mine->artObject3D.get(); o && (o != painted || paintedAt != at || paintedCls != c)) {
-				if (o != painted) {   // (a fresh model: painted in the class's colour; its light turned down to the tier's)
-					static constexpr const char* kPal[4] = { "violet", "fire", "poison", "blue" };
-					// (Noah: "make it a lot smaller ... just on the outside of the armor set, but not too big to where it limits your
-					// view in third person. It should be very subtle") a faint glow close to the body: its light a fifth to two
-					// fifths of the model's, the whole of it drawn in to 55%
-					Gun::PaintAura(o, kPal[std::clamp(c, 0, 3)], 0.16f + 0.04f * at);
-				} else {   // (the same model, a new tier: laid on again fresh, painted at the new strength)
-					mine->finished = true, mine->lifetime = 0.0f;
-				}
-				o->local.scale = 0.55f;
-				painted = o, paintedAt = at, paintedCls = c;
+				g_auraWait = true, g_auraTier = at, g_auraCls = c;   // (painted the frame its model is in: TickFast)
+			} else if (auto* o = mine->artObject3D.get(); o && (o != g_auraPainted || g_auraPaintedAt != at || g_auraPaintedCls != c)) {
+				if (o != g_auraPainted) PaintAuraModel(o, c, at);   // (one TickFast missed)
+				else mine->finished = true, mine->lifetime = 0.0f;  // (a new tier: laid on again fresh, painted at its strength)
 				if (static int said = 0; said++ < 6) logger::info("classes: the armour's aura - Auriel's sun aura in the class's colour, tier {}", at);
 			}
 		}
