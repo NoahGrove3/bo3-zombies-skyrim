@@ -775,10 +775,11 @@ namespace bo3z
 						return;
 					}
 					a->MoveToNearestNavmesh();
-					ShowRiser(a.get(), true), a->SetCollision(true);
-					a->EnableAI(true);
+					a->SetCollision(true);
+					// (the deep review: its AI was woken and set hunting here, then stopped again at once by StartRise - two
+					// switches in one frame on a body just moved) it comes back down a red beam like a fresh one, hidden and
+					// still; the arrival wakes it and sets it on you
 					StartRise(a.get(), pc);
-					SafeCombat(a, pc);
 				});
 			});
 		}
@@ -2480,6 +2481,18 @@ namespace bo3z
 			// (the audit: a champion put away at dawn or on your fall kept its slot - no dragon, priest or quest foe could rise after)
 			if (auto c = g_champ.handle.get(); c && c.get() == a) g_champ.handle = {};
 			a->StopCombat();
+			// (the deep review) any shader or art still running on it - a portal's, a burn's, a soul's glow - ended before the
+			// body is put away
+			if (auto* pl = RE::ProcessLists::GetSingleton()) {
+				pl->ForEachShaderEffect([a](RE::ShaderReferenceEffect* e) {
+					if (e && e->target.get().get() == a) e->finished = true;
+					return RE::BSContainer::ForEachResult::kContinue;
+				});
+				pl->ForEachModelEffect([a](RE::ModelReferenceEffect* e) {
+					if (e && e->target.get().get() == a) e->finished = true;
+					return RE::BSContainer::ForEachResult::kContinue;
+				});
+			}
 			a->Disable();
 			g_purge.push_back({ a->GetHandle(), 2.0f });
 		}
@@ -5085,7 +5098,7 @@ namespace bo3z
 			auto* dh = RE::TESDataHandler::GetSingleton();
 			// (a save from before: the old light was saved where it last stood) any of it round you put out, every few seconds
 			if ((sweep -= 0.5f) <= 0) {
-				sweep = 5.0f;
+				sweep = 45.0f;   // (the deep review: an 8000-unit sweep every 5 s for a light only an old save carries - once in a while is plenty)
 				if (auto* old = dh->LookupForm<RE::TESObjectLIGH>(gen::kLanternLight, gen::kPlugin); old && RE::TES::GetSingleton()) {
 					std::vector<RE::TESObjectREFR*> stray;
 					RE::TES::GetSingleton()->ForEachReferenceInRange(a_player, 8000.0f, [&](RE::TESObjectREFR* a_r) {

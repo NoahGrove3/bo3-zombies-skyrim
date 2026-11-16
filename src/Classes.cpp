@@ -1611,7 +1611,19 @@ namespace bo3z::Classes
 			// went down 20 s on, the moment the eight wolves' time was up, each still wearing its ghostly shader and in a fight)
 			// its shaders and effects stopped and its fight ended first; it is turned off now and deleted a moment later, once
 			// the game has let go of it
-			if (auto* pl = RE::ProcessLists::GetSingleton()) pl->StopAllMagicEffects(*a);
+			if (auto* pl = RE::ProcessLists::GetSingleton()) {
+				pl->StopAllMagicEffects(*a);
+				// (the deep review: the two later crashes came with the pack out too; a shader laid with ApplyEffectShader is no
+				// magic effect - StopAllMagicEffects left the violet one running on a body about to be put away) ended here too
+				pl->ForEachShaderEffect([a](RE::ShaderReferenceEffect* e) {
+					if (e && e->target.get().get() == a) e->finished = true;
+					return RE::BSContainer::ForEachResult::kContinue;
+				});
+				pl->ForEachModelEffect([a](RE::ModelReferenceEffect* e) {
+					if (e && e->target.get().get() == a) e->finished = true;
+					return RE::BSContainer::ForEachResult::kContinue;
+				});
+			}
 			a->StopCombat();
 			Gun::FxBlast("dark", a->GetPosition() + RE::NiPoint3{ 0, 0, 50.0f });
 			Console(a, "SetPlayerTeammate 0");
@@ -4277,7 +4289,7 @@ namespace bo3z::Classes
 				if (!w || w->IsDead() || !w->Is3DLoaded() || !w->Get3D()) continue;
 				if (fresh && age >= 0.5f) {
 					if (stagger > 0.0f) { age = 0.49f; continue; }   // (its turn next frame)
-					SoulLook(w.get(), 21.0f);
+					SoulLook(w.get(), 19.0f);   // (gone before the wolf is: it is sent off at 20 s)
 					stagger = 0.05f;
 				}
 			}

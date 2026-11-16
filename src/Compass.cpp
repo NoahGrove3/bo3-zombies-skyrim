@@ -86,7 +86,22 @@ namespace bo3z::Compass
 			if (!dh) {
 				return out;
 			}
-			for (auto* q : dh->GetFormArray<RE::TESQuest>()) {
+			// (the deep review's performance pass: "compass 5 ms" at its worst, every minute, from walking every quest the load
+			// order holds - thousands - twice a second) the running ones gathered a few hundred at a time across the calls,
+			// the journal's few read from them
+			static std::vector<RE::TESQuest*> running, gathering;
+			static std::size_t                next = 0;
+			{
+				const auto& all = dh->GetFormArray<RE::TESQuest>();
+				if (next == 0) gathering.clear();
+				const std::size_t end = std::min<std::size_t>(all.size(), next + 400);
+				for (std::size_t i = next; i < end; ++i) {
+					if (auto* q = all[i]; q && q->IsRunning() && !q->IsCompleted()) gathering.push_back(q);
+				}
+				next = end;
+				if (next >= all.size()) running.swap(gathering), next = 0;
+			}
+			for (auto* q : running) {
 				if (!q || !q->IsActive() || !q->IsRunning() || q->IsCompleted()) {
 					continue;
 				}

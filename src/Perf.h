@@ -38,7 +38,7 @@ namespace bo3z::Perf
 		static std::uint64_t frames0 = 0;
 		const auto now = std::chrono::steady_clock::now();
 		if (now - last < std::chrono::seconds(60)) return;
-		const std::uint64_t frames = a_frames - frames0;
+		const std::uint64_t frames = a_frames >= frames0 ? a_frames - frames0 : 0;   // (the free camera's frames counted apart: never a wrapped count)
 		frames0 = a_frames, last = now;
 		std::string line;
 		double total = 0;

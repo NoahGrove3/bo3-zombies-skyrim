@@ -1352,6 +1352,13 @@ namespace bo3z
 			if (!ws) {
 				return;
 			}
+			// (the deep review: "shops 12.8 ms" at its worst - this 6000-unit sweep for an old save's stands ran every 2 s, and
+			// every frame while a town was searched) once on coming into a new cell, and every half minute otherwise
+			static auto*  lastCell = static_cast<RE::TESObjectCELL*>(nullptr);
+			static auto   lastAt = std::chrono::steady_clock::time_point{};
+			const auto    nowT = std::chrono::steady_clock::now();
+			if (a_player->GetParentCell() == lastCell && nowT - lastAt < std::chrono::seconds(30)) return;
+			lastCell = a_player->GetParentCell(), lastAt = nowT;
 			int n = 0;
 			RE::TES::GetSingleton()->ForEachReferenceInRange(a_player, 6000.0f, [&](RE::TESObjectREFR* r) {
 				if (!r || r->IsDeleted() || !IsOurBase(r->GetBaseObject())) {
