@@ -170,7 +170,10 @@ SKSEPluginLoad(const SKSE::LoadInterface* a_skse)
 	bo3z::PluginList::Ensure();
 	SetupLog();
 	bo3z::Display::FitScreen(true);
-	logger::info("The Curse of Alduin {} loading as SKSE plugin", bo3z::kVersion);
+#ifndef CA_BUILD
+#	define CA_BUILD "local"
+#endif
+	logger::info("The Curse of Alduin {} (build {}) loading as SKSE plugin", bo3z::kVersion, CA_BUILD);
 	bo3z::Save::InstallCoSave();
 	bo3z::Events::InstallMenuWatch();
 	bo3z::Events::InstallLoadGuard();

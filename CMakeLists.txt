@@ -34,6 +34,13 @@ target_precompile_headers(CurseOfAlduin PRIVATE src/PCH.h)
 set_source_files_properties(src/Relay.cpp PROPERTIES SKIP_PRECOMPILE_HEADERS ON)  # winsock before windows.h
 target_link_libraries(CurseOfAlduin PRIVATE imgui::imgui Microsoft::DirectXTK Microsoft::DirectXTex d3d11.lib dxgi.lib windowscodecs.lib ole32.lib winmm.lib ws2_32.lib psapi.lib)
 target_compile_definitions(CurseOfAlduin PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN)
+# (Noah: "make sure the changes are actually built and installed") the commit it was built from, written in the log at load
+set(CA_BUILD "$ENV{GITHUB_SHA}")
+if(CA_BUILD STREQUAL "")
+	set(CA_BUILD "local")
+endif()
+string(SUBSTRING "${CA_BUILD}" 0 7 CA_BUILD)
+target_compile_definitions(CurseOfAlduin PRIVATE CA_BUILD="${CA_BUILD}")
 # the build's commit (CI), so players in a party can see they run the same build (Net.cpp only: no full rebuild)
 if(DEFINED ENV{GITHUB_SHA})
 	string(SUBSTRING "$ENV{GITHUB_SHA}" 0 7 UN_BUILD_SHA)
