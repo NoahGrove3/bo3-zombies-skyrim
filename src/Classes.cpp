@@ -2587,7 +2587,7 @@ namespace bo3z::Classes
 			auto* art = RE::TESDataHandler::GetSingleton()->LookupForm<RE::BGSArtObject>(gen::kArmAura, gen::kPlugin);
 			if (p && art) if (auto* pl = RE::ProcessLists::GetSingleton()) pl->ForEachModelEffect([&](RE::ModelReferenceEffect* e) {
 				if (e && e->artObject == art && e->target.get().get() == p && !e->finished) {
-					if (auto* o = e->artObject3D.get(); o && o != g_auraPainted) PaintAuraModel(o, g_auraCls, g_auraTier), g_auraWait = false;
+					if (auto* o = e->artObject3D.get(); o && o != g_auraPainted) PaintAuraModel(o, g_auraCls, g_auraTier), g_auraNode = e->artObject3D, g_auraWait = false;
 				}
 				return RE::BSContainer::ForEachResult::kContinue;
 			});
