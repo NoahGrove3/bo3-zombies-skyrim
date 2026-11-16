@@ -1025,6 +1025,7 @@ namespace bo3z
 		void AddUI(std::function<void()> a_task);
 		void Drain();                              // ours: from the Present hook
 		void Later(float a_seconds, std::function<void()> a_task);  // on the main thread, after a while (one timer thread for all)
+		void Retire(RE::Actor* a_actor, float a_deleteAfter = 1.5f); // an actor of ours put away: effects ended, fight ended, turned off now, deleted later
 	}
 
 	namespace Watchdog

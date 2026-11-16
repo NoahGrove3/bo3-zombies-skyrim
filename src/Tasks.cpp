@@ -96,5 +96,26 @@ namespace bo3z
 				t();
 			}
 		}
-	}
+			// (the deep review: crashes in Skyrim's sight-and-sound job for the dead) an actor of ours is never turned off and
+		// deleted in the same frame: its shaders and art are ended, its fight stopped, it is turned off now, and deleted only
+		// once the game has had time to let go of it
+		void Retire(RE::Actor* a_actor, float a_deleteAfter)
+		{
+			if (!a_actor || a_actor->IsDeleted()) return;
+			if (auto* pl = RE::ProcessLists::GetSingleton()) {
+				pl->ForEachShaderEffect([a_actor](RE::ShaderReferenceEffect* e) {
+					if (e && e->target.get().get() == a_actor) e->finished = true;
+					return RE::BSContainer::ForEachResult::kContinue;
+				});
+				pl->ForEachModelEffect([a_actor](RE::ModelReferenceEffect* e) {
+					if (e && e->target.get().get() == a_actor) e->finished = true;
+					return RE::BSContainer::ForEachResult::kContinue;
+				});
+			}
+			a_actor->StopCombat();
+			a_actor->Disable();
+			const RE::ObjectRefHandle h = a_actor->GetHandle();
+			Later(a_deleteAfter, [h] { if (auto r = h.get(); r && !r->IsDeleted()) r->SetDelete(true); });
+		}
+}
 }

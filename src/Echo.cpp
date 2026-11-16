@@ -146,8 +146,7 @@ namespace bo3z
 				}
 				if (al.t <= 0 || a->IsDead()) {
 					Gun::FxBlast("dark", a->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f });  // back into the earth
-					a->Disable();
-					a->SetDelete(true);
+					Tasks::Retire(a.get());
 					al.t = 0;
 				}
 			}
@@ -959,10 +958,7 @@ namespace bo3z
 			g_probe = {}, g_arrive = {}, g_leave = {};
 			g_hall = {}, g_hallSwept = false, g_aim = -1, g_hallMenu = false, g_hallKind = {};
 			for (auto& al : g_allies) {
-				if (auto a = al.h.get()) {
-					a->Disable();
-					a->SetDelete(true);
-				}
+				if (auto a = al.h.get()) Tasks::Retire(a.get());
 			}
 			g_allies.clear();
 			g_clear = false, g_slow = 0;
@@ -1031,10 +1027,7 @@ namespace bo3z
 			static auto* playerFaction = RE::TESForm::LookupByID<RE::TESFaction>(0x00000DB1);
 			a_count = std::min(a_count, 6);
 			while (!g_allies.empty() && static_cast<int>(g_allies.size()) + a_count > 6) {  // (six at most: the oldest go first)
-				if (auto a = g_allies.front().h.get()) {
-					a->Disable();
-					a->SetDelete(true);
-				}
+				if (auto a = g_allies.front().h.get()) Tasks::Retire(a.get());
 				g_allies.erase(g_allies.begin());
 			}
 			for (int i = 0; i < a_count; ++i) {

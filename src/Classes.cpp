@@ -800,6 +800,7 @@ namespace bo3z::Classes
 		if (a_index >= 0 && a_index < static_cast<int>(coffer::kSpells.size())) g_mastery[coffer::kSpells[a_index].ladder] = 0;
 	}
 
+	namespace { void EndThrall(RE::Actor* a); }
 	namespace { std::mutex g_lineLock; std::string g_line; std::vector<std::string> g_progress; int g_progressCls = -1; CodexSnap g_codexSnap; }
 	std::string WonderLineNow();
 	// (Noah: "a guide book for each class that tracks progression") the class guide's live page: built here once a second
@@ -1085,8 +1086,7 @@ namespace bo3z::Classes
 					continue;
 				}
 				logger::info("classes: a masterless conjured {} ({:08X}) let go", a->GetName(), a->GetFormID());
-				a->Disable();
-				a->SetDelete(true);
+				EndThrall(a.get());  // (put away a moment before it is deleted - never deleted the frame it is turned off)
 			}
 			g_masterless = std::move(nowMasterless);
 		}
@@ -1693,10 +1693,7 @@ namespace bo3z::Classes
 				auto a = h.get();
 				if (!a || a->IsDisabled()) { t = 0; continue; }
 				if ((t -= a_delta) <= 0 || a->IsDead()) {
-					Gun::FxBlast("dark", a->GetPosition() + RE::NiPoint3{ 0, 0, 50.0f });
-					Console(a.get(), "SetPlayerTeammate 0");  // (no teammate the save remembers and can't find)
-					a->Disable();
-					a->SetDelete(true);
+					EndThrall(a.get());  // (no teammate the save remembers and can't find; put away a moment before it is deleted)
 					t = 0;
 				}
 			}
@@ -1936,7 +1933,7 @@ namespace bo3z::Classes
 					continue;
 				}
 				while (!g_ownSummons.empty() && static_cast<int>(g_ownSummons.size()) >= cap) {  // (the oldest goes, as Skyrim's own do)
-					if (auto a = g_ownSummons.front().first.get()) Console(a.get(), "SetPlayerTeammate 0"), a->Disable(), a->SetDelete(true);
+					if (auto a = g_ownSummons.front().first.get()) EndThrall(a.get());
 					g_ownSummons.erase(g_ownSummons.begin());
 				}
 				const float yaw = p->GetAngleZ();
@@ -1965,9 +1962,7 @@ namespace bo3z::Classes
 			int n = 0;
 			for (auto& [h, t] : g_ownSummons) {
 				if (auto a = h.get()) {
-					Gun::FxBlast("dark", a->GetPosition() + RE::NiPoint3{ 0, 0, 50.0f });
-					Console(a.get(), "SetPlayerTeammate 0");
-					a->Disable(), a->SetDelete(true), ++n;
+					EndThrall(a.get()), ++n;
 				}
 			}
 			g_ownSummons.clear();
@@ -2082,11 +2077,7 @@ namespace bo3z::Classes
 			int before = CommandedNow(p) + static_cast<int>(g_ownSummons.size());
 			// (Noah: "it only worked one time") at the cap, one called up here makes room itself - Skyrim never swaps ours
 			while (before >= SummonCap(p) && !g_ownSummons.empty()) {
-				if (auto a = g_ownSummons.front().first.get()) {
-					Gun::FxBlast("dark", a->GetPosition() + RE::NiPoint3{ 0, 0, 50.0f });
-					Console(a.get(), "SetPlayerTeammate 0");
-					a->Disable(), a->SetDelete(true);
-				}
+				if (auto a = g_ownSummons.front().first.get()) EndThrall(a.get());
 				g_ownSummons.erase(g_ownSummons.begin());
 				--before;
 			}
@@ -4258,6 +4249,7 @@ namespace bo3z::Classes
 		// (Noah: "Each wolf needs one enemy you've killed while gathering souls") the cast held, its beam tears at the dead along
 		// your aim; each of them that dies while you still hold it gives a soul (up to 8), shown under the crosshair
 		std::vector<std::pair<RE::ActorHandle, float>> g_soulWolves;   // the pack: seconds since each was called
+		int g_soulPending = 0;   // wolves let go and about to be made (one every 0.12 s)
 		constexpr int kPack = 6;   // (Noah: "it should spawn max 6 (a Pack) at a time")
 		// (Noah: "needs to spawn spectral wolves they still look like normal ones") Skyrim's own wolf-spirit shader (the
 		// Companions' spirit wolves) - ours, made from a weapon's enchantment shader, never showed on a body
@@ -4348,7 +4340,7 @@ namespace bo3z::Classes
 				auto w = e.first.get();
 				return w && !w->IsDead() && !w->IsDisabled();
 			}));
-			const int n = std::min(g_souls, kPack - alive);
+			const int n = std::min(g_souls, kPack - alive - g_soulPending);
 			if (n <= 0) {
 				Hud::Banner("THE PACK IS FULL", 1.5f);
 				return;
@@ -4356,20 +4348,28 @@ namespace bo3z::Classes
 			g_souls -= n;
 			auto* base = SoulWolf();
 			const float hp = Director::RoundHealth() * gen::kRounds.hpScale * 1.5f;
-			int made = 0;
+			// (the deep review: two of the three crashes in Skyrim's sight-and-sound job came half a second after five or six
+			// wolves were made in one frame - each placed, moved, its factions changed and made a teammate all at once) one
+			// wolf every 0.12 s instead, each made at a quiet moment of the frame
+			const RE::NiPoint3 centre = p->GetPosition();
 			for (int k = 0; k < n; ++k) {
 				const float a = 6.2832f * k / n;
-				const RE::NiPoint3 at = p->GetPosition() + RE::NiPoint3{ std::cos(a) * 140.0f, std::sin(a) * 140.0f, 0.0f };
-				if (auto* w = RaiseAlly(p, base, at, 20.0f, hp, 12)) {
-					g_soulWolves.push_back({ w->GetHandle(), 0.0f });
-					// (Noah: "the spectral wolves kind of change colors ... just make it a solid one color, purple") no longer Skyrim's
-					// ghost ability too - its pale blue shader came and went over our violet one
-					Gun::Motes(6, at, 0.6f, 1.2f);
-					++made;
-				}
+				const RE::NiPoint3 at = centre + RE::NiPoint3{ std::cos(a) * 140.0f, std::sin(a) * 140.0f, 0.0f };
+				++g_soulPending;
+				Tasks::Later(0.05f + 0.12f * static_cast<float>(k), [base, at, hp] {
+					g_soulPending = std::max(0, g_soulPending - 1);
+					auto* pc = RE::PlayerCharacter::GetSingleton();
+					if (!pc || pc->IsDead()) return;
+					if (auto* w = RaiseAlly(pc, base, at, 20.0f, hp, 12)) {
+						g_soulWolves.push_back({ w->GetHandle(), 0.0f });
+						// (Noah: "the spectral wolves kind of change colors ... just make it a solid one color, purple") no longer
+						// Skyrim's ghost ability too - its pale blue shader came and went over our violet one
+						Gun::Motes(6, at, 0.6f, 1.2f);
+					}
+				});
 			}
 			Gun::BlastSound("lightmassive", p->GetPosition(), 0.6f);
-			logger::info("summoner: the Soulcaller's Staff lets {} soul(s) go - {} spectral wolves hunt", n, made);
+			logger::info("summoner: the Soulcaller's Staff lets {} soul(s) go - {} spectral wolves hunt", n, n);
 		}
 	}
 	void TickAlchemy(float a_delta)

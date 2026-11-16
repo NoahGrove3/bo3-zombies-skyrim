@@ -140,6 +140,21 @@ namespace bo3z
 			const auto ground = Director::GroundUnder(p->GetParentCell(), c);
 			if (!ground || c.z - *ground > 3000.0f) return;   // (nothing under the camera: left where it is)
 			const RE::NiPoint3 to{ c.x, c.y, *ground + 4.0f };
+			// (the deep review: the crash of Nov 16, 13:13 - Skyrim's sight-and-sound job for the dead read garbage while your body
+			// was being written straight in, out past the cell it still counted itself in) within its own cell the place is
+			// written in as before; once the camera is over another cell the body is moved properly (at most once a second and a
+			// half, and only onto a cell that is loaded), so Skyrim always knows which cell you are in
+			auto* here = p->GetParentCell();
+			auto* tes = RE::TES::GetSingleton();
+			auto* there = tes ? tes->GetCell(to) : nullptr;
+			if (!here || !there || !there->IsAttached()) return;
+			if (there != here) {
+				static auto lastMove = std::chrono::steady_clock::time_point{};
+				if (now - lastMove < std::chrono::milliseconds(1500)) return;
+				lastMove = now;
+				p->SetPosition(to, true);
+				return;
+			}
 			p->data.location = to;
 			if (auto* cc = p->GetCharController()) {
 				const float s = RE::bhkWorld::GetWorldScale();
