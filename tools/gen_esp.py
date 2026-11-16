@@ -446,7 +446,7 @@ def arto(key, model, kind):
         sub('MODL', z(model)), sub('DNAM', struct.pack('<I', kind))]))
 # (Noah: "The Aura needs to look like a super Saiyan around the player but not blinding thats fully animated" - "Flame Cloak")
 # Skyrim's Flame Cloak hung on you as a hit effect's art (src/Classes.cpp TickArmour paints it in the class's colour)
-arto('armaura', 'magic\\fxfirecloak01.nif', 1)
+arto('armaura', 'dlc01\\magic\\dlc01_sunaurabodyfx.nif', 1)   # (then: "too overwhelming" - "Dawnguard Sun Aura")
 for r in SCRAFT.values():
     arto('fx_' + r['id'] + '_hand', 'CurseOfAlduin\\fx\\' + r['id'] + '_hand.nif', 0)          # magic casting art
     recs['STAT'].append(record('STAT', fid('STAT', 'fx_' + r['id'] + '_orb'), [sub('EDID', z('UN_Orb_' + r['id'])), sub('OBND', struct.pack('<6h', -30, -30, -30, 30, 30, 30)),

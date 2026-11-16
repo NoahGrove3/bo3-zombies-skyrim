@@ -2559,8 +2559,17 @@ namespace bo3z::Classes
 
 
 	// every frame: the spells' costs, the summons, the flasks, the Staff of Magnus, cooldowns
+	// (Noah: "I can't see anything in first person") the armour aura's model, hidden every frame you look out of your own eyes
+	RE::NiPointer<RE::NiAVObject> g_auraNode;
 	void TickFast(float a_delta)
 	{
+		if (auto* o = g_auraNode.get()) {
+			const bool first = RE::PlayerCamera::GetSingleton() && RE::PlayerCamera::GetSingleton()->IsInFirstPerson();
+			if (first != o->GetFlags().any(RE::NiAVObject::Flag::kHidden)) {
+				if (first) o->GetFlags().set(RE::NiAVObject::Flag::kHidden);
+				else o->GetFlags().reset(RE::NiAVObject::Flag::kHidden);
+			}
+		}
 		// every other spell you know (heroes and armies, tomes, other mods' spells): its cost on the same curve,
 		// worked from its own first cost (kept, so it is never drawn in twice)
 		if (static float costT = 0; (costT -= a_delta) <= 0) {
@@ -4628,8 +4637,13 @@ namespace bo3z::Classes
 		// pulse every 20 seconds" - "Flame Cloak", "Remove it, aura only") Skyrim's Flame Cloak hung on you for good, flames
 		// licking up round your body in your class's colour: Tier I faint, each tier and Ascend a little brighter and bigger;
 		// laid on again only if it went (a load, a death), painted once each time its model is made
+		// (Noah, then: "the aura is too overwhelming, and I can't see anything in first person. I also need it to only be
+		// visible when wearing the armor set that has the upgraded levels" - "Dawnguard Sun Aura") Auriel's sun aura glow
+		// instead of the fire, only while the set's robe is on you and the set has been upgraded, hidden in first person
 		{
 			const int at = std::min(6, Kit::ArmourTier(c));
+			bool worn = false;
+			if (auto* body = p->GetWornArmor(RE::BGSBipedObjectForm::BipedObjectSlot::kBody)) for (auto* a : SetForms(c, 0)) worn = worn || a == body;
 			auto* art = RE::TESDataHandler::GetSingleton()->LookupForm<RE::BGSArtObject>(gen::kArmAura, gen::kPlugin);
 			static RE::NiAVObject* painted = nullptr;
 			static int paintedAt = -1, paintedCls = -1;
@@ -4638,7 +4652,8 @@ namespace bo3z::Classes
 				if (e && e->artObject == art && e->target.get().get() == p && !e->finished) mine = e;
 				return RE::BSContainer::ForEachResult::kContinue;
 			});
-			const bool want = art && at >= 1 && p->Is3DLoaded() && !p->IsDead();
+			const bool want = art && worn && at >= 1 && p->Is3DLoaded() && !p->IsDead();
+			g_auraNode = (mine && want) ? mine->artObject3D : nullptr;
 			if (!want) {
 				if (mine) mine->finished = true, mine->lifetime = 0.0f;
 			} else if (!mine) {
@@ -4647,13 +4662,13 @@ namespace bo3z::Classes
 			} else if (auto* o = mine->artObject3D.get(); o && (o != painted || paintedAt != at || paintedCls != c)) {
 				if (o != painted) {   // (a fresh model: painted in the class's colour; its light turned down to the tier's)
 					static constexpr const char* kPal[4] = { "violet", "fire", "poison", "blue" };
-					Gun::PaintAura(o, kPal[std::clamp(c, 0, 3)], 0.35f + 0.1f * at);
+					Gun::PaintAura(o, kPal[std::clamp(c, 0, 3)], 0.3f + 0.08f * at);
 				} else {   // (the same model, a new tier: laid on again fresh, painted at the new strength)
 					mine->finished = true, mine->lifetime = 0.0f;
 				}
-				o->local.scale = 0.95f + 0.03f * at;
+				o->local.scale = 1.0f;
 				painted = o, paintedAt = at, paintedCls = c;
-				if (static int said = 0; said++ < 6) logger::info("classes: the armour's aura - the Flame Cloak in the class's colour, tier {}", at);
+				if (static int said = 0; said++ < 6) logger::info("classes: the armour's aura - Auriel's sun aura in the class's colour, tier {}", at);
 			}
 		}
 		// (the Gondorian set, Tier I) the Ranger's stride: 10% faster
