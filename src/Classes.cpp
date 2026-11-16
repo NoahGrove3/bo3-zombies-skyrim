@@ -1643,6 +1643,9 @@ namespace bo3z::Classes
 			auto* a = ref ? ref->As<RE::Actor>() : nullptr;
 			if (!a) return nullptr;
 			a->SetPosition(a_at, true);
+			// (an ally belongs to you alone: every faction its kind is born in taken off - a wild wolf's pack, the Curse's dead -
+			// so nothing in it can set it on you or on your other allies)
+			for (const auto& fr : a_base->factions) if (fr.faction) a->RemoveFromFaction(fr.faction);
 			if (auto* fac = Director::UndeadFactionForm()) a->RemoveFromFaction(fac);
 			if (auto* pf = PlayerFaction()) a->AddToFaction(pf, 0);
 			Console(a, "SetPlayerTeammate 1");
@@ -4236,14 +4239,21 @@ namespace bo3z::Classes
 		std::unordered_set<RE::FormID> g_soulTaken;
 		RE::TESNPC* SoulWolf()
 		{
+			// (the deep review: four of Skyrim's sight-and-sound crashes, three of them a moment after the pack came) the wolf
+			// was Conjure Wolf's own - a conjured creature's body, made here with no spell and no master behind it, a thing
+			// Skyrim itself never does; now Skyrim's ordinary wolf (its own factions taken off it in RaiseAlly), the conjured
+			// one only if that is missing
 			static RE::TESNPC* wolf = nullptr;
 			if (wolf) return wolf;
-			for (int i = 0; i < 64 && !wolf; ++i) {
+			RE::TESNPC* conjured = nullptr;
+			for (int i = 0; i < 64 && !conjured; ++i) {
 				auto* sp = Arcana::Spell(i);
 				if (!sp || std::string_view(sp->GetName()) != "Conjure Wolf") continue;
-				for (auto* e : sp->effects) if (e && e->baseEffect && e->baseEffect->data.associatedForm) if (auto* n = e->baseEffect->data.associatedForm->As<RE::TESNPC>()) { wolf = n; break; }
+				for (auto* e : sp->effects) if (e && e->baseEffect && e->baseEffect->data.associatedForm) if (auto* n = e->baseEffect->data.associatedForm->As<RE::TESNPC>()) { conjured = n; break; }
 			}
-			if (!wolf) if (auto* f = RE::TESForm::LookupByID<RE::TESNPC>(0x00023ABE)) wolf = f;   // (Skyrim's own wolf)
+			if (auto* f = RE::TESForm::LookupByID<RE::TESNPC>(0x00023ABE); f && !f->IsSummonable()) wolf = f;   // (Skyrim's own wolf)
+			if (!wolf) wolf = conjured;
+			logger::info("summoner: the soul wolves are {} {:08X} (conjured kind {})", wolf ? wolf->GetName() : "none", wolf ? wolf->GetFormID() : 0, wolf && wolf->IsSummonable());
 			return wolf;
 		}
 		// (Noah: "Each wolf needs one enemy you've killed while gathering souls") the cast held, its beam tears at the dead along

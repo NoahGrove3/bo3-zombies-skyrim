@@ -3355,9 +3355,9 @@ namespace bo3z
 							ring(ap, 240.0f, 8, "shoutarea");
 							Forms::PlayAt(gen::Sound::boss_quake, a.get());
 							if (alive && flat < 420.0f && dz < 150.0f && !up) {
+								// (Noah: "one of the stronger Draugr enemies keeps stunning me over and over") the pound hurts and
+								// shakes the ground, but no longer staggers you
 								Director::HurtPlayer(0.14f, false);
-								a_player->SetGraphVariableFloat("staggerMagnitude", 0.9f);
-								a_player->NotifyAnimationGraph("staggerStart");
 								Hud::Banner("QUAKE", 0.8f);
 							}
 							s.ability = 8.0f * cdm;
