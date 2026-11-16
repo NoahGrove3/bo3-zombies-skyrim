@@ -4663,11 +4663,14 @@ namespace bo3z::Classes
 			} else if (auto* o = mine->artObject3D.get(); o && (o != painted || paintedAt != at || paintedCls != c)) {
 				if (o != painted) {   // (a fresh model: painted in the class's colour; its light turned down to the tier's)
 					static constexpr const char* kPal[4] = { "violet", "fire", "poison", "blue" };
-					Gun::PaintAura(o, kPal[std::clamp(c, 0, 3)], 0.3f + 0.08f * at);
+					// (Noah: "make it a lot smaller ... just on the outside of the armor set, but not too big to where it limits your
+					// view in third person. It should be very subtle") a faint glow close to the body: its light a fifth to two
+					// fifths of the model's, the whole of it drawn in to 55%
+					Gun::PaintAura(o, kPal[std::clamp(c, 0, 3)], 0.16f + 0.04f * at);
 				} else {   // (the same model, a new tier: laid on again fresh, painted at the new strength)
 					mine->finished = true, mine->lifetime = 0.0f;
 				}
-				o->local.scale = 1.0f;
+				o->local.scale = 0.55f;
 				painted = o, paintedAt = at, paintedCls = c;
 				if (static int said = 0; said++ < 6) logger::info("classes: the armour's aura - Auriel's sun aura in the class's colour, tier {}", at);
 			}

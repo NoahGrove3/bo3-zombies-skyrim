@@ -712,10 +712,11 @@ namespace bo3z
 			if (const auto top = WalkTop(a_actor->GetParentCell(), at, 45.0f); top && *top > floor - 40.0f && *top < floor + 40.0f) floor = *top;
 			g_risers.push_back({ a_actor->GetHandle(), floor });
 			Undead::FreshStep(a_actor);
-			a_actor->SetCollision(false);
+			// (Noah, a third time: "the enemies are still spawning in the floor" - the log still had each sinking 50-90 into the
+			// ground: the body was sent 115 under the floor with its collision off - left from when the dead clawed up out of
+			// the earth - and moved up again when it showed, its physics never catching up) now it waits where it stands, solid,
+			// still and unseen, and nothing moves it: it only fades in when its beam has come
 			a_actor->EnableAI(false);
-			at.z -= kRiseDepth;
-			a_actor->SetPosition(at, true);
 			if (Settings::ScreenShake() && a_player && a_player->GetPosition().GetDistance(at) < 700.0f) {
 				RE::ShakeCamera(0.25f, at, 0.6f);
 			}
@@ -834,9 +835,7 @@ namespace bo3z
 					// done - and its collision (off since it went under) is not touched again until it shows
 					if (a->Is3DLoaded()) r.built += a_delta;
 					if (r.built >= 0.35f) {
-						auto f = a->GetPosition();
-						f.z = r.floorZ + 2.0f;
-						a->SetPosition(f, true);
+						const auto f = a->GetPosition();
 						a->SetAlpha(0.0f);
 						ShowRiser(a.get(), true), r.hidden = false, r.faded = true;
 						const bool great = Director::IsBoss(a.get()) || g_elites.contains(a->GetFormID());
@@ -869,9 +868,6 @@ namespace bo3z
 						if (static int told = 0; told++ < 20) logger::info("riser: {:08X} {} arrives in a red beam at ({:.0f},{:.0f},{:.0f})", a->GetFormID(), a->GetName(), a->GetPositionX(), a->GetPositionY(), r.floorZ);
 					}
 					const float shows = r.anim == 4 ? r.delay + kRedBeamFall : 0.05f;
-					// (waiting unseen for its beam, without collision: held on its floor - its capsule never left to fall)
-					if (!a->IsDead() && a->Is3DLoaded() && std::abs(a->GetPositionZ() - (r.floorZ + 4.0f)) > 6.0f)
-						PlaceSolid(a.get(), { a->GetPositionX(), a->GetPositionY(), r.floorZ + 4.0f });
 					if (((r.anim == 5 || r.struck) && r.t >= shows) || a->IsDead()) {
 						// (Noah: "they are half way into the ground then teleport to the surface then start moving ... make the enemies
 						// fade in when they spawn so its not instant") still unseen as it's set on its floor; it fades in over the next
@@ -879,12 +875,7 @@ namespace bo3z
 						if (a->IsDead() && r.faded) a->SetAlpha(1.0f), r.faded = false;
 						// (the log: "sank 50-80 into the ground" a moment after showing - with no collision while it waited it had
 						// settled under the floor) set back on its floor as it shows, then solid
-						if (!a->IsDead()) {
-							auto f = a->GetPosition();
-							f.z = r.floorZ + 4.0f;
-							PlaceSolid(a.get(), f);
-						}
-						a->SetCollision(true);
+						a->SetCollision(true);   // (never off now; kept for one that was)
 						a->EnableAI(true);
 						if (auto* pc = RE::PlayerCharacter::GetSingleton(); pc && !a->IsDead()) {
 							const auto d = pc->GetPosition() - a->GetPosition();
