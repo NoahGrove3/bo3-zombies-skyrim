@@ -2042,7 +2042,8 @@ namespace bo3z
 						{ "shock", 2 }, { "sun", 4 }, { "blood", 5 }, { "arcane", 5 }, { "gold", 8 }, { "bane", 3 } };
 					int el = 4;
 					for (auto& [k, e] : kElem) if (l.s.model.find(std::string("arc_") + std::string(k) + ".nif") != std::string::npos) el = e;
-					ElemBurst(el, l.at, 0.8f * l.s.scale * grow, 0.0f, 0.45f);
+					if (!l.s.shatterFx.empty()) QueueFx(l.s.shatterFx, l.at, 0.8f * l.s.scale * grow * l.s.shatter, 0.0f, 0.6f, false);
+					else ElemBurst(el, l.at, 0.8f * l.s.scale * grow * l.s.shatter, 0.0f, 0.45f);
 				}
 			}
 			for (auto& l : g_slashes) if (l.gone > l.s.range) l.fx.Detach();

@@ -2368,17 +2368,18 @@ namespace bo3z::Classes
 			sl.scale = (1.1f + 0.15f * std::min(t, 3)) * sizeMul;
 			sl.share = BladeShare(w) * (0.7f + 0.3f * Arcana::Power()) * (t >= 1 ? UpgradeMult(t) / std::max(0.01f, UpgradeMult(1)) : 0.6f) * shareMul;
 			sl.flingKill = 16.0f;
-			sl.onHit = [bolt](RE::Actor* a, bool killed) {
+			// (Noah, twice: "the carian wand impact animations need to be 50% smaller ... Only Ice doesnt have a impact animation"
+			// - the halving had gone on a small burst laid over the hit, not on the bolt's own shatter, which is what shows)
+			sl.shatter = 0.5f;
+			if (bolt == 5) sl.shatterFx = "CurseOfAlduin\\fx\\burst_wandfrost.nif";   // (ice's own shatter: Skyrim's small frost impact was too small to see)
+			sl.onHit = [bolt](RE::Actor* a, bool) {
 				if (!a) return;
 				static constexpr const char* kHit[3] = { "fireball", "frost", "runeshock" };
 				Gun::BlastSound(kHit[std::clamp(bolt - 4, 0, 2)], a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, 0.6f);
 				// (Noah: "the carian wand impact animations need to be 50% smaller I also noticed Only Ice doesnt have a impact
 				// animation") half the size; ice's own burst (Skyrim's small frost impact) too small to see at that: the Ice
 				// Storm's impact in its place (fxmap.ini burst_wandfrost.nif)
-				if (!killed) {
-					if (bolt == 5) Gun::QueueFx("CurseOfAlduin\\fx\\burst_wandfrost.nif", a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, 0.5f, 0.0f, 0.6f, false);
-					else Gun::ElemBurst(bolt - 4, a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, 0.175f, 0.0f, 0.4f);
-				}
+				// (the burst you see is the bolt's own shatter where it strikes - sl.shatter below; none more here)
 			};
 			Gun::Slash(sl);
 		};

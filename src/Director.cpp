@@ -620,6 +620,22 @@ namespace bo3z
 
 		// (Noah: the dead kept getting stuck in the floor) the top of whatever is walkable under a point - paving, a boardwalk,
 		// a stair - by a ray from above, not the landscape's height under it
+		// (Noah, again: "the enemies are still spawning in halfway in the ground" - the log: "sank 70-80 into the ground" a second
+		// after each showed: SetPosition moved the reference, but its body's physics capsule - fallen through the floor while it
+		// waited without collision - stayed below and pulled it back down) the reference AND its capsule set on the point, the
+		// capsule's fall stopped
+		void PlaceSolid(RE::Actor* a_actor, const RE::NiPoint3& a_to)
+		{
+			if (!a_actor) return;
+			a_actor->data.location = a_to;
+			if (auto* cc = a_actor->GetCharController()) {
+				const float s = RE::bhkWorld::GetWorldScale();
+				cc->SetPositionImpl(RE::hkVector4(a_to.x * s, a_to.y * s, a_to.z * s, 0.0f), false, true);
+				RE::hkVector4 still{ 0.0f, 0.0f, 0.0f, 0.0f };
+				cc->SetLinearVelocityImpl(still);
+			}
+			a_actor->Update3DPosition(true);
+		}
 		std::optional<float> WalkTop(RE::TESObjectCELL* a_cell, const RE::NiPoint3& a_at, float a_above = 350.0f)
 		{
 			auto* world = a_cell ? a_cell->GetbhkWorld() : nullptr;
@@ -853,6 +869,9 @@ namespace bo3z
 						if (static int told = 0; told++ < 20) logger::info("riser: {:08X} {} arrives in a red beam at ({:.0f},{:.0f},{:.0f})", a->GetFormID(), a->GetName(), a->GetPositionX(), a->GetPositionY(), r.floorZ);
 					}
 					const float shows = r.anim == 4 ? r.delay + kRedBeamFall : 0.05f;
+					// (waiting unseen for its beam, without collision: held on its floor - its capsule never left to fall)
+					if (!a->IsDead() && a->Is3DLoaded() && std::abs(a->GetPositionZ() - (r.floorZ + 4.0f)) > 6.0f)
+						PlaceSolid(a.get(), { a->GetPositionX(), a->GetPositionY(), r.floorZ + 4.0f });
 					if (((r.anim == 5 || r.struck) && r.t >= shows) || a->IsDead()) {
 						// (Noah: "they are half way into the ground then teleport to the surface then start moving ... make the enemies
 						// fade in when they spawn so its not instant") still unseen as it's set on its floor; it fades in over the next
@@ -863,7 +882,7 @@ namespace bo3z
 						if (!a->IsDead()) {
 							auto f = a->GetPosition();
 							f.z = r.floorZ + 4.0f;
-							a->SetPosition(f, true);
+							PlaceSolid(a.get(), f);
 						}
 						a->SetCollision(true);
 						a->EnableAI(true);
@@ -912,7 +931,7 @@ namespace bo3z
 						Tasks::Later(0.25f, [h, at] {
 							auto b = h.get();
 							if (!b || b->IsDead() || b->IsDisabled() || b->IsDeleted() || !b->Is3DLoaded()) { if (b && !b->IsDead() && !b->IsDisabled()) b->EnableAI(true); return; }
-							b->SetPosition(at, true);
+							PlaceSolid(b.get(), at);
 							b->SetCollision(true);
 							Tasks::Later(0.25f, [h] { if (auto c = h.get(); c && !c->IsDead() && !c->IsDisabled() && !c->IsDeleted()) c->EnableAI(true); });
 						});
