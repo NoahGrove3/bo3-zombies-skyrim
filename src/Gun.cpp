@@ -3807,7 +3807,7 @@ namespace bo3z
 		// animation time") the red light of the College's fire pillar alone (its coals, ground plane and swirling arms hidden,
 		// fxmap.ini red_beam.nif), upright and still: let down out of the sky over a second, standing a second, drawn back up
 		// over the last; Director brings the body out at 2 s
-		struct RedColumn { WorldFx fx; RE::NiPoint3 at; float t = 0; bool landed = false; };
+		struct RedColumn { WorldFx fx; RE::NiPoint3 at; float t = 0; bool landed = false; float h = -1; };
 		std::vector<RedColumn> g_redCols;
 		constexpr float kRedDrop = 1.0f, kRedStand = 1.0f, kRedLift = 1.0f, kRedHigh = 1800.0f, kRedSize = 0.6f;
 		void RedBeamImpl(const RE::NiPoint3& a_at)
@@ -3825,19 +3825,29 @@ namespace bo3z
 			for (auto& c : g_redCols) {
 				c.t += a_delta;
 				float up = 0.0f;
+				RE::NiMatrix3 m = upright;
 				if (c.t < kRedDrop) {
 					const float f = c.t / kRedDrop;
 					up = kRedHigh * (1.0f - f) * (1.0f - f);   // (falling faster as it nears the ground)
 				} else if (c.t > kRedDrop + kRedStand) {
+					// (Noah: "instead of the beam as a whole lifting itself back up into the sky, can we make it stay at the ground
+					// level, but the bottom of the beam closes in on the top of the beam") its top held where it is, its foot drawn
+					// up into it: the column squeezed upward along its height alone
+					if (c.h < 0) {
+						c.h = 1800.0f;
+						if (auto* o = c.fx.Obj()) c.h = std::clamp(o->worldBound.center.z + o->worldBound.radius - c.at.z, 200.0f, 6000.0f);
+					}
 					const float f = std::min(1.0f, (c.t - kRedDrop - kRedStand) / kRedLift);
-					up = kRedHigh * f * f;   // (drawn back up, gathering speed)
+					const float k = std::max(0.002f, 1.0f - f * f * (3.0f - 2.0f * f));
+					m.entry[2][2] = k;
+					up = c.h * (1.0f - k);
 				}
 				if (!c.landed && c.t >= kRedDrop) {
 					c.landed = true;
 					// (Noah: "give them like a beam impact sound effect that's not loud, very subtle")
 					Audio::AtPoint(gen::Sound::hit_drill, c.at, 0.0f, 0.3f);
 				}
-				c.fx.Place(c.at + RE::NiPoint3{ 0, 0, up }, upright, kRedSize);
+				c.fx.Place(c.at + RE::NiPoint3{ 0, 0, up }, m, kRedSize);
 			}
 			for (auto& c : g_redCols) if (c.t >= kRedDrop + kRedStand + kRedLift) c.fx.Detach();
 			std::erase_if(g_redCols, [](const RedColumn& c) { return c.t >= kRedDrop + kRedStand + kRedLift; });
