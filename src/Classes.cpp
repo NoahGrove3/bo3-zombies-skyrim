@@ -2256,11 +2256,11 @@ namespace bo3z::Classes
 		// (Noah: "The wands spells needs to come from the wand tip and pulse and have slight recoil on each cast") each wand's
 		// tip orb (0 the class wand, 1 the Wandering Star), its flare and its kick
 		struct WandFx { RE::NiPointer<RE::NiAVObject> tip[2]; float pulse = 0.0f, kick = 0.0f, t = 0.0f; };
-		WandFx g_wfx[2];
+		WandFx g_wfx[3];   // (2: any other wand of the pack in your right hand)
 	}
 	void WandKick(int a_slot)
 	{
-		if (a_slot < 0 || a_slot > 1) return;
+		if (a_slot < 0 || a_slot > 2) return;
 		g_wfx[a_slot].pulse = 1.0f;   // (Noah: "remove the wand recoil effect" - the tip's flare alone)
 		Forms::Play(gen::Sound::wand_pulse);   // (Noah: "a sound effect while casting that matches the pulsing animation" - a deep arcane thrum)
 	}
@@ -2274,7 +2274,7 @@ namespace bo3z::Classes
 	// held, it glows and breathes; each cast it flares
 	void WandOrb(int a_slot, float a_tipY, bool a_inHand, bool a_held, float a_delta)
 	{
-		if (a_slot < 0 || a_slot > 1) return;
+		if (a_slot < 0 || a_slot > 2) return;
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (!p) return;
 		auto& F = g_wfx[a_slot];
@@ -2586,8 +2586,45 @@ namespace bo3z::Classes
 		a_o->Update(ud);
 		g_auraPainted = a_o, g_auraPaintedAt = a_tier, g_auraPaintedCls = a_cls;
 	}
+	namespace
+	{
+		// (Noah: "make sure all of the wand models that are in our mod pack have that same glowing tip effect as the carian
+		// wand") every wand model the pack has (Fulcimentum's SSS\*Wand*.nif) and its tip along +Y, measured from each model
+		// (tools/modelconv/nifrange.cpp: its farthest reach up its length, the orb set just inside it, as the Carian Wand's)
+		float OtherWandTipY(RE::TESObjectWEAP* a_w)
+		{
+			static constexpr std::pair<std::string_view, float> kTips[] = {
+				{ "woodwand1.nif", 37.0f }, { "steelwand.nif", 20.0f }, { "stahlrimwand.nif", 37.5f }, { "glasswand.nif", 33.5f },
+				{ "ebonywand.nif", 39.0f }, { "daedricwand.nif", 36.0f }, { "elvenwand.nif", 29.0f }, { "imperialwand.nif", 30.3f },
+				{ "dwarvenwand.nif", 23.5f },
+			};
+			const char* m = a_w ? a_w->GetModel() : nullptr;
+			if (!m) return 0.0f;
+			std::string low(m);
+			std::transform(low.begin(), low.end(), low.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+			for (const auto& [name, y] : kTips) if (low.size() >= name.size() && low.compare(low.size() - name.size(), name.size(), name) == 0) return y;
+			return 0.0f;
+		}
+		// any other wand in your right hand (the Carian Wand and the Wandering Star keep their own): the same blue orb at its
+		// tip, breathing; brighter while you cast with it
+		void TickOtherWands(float a_delta)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p) return;
+			auto* obj = p->GetEquippedObject(false);
+			auto* w = obj ? obj->As<RE::TESObjectWEAP>() : nullptr;
+			const auto* file = w ? w->GetFile(0) : nullptr;
+			const bool ours = w && (w == CarianBlade() || (file && std::string_view(file->fileName) == gen::kPlugin));
+			const float tip = ours ? 0.0f : OtherWandTipY(w);
+			const bool inHand = tip != 0.0f && p->AsActorState()->IsWeaponDrawn();
+			auto* c = inHand ? p->GetMagicCaster(RE::MagicSystem::CastingSource::kRightHand) : nullptr;
+			const bool held = c && c->state.get() != RE::MagicCaster::State::kNone;
+			WandOrb(2, tip, inHand, held, a_delta);
+		}
+	}
 	void TickFast(float a_delta)
 	{
+		TickOtherWands(a_delta);
 		if (g_auraWait) {
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			auto* art = RE::TESDataHandler::GetSingleton()->LookupForm<RE::BGSArtObject>(gen::kArmAura, gen::kPlugin);

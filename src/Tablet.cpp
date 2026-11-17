@@ -70,7 +70,6 @@ namespace bo3z::Tablet
 		// (Noah: "Rise above the top", "Three-quarter size") the weapons rise out of the slab's top (tools/tablet.py: its arch's
 		// top at Z1 158) and turn over it, three-quarters of their size
 		constexpr float kTopZ = 158.0f;
-		constexpr std::uint16_t kReelScale = 75;
 		// (Noah: "Holding the action key on the tablet should start the roll and holding action on the weapon rolled should
 		// pick it up") how long Activate is held; a hold done must be let go before the next
 		constexpr float kHoldTime = 0.6f;
@@ -303,16 +302,65 @@ namespace bo3z::Tablet
 			if (auto* e = sh ? sh->As<RE::TESEffectShader>() : nullptr) a_r->ApplyEffectShader(e, -1.0f);
 			a_done = true;
 		}
-		// a weapon's model hung over the slab's top, whichever way its model runs: its bounds' middle (measured from the model
-		// as it stands, so a blade that runs up or down from its grip both sit right) set a_lift of the way from the slab's top
-		// (half sunk in it) to clear over it
-		void HangOverTop(RE::TESObjectREFR* a_r, RE::NiAVObject* a_body, float a_lift)
+		// (Noah: "Box-style, measured" - "Flat, side-on, still") how each Tablet weapon's model is held on display, measured
+		// from the model it shows (its own, or the other mod's it wears - tools/modelconv/nifrange.cpp: each model's reach
+		// along x, y and z, a stray scrap of mesh not counted): which of its axes runs along it (to the tablet's right, its
+		// head that way), which is its breadth (up: an axe's blade, a scythe's hook), which is its thinnest (toward you); the
+		// middle of its reach; its length and breadth
+		struct Display { std::string_view id; float m[9]; float c[3]; float len, breadth; };
+		constexpr Display kDisplay[] = {
+			{ "stormtalons", { 1, 0, 0, 0, 1, 0, 0, 0, 1 }, { 0.63f, -0.03f, 2.10f }, 23.6f, 13.6f },
+			{ "gravebell", { 0, 1, 0, 0, 0, 1, 1, 0, 0 }, { 0.05f, 18.95f, -0.01f }, 56.4f, 10.6f },
+			{ "talons", { 1, 0, 0, 0, 0, -1, 0, 1, 0 }, { 5.13f, 0.24f, 0.85f }, 48.7f, 12.9f },
+			{ "riverstone", { 0, 1, 0, 0, 0, -1, -1, 0, 0 }, { -5.29f, 46.70f, -0.04f }, 141.8f, 21.1f },
+			{ "wyrmspine", { 0, 1, 0, 0, 0, 1, 1, 0, 0 }, { 0.00f, 50.07f, 0.01f }, 155.2f, 11.1f },
+			{ "lanternwick", { 0, 1, 0, 0, 0, -1, -1, 0, 0 }, { -0.14f, 19.74f, 0.02f }, 124.8f, 8.8f },
+			{ "cinderclaws", { 1, 0, 0, 0, 0, -1, 0, 1, 0 }, { 5.08f, 1.40f, 3.78f }, 33.4f, 14.8f },
+			{ "eclipse", { 0, 1, 0, 0, 0, 1, 1, 0, 0 }, { 0.00f, 52.87f, 0.00f }, 165.4f, 6.8f },
+			{ "wanderstar", { 0, 1, 0, 0, 0, 1, 1, 0, 0 }, { 0.23f, 13.03f, -0.04f }, 49.2f, 2.8f },
+			{ "frostmourn", { 0, 1, 0, 0, 0, -1, -1, 0, 0 }, { -0.38f, 27.38f, -0.06f }, 84.0f, 20.9f },
+			{ "silverscythe", { 0, 1, 0, 0, 0, -1, -1, 0, 0 }, { -11.63f, 7.71f, -0.04f }, 101.6f, 31.8f },
+			{ "bonereaper", { 0, 1, 0, 0, 0, -1, -1, 0, 0 }, { -0.54f, 16.11f, 0.28f }, 87.0f, 41.5f },
+			{ "wyrmtooth", { 0, 1, 0, 0, 0, -1, -1, 0, 0 }, { -3.24f, 14.19f, 0.00f }, 94.0f, 64.0f },
+			{ "bloodmoon", { 0, 1, 0, 0, 0, -1, -1, 0, 0 }, { -6.07f, 10.59f, -0.00f }, 91.7f, 47.0f },
+		};
+		const Display* DisplayOf(int a_w)
 		{
-			float offZ = 0.0f, rad = 40.0f;
-			if (auto* o = a_r->Get3D(); o && o->worldBound.radius > 1.0f) offZ = o->worldBound.center.z - a_r->GetPosition().z, rad = o->worldBound.radius;
-			const RE::NiPoint3 top = a_body->world * RE::NiPoint3{ 0.0f, 0.0f, kTopZ };
-			const float centreZ = top.z + (-0.2f + 1.15f * a_lift) * rad * 0.9f + 6.0f;
-			a_r->SetPosition(RE::NiPoint3{ top.x, top.y, centreZ - offZ });
+			if (a_w < 0 || a_w >= static_cast<int>(gen::kTabletWeapons.size())) return nullptr;
+			for (const auto& d : kDisplay) if (d.id == gen::kTabletWeapons[a_w].id) return &d;
+			return nullptr;
+		}
+		// its size on display: every weapon the same length over the slab (1.9 times its width), none taller than 55
+		float DisplayScale(int a_w)
+		{
+			const auto* d = DisplayOf(a_w);
+			if (!d) return 0.75f;
+			return std::clamp(std::min(105.0f / d->len, 55.0f / std::max(d->breadth, 1.0f)), 0.35f, 2.2f);
+		}
+		// a weapon held over the slab's top, flat and side-on: its middle a_lift of the way from sunk in the slab to clear
+		// over it, turned a_spin about the upright; the model's own transform set straight (a weapon's model points
+		// whichever way its maker chose - Euler angles can't hold them all alike)
+		void PoseDisplay(RE::TESObjectREFR* a_r, RE::NiAVObject* a_body, int a_w, float a_lift, float a_spin)
+		{
+			const auto* d = DisplayOf(a_w);
+			const float bs = a_body->world.scale, s = DisplayScale(a_w) * bs;
+			const float half = 0.5f * (d ? d->breadth : 40.0f) * DisplayScale(a_w);
+			const float z = kTopZ + 8.0f + half - (1.0f - a_lift) * (half * 2.0f + 14.0f);
+			const RE::NiPoint3 at = a_body->world * RE::NiPoint3{ 0.0f, 0.0f, z };
+			RE::NiMatrix3 D, Z;
+			for (int i = 0; i < 3; ++i) for (int j = 0; j < 3; ++j) D.entry[i][j] = d ? d->m[i * 3 + j] : (i == j ? 1.0f : 0.0f);
+			Z.entry[0][0] = std::cos(a_spin), Z.entry[0][1] = -std::sin(a_spin), Z.entry[0][2] = 0;
+			Z.entry[1][0] = std::sin(a_spin), Z.entry[1][1] = std::cos(a_spin), Z.entry[1][2] = 0;
+			Z.entry[2][0] = 0, Z.entry[2][1] = 0, Z.entry[2][2] = 1;
+			const RE::NiMatrix3 R = a_body->world.rotate * (Z * D);
+			const RE::NiPoint3 c = d ? RE::NiPoint3{ d->c[0], d->c[1], d->c[2] } : RE::NiPoint3{};
+			const RE::NiPoint3 pos = at - R * (c * s);
+			a_r->SetPosition(pos);
+			if (auto* o = a_r->Get3D()) {
+				o->local.rotate = R, o->local.translate = pos, o->local.scale = s;
+				RE::NiUpdateData u;
+				o->Update(u);
+			}
 		}
 		// the reel: every weapon in turn, a little one turning in the pool in its rarity's glow - quick at first, slowing,
 		// and landing on the one won (the mask's roll: it runs out and the mask rises instead)
@@ -336,7 +384,7 @@ namespace bo3z::Tablet
 				ClearReel();
 				auto* base = Forms::Ours(gen::kTabletWeapons[want].show) ? Forms::Ours(gen::kTabletWeapons[want].show)->As<RE::TESBoundObject>() : nullptr;
 				if (auto ref = base ? a_tab->PlaceObjectAtMe(base, false) : nullptr) {
-					ref->GetReferenceRuntimeData().refScale = kReelScale;
+					ref->GetReferenceRuntimeData().refScale = static_cast<std::uint16_t>(std::lround(DisplayScale(want) * 100.0f));
 					g_reel = ref->CreateRefHandle(), g_reelAt = want;
 				}
 			}
@@ -346,8 +394,7 @@ namespace bo3z::Tablet
 			// its length: tipped up, it turns about itself and never sweeps into the slab)
 			// over the slab's top: the first half second it rises out of it, then turns there, each weapon in turn
 			const float up = std::clamp(g_t / 0.45f, 0.0f, 1.0f);
-			HangOverTop(r.get(), a_body, 1.0f - (1.0f - up) * (1.0f - up));
-			r->SetAngle({ -RE::NI_HALF_PI, 0.0f, a_tab->GetAngleZ() + g_clock * 2.4f });
+			PoseDisplay(r.get(), a_body, g_reelAt, 1.0f - (1.0f - up) * (1.0f - up), 0.0f);
 			Glow(r.get(), g_reelAt, g_reelGlow);
 		}
 		// the won weapon's model rising out of the pool and turning there (placed in the world before the tablet's face)
@@ -366,7 +413,7 @@ namespace bo3z::Tablet
 			if (!r && showId) {
 				if (auto* base = Forms::Ours(showId) ? Forms::Ours(showId)->As<RE::TESBoundObject>() : nullptr) {
 					if (auto ref = a_tab->PlaceObjectAtMe(base, false)) {
-						if (!mask) ref->GetReferenceRuntimeData().refScale = kReelScale;
+						if (!mask) ref->GetReferenceRuntimeData().refScale = static_cast<std::uint16_t>(std::lround(DisplayScale(g_prize) * 100.0f));
 						g_show = ref->CreateRefHandle(), r = ref;
 					}
 				}
@@ -377,10 +424,11 @@ namespace bo3z::Tablet
 				// (box style) it rises out of the top where the reel landed and hangs there turning; its last seconds it sinks
 				// back into the slab
 				const float sink = std::clamp((g_t - (kOfferTime - kSinkTime)) / kSinkTime, 0.0f, 1.0f);
-				HangOverTop(r.get(), body, std::max(0.0f, 1.0f - sink * 1.25f));
+				// (the won one turns slowly, a full turn every 9 s)
+				PoseDisplay(r.get(), body, g_prize, std::max(0.0f, 1.0f - sink * 1.25f), 0.7f * std::sin(g_t * 0.7f));
 			}
 			// (the mask faces you out of the pool, turning a little; a weapon turns round)
-			r->SetAngle({ mask ? 0.0f : -RE::NI_HALF_PI, 0.0f, mask ? a_tab->GetAngleZ() + RE::NI_PI + 0.35f * std::sin(g_clock * 1.7f) : a_tab->GetAngleZ() + g_clock * 0.9f });
+			if (mask) r->SetAngle({ 0.0f, 0.0f, a_tab->GetAngleZ() + RE::NI_PI + 0.35f * std::sin(g_clock * 1.7f) });
 			if (g_phase == Phase::Offering) Glow(r.get(), g_prize, g_showGlow);
 		}
 
@@ -453,7 +501,7 @@ namespace bo3z::Tablet
 			// the slab: a slow bob and sway; in a roll it shudders, harder as the reel slows to its end
 			float sx = 0.0f, sz = 0.0f;
 			if (rolling) {
-				const float amp = 0.25f + 0.55f * k;
+				const float amp = 0.0f;   // (the box-style roll: the slab holds still under the weapons; was 0.25 + 0.55k)
 				sx = std::uniform_real_distribution<float>(-amp, amp)(g_rng), sz = std::uniform_real_distribution<float>(-amp, amp)(g_rng);
 			}
 			body->local.translate = RE::NiPoint3{ sx, 0.0f, 2.6f * std::sin(g_clock * 0.9f) + sz + BodyLift() };
