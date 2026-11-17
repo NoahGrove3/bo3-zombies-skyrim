@@ -220,6 +220,7 @@ namespace bo3z
 		void             RaiseAt(const RE::NiPoint3& a_at);
 		RE::ActorHandle  RaiseTrial(const RE::NiPoint3& a_at, bool a_elite);  // a trial's wave: one more of tonight's dead (or an elite)
 		void             DevSpawn(std::string_view a_row, int a_count);  // DevTools: raise that undead in front of you
+		void             DevCalm(bool a_on);  // DevTools (filming): no undead rise while on, those up now put away; the night goes on
 		void             DevSpawnAt(std::string_view a_row, const RE::NiPoint3& a_at, float a_yawDeg);  // DevTools: ...at a point, facing yaw
 		void             DevShowUndead(bool a_show);  // DevTools: hide/show every undead we raised (clean plates for art captures)
 		void             EndNight();

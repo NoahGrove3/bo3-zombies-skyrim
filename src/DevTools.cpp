@@ -215,6 +215,10 @@ namespace bo3z
 				if (const auto g = Director::GroundUnder(player->GetParentCell(), at + RE::NiPoint3{ 0, 0, 300.0f })) at.z = *g;
 				Gun::RedBeam(at);
 				logger::info("dev: beamtest at ({:.0f},{:.0f},{:.0f})", at.x, at.y, at.z);
+			} else if (cmd == "calm") {  // calm on|off: (filming) no undead rise, those up put away - the night (and the Tablet) stays
+				std::string on;
+				in >> on;
+				Director::DevCalm(on != "off");
 			} else if (cmd == "lure") {  // lure on|off
 				std::string v;
 				in >> v;

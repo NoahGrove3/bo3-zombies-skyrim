@@ -1095,8 +1095,12 @@ namespace bo3z
 			auto* proc = a_actor ? a_actor->GetActorRuntimeData().currentProcess : nullptr;
 			if (proc && proc->high) proc->high->voiceRecoveryTime = 1.0e6f;
 		}
+		// (Noah: "The enemies got in the way of the tablet clip") dev calm: the night goes on (the Tablet stays down) but none
+		// of the dead rise
+		bool g_devCalm = false;
 		bool SpawnOne(RE::PlayerCharacter* a_player, int a_force = -1, const RE::NiPoint3* a_at = nullptr)
 		{
+			if (g_devCalm) return false;
 			auto pick = a_force >= 0 ? std::optional<std::size_t>(static_cast<std::size_t>(a_force)) : PickEnemy();
 			if (!pick) {
 				return false;
@@ -4149,6 +4153,17 @@ namespace bo3z
 			}
 			std::scoped_lock l(Hud::Lock());
 			Hud::Edit().hurtTime = 0.9f;
+		}
+		void DevCalm(bool a_on)
+		{
+			g_devCalm = a_on;
+			int n = 0;
+			if (a_on) {
+				for (const auto& s : g_alive) if (auto a = s.handle.get(); a && !a->IsDisabled()) Vanish(a.get()), ++n;
+				if (auto a = g_boss.handle.get(); a && !a->IsDisabled()) Vanish(a.get()), ++n;
+				if (auto a = g_champ.handle.get(); a && !a->IsDisabled()) Vanish(a.get()), ++n;
+			}
+			logger::info("dev: calm {} ({} put away)", a_on ? "on - no undead rise" : "off", n);
 		}
 		void DevSpawn(std::string_view a_row, int a_count)
 		{

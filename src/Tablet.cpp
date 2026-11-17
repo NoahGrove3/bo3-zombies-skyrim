@@ -381,8 +381,11 @@ namespace bo3z::Tablet
 			a_r->SetPosition(pos);
 			if (auto* o = a_r->Get3D()) {
 				o->local.rotate = R, o->local.translate = pos, o->local.scale = s;
+				// (the crash of Nov 17, 16:04 - a worker's scene update read nothing: a full update here also carried this
+				// model's bounds up through the town's own nodes while a worker job was updating them) only this model and
+				// what hangs on it, nothing above
 				RE::NiUpdateData u;
-				o->Update(u);
+				o->UpdateDownwardPass(u, 0);
 			}
 		}
 		// the reel: every weapon in turn, a little one turning in the pool in its rarity's glow - quick at first, slowing,
