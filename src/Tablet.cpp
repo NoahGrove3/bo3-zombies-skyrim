@@ -294,6 +294,28 @@ namespace bo3z::Tablet
 			g_show = {}, g_showGlow = false;
 			ClearReel();
 		}
+		// (Noah: "I also need the roll animation to have the glow of the rarity of the weapon it lands on and other weapons
+		// rolling by") a weapon's rarity colour: worn green, battered (legendary) gold
+		RE::NiColor RarityColour(int a_w)
+		{
+			if (a_w < 0) return { 1.0f, 1.0f, 1.0f };
+			return gen::kTabletWeapons[a_w].battered ? RE::NiColor{ 1.0f, 0.70f, 0.16f } : RE::NiColor{ 0.30f, 1.0f, 0.36f };
+		}
+		// its model lit from within in that colour (every lit shader of it given its own glow), breathing a little
+		void RarityLight(RE::TESObjectREFR* a_r, int a_w, float a_k)
+		{
+			auto* root = a_r && a_w >= 0 ? a_r->Get3D() : nullptr;
+			if (!root) return;
+			const RE::NiColor c = RarityColour(a_w);
+			RE::BSVisit::TraverseScenegraphGeometries(root, [&](RE::BSGeometry* g) {
+				if (auto* lp = netimmerse_cast<RE::BSLightingShaderProperty*>(g->GetGeometryRuntimeData().shaderProperty.get())) {
+					lp->SetFlags(RE::BSShaderProperty::EShaderPropertyFlag8::kOwnEmit, true);
+					if (lp->emissiveColor) *lp->emissiveColor = c;
+					lp->emissiveMult = a_k;
+				}
+				return RE::BSVisit::BSVisitControl::kContinue;
+			});
+		}
 		// a weapon's rarity glow: worn green, battered gold
 		void Glow(RE::TESObjectREFR* a_r, int a_w, bool& a_done)
 		{
@@ -396,6 +418,7 @@ namespace bo3z::Tablet
 			const float up = std::clamp(g_t / 0.45f, 0.0f, 1.0f);
 			PoseDisplay(r.get(), a_body, g_reelAt, 1.0f - (1.0f - up) * (1.0f - up), 0.0f);
 			Glow(r.get(), g_reelAt, g_reelGlow);
+			RarityLight(r.get(), g_reelAt, 0.75f);   // (each weapon rolling by in its own rarity's light)
 		}
 		// the won weapon's model rising out of the pool and turning there (placed in the world before the tablet's face)
 		void PoseShow(RE::TESObjectREFR* a_tab, float a_rise)
@@ -429,7 +452,10 @@ namespace bo3z::Tablet
 			}
 			// (the mask faces you out of the pool, turning a little; a weapon turns round)
 			if (mask) r->SetAngle({ 0.0f, 0.0f, a_tab->GetAngleZ() + RE::NI_PI + 0.35f * std::sin(g_clock * 1.7f) });
-			if (g_phase == Phase::Offering) Glow(r.get(), g_prize, g_showGlow);
+			if (g_phase == Phase::Offering) {
+				Glow(r.get(), g_prize, g_showGlow);
+				RarityLight(r.get(), g_prize, 0.9f + 0.35f * std::sin(g_clock * 3.0f));   // (the won one brighter, breathing)
+			}
 		}
 
 		// (Noah: "it's very hard to see what the item is. Are you able to make it glow around the item that it lands on? ... It needs
@@ -453,10 +479,17 @@ namespace bo3z::Tablet
 			} else if (lamp->GetPosition().GetDistance(at) > 20.0f) {
 				lamp->SetPosition(at);
 			}
+			// (its light the colour of the weapon over the slab: green for a worn one rolling by, gold for a legendary)
+			const int lw = g_phase == Phase::Offering ? g_prize : g_phase == Phase::Rolling ? g_reelAt : -1;
+			if (auto* xl = lamp ? lamp->extraList.GetByType<RE::ExtraLight>() : nullptr; xl && xl->lightData && xl->lightData->light) {
+				const RE::NiColor c = RarityColour(lw);
+				const float k = lw >= 0 ? 1.25f : 1.0f;
+				xl->lightData->light->GetLightRuntimeData().diffuse = RE::NiColor{ c.red * k, c.green * k, c.blue * k };
+			}
 			static float next = 0.0f;
 			if ((next -= a_delta) > 0.0f) return;
 			next = 0.45f;
-			const int w = g_phase == Phase::Offering ? g_prize : g_phase == Phase::Rolling ? g_reelAt : -1;
+			const int w = lw;
 			auto sh = g_phase == Phase::Offering ? g_show.get() : g_reel.get();
 			if (w >= 0 && sh) {
 				const auto* o = sh->Get3D();
