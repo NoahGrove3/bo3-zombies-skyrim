@@ -64,7 +64,13 @@ namespace bo3z::Tablet
 		// the model's measures (tools/tablet.py): the pool's centre on the face (x 0, z Z0 + 42)
 		constexpr float kPoolZ = 116.0f;
 		// (Noah: "the weapon rolled should dissapear after 10 seconds if not picked up")
-		constexpr float kRollTime = 3.6f, kOfferTime = 10.0f;
+		// (Noah: "The tablet of mysteries should feel just like the mystery box from Black Ops 3 Zombies" - "About 5 seconds",
+		// "Box style": the won weapon hangs where it landed, turning, and sinks back into the tablet over about 12 seconds)
+		constexpr float kRollTime = 5.0f, kOfferTime = 12.0f, kSinkTime = 2.5f;
+		// (Noah: "Rise above the top", "Three-quarter size") the weapons rise out of the slab's top (tools/tablet.py: its arch's
+		// top at Z1 158) and turn over it, three-quarters of their size
+		constexpr float kTopZ = 158.0f;
+		constexpr std::uint16_t kReelScale = 75;
 		// (Noah: "Holding the action key on the tablet should start the roll and holding action on the weapon rolled should
 		// pick it up") how long Activate is held; a hold done must be let go before the next
 		constexpr float kHoldTime = 0.6f;
@@ -297,6 +303,17 @@ namespace bo3z::Tablet
 			if (auto* e = sh ? sh->As<RE::TESEffectShader>() : nullptr) a_r->ApplyEffectShader(e, -1.0f);
 			a_done = true;
 		}
+		// a weapon's model hung over the slab's top, whichever way its model runs: its bounds' middle (measured from the model
+		// as it stands, so a blade that runs up or down from its grip both sit right) set a_lift of the way from the slab's top
+		// (half sunk in it) to clear over it
+		void HangOverTop(RE::TESObjectREFR* a_r, RE::NiAVObject* a_body, float a_lift)
+		{
+			float offZ = 0.0f, rad = 40.0f;
+			if (auto* o = a_r->Get3D(); o && o->worldBound.radius > 1.0f) offZ = o->worldBound.center.z - a_r->GetPosition().z, rad = o->worldBound.radius;
+			const RE::NiPoint3 top = a_body->world * RE::NiPoint3{ 0.0f, 0.0f, kTopZ };
+			const float centreZ = top.z + (-0.2f + 1.15f * a_lift) * rad * 0.9f + 6.0f;
+			a_r->SetPosition(RE::NiPoint3{ top.x, top.y, centreZ - offZ });
+		}
 		// the reel: every weapon in turn, a little one turning in the pool in its rarity's glow - quick at first, slowing,
 		// and landing on the one won (the mask's roll: it runs out and the mask rises instead)
 		void TickReel(RE::TESObjectREFR* a_tab, RE::NiAVObject* a_body, float a_k, float a_delta)
@@ -319,7 +336,7 @@ namespace bo3z::Tablet
 				ClearReel();
 				auto* base = Forms::Ours(gen::kTabletWeapons[want].show) ? Forms::Ours(gen::kTabletWeapons[want].show)->As<RE::TESBoundObject>() : nullptr;
 				if (auto ref = base ? a_tab->PlaceObjectAtMe(base, false) : nullptr) {
-					ref->GetReferenceRuntimeData().refScale = 32;   // (a little one: a third of its size)
+					ref->GetReferenceRuntimeData().refScale = kReelScale;
 					g_reel = ref->CreateRefHandle(), g_reelAt = want;
 				}
 			}
@@ -327,7 +344,9 @@ namespace bo3z::Tablet
 			if (!r) return;
 			// (Noah: "the larger weapons ... poke through the tablet") before its face, stood on end (a weapon's model lies along
 			// its length: tipped up, it turns about itself and never sweeps into the slab)
-			r->SetPosition(a_body->world * RE::NiPoint3{ 0.0f, -kFront, kPoolZ - 14.0f });
+			// over the slab's top: the first half second it rises out of it, then turns there, each weapon in turn
+			const float up = std::clamp(g_t / 0.45f, 0.0f, 1.0f);
+			HangOverTop(r.get(), a_body, 1.0f - (1.0f - up) * (1.0f - up));
 			r->SetAngle({ -RE::NI_HALF_PI, 0.0f, a_tab->GetAngleZ() + g_clock * 2.4f });
 			Glow(r.get(), g_reelAt, g_reelGlow);
 		}
@@ -346,11 +365,20 @@ namespace bo3z::Tablet
 			const std::uint32_t showId = g_phase == Phase::Mask ? gen::kTabletMask : g_prize >= 0 ? gen::kTabletWeapons[g_prize].show : 0;
 			if (!r && showId) {
 				if (auto* base = Forms::Ours(showId) ? Forms::Ours(showId)->As<RE::TESBoundObject>() : nullptr) {
-					if (auto ref = a_tab->PlaceObjectAtMe(base, false)) g_show = ref->CreateRefHandle(), r = ref;
+					if (auto ref = a_tab->PlaceObjectAtMe(base, false)) {
+						if (!mask) ref->GetReferenceRuntimeData().refScale = kReelScale;
+						g_show = ref->CreateRefHandle(), r = ref;
+					}
 				}
 			}
 			if (!r) return;
-			r->SetPosition(at);
+			if (mask) r->SetPosition(at);
+			else {
+				// (box style) it rises out of the top where the reel landed and hangs there turning; its last seconds it sinks
+				// back into the slab
+				const float sink = std::clamp((g_t - (kOfferTime - kSinkTime)) / kSinkTime, 0.0f, 1.0f);
+				HangOverTop(r.get(), body, std::max(0.0f, 1.0f - sink * 1.25f));
+			}
 			// (the mask faces you out of the pool, turning a little; a weapon turns round)
 			r->SetAngle({ mask ? 0.0f : -RE::NI_HALF_PI, 0.0f, mask ? a_tab->GetAngleZ() + RE::NI_PI + 0.35f * std::sin(g_clock * 1.7f) : a_tab->GetAngleZ() + g_clock * 0.9f });
 			if (g_phase == Phase::Offering) Glow(r.get(), g_prize, g_showGlow);
@@ -370,7 +398,7 @@ namespace bo3z::Tablet
 			}
 			auto* body = a_tab->Get3D() ? a_tab->Get3D()->GetObjectByName("TabletBody") : nullptr;
 			if (!body) return;
-			const RE::NiPoint3 at = body->world * RE::NiPoint3{ 0.0f, -kFront - 70.0f, kPoolZ + 10.0f };
+			const RE::NiPoint3 at = body->world * RE::NiPoint3{ 0.0f, -kFront - 70.0f, kTopZ + 40.0f };   // (before it and over its top, where the weapons turn)
 			if (!lamp) {
 				auto* base = Forms::Ours(gen::kTabletLamp) ? Forms::Ours(gen::kTabletLamp)->As<RE::TESBoundObject>() : nullptr;
 				if (auto l = base ? a_tab->PlaceObjectAtMe(base, false) : nullptr) l->SetPosition(at), g_lamp = l->CreateRefHandle(), lamp = l;
@@ -382,7 +410,11 @@ namespace bo3z::Tablet
 			next = 0.45f;
 			const int w = g_phase == Phase::Offering ? g_prize : g_phase == Phase::Rolling ? g_reelAt : -1;
 			auto sh = g_phase == Phase::Offering ? g_show.get() : g_reel.get();
-			if (w >= 0 && sh) Gun::Motes(gen::kTabletWeapons[w].battered ? 8 : 7, sh->GetPosition() + RE::NiPoint3{ 0, 0, g_phase == Phase::Offering ? 40.0f : 10.0f }, g_phase == Phase::Offering ? 0.45f : 0.25f, 1.1f);
+			if (w >= 0 && sh) {
+				const auto* o = sh->Get3D();
+				const RE::NiPoint3 mid = o && o->worldBound.radius > 1.0f ? o->worldBound.center : sh->GetPosition() + RE::NiPoint3{ 0, 0, 40.0f };
+				Gun::Motes(gen::kTabletWeapons[w].battered ? 8 : 7, mid, g_phase == Phase::Offering ? 0.45f : 0.25f, 1.1f);
+			}
 		}
 		// how high over its plinth the tablet is: coming down the beam (falling faster and faster), going up it
 		float BodyLift()
@@ -1293,7 +1325,7 @@ namespace bo3z::Tablet
 				logger::info("tablet: the mask - leaving {} for {}", from >= 0 ? gen::kTowns[from] : "?", g_moveTo >= 0 ? gen::kTowns[g_moveTo] : "?");
 				g_phase = Phase::Idle, g_t = 0.0f, g_skull = false, g_prize = -1;
 			}
-			if (g_phase == Phase::Offering) if (auto r = g_ref.get()) PoseShow(r.get(), std::clamp(g_t / 1.5f, 0.0f, 1.0f));
+			if (g_phase == Phase::Offering) if (auto r = g_ref.get()) PoseShow(r.get(), 1.0f);
 			if (g_phase == Phase::Mask) if (auto r = g_ref.get()) PoseShow(r.get(), std::clamp(g_t / 1.2f, 0.0f, 1.0f));
 		}
 		TickNights(p, a_delta);
