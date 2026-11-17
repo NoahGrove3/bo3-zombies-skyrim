@@ -1671,6 +1671,8 @@ namespace bo3z
 		}
 		void TickVolatiles(RE::PlayerCharacter* a_player, float a_delta)
 		{
+			// (Noah: "leave the infected creep out") no Volatile hears you any more: the nights are the undead and creatures alone
+			if (constexpr bool kVolatiles = false; !kVolatiles) { g_noise = 0; return; }
 			// what you do is heard: running and sprinting; the rest comes through Director::Noise
 			if (a_player->AsActorState()->IsSprinting()) g_noise += 7.0f * a_delta;
 			else if (a_player->IsRunning()) g_noise += 1.5f * a_delta;
