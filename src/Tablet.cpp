@@ -366,9 +366,10 @@ namespace bo3z::Tablet
 		{
 			const auto* d = DisplayOf(a_w);
 			const float bs = a_body->world.scale, s = DisplayScale(a_w) * bs;
-			const float half = 0.5f * (d ? d->breadth : 40.0f) * DisplayScale(a_w);
-			const float z = kTopZ + 8.0f + half - (1.0f - a_lift) * (half * 2.0f + 14.0f);
-			const RE::NiPoint3 at = a_body->world * RE::NiPoint3{ 0.0f, 0.0f, z };
+			// (Noah: "displayed in front of the face of the tablet instead of above the tablet. Horizontal, just like the Black
+			// Ops 3 mystery box") level with the pool, before the face: it slides out of the face toward you as it comes
+			// (a_lift 0: in the slab, 1: clear before it), and back in as it goes
+			const RE::NiPoint3 at = a_body->world * RE::NiPoint3{ 0.0f, -4.0f - 30.0f * a_lift, kPoolZ };
 			RE::NiMatrix3 D, Z;
 			for (int i = 0; i < 3; ++i) for (int j = 0; j < 3; ++j) D.entry[i][j] = d ? d->m[i * 3 + j] : (i == j ? 1.0f : 0.0f);
 			Z.entry[0][0] = std::cos(a_spin), Z.entry[0][1] = -std::sin(a_spin), Z.entry[0][2] = 0;
@@ -447,8 +448,8 @@ namespace bo3z::Tablet
 				// (box style) it rises out of the top where the reel landed and hangs there turning; its last seconds it sinks
 				// back into the slab
 				const float sink = std::clamp((g_t - (kOfferTime - kSinkTime)) / kSinkTime, 0.0f, 1.0f);
-				// (the won one turns slowly, a full turn every 9 s)
-				PoseDisplay(r.get(), body, g_prize, std::max(0.0f, 1.0f - sink * 1.25f), 0.7f * std::sin(g_t * 0.7f));
+				// (the won one sways a little as it floats - never far enough to swing into the slab)
+				PoseDisplay(r.get(), body, g_prize, std::max(0.0f, 1.0f - sink * 1.25f), 0.12f * std::sin(g_t * 0.9f));
 			}
 			// (the mask faces you out of the pool, turning a little; a weapon turns round)
 			if (mask) r->SetAngle({ 0.0f, 0.0f, a_tab->GetAngleZ() + RE::NI_PI + 0.35f * std::sin(g_clock * 1.7f) });
@@ -472,7 +473,7 @@ namespace bo3z::Tablet
 			}
 			auto* body = a_tab->Get3D() ? a_tab->Get3D()->GetObjectByName("TabletBody") : nullptr;
 			if (!body) return;
-			const RE::NiPoint3 at = body->world * RE::NiPoint3{ 0.0f, -kFront - 70.0f, kTopZ + 40.0f };   // (before it and over its top, where the weapons turn)
+			const RE::NiPoint3 at = body->world * RE::NiPoint3{ 0.0f, -kFront - 70.0f, kPoolZ + 30.0f };   // (before its face and a little over, where the weapons float)
 			if (!lamp) {
 				auto* base = Forms::Ours(gen::kTabletLamp) ? Forms::Ours(gen::kTabletLamp)->As<RE::TESBoundObject>() : nullptr;
 				if (auto l = base ? a_tab->PlaceObjectAtMe(base, false) : nullptr) l->SetPosition(at), g_lamp = l->CreateRefHandle(), lamp = l;
