@@ -1058,9 +1058,21 @@ namespace bo3z
 		bool Tame(RE::Actor* a_actor, int a_kind)
 		{
 			auto* base = a_actor ? a_actor->GetActorBase() : nullptr;
-			auto* list = base ? base->actorEffects : nullptr;
 			bool  shouts = false;
-			if (list) {
+			// (Noah: "the higher level Draugr are still doing the knockback effect") a levelled draugr's shouts can come from the
+			// forms it was made from - its face, the templates it inherits its spells from - not its own list: every one of them
+			// cleared, not just the body's own
+			std::vector<RE::TESNPC*> chain;
+			auto add = [&](RE::TESNPC* n) { if (n && std::ranges::find(chain, n) == chain.end()) chain.push_back(n); };
+			add(base);
+			if (base) add(base->faceNPC);
+			for (std::size_t i = 0; i < chain.size() && chain.size() < 12; ++i)
+				if (auto* t = chain[i]->baseTemplateForm ? chain[i]->baseTemplateForm->As<RE::TESNPC>() : nullptr) add(t);
+			const bool dragon = a_actor && a_actor->HasKeywordString("ActorTypeDragon");
+			std::size_t dropped = 0, silenced = 0;
+			for (auto* npc : chain) {
+				auto* list = npc->actorEffects;
+				if (!list) continue;
 				std::vector<RE::SpellItem*> drop;
 				for (std::uint32_t i = 0; list->spells && i < list->numSpells; ++i) {
 					auto* sp = list->spells[i];
@@ -1070,7 +1082,6 @@ namespace bo3z
 				for (auto* sp : drop) list->RemoveSpell(sp);
 				std::vector<RE::TESShout*> gone;
 				// (Noah: "i dont want any shout enemies either") at night no one but the dragons shouts: every shout taken
-				const bool dragon = a_actor->HasKeywordString("ActorTypeDragon");
 				for (std::uint32_t i = 0; list->shouts && i < list->numShouts; ++i) {
 					auto* sh = list->shouts[i];
 					if (!sh) continue;
@@ -1081,10 +1092,19 @@ namespace bo3z
 					else shouts = true;
 				}
 				for (auto* sh : gone) list->RemoveShout(sh);
-				if (!drop.empty() || !gone.empty()) {
-					static int told = 0;
-					if (told++ < 12) logger::info("night: {} - {} spells and {} shouts of its own taken away", a_actor->GetName(), drop.size(), gone.size());
-				}
+				dropped += drop.size(), silenced += gone.size();
+			}
+			// (and a shout it was handed at its making - added to the body itself - taken off too)
+			if (a_actor && !dragon) {
+				auto& added = a_actor->GetActorRuntimeData().addedSpells;
+				std::vector<RE::SpellItem*> voice;
+				for (auto* sp : added) if (sp && sp->GetSpellType() == RE::MagicSystem::SpellType::kVoicePower) voice.push_back(sp);
+				for (auto* sp : voice) a_actor->RemoveSpell(sp);
+				silenced += voice.size();
+			}
+			if (dropped || silenced) {
+				static int told = 0;
+				if (told++ < 12) logger::info("night: {} - {} spells and {} shouts taken away (its {} forms)", a_actor->GetName(), dropped, silenced, chain.size());
 			}
 			// (the audit: the AI reads the high process's voice recovery time, not the actor's voiceTimer) held each pass in
 			// KeepThemComing; dragons keep their breath
