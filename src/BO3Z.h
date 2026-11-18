@@ -623,6 +623,7 @@ namespace bo3z
 		// later, all at the same moment (the host's night ends on every game at once); a wiped party loads exactly that
 		void DawnSave(int a_night);
 		void CityFreed(int a_town);  // the coming dawn's save is named for the freed city
+		void CheckpointSave(const std::string& a_what);  // (a class chosen) this character's save, written over each time
 	}
 
 	// Co-op with Skyrim Together (CurseOfAlduin.ini: Role=host|client|solo)

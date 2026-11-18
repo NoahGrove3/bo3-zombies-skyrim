@@ -299,6 +299,10 @@ namespace bo3z::Party
 			++g_fallGen, g_soloLoading = false;
 			FallControls(false);
 			Uncollapse(p);
+			// (Noah: "I can't move my camera ... the controls are wonky" after rising with no save) every control Skyrim has is
+			// given back, not only the fall's, and the camera set back to its own view
+			if (auto* cm = RE::ControlMap::GetSingleton()) cm->ToggleControls(static_cast<RE::UserEvents::USER_EVENT_FLAG>(0xFFFFFFFF), true, false);
+			if (auto* cam = RE::PlayerCamera::GetSingleton(); cam && !g_fallFirstPerson) cam->ForceThirdPerson();
 			if (g_fallFirstPerson) {
 				g_fallFirstPerson = false;
 				if (auto* cam = RE::PlayerCamera::GetSingleton()) cam->ForceFirstPerson();
@@ -431,6 +435,27 @@ namespace bo3z::Party
 				g_lastSave = name;
 				Hud::Banner("GAME SAVED - " + what, 3.0f);
 				logger::info("party save: '{}'", name);
+		});
+	}
+
+	// (Noah: "The game should autosave when choosing a class in the echo altar" - a new character that fell before any dawn had
+	// no save to come back to, and rising where it fell left the body and camera stuck) a save of this character, a moment
+	// on, written over each time: the fall always has somewhere to go back to
+	void CheckpointSave(const std::string& a_what)
+	{
+		Tasks::Later(2.5f, [a_what] {
+			auto* pl = RE::PlayerCharacter::GetSingleton();
+			auto* sl = RE::BGSSaveLoadManager::GetSingleton();
+			auto* ui = RE::UI::GetSingleton();
+			if (!pl || !sl || pl->IsDead() || g_wipeLoading || (ui && ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME))) {
+				logger::info("party save: skipped ({})", a_what);
+				return;
+			}
+			const std::string name = fmt::format("CurseOfAlduin - {} - Checkpoint - {:08X}", pl->GetName(), sl->currentCharacterID);
+			sl->Save(name.c_str());
+			g_lastSave = name;
+			Hud::Banner("GAME SAVED - " + a_what, 3.0f);
+			logger::info("party save: '{}' ({})", name, a_what);
 		});
 	}
 

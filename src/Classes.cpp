@@ -603,6 +603,7 @@ namespace bo3z::Classes
 		TakeGuides();
 		Hud::Lore("THE CURSE OF ALDUIN", "Your class's path is a tab in The Curse of Alduin, in your pack under Books (F1). It shows how your class grows and keeps a live page of how far you have come.", 9.0f);
 		logger::info("classes: {} -> {}{}", Name(from), Name(a_cls), g_switching ? " (switched at an altar)" : "");
+		Party::CheckpointSave(std::string(coffer::kClassName[a_cls]) + " chosen");
 	}
 
 	// a new character, out of the creator: the picker
