@@ -6,7 +6,7 @@
    "id": "gravecaller",
    "label": "Soulcaller's Staff",
    "color": "9CFF6A",
-   "text": "A summoning spell. Cast it and a violet wyrm flies in and burns the dead within 50 m of you for 90 seconds, circling and strafing. The call rests a minute after the wyrm departs. Once the three dragons fall, a second, smaller wyrm answers with it.",
+   "text": "The Soulcaller's Staff. Hold to cast its beam: each of the dead it kills gives a soul (six at most). Let go and a spectral wolf runs at your side for every soul, for 20 seconds.",
    "cls": "Summoner"
   },
   {

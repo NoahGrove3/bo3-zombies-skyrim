@@ -1561,7 +1561,7 @@ namespace bo3z::gen
 	inline constexpr std::uint32_t kTabletBeacon = 0xF15, kTabletMask = 0xF16;  // (the tablet's beam over it; the mask that sends it on)
 	struct EchoWonder { std::string_view id, label, text; std::uint32_t color, pedestal, gem; };
 	inline constexpr std::array<EchoWonder, 4> kEchoWonders{ {
-		EchoWonder{ "gravecaller", "Soulcaller's Staff", "A summoning spell. Cast it and a violet wyrm flies in and burns the dead within 50 m of you for 90 seconds, circling and strafing. The call rests a minute after the wyrm departs. Once the three dragons fall, a second, smaller wyrm answers with it.", 0x9CFF6A, 0xC44, 0xC4A },
+		EchoWonder{ "gravecaller", "Soulcaller's Staff", "The Soulcaller's Staff. Hold to cast its beam: each of the dead it kills gives a soul (six at most). Let go and a spectral wolf runs at your side for every soul, for 20 seconds.", 0x9CFF6A, 0xC44, 0xC4A },
 		EchoWonder{ "frostbinder", "Staff of Magnus", "The Staff of Magnus. Its beam drains the dead and feeds your magicka, and erupts where it lets go; held two seconds, the eruption leaves an orb of searing light pulsing on everything round it.", 0x9FD8FF, 0xC45, 0xC4B },
 		EchoWonder{ "wolfcrown", "Mutagen Staff", "The Mutagen Staff. Its orb is fed by six vials of the elements: hold attack to loose a beam that pierces the dead, pouring each vial in turn for 5 seconds; let go and the emptied vials refill.", 0xFFD24A, 0xC46, 0xC4C },
 		EchoWonder{ "barrowhorn", "Dragon Slayer", "The Akaviri dragon slayer. Every hit carries the spell in your other hand. Once the three dragons fall, a power attack sends that spell down the line.", 0xFF7A3C, 0xC47, 0xC4D },

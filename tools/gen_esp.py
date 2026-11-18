@@ -1495,17 +1495,17 @@ recs['ACTI'].append(record('ACTI', fid('ACTI', 'rel_portal'), [sub('EDID', z('UN
     sub('MODL', z(RQ + 'portal.nif')), sub('FNAM', b'\0\0')]))
 # (Noah: "just use High Hrothgar's building") the wonders and Alduin's Bane float in the great hall to be taken up, each in a soft
 # glow, and a fiery pillar holds the Hall's rewards: nameless activators (no prompt of Skyrim's - src/Echo.cpp aims and takes them)
-# (Noah: "skeleton dragon horn is from sketchfab so replace that with a spell model since its conjuration anyways") the Bone-Throne
-# Horn floats as a spell: its orb of green grave-fire (our own, tools/orbfx.py), not the horn
-for key, model, r in (('hf_gravecaller', 'CurseOfAlduin\\wonder\\bonehorn_show.nif', 40), ('hf_frostbinder', 'Weapons\\StaffofMagnus\\StaffofMagnus.nif', 80),
-                      ('hf_wolfcrown', 'apocnew\\restorationarcane_projectile_withershins.nif', 20), ('hf_barrowhorn', lgs('slayer'), 60),
+# (Noah, 2026-11-18: the old wonders' leftovers out) each class's wonder floats as itself: the Summoner's Soulcaller's Staff
+# (Fulcimentum's Glass Staff), the Alchemist's Mutagen Staff; their greyed likenesses made by tools/modelconv/ghostnif.cpp
+for key, model, r in (('hf_gravecaller', 'SSS\\GlassStaff.nif', 80), ('hf_frostbinder', 'Weapons\\StaffofMagnus\\StaffofMagnus.nif', 80),
+                      ('hf_wolfcrown', 'CurseOfAlduin\\alchemist\\mutagen_staff.nif', 80), ('hf_barrowhorn', lgs('slayer'), 60),
                       ('hf_bane', lgs('bane'), 90), ('hf_glow', 'CurseOfAlduin\\fx\\hall_glow.nif', 60),
                       ('hf_glowtall', 'CurseOfAlduin\\fx\\hall_glow_tall.nif', 120), ('hf_pillar', 'CurseOfAlduin\\fx\\pillar_fire.nif', 120)):
     recs['ACTI'].append(record('ACTI', fid('ACTI', key), [sub('EDID', z('UN_' + key)), sub('OBND', struct.pack('<6h', -r, -r, -r, r, r, r * 2)),
         sub('MODL', z(model)), sub('FNAM', b'\0\0')]))
 for k in ('gravecaller', 'frostbinder', 'wolfcrown', 'barrowhorn', 'bane'):  # (greyed out, until it's yours: tools/modelconv/ghostnif.cpp; the Staff of Magnus's made on the machine from the game's own)
     recs['ACTI'].append(record('ACTI', fid('ACTI', 'hg_' + k), [sub('EDID', z('UN_hg_' + k)), sub('OBND', struct.pack('<6h', -80, -80, -80, 80, 80, 160)),
-        sub('MODL', z({'bane': lgs('bane'), 'barrowhorn': lgs('slayer'), 'gravecaller': 'CurseOfAlduin\\wonder\\ghost_bonehorn.nif'}.get(k, 'CurseOfAlduin\\wonder\\ghost_' + k + '.nif'))), sub('FNAM', b'\0\0')]))   # (the Bane and the Slayer: Light Greatswords' models)
+        sub('MODL', z({'bane': lgs('bane'), 'barrowhorn': lgs('slayer'), 'gravecaller': 'CurseOfAlduin\\wonder\\ghost_soulcaller.nif', 'wolfcrown': 'CurseOfAlduin\\wonder\\ghost_mutagen.nif'}.get(k, 'CurseOfAlduin\\wonder\\ghost_' + k + '.nif'))), sub('FNAM', b'\0\0')]))   # (the Bane and the Slayer: Light Greatswords' models)
 # Stage 5 (src/Echo.cpp Hall): the Hall of the Awakened's stations, and Alduin's Fang
 for key, name, verb in (('hall_fang', "Alduin's Bane", 'Take'), ('hall_robes', "The First Dragonborn's Regalia", 'Take'),
                         ('hall_skull', "The Bone-Wyrm's Skull", 'Bind'), ('hall_endless', 'Brazier of the Endless Night', 'Kindle'),
