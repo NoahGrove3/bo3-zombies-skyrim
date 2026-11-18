@@ -1,3 +1,4 @@
+#include <set>
 #include <sstream>
 #include "BO3Z.h"
 
@@ -273,8 +274,12 @@ namespace bo3z
 			}
 			return n;
 		}
+		// (Noah: "I noticed a skeleton with cloak magic an ice one can you remove enemies that use cloak spells as well?") a kind
+		// found wrapped in a cloak spell (frost, flame, shock - from any form it is made from) rises no more
+		std::set<std::size_t> g_cloakBanned;
 		int Weight(const gen::Enemy& e)
 		{
+			if (g_cloakBanned.contains(static_cast<std::size_t>(&e - gen::kEnemies.data()))) return 0;
 			if (e.elite && (!Story::ElitesOpen() || EliteCount() >= static_cast<int>(gen::elite::maxAlive))) {  // (elites from Dragon Rising on)
 				return 0;
 			}
@@ -1055,6 +1060,23 @@ namespace bo3z
 			for (auto* e : a_m->effects) if (e && e->baseEffect && e->baseEffect->GetArchetype() == a_a) return true;
 			return false;
 		}
+		// a cloak spell anywhere on it: its own list, the forms it is made from, or handed to the body
+		bool UsesCloak(RE::Actor* a_actor)
+		{
+			auto* base = a_actor ? a_actor->GetActorBase() : nullptr;
+			std::vector<RE::TESNPC*> chain;
+			auto add = [&](RE::TESNPC* n) { if (n && std::ranges::find(chain, n) == chain.end()) chain.push_back(n); };
+			add(base);
+			if (base) add(base->faceNPC);
+			for (std::size_t i = 0; i < chain.size() && chain.size() < 12; ++i)
+				if (auto* t = chain[i]->baseTemplateForm ? chain[i]->baseTemplateForm->As<RE::TESNPC>() : nullptr) add(t);
+			for (auto* npc : chain)
+				if (auto* list = npc->actorEffects)
+					for (std::uint32_t i = 0; list->spells && i < list->numSpells; ++i)
+						if (HasArchetype(list->spells[i], RE::EffectSetting::Archetype::kCloak)) return true;
+			if (a_actor) for (auto* sp : a_actor->GetActorRuntimeData().addedSpells) if (HasArchetype(sp, RE::EffectSetting::Archetype::kCloak)) return true;
+			return false;
+		}
 		bool Tame(RE::Actor* a_actor, int a_kind)
 		{
 			auto* base = a_actor ? a_actor->GetActorBase() : nullptr;
@@ -1319,6 +1341,12 @@ namespace bo3z
 				const bool vanilla = fn == "Skyrim.esm" || fn == "Update.esm" || fn == "Dawnguard.esm" || fn == "HearthFires.esm" || fn == "Dragonborn.esm";
 				const bool person = actor->GetRace() && actor->GetRace()->GetPlayable();
 				if (!(vanilla && person)) MakeHeadlong(cs);
+			}
+			if (kindRow.bossEvery <= 0 && UsesCloak(actor)) {
+				g_cloakBanned.insert(*pick);
+				logger::warn("night: {} ({}) fights in a cloak spell - put away, its kind rises no more", actor->GetName(), kindRow.id);
+				Vanish(actor);
+				return false;
 			}
 			const bool tamed = Tame(actor, kindRow.kind);
 			const bool mute = kindRow.bossEvery <= 0 && tamed;

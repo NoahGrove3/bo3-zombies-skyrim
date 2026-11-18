@@ -215,6 +215,15 @@ namespace bo3z
 				if (const auto g = Director::GroundUnder(player->GetParentCell(), at + RE::NiPoint3{ 0, 0, 300.0f })) at.z = *g;
 				Gun::RedBeam(at);
 				logger::info("dev: beamtest at ({:.0f},{:.0f},{:.0f})", at.x, at.y, at.z);
+			} else if (cmd == "priest" && player) {  // priest [town index]: that city's Dragon Priest rises 900 before you (trailer filming; default Markarth)
+				int t = 4;
+				in >> t;
+				t = std::clamp(t, 0, static_cast<int>(gen::kCityBosses.size()) - 1);
+				const float yaw = player->GetAngleZ();
+				const RE::NiPoint3 at = player->GetPosition() + RE::NiPoint3{ std::sin(yaw) * 900.0f, std::cos(yaw) * 900.0f, 40.0f };
+				const auto& b = gen::kCityBosses[t];
+				const bool ok = Director::RaiseChampion(t, b.row, b.name, b.health, at);
+				logger::info("dev: priest {} ({}) {}", b.name, gen::kTowns[t], ok ? "rises" : "could not rise");
 			} else if (cmd == "calm") {  // calm on|off: (filming) no undead rise, those up put away - the night (and the Tablet) stays
 				std::string on;
 				in >> on;
