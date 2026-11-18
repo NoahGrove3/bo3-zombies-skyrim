@@ -16,7 +16,7 @@ namespace bo3z::Kit
 		constexpr int kGone = 100;
 		struct Def { Kind kind; const char* ref; int at; };  // ref: a ladder's label, a blade's id, a flask's element; at: cities freed (-1: the start)
 		constexpr Def kSummoner[] = { { Kind::Blade, "riftblade", -1 }, { Kind::Ladder, "Beasts", -1 }, { Kind::Ladder, "The Dead", -1 },
-			{ Kind::Ladder, "Daedra", 5 }, { Kind::Ladder, "The Wild", 3 }, { Kind::Ladder, "Dwemer", 1 },
+			{ Kind::Ladder, "Daedra", 5 }, { Kind::Ladder, "The Wild", kGone }  /* (Noah, 2026-11-18: Summonable Spriggans cut from the mod) */, { Kind::Ladder, "Dwemer", 1 },
 			{ Kind::Armour, "armour", -1 }, { Kind::Ladder, "Atronachs", 2 }, { Kind::Ladder, "Ash", 4 }, { Kind::Ladder, "The Night", 7 }, { Kind::Ladder, "The Wrath", 9 } };  // (Noah: "I want them all to be 7")  // (Noah: the Dwarven Spider at 1 city freed, the Spriggan at 3, the Dremora - the strongest - at 5) (the list's order is the save's: the Armory shows them by when they open)
 		constexpr Def kDestruction[] = { { Kind::Ladder, "Fire", -1 }, { Kind::Ladder, "Frost", -1 }, { Kind::Ladder, "Shock", 1 }, { Kind::Ladder, "Sun", 3 },
 			{ Kind::Ladder, "Arcane", 5 }, { Kind::Ladder, "Runes", kGone },   /* (Noah: "I dont want to use runes or cloaks in the loot pool") */

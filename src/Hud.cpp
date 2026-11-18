@@ -745,7 +745,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		{
 			struct Card { const char* name; const char* lore; ImU32 col; const char* tag; const char* arms; const char* grow; const char* kit; };
 			static const Card kCards[4] = {
-				{ "SUMMONER", "Conjurer of the College of Winterhold", IM_COL32(170, 120, 255, 255), "An army that grows family by family", "Summons - beasts, the dead, Daedra, Dwemer, the wild - and the Radiant Quarterstaff",
+				{ "SUMMONER", "Conjurer of the College of Winterhold", IM_COL32(170, 120, 255, 255), "An army that grows family by family", "Summons - beasts, the dead, Daedra, Dwemer - and the Radiant Quarterstaff",
 				  "Your kit grows at the altar: every family and the Radiant Quarterstaff to Legendary", "Conjure Wolf, Conjure Skeleton, the Radiant Quarterstaff, the Summoner Set" },
 				{ "DESTRUCTION", "Battle-mage of the College of Winterhold", IM_COL32(255, 120, 60, 255), "Master the elements one at a time", "Ranged spells: fire, frost, shock, sun, blood and runes",
 				  "Your kit grows at the altar: each element, and the Carian Wand, to Legendary", "Firebolt, Ice Spike, the Carian Wand, the Destruction Set" },

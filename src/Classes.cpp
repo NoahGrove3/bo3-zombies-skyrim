@@ -100,8 +100,6 @@ namespace bo3z::Classes
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			return p && p->GetActorBase() && p->GetActorBase()->IsFemale();
 		}
-		// a man's Ranger wears the Dawnguard's own light armour in the Drifter's place
-		constexpr std::uint32_t kDawnguardLight[] = { 0x00F3FB, 0x00F400, 0x00F3FE };  // cuirass, boots, gauntlets (Dawnguard.esm)
 		void GiveSpell(int a_index, bool a_left)
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
@@ -217,7 +215,6 @@ namespace bo3z::Classes
 				if (auto* em = RE::ActorEquipManager::GetSingleton(); em && CarianBlade()) {
 					em->EquipObject(p, CarianBlade(), nullptr, 1, RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F42), false, false, false, true);
 				}
-				if (auto* tome = Lookup(0x817, "Equipable Tomes - Redone.esp")) GiveItem(p, tome, 1, true);  // a Destruction tome at the hip
 				break;
 			case coffer::kAlchemist:
 				// (Noah: "replace it with the Alchemist class") the knife in the right hand, the Fire Flask in your pack (a hotkey throws it)
@@ -286,19 +283,6 @@ namespace bo3z::Classes
 			for (auto* sp : drop) {
 				p->RemoveSpell(sp);
 				logger::info("classes: {} taken off (not of your race or class)", sp->GetName());
-			}
-			// (Noah: "please remove the magical shout from inventories") the Wizard Warrior's Magical Shout, a shout of its own
-			if (auto* sh = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESShout>(0x0008B2, "The Wizard Warrior.esp"); sh && p->GetActorRuntimeData().selectedPower == sh) {
-				p->GetActorRuntimeData().selectedPower = nullptr;
-			}
-			if (auto* sh = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESShout>(0x0008B2, "The Wizard Warrior.esp")) {
-				static std::chrono::steady_clock::time_point told{};
-				if (auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton(); vm && std::chrono::steady_clock::now() - told > std::chrono::seconds(20)) {
-					told = std::chrono::steady_clock::now();
-					const auto hd = vm->GetObjectHandlePolicy()->GetHandleForObject(p->GetFormType(), p);
-					RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> none;
-					vm->DispatchMethodCall(hd, "Actor", "RemoveShout", RE::MakeFunctionArguments(static_cast<RE::TESShout*>(sh)), none);
-				}
 			}
 			// (Noah: "Obtain the Spellsword Manual - what is that for?") the Spellsword mod's own start quest: its manual
 			// is never needed here (the Spellsword's kit comes from the class)
@@ -1010,7 +994,7 @@ namespace bo3z::Classes
 				if (av->GetActorValue(v) < av->GetPermanentActorValue(v)) av->RestoreActorValue(v, av->GetPermanentActorValue(v));
 			}
 		}
-		// (Noah) worn armour made only for the other body is taken off; a man's Drifter Outfit becomes the Dawnguard's
+		// (Noah) worn armour made only for the other body is taken off
 		if (static int fitCheck = 0; ++fitCheck % 3 == 0 && p->Is3DLoaded() && !menus) {
 			const bool fem = PlayerFemale();
 			std::vector<RE::TESObjectARMO*> off;
@@ -1018,19 +1002,9 @@ namespace bo3z::Classes
 				auto* a = obj ? obj->As<RE::TESObjectARMO>() : nullptr;
 				if (a && data.second && data.second->IsWorn() && !Fits(a, fem)) off.push_back(a);
 			}
-			bool drifter = false;
 			for (auto* a : off) {
 				if (auto* em = RE::ActorEquipManager::GetSingleton()) em->UnequipObject(p, a, nullptr, 1, nullptr, false, false, false, true);
-				drifter |= a->GetFile(0) && a->GetFile(0)->GetFilename() == "DrifterArmorAndOutfitByXtudo.esp";
 				logger::info("classes: {} taken off - it has no model for a {} body", a->GetName(), fem ? "woman's" : "man's");
-			}
-			if (drifter) {
-				for (auto id : kDawnguardLight) {
-					auto* f = Lookup(id, "Dawnguard.esm");
-					auto* b = f ? f->As<RE::TESBoundObject>() : nullptr;
-					if (b) GiveItem(p, b, p->GetItemCount(b) > 0 ? 0 : 1, true);
-				}
-				Hud::Banner("The Drifter Outfit is made for a woman's body - the Dawnguard's light armor in its place", 4.0f);
 			}
 		}
 		// (the shells the Spell-weapon row once gave - Flame Shield's 600 magicka and the like - are taken back)
@@ -1179,15 +1153,6 @@ namespace bo3z::Classes
 			g_codexSnap = std::move(snap);
 		}
 		// (Fletcher's Sap Draught: the quiver's regrowth comes sooner and faster - Bows.inl TickRegen)
-		// (Noah's plan, the Spellsword) Imbue unlocks The Wizard Warrior's Enchantment Powers 1 to 4, one per rung climbed
-		// (the audit: the Spellsword's Enchantment Powers followed you into every class)
-		// another class's are taken off; coming back gives them again, without the banner a second time
-		static std::unordered_set<RE::FormID> announced;
-		static constexpr std::uint32_t kPowers[4] = { 0x0008A0, 0x000893, 0x0008A1, 0x002F6A };
-		// (Noah: "In the inventory remove the enchantment power 1-4") The Wizard Warrior's Enchantment Powers are no longer given -
-		// and taken from any character that has them
-		for (auto id : kPowers) if (auto* sp = dh->LookupForm<RE::SpellItem>(id, "The Wizard Warrior.esp"); sp && p->HasSpell(sp)) p->RemoveSpell(sp);
-		(void)announced;
 		// (Noah: "remove the indrik mounts mod, since we have our dragon glider for movement") no mounts for the Summoner
 		// (Noah: "summoner should start with 2 summon slots and go up for every 2 echo altars freed - max 7")
 		int cap = 1;
@@ -1272,74 +1237,6 @@ namespace bo3z::Classes
 	}
 
 
-	// ---- (Noah: the class framework) the outfit picker: any outfit for any class, as a cosmetic. Each altar visit can
-	// step through them (O / left stick); a piece you don't have yet is handed to you, and the outfit is put on.
-	namespace
-	{
-		struct Outfit { const char* name; const char* plugin; std::array<std::uint32_t, 5> ids; };
-		constexpr Outfit kOutfits[] = {
-			{ "Wandering Summoner", "Wandering Summoner Outfit.esp", { 0xE58, 0xE5B, 0xE5D, 0xE5F, 0xE63 } },
-			{ "Necromancer's Robes", "Skyrim.esm", { 0x10900E, 0x0C36E8, 0, 0, 0 } },
-			{ "Wild Witch", "ksws03.esp", { 0x808, 0x809, 0x80B, 0x811, 0x80D } },
-			{ "Drifter", "DrifterArmorAndOutfitByXtudo.esp", { 0x857, 0x858, 0x859, 0, 0 } },
-			{ "Dawnguard", "Dawnguard.esm", { 0x00F3FB, 0x00F400, 0x00F3FE, 0, 0 } },
-			{ "Practical Pirate", "practical_pirate.esp", { 0x800, 0x802, 0x805, 0, 0 } },
-			{ "Wizard Hat", "sirwho_Wizard_Hats-Full.esp", { 0, 0, 0, 0, 0 } },  // (each press: the next of its hats)
-		};
-		std::atomic<int> g_outfit{ -1 };
-		int              g_hat = -1;
-		std::mutex       g_outfitLock;
-		std::string      g_outfitName;
-	}
-	void NextOutfit()
-	{
-		auto* p = RE::PlayerCharacter::GetSingleton();
-		auto* dh = RE::TESDataHandler::GetSingleton();
-		if (!p || !dh) return;
-		constexpr int n = static_cast<int>(std::size(kOutfits));
-		for (int tries = 0; tries < n; ++tries) {
-			int next = (g_outfit.load() + 1) % n;
-			const auto& o = kOutfits[next];
-			std::vector<RE::TESBoundObject*> pieces;
-			if (o.ids[0] == 0) {  // the hats: the next one in the plugin
-				std::vector<RE::TESObjectARMO*> hats;
-				for (auto* a : dh->GetFormArray<RE::TESObjectARMO>()) {
-					if (a && a->GetFile(0) && a->GetFile(0)->GetFilename() == o.plugin && a->GetName() && *a->GetName()) hats.push_back(a);
-				}
-				if (!hats.empty()) {
-					g_hat = (g_hat + 1) % static_cast<int>(hats.size());
-					pieces.push_back(hats[g_hat]);
-					if (g_hat + 1 < static_cast<int>(hats.size())) next = next - 1 + n, next %= n;  // (stay on the hats until the last one)
-				}
-			} else {
-				for (auto id : o.ids) {
-					if (!id) continue;
-					auto* f = std::string_view(o.plugin) == "Skyrim.esm" ? RE::TESForm::LookupByID(id) : dh->LookupForm(id, o.plugin);
-					if (auto* b = f ? f->As<RE::TESBoundObject>() : nullptr) pieces.push_back(b);
-				}
-			}
-			g_outfit = next;
-			{
-				const bool fem = PlayerFemale();
-				std::erase_if(pieces, [&](RE::TESBoundObject* b) { return !Fits(b->As<RE::TESObjectARMO>(), fem); });  // (none your body can't wear)
-			}
-			if (pieces.empty()) continue;  // (that outfit's mod isn't installed, or it isn't made for you)
-			for (auto* b : pieces) GiveItem(p, b, p->GetItemCount(b) > 0 ? 0 : 1, true);
-			std::string nm = o.ids[0] == 0 ? std::string(pieces[0]->GetName()) : std::string(o.name);
-			{
-				std::scoped_lock l(g_outfitLock);
-				g_outfitName = nm;
-			}
-			Hud::Banner("Outfit: " + nm + "   (O / left stick: the next one)", 2.5f);
-			return;
-		}
-		Hud::Banner("No outfits found", 2.0f);
-	}
-	std::string OutfitName()
-	{
-		std::scoped_lock l(g_outfitLock);
-		return g_outfitName;
-	}
 
 
 
@@ -4468,24 +4365,6 @@ namespace bo3z::Classes
 		static float look = 0;
 		if ((look -= a_delta) > 0) return;
 		look = 1.0f;
-		// (the Alchemist's set changed from the Drifter's outfit to the Black Mage's) an Alchemist still carrying the Drifter's
-		// pieces has them taken back and the robes given at the set's tier, worn
-		if (static bool swapped = false; !swapped && g_class.load() == coffer::kAlchemist && g_kit[coffer::kAlchemist]) {
-			swapped = true;
-			int had = 0;
-			for (std::uint32_t id : { 0x831u, 0x830u, 0x832u, 0x80Eu, 0x80Du, 0x84Du, 0x81Du, 0x81Cu, 0x84Cu, 0x841u }) {
-				auto* f = Lookup(id, "DrifterArmorAndOutfitByXtudo.esp");
-				auto* b = f ? f->As<RE::TESBoundObject>() : nullptr;
-				if (b && p->GetItemCount(b) > 0) {
-					if (auto* em = RE::ActorEquipManager::GetSingleton()) em->UnequipObject(p, b, nullptr, 1, nullptr, false, false, false, true);
-					p->RemoveItem(b, p->GetItemCount(b), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr), ++had;
-				}
-			}
-			if (had) {
-				GiveArmourSet(coffer::kAlchemist, Kit::ArmourTier(coffer::kAlchemist), true);
-				logger::info("classes: the Alchemist's Drifter pieces ({}) traded for the Black Mage Robes", had);
-			}
-		}
 		for (int el = 0; el < 7; ++el) {  // an Alchemist's flasks never leave you (dropped or sold: back in the pack)
 			auto* it = FlaskItem(el);
 			const bool owned = el == 6 ? WonderState(coffer::kAlchemist) >= 4 : Kit::FlaskTier(el) >= 0;
@@ -4552,7 +4431,6 @@ namespace bo3z::Classes
 		std::vector<Piece> OldSetPieces(int a_cls, int a_tier, bool a_female)
 		{
 			switch (a_cls) {
-			case coffer::kSummoner: return { { "ArcaneConjurerRobes.esp", 0x000802 } };
 			case coffer::kDestruction:
 				switch (std::clamp(a_tier, 0, 3)) {
 				case 0: return { { "Black Mage Armor SE.esp", 0x0146A5 }, { "Black Mage Armor SE.esp", 0x0146A7 }, { "Black Mage Armor SE.esp", 0x014C0B }, { "Black Mage Armor SE.esp", 0x0146A6 } };  // College robes, hood and scarf, handwraps, boots
@@ -4563,12 +4441,6 @@ namespace bo3z::Classes
 			case coffer::kAlchemist:  // (Noah: "Could we use the destruction class armor set for male and female alchemist class?") the
 				// Black Mage's robes, as the Destruction class wears them - made for both bodies (the Drifter's outfit had no man's)
 				return OldSetPieces(coffer::kDestruction, a_tier, a_female);
-			case coffer::kSpellsword:
-				// (Noah: "remove the cape from the [Spellsword] class, just so that we don't have to worry about it anymore")
-				if (a_female) return { { "ValkyrieSwordShield.esp", 0x00285D }, { "ValkyrieSwordShield.esp", 0x00285A }, { "ValkyrieSwordShield.esp", 0x00285B }, { "ValkyrieSwordShield.esp", 0x002859 } };
-				// (Noah: "change the spell sword helmet for the male character to the other option ... I don't like the way the Dragon Lord
-				// plume helmet looks") the DragonLord Helmet, not the plume
-				return { { "DragonLordSwords.esp", 0x0012D3 }, { "DragonLordSwords.esp", 0x0012CF }, { "DragonLordSwords.esp", 0x0012CE }, { "DragonLordSwords.esp", 0x0012CD } };
 			default: return {};
 			}
 		}
@@ -4635,25 +4507,6 @@ namespace bo3z::Classes
 		for (auto* a : SetForms(a_cls, a_tier)) if (p->GetItemCount(a) > 0) return true;
 		return false;
 	}
-	// (Noah: the Madness Sword for a woman Spellsword too) Odin's Wrath, plain or awoken, goes back; the Madness Sword in its place
-	void ReplaceOdinsWrath(RE::PlayerCharacter* p)
-	{
-		if (!p) return;
-		bool held = false, had = false;
-		for (const std::uint32_t id : { 0x00435Au, 0x000D62u }) {
-			auto* f = Lookup(id, "ValkyrieSwordShield.esp");
-			auto* w = f ? f->As<RE::TESBoundObject>() : nullptr;
-			if (w && p->GetItemCount(w) > 0) {
-				held |= p->GetEquippedObject(false) == w;
-				had = true;
-				p->RemoveItem(w, p->GetItemCount(w), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
-			}
-		}
-		if (had) {
-			if (auto* blade = SpellswordBlade(); blade && p->GetItemCount(blade) <= 0) GiveItem(p, blade, 1, held);
-			logger::info("classes: Odin's Wrath taken back - the Madness Sword in its place");
-		}
-	}
 	void GiveArmourSet(int a_cls, int a_tier, bool a_wear)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
@@ -4674,7 +4527,6 @@ namespace bo3z::Classes
 			if (const int n = p->GetItemCount(a); n > 0) p->RemoveItem(a, n, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
 		}
 		for (auto* a : want) GiveItem(p, a, p->GetItemCount(a) > 0 ? 0 : 1, a_wear);
-		if (a_cls == coffer::kSpellsword) ReplaceOdinsWrath(p);
 		logger::info("classes: {} - {} (tier {}) given{}", Name(a_cls), ArmourSetName(a_cls, a_tier), a_tier, a_wear ? ", worn" : "");
 	}
 	// every second: the set's pieces as the rules want them (light, weight 1, the set's armour shared out), the Ranger's stride
@@ -4683,26 +4535,8 @@ namespace bo3z::Classes
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		const int c = g_class.load();
 		if (!p || c < 0) return;
-		if (c == coffer::kSpellsword && p->Is3DLoaded() && !ItemMenusOpen()) ReplaceOdinsWrath(p);
 		const int  rating = Kit::ArmourRating(c);
 		const auto set = SetForms(c, std::max(0, Kit::ArmourTier(c)));
-		// (the Valkyrie cape, no longer the set's: taken back from a character given it before)
-		if (static auto* cape = Lookup(0x003890, "ValkyrieSwordShield.esp"); cape) {
-			if (auto* ca = cape->As<RE::TESObjectARMO>(); ca && p->GetItemCount(ca) > 0 && !ItemMenusOpen()) {
-				p->RemoveItem(ca, p->GetItemCount(ca), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
-				logger::info("classes: the Valkyrie cape taken back (no longer part of the set)");
-			}
-		}
-		// (the DragonLord plume helmet, no longer the set's: the plain helmet in its place - worn if the plume was)
-		if (static auto* plume = Lookup(0x0012D2, "DragonLordSwords.esp"); plume && !ItemMenusOpen()) {
-			if (auto* pa = plume->As<RE::TESObjectARMO>(); pa && p->GetItemCount(pa) > 0) {
-				const bool worn = p->GetWornArmor(RE::BGSBipedObjectForm::BipedObjectSlot::kHead) == pa || p->GetWornArmor(RE::BGSBipedObjectForm::BipedObjectSlot::kHair) == pa;
-				p->RemoveItem(pa, p->GetItemCount(pa), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
-				auto* helm = Lookup(0x0012CF, "DragonLordSwords.esp");
-				if (auto* hb = helm ? helm->As<RE::TESBoundObject>() : nullptr; hb && c == coffer::kSpellsword && !PlayerFemale()) GiveItem(p, hb, p->GetItemCount(hb) > 0 ? 0 : 1, worn);
-				logger::info("classes: the DragonLord plume helmet swapped for the plain helmet{}", worn ? " (worn)" : "");
-			}
-		}
 		static auto* lightKw = RE::TESForm::LookupByID<RE::BGSKeyword>(0x06BBD3);  // ArmorLight
 		static auto* heavyKw = RE::TESForm::LookupByID<RE::BGSKeyword>(0x06BBD2);  // ArmorHeavy (no heavy armour's weight on you)
 		for (int k = 0; k < 4; ++k) {

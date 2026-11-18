@@ -1576,7 +1576,7 @@ namespace bo3z
 		int                 g_sel = 0;
 		int                 g_trialSel = 0;  // the controller's pick among the altar's trials
 		// (Noah: one way to drive the altar) a focus moved up and down its rows - D-pad or W/S - and A / Enter to take it
-		enum Row { kRowSpell = 0, kRowBow, kRowForge, kRowPerk, kRowShout, kRowBond, kRowTrial = 10, kRowLeave = 20, kRowClass = 30, kRowOutfit };  // (the altar rework: Kit rows are 40.. your kit, 100.. the Armory)
+		enum Row { kRowSpell = 0, kRowBow, kRowForge, kRowPerk, kRowShout, kRowBond, kRowTrial = 10, kRowLeave = 20, kRowClass = 30 };  // (the altar rework: Kit rows are 40.. your kit, 100.. the Armory)
 		int g_focus = kRowClass;
 		// (Noah: "different sections that show a drop down of what's in that section") the one section open (0: none)
 		enum Sec { kSecKit = 210, kSecArmory = 211, kSecPerks = 212, kSecVoice = 213, kSecTrials = 214, kSecWhispers = 215, kSecGlider = 216 };
@@ -1878,7 +1878,7 @@ namespace bo3z
 					(void)trial0;
 					if (g_focus == kRowLeave || (menu0 && !g_menu)) {
 						PlayUi(UiSnd::kLeave);
-					} else if (Points::Get() != pts0 || (g_focus >= kRowTrial && g_focus < kRowTrial + 5) || g_focus == kRowShout || g_focus == kRowOutfit) {
+					} else if (Points::Get() != pts0 || (g_focus >= kRowTrial && g_focus < kRowTrial + 5) || g_focus == kRowShout) {
 						PlayUi(UiSnd::kChoose);
 					} else {
 						PlayUi(UiSnd::kFail);
