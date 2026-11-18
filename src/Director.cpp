@@ -1140,6 +1140,7 @@ namespace bo3z
 		// (Noah: "The enemies got in the way of the tablet clip") dev calm: the night goes on (the Tablet stays down) but none
 		// of the dead rise
 		bool g_devCalm = false;
+		void Vanish(RE::Actor* a);   // (below)
 		bool SpawnOne(RE::PlayerCharacter* a_player, int a_force = -1, const RE::NiPoint3* a_at = nullptr)
 		{
 			if (g_devCalm) return false;
