@@ -4738,7 +4738,8 @@ namespace bo3z::Classes
 				if (e && e->artObject == art && e->target.get().get() == p && !e->finished) mine = e;
 				return RE::BSContainer::ForEachResult::kContinue;
 			});
-			const bool want = art && worn && at >= 1 && p->Is3DLoaded() && !p->IsDead();
+			// (Noah: "I also want to remove the aura effect on the class armor") never laid on; one left from before is ended
+			const bool want = false && art && worn && at >= 1 && p->Is3DLoaded() && !p->IsDead();
 			g_auraNode = (mine && want) ? mine->artObject3D : nullptr;
 			if (!want) {
 				if (mine) mine->finished = true, mine->lifetime = 0.0f;
