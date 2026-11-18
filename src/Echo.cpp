@@ -600,7 +600,7 @@ namespace bo3z
 					auto r = g_hall.item[i].get();
 					if (g_hallFixed[i] || !r || !r->Get3D()) continue;
 					r->SetMotionType(RE::hkpMotion::MotionType::kKeyframed);
-					if (g_hallKind[i] == 2 && i >= 3) {
+					if (g_hallKind[i] == 2 && (i >= 3 || i == 0)) {   // (and the Soulcaller's: Fulcimentum's own Glass Staff, never a copy of it)
 						if (auto* fx = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kHallGhostShader, gen::kPlugin)) r->ApplyEffectShader(fx, 100000.0f);
 					}
 					g_hallFixed[i] = true;

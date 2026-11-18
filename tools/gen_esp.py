@@ -1505,7 +1505,7 @@ for key, model, r in (('hf_gravecaller', 'SSS\\GlassStaff.nif', 80), ('hf_frostb
         sub('MODL', z(model)), sub('FNAM', b'\0\0')]))
 for k in ('gravecaller', 'frostbinder', 'wolfcrown', 'barrowhorn', 'bane'):  # (greyed out, until it's yours: tools/modelconv/ghostnif.cpp; the Staff of Magnus's made on the machine from the game's own)
     recs['ACTI'].append(record('ACTI', fid('ACTI', 'hg_' + k), [sub('EDID', z('UN_hg_' + k)), sub('OBND', struct.pack('<6h', -80, -80, -80, 80, 80, 160)),
-        sub('MODL', z({'bane': lgs('bane'), 'barrowhorn': lgs('slayer'), 'gravecaller': 'CurseOfAlduin\\wonder\\ghost_soulcaller.nif', 'wolfcrown': 'CurseOfAlduin\\wonder\\ghost_mutagen.nif'}.get(k, 'CurseOfAlduin\\wonder\\ghost_' + k + '.nif'))), sub('FNAM', b'\0\0')]))   # (the Bane and the Slayer: Light Greatswords' models)
+        sub('MODL', z({'bane': lgs('bane'), 'barrowhorn': lgs('slayer'), 'gravecaller': 'SSS\\GlassStaff.nif', 'wolfcrown': 'CurseOfAlduin\\wonder\\ghost_mutagen.nif'}.get(k, 'CurseOfAlduin\\wonder\\ghost_' + k + '.nif'))), sub('FNAM', b'\0\0')]))   # (the Bane and the Slayer: Light Greatswords' models)
 # Stage 5 (src/Echo.cpp Hall): the Hall of the Awakened's stations, and Alduin's Fang
 for key, name, verb in (('hall_fang', "Alduin's Bane", 'Take'), ('hall_robes', "The First Dragonborn's Regalia", 'Take'),
                         ('hall_skull', "The Bone-Wyrm's Skull", 'Bind'), ('hall_endless', 'Brazier of the Endless Night', 'Kindle'),
