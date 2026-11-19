@@ -403,6 +403,11 @@ namespace bo3z
 		bool     g_hallSwept = false;  // (what a save kept standing in the hall: taken away once, made again fresh)
 		std::array<int, 5> g_hallKind{};
 		std::array<bool, 5> g_hallFixed{};   // (held still, and its ghostly look laid on, once its 3D is in)
+		// (Noah, 2026-11-19: "the soulcaller staff needs to be centered with the stone engraving", the Mutagen Staff too; the Staff
+		// of Magnus "looks small ... not the same size as the other staffs") each wonder's own middle and size, read from its
+		// model once it's drawn: turned about its true middle, centred on the relief, and the three staffs at one length
+		struct Native { RE::NiPoint3 c; float r = 0; };
+		std::array<Native, 5> g_native{};
 		std::array<float, 5> g_glowT{};
 		float g_pillarT = 0;  // (the fire's and the glows' next lighting)  // what each spot holds: 0 nothing yet, 1 the thing itself, 2 its grey likeness
 		int      g_aim = -1;        // 0-3 a wonder, 4 the Bane, 5 the pillar; -1 nothing
@@ -565,7 +570,15 @@ namespace bo3z
 					auto r = g_hall.item[i].get();
 					if (want != g_hallKind[i] || !r || r->IsDeleted() || r->GetParentCell() != a_p->GetParentCell()) {
 						Drop(g_hall.item[i]), Drop(g_hall.glow[i]);
-						if (auto* b = Forms::Ours(want == 1 ? gen::kHallFloat[i] : gen::kHallGhost[i])) g_hall.item[i] = Gun::PlaceAt(b, FloatSpots()[i].at, 0);
+						// (Noah, 2026-11-19: "don't gray out any of the weapons. I think the text that says not yet won is good
+						// enough") each wonder as itself, won or not - only Alduin's Bane keeps its pale look until it wakes;
+						// the Dragon Slayer wearing the very model the sword wears now (Animated Armoury's Dragonbone Katana)
+						auto* b = Forms::Ours(want == 1 || i < 4 ? gen::kHallFloat[i] : gen::kHallGhost[i]);
+						if (i == 3 && b) {
+							if (auto* m = b->As<RE::TESModel>(); m && Classes::SlayerModel()) m->SetModel(Classes::SlayerModel());
+						}
+						if (b) g_hall.item[i] = Gun::PlaceAt(b, FloatSpots()[i].at, 0);
+						g_native[i] = {};
 						g_hallFixed[i] = false;
 						g_glowT[i] = 0;  // (its glow lit again at once)
 						g_hallKind[i] = want;
@@ -600,7 +613,7 @@ namespace bo3z
 					auto r = g_hall.item[i].get();
 					if (g_hallFixed[i] || !r || !r->Get3D()) continue;
 					r->SetMotionType(RE::hkpMotion::MotionType::kKeyframed);
-					if (g_hallKind[i] == 2 && (i >= 3 || i == 0)) {   // (and the Soulcaller's: Fulcimentum's own Glass Staff, never a copy of it)
+					if (g_hallKind[i] == 2 && i == 4) {   // (Alduin's Bane only: "looks absolutely perfect")
 						if (auto* fx = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kHallGhostShader, gen::kPlugin)) r->ApplyEffectShader(fx, 100000.0f);
 					}
 					g_hallFixed[i] = true;
@@ -619,11 +632,30 @@ namespace bo3z
 				R.entry[0][0] = c, R.entry[0][1] = 0, R.entry[0][2] = sn;
 				R.entry[1][0] = sn, R.entry[1][1] = 0, R.entry[1][2] = -c;
 				R.entry[2][0] = 0, R.entry[2][1] = 1, R.entry[2][2] = 0;
-				const float sc = kFloatScale[i];
+				// its model's own middle and size, read once: held unturned at the origin for a moment, its bound read back
+				if (i < 4 && g_native[i].r <= 0) {
+					o->local.rotate = RE::NiMatrix3{};
+					o->local.scale = 1.0f;
+					o->local.translate = {};
+					RE::NiUpdateData u0;
+					u0.time = 0.0f;
+					o->Update(u0);
+					if (o->worldBound.radius > 1.0f) {
+						g_native[i] = { o->worldBound.center, o->worldBound.radius };
+						logger::info("echo: the hall's wonder {} measured - middle ({:.1f}, {:.1f}, {:.1f}), half-length {:.1f}", i, g_native[i].c.x, g_native[i].c.y, g_native[i].c.z, g_native[i].r);
+					}
+				}
+				float sc = kFloatScale[i];
+				RE::NiPoint3 c{ 0, kFloatMid[i], 0 };
+				if (i < 4 && g_native[i].r > 0) {
+					c = g_native[i].c;
+					// the Staff of Magnus and the Mutagen Staff as long as the Soulcaller's Staff floats (its own size kept)
+					if ((i == 1 || i == 2) && g_native[0].r > 0) sc = g_native[0].r * kFloatScale[0] / g_native[i].r;
+				}
 				const RE::NiPoint3 mid = FloatSpots()[i].at + RE::NiPoint3{ 0, 0, bob };
 				o->local.rotate = R;
 				o->local.scale = sc;
-				o->local.translate = mid - R * RE::NiPoint3{ 0, kFloatMid[i] * sc, 0 };
+				o->local.translate = mid - R * (c * sc);
 				RE::NiUpdateData ud;
 				ud.time = 0.0f;
 				o->Update(ud);

@@ -417,6 +417,7 @@ namespace bo3z
 		// piercing beam, the next vial's element each; a power attack throws the next flask
 		void               DevClawRot(float a_x, float a_y, float a_z, bool a_on, bool a_third);
 		void               SlayerLook();   // (data loaded) the Dragon Slayer as Animated Armoury's Glass Katana
+		const char*        SlayerModel();  // the Dragon Slayer's model as worn (its Reliquary display wears the same)
 		void               DevClawForm(RE::FormID a_local, float a_x, float a_y, float a_z);  // one claw's own turn (its NewArmoury id)
 		void               WandButton(bool a_down);   // the attack pressed / let go with the Carian Wand drawn
 		void               WandKick(int a_slot);      // a wand's cast: its tip flares, the hand kicks (0 the class wand, 1 the Wandering Star)

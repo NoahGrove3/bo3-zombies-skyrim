@@ -2876,6 +2876,12 @@ namespace bo3z::Classes
 		if (!w || !s) { logger::warn("classes: the Dragon Slayer's katana look not found (Animated Armoury's Dragonbone Katana)"); return; }
 		if (AdoptLook(w, s)) logger::info("classes: the Dragon Slayer takes the look of {}", s->GetName());
 	}
+	// (Noah, 2026-11-19: the Reliquary's Dragon Slayer "is still the old katana") the model the Dragon Slayer wears now, for its display
+	const char* SlayerModel()
+	{
+		auto* w = Slayer();
+		return w && w->GetModel() && *w->GetModel() ? w->GetModel() : nullptr;
+	}
 	// a weapon made a scythe: a model of Battle Scythe's, held and swung two-handed as a battleaxe, with our scythe keyword (the
 	// MCO scythe moveset's); any whip's keywords Animated Armoury left on it taken off
 	bool ScytheLook(RE::TESObjectWEAP* a_w, const char* a_model)
