@@ -1892,7 +1892,14 @@ namespace bo3z::Classes
 	RE::TESObjectARMO* Underwear()
 	{
 		auto* dh = RE::TESDataHandler::GetSingleton();
-		return dh ? dh->LookupForm<RE::TESObjectARMO>(0x801, "Underwear.esp") : nullptr;
+		auto* uw = dh ? dh->LookupForm<RE::TESObjectARMO>(0x801, "Underwear.esp") : nullptr;
+		// (Noah, 2026-11-19: "remove the underwear item in my inventory and just make every player permanently wear underwear
+		// under the armor or clothes ... so that there's never nude showing") non-playable: still worn under whatever you put on
+		// (DressUnder, the equip watch), but never listed in the inventory, so it can't be dropped, sold or taken off by hand
+		if (uw && !(uw->formFlags & RE::TESObjectARMO::RecordFlags::kNonPlayable)) {
+			uw->formFlags |= RE::TESObjectARMO::RecordFlags::kNonPlayable;
+		}
+		return uw;
 	}
 	void DressUnder(bool a_anySex)
 	{
