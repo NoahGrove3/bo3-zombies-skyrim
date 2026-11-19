@@ -409,7 +409,12 @@ namespace bo3z
 		struct Native { RE::NiPoint3 c; float r = 0; };
 		std::array<Native, 5> g_native{};
 		std::array<float, 5> g_glowT{};
-		float g_pillarT = 0;  // (the fire's and the glows' next lighting)  // what each spot holds: 0 nothing yet, 1 the thing itself, 2 its grey likeness
+		float g_pillarT = 0;
+		// (Noah, 2026-11-19: the Endless Flame "looks really poorly done" - "Brazier ring") the pillar's base ringed by six of
+		// Sovngarde's stone braziers, each burning with Skyrim's own animated fire and embers, and the hall's warm firelight on
+		// the pillar: Skyrim.esm's SOVBrazier01, FXfireWithEmbersLight, HHIntLightFireMd
+		constexpr RE::FormID kRingBrazier = 0x0BD064, kRingFire = 0x033DA9, kRingLight = 0x0A0F3E;
+		std::vector<RE::ObjectRefHandle> g_ring;  // (the fire's and the glows' next lighting)  // what each spot holds: 0 nothing yet, 1 the thing itself, 2 its grey likeness
 		int      g_aim = -1;        // 0-3 a wonder, 4 the Bane, 5 the pillar; -1 nothing
 		bool     g_hallMenu = false;
 		int      g_hallFocus = 0;
@@ -533,6 +538,8 @@ namespace bo3z
 			for (auto& x : g_hall.item) Drop(x);
 			for (auto& x : g_hall.glow) Drop(x);
 			Drop(g_hall.pillar);
+			for (auto& x : g_ring) Drop(x);
+			g_ring.clear();
 		}
 		// every frame in the hall: the floating things turn and bob, and what's in your sights is found
 		void TickHall(RE::PlayerCharacter* a_p, float a_dt)
@@ -541,7 +548,7 @@ namespace bo3z
 			const bool here = a_p->GetParentCell() == HH() && !InRoom(a_p);
 			if (!here) {
 				g_hallSwept = false;
-				if (g_hall.pillar || g_aim >= 0 || g_hallMenu) {
+				if (g_hall.pillar || !g_ring.empty() || g_aim >= 0 || g_hallMenu) {
 					ClearHall();
 					g_aim = -1, g_hallMenu = false;
 					PushHallHud(a_p);
@@ -557,6 +564,10 @@ namespace bo3z
 				for (auto id : { gen::kHallGlow, gen::kHallGlowTall, gen::kHallPillar }) ours.push_back(Forms::Ours(id));
 				a_p->GetParentCell()->ForEachReference([&](RE::TESObjectREFR* r) {
 					if (r && !r->IsDeleted() && std::find(ours.begin(), ours.end(), r->GetBaseObject()) != ours.end()) r->Disable(), r->SetDelete(true);
+					// (the brazier ring's pieces a save kept: only ones placed in play, by the pillar - never the hall's own fires)
+					else if (r && !r->IsDeleted() && (r->GetFormID() >> 24) == 0xFF && r->GetBaseObject() &&
+							 (r->GetBaseObject()->GetFormID() == kRingBrazier || r->GetBaseObject()->GetFormID() == kRingFire || r->GetBaseObject()->GetFormID() == kRingLight) &&
+							 r->GetPosition().GetDistance(kPillarAt) < 400.0f) r->Disable(), r->SetDelete(true);
 					return RE::BSContainer::ForEachResult::kContinue;
 				});
 				g_hall = {}, g_hallKind = {};
@@ -588,10 +599,28 @@ namespace bo3z
 				// (Noah: "the Endless Flame pillar should be animated with flames" - placed as an object, a model of only light never
 				// drew) the fire and the glows burn as the flasks' ground fires do: lingering hazards wearing the model, lit again
 				// just before each burns out
-				if ((g_pillarT -= 0.5f) <= 0) {
-					Gun::Hazard("CurseOfAlduin\\fx\\pillar_fire.nif", kPillarAt, 1.0f, 60.0f);
-					g_pillarT = 59.5f;
-					logger::info("echo: the Endless Flame burns");
+				if (g_ring.empty()) {
+					auto* br = RE::TESForm::LookupByID<RE::TESBoundObject>(kRingBrazier);
+					auto* fire = RE::TESForm::LookupByID<RE::TESBoundObject>(kRingFire);
+					auto* light = RE::TESForm::LookupByID<RE::TESBoundObject>(kRingLight);
+					constexpr int   kN = 6;
+					constexpr float kR = 150.0f, kBr = 0.7f, kFire = 0.45f;  // (the pillar is 92 across its base; each brazier ~100 wide, 76 high)
+					for (int k = 0; br && fire && k < kN; ++k) {
+						const float a = (k + 0.5f) * 6.2832f / kN;
+						const RE::NiPoint3 at = kPillarAt + RE::NiPoint3{ std::cos(a) * kR, std::sin(a) * kR, 0.0f };
+						if (auto h = Gun::PlaceAt(br, at, a); h) {
+							if (auto r = h.get()) r->SetScale(kBr);
+							g_ring.push_back(h);
+						}
+						if (auto h = Gun::PlaceAt(fire, at + RE::NiPoint3{ 0, 0, 72.0f }, a); h) {
+							if (auto r = h.get()) r->SetScale(kFire);
+							g_ring.push_back(h);
+						}
+					}
+					if (light) {
+						if (auto h = Gun::PlaceAt(light, kPillarAt + RE::NiPoint3{ 0, 0, 140.0f }, 0); h) g_hall.pillar = h;
+					}
+					logger::info("echo: the Endless Flame burns - a ring of {} braziers", g_ring.size() / 2);
 				}
 				for (int i = 0; i < 5; ++i) {
 					if (g_hallKind[i] != 1 || (g_glowT[i] -= 0.5f) > 0) continue;
