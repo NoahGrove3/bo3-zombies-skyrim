@@ -2318,6 +2318,25 @@ namespace bo3z::Classes
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		return p && CarianBlade() && p->GetEquippedObject(false) == CarianBlade() && p->AsActorState()->IsWeaponDrawn();
 	}
+	// (Noah, 2026-11-19: the game crashed when "I put Summon Wolf on my left hand ... it was just spamming the Summon every shot" -
+	// "make the wands only work with Destruction spells from its class ... There has to be a spell on the opposite hand for the
+	// wand to use as shots") the wand looses only a Destruction mage's spell: one of Destruction's school, or one of the Echo
+	// Altar's Destruction spells (its kit and armory); anything else - a summons, a ward, a heal, or nothing at all - and it's still
+	bool WandSpellOk(const RE::SpellItem* a_sp)
+	{
+		if (!a_sp || Get() != coffer::kDestruction || a_sp->GetSpellType() != RE::MagicSystem::SpellType::kSpell) return false;
+		if (a_sp->GetAssociatedSkill() == RE::ActorValue::kDestruction) return true;
+		static std::vector<RE::FormID> kit;
+		if (kit.empty()) {
+			auto* dh = RE::TESDataHandler::GetSingleton();
+			for (const auto& c : coffer::kSpells) {
+				if (c.cls != coffer::kDestruction || !dh) continue;
+				if (auto* f = dh->LookupForm(c.id, c.plugin)) kit.push_back(f->GetFormID());
+			}
+			if (kit.empty()) kit.push_back(0);
+		}
+		return std::find(kit.begin(), kit.end(), a_sp->GetFormID()) != kit.end();
+	}
 	void TickWand(float a_delta)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
@@ -2341,7 +2360,14 @@ namespace bo3z::Classes
 			                     (c->state.get() == RE::MagicCaster::State::kCasting || c->state.get() == RE::MagicCaster::State::kCharging);
 			// (Noah: "Letting go of casting should stop the wand from casting and holding attack should start the casting") the
 			// attack button alone says: held, it casts; let go, it stops - Skyrim's own staff cast cut short with it
-			held = g_wandButton;
+			auto* lf = p->GetEquippedObject(true);
+			const bool ok = WandSpellOk(lf ? lf->As<RE::SpellItem>() : nullptr);
+			held = g_wandButton && ok;
+			if (static float told = 0; (told -= a_delta) <= 0 && g_wandButton && !ok) {
+				told = 4.0f;
+				Hud::Banner(Get() != coffer::kDestruction ? "Only a Destruction mage can fire the Carian Wand" :
+				                                            "The Carian Wand fires the Destruction spell in your other hand", 2.5f);
+			}
 			if (!held && casting && c) c->InterruptCast(false);
 			if (static float said = 0; g_wandButton && (said -= a_delta) <= 0) {
 				said = 1.0f;
@@ -2367,7 +2393,7 @@ namespace bo3z::Classes
 				auto* left = p->GetEquippedObject(true);
 				auto* sp = left ? left->As<RE::SpellItem>() : nullptr;
 				auto* c = p->GetMagicCaster(RE::MagicSystem::CastingSource::kRightHand);
-				if (sp && c && sp->GetSpellType() == RE::MagicSystem::SpellType::kSpell) {
+				if (sp && c && WandSpellOk(sp)) {
 					// (Noah: "the wand animation stops when I cast a spell on my other hand" - the left spell was cast through the
 					// right hand's own caster, cutting short the wand's held cast each time) an aimed spell is launched from the
 					// wand's tip itself, along your aim; any other through the instant caster - the right hand left to its cast
@@ -2392,9 +2418,7 @@ namespace bo3z::Classes
 					OnCast(sp->GetFormID());   // (a spell of ours: its own cast, as if from the hand - Skyrim's own cast event for it, if any, ignored)
 					g_wandEchoArmed = true;
 					if (static int n = 0; n++ % 20 == 0) logger::info("classes: the Carian Wand looses {} (no magicka)", sp->GetName());
-				} else {
-					WandCast();
-				}
+				}   // (no Destruction spell in the other hand: nothing - the Carian bolts of its own are gone)
 			}
 		}
 		g_wandHeld = held;
