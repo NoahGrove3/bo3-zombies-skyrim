@@ -675,16 +675,16 @@ namespace bo3z
 					}
 				}
 				float sc = kFloatScale[i];
-				RE::NiPoint3 c{ 0, kFloatMid[i], 0 };
+				RE::NiPoint3 mc{ 0, kFloatMid[i], 0 };
 				if (i < 4 && g_native[i].r > 0) {
-					c = g_native[i].c;
+					mc = g_native[i].c;
 					// the Staff of Magnus and the Mutagen Staff as long as the Soulcaller's Staff floats (its own size kept)
 					if ((i == 1 || i == 2) && g_native[0].r > 0) sc = g_native[0].r * kFloatScale[0] / g_native[i].r;
 				}
 				const RE::NiPoint3 mid = FloatSpots()[i].at + RE::NiPoint3{ 0, 0, bob };
 				o->local.rotate = R;
 				o->local.scale = sc;
-				o->local.translate = mid - R * (c * sc);
+				o->local.translate = mid - R * (mc * sc);
 				RE::NiUpdateData ud;
 				ud.time = 0.0f;
 				o->Update(ud);
