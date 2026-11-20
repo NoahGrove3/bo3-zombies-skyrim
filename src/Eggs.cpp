@@ -122,6 +122,8 @@ namespace bo3z::Eggs
 			float               wait = 0;      // (a wrapped one rises again after this)
 			bool                told = false;
 			float               glow = 0;      // (a roaming spirit cat) its next drift of motes
+			RE::NiPoint3        dry;           // (Noah: "they get stuck and swim around in the water") where it last stood on land
+			float               wet = 0;       // how long it's been swimming
 		};
 		struct Live
 		{
@@ -431,7 +433,8 @@ namespace bo3z::Eggs
 			RE::ActorHandle           cat;                  // (the pride) the lone spirit and its trail
 			std::vector<RE::NiPoint3> path;
 			int                       at = 0;
-			float                     wait = 0, growl = 0, glowT = 0, saidT = 0;
+			float                     wait = 0, growl = 0, glowT = 0, saidT = 0, wet = 0;
+			RE::NiPoint3              dry;
 			bool                      ghostDone = false;
 			float                     starIn = -1, starT = -1, emit = 0;   // (the Eye) the star's wait, its flight
 			RE::NiPoint3              starFrom, starVel;
@@ -573,6 +576,17 @@ namespace bo3z::Eggs
 				}
 				if (!cat || cat->IsDead()) { Gone(g_sign.cat), g_sign.path.clear(); return; }
 				if (cat->IsInCombat()) cat->StopCombat();
+				if (cat->AsActorState()->IsSwimming()) {   // (out of the water: back to dry land, its trail with it)
+					if ((g_sign.wet += a_dt) > 0.8f) {
+						g_sign.wet = 0;
+						const auto back = g_sign.dry.Length() > 1.0f ? g_sign.dry : g_sign.path[0];
+						g_sign.path[g_sign.at] = back;
+						cat->SetPosition(back, true);
+					}
+					return;
+				}
+				g_sign.wet = 0;
+				g_sign.dry = cat->GetPosition();
 				const auto  at = cat->GetPosition();
 				const float d = pp.GetDistance(at);
 				if (d < 2100.0f && (g_sign.growl -= a_dt) <= 0) g_sign.growl = 6.0f + u(rr) * 6.0f, Audio::At(gen::Sound::boss_growl, cat.get(), 0.45f);
@@ -796,8 +810,24 @@ namespace bo3z::Eggs
 								continue;
 							}
 							if (auto* act = r->As<RE::Actor>(); act && act->IsInCombat()) act->StopCombat();   // (a shy one never fights)
+							// (Noah: "they get stuck and swim around in the water and there's no way to sneak up on them while swimming") a cat
+							// that wanders into water is put back on the land it last stood on
+							if (auto* act = r->As<RE::Actor>(); act && act->AsActorState()->IsSwimming()) {
+								if ((m.wet += a_dt) > 0.8f) {
+									m.wet = 0;
+									auto back = m.dry.Length() > 1.0f ? std::optional<RE::NiPoint3>(m.dry) : std::nullopt;
+									for (int tries = 0; tries < 8 && !back; ++tries) {
+										const float ang = u(rr) * 6.2832f, rad = s.r0 + u(rr) * (s.r1 - s.r0) * 0.6f;
+										back = Walkable(a_p, c + RE::NiPoint3{ std::cos(ang) * rad, std::sin(ang) * rad, 0 }, 500.0f);
+									}
+									if (back) Gun::Motes(1, act->GetPosition(), 0.5f, 1.0f), act->SetPosition(*back, true), m.dry = {};
+								}
+								continue;
+							}
+							m.wet = 0;
 							const auto at = r->GetPosition();
 							m.at = at;   // (it roams: wherever it has wandered to)
+							m.dry = at;
 							const float d = pp.GetDistance(at);
 							const bool  sneak = a_p->IsSneaking();
 							// (Noah: "growl + faint glow") heard close by, a ghostly growl now and then; seen far off at night, its blue motes
