@@ -435,7 +435,7 @@ namespace bo3z::Eggs
 			int                       at = 0;
 			float                     wait = 0, growl = 0, glowT = 0, saidT = 0, wet = 0;
 			RE::NiPoint3              dry;
-			bool                      ghostDone = false;
+			bool                      ghostDone = false, atEnd = false;
 			float                     starIn = -1, starT = -1, emit = 0;   // (the Eye) the star's wait, its flight
 			RE::NiPoint3              starFrom, starVel;
 			bool                      starDone = false;
@@ -466,12 +466,18 @@ namespace bo3z::Eggs
 			g_sign.saidT = 6.0f;
 			Hud::QuestBanner(std::string(a_text), a_secs);
 		}
-		void DropAt(RE::PlayerCharacter* a_p, const RE::NiPoint3& a_at, RE::FormID a_vanilla)
+		void DropAt(RE::PlayerCharacter* a_p, const RE::NiPoint3& a_at, RE::FormID a_vanilla, float a_scale = 1.0f)
 		{
 			const auto spot = Walkable(a_p, a_at, 600.0f).value_or(a_at);
 			Remove(g_sign.drop), Remove(g_sign.dropLight);
 			if (a_vanilla) {
-				if (auto* b = RE::TESForm::LookupByID<RE::TESBoundObject>(a_vanilla)) g_sign.drop = Gun::PlaceAt(b, spot + RE::NiPoint3{ 0, 0, 12.0f }, 0.0f);
+				// (Noah: "an actual model instead of a blue glow on the ground with nothing there") the thing itself, large enough to
+				// see and held where it lies (never dropped through the ground by its physics)
+				if (auto* b = RE::TESForm::LookupByID<RE::TESBoundObject>(a_vanilla)) g_sign.drop = Gun::PlaceAt(b, spot + RE::NiPoint3{ 0, 0, 10.0f }, 0.0f);
+				if (auto r = g_sign.drop.get()) {
+					if (a_scale != 1.0f) r->SetScale(a_scale);
+					r->SetMotionType(RE::hkpMotion::MotionType::kKeyframed);
+				}
 			} else {
 				g_sign.drop = Place(a_p, gen::kRelRelic, spot, 0.32f);
 			}
@@ -593,7 +599,9 @@ namespace bo3z::Eggs
 				if (d < 9000.0f && (g_sign.glowT -= a_dt) <= 0) g_sign.glowT = 2.0f + u(rr), Gun::Motes(1, at + RE::NiPoint3{ 0, 0, 40.0f }, 0.35f, 1.8f);
 				if (d > 1600.0f && at.GetDistance(g_sign.path[g_sign.at]) > 700.0f) cat->SetPosition(g_sign.path[g_sign.at], true);   // (unseen, it keeps to its trail)
 				const bool sneak = a_p->IsSneaking();
-				if (d < 450.0f && !sneak) {   // rushed: it flees to where it first stood
+				if (g_sign.atEnd) {
+					// (waiting at its trail's end for you)
+				} else if (d < 450.0f && !sneak) {   // rushed: it flees to where it first stood
 					Gun::Motes(1, at, 0.6f, 1.0f);
 					g_sign.at = 0, g_sign.wait = 0;
 					cat->SetPosition(g_sign.path[0], true);
@@ -602,19 +610,22 @@ namespace bo3z::Eggs
 					if ((g_sign.wait += a_dt) > 1.2f) {   // followed softly: it slips on to its next place
 						g_sign.wait = 0;
 						Gun::Motes(1, at, 0.6f, 1.0f);
-						if (++g_sign.at >= static_cast<int>(g_sign.path.size()) - 1) {   // the end: it sinks away, and its fang is left
-							const auto end = g_sign.path.back();
-							Gone(g_sign.cat);
-							g_sign.path.clear(), g_sign.ghostDone = true;
-							Gun::ElemBurst(1, end + RE::NiPoint3{ 0, 0, 40.0f }, 1.4f, 0.0f, 1.0f);
-							DropAt(a_p, end, kSabreFang);
-							logger::info("eggs: the lone spirit led you to its fang");
-						} else {
-							cat->SetPosition(g_sign.path[g_sign.at], true);
-						}
+						if (++g_sign.at >= static_cast<int>(g_sign.path.size()) - 1) g_sign.at = static_cast<int>(g_sign.path.size()) - 1, g_sign.atEnd = true;
+						cat->SetPosition(g_sign.path[g_sign.at], true);
 					}
 				} else {
 					g_sign.wait = 0;
+				}
+				// (Noah: "revealed once the cat and the player gets within 10 meters of it. Invisible unless following the cat to it") at its
+				// trail's end it waits; come within 10 m of it there and it sinks away, and its fang lies where it stood
+				if (g_sign.atEnd && pp.GetDistance(g_sign.path.back()) < 700.0f) {
+					const auto end = g_sign.path.back();
+					Gone(g_sign.cat);
+					g_sign.path.clear(), g_sign.ghostDone = true, g_sign.atEnd = false;
+					Gun::ElemBurst(1, end + RE::NiPoint3{ 0, 0, 40.0f }, 1.4f, 0.0f, 1.0f);
+					Audio::AtPoint(gen::Sound::boss_growl, end, 0.0f, 0.5f);
+					DropAt(a_p, end, kSabreFang, 4.0f);
+					logger::info("eggs: the lone spirit led you to its fang");
 				}
 			} else if (v == "eye") {
 				if (g_sign.starT >= 0) {   // a star streaking over the city: a burning trail
