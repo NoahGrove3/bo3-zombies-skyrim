@@ -19,6 +19,7 @@ namespace bo3z
 			float               baseZ{ 0 };     // its node's height when first seen
 			bool                based{ false };
 			RE::NiNode*         node{ nullptr };  // (a fresh 3D after a reload is based again)
+			int                 town{ -2 };       // (the altar rising) the city it stands in, for its altar's sink (-2 not looked up)
 		};
 		std::array<bool, gen::kLocations.size()> g_dressed{};
 		// (Noah: "when I freed the altar, it didn't get the altar freeing animation. I wanted to use the same lightning charge
@@ -1112,6 +1113,7 @@ namespace bo3z
 		constexpr float kRiseDepth = 340.0f, kRiseSecs = 4.2f, kRiseNear = 2800.0f;
 		std::array<float, 16> g_riseT = [] { std::array<float, 16> a{}; a.fill(-1.0f); return a; }();
 		std::array<float, 16> g_riseDust{};
+		std::array<float, 16> g_sinkOff{};   // how far each city's altar is drawn under its ground now (its spinning pieces follow)
 		RE::TESGlobal* SeenGlob() { return RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESGlobal>(gen::kAltarSeen, gen::kPlugin); }
 		bool AltarSeen(int t)
 		{
@@ -1137,6 +1139,7 @@ namespace bo3z
 		}
 		void SinkAltar(std::size_t a_index, RE::TESObjectREFR* a_main, float a_off)
 		{
+			if (const int t = gen::kLocations[a_index].town; t >= 0 && t < 16) g_sinkOff[t] = a_off;
 			SinkDrawn(a_main, a_off);
 			const int obj = gen::kLocations[a_index].object;
 			RE::TES::GetSingleton()->ForEachReferenceInRange(a_main, 450.0f, [&](RE::TESObjectREFR* r) {
@@ -2339,12 +2342,20 @@ namespace bo3z
 						continue;
 					}
 					if (!s.based || s.node != node) {
-						s.baseZ = node->local.translate.z, s.based = true, s.node = node, s.ang = r->GetAngleZ();
+						// (Noah: "the rocks on the pillars and the echo altar stone tablet are still in the floor") its height from where it
+						// stands, not from its drawn node - which may have been sunk with an altar not yet found
+						s.baseZ = r->GetPosition().z, s.based = true, s.node = node, s.ang = r->GetAngleZ();
 					}
+					if (s.town == -2) {   // (only an altar's own pieces follow its sink - not the Tablet's)
+						s.town = TownOf(r.get());
+						auto* al = s.town >= 0 ? Placed(s.town, 0) : nullptr;
+						if (!al || al->GetPosition().GetDistance(r->GetPosition()) > 500.0f) s.town = -1;
+					}
+					const float sink = s.town >= 0 && s.town < 16 ? g_sinkOff[s.town] : 0.0f;
 					s.ang += s.degPerSec * boost * RE::NI_PI / 180.0f * a_delta;
 					node->local.rotate.SetEulerAnglesXYZ(0.0f, 0.0f, -s.ang);
 					const float ph = static_cast<float>(reinterpret_cast<std::uintptr_t>(node) % 628) * 0.01f;
-					node->local.translate.z = s.baseZ + std::sin(clock * (s.degPerSec > 20.0f ? 1.3f : 0.7f) + ph) * (s.degPerSec > 20.0f ? 4.0f : 9.0f);  // floating
+					node->local.translate.z = s.baseZ + sink + std::sin(clock * (s.degPerSec > 20.0f ? 1.3f : 0.7f) + ph) * (s.degPerSec > 20.0f ? 4.0f : 9.0f);  // floating
 					RE::NiUpdateData ud;
 					node->Update(ud);
 					if (auto* hb = r->GetBaseObject(); hb && (hb == Forms::Ours(gen::kHeartStone) || hb == Forms::Ours(gen::kHeartStoneLit))) {  // the altar's heart stone: the nearest one is the one you look into
