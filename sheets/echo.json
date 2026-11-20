@@ -6,7 +6,7 @@
    "id": "gravecaller",
    "label": "Soulcaller's Staff",
    "color": "9CFF6A",
-   "text": "The Soulcaller's Staff. Hold to cast its beam: each of the dead it kills gives a soul (six at most). Let go and a spectral wolf runs at your side for every soul, for 20 seconds.",
+   "text": "The Soulcaller's Staff. Hold to cast its beam: each of the dead it kills gives a soul. At twenty souls a spectral sabre cat leaps out at your side for 45 seconds - three at most, and the next waits for a place.",
    "cls": "Summoner"
   },
   {

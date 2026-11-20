@@ -421,6 +421,10 @@ namespace bo3z
 				in >> b;
 				Save::SetDragonBond(b);
 				logger::info("dev: dragon bond {}", Save::DragonBond());
+			} else if (cmd == "eyes") {  // eyes <ahead> <up> <side>: the Soulcaller's cats' eye flames moved, on every cat out
+				float f = 24, u = 9, sd = 7.5f;
+				in >> f >> u >> sd;
+				Classes::SetEyeFlames(f, u, sd);
 			} else if (cmd == "points") {
 				int n = 0;
 				in >> n;

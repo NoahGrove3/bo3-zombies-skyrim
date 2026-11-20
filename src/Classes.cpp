@@ -509,7 +509,7 @@ namespace bo3z::Classes
 		g_wStep[a_cls] = kWonderTaken;
 			Forms::Play(gen::Sound::shout_learned);
 			static constexpr const char* kText[4] = {   // (Noah, 2026-11-12: short and to the point)
-				"Hold to cast: each of the dead the beam kills gives a soul (max 6). Release: a spectral wolf per soul for 20 s.",
+				"Hold to cast: each of the dead the beam kills gives a soul. Every 20 souls: a spectral sabre cat for 45 s (max 3).",
 				"Hold its beam on the dead: it drains them and feeds your magicka, and erupts where it ends.",
 				"Hold block: throws a flask every 0.5 s, cycling the six elements. Power attack: throws the next flask.",
 				"Light: a golden fireball, 2x damage to dragons. Heavy: 5 s of golden fireballs on the dead within 20 m." };
@@ -4230,30 +4230,104 @@ namespace bo3z::Classes
 		}
 		// (Noah: "Each wolf needs one enemy you've killed while gathering souls") the cast held, its beam tears at the dead along
 		// your aim; each of them that dies while you still hold it gives a soul (up to 8), shown under the crosshair
-		std::vector<std::pair<RE::ActorHandle, float>> g_soulWolves;   // the pack: seconds since each was called
-		int g_soulPending = 0;   // wolves let go and about to be made (one every 0.12 s)
-		constexpr int kPack = 6;   // (Noah: "it should spawn max 6 (a Pack) at a time")
-		// (Noah: "needs to spawn spectral wolves they still look like normal ones") Skyrim's own wolf-spirit shader (the
-		// Companions' spirit wolves) - ours, made from a weapon's enchantment shader, never showed on a body
+		std::vector<std::pair<RE::ActorHandle, float>> g_soulWolves;   // the pride: seconds since each was called
+		int g_soulPending = 0;   // a cat let go and about to be made
+		// (Noah, 2026-11-19: "the spectral saber cats ... larger and have ... flaming eyes ... blue" - "each summon cost 20 souls
+		// with a maximum of 3 at a time ... stronger and larger"; the cat leaps out "Instantly at 20", lasts 45 s, 1.5x a sabre
+		// cat, 3x a wolf's health and damage, a Snowy sabre cat beneath the glow; at three out, the next "waits for a slot")
+		constexpr int   kPack = 3;
+		constexpr int   kSoulsPerCat = 20;
+		constexpr float kCatSecs = 45.0f, kCatScale = 1.5f, kCatStrength = 3.0f;
+		RE::TESNPC* SoulCat()
+		{
+			static RE::TESNPC* cat = nullptr;
+			if (cat) return cat;
+			cat = RE::TESForm::LookupByID<RE::TESNPC>(0x00023AB6);   // (Skyrim's EncSabreCatSnow)
+			if (!cat) cat = SoulWolf();
+			logger::info("summoner: the Soulcaller's cats are {} {:08X}", cat ? cat->GetName() : "none", cat ? cat->GetFormID() : 0);
+			return cat;
+		}
 		void SoulLook(RE::Actor* a_w, float a_secs)
 		{
-			// (Noah: "Currently, they glow red ... can you make them glow purple? Same with the glow effect that it gives the
-			// enemies") that shader's violet copy, ours
-			static auto* violet = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kSoulPurple, gen::kPlugin);
+			// (Noah: "All blue") the Soulcaller's own ghost glow - its shader made blue (tools/gen_esp.py) - on the cats and on
+			// the dead its beam holds
+			static auto* blue = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kSoulPurple, gen::kPlugin);
 			static auto* spirit = RE::TESForm::LookupByID<RE::TESEffectShader>(0x0FE68D);   // GhostWolfSpiritFXShader
-			auto* fx = violet ? violet : spirit ? spirit : RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kSpectralShader, gen::kPlugin);
+			auto* fx = blue ? blue : spirit ? spirit : RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kSpectralShader, gen::kPlugin);
 			if (fx) a_w->ApplyEffectShader(fx, a_secs);
+		}
+		// the eyes: a small blue flame in each socket, hung on the head's bone so it turns with the head. Where the sockets are
+		// is said in the cat's own terms - ahead of the head bone, above it, to each side, at a sabre cat's size - and turned
+		// into the bone's own once, as the flames go on (dev: eyes <ahead> <up> <side> moves them on every cat out)
+		RE::NiPoint3 g_eye{ 24.0f, 9.0f, 7.5f };
+		RE::NiNode* HeadNode(RE::NiAVObject* a_o)
+		{
+			auto* n = a_o ? a_o->AsNode() : nullptr;
+			if (!n) return nullptr;
+			std::string nm(n->name.c_str() ? n->name.c_str() : "");
+			std::transform(nm.begin(), nm.end(), nm.begin(), ::tolower);
+			if (nm.find("head") != std::string::npos && nm.find("track") == std::string::npos && nm.find("neck") == std::string::npos && nm.find("ik") == std::string::npos) return n;
+			for (auto& c : n->GetChildren()) if (auto* h = HeadNode(c.get())) return h;
+			return nullptr;
+		}
+		void EyeFlames(RE::Actor* a_c)
+		{
+			auto* root = a_c ? a_c->Get3D() : nullptr;
+			auto* head = HeadNode(root);
+			if (!head) { logger::warn("summoner: no head bone found on {:08X} - no eye flames", a_c ? a_c->GetFormID() : 0); return; }
+			for (int i = static_cast<int>(head->GetChildren().size()) - 1; i >= 0; --i) {   // (flames hung before - a retune)
+				auto& ch = head->GetChildren()[i];
+				if (ch && ch->name == "UN_EyeFlame") head->DetachChildAt(i);
+			}
+			const float z = a_c->GetAngleZ(), sc = a_c->GetScale();
+			const RE::NiPoint3 fwd{ std::sin(z), std::cos(z), 0.0f }, right{ std::cos(z), -std::sin(z), 0.0f }, up{ 0.0f, 0.0f, 1.0f };
+			const auto inv = head->world.rotate.Transpose();
+			for (int side : { -1, 1 }) {
+				auto fl = Gun::LoadModel("CurseOfAlduin\\fx\\eyeflame_blue.nif");
+				if (!fl) return;
+				const RE::NiPoint3 w = head->world.translate + (fwd * g_eye.x + up * g_eye.y + right * (g_eye.z * side)) * sc;
+				fl->name = "UN_EyeFlame";
+				fl->local.translate = (inv * (w - head->world.translate)) / std::max(0.01f, head->world.scale);
+				fl->local.rotate = inv;
+				fl->local.scale = 1.0f;
+				head->AttachChild(fl.get(), true);
+				RE::NiUpdateData ud;
+				fl->Update(ud);
+			}
+			static int said = 0;
+			if (said++ < 4) logger::info("summoner: blue flames in the eyes of {:08X} (on its {})", a_c->GetFormID(), head->name.c_str());
+		}
+		void CallCat(RE::PlayerCharacter* p)
+		{
+			auto* base = SoulCat();
+			if (!base) return;
+			const float hp = Director::RoundHealth() * gen::kRounds.hpScale * 1.5f * kCatStrength;
+			// its bite three times a wolf's: Skyrim's wolf's and the cat's own unarmed damage weighed
+			float dmg = kCatStrength;
+			if (auto* wolf = SoulWolf(); wolf && wolf->race && base->race && base->race->data.unarmedDamage > 0.0f) dmg = kCatStrength * wolf->race->data.unarmedDamage / base->race->data.unarmedDamage;
+			const float z = p->GetAngleZ();
+			const RE::NiPoint3 at = p->GetPosition() + RE::NiPoint3{ std::sin(z) * 170.0f, std::cos(z) * 170.0f, 0.0f };
+			++g_soulPending;
+			Tasks::Later(0.05f, [base, at, hp, dmg] {
+				g_soulPending = std::max(0, g_soulPending - 1);
+				auto* pc = RE::PlayerCharacter::GetSingleton();
+				if (!pc || pc->IsDead()) return;
+				if (auto* c = RaiseAlly(pc, base, at, kCatSecs, hp, 12)) {
+					c->SetScale(kCatScale);
+					c->AsActorValueOwner()->SetActorValue(RE::ActorValue::kAttackDamageMult, dmg);
+					g_soulWolves.push_back({ c->GetHandle(), 0.0f });
+					Gun::Motes(8, at, 0.8f, 1.4f);
+					logger::info("summoner: a spectral sabre cat leaps out ({:.0f} health, bite x{:.2f}, {} out)", hp, dmg, g_soulWolves.size());
+				}
+			});
+			Gun::BlastSound("lightmassive", p->GetPosition(), 0.6f);
 		}
 		void TickSoulcaller(float a_delta)
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			auto* sc = Soulcaller();
 			if (!p || !sc || !p->Is3DLoaded()) return;
-			// (Noah: "They should look like spectral wolves not normal ones") the ghost's shader laid on once each body is in (it
-			// was laid on before - while there was no body yet), and again every few seconds, never past their time
-			// (two crashes inside Skyrim, each a moment after the pack was called or while it fought: the ghost shader was laid on
-			// six bodies at once and again every 3 s) each wolf's shader laid on once, for its whole time, a frame apart from the
-			// next wolf's
+			// each cat's glow and eyes put on once its body is in, a frame apart from the next cat's (never all at once)
 			static float stagger = 0;
 			stagger = std::max(0.0f, stagger - a_delta);
 			for (auto& [h, age] : g_soulWolves) {
@@ -4262,18 +4336,28 @@ namespace bo3z::Classes
 				auto w = h.get();
 				if (!w || w->IsDead() || !w->Is3DLoaded() || !w->Get3D()) continue;
 				if (fresh && age >= 0.5f) {
-					if (stagger > 0.0f) { age = 0.49f; continue; }   // (its turn next frame)
-					SoulLook(w.get(), 19.0f);   // (gone before the wolf is: it is sent off at 20 s)
+					if (stagger > 0.0f) { age = 0.49f; continue; }
+					SoulLook(w.get(), kCatSecs - 1.0f);
+					EyeFlames(w.get());
 					stagger = 0.05f;
 				}
 			}
-			// (Noah: "only 6 wolves at a time ... a slot only frees up when a wolf dies or despawns after 20 seconds") each wolf
-			// sent off at 20 s if it hasn't gone itself; a slot is held until it is dead or gone - whatever its age
 			for (auto& [h, age] : g_soulWolves) {
 				auto w = h.get();
-				if (w && !w->IsDead() && !w->IsDisabled() && age >= 20.0f) EndThrall(w.get());
+				if (w && !w->IsDead() && !w->IsDisabled() && age >= kCatSecs) EndThrall(w.get());
 			}
 			std::erase_if(g_soulWolves, [](const auto& e) { auto w = e.first.get(); return !w || w->IsDisabled() || w->IsDead(); });
+			// a cat for every 20 souls, the moment the 20th is taken - or, with three out, the moment a place frees
+			if (g_souls >= kSoulsPerCat) {
+				static bool toldFull = false;
+				if (static_cast<int>(g_soulWolves.size()) + g_soulPending < kPack) {
+					g_souls -= kSoulsPerCat;
+					toldFull = false;
+					CallCat(p);
+				} else if (!std::exchange(toldFull, true)) {
+					Hud::Banner("THE PRIDE IS FULL - THE NEXT CAT WAITS", 2.0f);
+				}
+			}
 			auto* c = p->GetMagicCaster(RE::MagicSystem::CastingSource::kRightHand);
 			const bool inHand = p->GetEquippedObject(false) == sc && p->AsActorState()->IsWeaponDrawn();
 			const bool casting = inHand && c && c->currentSpell && c->currentSpell == sc->formEnchanting &&
@@ -4281,18 +4365,16 @@ namespace bo3z::Classes
 			{
 				std::scoped_lock l(Hud::Lock());
 				auto& h = Hud::Edit();
-				h.souls = inHand && (casting || g_souls > 0) ? g_souls : -1, h.soulsMax = kPack;
+				h.souls = inHand && (casting || g_souls > 0) ? g_souls : -1, h.soulsMax = kSoulsPerCat;
 			}
 			static float tick = 0;
-			static bool  held = false;   // (the souls go out once, as the cast is let go - never on their own later)
 			if (casting) {
-				held = true;
-				// a soul for each of the dead the beam touched that has died since
+				// a soul for each of the dead the beam touched that has died since (twenty make a cat)
 				for (auto it = g_soulTaken.begin(); it != g_soulTaken.end();) {
 					auto* f = RE::TESForm::LookupByID<RE::Actor>(*it);
 					if (!f || f->IsDeleted() || f->IsDisabled()) { it = g_soulTaken.erase(it); continue; }
 					if (f->IsDead()) {
-						if (g_souls < kPack) {
+						if (g_souls < kSoulsPerCat) {
 							++g_souls;
 							Gun::Motes(6, f->GetPosition(), 0.5f, 1.0f);
 							Gun::LightningArc(f->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, Gun::SwingFrom(), 0.0f);
@@ -4313,47 +4395,15 @@ namespace bo3z::Classes
 			}
 			tick = 0;
 			g_soulTaken.clear();
-			if (!std::exchange(held, false) || g_souls <= 0) return;
-			// let go: a spectral wolf for each soul, round you, hunting for 20 s
-			// (Noah: "There should only be 6 that can exist maximum at a single time. Right now, if I just keep casting and getting
-			// kills, I can infinitely spawn wolves") only as many as the pack has room for; souls left over stay in the staff
-			// for when some of the pack is gone
-			const int alive = static_cast<int>(std::count_if(g_soulWolves.begin(), g_soulWolves.end(), [](const auto& e) {
-				auto w = e.first.get();
-				return w && !w->IsDead() && !w->IsDisabled();
-			}));
-			const int n = std::min(g_souls, kPack - alive - g_soulPending);
-			if (n <= 0) {
-				Hud::Banner("THE PACK IS FULL", 1.5f);
-				return;
-			}
-			g_souls -= n;
-			auto* base = SoulWolf();
-			const float hp = Director::RoundHealth() * gen::kRounds.hpScale * 1.5f;
-			// (the deep review: two of the three crashes in Skyrim's sight-and-sound job came half a second after five or six
-			// wolves were made in one frame - each placed, moved, its factions changed and made a teammate all at once) one
-			// wolf every 0.12 s instead, each made at a quiet moment of the frame
-			const RE::NiPoint3 centre = p->GetPosition();
-			for (int k = 0; k < n; ++k) {
-				const float a = 6.2832f * k / n;
-				const RE::NiPoint3 at = centre + RE::NiPoint3{ std::cos(a) * 140.0f, std::sin(a) * 140.0f, 0.0f };
-				++g_soulPending;
-				Tasks::Later(0.05f + 0.12f * static_cast<float>(k), [base, at, hp] {
-					g_soulPending = std::max(0, g_soulPending - 1);
-					auto* pc = RE::PlayerCharacter::GetSingleton();
-					if (!pc || pc->IsDead()) return;
-					if (auto* w = RaiseAlly(pc, base, at, 20.0f, hp, 12)) {
-						g_soulWolves.push_back({ w->GetHandle(), 0.0f });
-						// (Noah: "the spectral wolves kind of change colors ... just make it a solid one color, purple") no longer
-						// Skyrim's ghost ability too - its pale blue shader came and went over our violet one
-						Gun::Motes(6, at, 0.6f, 1.2f);
-					}
-				});
-			}
-			Gun::BlastSound("lightmassive", p->GetPosition(), 0.6f);
-			logger::info("summoner: the Soulcaller's Staff lets {} soul(s) go - {} spectral wolves hunt", n, n);
 		}
 	}
+	void SetEyeFlames(float a_ahead, float a_up, float a_side)
+	{
+		g_eye = { a_ahead, a_up, a_side };
+		for (auto& [h, age] : g_soulWolves) if (auto w = h.get(); w && w->Get3D()) EyeFlames(w.get());
+		logger::info("summoner: eye flames now {:.1f} ahead, {:.1f} up, {:.1f} to each side", a_ahead, a_up, a_side);
+	}
+
 	void TickAlchemy(float a_delta)
 	{
 		TickGoldClouds(a_delta);

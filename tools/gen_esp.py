@@ -282,7 +282,7 @@ for name, hx in T['weap_staff']['subs']:
     elif name == 'FULL': b = z("Soulcaller's Staff")
     elif name in ('MODT', 'EAMT'): continue
     elif name == 'EITM': b = struct.pack('<I', fid('ENCH', 'soulcaller'))
-    elif name == 'DESC': b = z("Summoner's wonder. Hold to cast: each of the dead the beam kills gives a soul (max 6). Release: a spectral wolf per soul for 20 s.")
+    elif name == 'DESC': b = z("Summoner's wonder. Hold to cast: each of the dead the beam kills gives a soul. Every 20 souls: a spectral sabre cat for 45 s (max 3).")
     elif name == 'DATA': b = struct.pack('<IfH', 0, 8.0, 10)
     _sc.append(sub(name, b))
     if name == 'MODL': _sc.append(sub('EAMT', struct.pack('<H', 0)))
@@ -916,14 +916,16 @@ recs['EFSH'].append(record('EFSH', fid('EFSH', 'spectral'), subs))
 # (Noah: the Soulcaller's wolves "glow red, and it looks really good. But can you make them glow purple? Same with the glow
 # effect that it gives the enemies") Skyrim's own wolf-spirit shader (GhostWolfSpiritFXShader, red) copied, its red ghost
 # gradient swapped for Skyrim's violet one and its red edge turned violet (src/Classes.cpp SoulLook)
+# (Noah, 2026-11-19: the Soulcaller's spectral sabre cats, "blue flames to match the color of the translucent effect" - "All
+# blue") the glow made blue: the cats, and the dead its beam holds (the record keeps its old key, so its form id stays)
 d = bytearray(tsub('efsh_ghostwolf', 'DATA'))
-d[0x38:0x3B] = bytes((130, 0, 190))
+d[0x38:0x3B] = bytes((60, 140, 255))
 subs = [sub('EDID', z('UN_SoulPurpleShader'))]
 for name, hx in T['efsh_ghostwolf']['subs']:
     if name == 'EDID': continue
     # (Noah: "the spectral wolves kind of change colors. Can you just make it a solid one color, purple?") our one violet ramp,
     # not Skyrim's violet ghost gradient (pink through blue)
-    b = bytes(d) if name == 'DATA' else z('CurseOfAlduin\\fx\\pal_violet.dds') if name == 'ICON' else bytes.fromhex(hx)
+    b = bytes(d) if name == 'DATA' else z('CurseOfAlduin\\fx\\pal_blue.dds') if name == 'ICON' else bytes.fromhex(hx)
     subs.append(sub(name, b))
 recs['EFSH'].append(record('EFSH', fid('EFSH', 'soulpurple'), subs))
 # (Noah: the Tablet's roll "with green being a common weapon and gold being a legendary") the reel's little weapons glow in
