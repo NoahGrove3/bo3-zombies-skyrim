@@ -818,15 +818,15 @@ namespace bo3z::Eggs
 							// (the crash at Dawnstar's altar: a cat set down 200 m out stood in ground not yet loaded, and its feet's footing
 							// was worked out against a world that wasn't there) each cat is made only as you come within the loaded ground
 							// round you, and put away again as you leave it - where it wandered to, kept
-							const float far = pp.GetDistance(m.at);
+							const float dCat = pp.GetDistance(m.at);
 							if (!r || r->IsDisabled() || r->IsDeleted()) {
 								m.obj = {};
-								if (far < 6000.0f) {
+								if (dCat < 6000.0f) {
 									if (auto* cat = Classes::SpiritCat(m.at, false, 3600.0f)) m.obj = cat->CreateRefHandle();
 								}
 								continue;
 							}
-							if (far > 9000.0f && r->GetPosition().GetDistance(pp) > 9000.0f) {
+							if (dCat > 9000.0f && r->GetPosition().GetDistance(pp) > 9000.0f) {
 								m.at = r->GetPosition();
 								Remove(m.obj);
 								continue;
