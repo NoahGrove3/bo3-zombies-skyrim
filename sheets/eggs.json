@@ -23,7 +23,8 @@
      "row": "none",
      "dark": false,
      "hint": "Three spirit cats stalk the edges of this city by moonlight. They fear the hunter. Come to them quietly.",
-     "done": "Three souls pad behind you now."
+     "done": "Three souls pad behind you now.",
+     "mech": "flee"
     },
     {
      "type": "classkills",
@@ -39,7 +40,8 @@
      "row": "none",
      "dark": false,
      "hint": "A pride must hunt. Let your servants kill thirty of the dead tonight, and keep the spirit at your side alive.",
-     "done": "The pride has tasted the hunt."
+     "done": "The pride has tasted the hunt.",
+     "mech": "escort"
     },
     {
      "type": "order",
@@ -55,7 +57,8 @@
      "row": "none",
      "dark": false,
      "hint": "Four stones remember the pride's roar. Listen to the order they call, then answer them.",
-     "done": "The roar is whole again."
+     "done": "The roar is whole again.",
+     "mech": "sound"
     },
     {
      "type": "survive",
@@ -71,7 +74,8 @@
      "row": "none",
      "dark": false,
      "hint": "Stand at this altar while the dead come. Lift no blade. Let only what you call do the killing.",
-     "done": "The den is ready."
+     "done": "The den is ready.",
+     "mech": "summonsonly"
     },
     {
      "type": "boss",
@@ -87,7 +91,8 @@
      "row": "lich",
      "dark": false,
      "hint": "The Bone-Caller chains the Old King's soul. Break the chains, then break him.",
-     "done": "The Old King runs free."
+     "done": "The Old King runs free.",
+     "mech": "chains"
     }
    ],
    "voice": "pride",
@@ -115,7 +120,8 @@
      "row": "none",
      "dark": false,
      "hint": "Three seals sleep near this altar: ember, rime and storm. Strike each with its own element, before the first goes dark again.",
-     "done": "The seals are open."
+     "done": "The seals are open.",
+     "mech": "seals"
     },
     {
      "type": "touch",
@@ -131,7 +137,8 @@
      "row": "none",
      "dark": false,
      "hint": "Pieces of the Eye are falling tonight. Catch five before they burn out.",
-     "done": "The light is gathered."
+     "done": "The light is gathered.",
+     "mech": ""
     },
     {
      "type": "order",
@@ -147,7 +154,8 @@
      "row": "none",
      "dark": false,
      "hint": "Four stones, four colours. Ember before frost, frost before storm, and storm before the sun. Strike them so.",
-     "done": "The prism shines."
+     "done": "The prism shines.",
+     "mech": "prism"
     },
     {
      "type": "classkills",
@@ -163,7 +171,8 @@
      "row": "none",
      "dark": false,
      "hint": "Burn forty of the dead tonight. Fire, frost and storm... the Eye hungers for all three.",
-     "done": "The Eye is kindled."
+     "done": "The Eye is kindled.",
+     "mech": "elemsplit"
     },
     {
      "type": "boss",
@@ -179,7 +188,8 @@
      "row": "eg_anomaly",
      "dark": false,
      "hint": "The Great Anomaly wears every element in turn. Strike it with what it fears, never with what it wears.",
-     "done": "The Anomaly is unmade."
+     "done": "The Anomaly is unmade.",
+     "mech": "anomaly"
     }
    ],
    "voice": "eye",
@@ -207,7 +217,8 @@
      "row": "none",
      "dark": false,
      "hint": "Six of the dead rise tonight, each wrapped in an element. Answer each with its own flask, and take what falls.",
-     "done": "Six essences. Carry them carefully."
+     "done": "Six essences. Carry them carefully.",
+     "mech": "wrapped"
     },
     {
      "type": "altar",
@@ -223,7 +234,8 @@
      "row": "none",
      "dark": false,
      "hint": "A crucible needs an altar's fire. Bring the essences here before dawn.",
-     "done": "The crucible is lit."
+     "done": "The crucible is lit.",
+     "mech": "dawn"
     },
     {
      "type": "order",
@@ -239,7 +251,8 @@
      "row": "none",
      "dark": false,
      "hint": "Four braziers flicker a formula. Copy it with your flasks, in the order they burn.",
-     "done": "The formula holds."
+     "done": "The formula holds.",
+     "mech": "flaskorder"
     },
     {
      "type": "survive",
@@ -255,7 +268,8 @@
      "row": "none",
      "dark": false,
      "hint": "The brew must not be shaken. Hold this altar against the dead, and do not bleed.",
-     "done": "The Stone is setting."
+     "done": "The Stone is setting.",
+     "mech": ""
     },
     {
      "type": "boss",
@@ -271,7 +285,8 @@
      "row": "winged_twilight",
      "dark": false,
      "hint": "The Matriarch drinks whatever strikes her. Never feed her the same element twice.",
-     "done": "The Matriarch is spent."
+     "done": "The Matriarch is spent.",
+     "mech": "matriarch"
     }
    ],
    "voice": "stone",
@@ -299,7 +314,8 @@
      "row": "none",
      "dark": false,
      "hint": "The ground near this altar is hallowed. Feed it thirty of the dead, slain where it glows.",
-     "done": "The ground is fed."
+     "done": "The ground is fed.",
+     "mech": ""
     },
     {
      "type": "touch",
@@ -315,7 +331,8 @@
      "row": "none",
      "dark": false,
      "hint": "Five shards of the old blade lie scattered tonight. Their guardians wake when you come near.",
-     "done": "The blade is gathered."
+     "done": "The blade is gathered.",
+     "mech": "guardians"
     },
     {
      "type": "order",
@@ -331,7 +348,8 @@
      "row": "none",
      "dark": false,
      "hint": "Four rune-stones sing in turn. Strike them with steel, in the order they sing.",
-     "done": "The runes remember the blade."
+     "done": "The runes remember the blade.",
+     "mech": "steel"
     },
     {
      "type": "classkills",
@@ -347,7 +365,8 @@
      "row": "none",
      "dark": false,
      "hint": "Swear the oath in steel. Forty of the dead by your blade, a spell ready in your other hand.",
-     "done": "The oath is sworn."
+     "done": "The oath is sworn.",
+     "mech": "bladespell"
     },
     {
      "type": "boss",
@@ -363,7 +382,8 @@
      "row": "knight",
      "dark": false,
      "hint": "Thorgar the Skulltaker holds the hilt. Magic will not touch him. Face him with the blade alone.",
-     "done": "The hilt is yours."
+     "done": "The hilt is yours.",
+     "mech": "thorgar"
     }
    ],
    "voice": "oath",

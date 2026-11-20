@@ -978,6 +978,7 @@ namespace bo3z
 					if (auto* t = a_event->target->As<RE::Actor>(); t && a_event->source) Tablet::OnStrike(t, a_event->source, heavyHit, a_event->projectile != 0);   // (its power)
 					if (auto* t = a_event->target->As<RE::Actor>(); t && a_event->source) Gun::PriestHit(t, a_event->source, heavyHit);  // (the Dragon Priests' weapons)
 					auto* src = a_event->source ? RE::TESForm::LookupByID(a_event->source) : nullptr;
+					if (auto* t = a_event->target->As<RE::Actor>()) Eggs::OnPlayerHit(t, src);   // (the wonders' secrets: who struck what, how)
 					const bool spellHit = src && src->As<RE::MagicItem>();  // (the charge's own lightning never sets off another charge)
 					if (auto* t = a_event->target->As<RE::Actor>(); t && !spellHit && Director::IsFoe(t)) {
 						Gun::StormHit(t);  // (a blade, a fist or Skyrim's own bow: the Stormblast charge goes off too)
@@ -1150,14 +1151,13 @@ namespace bo3z
 					Compass::OnCast(a_event->spell);
 					Classes::NoteCast(a_event->spell);
 					Tablet::OnCast(a_event->spell);  // (a donated staff's or the Codex's use)
+					Eggs::OnSpellCast(a_event->spell);  // (the wonders' secrets hear its element: never claims it)
 					if (Classes::OnCast(a_event->spell)) {
 						// (the Tome of the Six Fires)
 					} else if (Director::DanceOfDeath(a_event->spell)) {
 						// (the Dance Of Death)
 					} else if (Movement::OnSpellCast(a_event->spell)) {
 						// (Bond II's Updraft)
-					} else if (Eggs::OnSpellCast(a_event->spell)) {
-						// (a hidden quest's summon, the Eye's beam)
 					} else if (const int sh = Gun::ShoutOfSpell(a_event->spell, level); sh >= 0) {
 						Gun::Shout(sh, level);
 					} else if (Arcana::IndexOf(RE::TESForm::LookupByID(a_event->spell)) >= 0) {

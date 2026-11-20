@@ -519,14 +519,6 @@ namespace bo3z::Classes
 			logger::info("classes: wonder {} earned", kWonderName[a_cls]);
 		}
 
-		// a kill of the class's own kind: the secret quest's "classkills" steps count it (Eggs)
-		void WonderKill(int a_cls)
-		{
-			if (a_cls < 0 || a_cls > 3) return;
-			const auto st = g_wStep[a_cls];
-			if (st == 0 || st > kWonderSteps) return;
-			Eggs::OnClassKill();
-		}
 	}
 
 
@@ -667,9 +659,18 @@ namespace bo3z::Classes
 			if (how != 0 && how != 2 && a_dying) {
 				if (auto it = g_lastBlade.find(a_dying->GetFormID()); it != g_lastBlade.end() && std::chrono::steady_clock::now() - it->second < std::chrono::milliseconds(1500)) how = 3;
 			}
-			if (how == c) WonderKill(c);  // (the classes' kinds of kill line up with the class order)
 			int element = -1;
 			if (const int ci = src ? Arcana::IndexOf(src) : -1; ci >= 0) element = coffer::kSpells[ci].element;
+			// (Noah, 2026-11-11: "Any class, all 4 quests") the wonders' quests hear every kind of kill, whoever's class it is:
+			// 0 by your summons, 1 by Destruction (its element), 2 by a flask, 3 by a blade
+			{
+				int any = how;
+				if (a_dying && any != 0 && FlaskMarked(a_dying)) any = 2;
+				if (any < 0 && p) for (int h : Arcana::Hands()) if (h >= 0 && Arcana::ClassOf(h) == coffer::kDestruction && src && src->As<RE::MagicItem>()) any = 1;
+				int el = element;
+				if (any == 1 && el < 0) for (int h : Arcana::Hands()) if (h >= 0 && Arcana::ClassOf(h) == coffer::kDestruction) el = coffer::kSpells[h].element;
+				if (any >= 0) Eggs::OnClassKill(any, el);
+			}
 			const float dist = a_dying && p ? a_dying->GetPosition().GetDistance(p->GetPosition()) : 0.0f;
 			if (how >= 0) Curse::OnClassKill(how, element, dist);
 			// (the class sets' powers) the Arcane Conjurer's Tier III: your summons' kills heal you a little; the Gondorian's
@@ -3136,6 +3137,7 @@ namespace bo3z::Classes
 		}
 		void FlaskBurst(const FlaskShot& f, const RE::NiPoint3& a_at)
 		{
+			if (f.el >= 0 && f.el < 6) Eggs::OnFlask(f.el, a_at);   // (the Alchemist's secret: its braziers, its wrapped dead, the Matriarch)
 			if (f.el == 6) {  // (Noah: the Philosopher's Flask made the Mutagen Gauntlet - "Bouncing cluster", "6 bounces, fixed order") the cluster
 				// bounces from one of the dead to the next, a flask of each element bursting on each in turn: fire, frost, shock, acid,
 				// holy, void; once the three dragons fall each burst is its Legendary form ("Bigger bursts")
@@ -4396,6 +4398,36 @@ namespace bo3z::Classes
 			tick = 0;
 			g_soulTaken.clear();
 		}
+	}
+	// (the Summoner's secret, "The Ghost Pride") a spectral sabre cat of the staff's kind: an ally at your side, or a shy one that
+	// keeps to itself (no fight in it, untouchable) for you to calm
+	RE::Actor* SpiritCat(const RE::NiPoint3& a_at, bool a_ally, float a_seconds)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* base = SoulCat();
+		if (!p || !base || !p->GetParentCell()) return nullptr;
+		RE::Actor* c = nullptr;
+		if (a_ally) {
+			c = RaiseAlly(p, base, a_at, a_seconds, Director::RoundHealth() * gen::kRounds.hpScale * 1.5f * kCatStrength, 12);
+		} else {
+			auto ref = p->PlaceObjectAtMe(base, false);
+			c = ref ? ref->As<RE::Actor>() : nullptr;
+			if (!c) return nullptr;
+			c->SetPosition(a_at, true);
+			for (const auto& fr : base->factions) if (fr.faction) c->RemoveFromFaction(fr.faction);
+			if (auto* pf = PlayerFaction()) c->AddToFaction(pf, 0);
+			c->AsActorValueOwner()->SetActorValue(RE::ActorValue::kAggression, 0.0f);
+			Console(c, "SetGhost 1");
+		}
+		if (!c) return nullptr;
+		c->SetScale(kCatScale);
+		Tasks::Later(0.6f, [h = c->GetHandle(), a_seconds] {
+			if (auto a = h.get(); a && a->Get3D()) {
+				SoulLook(a.get(), std::min(a_seconds, 3600.0f));
+				EyeFlames(a.get());
+			}
+		});
+		return c;
 	}
 	void SetEyeFlames(float a_ahead, float a_up, float a_side)
 	{

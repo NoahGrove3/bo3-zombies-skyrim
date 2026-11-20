@@ -367,14 +367,14 @@ _rowi = {r['id']: i for i, r in enumerate(en)}
 STEPT = ['touch', 'order', 'altar', 'kills', 'survive', 'boss', 'classkills']
 ELEM = ['any', 'fire', 'frost', 'shock']
 CLS = ['summoner', 'destruction', 'ranger', 'spellsword']
-o.append('\tstruct EggStep { int type, n, element; bool night; float r0, r1; bool nodamage; float seconds; std::string_view name, text; int row; bool dark; std::string_view hint, done; };')
+o.append('\tstruct EggStep { int type, n, element; bool night; float r0, r1; bool nodamage; float seconds; std::string_view name, text; int row; bool dark; std::string_view hint, done, mech; };')
 o.append('\tenum EggStepType : int { ' + ', '.join(f'kEgg{t.capitalize()} = {i}' for i, t in enumerate(STEPT)) + ' };')
 o.append('\tstruct EggDef { std::string_view id, title, rewardText; int cls; std::array<EggStep, 8> steps; int nSteps; std::uint32_t glob, townGlob; std::string_view voice, open, finale; };  // (one per class: it wins the class wonder; voice: Felldir\'s lines echo_<voice>_*)')
 o.append(f'\tinline constexpr std::uint32_t kEggGifts = 0x{IDS[("GLOB", "egg_gifts")]:03X}, kTestKitGlob = 0x{IDS[("GLOB", "test_kit")]:03X}, kRitualSouls = 0x{IDS[("GLOB", "ritual_souls")]:03X}, kRitualStand = 0x{IDS[("GLOB", "ritual_stand")]:03X};')
 o.append(f'\tinline constexpr std::array<EggDef, {len(EG)}> kEggs{{ {{')
 for e in EG:
-    st = e['steps'] + [dict(type='altar', n=0, text='', element='any', night=False, r0=0, r1=0, nodamage=False, seconds=0, name='', row='none', dark=False, hint='', done='')] * (8 - len(e['steps']))
-    steps = ', '.join(f'EggStep{{ {STEPT.index(s["type"])}, {s["n"]}, {ELEM.index(s["element"])}, {str(s["night"]).lower()}, {F(s["r0"])}, {F(s["r1"])}, {str(s["nodamage"]).lower()}, {F(s["seconds"])}, {cs(s["name"])}, {cs(s["text"])}, {_rowi[s["row"]] if s["row"] != "none" else -1}, {str(s["dark"]).lower()}, {cs(s.get("hint", ""))}, {cs(s.get("done", ""))} }}' for s in st)
+    st = e['steps'] + [dict(type='altar', n=0, text='', element='any', night=False, r0=0, r1=0, nodamage=False, seconds=0, name='', row='none', dark=False, hint='', done='', mech='')] * (8 - len(e['steps']))
+    steps = ', '.join(f'EggStep{{ {STEPT.index(s["type"])}, {s["n"]}, {ELEM.index(s["element"])}, {str(s["night"]).lower()}, {F(s["r0"])}, {F(s["r1"])}, {str(s["nodamage"]).lower()}, {F(s["seconds"])}, {cs(s["name"])}, {cs(s["text"])}, {_rowi[s["row"]] if s["row"] != "none" else -1}, {str(s["dark"]).lower()}, {cs(s.get("hint", ""))}, {cs(s.get("done", ""))}, {cs(s.get("mech", ""))} }}' for s in st)
     o.append(f'\t\tEggDef{{ {cs(e["id"])}, {cs(e["title"])}, {cs(e["rewardText"])}, {CLS.index(e["cls"])}, {{ {steps} }}, {len(e["steps"])}, 0x{IDS[("GLOB", "egg_" + e["id"])]:03X}, 0x{IDS[("GLOB", "egg_" + e["id"] + "_town")]:03X}, {cs(e.get("voice", ""))}, {cs(e.get("open", ""))}, {cs(e.get("final", ""))} }},')
 o.append('\t} };')
 # (Noah, 2026-11-19) Felldir the Old's whispers: each line's sound by its file's name (assets/sound/whisper), and the words

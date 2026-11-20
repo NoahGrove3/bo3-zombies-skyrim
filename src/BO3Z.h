@@ -418,7 +418,8 @@ namespace bo3z
 		void               DevClawRot(float a_x, float a_y, float a_z, bool a_on, bool a_third);
 		void               SlayerLook();   // (data loaded) the Dragon Slayer as Animated Armoury's Glass Katana
 		const char*        SlayerModel();  // the Dragon Slayer's model as worn (its Reliquary display wears the same)
-		void               SetEyeFlames(float a_ahead, float a_up, float a_side);  // (dev) where the Soulcaller's cats' blue eye flames sit
+		void               SetEyeFlames(float a_ahead, float a_up, float a_side);
+		RE::Actor*         SpiritCat(const RE::NiPoint3& a_at, bool a_ally, float a_seconds);  // (the Summoner's secret) a spectral sabre cat: an ally, or a shy untouchable one  // (dev) where the Soulcaller's cats' blue eye flames sit
 		void               DevClawForm(RE::FormID a_local, float a_x, float a_y, float a_z);  // one claw's own turn (its NewArmoury id)
 		void               WandButton(bool a_down);   // the attack pressed / let go with the Carian Wand drawn
 		void               WandKick(int a_slot);      // a wand's cast: its tip flares, the hand kicks (0 the class wand, 1 the Wandering Star)
@@ -980,10 +981,12 @@ namespace bo3z
 		void  Tick(float a_delta);
 		void  OnHurt();                          // (a coin step: taken unhurt)
 		void  OnUndeadDeath(RE::Actor* a_actor); // (marked ground)
-		void  OnClassKill();                     // (Classes) a kill your class's own way
+		void  OnClassKill(int a_how, int a_element);  // (Classes) a kill by summons 0, Destruction 1 (coffer element), flask 2, blade 3
+		void  OnPlayerHit(RE::Actor* a_target, RE::TESForm* a_source);  // (Events) your blow or spell landed
+		void  OnFlask(int a_element, const RE::NiPoint3& a_at);          // (Classes) a flask burst: 0 fire 1 frost 2 shock 3 acid 4 holy 5 blood
 		bool  WantsDead();                       // a secret's step in this freed city wants the dead about (they don't crumble)
 		void  OnBossSlain(int a_town);           // its named foe fell (Director's champion, town -10 - city)
-		bool  OnSpellCast(RE::FormID a_spell);   // (retired: false)
+		bool  OnSpellCast(RE::FormID a_spell);   // notes the cast's element and where (false: never claims it)
 		void  Heard(int a_town);                 // (retired)
 		void  Reset();                           // a save loaded or a new game: the live step forgotten
 		std::vector<std::string> Whispers(int a_town);  // the altar's hints: a line more for each step found
