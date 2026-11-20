@@ -195,7 +195,7 @@ for e, label, text in FLASKS:
             elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_flask_' + e))
             elif name == 'DESC': b = z(text)
             elif name == 'MODT': continue
-            elif name == 'DATA': b = struct.pack('<IfH', 0, 1.0, 0)
+            elif name == 'DATA': b = struct.pack('<IfH', 0, 1.0, 50)   # (Noah, 2026-11-20: "50 damage on contact with normal attacks")
             subs.append(sub(name, b))
         recs['WEAP'].append(record('WEAP', fid('WEAP', 'flaskweap_' + e), subs))
         continue

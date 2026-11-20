@@ -75,7 +75,7 @@ namespace bo3z
 					if (t == "weaponswing") {
 						g_weaponSwing = true;
 						MeleeSwing(false);
-						if (auto* pp = RE::PlayerCharacter::GetSingleton(); pp && PowerAttacking(pp) && Classes::MutagenInHand()) Classes::MutagenPower();
+						// (Noah, 2026-11-20: the Mutagen Staff's "light attack and heavy attack is normal" - its flasks come from blocking only)
 					} else if (t == "weaponleftswing") {
 						MeleeSwing(true);
 					}

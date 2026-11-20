@@ -4051,6 +4051,7 @@ namespace bo3z::Classes
 		AdoptLook(mut, s);
 		if (!ownModel.empty()) mut->SetModel(ownModel.c_str());
 		if (ownFirst) mut->firstPersonModelObject = ownFirst;
+		mut->attackDamage = 50;   // (Noah, 2026-11-20: "light attack and heavy attack is normal and 50 damage on contact")
 		mut->formEnchanting = nullptr, mut->amountofEnchantment = 0;   // (no staff cast of Skyrim's: its beam and flasks are ours)
 		logger::info("alchemist: the Mutagen Staff takes the look of {} - swung as a quarterstaff", s->GetName());
 	}
