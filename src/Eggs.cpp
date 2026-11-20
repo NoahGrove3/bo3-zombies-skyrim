@@ -551,7 +551,7 @@ namespace bo3z::Eggs
 							}
 							Gun::ElemBurst(kFlaskFx[m.el], at + RE::NiPoint3{ 0, 0, 40.0f }, 1.6f, 0.0f, 1.0f);
 							Gun::BlastSound("lightmassive", at, 0.7f);
-							if (pp.GetDistance(at) < 300.0f) a_p->AsActorValueOwner()->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kDamage, RE::ActorValue::kHealth, -15.0f);
+							if (pp.GetDistance(at) < 300.0f) a_p->AsActorValueOwner()->DamageActorValue(RE::ActorValue::kHealth, 15.0f);
 							Hud::Banner(fmt::format("Wrong - only {} frees it. It bursts, and rises again.", kFlaskEl[m.el]), 3.0f);
 							m.wait = 4.0f;
 						}
