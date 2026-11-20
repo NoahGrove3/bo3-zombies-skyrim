@@ -989,7 +989,10 @@ namespace bo3z
 		bool  OnSpellCast(RE::FormID a_spell);   // notes the cast's element and where (false: never claims it)
 		void  Heard(int a_town);                 // (retired)
 		void  Reset();                           // a save loaded or a new game: the live step forgotten
-		std::vector<std::string> Whispers(int a_town);  // the altar's hints: a line more for each step found
+		struct Whisper { std::string title, info; int id; };  // a card in the altar's Whispers: its title, a short note, what a click replays
+		std::vector<Whisper> Whispers(int a_town);  // the altar's whispers: a card more for each step found
+		void  Replay(int a_id);                  // a whisper card clicked: Felldir says it again
+		int   Speaking();                        // the card whose whisper is being said (-1 none)
 		std::string Line();                      // your class's quest, for the guide
 		float DamageMult();                      // (retired: 1)
 		bool  ShadowStep();                      // (retired: false)
@@ -1088,7 +1091,8 @@ namespace bo3z
 			float       headBurstT{ 0 };  // a headshot kill's white flash at the crosshair
 			float       lightningT{ 0 }, lightningI{ 0 };  // the sky's flash (seconds left, strength)
 			bool        eggDark{ false };                 // a hidden quest's dark (Riften's, Dawnstar's dream)
-			std::vector<std::string> whispers;            // the altar's hidden quest: its whispers (empty: none yet)
+			std::vector<Eggs::Whisper> whispers;          // the altar's hidden quest: its whispers, as cards (empty: none yet)
+			int         whisperSpeaking{ -1 };         // the card being said now
 			float       nightProgress{ -1 };              // 0..1 through the night's waves (-1: not fighting)
 			std::string styleTag;         // a style bonus ("+40 MULTI-KILL") by the septims
 			float       styleTime{ 0 };

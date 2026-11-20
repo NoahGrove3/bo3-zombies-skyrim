@@ -295,9 +295,10 @@ namespace bo3z::Eggs
 
 		// ---- (Noah, 2026-11-19: the Wonder Easter Eggs design) Felldir the Old whispers through the altars: lines queued and
 		// spoken one after another, each with its words under the compass while it plays ----
-		struct Said { gen::Sound snd; std::string text; float secs; };
+		struct Said { gen::Sound snd; std::string text; float secs; int card = -1; };
 		std::deque<Said> g_say;
 		float            g_sayT = 0, g_whCd = 0;
+		int              g_sayCard = -1;   // (the altar's Whispers) the card whose line is being said
 		int              g_visited = -1;   // the city whose altar has whispered this visit (walk away and it may again)
 		bool Say(std::string_view a_key, std::string_view a_text)
 		{
@@ -349,11 +350,12 @@ namespace bo3z::Eggs
 		{
 			g_whCd = std::max(0.0f, g_whCd - a_dt);
 			if (g_sayT > 0) {
-				g_sayT -= a_dt;
+				if ((g_sayT -= a_dt) <= 0 && g_say.empty()) g_sayCard = -1;
 			} else if (!g_say.empty()) {
 				auto l = g_say.front();
 				g_say.pop_front();
-				Audio::Ui(l.snd);
+				Audio::Voice(l.snd);   // (one voice at a time: a card clicked cuts off the line before it)
+				g_sayCard = l.card;
 				Hud::QuestBanner("Felldir: " + l.text, l.secs + 0.8f);
 				g_sayT = l.secs + 0.5f;
 			}
@@ -1012,29 +1014,63 @@ namespace bo3z::Eggs
 
 	void Heard(int) {}  // (each class keeps its own quest: a friend's isn't yours)
 
-	std::vector<std::string> Whispers(int a_town)
+	// (Noah, 2026-11-19: "the whispers tab should be cards like the armory with the title of each whisper ... when a title card is
+	// clicked it plays the whisper") each of Felldir's lines this altar has for you, as a card: a title, a short note, and the id a
+	// click replays - 1 the wonders asleep; 1000 + quest*20: + 0 its calling, + 1.. a step, + 15 where the next step waits,
+	// + 16 the altar's plain words; 2000 + quest its finale
+	std::vector<Whisper> Whispers(int a_town)
 	{
-		// (Noah, 2026-11-19) the altar menu keeps what Felldir has said: each quest's lines found so far, and where the next waits
-		std::vector<std::string> out;
+		static constexpr const char* kNum[9] = { "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX" };
+		std::vector<Whisper> out;
 		const int act = Active();
-		if (act < 0) {
-			if (FreedTowns() < 6) out.push_back(std::string(gen::kWhisperAsleep));
-		}
+		if (act < 0 && FreedTowns() < 6) out.push_back({ "The Wonders Sleep", "free more cities", 1 });
 		for (int e = 0; e < kCount; ++e) {
 			const auto& d = gen::kEggs[e];
+			const int   base = 1000 + e * 20;
 			if (Done(e) || Gifted(e)) {
-				out.push_back(std::string(d.title) + " - done. " + (Classes::WonderState(d.cls) == 4 ? std::string(Classes::WonderName(d.cls)) + " is yours." : std::string(d.rewardText)));
+				out.push_back({ std::string(d.title), Classes::WonderState(d.cls) == 4 ? std::string(Classes::WonderName(d.cls)) + " is yours" : std::string("complete - High Hrothgar calls"), 2000 + e });
 			} else if (e == act) {
-				out.push_back(std::string(d.open));
-				for (int i = 0; i < Step(e); ++i) out.push_back(std::string(d.steps[i].hint) + " (" + std::string(d.steps[i].done) + ")");
-				const int cur = CurTown(e);
-				if (cur >= 0 && a_town == cur) out.push_back(std::string(d.steps[Step(e)].hint));
-				else if (cur >= 0) out.push_back(std::string(gen::kWhisperNext) + " " + std::string(gen::kWhisperCity[cur]));
-				if (g_plain && g_hintKey == e * 100 + Step(e)) out.push_back("Plainly: " + std::string(d.steps[Step(e)].text));
+				out.push_back({ std::string(d.title), "the calling", base });
+				for (int i = 0; i < Step(e); ++i) out.push_back({ std::string(kNum[i]) + ". " + std::string(d.steps[i].title), "done", base + 1 + i });
+				const int st = Step(e), cur = CurTown(e);
+				if (cur >= 0 && a_town == cur) out.push_back({ std::string(kNum[st]) + ". " + std::string(d.steps[st].title), "here, now", base + 1 + st });
+				else if (cur >= 0) out.push_back({ "The Next Whisper", fmt::format("where step {} waits", kNum[st]), base + 15 });
+				if (g_plain && g_hintKey == e * 100 + st) out.push_back({ "The Altar Speaks Plainly", "what it wants, spelled out", base + 16 });
 			}
 		}
 		return out;
 	}
+
+	void Replay(int a_id)
+	{
+		g_say.clear(), g_sayT = 0, g_sayCard = -1;
+		const auto at = g_say.size();
+		if (a_id == 1) {
+			Say("echo_asleep", gen::kWhisperAsleep);
+		} else if (a_id >= 2000 && a_id < 2000 + kCount) {
+			const auto& d = gen::kEggs[a_id - 2000];
+			Say(fmt::format("echo_{}_final", d.voice), d.finale);
+		} else if (a_id >= 1000 && a_id < 1000 + kCount * 20) {
+			const int   e = (a_id - 1000) / 20, k = (a_id - 1000) % 20;
+			const auto& d = gen::kEggs[e];
+			if (k == 0) {
+				Say(fmt::format("echo_{}_open", d.voice), d.open);
+			} else if (k >= 1 && k <= d.nSteps) {
+				Say(StepKey(e, k - 1, false), d.steps[k - 1].hint);
+				if (k - 1 < Step(e)) Say(StepKey(e, k - 1, true), d.steps[k - 1].done);   // (a step found: how it ended, too)
+			} else if (k == 15) {
+				SayCity(CurTown(e));
+			} else if (k == 16 && Step(e) < d.nSteps) {
+				Forms::Play(gen::Sound::quest_step);
+				Hud::Lore("THE ALTAR SPEAKS PLAINLY", std::string(d.steps[Step(e)].text), 9.0f);
+			}
+		}
+		for (auto i = at; i < g_say.size(); ++i) g_say[i].card = a_id;
+		if (g_say.empty()) return;
+		Audio::Voice(std::nullopt);   // (the line being said stops for the one asked for)
+	}
+
+	int Speaking() { return g_sayCard >= 0 || !g_say.empty() ? (g_say.empty() ? g_sayCard : g_say.front().card) : -1; }
 
 	std::string Line()  // the class guide's line: how far along your path's secret you are
 	{

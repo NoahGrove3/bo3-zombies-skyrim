@@ -24,7 +24,8 @@
      "dark": false,
      "hint": "Three spirit cats stalk the edges of this city by moonlight. They fear the hunter. Come to them quietly.",
      "done": "Three souls pad behind you now.",
-     "mech": "flee"
+     "mech": "flee",
+     "title": "The Shy Pride"
     },
     {
      "type": "classkills",
@@ -41,7 +42,8 @@
      "dark": false,
      "hint": "A pride must hunt. Let your servants kill thirty of the dead tonight, and keep the spirit at your side alive.",
      "done": "The pride has tasted the hunt.",
-     "mech": "escort"
+     "mech": "escort",
+     "title": "The Hunt"
     },
     {
      "type": "order",
@@ -58,7 +60,8 @@
      "dark": false,
      "hint": "Four stones remember the pride's roar. Listen to the order they call, then answer them.",
      "done": "The roar is whole again.",
-     "mech": "sound"
+     "mech": "sound",
+     "title": "The Roaring Stones"
     },
     {
      "type": "survive",
@@ -75,7 +78,8 @@
      "dark": false,
      "hint": "Stand at this altar while the dead come. Lift no blade. Let only what you call do the killing.",
      "done": "The den is ready.",
-     "mech": "summonsonly"
+     "mech": "summonsonly",
+     "title": "The Den"
     },
     {
      "type": "boss",
@@ -92,7 +96,8 @@
      "dark": false,
      "hint": "The Bone-Caller chains the Old King's soul. Break the chains, then break him.",
      "done": "The Old King runs free.",
-     "mech": "chains"
+     "mech": "chains",
+     "title": "The Bone-Caller"
     }
    ],
    "voice": "pride",
@@ -121,7 +126,8 @@
      "dark": false,
      "hint": "Three seals sleep near this altar: ember, rime and storm. Strike each with its own element, before the first goes dark again.",
      "done": "The seals are open.",
-     "mech": "seals"
+     "mech": "seals",
+     "title": "The Three Seals"
     },
     {
      "type": "touch",
@@ -138,7 +144,8 @@
      "dark": false,
      "hint": "Pieces of the Eye are falling tonight. Catch five before they burn out.",
      "done": "The light is gathered.",
-     "mech": ""
+     "mech": "",
+     "title": "Falling Stars"
     },
     {
      "type": "order",
@@ -155,7 +162,8 @@
      "dark": false,
      "hint": "Four stones, four colours. Ember before frost, frost before storm, and storm before the sun. Strike them so.",
      "done": "The prism shines.",
-     "mech": "prism"
+     "mech": "prism",
+     "title": "The Prism"
     },
     {
      "type": "classkills",
@@ -172,7 +180,8 @@
      "dark": false,
      "hint": "Burn forty of the dead tonight. Fire, frost and storm... the Eye hungers for all three.",
      "done": "The Eye is kindled.",
-     "mech": "elemsplit"
+     "mech": "elemsplit",
+     "title": "Fire, Frost and Storm"
     },
     {
      "type": "boss",
@@ -189,7 +198,8 @@
      "dark": false,
      "hint": "The Great Anomaly wears every element in turn. Strike it with what it fears, never with what it wears.",
      "done": "The Anomaly is unmade.",
-     "mech": "anomaly"
+     "mech": "anomaly",
+     "title": "The Great Anomaly"
     }
    ],
    "voice": "eye",
@@ -218,7 +228,8 @@
      "dark": false,
      "hint": "Six of the dead rise tonight, each wrapped in an element. Answer each with its own flask, and take what falls.",
      "done": "Six essences. Carry them carefully.",
-     "mech": "wrapped"
+     "mech": "wrapped",
+     "title": "The Wrapped Dead"
     },
     {
      "type": "altar",
@@ -235,7 +246,8 @@
      "dark": false,
      "hint": "A crucible needs an altar's fire. Bring the essences here before dawn.",
      "done": "The crucible is lit.",
-     "mech": "dawn"
+     "mech": "dawn",
+     "title": "Before Dawn"
     },
     {
      "type": "order",
@@ -252,7 +264,8 @@
      "dark": false,
      "hint": "Four braziers flicker a formula. Copy it with your flasks, in the order they burn.",
      "done": "The formula holds.",
-     "mech": "flaskorder"
+     "mech": "flaskorder",
+     "title": "The Formula"
     },
     {
      "type": "survive",
@@ -269,7 +282,8 @@
      "dark": false,
      "hint": "The brew must not be shaken. Hold this altar against the dead, and do not bleed.",
      "done": "The Stone is setting.",
-     "mech": ""
+     "mech": "",
+     "title": "The Steady Hand"
     },
     {
      "type": "boss",
@@ -286,7 +300,8 @@
      "dark": false,
      "hint": "The Matriarch drinks whatever strikes her. Never feed her the same element twice.",
      "done": "The Matriarch is spent.",
-     "mech": "matriarch"
+     "mech": "matriarch",
+     "title": "The Matriarch"
     }
    ],
    "voice": "stone",
@@ -315,7 +330,8 @@
      "dark": false,
      "hint": "The ground near this altar is hallowed. Feed it thirty of the dead, slain where it glows.",
      "done": "The ground is fed.",
-     "mech": ""
+     "mech": "",
+     "title": "The Hallowed Ground"
     },
     {
      "type": "touch",
@@ -332,7 +348,8 @@
      "dark": false,
      "hint": "Five shards of the old blade lie scattered tonight. Their guardians wake when you come near.",
      "done": "The blade is gathered.",
-     "mech": "guardians"
+     "mech": "guardians",
+     "title": "The Blade-Shards"
     },
     {
      "type": "order",
@@ -349,7 +366,8 @@
      "dark": false,
      "hint": "Four rune-stones sing in turn. Strike them with steel, in the order they sing.",
      "done": "The runes remember the blade.",
-     "mech": "steel"
+     "mech": "steel",
+     "title": "The Singing Runes"
     },
     {
      "type": "classkills",
@@ -366,7 +384,8 @@
      "dark": false,
      "hint": "Swear the oath in steel. Forty of the dead by your blade, a spell ready in your other hand.",
      "done": "The oath is sworn.",
-     "mech": "bladespell"
+     "mech": "bladespell",
+     "title": "The Oath in Steel"
     },
     {
      "type": "boss",
@@ -383,7 +402,8 @@
      "dark": false,
      "hint": "Thorgar the Skulltaker holds the hilt. Magic will not touch him. Face him with the blade alone.",
      "done": "The hilt is yours.",
-     "mech": "thorgar"
+     "mech": "thorgar",
+     "title": "Thorgar the Skulltaker"
     }
    ],
    "voice": "oath",

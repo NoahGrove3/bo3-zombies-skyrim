@@ -1576,7 +1576,7 @@ namespace bo3z
 		int                 g_sel = 0;
 		int                 g_trialSel = 0;  // the controller's pick among the altar's trials
 		// (Noah: one way to drive the altar) a focus moved up and down its rows - D-pad or W/S - and A / Enter to take it
-		enum Row { kRowSpell = 0, kRowBow, kRowForge, kRowPerk, kRowShout, kRowBond, kRowTrial = 10, kRowLeave = 20, kRowClass = 30 };  // (the altar rework: Kit rows are 40.. your kit, 100.. the Armory)
+		enum Row { kRowSpell = 0, kRowBow, kRowForge, kRowPerk, kRowShout, kRowBond, kRowTrial = 10, kRowLeave = 20, kRowClass = 30, kRowWhisper = 300 };  // (the altar rework: Kit rows are 40.. your kit, 100.. the Armory)
 		int g_focus = kRowClass;
 		// (Noah: "different sections that show a drop down of what's in that section") the one section open (0: none)
 		enum Sec { kSecKit = 210, kSecArmory = 211, kSecPerks = 212, kSecVoice = 213, kSecTrials = 214, kSecWhispers = 215, kSecGlider = 216 };
@@ -1786,6 +1786,7 @@ namespace bo3z
 					if (id == kRowShout) return static_cast<int>(kSecVoice);
 					if (id == kRowBond) return static_cast<int>(kSecGlider);
 					if (id >= kRowTrial && id < kRowTrial + 5) return static_cast<int>(kSecTrials);
+					if (id >= kRowWhisper && id < kRowWhisper + 100) return static_cast<int>(kSecWhispers);
 					return 0;
 				};
 				if (Classes::Get() >= 0) {
@@ -1812,7 +1813,11 @@ namespace bo3z
 					rows.push_back(kSecTrials);
 					if (g_open == kSecTrials) for (int q : { 0, 1, 4, 3 }) rows.push_back(kRowTrial + q);  // (the Unbroken folded into the Breath; 3 is the class trial)
 				}
-				if (r && !Eggs::Whispers(TownOf(r)).empty()) rows.push_back(kSecWhispers);
+				const auto whispers = r ? Eggs::Whispers(TownOf(r)) : std::vector<Eggs::Whisper>{};
+				if (!whispers.empty()) {
+					rows.push_back(kSecWhispers);
+					if (g_open == kSecWhispers) for (int w = 0; w < static_cast<int>(whispers.size()); ++w) rows.push_back(kRowWhisper + w);
+				}
 				rows.push_back(kRowLeave);
 				if (std::find(rows.begin(), rows.end(), g_focus) == rows.end()) {  // (its section shut: back to its header)
 					const int sec = sectionOf(g_focus);
@@ -1846,6 +1851,11 @@ namespace bo3z
 					if (g_focus >= kSecKit && g_focus <= kSecGlider) {  // a header: open it (shutting the one open), or shut it
 						g_open = g_open == g_focus ? 0 : g_focus;
 						PlayUi(UiSnd::kChoose);
+						return true;
+					}
+					if (g_focus >= kRowWhisper && g_focus < kRowWhisper + static_cast<int>(whispers.size())) {   // (a whisper card: said again)
+						Eggs::Replay(whispers[g_focus - kRowWhisper].id);
+						PlayUi(UiSnd::kChoose, 0.5f);
 						return true;
 					}
 					switch (g_focus) {
@@ -2160,7 +2170,8 @@ namespace bo3z
 					if (auto r = g_menuRef.get()) {
 						const int t = TownOf(r.get());
 						h.shrineShout = Curse::ClaimableShout(t);
-						h.whispers = Eggs::Whispers(t);  // (Noah: the hidden quest's whispers, a line more for each step found)
+						h.whispers = Eggs::Whispers(t);  // (Noah: the hidden quest's whispers, a card more for each step found)
+						h.whisperSpeaking = Eggs::Speaking();
 						h.altarFreed = Curse::Freed(t);
 						if (const auto v = Curse::Altar(t); v.on) {  // the city still held: its trials
 							h.trialsOn = true;

@@ -2882,7 +2882,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const bool  shout = s.shrineShout >= 0 && s.shrineShout < static_cast<int>(gen::kShouts.size());
 				// (Noah: scroll down to the altar's trials) one panel, its trials below the rest; as tall as the screen allows,
 				// the rows sliding to keep the one in focus in view
-				const float trialsH = (s.trialsOn ? 112 * k + 5 * 70 * k + 104 * k : 0.0f) + (s.whispers.empty() ? 0.0f : 56 * k + 46 * k * s.whispers.size());
+				const float trialsH = (s.trialsOn ? 112 * k + 5 * 70 * k + 104 * k : 0.0f) + (s.whispers.empty() ? 0.0f : 56 * k + 50 * k * s.whispers.size());
 				static float measuredH = 0;  // (Noah: "five white dots under Leave the Altar" - the tops of the lines below it, cut by a short guess) the panel's real height, from the last frame
 				const float guessH = (shout ? 610 : 532) * k + 86 * k + 78 * k + 56 * k + trialsH;
 				const float contentH = measuredH > 0 ? measuredH + 40 * k : guessH;
@@ -3222,10 +3222,31 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					endSection();
 				}
 				// [5c] (Noah) the hidden quest's whispers: never told outright - a line more for each step found
+				// (Noah: "cards like the armory with the title of each whisper ... clicked it plays the whisper") a card a whisper: its
+				// title and a short note, never the words; select one and Felldir says it again
 				if (!s.whispers.empty() && section(215, "WHISPERS", fmt::format("{} heard", s.whispers.size()), false)) {
-					for (const auto& wsp : s.whispers) {
-						TxtWrap(dl, g_body, 16 * k, { L, y }, IM_COL32(190, 210, 240, 235), "\xE2\x80\x9C" + wsp + "\xE2\x80\x9D", Rr - L, 2);
-						y += 46 * k;
+					for (int wi = 0; wi < static_cast<int>(s.whispers.size()); ++wi) {
+						const auto& wsp = s.whispers[wi];
+						const int   row = 300 + wi;
+						const bool  saying = s.whisperSpeaking == wsp.id;
+						const ImU32 wc = IM_COL32(170, 200, 245, 255);
+						focusRow(row, y - 6 * k, y + 46 * k);
+						bullet({ L, y + 2 * k }, row, true);
+						Txt(dl, g_title, 18 * k, { L + 36 * k, y + 3 * k }, saying ? wc : kParch, Upper(wsp.title));
+						Txt(dl, g_body, 15 * k, { L + 36 * k, y + 27 * k }, IM_COL32(196, 182, 160, 235), saying ? std::string("Felldir speaks...") : wsp.info);
+						{  // a small speaker at the right: lit, with its waves pulsing, while this one is being said
+							const ImVec2 c{ Rr - 22 * k, y + 20 * k };
+							const ImU32  ic = saying ? wc : s.altarFocus == row ? kGold : IM_COL32(150, 140, 124, 220);
+							dl->AddRectFilled({ c.x - 9 * k, c.y - 4 * k }, { c.x - 4 * k, c.y + 4 * k }, ic);
+							dl->AddTriangleFilled({ c.x - 4 * k, c.y - 4 * k }, { c.x + 3 * k, c.y - 10 * k }, { c.x + 3 * k, c.y + 10 * k }, ic);
+							dl->AddTriangleFilled({ c.x - 4 * k, c.y - 4 * k }, { c.x + 3 * k, c.y + 10 * k }, { c.x - 4 * k, c.y + 4 * k }, ic);
+							const float pulse = saying ? 0.5f + 0.5f * std::sin(now * 6.0f) : 1.0f;
+							for (int q = 1; q <= 2; ++q) {
+								dl->PathArcTo({ c.x + 3 * k, c.y }, (4.0f + 5.0f * q) * k, -0.7f, 0.7f, 10);
+								dl->PathStroke(Fade(ic, q == 2 ? pulse : 1.0f), 0, 1.6f * k);
+							}
+						}
+						y += 50 * k;
 					}
 					y += 6 * k;
 					endSection();
