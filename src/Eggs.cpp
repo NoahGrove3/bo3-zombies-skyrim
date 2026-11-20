@@ -174,55 +174,6 @@ namespace bo3z::Eggs
 			}
 		}
 
-		void Award(int e, bool a_loud)
-		{
-			if (Gifted(e)) return;
-			SetGift(e);
-			const auto& d = gen::kEggs[e];
-			if (a_loud) {
-				std::string t(d.title);
-				for (auto& ch : t) ch = static_cast<char>(std::toupper(static_cast<unsigned char>(ch)));
-				Hud::QuestBanner(t + " - COMPLETE", 5.0f);
-			}
-			Classes::EarnWonder(d.cls);  // (the quest's end: the Greybeards call, and the wonder waits in the Reliquary)
-			logger::info("eggs: {} rewarded", d.id);
-		}
-		void Complete(int e)
-		{
-			Say(fmt::format("echo_{}_final", gen::kEggs[e].voice), gen::kEggs[e].finale);
-			SetRaw(e, kDone);
-			Clear();
-			Stats::Note(Stats::kQuest);
-			Points::Add(2500);
-			Award(e, true);
-			logger::info("eggs: {} done", gen::kEggs[e].id);
-		}
-		void Advance(int e)
-		{
-			const int st = Step(e) + 1;
-			Forms::Play(gen::Sound::quest_step);
-			Say(StepKey(e, st - 1, true), gen::kEggs[e].steps[st - 1].done);   // (it counted: Felldir says so, wherever you are)
-			if (st >= gen::kEggs[e].nSteps) {
-				Complete(e);
-				return;
-			}
-			SetRaw(e, st * 1000);
-			SetTowns(e, (CurTown(e) + 1) * 100);  // (this city did its step: the next is found in another)
-			g_visited = -1, g_whCd = 0;  // (the next altar you reach tells you where to go)
-			logger::info("eggs: {} step {}", gen::kEggs[e].id, st);
-		}
-		void Bump(int e, int a_n, std::string_view a_what)
-		{
-			const int prog = Prog(e) + 1;
-			SetRaw(e, Step(e) * 1000 + prog);
-			if (prog < a_n) {
-				Forms::Play(gen::Sound::quest_step);
-				Hud::Banner(fmt::format("{} {} of {}", a_what, prog, a_n), 2.5f);
-			} else {
-				Advance(e);
-			}
-		}
-
 		// ---- (Noah, 2026-11-19: the Wonder Easter Eggs design) Felldir the Old whispers through the altars: lines queued and
 		// spoken one after another, each with its words under the compass while it plays ----
 		struct Said { gen::Sound snd; std::string text; float secs; };
@@ -308,6 +259,55 @@ namespace bo3z::Eggs
 			if (c.empty()) return -1;
 			static std::mt19937 rr{ std::random_device{}() };
 			return c[std::uniform_int_distribution<std::size_t>(0, c.size() - 1)(rr)];
+		}
+
+		void Award(int e, bool a_loud)
+		{
+			if (Gifted(e)) return;
+			SetGift(e);
+			const auto& d = gen::kEggs[e];
+			if (a_loud) {
+				std::string t(d.title);
+				for (auto& ch : t) ch = static_cast<char>(std::toupper(static_cast<unsigned char>(ch)));
+				Hud::QuestBanner(t + " - COMPLETE", 5.0f);
+			}
+			Classes::EarnWonder(d.cls);  // (the quest's end: the Greybeards call, and the wonder waits in the Reliquary)
+			logger::info("eggs: {} rewarded", d.id);
+		}
+		void Complete(int e)
+		{
+			Say(fmt::format("echo_{}_final", gen::kEggs[e].voice), gen::kEggs[e].finale);
+			SetRaw(e, kDone);
+			Clear();
+			Stats::Note(Stats::kQuest);
+			Points::Add(2500);
+			Award(e, true);
+			logger::info("eggs: {} done", gen::kEggs[e].id);
+		}
+		void Advance(int e)
+		{
+			const int st = Step(e) + 1;
+			Forms::Play(gen::Sound::quest_step);
+			Say(StepKey(e, st - 1, true), gen::kEggs[e].steps[st - 1].done);   // (it counted: Felldir says so, wherever you are)
+			if (st >= gen::kEggs[e].nSteps) {
+				Complete(e);
+				return;
+			}
+			SetRaw(e, st * 1000);
+			SetTowns(e, (CurTown(e) + 1) * 100);  // (this city did its step: the next is found in another)
+			g_visited = -1, g_whCd = 0;  // (the next altar you reach tells you where to go)
+			logger::info("eggs: {} step {}", gen::kEggs[e].id, st);
+		}
+		void Bump(int e, int a_n, std::string_view a_what)
+		{
+			const int prog = Prog(e) + 1;
+			SetRaw(e, Step(e) * 1000 + prog);
+			if (prog < a_n) {
+				Forms::Play(gen::Sound::quest_step);
+				Hud::Banner(fmt::format("{} {} of {}", a_what, prog, a_n), 2.5f);
+			} else {
+				Advance(e);
+			}
 		}
 
 		void TickStep(RE::PlayerCharacter* a_p, int e, RE::TESObjectREFR* a_altar, float a_dt)
