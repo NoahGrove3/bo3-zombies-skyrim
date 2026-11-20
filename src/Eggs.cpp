@@ -282,8 +282,7 @@ namespace bo3z::Eggs
 					const auto mech = Mech(e, st);
 					if (mech == "seals" || mech == "prism") m.el = i + 1;          // ember, rime, storm (and the sun's stone)
 					if (mech == "wrapped") m.el = i;                                // one of the dead for each flask's element
-					if (!m.taken && mech == "flee") {                               // a shy spirit cat, not a relic
-						if (auto* cat = Classes::SpiritCat(m.at, false, 3600.0f)) m.obj = cat->CreateRefHandle();
+					if (!m.taken && mech == "flee") {                               // a shy spirit cat, not a relic (made as you come near)
 					} else if (!m.taken && mech != "wrapped") {
 						m.obj = Place(a_p, gen::kRelRelic, m.at, s.type == gen::kEggOrder ? 0.55f : 0.32f);
 						m.light = Place(a_p, gen::kRelRelicLight, m.at + RE::NiPoint3{ 0, 0, 90.0f }, 1.0f);
@@ -816,8 +815,20 @@ namespace bo3z::Eggs
 						for (auto& m : g_live.marks) {
 							if (m.taken) continue;
 							auto r = m.obj.get();
-							if (!r || r->IsDisabled()) {
-								if (auto* cat = Classes::SpiritCat(m.at, false, 3600.0f)) m.obj = cat->CreateRefHandle();
+							// (the crash at Dawnstar's altar: a cat set down 200 m out stood in ground not yet loaded, and its feet's footing
+							// was worked out against a world that wasn't there) each cat is made only as you come within the loaded ground
+							// round you, and put away again as you leave it - where it wandered to, kept
+							const float far = pp.GetDistance(m.at);
+							if (!r || r->IsDisabled() || r->IsDeleted()) {
+								m.obj = {};
+								if (far < 6000.0f) {
+									if (auto* cat = Classes::SpiritCat(m.at, false, 3600.0f)) m.obj = cat->CreateRefHandle();
+								}
+								continue;
+							}
+							if (far > 9000.0f && r->GetPosition().GetDistance(pp) > 9000.0f) {
+								m.at = r->GetPosition();
+								Remove(m.obj);
 								continue;
 							}
 							if (auto* act = r->As<RE::Actor>(); act && act->IsInCombat()) act->StopCombat();   // (a shy one never fights)
@@ -859,7 +870,7 @@ namespace bo3z::Eggs
 									const RE::NiPoint3 dir{ (away.x * cs - away.y * sn) / l, (away.x * sn + away.y * cs) / l, 0 };
 									if (const auto to = Walkable(a_p, at + dir * (1300.0f + u(rr) * 700.0f), 500.0f); to && to->GetDistance(c) < s.r1) {
 										Gun::Motes(1, at, 0.6f, 1.0f);
-										r->SetPosition(*to);
+										if (auto* act = r->As<RE::Actor>()) act->SetPosition(*to, true);   // (an actor moved as one: its body with it)
 										m.at = *to;
 										break;
 									}
