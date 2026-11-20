@@ -4297,6 +4297,9 @@ namespace bo3z::Classes
 		}
 		void EyeFlames(RE::Actor* a_c)
 		{
+			// (Noah, 2026-11-20: "I also want the blue flame in the eyes of the cats to be removed so it's just the ghostly looking
+			// design") no flames: the cats are the ghost glow alone
+			if (a_c) return;
 			auto* root = a_c ? a_c->Get3D() : nullptr;
 			// (Noah: "the flaming eyeballs were not on the model's eye socket ... they were floating") a sabre cat has a bone for each
 			// eye ("Sabrecat_Head [LEye]" / "[REye]", at the eyeball's centre, +y looking out): each flame hangs on its own
