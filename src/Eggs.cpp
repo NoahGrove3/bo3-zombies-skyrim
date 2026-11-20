@@ -380,8 +380,7 @@ namespace bo3z::Eggs
 		void SayHere(int e, int a_town)
 		{
 			if (e < 0) {
-				if (FreedTowns() < 6 && !g_dev) Say("echo_asleep", gen::kWhisperAsleep);
-				else if (const int sq = SignQuest(); sq >= 0) Say(fmt::format("echo_{}_sign", gen::kEggs[sq].voice), kSignLine[sq]);
+				if (const int sq = SignQuest(); sq >= 0) Say(fmt::format("echo_{}_sign", gen::kEggs[sq].voice), kSignLine[sq]);
 				return;
 			}
 			if (!OpenSaid(e)) {
@@ -411,7 +410,7 @@ namespace bo3z::Eggs
 			if (d > 2000.0f && g_visited == town) g_visited = -1;
 			if (town < 0) g_visited = -1;
 			if (!altar || d > 850.0f || g_visited == town || a_p->IsInCombat() || g_whCd > 0 || g_sayT > 0 || !g_say.empty()) return;
-			if (e < 0 && (FreedTowns() >= 6 || g_dev) && SignQuest() < 0) return;   // (nothing under way, no sign to hint: nothing to say)
+			if (e < 0 && SignQuest() < 0) return;   // (nothing under way, no sign to hint: nothing to say - the wonders' sleep is said once, as the first altar wakes)
 			g_visited = town;
 			g_whCd = 180.0f;
 			SayHere(e, town);
@@ -1140,7 +1139,14 @@ namespace bo3z::Eggs
 			const int  f = FreedTowns();
 			if (last < 0 || f < last) {
 				for (int i = 0; i < 3; ++i) if (f >= kRevealAt[i]) SetBit(20 + i, true);
+				if (f >= 1) SetBit(23, true);
 			} else if (f > last) {
+				// (Noah, 2026-11-20: "Make the wonders still sleep voice play once the first echo alter is freed in riverwood") the
+				// voice's first words, once, as the first altar wakes
+				if (f >= 1 && !((Gifts() >> 23) & 1)) {
+					SetBit(23, true);
+					if (Say("echo_asleep", gen::kWhisperAsleep)) g_say.back().card = 1;
+				}
 				for (int i = 0; i < 3; ++i) {
 					if (f < kRevealAt[i] || RevealSaid(i)) continue;
 					SetBit(20 + i, true);
@@ -1378,7 +1384,7 @@ namespace bo3z::Eggs
 	{
 		static constexpr const char* kNum[9] = { "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX" };
 		std::vector<Whisper> out;
-		if (FreedTowns() < 6) out.push_back({ "The Wonders Sleep", "free more cities", 1, 0 });
+		if ((Gifts() >> 23) & 1) out.push_back({ "The Wonders Sleep", "the first altar awake", 1, 0 });
 		for (int i = 0; i < 3; ++i) if (RevealSaid(i)) out.push_back({ kRevealTitle[i], fmt::format("{} altars awake", kRevealAt[i]), 3 + i, 0 });
 		const int act = Active();
 		const int sq = SignQuest();
