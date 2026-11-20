@@ -1063,8 +1063,8 @@ for key, edid, track, flags, prio, fade in (('boss', 'UN_MUSBoss', 'Data\\Music\
 recs['FSTS'].append(record('FSTS', fid('FSTS', 'silent'), [sub('EDID', z('UN_SilentFootsteps')), sub('XCNT', struct.pack('<5I', 0, 0, 0, 0, 0)), sub('DATA', b'')]))
 # loading screens of our own among Skyrim's: the shrine or the lore book turning, and a hint
 LOADING_TIPS = [
-    "Alduin shouted three words into the earth at Helgen - SLEN TIID VO, Flesh, Time, Undo - and every barrow answered.",
-    "Alduin's mist lies on the door of Sovngarde. The dead cannot pass to Shor's hall, so they rise instead.",
+    "As Alduin flew from burning Helgen he shouted three words into the earth - SLEN TIID VO, Flesh, Time, Undo - and every barrow answered.",
+    "Alduin's shout lies like a mist across the road to Sovngarde. The dead cannot pass to Shor's hall, so they rise instead.",
     "Free six cities and your path's secret wakes. When it is won, the Greybeards call - your wonder waits beneath High Hrothgar.",
     "An Echo Altar stands in every city. Upgrade your kit, take a relic or a perk - the night does not wait while you bargain.",
     "Gloomstalkers shriek to wound everyone near them. Kill them first.",
@@ -1285,9 +1285,9 @@ def lore_text():
            "<p align='center'><font size='30'>THE CURSE OF ALDUIN</font></p>",
            "<p align='center'>Written at High Hrothgar by a Greybeard who broke his silence, for whoever lived through Helgen</p>",
            "[pagebreak]", "<p align='center'><font size='24'>I. What Happened</font></p>", img('helgen', 300, 176),
-           "<p>When Alduin rose over Helgen, he shouted three Words into the earth: <b>SLEN TIID VO</b> - Flesh, Time, Undo. "
-           "It is the shout that raises the dead.</p>",
-           "<p>His mist also covers the door of <b>Sovngarde</b>, so the dead of Skyrim cannot pass on. They lie restless in the ground. "
+           "<p>Alduin attacked Helgen, but he did not stay to finish it. As he flew north he shouted three Words into the earth: <b>SLEN TIID VO</b> - Flesh, Time, Undo. "
+           "It is the shout he uses to raise his dragons from their burial mounds. This time it fell on every grave in Skyrim.</p>",
+           "<p>His shout also hangs like a mist across the road to <b>Sovngarde</b>, so the dead of Skyrim cannot pass on. They lie restless in the ground. "
            "By day they sleep. When the sun goes down, they rise.</p>",
            "[pagebreak]", "<p align='center'><font size='24'>II. The Dead</font></p>", img('graves', 300, 176),
            "<p>Each night the dead come in <b>waves</b>, more of them and harder to kill as the nights go on. Each one comes down in a red beam from the sky "
@@ -1308,7 +1308,9 @@ def lore_text():
            "Finish them and its Dragon Priest rises at night. Kill him and the altar wakes.</p>",
            "<p>A woken altar makes its city a <b>sanctuary</b>: none of the curse's dead rise inside it, by night or by day. Step outside its walls and they find you again.</p>",
            "[pagebreak]", "<p align='center'><font size='24'>V. The Dragonborn's Road</font></p>",
-           "<p>The Curse walks beside your own story; it does not replace it.</p>",
+           "<p>The Curse walks beside your own story; it does not replace it. Your own road against Alduin - the Greybeards, Paarthurnax, Sovngarde - is still ahead of you.</p>",
+           "<p>Even if Alduin himself falls in Sovngarde, the Curse does not die with him. A shout, once spoken, keeps its own voice: his three Words still ring in the earth, "
+           "and his <b>Echo</b> still circles the Throat of the World. Only the altars and the slaying of the Words can silence them.</p>",
            "<p><b>Riverwood's</b> altar, nearest Helgen, wakes first. <b>Whiterun's</b> answers your first dragon soul and gives you a dragon to ride - and its Thu'um, "
            "<i>Dragon's Updraft</i>. <b>Solitude's</b> bards give you the <i>Dance of Death</i>.</p>",
            "<p>Free six cities and the four paths' <b>secrets</b> wake, one at a time. Win one and the Greybeards call you to <b>High Hrothgar</b>: its <b>wonder</b> floats waiting "
@@ -1359,15 +1361,15 @@ def guide_text():
            p("Steer with the stick or WASD. Forward dives, back climbs. Attack to make it breathe fire on the dead below - only the dead, never your friends. "
              "At the altar you can make deeper bonds with it."),
            "[pagebreak]", h("The Reliquary"),
-           p("Behind a sealed door in the great hall of <b>High Hrothgar</b> lies the Reliquary of the Tongues: four pedestals, one for each path's wonder. "
-             "It opens the first time the Greybeards call you."),
-           p("Win one of the four secrets and the Greybeards' shout rolls across Skyrim - its <b>wonder</b> waits on its pedestal. Go and take it up. "
+           p("In the great hall of <b>High Hrothgar</b> the Greybeards keep the Reliquary of the Tongues: a place over each bench for each path's wonder, "
+             "and Alduin's Bane above the fire. Each wonder shows there, waiting, until it is won."),
+           p("Win one of the four secrets and the Greybeards' shout rolls across Skyrim - its <b>wonder</b> waits for you in the great hall. Go and take it up. "
              "Every wonder answers to every class: win them all and mix your own build."),
            "[pagebreak]", h("The Wonder Weapons"),
-           p("<b>Horn of the Spectral Wyrm</b> (Summoner) - blow it and a spectral dragon fights at your side."),
-           p("<b>Tome of the Six Fires</b> (Battle-mage) - one cast looses the top spell of all six of your elements on the dead round you, every 8 seconds."),
-           p("<b>Subsuming Vortex</b> (Ranger) - every arrow tears open a black hole that drags the dead in, then bursts."),
-           p("<b>Dragon Slayer</b> (Spellsword) - two tiers above your blade, and every hit carries the last Spellsword spell you held."),
+           p("<b>Soulcaller's Staff</b> (Summoner) - its beam takes the souls of the dead it kills; every 20 souls a spectral sabre cat fights at your side, three at most."),
+           p("<b>Staff of Magnus</b> (Destruction) - its beam drains the dead and feeds your magicka, and erupts where it lets go."),
+           p("<b>Mutagen Staff</b> (Alchemist) - its beam pierces the dead, pouring each of its six elements in turn."),
+           p("<b>Dragon Slayer</b> (Spellsword) - every hit carries the spell in your other hand."),
            p("When the three dragons fall, every wonder wakes to its <b>Legendary</b> form."),
            "[pagebreak]", h("The Three Dragons"),
            p("With all four wonders won (a party pools theirs), Alduin's three words wake as dragons, each at its own place: <b>SLEN</b> - Slenvahrin, at the cult's old shrine in the Reach; "
