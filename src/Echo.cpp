@@ -602,11 +602,13 @@ namespace bo3z
 				// (Noah, 2026-11-20: "The endless flame braziers need to be removed - make it the Pillar of Time ... give that stone pillar
 				// blue runic design and symbols like the echo alter") no braziers: the pillar ringed by bands of the altars' blue runes
 				// (tools/pillarrunes.py), turning slowly
-				if (!g_hall.pillar.get()) {
-					if (auto* runes = Forms::Ours(gen::kHallPillar)) {
-						g_hall.pillar = Gun::PlaceAt(runes, kPillarAt, 0);
-						logger::info("echo: the Pillar of Time's runes lit");
-					}
+				// (Noah: "I don't see any runic effects on the pillar of time" - placed as an object, a model of only light never drew) laid
+				// as the glows are: a lingering model of light, lit again just before it burns out
+				if ((g_pillarT -= 0.5f) <= 0) {
+					Gun::Hazard("CurseOfAlduin\\reliquary\\pillar_runes.nif", kPillarAt, 1.0f, 20.0f);
+					static bool said = false;
+					if (!said) said = true, logger::info("echo: the Pillar of Time's runes lit");
+					g_pillarT = 19.5f;
 				}
 				for (int i = 0; i < 5; ++i) {
 					if (g_hallKind[i] != 1 || (g_glowT[i] -= 0.5f) > 0) continue;
@@ -622,6 +624,21 @@ namespace bo3z
 					if (auto* fn = o->AsFadeNode()) fn->GetRuntimeData().currentFade = 1.0f;
 				};
 				for (int i = 0; i < 5; ++i) whole(g_hall.item[i]);
+				// (Noah: "the dragon slayer blade looks like it has a cover on it covering the blade edge") the katana's model carries its
+				// scabbard (hidden in the hands once drawn): on the display it's hidden too
+				if (auto r = g_hall.item[3].get(); r && r->Get3D()) {
+					std::function<void(RE::NiAVObject*)> hide = [&](RE::NiAVObject* o) {
+						if (!o) return;
+						std::string nm(o->name.c_str() ? o->name.c_str() : "");
+						std::transform(nm.begin(), nm.end(), nm.begin(), ::tolower);
+						if (nm.find("scb") != std::string::npos || nm.find("sheath") != std::string::npos || nm.find("scabbard") != std::string::npos) {
+							o->GetFlags().set(RE::NiAVObject::Flag::kHidden);
+							return;
+						}
+						if (auto* n = o->AsNode()) for (auto& c : n->GetChildren()) hide(c.get());
+					};
+					hide(r->Get3D());
+				}
 				// (the Bane's and the Slayer's models are Light Greatswords' own, havok body and all) each held where it floats, never
 				// dropped by the physics; and until it's yours, a pale ghostly membrane over it - its grey likeness
 				for (int i = 0; i < 5; ++i) {
