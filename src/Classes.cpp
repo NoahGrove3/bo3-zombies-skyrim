@@ -4044,7 +4044,13 @@ namespace bo3z::Classes
 		auto* f = Lookup(0x18B75A, "NewArmoury.esp");   // Animated Armoury's Dwarven Quarterstaff
 		auto* s = f ? f->As<RE::TESObjectWEAP>() : nullptr;
 		if (!mut || !s) { logger::warn("alchemist: the Mutagen Staff can't take the Dwarven Quarterstaff's look - is Animated Armoury installed?"); return; }
+		// (Noah, 2026-11-20: "use our mutagen staff model but the dwarven quarter staff attack animations") the quarterstaff's swings,
+		// reach and sounds; our own staff in the hands (tools/modelconv/qsfit.cpp: grown to a quarterstaff's length, gripped as one)
+		const std::string ownModel = mut->GetModel() ? mut->GetModel() : "";
+		auto* const       ownFirst = mut->firstPersonModelObject;
 		AdoptLook(mut, s);
+		if (!ownModel.empty()) mut->SetModel(ownModel.c_str());
+		if (ownFirst) mut->firstPersonModelObject = ownFirst;
 		mut->formEnchanting = nullptr, mut->amountofEnchantment = 0;   // (no staff cast of Skyrim's: its beam and flasks are ours)
 		logger::info("alchemist: the Mutagen Staff takes the look of {} - swung as a quarterstaff", s->GetName());
 	}

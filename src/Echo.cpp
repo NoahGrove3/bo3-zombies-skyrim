@@ -490,7 +490,7 @@ namespace bo3z
 		}
 		std::string AimLabel(RE::PlayerCharacter* a_p, int a_i)
 		{
-			if (a_i == 5) return "The Endless Flame";
+			if (a_i == 5) return "The Pillar of Time";
 			if (a_i < 5 && !FloatShown(a_p, a_i)) {  // (nothing to take: its grey likeness, or one already yours)
 				if (a_i == 4) return a_p->GetItemCount(Bane()) > 0 ? "Alduin's Bane - in your hands" : "Alduin's Bane - wakes when the Echo of Alduin falls";
 				const int st = Classes::WonderState(a_i);
@@ -517,7 +517,7 @@ namespace bo3z
 			                                                      : "New Game+: the nights start over with the dead stronger - you keep your wonders, powers and gear")
 			                               : "Wakes when the Echo of Alduin falls",
 				!again ? std::string("LOCKED") : "CYCLE " + std::to_string(Cycle() + 1), again });
-			r.push_back({ "LEAVE THE FLAME", "", "", true });
+			r.push_back({ "LEAVE THE PILLAR", "", "", true });
 			return r;
 		}
 		void PushHallHud(RE::PlayerCharacter* a_p)
@@ -527,7 +527,7 @@ namespace bo3z
 			h.hallAim = g_aim >= 0 && !g_hallMenu ? AimLabel(a_p, g_aim) : std::string();
 			h.hallMenu = g_hallMenu;
 			if (g_hallMenu) {
-				h.hallTitle = "THE ENDLESS FLAME";
+				h.hallTitle = "THE PILLAR OF TIME";
 				h.hallRows = HallRows();
 				h.hallFocus = g_hallFocus;
 			}
@@ -599,28 +599,14 @@ namespace bo3z
 				// (Noah: "the Endless Flame pillar should be animated with flames" - placed as an object, a model of only light never
 				// drew) the fire and the glows burn as the flasks' ground fires do: lingering hazards wearing the model, lit again
 				// just before each burns out
-				if (g_ring.empty()) {
-					auto* br = RE::TESForm::LookupByID<RE::TESBoundObject>(kRingBrazier);
-					auto* fire = RE::TESForm::LookupByID<RE::TESBoundObject>(kRingFire);
-					auto* light = RE::TESForm::LookupByID<RE::TESBoundObject>(kRingLight);
-					constexpr int   kN = 6;
-					constexpr float kR = 150.0f, kBr = 0.7f, kFire = 0.45f;  // (the pillar is 92 across its base; each brazier ~100 wide, 76 high)
-					for (int k = 0; br && fire && k < kN; ++k) {
-						const float a = (k + 0.5f) * 6.2832f / kN;
-						const RE::NiPoint3 at = kPillarAt + RE::NiPoint3{ std::cos(a) * kR, std::sin(a) * kR, 0.0f };
-						if (auto h = Gun::PlaceAt(br, at, a); h) {
-							if (auto r = h.get()) r->SetScale(kBr);
-							g_ring.push_back(h);
-						}
-						if (auto h = Gun::PlaceAt(fire, at + RE::NiPoint3{ 0, 0, 72.0f }, a); h) {
-							if (auto r = h.get()) r->SetScale(kFire);
-							g_ring.push_back(h);
-						}
+				// (Noah, 2026-11-20: "The endless flame braziers need to be removed - make it the Pillar of Time ... give that stone pillar
+				// blue runic design and symbols like the echo alter") no braziers: the pillar ringed by bands of the altars' blue runes
+				// (tools/pillarrunes.py), turning slowly
+				if (!g_hall.pillar.get()) {
+					if (auto* runes = Forms::Ours(gen::kHallPillar)) {
+						g_hall.pillar = Gun::PlaceAt(runes, kPillarAt, 0);
+						logger::info("echo: the Pillar of Time's runes lit");
 					}
-					if (light) {
-						if (auto h = Gun::PlaceAt(light, kPillarAt + RE::NiPoint3{ 0, 0, 140.0f }, 0); h) g_hall.pillar = h;
-					}
-					logger::info("echo: the Endless Flame burns - a ring of {} braziers", g_ring.size() / 2);
 				}
 				for (int i = 0; i < 5; ++i) {
 					if (g_hallKind[i] != 1 || (g_glowT[i] -= 0.5f) > 0) continue;
@@ -662,16 +648,28 @@ namespace bo3z
 				R.entry[1][0] = sn, R.entry[1][1] = 0, R.entry[1][2] = -c;
 				R.entry[2][0] = 0, R.entry[2][1] = 1, R.entry[2][2] = 0;
 				// its model's own middle and size, read once: held unturned at the origin for a moment, its bound read back
-				if (i < 4 && g_native[i].r <= 0) {
+				if (i < 4 && g_native[i].r == 0.0f) {
 					o->local.rotate = RE::NiMatrix3{};
 					o->local.scale = 1.0f;
 					o->local.translate = {};
 					RE::NiUpdateData u0;
 					u0.time = 0.0f;
 					o->Update(u0);
-					if (o->worldBound.radius > 1.0f) {
-						g_native[i] = { o->worldBound.center, o->worldBound.radius };
-						logger::info("echo: the hall's wonder {} measured - middle ({:.1f}, {:.1f}, {:.1f}), half-length {:.1f}", i, g_native[i].c.x, g_native[i].c.y, g_native[i].c.z, g_native[i].r);
+					// (Noah, 2026-11-20: the Soulcaller's Staff, the Staff of Magnus and the Dragon Slayer "are invisible but I can still see the
+					// pop up") a bound read back before Skyrim had worked it out is where the thing stood in the hall, not its own middle -
+					// centred on that, it was drawn far off. A middle further from its origin than its own size is that: read again next
+					// frame, and after a few tries its sheet middle is used
+					static std::array<int, 5> tries{};
+					const auto c = o->worldBound.center;
+					const float rr = o->worldBound.radius;
+					if (rr > 1.0f && c.Length() < std::max(120.0f, rr * 1.5f)) {
+						g_native[i] = { c, rr };
+						tries[i] = 0;
+						logger::info("echo: the hall's wonder {} measured - middle ({:.1f}, {:.1f}, {:.1f}), half-length {:.1f}", i, c.x, c.y, c.z, rr);
+					} else if (++tries[i] > 30) {
+						g_native[i] = { RE::NiPoint3{ 0, kFloatMid[i], 0 }, 0.0f };
+						g_native[i].r = -1.0f;   // (given up: its sheet middle and scale)
+						logger::warn("echo: the hall's wonder {} gave no true middle ({:.0f}, {:.0f}, {:.0f}) r {:.0f} - its sheet middle used", i, c.x, c.y, c.z, rr);
 					}
 				}
 				float sc = kFloatScale[i];
@@ -688,6 +686,21 @@ namespace bo3z
 				RE::NiUpdateData ud;
 				ud.time = 0.0f;
 				o->Update(ud);
+			}
+			if (auto pr = g_hall.pillar.get()) {   // the Pillar of Time's rune bands turning slowly
+				if (auto* o = pr->Get3D()) {
+					const float a = std::fmod(g_hallT * 0.1f, 6.2832f), c = std::cos(a), sn = std::sin(a);
+					RE::NiMatrix3 R;
+					R.entry[0][0] = c, R.entry[0][1] = -sn, R.entry[0][2] = 0;
+					R.entry[1][0] = sn, R.entry[1][1] = c, R.entry[1][2] = 0;
+					R.entry[2][0] = 0, R.entry[2][1] = 0, R.entry[2][2] = 1;
+					o->local.rotate = R;
+					o->local.translate = kPillarAt;
+					o->GetFlags().set(RE::NiAVObject::Flag::kAlwaysDraw, RE::NiAVObject::Flag::kIgnoreFade);
+					if (auto* fn = o->AsFadeNode()) fn->GetRuntimeData().currentFade = 1.0f;
+					RE::NiUpdateData ud;
+					o->Update(ud);
+				}
 			}
 			// in your sights: the nearest along your look, close enough to reach
 			g_aim = -1;
@@ -1278,7 +1291,7 @@ namespace bo3z
 				consider(kHHFront + RE::NiPoint3{ 0, 0, 250.0f }, "High Hrothgar - " + std::string(Classes::WonderName(waiting)) + " waits in the great hall");
 			}
 			if (Flag(kFlagHallOpen) && Bane() && a_p->GetItemCount(Bane()) <= 0 && !Flag(kFlagRobes)) {
-				consider(kHHFront + RE::NiPoint3{ 0, 0, 250.0f }, "High Hrothgar - Alduin's Bane and the Endless Flame");
+				consider(kHHFront + RE::NiPoint3{ 0, 0, 250.0f }, "High Hrothgar - Alduin's Bane and the Pillar of Time");
 			}
 			for (int w = 0; w < kWordCount; ++w) {
 				if (!Awake(w)) continue;

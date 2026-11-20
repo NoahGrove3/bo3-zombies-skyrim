@@ -189,7 +189,7 @@ for e, label, text in FLASKS:
             b = bytes.fromhex(hx)
             if name == 'EDID': b = z('UN_Flask_' + e)
             elif name == 'FULL': b = z('Mutagen Staff')
-            elif name == 'MODL': b = z('CurseOfAlduin\\alchemist\\mutagen_staff.nif')
+            elif name == 'MODL': b = z('CurseOfAlduin\\alchemist\\mutagen_staff_qs.nif')   # (Noah, 2026-11-20: our model, held as a quarterstaff - tools/modelconv/qsfit.cpp)
             elif name == 'EITM': b = struct.pack('<I', fid('ENCH', 'mutagenstaff'))
             elif name == 'EAMT': b = struct.pack('<H', 3000)
             elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_flask_' + e))
@@ -1518,7 +1518,7 @@ recs['ACTI'].append(record('ACTI', fid('ACTI', 'rel_portal'), [sub('EDID', z('UN
 for key, model, r in (('hf_gravecaller', 'SSS\\GlassStaff.nif', 80), ('hf_frostbinder', 'Weapons\\StaffofMagnus\\StaffofMagnus.nif', 80),
                       ('hf_wolfcrown', 'CurseOfAlduin\\alchemist\\mutagen_staff.nif', 80), ('hf_barrowhorn', lgs('slayer'), 60),
                       ('hf_bane', lgs('bane'), 90), ('hf_glow', 'CurseOfAlduin\\fx\\hall_glow.nif', 60),
-                      ('hf_glowtall', 'CurseOfAlduin\\fx\\hall_glow_tall.nif', 120), ('hf_pillar', 'CurseOfAlduin\\fx\\pillar_fire.nif', 120)):
+                      ('hf_glowtall', 'CurseOfAlduin\\fx\\hall_glow_tall.nif', 120), ('hf_pillar', 'CurseOfAlduin\\reliquary\\pillar_runes.nif', 170)):
     recs['ACTI'].append(record('ACTI', fid('ACTI', key), [sub('EDID', z('UN_' + key)), sub('OBND', struct.pack('<6h', -r, -r, -r, r, r, r * 2)),
         sub('MODL', z(model)), sub('FNAM', b'\0\0')]))
 for k in ('gravecaller', 'frostbinder', 'wolfcrown', 'barrowhorn', 'bane'):  # (greyed out, until it's yours: tools/modelconv/ghostnif.cpp; the Staff of Magnus's made on the machine from the game's own)
