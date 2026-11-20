@@ -34,7 +34,7 @@ namespace bo3z::Eggs
 				g->value = static_cast<float>(a_on ? (v | (1 << a_bit)) : (v & ~(1 << a_bit)));
 			}
 		}
-		bool Begun(int e) { return (Gifts() >> (12 + e)) & 1; }
+		bool Begun(int e) { return ((Gifts() >> (12 + e)) & 1) || Raw(e) > 0; }   // (a quest already under way before the signs: begun)
 		bool RevealSaid(int i) { return (Gifts() >> (20 + i)) & 1; }
 		bool Done(int e) { return Raw(e) >= kDone; }
 		int  Step(int e) { return Done(e) ? gen::kEggs[e].nSteps : std::clamp(Raw(e) / 1000, 0, std::max(0, static_cast<int>(gen::kEggs[e].nSteps) - 1)); }  // (the audit: a bad save or console edit never indexes past its steps)

@@ -1123,37 +1123,59 @@ namespace bo3z
 		{
 			if (auto* g = SeenGlob()) g->value = static_cast<float>(static_cast<int>(g->value) | (1 << t));
 		}
-		float AltarFloor(std::size_t a_index)
+		// (the altar's own place never moves - the stand, its plan and its pieces all hang on it) only what is drawn sinks: its model
+		// and its pieces' models are lowered under the ground, and brought up as it rises
+		void SinkDrawn(RE::TESObjectREFR* a_r, float a_off)
 		{
-			const auto& loc = gen::kLocations[a_index];
-			return loc.fixed ? loc.z : g_towns[loc.town].top - kAltarSink;
+			auto* n = a_r ? a_r->Get3D() : nullptr;
+			if (!n) return;
+			const float want = a_r->GetPosition().z + a_off;
+			if (std::abs(n->local.translate.z - want) < 0.5f) return;
+			n->local.translate.z = want;
+			RE::NiUpdateData ud;
+			n->Update(ud);
+		}
+		void SinkAltar(std::size_t a_index, RE::TESObjectREFR* a_main, float a_off)
+		{
+			SinkDrawn(a_main, a_off);
+			const int obj = gen::kLocations[a_index].object;
+			RE::TES::GetSingleton()->ForEachReferenceInRange(a_main, 450.0f, [&](RE::TESObjectREFR* r) {
+				if (!r || r == a_main || r->IsDeleted()) return RE::BSContainer::ForEachResult::kContinue;
+				auto* b = r->GetBaseObject();
+				for (const auto& d : gen::kDress) {
+					if (d.object != obj) continue;
+					if (auto* ob = Forms::Ours(d.formId); ob && b == ob) {
+						SinkDrawn(r, a_off);
+						break;
+					}
+				}
+				return RE::BSContainer::ForEachResult::kContinue;
+			});
 		}
 		void TickRise(RE::PlayerCharacter* a_p, float a_dt)
 		{
 			if (!a_p || Coop::Client()) return;
+			static float scan = 0;
+			const bool   rescan = (scan -= a_dt) <= 0;
+			if (rescan) scan = 0.5f;
 			for (std::size_t i = 0; i < gen::kLocations.size(); ++i) {
 				const auto& loc = gen::kLocations[i];
 				if (gen::kObjects[loc.object].kind != 0 || loc.town < 0 || loc.town >= 16) continue;
 				auto r = g_placed[i].get();
-				if (!r || r->IsDeleted() || !r->Is3DLoaded() || (!loc.fixed && !g_towns[loc.town].topSet)) continue;
-				const int   t = loc.town;
-				const float floor = AltarFloor(i);
-				auto        pos = r->GetPosition();
-				float&      rt = g_riseT[t];
+				if (!r || r->IsDeleted() || !r->Is3DLoaded()) continue;
+				const int t = loc.town;
+				const auto pos = r->GetPosition();
+				float&     rt = g_riseT[t];
 				if (rt < 0 && !AltarSeen(t)) {
-					if (std::abs(pos.z - (floor - kRiseDepth)) > 2.0f) {   // (hidden: under its ground, its pieces with it)
-						pos.z = floor - kRiseDepth;
-						r->SetPosition(pos);
-						Dress(i, r.get());
-					}
-					if (a_p->GetWorldspace() != r->GetWorldspace() || a_p->GetPosition().GetDistance({ pos.x, pos.y, floor }) > kRiseNear) continue;
+					if (rescan) SinkAltar(i, r.get(), -kRiseDepth);   // (hidden: drawn under its ground, its pieces with it)
+					else SinkDrawn(r.get(), -kRiseDepth);
+					if (a_p->GetWorldspace() != r->GetWorldspace() || a_p->GetPosition().GetDistance(pos) > kRiseNear) continue;
 					// found: it rises
 					SetAltarSeen(t);
 					rt = 0.0f, g_riseDust[t] = 0.0f;
-					const RE::NiPoint3 at{ pos.x, pos.y, floor };
-					Audio::AtPoint(gen::Sound::boss_quake, at, 0.0f, 1.0f);
-					Audio::AtPoint(gen::Sound::rise_dig, at, 0.3f, 1.0f);
-					if (Settings::ScreenShake()) RE::ShakeCamera(0.55f, at, kRiseSecs);
+					Audio::AtPoint(gen::Sound::boss_quake, pos, 0.0f, 1.0f);
+					Audio::AtPoint(gen::Sound::rise_dig, pos, 0.3f, 1.0f);
+					if (Settings::ScreenShake()) RE::ShakeCamera(0.55f, pos, kRiseSecs);
 					logger::info("shops: the Echo Altar of {} found - it rises", gen::kTowns[t]);
 				}
 				if (rt < 0) continue;
@@ -1161,23 +1183,19 @@ namespace bo3z
 				const float u = std::clamp(rt / kRiseSecs, 0.0f, 1.0f);
 				const float e = u * u * (3.0f - 2.0f * u);
 				const float jitter = u < 1.0f ? std::sin(rt * 47.0f) * 2.5f * (1.0f - u) : 0.0f;   // (it judders as it grinds up)
-				pos.z = floor - kRiseDepth * (1.0f - e) + jitter;
-				r->SetPosition(pos);
-				Dress(i, r.get());
+				SinkAltar(i, r.get(), -kRiseDepth * (1.0f - e) + jitter);
 				if ((g_riseDust[t] -= a_dt) <= 0 && u < 0.95f) {
 					g_riseDust[t] = 0.7f;
 					static std::mt19937 rr{ std::random_device{}() };
 					std::uniform_real_distribution<float> ang(0.0f, 6.2832f);
 					const float a = ang(rr);
-					Gun::FxBlast("giantslam", { pos.x + std::cos(a) * 160.0f, pos.y + std::sin(a) * 160.0f, floor + 10.0f });
+					Gun::FxBlast("giantslam", { pos.x + std::cos(a) * 160.0f, pos.y + std::sin(a) * 160.0f, pos.z + 60.0f });
 				}
 				if (u >= 1.0f) {
 					rt = -1.0f;
-					pos.z = floor;
-					r->SetPosition(pos);
-					Dress(i, r.get());
-					Gun::ElemBurst(1, { pos.x, pos.y, floor + kOrbZ }, 1.6f, 0.0f, 1.2f);   // (its heart lights, blue)
-					Gun::FxBlast("light", { pos.x, pos.y, floor + kOrbZ });
+					SinkAltar(i, r.get(), 0.0f);
+					Gun::ElemBurst(1, pos + RE::NiPoint3{ 0, 0, kOrbZ }, 1.6f, 0.0f, 1.2f);   // (its heart lights, blue)
+					Gun::FxBlast("light", pos + RE::NiPoint3{ 0, 0, kOrbZ });
 					Forms::PlayAt(gen::Sound::coffer_open, r.get());
 					logger::info("shops: the Echo Altar of {} has risen", gen::kTowns[t]);
 				}
