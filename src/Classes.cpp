@@ -4498,6 +4498,28 @@ namespace bo3z::Classes
 		g_flaskCool = std::max(0.0f, g_flaskCool - a_delta), g_philCool = std::max(0.0f, g_philCool - a_delta);
 		TickGauntletBeam(a_delta);
 		TickMutagen(a_delta);
+		// (Noah, 2026-11-20: "whenever I sheath [a quarter staff] my hands are still in the holding the staff position but the staff is
+		// invisible because it's on my back") a quarterstaff's put-away doesn't hand the pose back: a moment after it's away, the
+		// body is let go to its plain stance
+		{
+			static bool  was = false;
+			static float wait = -1.0f;
+			static auto* qs = RE::TESDataHandler::GetSingleton()->LookupForm<RE::BGSKeyword>(0x0E4581, "NewArmoury.esp");
+			if (auto* p = RE::PlayerCharacter::GetSingleton(); p && qs) {
+				auto* w = p->GetEquippedObject(false);
+				auto* weap = w ? w->As<RE::TESObjectWEAP>() : nullptr;
+				const bool isQs = weap && weap->HasKeyword(qs);
+				const bool drawn = p->AsActorState()->IsWeaponDrawn();
+				if (was && !drawn && isQs) wait = 1.4f;
+				was = drawn;
+				if (wait > 0 && (wait -= a_delta) <= 0) {
+					if (!drawn && isQs && !p->IsInKillMove() && !p->AsActorState()->IsSwimming()) {
+						p->NotifyAnimationGraph("IdleForceDefaultState");
+						logger::info("classes: the quarterstaff put away - your stance let go");
+					}
+				}
+			}
+		}
 		TickClaws();
 		// (Noah: "when swinging the whips, I don't see the whip uncoil") its chain told again each time it's drawn - the
 		// variable Animated Armoury's script sets on equipping doesn't outlive the weapon's 3D being put away and remade
