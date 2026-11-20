@@ -2882,7 +2882,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const bool  shout = s.shrineShout >= 0 && s.shrineShout < static_cast<int>(gen::kShouts.size());
 				// (Noah: scroll down to the altar's trials) one panel, its trials below the rest; as tall as the screen allows,
 				// the rows sliding to keep the one in focus in view
-				const float trialsH = (s.trialsOn ? 112 * k + 5 * 70 * k + 104 * k : 0.0f) + (s.whispers.empty() ? 0.0f : 56 * k + 50 * k * s.whispers.size());
+				const float trialsH = (s.trialsOn ? 112 * k + 5 * 70 * k + 104 * k : 0.0f) + (s.whispers.empty() ? 0.0f : 56 * k + 5 * 40 * k + 50 * k * s.whispers.size());
 				static float measuredH = 0;  // (Noah: "five white dots under Leave the Altar" - the tops of the lines below it, cut by a short guess) the panel's real height, from the last frame
 				const float guessH = (shout ? 610 : 532) * k + 86 * k + 78 * k + 56 * k + trialsH;
 				const float contentH = measuredH > 0 ? measuredH + 40 * k : guessH;
@@ -3225,28 +3225,52 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				// (Noah: "cards like the armory with the title of each whisper ... clicked it plays the whisper") a card a whisper: its
 				// title and a short note, never the words; select one and Felldir says it again
 				if (!s.whispers.empty() && section(215, "WHISPERS", fmt::format("{} heard", s.whispers.size()), false)) {
-					for (int wi = 0; wi < static_cast<int>(s.whispers.size()); ++wi) {
-						const auto& wsp = s.whispers[wi];
-						const int   row = 300 + wi;
-						const bool  saying = s.whisperSpeaking == wsp.id;
-						const ImU32 wc = IM_COL32(170, 200, 245, 255);
-						focusRow(row, y - 6 * k, y + 46 * k);
-						bullet({ L, y + 2 * k }, row, true);
-						Txt(dl, g_title, 18 * k, { L + 36 * k, y + 3 * k }, saying ? wc : kParch, Upper(wsp.title));
-						Txt(dl, g_body, 15 * k, { L + 36 * k, y + 27 * k }, IM_COL32(196, 182, 160, 235), saying ? std::string("Felldir speaks...") : wsp.info);
-						{  // a small speaker at the right: lit, with its waves pulsing, while this one is being said
-							const ImVec2 c{ Rr - 22 * k, y + 20 * k };
-							const ImU32  ic = saying ? wc : s.altarFocus == row ? kGold : IM_COL32(150, 140, 124, 220);
-							dl->AddRectFilled({ c.x - 9 * k, c.y - 4 * k }, { c.x - 4 * k, c.y + 4 * k }, ic);
-							dl->AddTriangleFilled({ c.x - 4 * k, c.y - 4 * k }, { c.x + 3 * k, c.y - 10 * k }, { c.x + 3 * k, c.y + 10 * k }, ic);
-							dl->AddTriangleFilled({ c.x - 4 * k, c.y - 4 * k }, { c.x + 3 * k, c.y + 10 * k }, { c.x - 4 * k, c.y + 4 * k }, ic);
-							const float pulse = saying ? 0.5f + 0.5f * std::sin(now * 6.0f) : 1.0f;
-							for (int q = 1; q <= 2; ++q) {
-								dl->PathArcTo({ c.x + 3 * k, c.y }, (4.0f + 5.0f * q) * k, -0.7f, 0.7f, 10);
-								dl->PathStroke(Fade(ic, q == 2 ? pulse : 1.0f), 0, 1.6f * k);
-							}
+					// (Noah: "Whispers tab -> sub tabs with the wonders names -> whispers for that wonder when discovered") the voice, then
+					// the four wonders (one with nothing heard yet greyed); the open one shows its cards
+					for (int g = 0; g < 5; ++g) {
+						int n = 0;
+						for (const auto& w : s.whispers) n += w.group == g ? 1 : 0;
+						const int  grow = 400 + g;
+						const bool open = s.whisperGroup == g && n > 0;
+						focusRow(grow, y - 6 * k, y + 34 * k);
+						{  // a small chevron: right shut, down open
+							const ImVec2 c{ L + 13 * k, y + 13 * k };
+							const ImU32  cc = n == 0 ? kLockedCol : s.altarFocus == grow ? kGold : IM_COL32(190, 180, 160, 230);
+							if (open) dl->AddTriangleFilled({ c.x - 6 * k, c.y - 3 * k }, { c.x + 6 * k, c.y - 3 * k }, { c.x, c.y + 5 * k }, cc);
+							else dl->AddTriangleFilled({ c.x - 3 * k, c.y - 6 * k }, { c.x - 3 * k, c.y + 6 * k }, { c.x + 5 * k, c.y }, cc);
 						}
-						y += 50 * k;
+						const std::string gname = Upper(Eggs::GroupName(g));
+						Txt(dl, g_title, 18 * k, { L + 36 * k, y + 3 * k }, n == 0 ? kLockedCol : open ? kParch : IM_COL32(222, 210, 186, 245), gname);
+						const std::string sum = n == 0 ? std::string("not yet heard") : fmt::format("{} heard", n);
+						Txt(dl, g_body, 15 * k, { Rr - Measure(g_body, 15 * k, sum).x, y + 6 * k }, n == 0 ? kLockedCol : IM_COL32(170, 156, 132, 220), sum);
+						y += 40 * k;
+						if (!open) continue;
+						for (int wi = 0; wi < static_cast<int>(s.whispers.size()); ++wi) {
+							const auto& wsp = s.whispers[wi];
+							if (wsp.group != g) continue;
+							const int   row = 300 + wi;
+							const float X = L + 24 * k;
+							const bool  saying = s.whisperSpeaking == wsp.id;
+							const ImU32 wc = IM_COL32(170, 200, 245, 255);
+							focusRow(row, y - 6 * k, y + 46 * k);
+							bullet({ X, y + 2 * k }, row, true);
+							Txt(dl, g_title, 17 * k, { X + 36 * k, y + 3 * k }, saying ? wc : kParch, Upper(wsp.title));
+							Txt(dl, g_body, 15 * k, { X + 36 * k, y + 26 * k }, IM_COL32(196, 182, 160, 235), saying ? std::string(s.whisperNamed ? "Felldir speaks..." : "The voice speaks...") : wsp.info);
+							{  // a small speaker at the right: lit, with its waves pulsing, while this one is being said
+								const ImVec2 c{ Rr - 22 * k, y + 20 * k };
+								const ImU32  ic = saying ? wc : s.altarFocus == row ? kGold : IM_COL32(150, 140, 124, 220);
+								dl->AddRectFilled({ c.x - 9 * k, c.y - 4 * k }, { c.x - 4 * k, c.y + 4 * k }, ic);
+								dl->AddTriangleFilled({ c.x - 4 * k, c.y - 4 * k }, { c.x + 3 * k, c.y - 10 * k }, { c.x + 3 * k, c.y + 10 * k }, ic);
+								dl->AddTriangleFilled({ c.x - 4 * k, c.y - 4 * k }, { c.x + 3 * k, c.y + 10 * k }, { c.x - 4 * k, c.y + 4 * k }, ic);
+								const float pulse = saying ? 0.5f + 0.5f * std::sin(now * 6.0f) : 1.0f;
+								for (int q = 1; q <= 2; ++q) {
+									dl->PathArcTo({ c.x + 3 * k, c.y }, (4.0f + 5.0f * q) * k, -0.7f, 0.7f, 10);
+									dl->PathStroke(Fade(ic, q == 2 ? pulse : 1.0f), 0, 1.6f * k);
+								}
+							}
+							y += 50 * k;
+						}
+						y += 4 * k;
 					}
 					y += 6 * k;
 					endSection();
@@ -5493,12 +5517,23 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 
 			// the chapter's bullets, from (x0, y) in a column w wide; returns the y after them
 			auto bullets = [&](const codex::Chapter& ch, float x0, float y, float w) {
+				// (Noah: "the reveal ... slowly as the echo altars are freed") a line opening {freed>=N} is still blank until N altars
+				// are free: one muted line says the page has more to give
+				const int freedNow = Classes::Codex().freed;
+				bool      blank = false;
 				for (int i = 0; i < static_cast<int>(ch.paras.size()); ++i) {
+					std::string_view para = ch.paras[i];
+					if (para.starts_with("{freed>=")) {
+						const auto close = para.find('}');
+						const int  need = close != std::string_view::npos ? std::atoi(std::string(para.substr(8, close - 8)).c_str()) : 0;
+						if (freedNow < need) { blank = true; continue; }
+						para.remove_prefix(close + 1);
+					}
 					const std::string key = std::to_string(g_cxCh) + ":" + std::to_string(i);
 					const bool        whole = g_cxShowAll || g_cxOpenPara.contains(key);
-					const std::string shortL = ShortLine(ch.paras[i]);
-					const bool        more = Strip(shortL).size() + 4 < Strip(ch.paras[i]).size();
-					const std::string text = whole || !more ? std::string(ch.paras[i]) : shortL;
+					const std::string shortL = ShortLine(para);
+					const bool        more = Strip(shortL).size() + 4 < Strip(para).size();
+					const std::string text = whole || !more ? std::string(para) : shortL;
 					const float       h = RichText(dl, text, { x0 + 26 * k, y }, w - 26 * k, 21 * k, false);
 					const ImVec2      a{ x0, y - 4 * k }, z{ x0 + w, y + h };
 					const bool        hv = more && hover(a, z);
@@ -5510,6 +5545,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						click = false;
 					}
 					y += h + 12 * k;
+				}
+				if (blank) {
+					y += 4 * k;
+					y += RichText(dl, "<i>The rest of this page is still blank. Free more Echo Altars and the ink returns.</i>", { x0 + 26 * k, y }, w - 26 * k, 19 * k, true) + 12 * k;
 				}
 				return y;
 			};

@@ -874,6 +874,7 @@ namespace bo3z
 		void  BeforeLoad();  // a save is loading over this world: our hand-made map-marker records come off first
 		std::vector<std::uint8_t> RollState();                    // each altar's rolls tonight (the co-save)
 		void  SetRollState(const std::vector<std::uint8_t>& a_s);
+		void  DevAltarHide();   // (dev: altarhide) every altar not yet freed sinks again, to rise when found
 		void Tick(float a_delta);
 		void Reset();
 		void OnActivate(RE::TESObjectREFR* a_ref);
@@ -989,7 +990,9 @@ namespace bo3z
 		bool  OnSpellCast(RE::FormID a_spell);   // notes the cast's element and where (false: never claims it)
 		void  Heard(int a_town);                 // (retired)
 		void  Reset();                           // a save loaded or a new game: the live step forgotten
-		struct Whisper { std::string title, info; int id; };  // a card in the altar's Whispers: its title, a short note, what a click replays
+		struct Whisper { std::string title, info; int id; int group = 0; };  // a card in the altar's Whispers: its title, a short note, what a click replays, its sub-tab (0 the voice, 1-4 a wonder)
+		bool  Named();                           // the voice has said its name (Felldir) - six altars awake
+		std::string GroupName(int a_group);      // a Whispers sub-tab's name
 		std::vector<Whisper> Whispers(int a_town);  // the altar's whispers: a card more for each step found
 		void  Replay(int a_id);                  // a whisper card clicked: Felldir says it again
 		bool  Strip(std::string& a_title, std::string& a_goal, float& a_frac, float& a_timer);  // the step under way in this city (under the compass)
@@ -999,7 +1002,7 @@ namespace bo3z
 		bool  ShadowStep();                      // (retired: false)
 		void  DevStep(int a_town);
 		bool  DevOpen();                         // (dev: egg) the wonders' quests open whatever the freed cities
-		void  Dev(std::string_view a_cmd, std::string_view a_arg);  // egg <pride|eye|stone|oath>, eggjump <n>, eggnext, eggto, eggsay, eggreset
+		void  Dev(std::string_view a_cmd, std::string_view a_arg);  // egg <pride|eye|stone|oath>, eggjump <n>, eggnext, eggto, eggsay, eggsign, eggreset
 	}
 
 	// (Noah) the night's atmosphere (src/Atmos.cpp)
@@ -1094,6 +1097,8 @@ namespace bo3z
 			bool        eggDark{ false };                 // a hidden quest's dark (Riften's, Dawnstar's dream)
 			std::vector<Eggs::Whisper> whispers;          // the altar's hidden quest: its whispers, as cards (empty: none yet)
 			int         whisperSpeaking{ -1 };         // the card being said now
+			int         whisperGroup{ -1 };            // the Whispers sub-tab open (-1 none)
+			bool        whisperNamed{ false };         // the voice has said who it is
 			float       nightProgress{ -1 };              // 0..1 through the night's waves (-1: not fighting)
 			std::string styleTag;         // a style bonus ("+40 MULTI-KILL") by the septims
 			float       styleTime{ 0 };

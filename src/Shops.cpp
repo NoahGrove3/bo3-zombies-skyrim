@@ -1106,6 +1106,84 @@ namespace bo3z
 			Dress(a_index, found);
 		}
 
+		// ---- (Noah, 2026-11-19: "give the echo altar an entrance when first discovering it like the tablet does when it spawns in")
+		// an altar not yet found lies sunk under its own ground; come within about 40 m and the ground shakes, dust bursts and it grinds
+		// up out of the earth, its heart lighting blue as it settles. Found ones are kept (a bit a city); a freed one is found ----
+		constexpr float kRiseDepth = 340.0f, kRiseSecs = 4.2f, kRiseNear = 2800.0f;
+		std::array<float, 16> g_riseT = [] { std::array<float, 16> a{}; a.fill(-1.0f); return a; }();
+		std::array<float, 16> g_riseDust{};
+		RE::TESGlobal* SeenGlob() { return RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESGlobal>(gen::kAltarSeen, gen::kPlugin); }
+		bool AltarSeen(int t)
+		{
+			if (Curse::Freed(t)) return true;
+			auto* g = SeenGlob();
+			return !g || ((static_cast<int>(g->value) >> t) & 1);
+		}
+		void SetAltarSeen(int t)
+		{
+			if (auto* g = SeenGlob()) g->value = static_cast<float>(static_cast<int>(g->value) | (1 << t));
+		}
+		float AltarFloor(std::size_t a_index)
+		{
+			const auto& loc = gen::kLocations[a_index];
+			return loc.fixed ? loc.z : g_towns[loc.town].top - kAltarSink;
+		}
+		void TickRise(RE::PlayerCharacter* a_p, float a_dt)
+		{
+			if (!a_p || Coop::Client()) return;
+			for (std::size_t i = 0; i < gen::kLocations.size(); ++i) {
+				const auto& loc = gen::kLocations[i];
+				if (gen::kObjects[loc.object].kind != 0 || loc.town < 0 || loc.town >= 16) continue;
+				auto r = g_placed[i].get();
+				if (!r || r->IsDeleted() || !r->Is3DLoaded() || (!loc.fixed && !g_towns[loc.town].topSet)) continue;
+				const int   t = loc.town;
+				const float floor = AltarFloor(i);
+				auto        pos = r->GetPosition();
+				float&      rt = g_riseT[t];
+				if (rt < 0 && !AltarSeen(t)) {
+					if (std::abs(pos.z - (floor - kRiseDepth)) > 2.0f) {   // (hidden: under its ground, its pieces with it)
+						pos.z = floor - kRiseDepth;
+						r->SetPosition(pos);
+						Dress(i, r.get());
+					}
+					if (a_p->GetWorldspace() != r->GetWorldspace() || a_p->GetPosition().GetDistance({ pos.x, pos.y, floor }) > kRiseNear) continue;
+					// found: it rises
+					SetAltarSeen(t);
+					rt = 0.0f, g_riseDust[t] = 0.0f;
+					const RE::NiPoint3 at{ pos.x, pos.y, floor };
+					Audio::AtPoint(gen::Sound::boss_quake, at, 0.0f, 1.0f);
+					Audio::AtPoint(gen::Sound::rise_dig, at, 0.3f, 1.0f);
+					if (Settings::ScreenShake()) RE::ShakeCamera(0.55f, at, kRiseSecs);
+					logger::info("shops: the Echo Altar of {} found - it rises", gen::kTowns[t]);
+				}
+				if (rt < 0) continue;
+				rt += a_dt;
+				const float u = std::clamp(rt / kRiseSecs, 0.0f, 1.0f);
+				const float e = u * u * (3.0f - 2.0f * u);
+				const float jitter = u < 1.0f ? std::sin(rt * 47.0f) * 2.5f * (1.0f - u) : 0.0f;   // (it judders as it grinds up)
+				pos.z = floor - kRiseDepth * (1.0f - e) + jitter;
+				r->SetPosition(pos);
+				Dress(i, r.get());
+				if ((g_riseDust[t] -= a_dt) <= 0 && u < 0.95f) {
+					g_riseDust[t] = 0.7f;
+					static std::mt19937 rr{ std::random_device{}() };
+					std::uniform_real_distribution<float> ang(0.0f, 6.2832f);
+					const float a = ang(rr);
+					Gun::FxBlast("giantslam", { pos.x + std::cos(a) * 160.0f, pos.y + std::sin(a) * 160.0f, floor + 10.0f });
+				}
+				if (u >= 1.0f) {
+					rt = -1.0f;
+					pos.z = floor;
+					r->SetPosition(pos);
+					Dress(i, r.get());
+					Gun::ElemBurst(1, { pos.x, pos.y, floor + kOrbZ }, 1.6f, 0.0f, 1.2f);   // (its heart lights, blue)
+					Gun::FxBlast("light", { pos.x, pos.y, floor + kOrbZ });
+					Forms::PlayAt(gen::Sound::coffer_open, r.get());
+					logger::info("shops: the Echo Altar of {} has risen", gen::kTowns[t]);
+				}
+			}
+		}
+
 		// ---- world-map markers: one "Echo Altar" per town, at the plaza once it is built ----
 		std::array<RE::ObjectRefHandle, gen::kTowns.size()> g_markers{};
 		std::unordered_set<RE::ExtraMapMarker*> g_madeMarkers;  // the ones we made by hand (BeforeLoad)
@@ -1576,11 +1654,12 @@ namespace bo3z
 		int                 g_sel = 0;
 		int                 g_trialSel = 0;  // the controller's pick among the altar's trials
 		// (Noah: one way to drive the altar) a focus moved up and down its rows - D-pad or W/S - and A / Enter to take it
-		enum Row { kRowSpell = 0, kRowBow, kRowForge, kRowPerk, kRowShout, kRowBond, kRowTrial = 10, kRowLeave = 20, kRowClass = 30, kRowWhisper = 300 };  // (the altar rework: Kit rows are 40.. your kit, 100.. the Armory)
+		enum Row { kRowSpell = 0, kRowBow, kRowForge, kRowPerk, kRowShout, kRowBond, kRowTrial = 10, kRowLeave = 20, kRowClass = 30, kRowWhisper = 300, kRowWhGroup = 400 };  // (the altar rework: Kit rows are 40.. your kit, 100.. the Armory)
 		int g_focus = kRowClass;
 		// (Noah: "different sections that show a drop down of what's in that section") the one section open (0: none)
 		enum Sec { kSecKit = 210, kSecArmory = 211, kSecPerks = 212, kSecVoice = 213, kSecTrials = 214, kSecWhispers = 215, kSecGlider = 216 };
 		int g_open = kSecKit;
+		int g_whOpen = -1;   // (the Whispers) the sub-tab open: 0 the voice, 1-4 a wonder
 		RE::ObjectRefHandle g_pickAltar;  // the altar whose class picker is up (no class yet): it opens when one is chosen
 
 		void BuyPerk(int perk, RE::TESObjectREFR* a_ref)
@@ -1787,6 +1866,7 @@ namespace bo3z
 					if (id == kRowBond) return static_cast<int>(kSecGlider);
 					if (id >= kRowTrial && id < kRowTrial + 5) return static_cast<int>(kSecTrials);
 					if (id >= kRowWhisper && id < kRowWhisper + 100) return static_cast<int>(kSecWhispers);
+					if (id >= kRowWhGroup && id < kRowWhGroup + 5) return static_cast<int>(kSecWhispers);
 					return 0;
 				};
 				if (Classes::Get() >= 0) {
@@ -1816,7 +1896,14 @@ namespace bo3z
 				const auto whispers = r ? Eggs::Whispers(TownOf(r)) : std::vector<Eggs::Whisper>{};
 				if (!whispers.empty()) {
 					rows.push_back(kSecWhispers);
-					if (g_open == kSecWhispers) for (int w = 0; w < static_cast<int>(whispers.size()); ++w) rows.push_back(kRowWhisper + w);
+					// (Noah: "Whispers tab -> sub tabs with the wonders names -> whispers for that wonder") the voice, then the four
+					// wonders, each opening to its own cards
+					if (g_open == kSecWhispers) {
+						for (int g = 0; g < 5; ++g) {
+							rows.push_back(kRowWhGroup + g);
+							if (g_whOpen == g) for (int w = 0; w < static_cast<int>(whispers.size()); ++w) if (whispers[w].group == g) rows.push_back(kRowWhisper + w);
+						}
+					}
 				}
 				rows.push_back(kRowLeave);
 				if (std::find(rows.begin(), rows.end(), g_focus) == rows.end()) {  // (its section shut: back to its header)
@@ -1850,6 +1937,17 @@ namespace bo3z
 					bool       kitOk = false;
 					if (g_focus >= kSecKit && g_focus <= kSecGlider) {  // a header: open it (shutting the one open), or shut it
 						g_open = g_open == g_focus ? 0 : g_focus;
+						PlayUi(UiSnd::kChoose);
+						return true;
+					}
+					if (g_focus >= kRowWhGroup && g_focus < kRowWhGroup + 5) {   // (a wonder's sub-tab: opened, or shut)
+						const int g = g_focus - kRowWhGroup;
+						const bool any = std::any_of(whispers.begin(), whispers.end(), [g](const Eggs::Whisper& w) { return w.group == g; });
+						if (!any) {
+							PlayUi(UiSnd::kFail);
+							return true;
+						}
+						g_whOpen = g_whOpen == g ? -1 : g;
 						PlayUi(UiSnd::kChoose);
 						return true;
 					}
@@ -1957,6 +2055,7 @@ namespace bo3z
 
 		void Tick(float a_delta)
 		{
+			TickRise(RE::PlayerCharacter::GetSingleton(), a_delta);
 			if (g_menu) {
 				auto r = g_menuRef.get();
 				auto* player = RE::PlayerCharacter::GetSingleton();
@@ -2172,6 +2271,8 @@ namespace bo3z
 						h.shrineShout = Curse::ClaimableShout(t);
 						h.whispers = Eggs::Whispers(t);  // (Noah: the hidden quest's whispers, a card more for each step found)
 						h.whisperSpeaking = Eggs::Speaking();
+						h.whisperGroup = g_whOpen;
+						h.whisperNamed = Eggs::Named();
 						h.altarFreed = Curse::Freed(t);
 						if (const auto v = Curse::Altar(t); v.on) {  // the city still held: its trials
 							h.trialsOn = true;
@@ -2425,6 +2526,12 @@ namespace bo3z::Shops
 	// (Noah: every load in a running game crashed) the station icons' ExtraMapMarker records were made by hand (a game
 	// marker's data copied), and Skyrim tearing the world down for a load choked on them. Before any load they are
 	// lifted off their markers (not freed: the engine never touches them again) - a loaded save has its own.
+	void DevAltarHide()
+	{
+		if (auto* g = SeenGlob()) g->value = 0.0f;
+		g_riseT.fill(-1.0f);
+		logger::info("dev: altarhide - the altars not yet freed sink, to rise when found");
+	}
 	void BeforeLoad()
 	{
 		int n = 0;

@@ -4239,7 +4239,7 @@ namespace bo3z::Classes
 		// cat, 3x a wolf's health and damage, a Snowy sabre cat beneath the glow; at three out, the next "waits for a slot")
 		constexpr int   kPack = 3;
 		constexpr int   kSoulsPerCat = 20;
-		constexpr float kCatSecs = 45.0f, kCatScale = 1.5f, kCatStrength = 3.0f;
+		constexpr float kCatSecs = 45.0f, kCatScale = 1.25f, kCatStrength = 3.0f;
 		RE::TESNPC* SoulCat()
 		{
 			static RE::TESNPC* cat = nullptr;
@@ -4258,10 +4258,26 @@ namespace bo3z::Classes
 			auto* fx = blue ? blue : spirit ? spirit : RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kSpectralShader, gen::kPlugin);
 			if (fx) a_w->ApplyEffectShader(fx, a_secs);
 		}
+		// (Noah, 2026-11-19, a picture of a spectral sabre cat: see-through, its edges lit) a cat: the blue glow, and the body itself
+		// faded so the night shows through it
+		constexpr float kCatAlpha = 0.38f;
+		void CatLook(RE::Actor* a_c, float a_secs)
+		{
+			SoulLook(a_c, a_secs);
+			a_c->SetAlpha(kCatAlpha);
+		}
 		// the eyes: a small blue flame in each socket, hung on the head's bone so it turns with the head. Where the sockets are
 		// is said in the cat's own terms - ahead of the head bone, above it, to each side, at a sabre cat's size - and turned
 		// into the bone's own once, as the flames go on (dev: eyes <ahead> <up> <side> moves them on every cat out)
-		RE::NiPoint3 g_eye{ 24.0f, 9.0f, 7.5f };
+		RE::NiPoint3 g_eye{ 1.4f, 0.6f, 0.0f };   // (on the eye bones: ahead of the eyeball's centre, above it, outward)
+		RE::NiNode* FindNode(RE::NiAVObject* a_o, std::string_view a_part)
+		{
+			auto* n = a_o ? a_o->AsNode() : nullptr;
+			if (!n) return nullptr;
+			if (n->name.c_str() && std::string_view(n->name.c_str()).find(a_part) != std::string_view::npos) return n;
+			for (auto& c : n->GetChildren()) if (auto* h = FindNode(c.get(), a_part)) return h;
+			return nullptr;
+		}
 		RE::NiNode* HeadNode(RE::NiAVObject* a_o)
 		{
 			auto* n = a_o ? a_o->AsNode() : nullptr;
@@ -4275,6 +4291,32 @@ namespace bo3z::Classes
 		void EyeFlames(RE::Actor* a_c)
 		{
 			auto* root = a_c ? a_c->Get3D() : nullptr;
+			// (Noah: "the flaming eyeballs were not on the model's eye socket ... they were floating") a sabre cat has a bone for each
+			// eye ("Sabrecat_Head [LEye]" / "[REye]", at the eyeball's centre, +y looking out): each flame hangs on its own
+			auto* le = FindNode(root, "[LEye]");
+			auto* re = FindNode(root, "[REye]");
+			if (le && re) {
+				int side = -1;
+				for (auto* eye : { le, re }) {
+					for (int i = static_cast<int>(eye->GetChildren().size()) - 1; i >= 0; --i) {
+						auto& ch = eye->GetChildren()[i];
+						if (ch && ch->name == "UN_EyeFlame") eye->DetachChildAt(i);
+					}
+					auto fl = Gun::LoadModel("CurseOfAlduin\\fx\\eyeflame_blue.nif");
+					if (!fl) return;
+					fl->name = "UN_EyeFlame";
+					fl->local.translate = { g_eye.z * side, g_eye.x, g_eye.y };
+					for (int r = 0; r < 3; ++r) for (int q = 0; q < 3; ++q) fl->local.rotate.entry[r][q] = r == q ? 1.0f : 0.0f;
+					fl->local.scale = 0.75f;
+					eye->AttachChild(fl.get(), true);
+					RE::NiUpdateData ud;
+					fl->Update(ud);
+					side = -side;
+				}
+				static int said = 0;
+				if (said++ < 4) logger::info("summoner: blue flames on the eye bones of {:08X}", a_c->GetFormID());
+				return;
+			}
 			auto* head = HeadNode(root);
 			if (!head) { logger::warn("summoner: no head bone found on {:08X} - no eye flames", a_c ? a_c->GetFormID() : 0); return; }
 			for (int i = static_cast<int>(head->GetChildren().size()) - 1; i >= 0; --i) {   // (flames hung before - a retune)
@@ -4339,7 +4381,7 @@ namespace bo3z::Classes
 				if (!w || w->IsDead() || !w->Is3DLoaded() || !w->Get3D()) continue;
 				if (fresh && age >= 0.5f) {
 					if (stagger > 0.0f) { age = 0.49f; continue; }
-					SoulLook(w.get(), kCatSecs - 1.0f);
+					CatLook(w.get(), kCatSecs - 1.0f);
 					EyeFlames(w.get());
 					stagger = 0.05f;
 				}
@@ -4428,7 +4470,7 @@ namespace bo3z::Classes
 		c->SetScale(kCatScale);
 		Tasks::Later(0.6f, [h = c->GetHandle(), a_seconds] {
 			if (auto a = h.get(); a && a->Get3D()) {
-				SoulLook(a.get(), std::min(a_seconds, 3600.0f));
+				CatLook(a.get(), std::min(a_seconds, 3600.0f));
 				EyeFlames(a.get());
 			}
 		});

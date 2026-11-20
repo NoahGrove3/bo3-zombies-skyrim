@@ -1899,6 +1899,7 @@
   "SNDR:wh_stone_s4": "0xf67",
   "SNDR:wh_stone_s4_done": "0xf68",
   "SNDR:wh_stone_s5": "0xf69",
-  "SNDR:wh_stone_s5_done": "0xf6a"
+  "SNDR:wh_stone_s5_done": "0xf6a",
+  "GLOB:altar_seen": "0xf6b"
  }
 }

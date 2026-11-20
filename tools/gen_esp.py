@@ -1298,12 +1298,18 @@ def lore_text():
            "<p>The night's dead never cast spells, loose arrows or shout; they come at you with tooth and blade. "
            "Every fifth night a great <b>boss</b> walks with them; it and the champions come down in blood-red lightning.</p>",
            "[pagebreak]", "<p align='center'><font size='24'>III. The Echo Altars</font></p>", img('wards', 300, 176),
-           "<p>Long ago the <b>Tongues</b>, the first masters of the Voice, raised an altar in every hold to hold Alduin's shout back. "
+           # (Noah, 2026-11-19: "make the reveal to who rose the altars and who the voice is slowly as the echo altars are freed so it
+           # feels like a mystery unfolding") a paragraph opening {freed>=N} shows in the Codex only once N altars are free
+           "<p>No one living remembers who raised the <b>Echo Altars</b>. One stands in every hold, older than the city around it. "
            "Every mage who fell in the Dragon War gave a last spell to them, which is why an altar can still make your weapons and spells stronger, "
            "brew your draughts and call your dragon.</p>",
            "<p>Alduin's return woke the altars only halfway. Each one is held silent by a <b>Dragon Priest</b>, still bound by his old oath to Alduin.</p>",
-           "<p>The altars still carry one voice. <b>Felldir the Old</b>, the Tongue who read the Elder Scroll and cast Alduin out of time, waits in Sovngarde behind "
-           "Alduin's mist. Through the altars he raised he whispers to the living - and once six cities are free, he will lead you to the wonders the Tongues hid.</p>",
+           "<p>And at night, some say, a <b>voice</b> speaks from the stone.</p>",
+           "<p>{freed>=2}The altars are older than the Empire, older than the first Emperor's grandfathers. They were raised while dragons still ruled the sky.</p>",
+           "<p>{freed>=4}They were raised by the <b>Tongues</b>, the first masters of the Voice, who turned the dragons' own tongue against them. "
+           "Three of them fought Alduin on the Throat of the World. Gormlaith fell there; Hakon has not been heard from since. The third is still here.</p>",
+           "<p>{freed>=6}The voice is <b>Felldir the Old</b>, the Tongue who read the Elder Scroll and cast Alduin out of time. He waits in Sovngarde behind "
+           "Alduin's mist, and through the altars he raised he whispers to the living. Now that six cities are free, he will lead you to the wonders the Tongues hid.</p>",
            "[pagebreak]", "<p align='center'><font size='24'>IV. Waking an Altar</font></p>",
            "<p>Stand at an altar and it sets you <b>trials</b>: hold its rune circle, cull the dead in its streets, hold the altar through a night's waves, "
            "and pass the trial of your own path. "
@@ -1391,11 +1397,13 @@ def guide_text():
              "<b>Seat of the Awakened</b> - begin again: every city falls back under the curse and the nights start over, the dead 50% tougher each cycle. "
              "Your wonders, powers and gear stay yours; free the altars again and the Echo returns."),
            "[pagebreak]", h("Whispers of the Altars"),
-           p("Each path keeps a secret, and it is the only road to the path's <b>wonder</b>. The secrets wake once six cities are free. "
-             "<b>Felldir the Old</b> whispers through every Echo Altar: walk up to one and he tells you which city the next step waits in, in a riddle. "
-             "At that city's altar he tells you what to do there, and when a step is done he says so. Everything he has said stays in the altar's menu. "
-             "Win a secret and the Greybeards call you to High Hrothgar. These are the four secrets:"),
-           ] + [p(f"<b>{ {'summoner': 'The Summoner', 'destruction': 'Destruction', 'ranger': 'The Alchemist', 'spellsword': 'The Spellsword'}[e['cls']] }</b> - <i>{e['title']}</i>: {e['open']}") for e in S['eggs']['rows']] + [
+           p("Each path keeps a secret, and it is the only road to the path's <b>wonder</b>. The secrets wake once six cities are free, "
+             "and each begins with a sign of its own that only that path will see. Listen at the altars: the voice in the stone hints at yours. "
+             "Once a secret has begun, walk up to any altar and the voice tells you which city the next step waits in, in a riddle; at that city's altar "
+             "it tells you what to do there, and when a step is done it says so. Everything it has said stays in the altar's Whispers. "
+             "Win a secret and the Greybeards call you to High Hrothgar. The four secrets are "
+             + ', '.join(f"<i>{e['title']}</i>" for e in S['eggs']['rows'][:-1]) + f" and <i>{S['eggs']['rows'][-1]['title']}</i>."),
+           ] + [
            "[pagebreak]", h("Event Nights and Themed Waves"),
            p("From night 8, about one night in eight is an <b>event night</b>: a Goblin Raid, a Harpy Swarm, Armored Champions or a Blood Fog. The whole night belongs to it - and it pays <b>double Cursed Essence</b>, with the dead coming twice as fast."),
            p("On ordinary nights, from the third wave, about one wave in six is <b>themed</b> the same way. Its name shows on the wave dial under the compass."),
@@ -1405,7 +1413,7 @@ def guide_text():
            p("Good luck. Stay out of the barrows after dark."), "</font>"]
     return '\n'.join(out)
 
-for key, edid, name, text, model in (('dirge', 'UN_UndyingDirgeBook', 'The Curse of Alduin', lore_text(), 'Clutter\\Books\\Book02LowPoly02.nif'),
+for key, edid, name, text, model in (('dirge', 'UN_UndyingDirgeBook', 'The Curse of Alduin', __import__('re').sub(r'\{freed>=\d+\}', '', lore_text()), 'Clutter\\Books\\Book02LowPoly02.nif'),
                                      ('guide', 'UN_SurvivorsGuide', "A Survivor's Guide to the Long Night", guide_text(), 'Clutter\\Books\\Book02LowPoly02.nif')):
     recs.setdefault('BOOK', []).append(record('BOOK', fid('BOOK', key), [
         sub('EDID', z(edid)), sub('OBND', bytes.fromhex('f5fff1fffdff0b000f000300')), sub('FULL', z(name)),
@@ -1446,6 +1454,8 @@ for e in S['eggs']['rows']:
     for k, ed in (('egg_' + e['id'], 'UN_Egg_' + e['id']), ('egg_' + e['id'] + '_town', 'UN_Egg_' + e['id'] + '_Town')):
         recs['GLOB'].append(record('GLOB', fid('GLOB', k), [sub('EDID', z(ed)), sub('FNAM', b'f'), sub('FLTV', struct.pack('<f', 0.0))]))
 recs['GLOB'].append(record('GLOB', fid('GLOB', 'egg_gifts'), [sub('EDID', z('UN_EggGifts')), sub('FNAM', b'f'), sub('FLTV', struct.pack('<f', 0.0))]))
+# (Noah, 2026-11-19: "give the echo altar an entrance when first discovering it") the altars risen so far, a bit a city
+recs['GLOB'].append(record('GLOB', fid('GLOB', 'altar_seen'), [sub('EDID', z('UN_AltarSeen')), sub('FNAM', b'f'), sub('FLTV', struct.pack('<f', 0.0))]))
 for k, e in (('ritual_souls', 'UN_RitualSouls'), ('ritual_stand', 'UN_RitualStand')):   # (the staffs' last step: souls fed to each, the one on its stand)
     recs['GLOB'].append(record('GLOB', fid('GLOB', k), [sub('EDID', z(e)), sub('FNAM', b'f'), sub('FLTV', struct.pack('<f', 0.0))]))
 recs['GLOB'].append(record('GLOB', fid('GLOB', 'test_kit'), [sub('EDID', z('UN_TestKit')), sub('FNAM', b'f'), sub('FLTV', struct.pack('<f', 0.0))]))  # (Noah's test characters)

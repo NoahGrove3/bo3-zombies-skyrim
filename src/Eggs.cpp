@@ -25,6 +25,17 @@ namespace bo3z::Eggs
 		int  Gifts() { auto* g = Glob(gen::kEggGifts); return g ? static_cast<int>(g->value) : 0; }
 		void SetGift(int e) { if (auto* g = Glob(gen::kEggGifts)) g->value = static_cast<float>(Gifts() | (1 << e)); }
 		bool Gifted(int e) { return (Gifts() >> e) & 1; }
+		// (Noah, 2026-11-19: "a unique way for each class to start their Easter egg ... instead of it just being fully open") a
+		// quest under way only once its sign has been found (bits 12-15); the voice's three reveals said (bits 20-22)
+		void SetBit(int a_bit, bool a_on)
+		{
+			if (auto* g = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESGlobal>(gen::kEggGifts, gen::kPlugin)) {
+				const int v = static_cast<int>(g->value);
+				g->value = static_cast<float>(a_on ? (v | (1 << a_bit)) : (v & ~(1 << a_bit)));
+			}
+		}
+		bool Begun(int e) { return (Gifts() >> (12 + e)) & 1; }
+		bool RevealSaid(int i) { return (Gifts() >> (20 + i)) & 1; }
 		bool Done(int e) { return Raw(e) >= kDone; }
 		int  Step(int e) { return Done(e) ? gen::kEggs[e].nSteps : std::clamp(Raw(e) / 1000, 0, std::max(0, static_cast<int>(gen::kEggs[e].nSteps) - 1)); }  // (the audit: a bad save or console edit never indexes past its steps)
 		int  Prog(int e) { return Done(e) ? 0 : Raw(e) % 1000; }
@@ -41,7 +52,7 @@ namespace bo3z::Eggs
 			for (int e = 0; e < kCount; ++e) {
 				const int ec = gen::kEggs[e].cls;
 				const int st = Classes::WonderState(ec);
-				if (Done(e) || st < 1 || st > 3) continue;
+				if (Done(e) || st < 1 || st > 3 || !Begun(e)) continue;   // (its sign not yet found: not under way)
 				if (ec == c) return e;
 				if (pick < 0) pick = e;
 			}
@@ -110,6 +121,7 @@ namespace bo3z::Eggs
 			RE::ActorHandle     guard;         // a shard's guardian, a wrapped one of the dead
 			float               wait = 0;      // (a wrapped one rises again after this)
 			bool                told = false;
+			float               glow = 0;      // (a roaming spirit cat) its next drift of motes
 		};
 		struct Live
 		{
@@ -245,6 +257,17 @@ namespace bo3z::Eggs
 				for (int i = 0; i < s.n; ++i) {
 					const std::uint32_t h = Hash(static_cast<std::uint32_t>(e * 131 + st * 17 + i * 7 + 1));
 					std::optional<RE::NiPoint3> at;
+					// (Noah: "not so close to the altar - randomly spawned in and wandering around on a path within 200m of the altar so it
+					// makes more sense to search for them") the spirit cats: anywhere 35 to 200 m out, a new spread each time
+					if (Mech(e, st) == "flee") {
+						static std::mt19937 rr{ std::random_device{}() };
+						std::uniform_real_distribution<float> u(0.0f, 1.0f);
+						for (int tries = 0; tries < 10 && !at; ++tries) {
+							const float ang = u(rr) * 6.2832f, r = s.r0 + u(rr) * (s.r1 - s.r0) * (tries < 6 ? 1.0f : 0.4f);
+							at = Walkable(a_p, c + RE::NiPoint3{ std::cos(ang) * r, std::sin(ang) * r, 0 }, 600.0f);
+							if (at && std::abs(at->z - c.z) > 1800.0f) at.reset();
+						}
+					}
 					for (int tries = 0; tries < 6 && !at; ++tries) {
 						const float ang = (h % 3600) * 0.0017453f + tries * 1.1f + (s.type == gen::kEggOrder ? 6.2832f * i / s.n : 0.0f);
 						const float r = s.r0 + ((h >> 12) % 1000) / 1000.0f * (s.r1 - s.r0);
@@ -326,6 +349,27 @@ namespace bo3z::Eggs
 			for (int t = 0; t < 10; ++t) n += Curse::Freed(t) ? 1 : 0;
 			return n;
 		}
+		// the quest whose sign waits for you: your class's, once six altars are free, not yet begun
+		int SignQuest()
+		{
+			const int c = Classes::Get();
+			if (c < 0 || (FreedTowns() < 6 && !g_dev)) return -1;
+			for (int e = 0; e < kCount; ++e) {
+				if (gen::kEggs[e].cls != c || Done(e) || Gifted(e) || Begun(e)) continue;
+				const int st = Classes::WonderState(c);
+				if (g_dev || (st >= 1 && st <= 3)) return e;
+			}
+			return -1;
+		}
+		constexpr const char* kSignLine[4] = { "A lone spirit walks the night. Follow it softly... and see where it leads.",
+			                                   "When a star crosses the sky above you... strike it down.",
+			                                   "One of the dead burns brighter than the rest. Break it with glass, and catch what falls.",
+			                                   "Where the World-Eater first returned, a broken blade waits for a hand." };
+		constexpr int         kRevealAt[3] = { 2, 4, 6 };
+		constexpr const char* kRevealTitle[3] = { "Older Than the Empire", "The Three", "Felldir the Old" };
+		constexpr const char* kRevealLine[3] = { "Two stones wake... so you can hear me. These altars were old before your Empire was born. They were raised while dragons still ruled the sky.",
+			                                     "We raised them, the three of us... the first who learned the Voice and turned it on its masters. One fell at the summit. One I have not seen since. And I... I am still here.",
+			                                     "Six voices answer. Then hear my name. I am Felldir, called the Old. I read the Scroll that cast Alduin out of time, and I wait for you behind his mist. The wonders stir... watch the night." };
 		bool OpenSaid(int e) { return (Gifts() >> (8 + e)) & 1; }
 		void SetOpenSaid(int e, bool a_on)
 		{
@@ -337,6 +381,7 @@ namespace bo3z::Eggs
 		{
 			if (e < 0) {
 				if (FreedTowns() < 6 && !g_dev) Say("echo_asleep", gen::kWhisperAsleep);
+				else if (const int sq = SignQuest(); sq >= 0) Say(fmt::format("echo_{}_sign", gen::kEggs[sq].voice), kSignLine[sq]);
 				return;
 			}
 			if (!OpenSaid(e)) {
@@ -356,7 +401,7 @@ namespace bo3z::Eggs
 				g_say.pop_front();
 				Audio::Voice(l.snd);   // (one voice at a time: a card clicked cuts off the line before it)
 				g_sayCard = l.card;
-				Hud::QuestBanner("Felldir: " + l.text, l.secs + 0.8f);
+				logger::info("eggs: the altar says \"{}\"", l.text);   // (Noah: "remove the subtitle cards when the altar is speaking so it's more cryptic")
 				g_sayT = l.secs + 0.5f;
 			}
 			// (the timing) walking within about 12 m of an altar, out of a fight, once a visit, and one whisper every 3 minutes
@@ -366,11 +411,277 @@ namespace bo3z::Eggs
 			if (d > 2000.0f && g_visited == town) g_visited = -1;
 			if (town < 0) g_visited = -1;
 			if (!altar || d > 850.0f || g_visited == town || a_p->IsInCombat() || g_whCd > 0 || g_sayT > 0 || !g_say.empty()) return;
-			if (e < 0 && (FreedTowns() >= 6 || g_dev)) return;   // (nothing under way: nothing to say)
+			if (e < 0 && (FreedTowns() >= 6 || g_dev) && SignQuest() < 0) return;   // (nothing under way, no sign to hint: nothing to say)
 			g_visited = town;
 			g_whCd = 180.0f;
 			SayHere(e, town);
 		}
+		// ---- (Noah, 2026-11-19: "a unique way for each class to start their Easter egg/wonder quest instead of it just being fully
+		// open after 6 echo altars are free") each secret's sign, seen only by its own path once six altars are free:
+		//   the Ghost Pride      a lone spirit cat at night near a freed altar - follow it softly and it leads to a sabre cat's fang
+		//   the Eye of Magnus    once a night a star streaks over the freed city you're in - strike it with a spell; a shard falls
+		//   the Philosopher's Stone   once a night one of the dead burns gold - kill it with a flask and catch its essence
+		//   the Slayer's Oath    a rusted blade in Helgen's ruins - lift it
+		// the thing found on the ground (fang, shard, essence) touched: the secret begins ----
+		struct Sign
+		{
+			int                       egg = -1;
+			RE::ObjectRefHandle       drop, dropLight;      // the fang, the shard, the essence
+			RE::NiPoint3              dropAt;
+			bool                      dropOut = false;
+			RE::ActorHandle           cat;                  // (the pride) the lone spirit and its trail
+			std::vector<RE::NiPoint3> path;
+			int                       at = 0;
+			float                     wait = 0, growl = 0, glowT = 0, saidT = 0;
+			bool                      ghostDone = false;
+			float                     starIn = -1, starT = -1, emit = 0;   // (the Eye) the star's wait, its flight
+			RE::NiPoint3              starFrom, starVel;
+			bool                      starDone = false;
+			float                     glowIn = -1;          // (the Stone) the gold one of the dead
+			RE::ActorHandle           glow;
+			bool                      glowDone = false;
+			RE::ObjectRefHandle       blade, bladeLight;    // (the Oath) the rusted blade in Helgen
+			int                       bladeHave = -1;
+		} g_sign;
+		bool g_signNow = false;   // (dev: eggsign) the sign at once, day or night
+		bool g_resetReveal = false;   // (a load) the freed count read afresh
+		std::chrono::steady_clock::time_point g_lastFlaskKill{};
+		constexpr RE::FormID kSabreFang = 0x06BC04, kRustedBlade = 0x02C66F;   // Skyrim.esm: SabrecatTooth, DraugrSword (Ancient Nord Sword)
+		const RE::NiPoint3   kHelgenSpot{ 15460.0f, -81716.0f, 8205.0f };       // Helgen's square, where the headsman's block stood
+		void ClearSign(bool a_blade)
+		{
+			Remove(g_sign.drop), Remove(g_sign.dropLight);
+			g_sign.dropOut = false;
+			Gone(g_sign.cat);
+			g_sign.path.clear(), g_sign.at = 0, g_sign.wait = 0;
+			g_sign.starT = -1, g_sign.starIn = -1;
+			g_sign.glow = {}, g_sign.glowIn = -1;
+			if (a_blade) Remove(g_sign.bladeLight), g_sign.blade = {}, g_sign.bladeHave = -1;
+		}
+		void SignSay(std::string_view a_text, float a_secs = 3.0f)
+		{
+			if (g_sign.saidT > 0) return;
+			g_sign.saidT = 6.0f;
+			Hud::QuestBanner(std::string(a_text), a_secs);
+		}
+		void DropAt(RE::PlayerCharacter* a_p, const RE::NiPoint3& a_at, RE::FormID a_vanilla)
+		{
+			const auto spot = Walkable(a_p, a_at, 600.0f).value_or(a_at);
+			Remove(g_sign.drop), Remove(g_sign.dropLight);
+			if (a_vanilla) {
+				if (auto* b = RE::TESForm::LookupByID<RE::TESBoundObject>(a_vanilla)) g_sign.drop = Gun::PlaceAt(b, spot + RE::NiPoint3{ 0, 0, 12.0f }, 0.0f);
+			} else {
+				g_sign.drop = Place(a_p, gen::kRelRelic, spot, 0.32f);
+			}
+			g_sign.dropLight = Place(a_p, gen::kRelRelicLight, spot + RE::NiPoint3{ 0, 0, 70.0f }, 1.0f);
+			g_sign.dropAt = spot, g_sign.dropOut = true;
+			Gun::FxBlast("light", spot + RE::NiPoint3{ 0, 0, 30.0f });
+		}
+		void Begin(int e)
+		{
+			SetBit(12 + e, true);
+			ClearSign(true);
+			SetRaw(e, 0), SetTowns(e, 0);
+			Forms::Play(gen::Sound::quest_step);
+			Hud::QuestBanner(std::string(gen::kEggs[e].title) + " has begun", 4.0f);
+			g_say.clear(), g_sayT = 0;
+			Say(fmt::format("echo_{}_open", gen::kEggs[e].voice), gen::kEggs[e].open);
+			SetOpenSaid(e, true);
+			logger::info("eggs: {} begun - its sign found", gen::kEggs[e].id);
+		}
+		// (Events) a spell of yours as the star crosses: aimed close enough, it's struck
+		void SignCast(RE::PlayerCharacter* a_p, int a_el)
+		{
+			if (g_sign.starT < 0 || !a_el) return;
+			const auto star = g_sign.starFrom + g_sign.starVel * g_sign.starT;
+			const float pitch = a_p->GetAngleX(), yaw = a_p->GetAngleZ();
+			const RE::NiPoint3 aim{ std::sin(yaw) * std::cos(pitch), std::cos(yaw) * std::cos(pitch), -std::sin(pitch) };
+			RE::NiPoint3 to = star - (a_p->GetPosition() + RE::NiPoint3{ 0, 0, 120.0f });
+			const float d = to.Length();
+			if (d < 1.0f || d > 14000.0f) return;
+			to = to / d;
+			if (aim.x * to.x + aim.y * to.y + aim.z * to.z < 0.985f) return;   // (within ~10 degrees)
+			g_sign.starT = -1, g_sign.starDone = true;
+			Gun::ElemBurst(4, star, 3.0f, 0.0f, 1.2f);
+			Gun::LightningArc(a_p->GetPosition() + RE::NiPoint3{ 0, 0, 150.0f }, star, 0.0f);
+			Audio::AtPoint(gen::Sound::boss_quake, a_p->GetPosition(), 0.3f, 0.6f);
+			logger::info("eggs: the falling star struck at ({:.0f},{:.0f},{:.0f})", star.x, star.y, star.z);
+			Gun::Lob("CurseOfAlduin\\fx\\lightorb.nif", star, RE::NiPoint3{ 0, 0, -600.0f }, 1.4f, [](const RE::NiPoint3& land) {
+				if (auto* p = RE::PlayerCharacter::GetSingleton()) DropAt(p, land, 0);
+				Gun::ElemBurst(4, land + RE::NiPoint3{ 0, 0, 20.0f }, 1.6f, 0.0f, 1.0f);
+			});
+		}
+		void TickSign(RE::PlayerCharacter* a_p, float a_dt)
+		{
+			const int e = SignQuest();
+			if (e != g_sign.egg) {
+				ClearSign(true);
+				g_sign = {};
+				g_sign.egg = e;
+			}
+			if (e < 0) return;
+			g_sign.saidT = std::max(0.0f, g_sign.saidT - a_dt);
+			const bool night = Director::NightNow() || g_signNow;
+			static bool wasNight = false;
+			if (wasNight && !Director::NightNow()) g_sign.starDone = g_sign.glowDone = g_sign.ghostDone = false;   // (a new night: a new sign)
+			wasNight = Director::NightNow();
+			const auto pp = a_p->GetPosition();
+			// the found thing: touched (or picked up), the secret begins
+			if (g_sign.dropOut) {
+				auto d = g_sign.drop.get();
+				if (pp.GetDistance(g_sign.dropAt) < 170.0f || (g_sign.drop && (!d || d->IsDeleted() || !d->GetParentCell()))) {
+					Begin(e);
+					return;
+				}
+			}
+			const int  town = Curse::ZoneTown();
+			const bool freedHere = town >= 0 && (Curse::Freed(town) || g_dev);
+			auto*      altar = freedHere ? Shops::Placed(town, 0) : nullptr;
+			static std::mt19937 rr{ std::random_device{}() };
+			std::uniform_real_distribution<float> u(0.0f, 1.0f);
+			const auto v = gen::kEggs[e].voice;
+			if (v == "pride") {
+				auto cat = g_sign.cat.get();
+				if (!night || !altar || pp.GetDistance(altar->GetPosition()) > 9000.0f) {
+					if (cat || !g_sign.path.empty()) Gone(g_sign.cat), g_sign.path.clear();
+					return;
+				}
+				if (g_sign.dropOut || g_sign.ghostDone) return;
+				if (!cat && g_sign.path.empty()) {   // the lone spirit and the way it will lead
+					const auto  c = altar->GetPosition();
+					const float a0 = u(rr) * 6.2832f;
+					auto        at = Walkable(a_p, c + RE::NiPoint3{ std::cos(a0) * 1500.0f, std::sin(a0) * 1500.0f, 0 }, 600.0f);
+					if (!at) return;
+					g_sign.path.push_back(*at);
+					float a = a0;
+					for (int i = 0; i < 6 && g_sign.path.size() < 6; ++i) {
+						a += (u(rr) - 0.5f) * 1.2f;
+						if (auto nx = Walkable(a_p, g_sign.path.back() + RE::NiPoint3{ std::cos(a) * 1100.0f, std::sin(a) * 1100.0f, 0 }, 500.0f)) g_sign.path.push_back(*nx);
+					}
+					if (auto* k = Classes::SpiritCat(g_sign.path[0], false, 1800.0f)) g_sign.cat = k->GetHandle();
+					g_sign.at = 0, g_sign.wait = 0;
+					logger::info("eggs: a lone spirit cat walks near {}'s altar ({} steps to its fang)", gen::kTowns[town], g_sign.path.size());
+					return;
+				}
+				if (!cat || cat->IsDead()) { Gone(g_sign.cat), g_sign.path.clear(); return; }
+				if (cat->IsInCombat()) cat->StopCombat();
+				const auto  at = cat->GetPosition();
+				const float d = pp.GetDistance(at);
+				if (d < 2100.0f && (g_sign.growl -= a_dt) <= 0) g_sign.growl = 6.0f + u(rr) * 6.0f, Audio::At(gen::Sound::boss_growl, cat.get(), 0.45f);
+				if (d < 9000.0f && (g_sign.glowT -= a_dt) <= 0) g_sign.glowT = 2.0f + u(rr), Gun::Motes(1, at + RE::NiPoint3{ 0, 0, 40.0f }, 0.35f, 1.8f);
+				if (d > 1600.0f && at.GetDistance(g_sign.path[g_sign.at]) > 700.0f) cat->SetPosition(g_sign.path[g_sign.at]);   // (unseen, it keeps to its trail)
+				const bool sneak = a_p->IsSneaking();
+				if (d < 450.0f && !sneak) {   // rushed: it flees to where it first stood
+					Gun::Motes(1, at, 0.6f, 1.0f);
+					g_sign.at = 0, g_sign.wait = 0;
+					cat->SetPosition(g_sign.path[0]);
+					SignSay("It fled from you. Come softly.");
+				} else if (d < 800.0f && sneak) {
+					if ((g_sign.wait += a_dt) > 1.2f) {   // followed softly: it slips on to its next place
+						g_sign.wait = 0;
+						Gun::Motes(1, at, 0.6f, 1.0f);
+						if (++g_sign.at >= static_cast<int>(g_sign.path.size()) - 1) {   // the end: it sinks away, and its fang is left
+							const auto end = g_sign.path.back();
+							Gone(g_sign.cat);
+							g_sign.path.clear(), g_sign.ghostDone = true;
+							Gun::ElemBurst(1, end + RE::NiPoint3{ 0, 0, 40.0f }, 1.4f, 0.0f, 1.0f);
+							DropAt(a_p, end, kSabreFang);
+							logger::info("eggs: the lone spirit led you to its fang");
+						} else {
+							cat->SetPosition(g_sign.path[g_sign.at]);
+						}
+					}
+				} else {
+					g_sign.wait = 0;
+				}
+			} else if (v == "eye") {
+				if (g_sign.starT >= 0) {   // a star streaking over the city: a burning trail
+					g_sign.starT += a_dt;
+					const auto at = g_sign.starFrom + g_sign.starVel * g_sign.starT;
+					if ((g_sign.emit -= a_dt) <= 0) {
+						g_sign.emit = 0.05f;
+						Gun::QueueFx("CurseOfAlduin\\fx\\lightorb.nif", at, 2.4f, 0.0f, 0.55f, false);
+					}
+					if (g_sign.starT > 9.0f) g_sign.starT = -1, g_sign.starDone = true;   // (missed: another night)
+					return;
+				}
+				if (!night || !freedHere || g_sign.starDone || g_sign.dropOut) { g_sign.starIn = -1; return; }
+				if (g_sign.starIn < 0) g_sign.starIn = g_signNow ? 2.0f : 20.0f + u(rr) * 100.0f;
+				if ((g_sign.starIn -= a_dt) > 0) return;
+				const float a = u(rr) * 6.2832f;
+				const RE::NiPoint3 dir{ std::cos(a), std::sin(a), 0 };
+				g_sign.starFrom = pp + dir * 5500.0f + RE::NiPoint3{ 0, 0, 4200.0f };
+				const auto to = pp - dir * 5500.0f + RE::NiPoint3{ 0, 0, 2600.0f };
+				g_sign.starVel = (to - g_sign.starFrom) / 9.0f;
+				g_sign.starT = 0, g_sign.starIn = -1, g_signNow = false;
+				Audio::AtPoint(gen::Sound::boss_quake_wind, pp, 0.0f, 0.5f);
+				logger::info("eggs: a star crosses the sky over {}", town >= 0 ? gen::kTowns[town] : "you");
+			} else if (v == "stone") {
+				auto g = g_sign.glow.get();
+				if (g) {
+					if ((g_sign.glowT -= a_dt) <= 0 && !g->IsDead()) g_sign.glowT = 1.2f, Gun::Motes(4, g->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f }, 0.4f, 1.4f);
+					if (g->IsDead()) {
+						const bool byFlask = std::chrono::steady_clock::now() - g_lastFlaskKill < std::chrono::milliseconds(1500);
+						if (byFlask) {
+							Gun::ElemBurst(4, g->GetPosition() + RE::NiPoint3{ 0, 0, 50.0f }, 1.4f, 0.0f, 1.0f);
+							DropAt(a_p, g->GetPosition(), 0);
+							logger::info("eggs: the burning one broken with glass - its essence falls");
+						} else {
+							SignSay("Its light goes out.");
+							logger::info("eggs: the burning one died, not by a flask");
+						}
+						g_sign.glow = {}, g_sign.glowDone = true;
+					} else if (g->IsDisabled() || g->IsDeleted()) {
+						g_sign.glow = {};
+					}
+					return;
+				}
+				if (!night || g_sign.glowDone || g_sign.dropOut || (!Director::Fighting() && !g_signNow)) { g_sign.glowIn = -1; return; }
+				if (g_sign.glowIn < 0) g_sign.glowIn = g_signNow ? 1.0f : 25.0f + u(rr) * 60.0f;
+				if ((g_sign.glowIn -= a_dt) > 0) return;
+				RE::Actor* pick = nullptr;
+				float      best = 3000.0f;
+				for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
+					auto a = h.get();
+					if (!a || a->IsDead() || a->IsDisabled() || !Director::IsFoe(a.get())) continue;
+					if (const float d = a->GetPosition().GetDistance(pp); d < best && d > 500.0f) best = d, pick = a.get();
+				}
+				if (!pick) { g_sign.glowIn = 4.0f; return; }
+				static auto* gold = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kTabletGold, gen::kPlugin);
+				if (gold) pick->ApplyEffectShader(gold, 600.0f);
+				g_sign.glow = pick->GetHandle(), g_sign.glowIn = -1, g_signNow = false;
+				logger::info("eggs: one of the dead burns gold ({:08X})", pick->GetFormID());
+			} else if (v == "oath") {
+				auto* ws = a_p->GetWorldspace();
+				if (!ws || ws->GetFormID() != 0x3C || pp.GetDistance(kHelgenSpot) > 7000.0f) return;
+				auto* base = RE::TESForm::LookupByID<RE::TESBoundObject>(kRustedBlade);
+				if (!base) return;
+				const auto count = [&] {
+					for (const auto& [obj, data] : a_p->GetInventory()) if (obj == base) return data.first;
+					return 0;
+				};
+				auto b = g_sign.blade.get();
+				if (!b) {   // the blade: the one left there before (a save), or laid there now
+					RE::TES::GetSingleton()->ForEachReferenceInRange(a_p, 7500.0f, [&](RE::TESObjectREFR* r) {
+						if (r && r->GetBaseObject() == base && !r->IsDeleted() && r->GetPosition().GetDistance(kHelgenSpot) < 600.0f) {
+							g_sign.blade = r->CreateRefHandle();
+							return RE::BSContainer::ForEachResult::kStop;
+						}
+						return RE::BSContainer::ForEachResult::kContinue;
+					});
+					if (!g_sign.blade) {
+						const auto spot = Walkable(a_p, kHelgenSpot, 500.0f).value_or(kHelgenSpot);
+						g_sign.blade = Gun::PlaceAt(base, spot + RE::NiPoint3{ 0, 0, 15.0f }, u(rr) * 6.28f);
+						logger::info("eggs: a rusted blade lies in Helgen ({:.0f},{:.0f},{:.0f})", spot.x, spot.y, spot.z);
+					}
+					if (auto nb = g_sign.blade.get()) g_sign.bladeLight = Place(a_p, gen::kRelRelicLight, nb->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f }, 1.0f);
+					g_sign.bladeHave = count();
+					return;
+				}
+				if (count() > g_sign.bladeHave || b->IsDeleted() || !b->GetParentCell()) Begin(e);   // lifted
+			}
+		}
+
 		// the step's city, chosen as the step begins (never the city of the step before) - so every altar can point to it
 		bool Eligible(int t) { return g_dev || Curse::Freed(t); }
 		int PickTown(int e)
@@ -467,6 +778,8 @@ namespace bo3z::Eggs
 					};
 					// (The Ghost Pride) the spirit cats shy from a hunter: run at one and it flickers away; crouch and close in to calm it
 					if (mech == "flee") {
+						static std::mt19937 rr{ std::random_device{}() };
+						std::uniform_real_distribution<float> u(0.0f, 1.0f);
 						for (auto& m : g_live.marks) {
 							if (m.taken) continue;
 							auto r = m.obj.get();
@@ -476,19 +789,34 @@ namespace bo3z::Eggs
 							}
 							if (auto* act = r->As<RE::Actor>(); act && act->IsInCombat()) act->StopCombat();   // (a shy one never fights)
 							const auto at = r->GetPosition();
+							m.at = at;   // (it roams: wherever it has wandered to)
 							const float d = pp.GetDistance(at);
 							const bool  sneak = a_p->IsSneaking();
-							if (d < 650.0f && !sneak) {
-								RE::NiPoint3 away = at - pp;
-								away.z = 0;
-								const float l = std::max(1.0f, away.Length());
-								if (const auto to = Walkable(a_p, at + away * (650.0f / l), 400.0f)) {
-									Gun::Motes(1, at, 0.6f, 1.0f);
-									r->SetPosition(*to);
-									m.at = *to;
+							// (Noah: "growl + faint glow") heard close by, a ghostly growl now and then; seen far off at night, its blue motes
+							if (d < 2100.0f && (m.wait -= a_dt) <= 0) {
+								m.wait = 7.0f + u(rr) * 7.0f;
+								Audio::At(gen::Sound::boss_growl, r.get(), 0.45f);
+							}
+							if (night && d < 9000.0f && (m.glow -= a_dt) <= 0) {
+								m.glow = 2.2f + u(rr) * 1.2f;
+								Gun::Motes(1, at + RE::NiPoint3{ 0, 0, 40.0f }, 0.35f, 1.8f);
+							}
+							if (d < 500.0f && !sneak) {   // seen coming: it flickers off further into the night
+								for (int tries = 0; tries < 6; ++tries) {
+									RE::NiPoint3 away = at - pp;
+									away.z = 0;
+									const float l = std::max(1.0f, away.Length());
+									const float ang = (u(rr) - 0.5f) * 1.6f, cs = std::cos(ang), sn = std::sin(ang);
+									const RE::NiPoint3 dir{ (away.x * cs - away.y * sn) / l, (away.x * sn + away.y * cs) / l, 0 };
+									if (const auto to = Walkable(a_p, at + dir * (1300.0f + u(rr) * 700.0f), 500.0f); to && to->GetDistance(c) < s.r1) {
+										Gun::Motes(1, at, 0.6f, 1.0f);
+										r->SetPosition(*to);
+										m.at = *to;
+										break;
+									}
 								}
 								if (Throttle(6.0f)) Hud::QuestBanner("It shies from you. Come to it quietly.", 3.0f);
-							} else if (d < 200.0f && sneak) {
+							} else if (d < 220.0f && sneak) {
 								if (s.night && !night) {
 									if (Throttle(6.0f)) Hud::QuestBanner("It won't settle by day. Come back at night.", 3.0f);
 									continue;
@@ -805,6 +1133,24 @@ namespace bo3z::Eggs
 		if (!p || !p->Is3DLoaded()) return;
 		g_beamCd = std::max(0.0f, g_beamCd - a_delta);
 		const int e = Active();
+		// (Noah: "make the reveal to who rose the alters and who the voice is slowly as the echo altars are freed") as the second,
+		// fourth and sixth altars wake, the voice says a little more of who it is (said once; a save already past them stays quiet)
+		{
+			static int last = -1;
+			const int  f = FreedTowns();
+			if (last < 0 || f < last) {
+				for (int i = 0; i < 3; ++i) if (f >= kRevealAt[i]) SetBit(20 + i, true);
+			} else if (f > last) {
+				for (int i = 0; i < 3; ++i) {
+					if (f < kRevealAt[i] || RevealSaid(i)) continue;
+					SetBit(20 + i, true);
+					if (Say(fmt::format("echo_voice_{}", kRevealAt[i]), kRevealLine[i])) g_say.back().card = 3 + i;
+				}
+			}
+			last = f;
+			if (g_resetReveal) g_resetReveal = false, last = -1;
+		}
+		TickSign(p, a_delta);
 		TickWhispers(p, e, a_delta);
 		if (e < 0) {
 			if (g_live.egg >= 0) Clear();
@@ -896,6 +1242,7 @@ namespace bo3z::Eggs
 	// own class's way only
 	void OnClassKill(int a_how, int a_element)
 	{
+		if (a_how == 2) g_lastFlaskKill = std::chrono::steady_clock::now();   // (the Stone's sign: the burning one broken with glass)
 		const int e = g_live.egg;
 		if (e < 0 || Done(e) || !Director::NightNow() || Curse::ZoneTown() != CurTown(e)) return;
 		const auto& s = gen::kEggs[e].steps[Step(e)];
@@ -1001,6 +1348,7 @@ namespace bo3z::Eggs
 		if (const int el = SpellEl(RE::TESForm::LookupByID(a_spell)); el) {
 			if (auto* p = RE::PlayerCharacter::GetSingleton()) {
 				g_castEl = el, g_castAt = std::chrono::steady_clock::now(), g_castFrom = p->GetPosition();
+				SignCast(p, el);   // (the Eye's sign: the star struck)
 			}
 		}
 		return false;
@@ -1011,6 +1359,9 @@ namespace bo3z::Eggs
 	{
 		Clear();
 		g_hintKey = -1, g_lastProg = 0, g_stuck = 0, g_plain = false, g_beamCd = 0, g_dawnArmed = false;
+		ClearSign(true);
+		g_sign = {};
+		g_resetReveal = true;
 	}
 
 	void Heard(int) {}  // (each class keeps its own quest: a friend's isn't yours)
@@ -1019,27 +1370,43 @@ namespace bo3z::Eggs
 	// clicked it plays the whisper") each of Felldir's lines this altar has for you, as a card: a title, a short note, and the id a
 	// click replays - 1 the wonders asleep; 1000 + quest*20: + 0 its calling, + 1.. a step, + 15 where the next step waits,
 	// + 16 the altar's plain words; 2000 + quest its finale
+	// (Noah: "Whispers tab -> sub tabs with the wonders names -> whispers for that wonder when discovered") group 0 the voice
+	// itself (the wonders asleep, what it has said of who it is); 1-4 a wonder's secret (its sign, its calling, its steps). Ids:
+	// 1 asleep, 3-5 the voice's reveals, 1000 + quest*20: + 0 its calling, + 1.. a step, + 15 where the next step waits, + 16 the
+	// altar's plain words, + 17 its sign; 2000 + quest its finale
 	std::vector<Whisper> Whispers(int a_town)
 	{
 		static constexpr const char* kNum[9] = { "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX" };
 		std::vector<Whisper> out;
+		if (FreedTowns() < 6) out.push_back({ "The Wonders Sleep", "free more cities", 1, 0 });
+		for (int i = 0; i < 3; ++i) if (RevealSaid(i)) out.push_back({ kRevealTitle[i], fmt::format("{} altars awake", kRevealAt[i]), 3 + i, 0 });
 		const int act = Active();
-		if (act < 0 && FreedTowns() < 6) out.push_back({ "The Wonders Sleep", "free more cities", 1 });
+		const int sq = SignQuest();
 		for (int e = 0; e < kCount; ++e) {
 			const auto& d = gen::kEggs[e];
-			const int   base = 1000 + e * 20;
+			const int   base = 1000 + e * 20, g = 1 + e;
+			if (e == sq) out.push_back({ "A Sign", "how it begins", base + 17, g });
+			if (!Begun(e) && !Done(e) && !Gifted(e)) continue;
+			out.push_back({ std::string(d.title), "the calling", base, g });
 			if (Done(e) || Gifted(e)) {
-				out.push_back({ std::string(d.title), Classes::WonderState(d.cls) == 4 ? std::string(Classes::WonderName(d.cls)) + " is yours" : std::string("complete - High Hrothgar calls"), 2000 + e });
-			} else if (e == act) {
-				out.push_back({ std::string(d.title), "the calling", base });
-				for (int i = 0; i < Step(e); ++i) out.push_back({ std::string(kNum[i]) + ". " + std::string(d.steps[i].title), "done", base + 1 + i });
-				const int st = Step(e), cur = CurTown(e);
-				if (cur >= 0 && a_town == cur) out.push_back({ std::string(kNum[st]) + ". " + std::string(d.steps[st].title), "here, now", base + 1 + st });
-				else if (cur >= 0) out.push_back({ "The Next Whisper", fmt::format("where step {} waits", kNum[st]), base + 15 });
-				if (g_plain && g_hintKey == e * 100 + st) out.push_back({ "The Altar Speaks Plainly", "what it wants, spelled out", base + 16 });
+				for (int i = 0; i < d.nSteps; ++i) out.push_back({ std::string(kNum[i]) + ". " + std::string(d.steps[i].title), "done", base + 1 + i, g });
+				out.push_back({ "The End", Classes::WonderState(d.cls) == 4 ? std::string(Classes::WonderName(d.cls)) + " is yours" : std::string("High Hrothgar calls"), 2000 + e, g });
+				continue;
 			}
+			for (int i = 0; i < Step(e); ++i) out.push_back({ std::string(kNum[i]) + ". " + std::string(d.steps[i].title), "done", base + 1 + i, g });
+			if (e != act) continue;
+			const int st = Step(e), cur = CurTown(e);
+			if (cur >= 0 && a_town == cur) out.push_back({ std::string(kNum[st]) + ". " + std::string(d.steps[st].title), "here, now", base + 1 + st, g });
+			else if (cur >= 0) out.push_back({ "The Next Whisper", fmt::format("where step {} waits", kNum[st]), base + 15, g });
+			if (g_plain && g_hintKey == e * 100 + st) out.push_back({ "The Altar Speaks Plainly", "what it wants, spelled out", base + 16, g });
 		}
 		return out;
+	}
+	bool Named() { return RevealSaid(2) || FreedTowns() >= 6; }
+	std::string GroupName(int a_g)
+	{
+		if (a_g <= 0) return Named() ? "Felldir the Old" : "The Voice in the Stone";
+		return std::string(Classes::WonderName(gen::kEggs[a_g - 1].cls));
 	}
 
 	void Replay(int a_id)
@@ -1048,6 +1415,8 @@ namespace bo3z::Eggs
 		const auto at = g_say.size();
 		if (a_id == 1) {
 			Say("echo_asleep", gen::kWhisperAsleep);
+		} else if (a_id >= 3 && a_id <= 5) {
+			Say(fmt::format("echo_voice_{}", kRevealAt[a_id - 3]), kRevealLine[a_id - 3]);
 		} else if (a_id >= 2000 && a_id < 2000 + kCount) {
 			const auto& d = gen::kEggs[a_id - 2000];
 			Say(fmt::format("echo_{}_final", d.voice), d.finale);
@@ -1061,6 +1430,8 @@ namespace bo3z::Eggs
 				if (k - 1 < Step(e)) Say(StepKey(e, k - 1, true), d.steps[k - 1].done);   // (a step found: how it ended, too)
 			} else if (k == 15) {
 				SayCity(CurTown(e));
+			} else if (k == 17) {
+				Say(fmt::format("echo_{}_sign", d.voice), kSignLine[e]);
 			} else if (k == 16 && Step(e) < d.nSteps) {
 				Forms::Play(gen::Sound::quest_step);
 				Hud::Lore("THE ALTAR SPEAKS PLAINLY", std::string(d.steps[Step(e)].text), 9.0f);
@@ -1157,6 +1528,7 @@ namespace bo3z::Eggs
 			g_dev = true, g_devEgg = e;
 			Classes::DevWonder(gen::kEggs[e].cls, 1);
 			SetRaw(e, 0), SetTowns(e, 0), SetOpenSaid(e, false);
+			SetBit(12 + e, true);   // (begun: its sign skipped)
 			Clear();
 			g_say.clear(), g_sayT = 0, g_whCd = 0, g_visited = -1;
 			if (const int t = PickTown(e); t >= 0) SetTowns(e, t + 1);
@@ -1189,8 +1561,14 @@ namespace bo3z::Eggs
 		} else if (a_cmd == "eggsay") {
 			g_say.clear(), g_sayT = 0;
 			SayHere(Active(), Curse::ZoneTown());
+		} else if (a_cmd == "eggsign") {   // eggsign: your class's sign shown at once (its secret not yet begun; night or day)
+			g_dev = true, g_devEgg = -1, g_signNow = true;
+			for (int e = 0; e < kCount; ++e) if (gen::kEggs[e].cls == Classes::Get()) SetBit(12 + e, false), SetRaw(e, 0), SetTowns(e, 0);
+			ClearSign(true);
+			g_sign = {};
+			logger::info("dev: eggsign - {}'s sign comes now", SignQuest() >= 0 ? gen::kEggs[SignQuest()].title : "no");
 		} else if (a_cmd == "eggreset") {
-			for (int e = 0; e < kCount; ++e) SetRaw(e, 0), SetTowns(e, 0), SetOpenSaid(e, false);
+			for (int e = 0; e < kCount; ++e) SetRaw(e, 0), SetTowns(e, 0), SetOpenSaid(e, false), SetBit(12 + e, false);
 			Clear();
 			g_say.clear(), g_sayT = 0, g_whCd = 0, g_visited = -1, g_devEgg = -1;
 			logger::info("dev: eggreset - every wonder quest back to its start");

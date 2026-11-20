@@ -421,10 +421,12 @@ namespace bo3z
 				in >> b;
 				Save::SetDragonBond(b);
 				logger::info("dev: dragon bond {}", Save::DragonBond());
-			} else if (cmd == "egg" || cmd == "eggjump" || cmd == "eggnext" || cmd == "eggto" || cmd == "eggsay" || cmd == "eggreset") {
+			} else if (cmd == "egg" || cmd == "eggjump" || cmd == "eggnext" || cmd == "eggto" || cmd == "eggsay" || cmd == "eggsign" || cmd == "eggreset") {
 				std::string arg;
 				in >> arg;
 				Eggs::Dev(cmd, arg);
+			} else if (cmd == "altarhide") {  // altarhide: the altars not yet freed sink back, to rise again when you come near
+				Shops::DevAltarHide();
 			} else if (cmd == "eyes") {  // eyes <ahead> <up> <side>: the Soulcaller's cats' eye flames moved, on every cat out
 				float f = 24, u = 9, sd = 7.5f;
 				in >> f >> u >> sd;
