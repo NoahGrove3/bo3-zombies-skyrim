@@ -5034,288 +5034,18 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		}
 
 
-		// ---- The Curse of Alduin intro: once, when a new character first stands outside Riverwood. A storybook legend
-		// cut in woodcut on parchment (tools/legend.py draws it: Data/Interface/CurseOfAlduin/legend/*), one picture
-		// per couplet of the narration. Each picture is LAYERED and moves: the back pans slowly, the subject drifts on
-		// its own parallax, flames / glows / the running dead cycle through three cut frames, the front moves across.
-		// The couplet is carved under the picture and inks in, left to right, as it is spoken. Its own music and a
-		// stinger at each page; Skyrim's own sound is silent. The world waits (paused); hold Space / Enter / E / pad A
-		// to skip. Textures load when it starts and are released when it ends.
-		struct FilmScene
-		{
-			const char* name;              // legend/<name>_back.jpg, _mid/_fx0..2/_front.png
-			float       dur;
-			float       z0, z1;            // zoom from, to
-			float       x0, y0, x1, y1;    // pan of the picture (fraction of the spare picture, -1..1)
-			float       frontDx0, frontDx1, frontBob;  // the front layer's own move across the scene (picture px), and its bob
-			float       midBob;            // the subject's slow rise and fall (picture px)
-			gen::Sound  cue;
-			float       cueAt;
-			gen::Sound  vo;
-			float       voAt;              // the line starts (seconds into the scene)
-			float       l2At;              // its second half is spoken
-		};
-		using GS = gen::Sound;
-		// timed to the rhymed narration (vo_01..vo_09, measured: each couplet's second line starts at l2At)
-		const FilmScene kFilm[] = {
-			{ "helgen", 8.1f, 1.10f, 1.04f, -0.5f, 0.3f, 0.4f, -0.2f, -90, 110, 10, 4, GS::intro_helgen, 0.05f, GS::vo_01, 0.9f, 4.2f },
-			{ "sky", 10.2f, 1.04f, 1.12f, 0.0f, -0.4f, 0.0f, 0.2f, 0, 0, 2, 12, GS::intro_dirge, 0.05f, GS::vo_02, 0.6f, 5.4f },
-			{ "graves", 9.6f, 1.12f, 1.03f, 0.4f, 0.5f, -0.3f, 0.0f, 0, 0, 0, 3, GS::intro_graves, 0.05f, GS::vo_03, 0.6f, 5.0f },
-			{ "dusk", 9.9f, 1.03f, 1.10f, 0.0f, -0.6f, 0.0f, 0.4f, 0, 0, 0, 0, GS::intro_graves, 0.05f, GS::vo_04, 0.6f, 4.9f },
-			{ "horde", 11.9f, 1.12f, 1.04f, -0.3f, 0.2f, 0.3f, 0.0f, 0, 0, 6, 0, GS::intro_horde, 0.05f, GS::vo_05, 0.6f, 6.3f },
-			{ "champions", 11.0f, 1.02f, 1.10f, 0.0f, 0.3f, 0.0f, -0.3f, 0, 0, 0, 5, GS::intro_champions, 0.05f, GS::vo_06, 0.6f, 5.2f },
-			{ "wyrm", 10.9f, 1.10f, 1.03f, 0.3f, -0.2f, -0.3f, 0.2f, 0, 0, 0, 14, GS::intro_wyrm, 0.05f, GS::vo_07, 0.6f, 4.7f },
-			{ "shrine", 10.3f, 1.03f, 1.12f, 0.2f, 0.3f, -0.1f, -0.1f, 0, 0, 0, 10, GS::intro_shrine, 0.05f, GS::vo_08, 0.6f, 5.35f },
-			{ "dragonborn", 12.0f, 1.02f, 1.08f, 0.0f, 0.2f, 0.0f, -0.2f, 0, 0, 0, 4, GS::intro_title, 0.05f, GS::vo_09, 0.9f, 6.45f },
-		};
-		constexpr int kFilmScenes = static_cast<int>(std::size(kFilm));
-		constexpr float kFilmXfade = 1.0f;
-		enum FilmLayer { kLBack, kLMid, kLFx0, kLFx1, kLFx2, kLFront, kLayers };
-		constexpr const char* kLayerName[kLayers] = { "back", "mid", "fx0", "fx1", "fx2", "front" };
-		std::atomic<bool>         g_filmReq{ false };
-		std::atomic<bool>         g_filmOn{ false };
-		// the veil: black over everything while a new game turns into the film and the film into the game, so the
-		// start prompts (answered for you) never flash and the world fades in only once it has settled
+		// ---- (Noah, 2026-11-19: the old intro film - its narration and woodcut legend slides - "aren't being used anymore", taken
+		// out) what's left is the veil: black over everything while a new character goes from the creator into the world, so
+		// the start prompts (answered for you) never flash and the world fades in only once it has settled
+		std::atomic<bool>                     g_filmReq{ false };   // (no film any more: always false - kept so the veil's tests read the same)
+		std::atomic<bool>                     g_filmOn{ false };
 		float                                 g_veil = 0;
 		bool                                  g_outro = false;
-		std::chrono::steady_clock::time_point g_outroStart, g_outroBusy, g_reqSince, g_filmStart;
-		std::atomic<long long>                g_holdUntilMs{ 0 };  // a new character is on its way to Riverwood: black until the film takes over
-		std::atomic<bool>         g_veilNow{ false };              // black at once (no fade in)
-		std::atomic<bool>         g_filmSkipHeld{ false };
-		float                     g_filmT = 0, g_filmSkip = 0, g_filmEnd = -1;
-		int                       g_filmCue = -1;
-		int                       g_filmVo = -1;
-		bool                      g_filmPaused = false;
-		bool                      g_saveAfterFilm = false;          // the new character is saved once it stands in the world
-		std::uint32_t             g_filmPauses = 0;  // pauses already in force when the film began
-		ID3D11ShaderResourceView* g_filmTex[kFilmScenes][kLayers]{};
-		struct FilmText { ID3D11ShaderResourceView* tex{}; float w{ 0 }, h{ 0 }; };
-		FilmText                  g_filmLine[kFilmScenes][2]{};
-		FilmText                  g_filmRunes, g_filmSkipText;
-		ID3D11ShaderResourceView* g_filmPaper = nullptr;  // the page
-
-		void FilmRelease()
-		{
-			for (auto& sc : g_filmTex) {
-				for (auto*& t : sc) {
-					if (t) t->Release();
-					t = nullptr;
-				}
-			}
-			for (auto& sc : g_filmLine) {
-				for (auto& l : sc) {
-					if (l.tex) l.tex->Release();
-					l = {};
-				}
-			}
-			for (auto* l : { &g_filmRunes, &g_filmSkipText }) {
-				if (l->tex) l->tex->Release();
-				*l = {};
-			}
-			if (g_filmPaper) {
-				g_filmPaper->Release();
-				g_filmPaper = nullptr;
-			}
-		}
-
-		void FilmStop()
-		{
-			FilmRelease();
-			if (g_filmPaused) {
-				if (auto* ui = RE::UI::GetSingleton(); ui && ui->numPausesGame > 0) {
-					--ui->numPausesGame;
-				}
-				g_filmPaused = false;
-			}
-			Audio::IntroMusic(false);
-			Audio::Voice(std::nullopt);
-			Audio::FilmQuiet(false);
-			g_filmOn = false;
-			logger::info("intro: film ended at {:.1f}s", g_filmT);
-		}
-
-		bool LoadTex(const std::string& a_rel, ID3D11ShaderResourceView** a_out, float* a_w = nullptr, float* a_h = nullptr)
-		{
-			const std::string  n = "Data\\Interface\\CurseOfAlduin\\" + a_rel;
-			const std::wstring w(n.begin(), n.end());
-			ID3D11Resource*    res = nullptr;
-			if (FAILED(DirectX::CreateWICTextureFromFile(g_device, w.c_str(), &res, a_out))) {
-				return false;
-			}
-			if (res) {
-				ID3D11Texture2D* t2 = nullptr;
-				if (SUCCEEDED(res->QueryInterface(__uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&t2))) && t2) {
-					D3D11_TEXTURE2D_DESC d{};
-					t2->GetDesc(&d);
-					if (a_w) *a_w = static_cast<float>(d.Width);
-					if (a_h) *a_h = static_cast<float>(d.Height);
-					t2->Release();
-				}
-				res->Release();
-			}
-			return true;
-		}
-
-		void FilmStart()
-		{
-			int loaded = 0;
-			for (int i = 0; i < kFilmScenes; ++i) {
-				for (int l = 0; l < kLayers; ++l) {
-					const std::string f = std::string("legend\\") + kFilm[i].name + "_" + kLayerName[l] + (l == kLBack ? ".jpg" : ".png");
-					loaded += LoadTex(f, &g_filmTex[i][l]) ? 1 : 0;
-				}
-				for (int k = 0; k < 2; ++k) {
-					char key[16];
-					std::snprintf(key, sizeof(key), "l%02d%c", i + 1, k ? 'b' : 'a');
-					auto& t = g_filmLine[i][k];
-					LoadTex(std::string("legend\\text_") + key + ".png", &t.tex, &t.w, &t.h);
-				}
-			}
-			LoadTex("legend\\text_runes.png", &g_filmRunes.tex, &g_filmRunes.w, &g_filmRunes.h);
-			LoadTex("legend\\text_skip.png", &g_filmSkipText.tex, &g_filmSkipText.w, &g_filmSkipText.h);
-			LoadTex("legend\\page_paper.jpg", &g_filmPaper);
-			if (auto* ui = RE::UI::GetSingleton()) {
-				g_filmPauses = ui->numPausesGame;
-				++ui->numPausesGame;  // the world waits while the film plays
-				g_filmPaused = true;
-			}
-			Audio::FilmQuiet(true);
-			Audio::IntroMusic(true);
-			g_filmT = 0, g_filmSkip = 0, g_filmEnd = -1, g_filmCue = -1, g_filmVo = -1;
-			g_filmStart = std::chrono::steady_clock::now();
-			g_filmOn = true;
-			logger::info("intro: film starts ({} layers, page {})", loaded, g_filmPaper != nullptr);
-		}
-
-		void DrawFilm(ImVec2 size, float dt)
-		{
-			auto*       fg = ImGui::GetForegroundDrawList();
-			const float k = size.y / 1080.0f;
-			// the film's clock is the wall clock, so pictures and words keep time with the narrator however the frames fall
-			g_filmT = std::chrono::duration<float>(std::chrono::steady_clock::now() - g_filmStart).count();
-			float total = 0;
-			for (const auto& sc : kFilm) total += sc.dur;
-			g_filmSkip = g_filmSkipHeld ? g_filmSkip + dt : std::max(0.0f, g_filmSkip - dt * 2);
-			if (g_filmEnd < 0 && (g_filmT >= total || g_filmSkip >= 0.9f)) {
-				g_filmEnd = g_filmT;
-			}
-			const float outFade = g_filmEnd < 0 ? 0.0f : std::clamp((g_filmT - g_filmEnd) / 1.2f, 0.0f, 1.0f);
-			float start = 0;
-			int   cur = kFilmScenes - 1;
-			for (int i = 0; i < kFilmScenes; ++i) {
-				if (g_filmT < start + kFilm[i].dur) {
-					cur = i;
-					break;
-				}
-				start += kFilm[i].dur;
-			}
-			const float local = g_filmT - start;
-			if (g_filmEnd < 0 && cur != g_filmCue && local >= kFilm[cur].cueAt) {  // the page turns: its stinger, under the narrator
-				g_filmCue = cur;
-				Audio::Ui(kFilm[cur].cue, 0.40f);
-			}
-			if (g_filmEnd < 0 && cur != g_filmVo && local >= kFilm[cur].voAt) {
-				g_filmVo = cur;
-				Audio::Voice(kFilm[cur].vo);
-			}
-			const auto tid = [](ID3D11ShaderResourceView* t) { return ImTextureID(reinterpret_cast<std::uintptr_t>(t)); };
-			// the page
-			fg->AddRectFilled({ 0, 0 }, size, IM_COL32(219, 199, 160, 255));
-			if (g_filmPaper) {
-				const float aspect = size.x / size.y, src = 1600.0f / 900.0f;
-				const float uw = aspect < src ? aspect / src : 1.0f, vh = aspect < src ? 1.0f : src / aspect;
-				fg->AddImage(tid(g_filmPaper), { 0, 0 }, size, { 0.5f - uw / 2, 0.5f - vh / 2 }, { 0.5f + uw / 2, 0.5f + vh / 2 });
-			}
-			// the picture: 16:9, centred, the words under it
-			const float ph = std::min(size.y * 0.66f, size.x * 0.84f * 9.0f / 16.0f), pw = ph * 16.0f / 9.0f;
-			const ImVec2 p0{ (size.x - pw) / 2, size.y * 0.045f }, p1{ p0.x + pw, p0.y + ph };
-			const float  ps = pw / 1600.0f;  // picture px -> screen px
-			auto scene = [&](int i, float t, float alpha) {
-				const auto& sc = kFilm[i];
-				if (alpha <= 0 || !g_filmTex[i][kLBack]) {
-					return;
-				}
-				const float u = std::clamp(t / sc.dur, 0.0f, 1.0f);
-				const float e = u * u * (3 - 2 * u) * 0.4f + u * 0.6f;
-				const float z = sc.z0 + (sc.z1 - sc.z0) * e;
-				const float span = 1.0f / z, spare = 1.0f - span;
-				const float px = sc.x0 + (sc.x1 - sc.x0) * e, py = sc.y0 + (sc.y1 - sc.y0) * e;
-				const ImU32 col = IM_COL32(255, 255, 255, static_cast<int>(255 * alpha));
-				auto layer = [&](ID3D11ShaderResourceView* tex, float parallax, float ox, float oy) {
-					if (!tex) return;
-					// the same window into every layer, its centre pushed further for the nearer layers (kept on the sheet)
-					const float cx = std::clamp(0.5f + px * spare / 2 * parallax, span / 2, 1 - span / 2);
-					const float cy = std::clamp(0.5f + py * spare / 2 * parallax, span / 2, 1 - span / 2);
-					fg->AddImage(tid(tex), { p0.x + ox * ps, p0.y + oy * ps }, { p1.x + ox * ps, p1.y + oy * ps }, { cx - span / 2, cy - span / 2 }, { cx + span / 2, cy + span / 2 }, col);
-				};
-				layer(g_filmTex[i][kLBack], 1.0f, 0, 0);
-				layer(g_filmTex[i][kLMid], 1.25f, 0, std::sin(t * 0.9f) * sc.midBob);
-				const int fr = static_cast<int>(t * 6.0f) % 3;  // three cut frames, six a second
-				layer(g_filmTex[i][kLFx0 + fr], 1.25f, 0, 0);
-				const float fx = sc.frontDx0 + (sc.frontDx1 - sc.frontDx0) * e;
-				layer(g_filmTex[i][kLFront], 1.5f, fx, std::sin(t * 1.7f) * sc.frontBob);
-			};
-			fg->PushClipRect(p0, p1, true);
-			const float inA = std::clamp(local / kFilmXfade, 0.0f, 1.0f);
-			if (cur > 0 && local < kFilmXfade) {
-				scene(cur - 1, kFilm[cur - 1].dur + local, 1.0f);
-			}
-			scene(cur, local, cur == 0 ? 1.0f : inA * inA * (3 - 2 * inA));
-			fg->PopClipRect();
-			// the words, carved: a band of the legend's own script, then the couplet inking in as it is spoken
-			const float ts = size.x / 1600.0f * 0.92f;
-			if (g_filmRunes.tex) {
-				const float w = std::min(pw, g_filmRunes.w * ts * 0.8f), h = g_filmRunes.h * w / g_filmRunes.w;
-				fg->AddImage(tid(g_filmRunes.tex), { (size.x - w) / 2, p1.y + 14 * k }, { (size.x + w) / 2, p1.y + 14 * k + h }, { 0, 0 }, { 1, 1 }, IM_COL32(255, 255, 255, 150));
-			}
-			const auto& sc = kFilm[cur];
-			auto ink = [&](const FilmText& t, float y, float at) {
-				if (!t.tex) return;
-				const float reveal = std::clamp((local - at) / 0.9f, 0.0f, 1.0f);           // inked in left to right
-				const float leave = std::clamp((sc.dur - 0.35f - local) / 0.5f, 0.0f, 1.0f);  // gone before the page turns
-				if (reveal <= 0 || leave <= 0) return;
-				float w = t.w * ts, h = t.h * ts;
-				if (w > size.x - 80 * k) {
-					h *= (size.x - 80 * k) / w, w = size.x - 80 * k;
-				}
-				const ImVec2 a{ (size.x - w) / 2, y };
-				fg->PushClipRect({ a.x - 4, a.y - 4 }, { a.x + w * reveal + 4, a.y + h + 4 }, true);
-				fg->AddImage(tid(t.tex), a, { a.x + w, a.y + h }, { 0, 0 }, { 1, 1 }, IM_COL32(255, 255, 255, static_cast<int>(255 * leave)));
-				fg->PopClipRect();
-			};
-			const float ty = p1.y + 62 * k;
-			ink(g_filmLine[cur][0], ty, sc.voAt - 0.1f);
-			ink(g_filmLine[cur][1], ty + 64 * k, sc.l2At - 0.1f);
-			// skip: the carved hint, and a ring that fills while the key is held
-			{
-				const float ha = std::clamp((g_filmT - 2.0f) / 1.0f, 0.0f, 1.0f) * (1.0f - outFade);
-				// bottom centre, clear of the page's swirled borders: the words, then the ring after them
-				const float sw = g_filmSkipText.tex ? g_filmSkipText.w * ts : 0, sh = g_filmSkipText.tex ? g_filmSkipText.h * ts : 0;
-				const ImVec2 c{ (size.x + sw) / 2 + 22 * k, size.y - 30 * k };
-				if (g_filmSkipText.tex) {
-					fg->AddImage(tid(g_filmSkipText.tex), { c.x - 22 * k - sw, c.y - sh / 2 }, { c.x - 22 * k, c.y + sh / 2 }, { 0, 0 }, { 1, 1 }, IM_COL32(255, 255, 255, static_cast<int>(200 * ha)));
-				}
-				fg->AddCircle(c, 12 * k, IM_COL32(34, 24, 18, static_cast<int>(130 * ha)), 32, 2.0f * k);
-				if (g_filmSkip > 0) {
-					fg->PathArcTo(c, 12 * k, -1.5708f, -1.5708f + 6.2832f * std::min(1.0f, g_filmSkip / 0.9f), 32);
-					fg->PathStroke(IM_COL32(170, 40, 30, static_cast<int>(255 * ha)), 0, 3.5f * k);
-				}
-			}
-			const float inFade = 1.0f - std::clamp(g_filmT / 1.2f, 0.0f, 1.0f);
-			if (inFade > 0) fg->AddRectFilled({ 0, 0 }, size, IM_COL32(0, 0, 0, static_cast<int>(255 * inFade)));
-			if (outFade > 0) fg->AddRectFilled({ 0, 0 }, size, IM_COL32(0, 0, 0, static_cast<int>(255 * outFade)));
-			if (outFade >= 1.0f) {
-				FilmStop();
-				g_outro = true, g_veil = 1.0f;
-				g_saveAfterFilm = true;
-				g_outroStart = g_outroBusy = std::chrono::steady_clock::now();
-				Tasks::Add([] {  // into the game in first person
-					if (auto* cam = RE::PlayerCamera::GetSingleton()) {
-						cam->ForceFirstPerson();
-					}
-				});
-			}
-		}
+		std::chrono::steady_clock::time_point g_outroStart, g_outroBusy, g_reqSince;
+		std::atomic<long long>                g_holdUntilMs{ 0 };  // a new character is on its way to Riverwood: black until it stands there
+		std::atomic<bool>                     g_veilNow{ false };   // black at once (no fade in)
+		std::atomic<bool>                     g_filmSkipHeld{ false };
+		bool                                  g_saveAfterFilm = false;  // the new character is saved once it stands in the world
 
 
 		// ---- The new-game prompts answered for you: a new character always escaped with Ralof (Stormcloaks), and
@@ -6107,27 +5837,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			AnswerStartPrompts(uiM);
 			RaceTidy::Tick();
 			InputSwitch::Tick();
-			if (g_filmReq && !g_filmOn) {  // the film waits until the world has settled (the move to Riverwood loads a cell)
-				static auto settled = std::chrono::steady_clock::now();
-				if (!InGame()) {
-					settled = std::chrono::steady_clock::now();
-				} else if (std::chrono::steady_clock::now() - settled > std::chrono::milliseconds(2500)) {
-					g_filmReq = false;
-					FilmStart();
-				}
-			}
-			const bool film = g_filmOn;
-			if (film) {  // another pausing menu opened over the film (the journal, a loading screen): the film yields
-				auto* ui = RE::UI::GetSingleton();
-				const bool loading = ui && ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME);
-				if (ui && (ui->numPausesGame > g_filmPauses + 1 || loading || onMainMenu)) {
-					logger::info("intro: film yields (pauses {} vs {}, loading {}, main menu {})", ui->numPausesGame, g_filmPauses + 1, loading, onMainMenu);
-					FilmStop();
-					if (!onMainMenu && g_filmT < 20.0f) {
-						g_filmReq = true;  // a prompt (survival mode, a quest box) came up first: the film starts again once it is answered
-					}
-				}
-			}
 			// (Noah: "add a slow zoom in on all loading screens") the loading screen's picture drifts slowly closer while it
 			// shows - about a tenth larger over twenty seconds, easing out - and its camera's view narrows with it
 			{
@@ -6249,9 +5958,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			UpdateCursor(io.DisplaySize);
 			ImGui_ImplDX11_NewFrame();
 			ImGui::NewFrame();
-			if (g_filmOn) {
-				DrawFilm(io.DisplaySize, dt);
-			} else if (bootScreen) {
+			if (bootScreen) {
 				DrawBootScreen(io.DisplaySize);
 			} else if (codex) {
 				DrawCodex(io.DisplaySize, static_cast<float>(ImGui::GetTime()), clicks);
@@ -6770,15 +6477,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			g_devPick = a_text;
 			std::transform(g_devPick.begin(), g_devPick.end(), g_devPick.begin(), [](unsigned char ch) { return static_cast<char>(std::toupper(ch)); });
 		}
-		// The film is off for now (in a co-op party Skyrim Together's own screens kept pausing it, and it began again
-		// and again): a new character goes from black straight into the game, and is saved there.
-		constexpr bool kFilmOn = false;
+		// a new character goes from black straight into the game, and is saved there
 		void IntroStart()
 		{
-			if (kFilmOn) {
-				g_filmReq = true;
-				return;
-			}
 			g_outro = true, g_veil = 1.0f;
 			g_saveAfterFilm = false;  // (the race menu is still to come: the first save waits for it, AfterCharacterMade)
 			g_holdUntilMs = 0;  // (the long hold was for the film: without it, black lasted 15-20 s)

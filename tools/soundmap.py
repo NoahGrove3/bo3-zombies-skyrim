@@ -193,23 +193,6 @@ S('relic_found', ['sp_crunch', 'sp_bones'], 20, use='a relic (bones) picked up: 
 S('curse_lifted', 'shout_learned', -10, use='a city freed (with the music stinger)')
 S('shout_learned', 'shout_learned', 0, use="a Thu'um learned")
 # ---- the intro (plays once, after character creation; UI category: it plays while the game waits)
-S('intro_helgen', 'boss_growl', -15, cat='ui', use='intro: the World-Eater over Helgen')
-S('intro_dirge', 'boss_arrive', -10, cat='ui', use="intro: ALDUIN'S CURSE title hit")
-S('intro_graves', GHOST, -30, cat='ui', use='intro: the graves wake')
-S('intro_horde', 'en_roar', -20, cat='ui', use='intro: the horde')
-S('intro_champions', 'champ_arrive', -10, cat='ui', use='intro: the champions')
-S('intro_wyrm', 'boss_breath', -10, cat='ui', use='intro: Grimmvar in the fog')
-S('intro_shrine', 'coffer_charge', -10, cat='ui', use='intro: the Echo Altar')
-S('intro_title', 'champ_arrive', -20, cat='ui', use='intro: THE CURSE OF ALDUIN')
-S('vo_01', 'vo_01', 0, cat='ui', use='intro narration, scene 1')
-S('vo_02', 'vo_02', 0, cat='ui', use='intro narration, scene 2')
-S('vo_03', 'vo_03', 0, cat='ui', use='intro narration, scene 3')
-S('vo_04', 'vo_04', 0, cat='ui', use='intro narration, scene 4')
-S('vo_05', 'vo_05', 0, cat='ui', use='intro narration, scene 5')
-S('vo_06', 'vo_06', 0, cat='ui', use='intro narration, scene 6')
-S('vo_07', 'vo_07', 0, cat='ui', use='intro narration, scene 7')
-S('vo_08', 'vo_08', 0, cat='ui', use='intro narration, scene 8')
-S('vo_09', 'vo_09', 0, cat='ui', use='intro narration, scene 9')
 
 rows = []
 

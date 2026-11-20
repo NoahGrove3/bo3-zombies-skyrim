@@ -116,13 +116,6 @@ def save(x, name, size=(1920, 1080), quality=90):
 
 
 def main():
-    save(grade(burn_sky(load('helgen_a')), exposure=1.25, cold=0.4), 'intro_helgen.jpg')
-    save(grade(load('sky_a'), exposure=1.1, sat=0.7), 'intro_sky.jpg')
-    save(grade(crop(load('graves_a'), 0.45, 0.45, 1.25), exposure=1.6, lift=0.8), 'intro_graves.jpg')
-    save(grade(load('horde_e'), exposure=1.7, lift=0.78), 'intro_horde.jpg')
-    save(grade(crop(load('horde_c'), 0.32, 0.6, 1.35), exposure=1.8, lift=0.78), 'intro_champions.jpg')
-    save(grade(fog(load('wyrm_a'), 0.35), exposure=2.2, lift=0.75, sat=0.75), 'intro_wyrm.jpg')
-    save(grade(violet_crown(load('shrine_a')), exposure=1.35), 'intro_shrine.jpg')
     # the main menu: the horde coming down from Bleak Falls Barrow under the aurora; the dark cairn on the right
     # carries the menu, the sky the title. The aurora is also cut out on its own for the slow shimmer.
     m = grade(load('menu_a'), exposure=1.65, lift=0.8, vignette=0.45)
