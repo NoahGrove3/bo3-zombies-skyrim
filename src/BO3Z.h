@@ -992,6 +992,7 @@ namespace bo3z
 		struct Whisper { std::string title, info; int id; };  // a card in the altar's Whispers: its title, a short note, what a click replays
 		std::vector<Whisper> Whispers(int a_town);  // the altar's whispers: a card more for each step found
 		void  Replay(int a_id);                  // a whisper card clicked: Felldir says it again
+		bool  Strip(std::string& a_title, std::string& a_goal, float& a_frac, float& a_timer);  // the step under way in this city (under the compass)
 		int   Speaking();                        // the card whose whisper is being said (-1 none)
 		std::string Line();                      // your class's quest, for the guide
 		float DamageMult();                      // (retired: 1)

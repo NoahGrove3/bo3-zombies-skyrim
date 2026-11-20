@@ -425,7 +425,7 @@ namespace bo3z::Eggs
 			SetRaw(e, Step(e) * 1000 + prog);
 			if (prog < a_n) {
 				Forms::Play(gen::Sound::quest_step);
-				Hud::Banner(fmt::format("{} {} of {}", a_what, prog, a_n), 2.5f);
+				Hud::QuestBanner(fmt::format("{} {} of {}", a_what, prog, a_n), 2.5f);
 			} else {
 				Advance(e);
 			}
@@ -446,14 +446,14 @@ namespace bo3z::Eggs
 					if (s.nodamage && g_live.hurt && Prog(e) > 0) {  // (the Nightingale's coins slip away when you bleed)
 						g_live.hurt = false;
 						SetRaw(e, st * 1000);
-						Hud::Banner("You were hurt - the " + std::string(s.name) + "s slip back into the shadows", 4.0f);
+						Hud::QuestBanner("You were hurt - the " + std::string(s.name) + "s slip back into the shadows", 4.0f);
 						Setup(a_p, e, st, a_altar);
 						return;
 					}
 					if (s.seconds > 0 && g_live.timer >= 0 && (g_live.timer += a_dt) > s.seconds) {
 						g_live.timer = -1;
 						SetRaw(e, st * 1000);
-						Hud::Banner(mech == "seals" ? std::string("Too slow - the seals close again") : "Too slow - the " + std::string(s.name) + "s gutter out", 4.0f);
+						Hud::QuestBanner(mech == "seals" ? std::string("Too slow - the seals close again") : "Too slow - the " + std::string(s.name) + "s gutter out", 4.0f);
 						Setup(a_p, e, st, a_altar);
 						return;
 					}
@@ -474,6 +474,7 @@ namespace bo3z::Eggs
 								if (auto* cat = Classes::SpiritCat(m.at, false, 3600.0f)) m.obj = cat->CreateRefHandle();
 								continue;
 							}
+							if (auto* act = r->As<RE::Actor>(); act && act->IsInCombat()) act->StopCombat();   // (a shy one never fights)
 							const auto at = r->GetPosition();
 							const float d = pp.GetDistance(at);
 							const bool  sneak = a_p->IsSneaking();
@@ -486,10 +487,10 @@ namespace bo3z::Eggs
 									r->SetPosition(*to);
 									m.at = *to;
 								}
-								if (Throttle(6.0f)) Hud::Banner("It shies from you. Come to it quietly.", 3.0f);
+								if (Throttle(6.0f)) Hud::QuestBanner("It shies from you. Come to it quietly.", 3.0f);
 							} else if (d < 200.0f && sneak) {
 								if (s.night && !night) {
-									if (Throttle(6.0f)) Hud::Banner("It won't settle by day. Come back at night.", 3.0f);
+									if (Throttle(6.0f)) Hud::QuestBanner("It won't settle by day. Come back at night.", 3.0f);
 									continue;
 								}
 								if (auto* act = r->As<RE::Actor>()) act->Disable();
@@ -504,14 +505,14 @@ namespace bo3z::Eggs
 						for (auto& m : g_live.marks) {
 							if (m.taken) continue;
 							const float d = pp.GetDistance(m.at);
-							if (d < 400.0f && !m.told) m.told = true, Hud::Banner(fmt::format("A {} seal. It wants {}.", m.el == 1 ? "ember" : m.el == 2 ? "rime" : "storm", kEl[m.el]), 3.0f);
+							if (d < 400.0f && !m.told) m.told = true, Hud::QuestBanner(fmt::format("A {} seal. It wants {}.", m.el == 1 ? "ember" : m.el == 2 ? "rime" : "storm", kEl[m.el]), 3.0f);
 							if (d > 1400.0f) continue;
 							if (const int el = CastNear(m.at, 1400.0f); el) {
 								if (el == m.el) {
 									Gun::ElemBurst(kElFx[m.el], m.at + RE::NiPoint3{ 0, 0, 40.0f }, 1.0f, 0.0f, 0.9f);
 									take(m, "light");
 								} else {
-									Hud::Banner(fmt::format("The {} seal doesn't answer {}.", kEl[m.el], kEl[el]), 2.5f);
+									Hud::QuestBanner(fmt::format("The {} seal doesn't answer {}.", kEl[m.el], kEl[el]), 2.5f);
 								}
 								return;
 							}
@@ -539,7 +540,7 @@ namespace bo3z::Eggs
 								continue;
 							}
 							if (aura && !a->IsDead()) Gun::ElemBurst(kFlaskFx[m.el], a->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f }, 0.6f, 0.0f, 0.8f);
-							if (!m.told && pp.GetDistance(a->GetPosition()) < 900.0f) m.told = true, Hud::Banner(fmt::format("One of the dead, wrapped in {}.", kFlaskEl[m.el]), 3.0f);
+							if (!m.told && pp.GetDistance(a->GetPosition()) < 900.0f) m.told = true, Hud::QuestBanner(fmt::format("One of the dead, wrapped in {}.", kFlaskEl[m.el]), 3.0f);
 							if (!a->IsDead()) continue;
 							const auto it = g_flaskHit.find(a->GetFormID());
 							const int  by = it != g_flaskHit.end() ? it->second : -1;
@@ -554,7 +555,7 @@ namespace bo3z::Eggs
 							Gun::ElemBurst(kFlaskFx[m.el], at + RE::NiPoint3{ 0, 0, 40.0f }, 1.6f, 0.0f, 1.0f);
 							Gun::BlastSound("lightmassive", at, 0.7f);
 							if (pp.GetDistance(at) < 300.0f) a_p->AsActorValueOwner()->DamageActorValue(RE::ActorValue::kHealth, 15.0f);
-							Hud::Banner(fmt::format("Wrong - only {} frees it. It bursts, and rises again.", kFlaskEl[m.el]), 3.0f);
+							Hud::QuestBanner(fmt::format("Wrong - only {} frees it. It bursts, and rises again.", kFlaskEl[m.el]), 3.0f);
 							m.wait = 4.0f;
 						}
 						break;
@@ -569,22 +570,22 @@ namespace bo3z::Eggs
 								if (const auto spot = Walkable(a_p, m.at + RE::NiPoint3{ 120.0f, 0, 0 }, 300.0f); spot) {
 									if (auto h = Director::RaiseTrial(*spot, true)) {
 										m.guard = h, m.told = true;
-										Hud::Banner("A guardian rises from the shard.", 3.0f);
+										Hud::QuestBanner("A guardian rises from the shard.", 3.0f);
 									}
 								}
 							}
 							if (g && !g->IsDead() && d < 170.0f) {
-								if (Throttle(4.0f)) Hud::Banner("Its guardian still stands.", 2.5f);
+								if (Throttle(4.0f)) Hud::QuestBanner("Its guardian still stands.", 2.5f);
 								continue;
 							}
 						}
 						if (d > 170.0f) continue;
 						if (s.night && !night) {
-							if (!g_live.toldDay) g_live.toldDay = true, Hud::Banner("It sleeps. Come back at night.", 3.0f);
+							if (!g_live.toldDay) g_live.toldDay = true, Hud::QuestBanner("It sleeps. Come back at night.", 3.0f);
 							continue;
 						}
 						if (s.element != 0 && HandElement() != s.element) {
-							if (!g_live.toldDay) g_live.toldDay = true, Hud::Banner(fmt::format("It doesn't stir. It wants {} in your hands.", kElemName[s.element]), 3.0f);
+							if (!g_live.toldDay) g_live.toldDay = true, Hud::QuestBanner(fmt::format("It doesn't stir. It wants {} in your hands.", kElemName[s.element]), 3.0f);
 							continue;
 						}
 						take(m, "light");
@@ -624,7 +625,7 @@ namespace bo3z::Eggs
 					if (mech == "prism") {   // struck by a spell cast close by
 						for (int i = 0; i < n && hit < 0; ++i) {
 							const float d = pp.GetDistance(g_live.marks[i].at);
-							if (d < 350.0f && !g_live.marks[i].told) g_live.marks[i].told = true, Hud::Banner(fmt::format("The {}-stone.", kEl[g_live.marks[i].el]), 2.5f);
+							if (d < 350.0f && !g_live.marks[i].told) g_live.marks[i].told = true, Hud::QuestBanner(fmt::format("The {}-stone.", kEl[g_live.marks[i].el]), 2.5f);
 						}
 						int best = -1;
 						float bd = 900.0f;
@@ -643,7 +644,7 @@ namespace bo3z::Eggs
 							}
 							if (g_live.last == i) continue;
 							if (mech == "steel" && !Swinging(a_p)) {   // (The Slayer's Oath) struck with steel, not walked to
-								if (Throttle(5.0f)) Hud::Banner("Strike it with your blade.", 2.5f);
+								if (Throttle(5.0f)) Hud::QuestBanner("Strike it with your blade.", 2.5f);
 								continue;
 							}
 							g_live.last = i, hit = i;
@@ -659,7 +660,7 @@ namespace bo3z::Eggs
 					} else {
 						SetRaw(e, st * 1000);
 						Forms::Play(gen::Sound::rite_fail);
-						Hud::Banner(!elOk ? (mech == "prism" ? std::string("Wrong element - start again") : std::string("Wrong flask - watch the braziers again")) :
+						Hud::QuestBanner(!elOk ? (mech == "prism" ? std::string("Wrong element - start again") : std::string("Wrong flask - watch the braziers again")) :
 						                    mech == "sound" ? std::string("Wrong - listen to the stones again") : "Wrong - watch the " + std::string(s.name) + "s again", 3.0f);
 						g_live.showT = 0;
 					}
@@ -696,14 +697,14 @@ namespace bo3z::Eggs
 							g_live.ally = {}, al = {};
 							if (g_live.allyUp && Prog(e) > 0) {
 								SetRaw(e, st * 1000);
-								Hud::Banner("The spirit cat fell - the hunt starts over", 3.5f);
+								Hud::QuestBanner("The spirit cat fell - the hunt starts over", 3.5f);
 							}
 							g_live.allyUp = false, g_live.mechT = 6.0f;
 						}
 						if (!al && (g_live.mechT -= a_dt) <= 0) {
 							if (auto* cat = Classes::SpiritCat(pp + RE::NiPoint3{ 150.0f, 0, 0 }, true, 3600.0f)) {
 								g_live.ally = cat->GetHandle(), g_live.allyUp = true;
-								Hud::Banner("A spirit cat hunts beside you. Keep it alive.", 3.0f);
+								Hud::QuestBanner("A spirit cat hunts beside you. Keep it alive.", 3.0f);
 							}
 							g_live.mechT = 6.0f;
 						}
@@ -747,14 +748,14 @@ namespace bo3z::Eggs
 						if (!b || b->IsDead()) break;
 						if (mech == "chains") {   // (The Ghost Pride) untouchable while a soul-chain stands
 							const int left = static_cast<int>(std::count_if(g_live.marks.begin(), g_live.marks.end(), [](const Mark& m) { return !m.taken; }));
-							if (left > 0 && !g_live.ghosted) Con(b.get(), "SetGhost 1"), g_live.ghosted = true, Hud::Banner("Three soul-chains hold him. Break them.", 3.5f);
+							if (left > 0 && !g_live.ghosted) Con(b.get(), "SetGhost 1"), g_live.ghosted = true, Hud::QuestBanner("Three soul-chains hold him. Break them.", 3.5f);
 							for (auto& m : g_live.marks) {
 								if (m.taken || pp.GetDistance(m.at) > 170.0f) continue;
 								m.taken = true;
 								Remove(m.obj), Remove(m.light);
 								Gun::FxBlast("light", m.at + RE::NiPoint3{ 0, 0, 40.0f });
 								Forms::Play(gen::Sound::quest_step);
-								Hud::Banner(left - 1 > 0 ? fmt::format("A chain breaks - {} left", left - 1) : std::string("The last chain breaks - he can be hurt"), 3.0f);
+								Hud::QuestBanner(left - 1 > 0 ? fmt::format("A chain breaks - {} left", left - 1) : std::string("The last chain breaks - he can be hurt"), 3.0f);
 								if (left - 1 == 0) Con(b.get(), "SetGhost 0"), g_live.ghosted = false;
 								break;
 							}
@@ -763,7 +764,7 @@ namespace bo3z::Eggs
 								g_live.mechT = 6.0f;
 								g_live.worn = g_live.worn % 3 + 1;
 								Gun::ElemBurst(kElFx[g_live.worn], b->GetPosition() + RE::NiPoint3{ 0, 0, 90.0f }, 1.4f, 0.0f, 1.0f);
-								Hud::Banner(fmt::format("The Anomaly wears {}", kEl[g_live.worn]), 2.0f);
+								Hud::QuestBanner(fmt::format("The Anomaly wears {}", kEl[g_live.worn]), 2.0f);
 							}
 						}
 						break;  // (OnBossSlain moves it on)
@@ -775,12 +776,12 @@ namespace bo3z::Eggs
 						g_live.foes.clear();
 						g_live.started = false, g_live.struck = false, g_live.hurt = false;
 						Forms::Play(gen::Sound::rite_fail);
-						Hud::Banner(mech == "summonsonly" ? "You struck a blow - only your summons may kill. The den starts again." : "You were hurt - the brew is shaken. Hold the altar again.", 4.0f);
+						Hud::QuestBanner(mech == "summonsonly" ? "You struck a blow - only your summons may kill. The den starts again." : "You were hurt - the brew is shaken. Hold the altar again.", 4.0f);
 						break;
 					}
 					if (!g_live.started) {
 						g_live.started = true, g_live.struck = false, g_live.hurt = false;
-						Hud::Banner(std::string(s.text), 4.0f);
+						Hud::QuestBanner(std::string(s.text), 4.0f);
 						for (int i = 0; i < s.n; ++i) {
 							const float a = 6.2832f * i / s.n, r = 650.0f + 250.0f * (i % 3);
 							const auto  spot = Walkable(a_p, c + RE::NiPoint3{ std::cos(a) * r, std::sin(a) * r, 0 }, 500.0f);
@@ -825,7 +826,7 @@ namespace bo3z::Eggs
 				SetRaw(e, 0), SetTowns(e, 0);
 				Clear();
 				Forms::Play(gen::Sound::rite_fail);
-				Hud::Banner("Dawn broke - the essences spoilt. Six more must be taken by night.", 5.0f);
+				Hud::QuestBanner("Dawn broke - the essences spoilt. Six more must be taken by night.", 5.0f);
 				return;
 			}
 		} else {
@@ -876,7 +877,7 @@ namespace bo3z::Eggs
 				Advance(e);
 			} else if (prog % 5 == 0) {
 				Forms::Play(gen::Sound::quest_step);
-				Hud::Banner(fmt::format("The ground drinks: {} of {}", prog, s.n), 2.5f);
+				Hud::QuestBanner(fmt::format("The ground drinks: {} of {}", prog, s.n), 2.5f);
 			}
 		}
 	}
@@ -905,14 +906,14 @@ namespace bo3z::Eggs
 		if (mech == "bladespell") {
 			auto* l = p ? p->GetEquippedObject(true) : nullptr;
 			if (!l || !l->As<RE::SpellItem>()) {
-				if (Throttle(8.0f)) Hud::Banner("The oath wants a spell ready in your other hand.", 3.0f);
+				if (Throttle(8.0f)) Hud::QuestBanner("The oath wants a spell ready in your other hand.", 3.0f);
 				return;
 			}
 		}
 		// (The Eye of Magnus) fire, frost and storm: ten each at the least
 		if (mech == "elemsplit") {
 			if (a_element < 0 || a_element > 2) {
-				if (Throttle(8.0f)) Hud::Banner("The Eye wants fire, frost or storm.", 3.0f);
+				if (Throttle(8.0f)) Hud::QuestBanner("The Eye wants fire, frost or storm.", 3.0f);
 				return;
 			}
 			auto& k = g_live.elKills;
@@ -923,7 +924,7 @@ namespace bo3z::Eggs
 				Advance(e);
 			} else if (sum % 5 == 0 || (k[a_element] == 10)) {
 				Forms::Play(gen::Sound::quest_step);
-				Hud::Banner(fmt::format("The Eye drinks: fire {}  frost {}  storm {}  ({} of {})", k[0], k[1], k[2], sum, s.n), 3.0f);
+				Hud::QuestBanner(fmt::format("The Eye drinks: fire {}  frost {}  storm {}  ({} of {})", k[0], k[1], k[2], sum, s.n), 3.0f);
 			}
 			return;
 		}
@@ -933,7 +934,7 @@ namespace bo3z::Eggs
 			Advance(e);
 		} else if (prog % 10 == 0) {
 			Forms::Play(gen::Sound::quest_step);
-			Hud::Banner(fmt::format("The secret drinks: {} of {}", prog, s.n), 2.5f);
+			Hud::QuestBanner(fmt::format("The secret drinks: {} of {}", prog, s.n), 2.5f);
 		}
 	}
 
@@ -954,12 +955,12 @@ namespace bo3z::Eggs
 			if (const int el = SpellEl(a_source); el && el == g_live.worn) {
 				Heal(a_target, 0.04f);
 				Gun::ElemBurst(kElFx[el], a_target->GetPosition() + RE::NiPoint3{ 0, 0, 90.0f }, 0.8f, 0.0f, 0.6f);
-				if (Throttle(3.0f)) Hud::Banner(fmt::format("It drinks your {} - strike with what it isn't wearing", kEl[el]), 2.5f);
+				if (Throttle(3.0f)) Hud::QuestBanner(fmt::format("It drinks your {} - strike with what it isn't wearing", kEl[el]), 2.5f);
 			}
 		} else if (mech == "thorgar") {   // (The Slayer's Oath) magic won't touch him
 			if (a_source && a_source->As<RE::MagicItem>()) {
 				Heal(a_target, 0.03f);
-				if (Throttle(3.0f)) Hud::Banner("Magic will not touch him. The blade alone.", 2.5f);
+				if (Throttle(3.0f)) Hud::QuestBanner("Magic will not touch him. The blade alone.", 2.5f);
 			}
 		}
 	}
@@ -980,7 +981,7 @@ namespace bo3z::Eggs
 			if (!b || b->IsDead() || b->GetPosition().GetDistance(a_at) > 350.0f) return;
 			if (a_element == g_live.lastEl) {
 				Heal(b.get(), 0.05f);
-				if (Throttle(3.0f)) Hud::Banner(fmt::format("She drinks your {} - never the same twice", kFlaskEl[std::clamp(a_element, 0, 5)]), 2.5f);
+				if (Throttle(3.0f)) Hud::QuestBanner(fmt::format("She drinks your {} - never the same twice", kFlaskEl[std::clamp(a_element, 0, 5)]), 2.5f);
 			}
 			g_live.lastEl = a_element;
 		}
@@ -1071,6 +1072,60 @@ namespace bo3z::Eggs
 	}
 
 	int Speaking() { return g_sayCard >= 0 || !g_say.empty() ? (g_say.empty() ? g_sayCard : g_say.front().card) : -1; }
+
+	// (the test: "spirit cats 2 of 3" went to the log only - banners are off) the step under way, under the compass while you're in
+	// its city: the quest, the step's name and its count (never what it wants - that's the whispers' to say)
+	bool Strip(std::string& a_title, std::string& a_goal, float& a_frac, float& a_timer)
+	{
+		const int e = g_live.egg;
+		if (e < 0 || Done(e) || g_live.step != Step(e) || Curse::ZoneTown() != CurTown(e)) return false;
+		const auto& s = gen::kEggs[e].steps[Step(e)];
+		const auto  mech = Mech(e, Step(e));
+		const int   prog = Prog(e);
+		a_title = std::string(gen::kEggs[e].title);
+		std::transform(a_title.begin(), a_title.end(), a_title.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
+		a_goal = std::string(s.title);
+		a_frac = s.n > 0 ? static_cast<float>(prog) / s.n : 0.0f;
+		switch (s.type) {
+		case gen::kEggTouch:
+		case gen::kEggOrder:
+		case gen::kEggKills:
+		case gen::kEggClasskills:
+			if (mech == "elemsplit") {
+				const auto& k = g_live.elKills;
+				a_goal += fmt::format("   fire {}  frost {}  storm {}", k[0], k[1], k[2]);
+			} else {
+				a_goal += fmt::format("   {} / {}", prog, s.n);
+			}
+			if (s.seconds > 0 && g_live.timer >= 0) a_timer = std::max(0.0f, s.seconds - g_live.timer);
+			break;
+		case gen::kEggAltar:
+			a_goal += mech == "dawn" ? "   - before dawn" : "";
+			a_frac = 0;
+			break;
+		case gen::kEggSurvive:
+			if (g_live.started) {
+				a_goal += fmt::format("   {} remain", g_live.foes.size());
+				a_frac = s.n > 0 ? 1.0f - static_cast<float>(g_live.foes.size()) / s.n : 0.0f;
+			} else {
+				a_frac = 0;
+			}
+			break;
+		case gen::kEggBoss:
+			if (mech == "chains") {
+				const int left = static_cast<int>(std::count_if(g_live.marks.begin(), g_live.marks.end(), [](const Mark& m) { return !m.taken; }));
+				if (left > 0) a_goal += fmt::format("   {} chains hold him", left);
+			}
+			a_frac = 0;
+			if (auto b = g_live.boss.get(); b && !b->IsDead()) {
+				auto* av = b->AsActorValueOwner();
+				a_frac = 1.0f - av->GetActorValue(RE::ActorValue::kHealth) / std::max(1.0f, av->GetPermanentActorValue(RE::ActorValue::kHealth));
+			}
+			break;
+		default: break;
+		}
+		return true;
+	}
 
 	std::string Line()  // the class guide's line: how far along your path's secret you are
 	{

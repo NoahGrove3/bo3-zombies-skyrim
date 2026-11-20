@@ -4416,7 +4416,12 @@ namespace bo3z::Classes
 			c->SetPosition(a_at, true);
 			for (const auto& fr : base->factions) if (fr.faction) c->RemoveFromFaction(fr.faction);
 			if (auto* pf = PlayerFaction()) c->AddToFaction(pf, 0);
-			c->AsActorValueOwner()->SetActorValue(RE::ActorValue::kAggression, 0.0f);
+			// (the test: a shy cat mauled Noah for 108) no fight in it at all: unaggressive, cowardly, and its blows harmless
+			auto* av = c->AsActorValueOwner();
+			av->SetActorValue(RE::ActorValue::kAggression, 0.0f);
+			av->SetActorValue(RE::ActorValue::kConfidence, 0.0f);
+			av->SetActorValue(RE::ActorValue::kAttackDamageMult, 0.0f);
+			c->StopCombat();
 			Console(c, "SetGhost 1");
 		}
 		if (!c) return nullptr;

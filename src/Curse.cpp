@@ -543,6 +543,7 @@ namespace bo3z
 				Echo::Strip(h.questTitle, h.questGoal, h.questFrac);  // out in the wilds: a hunt for a wonder's part
 				return;
 			}
+			if (Eggs::Strip(h.questTitle, h.questGoal, h.questFrac, h.questTimer)) return;  // a wonder's secret, its step here
 			const St s = Get(a_zone);
 			if (s.freed) {
 				if (a_night) {
