@@ -369,7 +369,7 @@ namespace bo3z::Eggs
 		constexpr const char* kRevealTitle[3] = { "Older Than the Empire", "The Three", "Felldir the Old" };
 		constexpr const char* kRevealLine[3] = { "Two stones wake... so you can hear me. These altars were old before your Empire was born. They were raised while dragons still ruled the sky.",
 			                                     "We raised them, the three of us... the first who learned the Voice and turned it on its masters. One fell at the summit. One I have not seen since. And I... I am still here.",
-			                                     "Six voices answer. Then hear my name. I am Felldir, called the Old. I read the Scroll that cast Alduin out of time, and I wait for you behind his mist. The wonders stir... watch the night." };
+			                                     "Six stones are free... you may hear my name. I am Felldir the Old. I read the Scroll that cast Alduin out of time, and I wait for you behind his mist. The wonders stir... watch the night." };
 		bool OpenSaid(int e) { return (Gifts() >> (8 + e)) & 1; }
 		void SetOpenSaid(int e, bool a_on)
 		{

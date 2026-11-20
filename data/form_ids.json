@@ -1900,6 +1900,13 @@
   "SNDR:wh_stone_s4_done": "0xf68",
   "SNDR:wh_stone_s5": "0xf69",
   "SNDR:wh_stone_s5_done": "0xf6a",
-  "GLOB:altar_seen": "0xf6b"
+  "GLOB:altar_seen": "0xf6b",
+  "SNDR:wh_voice_2": "0xf6c",
+  "SNDR:wh_voice_4": "0xf6d",
+  "SNDR:wh_voice_6": "0xf6e",
+  "SNDR:wh_pride_sign": "0xf6f",
+  "SNDR:wh_eye_sign": "0xf70",
+  "SNDR:wh_stone_sign": "0xf71",
+  "SNDR:wh_oath_sign": "0xf72"
  }
 }
