@@ -548,9 +548,18 @@ namespace bo3z::Eggs
 				if (g_sign.dropOut || g_sign.ghostDone) return;
 				if (!cat && g_sign.path.empty()) {   // the lone spirit and the way it will lead
 					const auto  c = altar->GetPosition();
-					const float a0 = u(rr) * 6.2832f;
-					auto        at = Walkable(a_p, c + RE::NiPoint3{ std::cos(a0) * 1500.0f, std::sin(a0) * 1500.0f, 0 }, 600.0f);
-					if (!at) return;
+					float       a0 = 0;
+					std::optional<RE::NiPoint3> at;
+					for (int t = 0; t < 12 && !at; ++t) {   // (a walled city's streets: a few tries, nearer in each time)
+						a0 = u(rr) * 6.2832f;
+						const float r = 1500.0f - t * 90.0f;
+						at = Walkable(a_p, c + RE::NiPoint3{ std::cos(a0) * r, std::sin(a0) * r, 0 }, 900.0f);
+					}
+					if (!at) {
+						static int miss = 0;
+						if (miss++ % 120 == 0) logger::info("eggs: no walkable ground near {}'s altar for the lone spirit yet", gen::kTowns[town]);
+						return;
+					}
 					g_sign.path.push_back(*at);
 					float a = a0;
 					for (int i = 0; i < 6 && g_sign.path.size() < 6; ++i) {
