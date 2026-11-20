@@ -1302,6 +1302,8 @@ def lore_text():
            "Every mage who fell in the Dragon War gave a last spell to them, which is why an altar can still make your weapons and spells stronger, "
            "brew your draughts and call your dragon.</p>",
            "<p>Alduin's return woke the altars only halfway. Each one is held silent by a <b>Dragon Priest</b>, still bound by his old oath to Alduin.</p>",
+           "<p>The altars still carry one voice. <b>Felldir the Old</b>, the Tongue who read the Elder Scroll and cast Alduin out of time, waits in Sovngarde behind "
+           "Alduin's mist. Through the altars he raised he whispers to the living - and once six cities are free, he will lead you to the wonders the Tongues hid.</p>",
            "[pagebreak]", "<p align='center'><font size='24'>IV. Waking an Altar</font></p>",
            "<p>Stand at an altar and it sets you <b>trials</b>: hold its rune circle, cull the dead in its streets, hold the altar through a night's waves, "
            "and pass the trial of your own path. "
