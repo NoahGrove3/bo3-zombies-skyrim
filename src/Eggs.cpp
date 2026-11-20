@@ -30,8 +30,11 @@ namespace bo3z::Eggs
 		int  Prog(int e) { return Done(e) ? 0 : Raw(e) % 1000; }
 		// (Noah, 2026-11-11: "Any class, all 4 quests") the quest under way: one at a time - your own class's first while it is
 		// open and not done, then the others in turn (each open once six cities are free, Classes)
+		bool g_dev = false;      // (dev: egg <quest>) the wonders' quests open whatever the freed cities, and in any city
+		int  g_devEgg = -1;      // (dev) the quest woken by hand comes first
 		int Active()
 		{
+			if (g_devEgg >= 0 && g_devEgg < static_cast<int>(gen::kEggs.size()) && !Done(g_devEgg)) return g_devEgg;
 			const int c = Classes::Get();
 			if (c < 0) return -1;
 			int pick = -1;
@@ -186,6 +189,7 @@ namespace bo3z::Eggs
 		}
 		void Complete(int e)
 		{
+			Say(fmt::format("echo_{}_final", gen::kEggs[e].voice), gen::kEggs[e].finale);
 			SetRaw(e, kDone);
 			Clear();
 			Stats::Note(Stats::kQuest);
@@ -197,13 +201,14 @@ namespace bo3z::Eggs
 		{
 			const int st = Step(e) + 1;
 			Forms::Play(gen::Sound::quest_step);
+			Say(StepKey(e, st - 1, true), gen::kEggs[e].steps[st - 1].done);   // (it counted: Felldir says so, wherever you are)
 			if (st >= gen::kEggs[e].nSteps) {
 				Complete(e);
 				return;
 			}
 			SetRaw(e, st * 1000);
 			SetTowns(e, (CurTown(e) + 1) * 100);  // (this city did its step: the next is found in another)
-			Hud::QuestBanner(std::string(gen::kEggs[e].steps[st].text), 6.0f);  // (found the way on: the next step is told)
+			g_visited = -1, g_whCd = 0;  // (the next altar you reach tells you where to go)
 			logger::info("eggs: {} step {}", gen::kEggs[e].id, st);
 		}
 		void Bump(int e, int a_n, std::string_view a_what)
@@ -216,6 +221,93 @@ namespace bo3z::Eggs
 			} else {
 				Advance(e);
 			}
+		}
+
+		// ---- (Noah, 2026-11-19: the Wonder Easter Eggs design) Felldir the Old whispers through the altars: lines queued and
+		// spoken one after another, each with its words under the compass while it plays ----
+		struct Said { gen::Sound snd; std::string text; float secs; };
+		std::deque<Said> g_say;
+		float            g_sayT = 0, g_whCd = 0;
+		int              g_visited = -1;   // the city whose altar has whispered this visit (walk away and it may again)
+		bool Say(std::string_view a_key, std::string_view a_text)
+		{
+			for (const auto& w : gen::kWhispers) {
+				if (w.key == a_key) {
+					g_say.push_back({ w.sound, std::string(a_text), w.secs });
+					return true;
+				}
+			}
+			logger::warn("eggs: no whisper {}", a_key);
+			return false;
+		}
+		std::string StepKey(int e, int st, bool a_done) { return fmt::format("echo_{}_s{}{}", gen::kEggs[e].voice, st + 1, a_done ? "_done" : ""); }
+		void SayCity(int a_town)
+		{
+			if (a_town < 0 || a_town >= 10) return;
+			std::string t(gen::kTowns[a_town]);
+			std::transform(t.begin(), t.end(), t.begin(), ::tolower);
+			Say("echo_next", gen::kWhisperNext);
+			Say("echo_city_" + t, gen::kWhisperCity[a_town]);
+		}
+		int FreedTowns()
+		{
+			int n = 0;
+			for (int t = 0; t < 10; ++t) n += Curse::Freed(t) ? 1 : 0;
+			return n;
+		}
+		bool OpenSaid(int e) { return (Gifts() >> (8 + e)) & 1; }
+		void SetOpenSaid(int e, bool a_on)
+		{
+			if (auto* g = Glob(gen::kEggGifts)) g->value = static_cast<float>(a_on ? (Gifts() | (1 << (8 + e))) : (Gifts() & ~(1 << (8 + e))));
+		}
+		// what an altar says: before six cities, that the wonders sleep; with a quest under way, its opening once, then the
+		// step's own line at the step's city, or a riddle naming that city anywhere else
+		void SayHere(int e, int a_town)
+		{
+			if (e < 0) {
+				if (FreedTowns() < 6 && !g_dev) Say("echo_asleep", gen::kWhisperAsleep);
+				return;
+			}
+			if (!OpenSaid(e)) {
+				Say(fmt::format("echo_{}_open", gen::kEggs[e].voice), gen::kEggs[e].open);
+				SetOpenSaid(e, true);
+			}
+			if (a_town >= 0 && a_town == CurTown(e)) Say(StepKey(e, Step(e), false), gen::kEggs[e].steps[Step(e)].hint);
+			else SayCity(CurTown(e));
+		}
+		void TickWhispers(RE::PlayerCharacter* a_p, int e, float a_dt)
+		{
+			g_whCd = std::max(0.0f, g_whCd - a_dt);
+			if (g_sayT > 0) {
+				g_sayT -= a_dt;
+			} else if (!g_say.empty()) {
+				auto l = g_say.front();
+				g_say.pop_front();
+				Audio::Ui(l.snd);
+				Hud::QuestBanner("Felldir: " + l.text, l.secs + 0.8f);
+				g_sayT = l.secs + 0.5f;
+			}
+			// (the timing) walking within about 12 m of an altar, out of a fight, once a visit, and one whisper every 3 minutes
+			const int town = Curse::ZoneTown();
+			auto*     altar = town >= 0 ? Shops::Placed(town, 0) : nullptr;
+			const float d = altar ? a_p->GetPosition().GetDistance(altar->GetPosition()) : FLT_MAX;
+			if (d > 2000.0f && g_visited == town) g_visited = -1;
+			if (town < 0) g_visited = -1;
+			if (!altar || d > 850.0f || g_visited == town || a_p->IsInCombat() || g_whCd > 0 || g_sayT > 0 || !g_say.empty()) return;
+			if (e < 0 && (FreedTowns() >= 6 || g_dev)) return;   // (nothing under way: nothing to say)
+			g_visited = town;
+			g_whCd = 180.0f;
+			SayHere(e, town);
+		}
+		// the step's city, chosen as the step begins (never the city of the step before) - so every altar can point to it
+		bool Eligible(int t) { return g_dev || Curse::Freed(t); }
+		int PickTown(int e)
+		{
+			std::vector<int> c;
+			for (int t = 0; t < 10; ++t) if (Eligible(t) && t != PrevTown(e)) c.push_back(t);
+			if (c.empty()) return -1;
+			static std::mt19937 rr{ std::random_device{}() };
+			return c[std::uniform_int_distribution<std::size_t>(0, c.size() - 1)(rr)];
 		}
 
 		void TickStep(RE::PlayerCharacter* a_p, int e, RE::TESObjectREFR* a_altar, float a_dt)
@@ -382,44 +474,31 @@ namespace bo3z::Eggs
 		if (!p || !p->Is3DLoaded()) return;
 		g_beamCd = std::max(0.0f, g_beamCd - a_delta);
 		const int e = Active();
-		const int town = Curse::ZoneTown();
-		if (e < 0 || town < 0 || !Curse::Freed(town)) {
+		TickWhispers(p, e, a_delta);
+		if (e < 0) {
 			if (g_live.egg >= 0) Clear();
 			return;
 		}
-		// which city this step is played in: the first freed city you reach that did not give the step before - and once
-		// the step has begun, only that one
-		const int cur = CurTown(e);
-		if (cur != town) {
-			static float told = 0;
-			told = std::max(0.0f, told - a_delta);
-			if (cur >= 0 && Prog(e) > 0) {
-				if (told <= 0) told = 90.0f, Hud::Banner(fmt::format("Your path's secret waits in {}", gen::kTowns[cur]), 4.0f);
-				if (g_live.egg >= 0) Clear();
-				return;
+		// (Noah, 2026-11-19) the step's city is chosen as the step begins, so every altar's riddle can point to it
+		if (CurTown(e) < 0) {
+			if (const int t = PickTown(e); t >= 0) {
+				SetTowns(e, (PrevTown(e) + 1) * 100 + t + 1);
+				logger::info("eggs: {} step {} waits in {}", gen::kEggs[e].id, Step(e) + 1, gen::kTowns[t]);
 			}
-			if (town == PrevTown(e)) {
-				if (told <= 0 && Step(e) > 0) told = 90.0f, Hud::Banner("The altar here has given its sign. The next waits in another freed city.", 4.0f);
-				if (g_live.egg >= 0) Clear();
-				return;
-			}
-			SetTowns(e, (PrevTown(e) + 1) * 100 + town + 1);
+		}
+		const int town = Curse::ZoneTown();
+		if (town < 0 || town != CurTown(e) || !Eligible(town)) {
+			if (g_live.egg >= 0) Clear();
+			return;
 		}
 		auto* altar = Shops::Placed(town, 0);
 		if (!altar) return;
 		const int st = Step(e);
-		// (Noah: "how would players figure out the Easter eggs with no prior context?") the hints come to you: reach a city
-		// where the step can be played and its whisper is spoken; spend long enough on a step without getting anywhere
-		// (about two nights' worth, here at night) and the altar says plainly what it wants - and keeps saying it in its
-		// whispers
+		// (Noah: "how would players figure out the Easter eggs with no prior context?") spend long enough on a step without
+		// getting anywhere (about two nights' worth, here at night) and the altar says plainly what it wants
 		{
-			static int   lastTown = -1, lastKey = -1;
-			const int    key = e * 100 + st;
+			const int key = e * 100 + st;
 			if (key != g_hintKey) g_hintKey = key, g_stuck = 0, g_plain = false, g_lastProg = Prog(e);
-			if (town != lastTown || key != lastKey) {
-				lastTown = town, lastKey = key;
-				Hud::QuestBanner("The altar whispers: " + std::string(gen::kEggs[e].steps[st].hint), 6.0f);
-			}
 			if (Prog(e) != g_lastProg) g_lastProg = Prog(e), g_stuck = std::max(0.0f, g_stuck - 120.0f);
 			if (Director::NightNow() && !g_plain && (g_stuck += a_delta) > 480.0f) {
 				g_plain = true;
@@ -503,18 +582,23 @@ namespace bo3z::Eggs
 
 	std::vector<std::string> Whispers(int a_town)
 	{
+		// (Noah, 2026-11-19) the altar menu keeps what Felldir has said: each quest's lines found so far, and where the next waits
 		std::vector<std::string> out;
-		if (!Curse::Freed(a_town)) return out;
 		const int act = Active();
+		if (act < 0) {
+			if (FreedTowns() < 6) out.push_back(std::string(gen::kWhisperAsleep));
+		}
 		for (int e = 0; e < kCount; ++e) {
 			const auto& d = gen::kEggs[e];
 			if (Done(e) || Gifted(e)) {
 				out.push_back(std::string(d.title) + " - done. " + (Classes::WonderState(d.cls) == 4 ? std::string(Classes::WonderName(d.cls)) + " is yours." : std::string(d.rewardText)));
-			} else if (e == act) {   // (the secret under way: its hints)
-				const int shown = std::clamp(Step(e) + 1, 1, d.nSteps);
-				for (int i = 0; i < shown; ++i) out.push_back(std::string(d.steps[i].hint));
+			} else if (e == act) {
+				out.push_back(std::string(d.open));
+				for (int i = 0; i < Step(e); ++i) out.push_back(std::string(d.steps[i].hint) + " (" + std::string(d.steps[i].done) + ")");
+				const int cur = CurTown(e);
+				if (cur >= 0 && a_town == cur) out.push_back(std::string(d.steps[Step(e)].hint));
+				else if (cur >= 0) out.push_back(std::string(gen::kWhisperNext) + " " + std::string(gen::kWhisperCity[cur]));
 				if (g_plain && g_hintKey == e * 100 + Step(e)) out.push_back("Plainly: " + std::string(d.steps[Step(e)].text));
-				if (a_town == PrevTown(e)) out.push_back("(This altar has given its sign. The next waits in another freed city.)");
 			}
 		}
 		return out;
@@ -533,9 +617,60 @@ namespace bo3z::Eggs
 
 	float DamageMult() { return 1.0f; }  // (Vaermina's Gift retired with the city quests)
 	bool  ShadowStep() { return false; }  // (the Nightingale's Debt retired with them)
-	void DevStep(int)  // dev: your class's quest one step on
+	void DevStep(int)  // dev: the quest under way one step on (eggnext)
 	{
 		const int e = Active();
 		if (e >= 0 && !Done(e)) Advance(e);
+	}
+	bool DevOpen() { return g_dev; }
+	// (Noah, 2026-11-19: "a way to test the Easter eggs") egg <pride|eye|stone|oath>, eggjump <step>, eggnext, eggto, eggsay, eggreset
+	void Dev(std::string_view a_cmd, std::string_view a_arg)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (a_cmd == "egg") {
+			int e = -1;
+			for (int i = 0; i < kCount; ++i) if (gen::kEggs[i].voice == a_arg || gen::kEggs[i].id == a_arg) e = i;
+			if (e < 0) { logger::info("dev: egg - no quest {} (pride, eye, stone, oath)", a_arg); return; }
+			g_dev = true, g_devEgg = e;
+			Classes::DevWonder(gen::kEggs[e].cls, 1);
+			SetRaw(e, 0), SetTowns(e, 0), SetOpenSaid(e, false);
+			Clear();
+			g_say.clear(), g_sayT = 0, g_whCd = 0, g_visited = -1;
+			if (const int t = PickTown(e); t >= 0) SetTowns(e, t + 1);
+			SayHere(e, Curse::ZoneTown());
+			logger::info("dev: egg {} woken - step 1 waits in {}", gen::kEggs[e].id, CurTown(e) >= 0 ? gen::kTowns[CurTown(e)] : "nowhere");
+		} else if (a_cmd == "eggjump") {
+			const int e = Active();
+			int n = 1;
+			try { n = std::stoi(std::string(a_arg)); } catch (...) {}
+			if (e < 0) return;
+			n = std::clamp(n, 1, static_cast<int>(gen::kEggs[e].nSteps));
+			SetRaw(e, (n - 1) * 1000), SetTowns(e, 0);
+			Clear();
+			g_visited = -1, g_whCd = 0;
+			logger::info("dev: eggjump {} step {}", gen::kEggs[e].id, n);
+		} else if (a_cmd == "eggnext") {
+			DevStep(0);
+		} else if (a_cmd == "eggto") {
+			const int e = Active();
+			const int t = e >= 0 ? CurTown(e) : -1;
+			if (!p || t < 0) return;
+			for (const auto& l : gen::kLocations) {
+				if (l.town != t) continue;
+				if (auto* a = RE::TESForm::LookupByID<RE::TESObjectREFR>(l.anchor)) {
+					p->MoveTo(a);
+					logger::info("dev: eggto {}", gen::kTowns[t]);
+				}
+				break;
+			}
+		} else if (a_cmd == "eggsay") {
+			g_say.clear(), g_sayT = 0;
+			SayHere(Active(), Curse::ZoneTown());
+		} else if (a_cmd == "eggreset") {
+			for (int e = 0; e < kCount; ++e) SetRaw(e, 0), SetTowns(e, 0), SetOpenSaid(e, false);
+			Clear();
+			g_say.clear(), g_sayT = 0, g_whCd = 0, g_visited = -1, g_devEgg = -1;
+			logger::info("dev: eggreset - every wonder quest back to its start");
+		}
 	}
 }

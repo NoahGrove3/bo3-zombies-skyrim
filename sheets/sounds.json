@@ -7761,6 +7761,1086 @@
       "cat": "sfx",
       "loop": false,
       "use": "(Noah: \"Deep arcane thrum\") each wand cast, with the tip's flare (tools/wandsfx.py)"
+    },
+    {
+      "id": "wh_asleep",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_asleep",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_asleep.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_asleep.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_asleep"
+    },
+    {
+      "id": "wh_city_dawnstar",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_city_dawnstar",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_city_dawnstar.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_city_dawnstar.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_city_dawnstar"
+    },
+    {
+      "id": "wh_city_falkreath",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_city_falkreath",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_city_falkreath.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_city_falkreath.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_city_falkreath"
+    },
+    {
+      "id": "wh_city_markarth",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_city_markarth",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_city_markarth.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_city_markarth.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_city_markarth"
+    },
+    {
+      "id": "wh_city_morthal",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_city_morthal",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_city_morthal.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_city_morthal.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_city_morthal"
+    },
+    {
+      "id": "wh_city_riften",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_city_riften",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_city_riften.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_city_riften.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_city_riften"
+    },
+    {
+      "id": "wh_city_riverwood",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_city_riverwood",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_city_riverwood.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_city_riverwood.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_city_riverwood"
+    },
+    {
+      "id": "wh_city_solitude",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_city_solitude",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_city_solitude.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_city_solitude.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_city_solitude"
+    },
+    {
+      "id": "wh_city_whiterun",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_city_whiterun",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_city_whiterun.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_city_whiterun.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_city_whiterun"
+    },
+    {
+      "id": "wh_city_windhelm",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_city_windhelm",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_city_windhelm.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_city_windhelm.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_city_windhelm"
+    },
+    {
+      "id": "wh_city_winterhold",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_city_winterhold",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_city_winterhold.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_city_winterhold.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_city_winterhold"
+    },
+    {
+      "id": "wh_eye_final",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_eye_final",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_eye_final.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_eye_final.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_eye_final"
+    },
+    {
+      "id": "wh_eye_open",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_eye_open",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_eye_open.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_eye_open.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_eye_open"
+    },
+    {
+      "id": "wh_eye_s1",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_eye_s1",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_eye_s1.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_eye_s1.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_eye_s1"
+    },
+    {
+      "id": "wh_eye_s1_done",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_eye_s1_done",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_eye_s1_done.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_eye_s1_done.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_eye_s1_done"
+    },
+    {
+      "id": "wh_eye_s2",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_eye_s2",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_eye_s2.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_eye_s2.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_eye_s2"
+    },
+    {
+      "id": "wh_eye_s2_done",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_eye_s2_done",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_eye_s2_done.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_eye_s2_done.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_eye_s2_done"
+    },
+    {
+      "id": "wh_eye_s3",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_eye_s3",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_eye_s3.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_eye_s3.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_eye_s3"
+    },
+    {
+      "id": "wh_eye_s3_done",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_eye_s3_done",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_eye_s3_done.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_eye_s3_done.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_eye_s3_done"
+    },
+    {
+      "id": "wh_eye_s4",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_eye_s4",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_eye_s4.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_eye_s4.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_eye_s4"
+    },
+    {
+      "id": "wh_eye_s4_done",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_eye_s4_done",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_eye_s4_done.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_eye_s4_done.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_eye_s4_done"
+    },
+    {
+      "id": "wh_eye_s5",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_eye_s5",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_eye_s5.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_eye_s5.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_eye_s5"
+    },
+    {
+      "id": "wh_eye_s5_done",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_eye_s5_done",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_eye_s5_done.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_eye_s5_done.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_eye_s5_done"
+    },
+    {
+      "id": "wh_next",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_next",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_next.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_next.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_next"
+    },
+    {
+      "id": "wh_oath_final",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_oath_final",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_oath_final.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_oath_final.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_oath_final"
+    },
+    {
+      "id": "wh_oath_open",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_oath_open",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_oath_open.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_oath_open.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_oath_open"
+    },
+    {
+      "id": "wh_oath_s1",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_oath_s1",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_oath_s1.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_oath_s1.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_oath_s1"
+    },
+    {
+      "id": "wh_oath_s1_done",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_oath_s1_done",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_oath_s1_done.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_oath_s1_done.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_oath_s1_done"
+    },
+    {
+      "id": "wh_oath_s2",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_oath_s2",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_oath_s2.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_oath_s2.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_oath_s2"
+    },
+    {
+      "id": "wh_oath_s2_done",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_oath_s2_done",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_oath_s2_done.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_oath_s2_done.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_oath_s2_done"
+    },
+    {
+      "id": "wh_oath_s3",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_oath_s3",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_oath_s3.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_oath_s3.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_oath_s3"
+    },
+    {
+      "id": "wh_oath_s3_done",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_oath_s3_done",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_oath_s3_done.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_oath_s3_done.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_oath_s3_done"
+    },
+    {
+      "id": "wh_oath_s4",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_oath_s4",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_oath_s4.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_oath_s4.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_oath_s4"
+    },
+    {
+      "id": "wh_oath_s4_done",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_oath_s4_done",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_oath_s4_done.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_oath_s4_done.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_oath_s4_done"
+    },
+    {
+      "id": "wh_oath_s5",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_oath_s5",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_oath_s5.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_oath_s5.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_oath_s5"
+    },
+    {
+      "id": "wh_oath_s5_done",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_oath_s5_done",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_oath_s5_done.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_oath_s5_done.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_oath_s5_done"
+    },
+    {
+      "id": "wh_pride_final",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_pride_final",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_pride_final.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_pride_final.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_pride_final"
+    },
+    {
+      "id": "wh_pride_open",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_pride_open",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_pride_open.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_pride_open.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_pride_open"
+    },
+    {
+      "id": "wh_pride_s1",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_pride_s1",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_pride_s1.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_pride_s1.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_pride_s1"
+    },
+    {
+      "id": "wh_pride_s1_done",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_pride_s1_done",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_pride_s1_done.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_pride_s1_done.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_pride_s1_done"
+    },
+    {
+      "id": "wh_pride_s2",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_pride_s2",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_pride_s2.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_pride_s2.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_pride_s2"
+    },
+    {
+      "id": "wh_pride_s2_done",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_pride_s2_done",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_pride_s2_done.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_pride_s2_done.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_pride_s2_done"
+    },
+    {
+      "id": "wh_pride_s3",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_pride_s3",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_pride_s3.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_pride_s3.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_pride_s3"
+    },
+    {
+      "id": "wh_pride_s3_done",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_pride_s3_done",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_pride_s3_done.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_pride_s3_done.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_pride_s3_done"
+    },
+    {
+      "id": "wh_pride_s4",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_pride_s4",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_pride_s4.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_pride_s4.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_pride_s4"
+    },
+    {
+      "id": "wh_pride_s4_done",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_pride_s4_done",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_pride_s4_done.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_pride_s4_done.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_pride_s4_done"
+    },
+    {
+      "id": "wh_pride_s5",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_pride_s5",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_pride_s5.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_pride_s5.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_pride_s5"
+    },
+    {
+      "id": "wh_pride_s5_done",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_pride_s5_done",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_pride_s5_done.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_pride_s5_done.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_pride_s5_done"
+    },
+    {
+      "id": "wh_stone_final",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_stone_final",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_stone_final.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_stone_final.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_stone_final"
+    },
+    {
+      "id": "wh_stone_open",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_stone_open",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_stone_open.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_stone_open.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_stone_open"
+    },
+    {
+      "id": "wh_stone_s1",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_stone_s1",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_stone_s1.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_stone_s1.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_stone_s1"
+    },
+    {
+      "id": "wh_stone_s1_done",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_stone_s1_done",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_stone_s1_done.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_stone_s1_done.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_stone_s1_done"
+    },
+    {
+      "id": "wh_stone_s2",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_stone_s2",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_stone_s2.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_stone_s2.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_stone_s2"
+    },
+    {
+      "id": "wh_stone_s2_done",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_stone_s2_done",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_stone_s2_done.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_stone_s2_done.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_stone_s2_done"
+    },
+    {
+      "id": "wh_stone_s3",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_stone_s3",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_stone_s3.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_stone_s3.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_stone_s3"
+    },
+    {
+      "id": "wh_stone_s3_done",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_stone_s3_done",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_stone_s3_done.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_stone_s3_done.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_stone_s3_done"
+    },
+    {
+      "id": "wh_stone_s4",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_stone_s4",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_stone_s4.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_stone_s4.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_stone_s4"
+    },
+    {
+      "id": "wh_stone_s4_done",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_stone_s4_done",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_stone_s4_done.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_stone_s4_done.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_stone_s4_done"
+    },
+    {
+      "id": "wh_stone_s5",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_stone_s5",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_stone_s5.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_stone_s5.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_stone_s5"
+    },
+    {
+      "id": "wh_stone_s5_done",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wh_stone_s5_done",
+      "file": "fx\\CurseOfAlduin\\whisper\\echo_stone_s5_done.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\whisper\\echo_stone_s5_done.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "ui",
+      "loop": false,
+      "use": "Felldir the Old's whisper: echo_stone_s5_done"
     }
   ]
 }

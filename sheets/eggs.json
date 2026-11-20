@@ -1,33 +1,34 @@
 {
  "sheet": "eggs",
- "about": "(Noah: one longer Easter egg for each class, and the wonders harder to win) one hidden quest per class, opened once 6 cities are freed and never explained in game; finishing it is the only way to win the class's wonder. Each step is played at a freed city's Echo Altar, and never in the same city as the step before (the altar's menu shows its whispers - each step's hint, a line more for each step found). Steps: touch (find n glowing things round the altar, element in hand if asked, at night if night, without being hurt if nodamage, within seconds if set), order (touch n stones in the order they light), altar (return to an altar), kills (n of the night's dead on marked ground), classkills (n of the night's dead killed your class's way in that city at night), survive (n of the dead risen round the altar; dark: the screen darkens), boss (a named foe: an enemies row).",
+ "about": "(Noah: one longer Easter egg for each class, and the wonders harder to win) one hidden quest per class, opened once 6 cities are freed and never explained in game; finishing it is the only way to win the class's wonder. Each step is played at a freed city's Echo Altar, and never in the same city as the step before (the altar's menu shows its whispers - each step's hint, a line more for each step found). (Noah, 2026-11-19: the Wonder Easter Eggs design) Felldir the Old whispers through every altar: a riddle naming the step's city at any altar, the step's own line at that city's altar, a line as each step is done. Steps: touch, order, altar, kills, classkills, survive, boss.",
  "rows": [
   {
    "id": "wyrm",
    "cls": "summoner",
-   "title": "The Wyrm's Calling",
+   "title": "The Ghost Pride",
    "reward": "wonder",
-   "rewardText": "The Greybeards call you to High Hrothgar: the Call of the Violet Wyrm waits in the great hall.",
+   "rewardText": "The Greybeards call you to High Hrothgar: the Soulcaller's Staff waits in the great hall.",
    "steps": [
     {
      "type": "touch",
-     "n": 4,
-     "text": "Find the four wyrm-bone shards buried round an Echo Altar at night",
+     "n": 3,
+     "text": "Calm the three spirit sabre cats prowling the edge of the city at night - sneak up on each",
      "element": "any",
      "night": true,
-     "r0": 500,
-     "r1": 1400,
+     "r0": 900,
+     "r1": 1600,
      "nodamage": false,
      "seconds": 0,
-     "name": "wyrm-bone shard",
+     "name": "spirit cat",
      "row": "none",
      "dark": false,
-     "hint": "Bones of a wyrm lie shallow round the altars. They wake only in the dark."
+     "hint": "Three spirit cats stalk the edges of this city by moonlight. They fear the hunter. Come to them quietly.",
+     "done": "Three souls pad behind you now."
     },
     {
      "type": "classkills",
      "n": 30,
-     "text": "Feed the bones: 30 of the dead slain by your summons, in another freed city at night",
+     "text": "The hunt: 30 of the dead slain by your summons at night, a spirit cat at your side",
      "element": "any",
      "night": true,
      "r0": 0,
@@ -37,42 +38,29 @@
      "name": "",
      "row": "none",
      "dark": false,
-     "hint": "What you call must do the killing. The bones drink only what your servants kill."
+     "hint": "A pride must hunt. Let your servants kill thirty of the dead tonight, and keep the spirit at your side alive.",
+     "done": "The pride has tasted the hunt."
     },
     {
      "type": "order",
      "n": 4,
-     "text": "Wake the four bone-totems in the order they glow",
+     "text": "Touch the four roaring stones in the order you heard them",
      "element": "any",
      "night": true,
      "r0": 350,
      "r1": 800,
      "nodamage": false,
      "seconds": 0,
-     "name": "bone-totem",
+     "name": "roaring stone",
      "row": "none",
      "dark": false,
-     "hint": "The totems remember the order they were raised. Watch them."
-    },
-    {
-     "type": "altar",
-     "n": 1,
-     "text": "Lay the bones on an Echo Altar",
-     "element": "any",
-     "night": false,
-     "r0": 0,
-     "r1": 0,
-     "nodamage": false,
-     "seconds": 0,
-     "name": "the altar",
-     "row": "none",
-     "dark": false,
-     "hint": "The bones want an altar's fire."
+     "hint": "Four stones remember the pride's roar. Listen to the order they call, then answer them.",
+     "done": "The roar is whole again."
     },
     {
      "type": "survive",
      "n": 18,
-     "text": "Hold the altar in the dark while the wyrm's soul stirs",
+     "text": "Hold the altar against the dead without striking a blow yourself - only your summons may kill",
      "element": "any",
      "night": true,
      "r0": 0,
@@ -81,28 +69,14 @@
      "seconds": 0,
      "name": "",
      "row": "none",
-     "dark": true,
-     "hint": "When the wyrm stirs, the light goes out. Hold."
-    },
-    {
-     "type": "touch",
-     "n": 5,
-     "text": "Catch the five spirit-flames before they gutter out",
-     "element": "any",
-     "night": true,
-     "r0": 500,
-     "r1": 1400,
-     "nodamage": false,
-     "seconds": 75,
-     "name": "spirit-flame",
-     "row": "none",
      "dark": false,
-     "hint": "Five flames, and not long to catch them."
+     "hint": "Stand at this altar while the dead come. Lift no blade. Let only what you call do the killing.",
+     "done": "The den is ready."
     },
     {
      "type": "boss",
      "n": 1,
-     "text": "Destroy the Bone-Caller, who would bind the wyrm before you",
+     "text": "Break the Bone-Caller's three soul-chains, then kill him",
      "element": "any",
      "night": true,
      "r0": 0,
@@ -112,81 +86,57 @@
      "name": "The Bone-Caller",
      "row": "lich",
      "dark": false,
-     "hint": "Someone else is calling the wyrm."
+     "hint": "The Bone-Caller chains the Old King's soul. Break the chains, then break him.",
+     "done": "The Old King runs free."
     }
-   ]
+   ],
+   "voice": "pride",
+   "open": "Listen... the ghost-cats that guarded the Tongues still prowl. Gather their scattered souls, and the Soulcaller's Staff will answer you.",
+   "final": "The pride is whole. The Greybeards are calling. The Soulcaller's Staff waits at High Hrothgar."
   },
   {
    "id": "sixfires",
    "cls": "destruction",
-   "title": "The Six Fires",
+   "title": "The Eye of Magnus",
    "reward": "wonder",
    "rewardText": "The Greybeards call you to High Hrothgar: the Staff of Magnus waits in the great hall.",
    "steps": [
     {
      "type": "touch",
      "n": 3,
-     "text": "Burn open the three ember-seals round an Echo Altar (fire in hand)",
-     "element": "fire",
-     "night": true,
-     "r0": 500,
-     "r1": 1400,
-     "nodamage": false,
-     "seconds": 0,
-     "name": "ember-seal",
-     "row": "none",
-     "dark": false,
-     "hint": "Three seals sleep in the ashes. Only flame will open them."
-    },
-    {
-     "type": "touch",
-     "n": 3,
-     "text": "Shatter the three rime-seals in another freed city (frost in hand)",
-     "element": "frost",
-     "night": true,
-     "r0": 500,
-     "r1": 1400,
-     "nodamage": false,
-     "seconds": 0,
-     "name": "rime-seal",
-     "row": "none",
-     "dark": false,
-     "hint": "The next seals are ice. Cold breaks cold."
-    },
-    {
-     "type": "touch",
-     "n": 3,
-     "text": "Wake the three storm-seals in another freed city (lightning in hand)",
-     "element": "shock",
-     "night": true,
-     "r0": 500,
-     "r1": 1400,
-     "nodamage": false,
-     "seconds": 0,
-     "name": "storm-seal",
-     "row": "none",
-     "dark": false,
-     "hint": "The last seals hum. Give them lightning."
-    },
-    {
-     "type": "classkills",
-     "n": 40,
-     "text": "Kindle the tome: 40 of the dead slain with Destruction, in another freed city at night",
+     "text": "Open the ember, rime and storm seals, each with a spell of its element, within 20 seconds of the first",
      "element": "any",
      "night": true,
-     "r0": 0,
-     "r1": 0,
+     "r0": 500,
+     "r1": 1100,
      "nodamage": false,
-     "seconds": 0,
-     "name": "",
+     "seconds": 20,
+     "name": "seal",
      "row": "none",
      "dark": false,
-     "hint": "The tome is kindled with the dead your spells burn."
+     "hint": "Three seals sleep near this altar: ember, rime and storm. Strike each with its own element, before the first goes dark again.",
+     "done": "The seals are open."
+    },
+    {
+     "type": "touch",
+     "n": 5,
+     "text": "Catch five falling pieces of the Eye at night within 60 seconds",
+     "element": "any",
+     "night": true,
+     "r0": 600,
+     "r1": 1500,
+     "nodamage": false,
+     "seconds": 60,
+     "name": "falling star",
+     "row": "none",
+     "dark": false,
+     "hint": "Pieces of the Eye are falling tonight. Catch five before they burn out.",
+     "done": "The light is gathered."
     },
     {
      "type": "order",
      "n": 4,
-     "text": "Turn the four light-stones in the order they shine",
+     "text": "Strike the four light-stones in order: fire, frost, storm, then sun",
      "element": "any",
      "night": true,
      "r0": 350,
@@ -196,27 +146,29 @@
      "name": "light-stone",
      "row": "none",
      "dark": false,
-     "hint": "Four stones shine in turn. Turn them as they show you."
+     "hint": "Four stones, four colours. Ember before frost, frost before storm, and storm before the sun. Strike them so.",
+     "done": "The prism shines."
     },
     {
-     "type": "touch",
-     "n": 4,
-     "text": "Gather the four drifting anomalies without being hurt",
+     "type": "classkills",
+     "n": 40,
+     "text": "40 of the dead slain with Destruction at night - at least 10 each by fire, frost and storm",
      "element": "any",
      "night": true,
-     "r0": 500,
-     "r1": 1400,
-     "nodamage": true,
+     "r0": 0,
+     "r1": 0,
+     "nodamage": false,
      "seconds": 0,
-     "name": "anomaly",
+     "name": "",
      "row": "none",
      "dark": false,
-     "hint": "The anomalies scatter from a bleeding hand."
+     "hint": "Burn forty of the dead tonight. Fire, frost and storm... the Eye hungers for all three.",
+     "done": "The Eye is kindled."
     },
     {
      "type": "boss",
      "n": 1,
-     "text": "Unmake the Great Anomaly",
+     "text": "Unmake the Great Anomaly - strike it only with an element it isn't wearing",
      "element": "any",
      "night": true,
      "r0": 0,
@@ -226,9 +178,13 @@
      "name": "The Great Anomaly",
      "row": "eg_anomaly",
      "dark": false,
-     "hint": "All that magic drew something. It waits."
+     "hint": "The Great Anomaly wears every element in turn. Strike it with what it fears, never with what it wears.",
+     "done": "The Anomaly is unmade."
     }
-   ]
+   ],
+   "voice": "eye",
+   "open": "A god's eye fell to Nirn, and the curse buried its light. Wake its fire, frost and storm, and the Staff of Magnus is yours to claim.",
+   "final": "The Eye sees again. The Greybeards are calling. The Staff of Magnus waits at High Hrothgar."
   },
   {
    "id": "vortex",
@@ -239,53 +195,24 @@
    "steps": [
     {
      "type": "touch",
-     "n": 5,
-     "text": "Catch the five falling stars round an Echo Altar before they fade",
+     "n": 6,
+     "text": "Kill the six element-wrapped dead at night, each with a flask of its own element, and take their essences",
      "element": "any",
      "night": true,
-     "r0": 500,
-     "r1": 1400,
-     "nodamage": false,
-     "seconds": 60,
-     "name": "falling star",
-     "row": "none",
-     "dark": false,
-     "hint": "Stars fall near the altars at night - five, and they fade fast."
-    },
-    {
-     "type": "classkills",
-     "n": 40,
-     "text": "Feed the dark: 40 of the dead slain with your flasks, in another freed city at night",
-     "element": "any",
-     "night": true,
-     "r0": 0,
-     "r1": 0,
+     "r0": 700,
+     "r1": 1500,
      "nodamage": false,
      "seconds": 0,
-     "name": "",
+     "name": "essence",
      "row": "none",
      "dark": false,
-     "hint": "Only the string feeds it."
-    },
-    {
-     "type": "touch",
-     "n": 3,
-     "text": "Take the three shadow coins without being hurt",
-     "element": "any",
-     "night": true,
-     "r0": 500,
-     "r1": 1400,
-     "nodamage": true,
-     "seconds": 0,
-     "name": "shadow coin",
-     "row": "none",
-     "dark": false,
-     "hint": "Three coins in the shadows. Bleed and they slip away."
+     "hint": "Six of the dead rise tonight, each wrapped in an element. Answer each with its own flask, and take what falls.",
+     "done": "Six essences. Carry them carefully."
     },
     {
      "type": "altar",
      "n": 1,
-     "text": "Pay the coins to an Echo Altar",
+     "text": "Carry the essences to the altar before dawn",
      "element": "any",
      "night": false,
      "r0": 0,
@@ -295,12 +222,13 @@
      "name": "the altar",
      "row": "none",
      "dark": false,
-     "hint": "Coins are for paying. The altar is owed."
+     "hint": "A crucible needs an altar's fire. Bring the essences here before dawn.",
+     "done": "The crucible is lit."
     },
     {
      "type": "order",
      "n": 4,
-     "text": "Light the four braziers in the order they flicker",
+     "text": "Light the four braziers with your flasks in the order they flicker",
      "element": "any",
      "night": true,
      "r0": 350,
@@ -310,39 +238,45 @@
      "name": "brazier",
      "row": "none",
      "dark": false,
-     "hint": "The braziers flicker in an order. Light them in it."
+     "hint": "Four braziers flicker a formula. Copy it with your flasks, in the order they burn.",
+     "done": "The formula holds."
     },
     {
      "type": "survive",
      "n": 16,
-     "text": "Hold the altar in the dark",
+     "text": "Hold the altar against the dead without being hurt",
      "element": "any",
      "night": true,
      "r0": 0,
      "r1": 0,
-     "nodamage": false,
+     "nodamage": true,
      "seconds": 0,
      "name": "",
      "row": "none",
-     "dark": true,
-     "hint": "The dark comes for whoever holds the eye."
+     "dark": false,
+     "hint": "The brew must not be shaken. Hold this altar against the dead, and do not bleed.",
+     "done": "The Stone is setting."
     },
     {
      "type": "boss",
      "n": 1,
-     "text": "Bring down the Matriarch of the Black Sky",
+     "text": "Bring down the Matriarch - never the same element twice in a row",
      "element": "any",
      "night": true,
      "r0": 0,
      "r1": 0,
      "nodamage": false,
      "seconds": 0,
-     "name": "The Matriarch of the Black Sky",
+     "name": "The Matriarch",
      "row": "winged_twilight",
      "dark": false,
-     "hint": "Something winged circles above the altars. Look up."
+     "hint": "The Matriarch drinks whatever strikes her. Never feed her the same element twice.",
+     "done": "The Matriarch is spent."
     }
-   ]
+   ],
+   "voice": "stone",
+   "open": "Every element can be bottled... even the curse. Brew the Philosopher's Stone, and the Mutagen Staff will be yours.",
+   "final": "The Stone is made. The Greybeards are calling. The Mutagen Staff waits at High Hrothgar."
   },
   {
    "id": "slayer",
@@ -354,52 +288,39 @@
     {
      "type": "kills",
      "n": 30,
-     "text": "Feed the hallowed ground: 30 of the dead slain on it, near an Echo Altar at night",
+     "text": "Feed the hallowed ground: 30 of the dead slain on it at night",
      "element": "any",
      "night": true,
      "r0": 600,
      "r1": 900,
      "nodamage": false,
      "seconds": 0,
-     "name": "the marked ground",
+     "name": "the hallowed ground",
      "row": "none",
      "dark": false,
-     "hint": "A patch of ground near the altar is hungry. Feed it the dead."
-    },
-    {
-     "type": "classkills",
-     "n": 40,
-     "text": "Blood the oath: 40 of the dead slain in melee, in another freed city at night",
-     "element": "any",
-     "night": true,
-     "r0": 0,
-     "r1": 0,
-     "nodamage": false,
-     "seconds": 0,
-     "name": "",
-     "row": "none",
-     "dark": false,
-     "hint": "The oath is sworn with a blade, not a spell."
+     "hint": "The ground near this altar is hallowed. Feed it thirty of the dead, slain where it glows.",
+     "done": "The ground is fed."
     },
     {
      "type": "touch",
      "n": 5,
-     "text": "Find the five broken blade-shards",
+     "text": "Gather the five blade-shards at night - each guardian rises as you near",
      "element": "any",
      "night": true,
-     "r0": 500,
-     "r1": 1400,
+     "r0": 600,
+     "r1": 1500,
      "nodamage": false,
      "seconds": 0,
      "name": "blade-shard",
      "row": "none",
      "dark": false,
-     "hint": "The old blade lies broken in five pieces, scattered by night."
+     "hint": "Five shards of the old blade lie scattered tonight. Their guardians wake when you come near.",
+     "done": "The blade is gathered."
     },
     {
      "type": "order",
      "n": 4,
-     "text": "Strike the four rune-stones in the order they sing",
+     "text": "Strike the four rune-stones with steel in the order they sing",
      "element": "any",
      "night": true,
      "r0": 350,
@@ -409,12 +330,13 @@
      "name": "rune-stone",
      "row": "none",
      "dark": false,
-     "hint": "Four stones sing in turn. Strike them as they sing."
+     "hint": "Four rune-stones sing in turn. Strike them with steel, in the order they sing.",
+     "done": "The runes remember the blade."
     },
     {
-     "type": "survive",
-     "n": 20,
-     "text": "Keep your oath: survive the dead risen round the altar",
+     "type": "classkills",
+     "n": 40,
+     "text": "40 of the dead slain with your blade at night, a spell ready in your other hand",
      "element": "any",
      "night": true,
      "r0": 0,
@@ -424,12 +346,13 @@
      "name": "",
      "row": "none",
      "dark": false,
-     "hint": "An oath is proven by standing."
+     "hint": "Swear the oath in steel. Forty of the dead by your blade, a spell ready in your other hand.",
+     "done": "The oath is sworn."
     },
     {
      "type": "boss",
      "n": 1,
-     "text": "Take the blade's hilt from Thorgar the Skulltaker",
+     "text": "Defeat Thorgar the Skulltaker with the blade alone - magic won't touch him",
      "element": "any",
      "night": true,
      "r0": 0,
@@ -439,32 +362,40 @@
      "name": "Thorgar the Skulltaker",
      "row": "knight",
      "dark": false,
-     "hint": "A skull-taker carries what is missing."
-    },
-    {
-     "type": "boss",
-     "n": 1,
-     "text": "Defeat the Gatekeeper, the blade's last guardian",
-     "element": "any",
-     "night": true,
-     "r0": 0,
-     "r1": 0,
-     "nodamage": false,
-     "seconds": 0,
-     "name": "The Gatekeeper",
-     "row": "king",
-     "dark": false,
-     "hint": "Every blade has a keeper. This one guards a gate."
+     "hint": "Thorgar the Skulltaker holds the hilt. Magic will not touch him. Face him with the blade alone.",
+     "done": "The hilt is yours."
     }
-   ]
+   ],
+   "voice": "oath",
+   "open": "A slayer swore an oath and broke his blade on Alduin's scales. Take up his oath, and the Dragon Slayer will be yours.",
+   "final": "The blade is whole. The Greybeards are calling. The Dragon Slayer waits at High Hrothgar."
   }
  ],
  "columns": [
   "id",
   "cls",
   "title",
+  "voice",
   "reward",
   "rewardText",
+  "open",
+  "final",
   "steps"
- ]
+ ],
+ "whisper": {
+  "asleep": "The wonders still sleep. Free more cities, and they will stir.",
+  "next": "The next whisper waits...",
+  "cities": {
+   "Riverwood": "...where the mill wheel turns beside the river, and the dragon first broke the sky.",
+   "Whiterun": "...beneath the hall built on a dragon's cage, where the golden tree grows.",
+   "Solitude": "...where the great arch spans the sea, and the bards keep their songs.",
+   "Windhelm": "...in the oldest city of stone, where the snow never leaves the palace of kings.",
+   "Markarth": "...in the city the deep elves carved, where the cliffs bleed silver.",
+   "Riften": "...where the canals run beneath a city of thieves and honey.",
+   "Falkreath": "...among the graves in the pines, where the dead outnumber the living.",
+   "Morthal": "...in the marsh town, where the mist hides what walks.",
+   "Dawnstar": "...on the cold northern shore, where the dreamers cannot sleep.",
+   "Winterhold": "...where the city fell into the sea, and the college stands alone."
+  }
+ }
 }

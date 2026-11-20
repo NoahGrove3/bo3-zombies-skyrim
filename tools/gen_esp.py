@@ -1391,9 +1391,11 @@ def guide_text():
              "<b>Seat of the Awakened</b> - begin again: every city falls back under the curse and the nights start over, the dead 50% tougher each cycle. "
              "Your wonders, powers and gear stay yours; free the altars again and the Echo returns."),
            "[pagebreak]", h("Whispers of the Altars"),
-           p("Each path keeps a secret, and it is the only road to the path's <b>wonder</b>. It wakes once six cities are free, and nobody will tell you what to do. Stand at a freed altar and its <b>whispers</b> show in its menu - another line for each step you find. When it is won, the Greybeards call you to High Hrothgar. "
-             "Each step is found at a freed altar, never in the same city as the step before. These are the first whispers:"),
-           ] + [p(f"<b>{ {'summoner': 'The Summoner', 'destruction': 'The Battle-mage', 'ranger': 'The Alchemist', 'spellsword': 'The Spellsword'}[e['cls']] }</b> - {e['steps'][0]['hint']}") for e in S['eggs']['rows']] + [
+           p("Each path keeps a secret, and it is the only road to the path's <b>wonder</b>. The secrets wake once six cities are free. "
+             "<b>Felldir the Old</b> whispers through every Echo Altar: walk up to one and he tells you which city the next step waits in, in a riddle. "
+             "At that city's altar he tells you what to do there, and when a step is done he says so. Everything he has said stays in the altar's menu. "
+             "Win a secret and the Greybeards call you to High Hrothgar. These are the four secrets:"),
+           ] + [p(f"<b>{ {'summoner': 'The Summoner', 'destruction': 'Destruction', 'ranger': 'The Alchemist', 'spellsword': 'The Spellsword'}[e['cls']] }</b> - <i>{e['title']}</i>: {e['open']}") for e in S['eggs']['rows']] + [
            "[pagebreak]", h("Event Nights and Themed Waves"),
            p("From night 8, about one night in eight is an <b>event night</b>: a Goblin Raid, a Harpy Swarm, Armored Champions or a Blood Fog. The whole night belongs to it - and it pays <b>double Cursed Essence</b>, with the dead coming twice as fast."),
            p("On ordinary nights, from the third wave, about one wave in six is <b>themed</b> the same way. Its name shows on the wave dial under the compass."),

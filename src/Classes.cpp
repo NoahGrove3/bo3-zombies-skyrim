@@ -685,7 +685,7 @@ namespace bo3z::Classes
 		if (g_class.load() >= 0) {
 			bool woke = false;
 			for (int c2 = 0; c2 < 4; ++c2) {
-				if (g_wStep[c2] >= 1 && g_wStep[c2] <= kWonderSteps && FreedCount() < kWonderOpensAt && !Echo::HallOpen()) g_wStep[c2] = 0;  // (the audit: never in a new cycle begun at the Seat)  // (an old save's three-city trial: shut again until six)
+				if (g_wStep[c2] >= 1 && g_wStep[c2] <= kWonderSteps && FreedCount() < kWonderOpensAt && !Echo::HallOpen() && !Eggs::DevOpen()) g_wStep[c2] = 0;  // (the audit: never in a new cycle begun at the Seat)  // (an old save's three-city trial: shut again until six)
 				if (g_wStep[c2] == 0 && FreedCount() >= kWonderOpensAt) g_wStep[c2] = 1, woke = true;
 			}
 			if (woke) {

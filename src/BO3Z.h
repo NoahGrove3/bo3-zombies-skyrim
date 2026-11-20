@@ -991,6 +991,8 @@ namespace bo3z
 		float DamageMult();                      // (retired: 1)
 		bool  ShadowStep();                      // (retired: false)
 		void  DevStep(int a_town);
+		bool  DevOpen();                         // (dev: egg) the wonders' quests open whatever the freed cities
+		void  Dev(std::string_view a_cmd, std::string_view a_arg);  // egg <pride|eye|stone|oath>, eggjump <n>, eggnext, eggto, eggsay, eggreset
 	}
 
 	// (Noah) the night's atmosphere (src/Atmos.cpp)

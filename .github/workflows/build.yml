@@ -73,6 +73,8 @@ jobs:
           python tools/mcm.py "$stage\Data"   # the Mod Configuration page (SkyUI + MCM Helper) and the Experience file
           New-Item -ItemType Directory -Force "$stage\Data\Sound\fx\CurseOfAlduin\un", "$stage\Data\Music\CurseOfAlduin" | Out-Null
           Copy-Item assets\sound\un\*.wav "$stage\Data\Sound\fx\CurseOfAlduin\un\"   # the Curse of Alduin SFX library, cut by tools/sfx.py
+          New-Item -ItemType Directory -Force "$stage\Data\Sound\fx\CurseOfAlduin\whisper" | Out-Null
+          Copy-Item assets\sound\whisper\*.wav "$stage\Data\Sound\fx\CurseOfAlduin\whisper\"   # Felldir the Old's whispers at the Echo Altars
           Copy-Item assets\music\*.wav "$stage\Data\Music\CurseOfAlduin\"
           Copy-Item assets\ui\*.png, assets\ui\*.jpg "$stage\Data\Interface\CurseOfAlduin\"
           Copy-Item assets\fx\* "$stage\Data\" -Recurse -Force   # the ten spells' looks (tools/spellfx.py)
