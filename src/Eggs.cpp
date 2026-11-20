@@ -569,12 +569,12 @@ namespace bo3z::Eggs
 				const float d = pp.GetDistance(at);
 				if (d < 2100.0f && (g_sign.growl -= a_dt) <= 0) g_sign.growl = 6.0f + u(rr) * 6.0f, Audio::At(gen::Sound::boss_growl, cat.get(), 0.45f);
 				if (d < 9000.0f && (g_sign.glowT -= a_dt) <= 0) g_sign.glowT = 2.0f + u(rr), Gun::Motes(1, at + RE::NiPoint3{ 0, 0, 40.0f }, 0.35f, 1.8f);
-				if (d > 1600.0f && at.GetDistance(g_sign.path[g_sign.at]) > 700.0f) cat->SetPosition(g_sign.path[g_sign.at]);   // (unseen, it keeps to its trail)
+				if (d > 1600.0f && at.GetDistance(g_sign.path[g_sign.at]) > 700.0f) cat->SetPosition(g_sign.path[g_sign.at], true);   // (unseen, it keeps to its trail)
 				const bool sneak = a_p->IsSneaking();
 				if (d < 450.0f && !sneak) {   // rushed: it flees to where it first stood
 					Gun::Motes(1, at, 0.6f, 1.0f);
 					g_sign.at = 0, g_sign.wait = 0;
-					cat->SetPosition(g_sign.path[0]);
+					cat->SetPosition(g_sign.path[0], true);
 					SignSay("It fled from you. Come softly.");
 				} else if (d < 800.0f && sneak) {
 					if ((g_sign.wait += a_dt) > 1.2f) {   // followed softly: it slips on to its next place
@@ -588,7 +588,7 @@ namespace bo3z::Eggs
 							DropAt(a_p, end, kSabreFang);
 							logger::info("eggs: the lone spirit led you to its fang");
 						} else {
-							cat->SetPosition(g_sign.path[g_sign.at]);
+							cat->SetPosition(g_sign.path[g_sign.at], true);
 						}
 					}
 				} else {
