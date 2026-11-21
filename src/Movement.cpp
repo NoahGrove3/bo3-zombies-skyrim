@@ -179,6 +179,55 @@ namespace bo3z
 
 	namespace Movement
 	{
+		// (Noah, 2026-11-21: "When using the updraft shout in first person I should be able to use my glider in first person as well as
+		// switch to third person mid flight so using the glider works with both perspectives") the paraglider's glide lives on the
+		// third-person body's animation graph. In first person that graph still runs (it moves your shadow, your body for the next
+		// view), but the game tells and reads only the graph of the view you're in - so in first person the glider never opened, and a
+		// glide begun in third person ended the moment you looked through your own eyes. Its event and its state now go to and come
+		// from the third-person graph itself, whichever view you're in
+		std::uint32_t g_thirdGraph = 0;   // (which of the player's graphs is the third-person one: learned while in third person)
+		bool          g_fpThird = false;  // (dev: fpglide third) the old way back - first person turned to third for a glide
+		template <class F>
+		auto OnThirdGraph(RE::PlayerCharacter* a_p, F&& a_f)
+		{
+			RE::BSTSmartPointer<RE::BSAnimationGraphManager> m;
+			if (!a_p || !a_p->GetAnimationGraphManager(m) || !m || m->graphs.size() < 2) return a_f();
+			auto&      rd = m->GetRuntimeData();
+			const auto was = rd.activeGraph;
+			if (auto* cam = RE::PlayerCamera::GetSingleton(); cam && !cam->IsInFirstPerson()) g_thirdGraph = was;
+			if (g_thirdGraph >= m->graphs.size()) return a_f();
+			rd.activeGraph = g_thirdGraph;
+			auto r = a_f();
+			rd.activeGraph = was;
+			return r;
+		}
+		bool ParaNotify(RE::PlayerCharacter* a_p, const char* a_event)
+		{
+			return OnThirdGraph(a_p, [&] { return a_p->NotifyAnimationGraph(a_event); });
+		}
+		bool ParaGliding(RE::PlayerCharacter* a_p, bool& a_out)
+		{
+			return OnThirdGraph(a_p, [&] { return ParaGliding(a_p, a_out); });
+		}
+		void DevFpGlide(std::string_view a_mode)
+		{
+			g_fpThird = a_mode == "third";
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			RE::BSTSmartPointer<RE::BSAnimationGraphManager> m;
+			std::string g;
+			if (p && p->GetAnimationGraphManager(m) && m) {
+				for (std::uint32_t i = 0; i < m->graphs.size(); ++i) {
+					bool pg = false;
+					auto& rd = m->GetRuntimeData();
+					const auto was = rd.activeGraph;
+					rd.activeGraph = i;
+					const bool known = p->GetGraphVariableBool("bParaGliding", pg);
+					rd.activeGraph = was;
+					g += fmt::format(" [graph {}{}: bParaGliding {}]", i, i == m->GetRuntimeData().activeGraph ? " active" : "", known ? (pg ? "on" : "off") : "unknown");
+				}
+			}
+			logger::info("glider: first person {} -{} (third-person graph {})", g_fpThird ? "turns to third person for a glide (the old way)" : "glides in first person", g, g_thirdGraph);
+		}
 		// Skyrim's Paraglider: everyone carries the glider (Paragliding.esp's "Paraglider", local 0x802) - its own way
 		// of getting one is a little quest; here it is in your pack. Its script sets the behavior flag the glide needs
 		// when it enters your inventory; the flag is also kept set here (a load or a new body can drop it).
@@ -1348,7 +1397,7 @@ namespace bo3z
 				}
 				if (g_glideQueued && g_takeT > kUpdraftRise && !g_hadDragon) {
 					g_glideQueued = false;
-					if (!a_player->NotifyAnimationGraph("StartPara")) {
+					if (!ParaNotify(a_player, "StartPara")) {
 						DevTools::PressKey(RE::INPUT_DEVICE::kKeyboard, 0x12, 0.05f);
 					}
 					logger::info("glider: opened at the Updraft's top");
@@ -1647,14 +1696,14 @@ namespace bo3z
 					// no dragon, sinking slowly and steadily for half a second: it is ended
 					static float stuckT = 0;
 					bool         pgNow = false;
-					a_player->GetGraphVariableBool("bParaGliding", pgNow);
+					ParaGliding(a_player, pgNow);
 					const bool slowSink = !OnGround(a_player) && !pgNow && g_liftOff == 0 && preFallV < -40.0f && preFallV > -420.0f;
 					stuckT = slowSink ? stuckT + a_delta : 0.0f;
 					static bool  forceFall = false;
 					static float fallVz = 0;
 					if (stuckT > 0.6f && !forceFall) {
 						stuckT = 0;
-						a_player->NotifyAnimationGraph("EndPara");
+						ParaNotify(a_player, "EndPara");
 						forceFall = true, fallVz = preFallV;
 						logger::info("glider: the paraglider's slow fall was left on with no glider out ({:.0f}/s) - ended", preFallV);
 					}
@@ -1727,13 +1776,14 @@ namespace bo3z
 				g_swoopLen = len;
 				PlayGameSound(DragonSound::kRoar, a_player, nullptr, 0.7f);
 				PlayGameSound(DragonSound::kFlapBig, a_player);
-				logger::info("glider: the dragon is called - it reaches you in {:.2f} s", len);
+				logger::info("glider: the dragon is called - it reaches you in {:.2f} s (seen in {} person; on the third-person body {}, the first-person body {})", len,
+					RE::PlayerCamera::GetSingleton() && RE::PlayerCamera::GetSingleton()->IsInFirstPerson() ? "first" : "third", bank[0] != nullptr, bank[1] != nullptr);
 			}
 			// the paraglider's own state: the glide ended (landing, Activate) though its copy of the dragon still hangs on
 			// you for the put-away - the dragon lets go now, and the copy is hidden
 			{
 				bool pg = false;
-				const bool known = a_player->GetGraphVariableBool("bParaGliding", pg);
+				const bool known = ParaGliding(a_player, pg);
 				if (known && pg) {
 					sawGliding = true;
 				}
@@ -1754,7 +1804,7 @@ namespace bo3z
 					g_hadDragon = false;
 					EndHold();
 					// ... and the paraglider's own slow fall ends with it (left on, you ran in the air with no glider at all)
-					a_player->NotifyAnimationGraph("EndPara");
+					ParaNotify(a_player, "EndPara");
 					g_armHoldOn = false, g_armHold = 0, g_flapT = -1, g_liftT = -1, g_divePitch = 0;
 					if (g_breathSound.IsValid()) g_breathSound.Stop();
 					DiveRush(a_player, 0.0f);
@@ -1768,7 +1818,7 @@ namespace bo3z
 				static bool  touched = false;
 				static float airT = 0;
 				bool         pg2 = false;
-				a_player->GetGraphVariableBool("bParaGliding", pg2);
+				ParaGliding(a_player, pg2);
 				if (OnGround(a_player)) {
 					touched = true, airT = 0;
 				} else {
@@ -2454,7 +2504,7 @@ namespace bo3z
 					}
 					if (down > 0.42f) {
 						g_dive = true, g_diveT = 0;
-						if (!player->NotifyAnimationGraph("EndPara")) {  // (the glider closed: it lets you go)
+						if (!ParaNotify(player, "EndPara")) {  // (the glider closed: it lets you go)
 							DevTools::PressKey(RE::INPUT_DEVICE::kKeyboard, 0x12, 0.05f);
 						}
 						Forms::PlayAt(gen::Sound::shout_gale, player);
@@ -2978,10 +3028,32 @@ namespace bo3z
 			auto third = [&]() -> RE::ThirdPersonState* {
 				return cam->currentState && cam->currentState->id == RE::CameraState::kThirdPerson ? static_cast<RE::ThirdPersonState*>(cam->currentState.get()) : nullptr;
 			};
+			if (!g_fpThird) {
+				// (Noah, 2026-11-21) first person stays first person: Activate in the air opens the glider on the third-person body's
+				// graph (its glide, its dragon), the view left as it is - and a glide goes on through any change of view
+				if (g_fpWant) {
+					g_fpWant = false;
+					bool pg = false;
+					ParaGliding(a_p, pg);
+					if (!BondLocked() && cam->IsInFirstPerson() && !OnGround(a_p) && !pg && !Riding()) {
+						const bool took = ParaNotify(a_p, "StartPara");
+						logger::info("glider: opened in first person ({})", took ? "the glide begins" : "not taken");
+					}
+				}
+				static bool wasFirst = false, wasGliding = false;
+				bool        pgNow = false;
+				ParaGliding(a_p, pgNow);
+				const bool first = cam->IsInFirstPerson();
+				if (pgNow && first != wasFirst && wasGliding) {
+					logger::info("glider: the view changed mid-glide - now {} person, the glide goes on", first ? "first" : "third");
+				}
+				wasFirst = first, wasGliding = pgNow;
+				if (g_fpGlide == 0) return;   // (a glide begun the old way: let it finish below)
+			}
 			if (g_fpWant) {
 				g_fpWant = false;
 				bool pg = false;
-				a_p->GetGraphVariableBool("bParaGliding", pg);
+				ParaGliding(a_p, pg);
 				if (g_fpGlide == 0 && !BondLocked() && cam->IsInFirstPerson() && !OnGround(a_p) && !pg && !Riding()) {  // (the glider is yours once Whiterun is won)
 					cam->ForceThirdPerson();
 					g_fpGlide = 1, g_fpGlideT = 0, g_fpZoomWas = -1;
@@ -2993,7 +3065,7 @@ namespace bo3z
 			// person and the glider is called again there, so its animations play on the body they were made for
 			if (g_fpGlide == 0 && cam->IsInFirstPerson() && !Riding()) {
 				bool pg = false;
-				a_p->GetGraphVariableBool("bParaGliding", pg);
+				ParaGliding(a_p, pg);
 				if (pg) {
 					cam->ForceThirdPerson();
 					g_fpGlide = 1, g_fpGlideT = 0, g_fpZoomWas = -1;
@@ -3009,7 +3081,7 @@ namespace bo3z
 				tp->targetZoomOffset = 0.05f;  // close behind your head
 			}
 			if (g_fpGlide == 1 && g_fpGlideT > 0.1f) {
-				if (!a_p->NotifyAnimationGraph("StartPara")) {
+				if (!ParaNotify(a_p, "StartPara")) {
 					DevTools::PressKey(RE::INPUT_DEVICE::kKeyboard, 0x12, 0.05f);
 				}
 				g_fpGlide = 2, g_fpGlideT = 0;

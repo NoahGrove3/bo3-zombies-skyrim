@@ -820,6 +820,10 @@ namespace bo3z
 					if (auto* em = RE::ActorEquipManager::GetSingleton()) em->EquipSpell(player, sp, RE::TESForm::LookupByID<RE::BGSEquipSlot>(hand == "l" ? 0x013F43 : 0x013F42));
 				}
 				logger::info("dev: arequip {} -> {} [{:08X}]", i, sp ? sp->GetName() : "none", sp ? sp->GetFormID() : 0);
+			} else if (cmd == "fpglide") {  // fpglide [third]: the glider in first person as it is (default), or turned to third (the old way)
+				std::string mode;
+				in >> mode;
+				Movement::DevFpGlide(mode);
 			} else if (cmd == "floaters" && player) {  // floaters [radius]: trees, rocks and plants round you standing in the air - whose they are
 				// (Noah, 2026-11-21: "I still see a bunch of grass bushes trees and rocks that are floating all over the map what mod would
 				// be causing this?" - up close too) every tree, rock, plant and static within reach whose foot is well above the ground

@@ -949,6 +949,7 @@ namespace bo3z
 	{
 		bool Dodging();  // a dodge roll under way
 		bool Gliding();  // on the dragon glider (or just landed from a dive)
+		void DevFpGlide(std::string_view a_mode);   // (dev: fpglide [third]) first person glides as it is, or turns to third (the old way); logs the graphs
 		RE::NiMatrix3 SlerpRot(const RE::NiMatrix3& a_from, const RE::NiMatrix3& a_to, float a_t);
 
 		void OnButton(const RE::ButtonEvent* a_event);  // crouch/jump keys (Skyrim ignores crouch while sprinting)
