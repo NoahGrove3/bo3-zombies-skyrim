@@ -266,8 +266,8 @@ def skull(M):
 
 
 SKULL_SCALE = 0.051    # (Noah, 2026-11-21: "Bigger, wrapped round blade" - 144 long in its own units: 7.3 model units here, 11.8 in the game)
-SKULL_JAW_UP = 10.0    # (degrees the jaw is swung up about its hinge: its top line then parallel to its palate's)
-SKULL_JAW_DROP = 34.0  # (and lowered, the jaws held apart by the blade's width: its palate on the spine, its jaw along the edge)
+SKULL_JAW_UP = -8.0    # (degrees the jaw is swung up about its hinge: below 0, opened - its chin on the blade's edge)
+SKULL_JAW_DROP = 2.0   # (and barely lowered: Noah, 2026-11-21: "close the back of the skull a bit more so it's not broken looking" - its hinge kept on the skull)
 SKULL_PITCH = 26.0     # (degrees the whole skull is tipped snout-up: its palate along the blade's spine, the back of its head lowered)
 SKULL_MOUTH = 234.0    # (the blade's middle line through it, in its own height: its palate 255 and its jaw 213, the blade 42 wide)
 SKULL_BACK = -1.35     # (the back of its head down over the grip's top, its horns swept back over the grip)
