@@ -583,7 +583,7 @@ namespace bo3z
 						Drop(g_hall.item[i]), Drop(g_hall.glow[i]);
 						// (Noah, 2026-11-19: "don't gray out any of the weapons. I think the text that says not yet won is good
 						// enough") each wonder as itself, won or not - only Alduin's Bane keeps its pale look until it wakes;
-						// the Dragon Slayer wearing the very model the sword wears now (Animated Armoury's Dragonbone Katana)
+						// the Dragon Slayer wearing the very model the sword wears now (our own dragonbone katana, tools/dragonslayer.py)
 						auto* b = Forms::Ours(want == 1 || i < 4 ? gen::kHallFloat[i] : gen::kHallGhost[i]);
 						if (i == 3 && b) {
 							if (auto* m = b->As<RE::TESModel>(); m && Classes::SlayerModel()) m->SetModel(Classes::SlayerModel());

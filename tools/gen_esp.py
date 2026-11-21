@@ -717,7 +717,10 @@ crystal_weapon('madness', 'UN_MadnessSword', 'Spellbound Rapier', hip('spellboun
 # (Noah: "make the Dragon Slayer sword one-handed ... use the sword I attached") the Spellsword's wonder: a one-handed sword (the
 # Madness Sword's record) with the Ayleid Crystal Saber's model (tools/wonderprops.py slayer); its spell-on-hit, lightning
 # slashes and tier in src/Classes.cpp and src/WonderProps.inl
-crystal_weapon('slayer', 'UN_DragonSlayer', 'Dragon Slayer', lgs('slayer'), '1st_slayer',
+# (Noah, 2026-11-20: approved "our own Dragon Slayer" - tools/dragonslayer.py) our dragonbone katana; Animated Armoury's katana
+# swings kept (src/Classes.cpp SlayerLook)
+SLAYER_NIF = 'CurseOfAlduin\\slayer\\dragonslayer.nif'
+crystal_weapon('slayer', 'UN_DragonSlayer', 'Dragon Slayer', SLAYER_NIF, '1st_slayer',
     SWORD_DESC['slayer'],
     (6000, 16.0, 26), 'weap_draugr_gs', 0.75 * 1.5)   # (Noah: "make 2hand attacks faster by 50% only while holding those 2 weapons")
 
@@ -1516,14 +1519,14 @@ recs['ACTI'].append(record('ACTI', fid('ACTI', 'rel_portal'), [sub('EDID', z('UN
 # (Noah, 2026-11-18: the old wonders' leftovers out) each class's wonder floats as itself: the Summoner's Soulcaller's Staff
 # (Fulcimentum's Glass Staff), the Alchemist's Mutagen Staff; their greyed likenesses made by tools/modelconv/ghostnif.cpp
 for key, model, r in (('hf_gravecaller', 'SSS\\GlassStaff.nif', 80), ('hf_frostbinder', 'Weapons\\StaffofMagnus\\StaffofMagnus.nif', 80),
-                      ('hf_wolfcrown', 'CurseOfAlduin\\alchemist\\mutagen_staff.nif', 80), ('hf_barrowhorn', lgs('slayer'), 60),
+                      ('hf_wolfcrown', 'CurseOfAlduin\\alchemist\\mutagen_staff.nif', 80), ('hf_barrowhorn', 'CurseOfAlduin\\slayer\\dragonslayer.nif', 60),
                       ('hf_bane', lgs('bane'), 90), ('hf_glow', 'CurseOfAlduin\\fx\\hall_glow.nif', 60),
                       ('hf_glowtall', 'CurseOfAlduin\\fx\\hall_glow_tall.nif', 120), ('hf_pillar', 'CurseOfAlduin\\reliquary\\pillar_runes.nif', 170)):
     recs['ACTI'].append(record('ACTI', fid('ACTI', key), [sub('EDID', z('UN_' + key)), sub('OBND', struct.pack('<6h', -r, -r, -r, r, r, r * 2)),
         sub('MODL', z(model)), sub('FNAM', b'\0\0')]))
 for k in ('gravecaller', 'frostbinder', 'wolfcrown', 'barrowhorn', 'bane'):  # (greyed out, until it's yours: tools/modelconv/ghostnif.cpp; the Staff of Magnus's made on the machine from the game's own)
     recs['ACTI'].append(record('ACTI', fid('ACTI', 'hg_' + k), [sub('EDID', z('UN_hg_' + k)), sub('OBND', struct.pack('<6h', -80, -80, -80, 80, 80, 160)),
-        sub('MODL', z({'bane': lgs('bane'), 'barrowhorn': lgs('slayer'), 'gravecaller': 'SSS\\GlassStaff.nif', 'wolfcrown': 'CurseOfAlduin\\wonder\\ghost_mutagen.nif'}.get(k, 'CurseOfAlduin\\wonder\\ghost_' + k + '.nif'))), sub('FNAM', b'\0\0')]))   # (the Bane and the Slayer: Light Greatswords' models)
+        sub('MODL', z({'bane': lgs('bane'), 'barrowhorn': 'CurseOfAlduin\\slayer\\dragonslayer.nif', 'gravecaller': 'SSS\\GlassStaff.nif', 'wolfcrown': 'CurseOfAlduin\\wonder\\ghost_mutagen.nif'}.get(k, 'CurseOfAlduin\\wonder\\ghost_' + k + '.nif'))), sub('FNAM', b'\0\0')]))   # (the Bane and the Slayer: Light Greatswords' models)
 # Stage 5 (src/Echo.cpp Hall): the Hall of the Awakened's stations, and Alduin's Fang
 for key, name, verb in (('hall_fang', "Alduin's Bane", 'Take'), ('hall_robes', "The First Dragonborn's Regalia", 'Take'),
                         ('hall_skull', "The Bone-Wyrm's Skull", 'Bind'), ('hall_endless', 'Brazier of the Endless Night', 'Kindle'),

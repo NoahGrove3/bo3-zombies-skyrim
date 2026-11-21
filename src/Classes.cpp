@@ -2899,7 +2899,14 @@ namespace bo3z::Classes
 		auto* f = Lookup(0x34473D, "NewArmoury.esp");
 		auto* s = f ? f->As<RE::TESObjectWEAP>() : nullptr;
 		if (!w || !s) { logger::warn("classes: the Dragon Slayer's katana look not found (Animated Armoury's Dragonbone Katana)"); return; }
-		if (AdoptLook(w, s)) logger::info("classes: the Dragon Slayer takes the look of {}", s->GetName());
+		// (Noah, 2026-11-20: "our own Dragon Slayer sword" - "Katana (keep its moveset)", approved) the katana's swings, reach and
+		// sounds; our own dragonbone katana in the hands (tools/dragonslayer.py)
+		const std::string ownModel = w->GetModel() ? w->GetModel() : "";
+		auto* const       ownFirst = w->firstPersonModelObject;
+		AdoptLook(w, s);
+		if (!ownModel.empty()) w->SetModel(ownModel.c_str());
+		if (ownFirst) w->firstPersonModelObject = ownFirst;
+		logger::info("classes: the Dragon Slayer swung as {}, our own dragonbone katana in the hands", s->GetName());
 	}
 	// (Noah, 2026-11-19: the Reliquary's Dragon Slayer "is still the old katana") the model the Dragon Slayer wears now, for its display
 	const char* SlayerModel()

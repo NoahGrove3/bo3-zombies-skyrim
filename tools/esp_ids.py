@@ -148,7 +148,7 @@ def dressing(S):
         records[('STAT', '1st_flask_' + _e)] = {'model': 'CurseOfAlduin\\alchemist\\mutagen_staff_qs.nif' if _e == 'philosopher' else 'CurseOfAlduin\\alchemist\\flask_' + _e + '_held.nif', 'color': '', 'radius': 0}
     for _t, (_k, _n, _m, _kind, _d, _x) in PRIEST_WEAPONS.items():   # (the Dragon Priests' weapons, held)
         records[('STAT', '1st_priest_' + _k)] = {'model': PRIEST_FIRST.get(_k, _m if '\\' in _m else 'CurseOfAlduin\\priests\\' + _m + '.nif'), 'color': '', 'radius': 0}
-    records[('STAT', '1st_slayer')] = {'model': 'Light Greatswords\\akaviri\\LightGreatsword.nif', 'color': '', 'radius': 0}        # (Noah) the Dragon Slayer: the Ayleid Crystal Saber
+    records[('STAT', '1st_slayer')] = {'model': 'CurseOfAlduin\\slayer\\dragonslayer.nif', 'color': '', 'radius': 0}        # (Noah, 2026-11-20) the Dragon Slayer: our own dragonbone katana (tools/dragonslayer.py)
     records[('STAT', '1st_mace')] = {'model': 'CurseOfAlduin\\hipblades\\daedric.nif', 'color': '', 'radius': 0}  # (Noah) the Alchemist's Shadowflame Sword: Kv's purple crystal sword
     records[('STAT', '1st_kvred')] = {'model': 'CurseOfAlduin\\hipblades\\nordic.nif', 'color': '', 'radius': 0}  # the Spellsword's
     records[('STAT', '1st_kvblue')] = {'model': 'CurseOfAlduin\\hipblades\\stahlrim.nif', 'color': '', 'radius': 0}  # Destruction's Carian blade
