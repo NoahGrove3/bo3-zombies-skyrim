@@ -426,7 +426,8 @@ namespace bo3z
 		std::array<Native, 5> g_native{};
 		std::array<float, 5> g_glowT{};
 		float g_pillarT = 0;
-		std::vector<RE::ObjectRefHandle> g_pillarRefs;   // (the runes lit now: put out when they're lit again)
+		std::vector<RE::ObjectRefHandle> g_pillarRefs;
+		std::array<std::vector<RE::ObjectRefHandle>, 5> g_glowRefs;   // (each spot's glow lit now)   // (the runes lit now: put out when they're lit again)
 		// (Noah, 2026-11-19: the Endless Flame "looks really poorly done" - "Brazier ring") the pillar's base ringed by six of
 		// Sovngarde's stone braziers, each burning with Skyrim's own animated fire and embers, and the hall's warm firelight on
 		// the pillar: Skyrim.esm's SOVBrazier01, FXfireWithEmbersLight, HHIntLightFireMd
@@ -561,6 +562,7 @@ namespace bo3z
 		void ClearHall()
 		{
 			g_hallKind = {}, g_glowT = {}, g_pillarT = 0;
+			for (auto& v : g_glowRefs) { for (auto& h : v) if (auto r = h.get()) r->Disable(), r->SetDelete(true); v.clear(); }
 			for (auto& x : g_hall.item) Drop(x);
 			for (auto& x : g_hall.glow) Drop(x);
 			Drop(g_hall.pillar);
@@ -652,10 +654,21 @@ namespace bo3z
 					if (!said) said = true, logger::info("echo: the Pillar of Time's runes lit");
 					g_pillarT = 60.0f;
 				}
+				// (Noah, 2026-11-21: "the gold aura ... lingers after the blade has been picked up then disappears 10 seconds later ... make
+				// that glowing effect dimmer and disappear with the wonders model") each spot's glow kept by hand: put out the moment its
+				// wonder is taken (or turns grey), and when lit again the old one put out at once (no doubled flash)
 				for (int i = 0; i < 5; ++i) {
-					if (g_hallKind[i] != 1 || (g_glowT[i] -= 0.5f) > 0) continue;
-					Gun::Hazard(i == 4 ? "CurseOfAlduin\\fx\\hall_glow_tall.nif" : "CurseOfAlduin\\fx\\hall_glow.nif", FloatSpots()[i].at, 1.0f, 20.0f);
-					g_glowT[i] = 19.5f;
+					if (g_hallKind[i] != 1) {
+						for (auto& h : g_glowRefs[i]) if (auto r = h.get()) r->Disable(), r->SetDelete(true);
+						g_glowRefs[i].clear();
+						continue;
+					}
+					if ((g_glowT[i] -= 0.5f) > 0) continue;
+					std::vector<RE::ObjectRefHandle> fresh;
+					Gun::Hazard(i == 4 ? "CurseOfAlduin\\fx\\hall_glow_tall.nif" : "CurseOfAlduin\\fx\\hall_glow.nif", FloatSpots()[i].at, 1.0f, 40.0f, 0.0f, &fresh);
+					for (auto& h : g_glowRefs[i]) if (auto r = h.get()) r->Disable(), r->SetDelete(true);
+					g_glowRefs[i] = std::move(fresh);
+					g_glowT[i] = 30.0f;
 				}
 				// (they never drew: a placed thing fades in from nothing, and a model of only light never finished) drawn whole, at once
 				const auto whole = [](RE::ObjectRefHandle& a_h) {

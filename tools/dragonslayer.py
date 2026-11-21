@@ -48,17 +48,19 @@ def bone_blade_tex():
     d1, d2 = g.cells(1024, 260, 2105)
     craze = np.kron(np.clip(1 - (np.sqrt(d2) - np.sqrt(d1)) / 1.2, 0, 1), np.ones((2, 2))) * (blot > 0.55) * (1 - bev)
     lum = 0.9 + 0.08 * (grain - 0.5) + 0.05 * (fibre - 0.5) + 0.06 * (blot - 0.5) - 0.1 * spine
-    col = np.array([226, 216, 192], np.float32) * lum[..., None]
+    # (Noah, 2026-11-21: "you didn't remove the weapon glow on the model itself ... Keep the glow only in the blades dragon language
+    # engravings") an older, duller ivory - under the game's light the near-white bone read as lit from within
+    col = np.array([196, 184, 158], np.float32) * lum[..., None]
     col = col * (1 - spine[..., None] * 0.25) + np.array([190, 168, 128]) * spine[..., None] * 0.25
-    col = col * (1 - bev[..., None]) + np.array([244, 240, 228]) * (0.94 + 0.06 * (fibre[..., None] - 0.5)) * bev[..., None]
-    col = col * (1 - hone[..., None]) + np.array([250, 248, 240]) * hone[..., None]
-    col = col + np.array([34, 30, 22]) * line[..., None] - np.array([26, 30, 36]) * (np.clip((hamon - u) / 0.05, 0, 1) * (1 - bev))[..., None] * 0.6
+    col = col * (1 - bev[..., None]) + np.array([214, 206, 186]) * (0.94 + 0.06 * (fibre[..., None] - 0.5)) * bev[..., None]
+    col = col * (1 - hone[..., None]) + np.array([222, 216, 200]) * hone[..., None]
+    col = col + np.array([16, 14, 10]) * line[..., None] - np.array([26, 30, 36]) * (np.clip((hamon - u) / 0.05, 0, 1) * (1 - bev))[..., None] * 0.6
     guardstain = np.clip(1 - v / 0.12, 0, 1) ** 2 * (0.4 + 0.6 * blot)
     col = col * (1 - 0.18 * guardstain[..., None]) + np.array([150, 104, 70]) * 0.18 * guardstain[..., None]
     col = col * (1 - 0.35 * craze[..., None]) + np.array([150, 136, 110]) * 0.35 * craze[..., None]
     D = pw.save(col, 'slay_bone_d.dds')
     h = 0.35 * grain + 0.25 * fibre - 0.6 * craze + 0.2 * bev
-    spec = np.clip(70 + 50 * bev + 40 * hone + 20 * line - 40 * craze + 12 * (grain - 0.5), 0, 255)   # (Noah: "less shiny")
+    spec = np.clip(45 + 30 * bev + 20 * hone + 10 * line - 30 * craze + 10 * (grain - 0.5), 0, 255)   # (Noah: "less shiny")
     N = pw.save(np.dstack([height_to_normal(gaussian_filter(h, 0.7), 5.0), spec]), 'slay_bone_n.dds', True)
     return D, N
 
@@ -139,13 +141,13 @@ def scabbard_tex():
     return D, N
 
 
-def scabbard(M, mat, y0, length, width, curve):
+def scabbard(M, mat, y0, length, width, curve, mouth=2.0):
     """the scabbard round the blade as pw.blade() builds it (from y0, length long, width wide, its curve): a lacquered tube
     of rounded oval section following the blade's sweep, a bone mouth at the guard, two bone bands, a bone tip closing it,
     and a small bone knob on its face for the cord"""
     def cx(z): s = np.clip((z - y0) / length, 0, 1); return curve * s ** 2 * length
     def half(z): s = np.clip((z - y0) / length, 0, 1); return width * 0.5 * (1 - 0.18 * s) + 0.32, 0.56 - 0.12 * s
-    z0, z1 = 2.0, y0 + length + 0.9
+    z0, z1 = mouth, y0 + length + 0.9
     nu = 40
     th = np.linspace(0, 2 * np.pi, nu + 1)
     e = 2.0 / 3.2
@@ -186,10 +188,40 @@ def scabbard(M, mat, y0, length, width, curve):
     fitting(30.0, 30.5, 1.05, 5)
     fitting(z1 - 2.8, z1, 1.07, 16, 'end')
     # the knob for the cord, on the scabbard's face below the mouth
-    zk = 7.0; a, b = half(zk)
+    zk = mouth + 5.0; a, b = half(zk)
     V, Nn, UV, F = pw.superbox(np.array([cx(zk) - a * 0.35, b + 0.18, zk]), 0.35, 0.25, 0.6, 3.0, 16, 8)
     UV = np.asarray(UV) % 1.0 * [0.2, 0.05] + [SCB_U + 0.02, 0.5]
     M.add('Scb', mat, V, Nn, UV, F)
+
+
+VANILLA = ROOT / 'build' / 'vanilla'   # (the player's own Skyrim, read out of its archives - never committed as it is)
+
+
+def skull(M):
+    """(Noah, 2026-11-21: "use a skyrim dragons actual skull shrunk down and aligned" - "Merge into our sword file") Skyrim's own
+    dragon skull (meshes\\clutter\\deadanimals\\dragonbonesskull01.nif, its own DragonSkeleton textures) shrunk to the guard: its
+    snout along the blade, its crown over the spine, the blade running out of its mouth; the back of its head over the grip.
+    Read out of Skyrim - Meshes0.bsa into build/vanilla (tools/bsalz4.py) and turned to OBJ (tools/modelconv/shapeobj)"""
+    src = VANILLA / 'skull.obj'
+    if not src.exists():
+        subprocess.run([tool('shapeobj'), str(VANILLA / 'dragonbonesskull01.nif'), str(src)], check=True)
+    V, T, N, F = [], [], [], []
+    for l in open(src):
+        if l.startswith('v '): V.append([float(x) for x in l.split()[1:4]])
+        elif l.startswith('vt '): T.append([float(x) for x in l.split()[1:3]])
+        elif l.startswith('vn '): N.append([float(x) for x in l.split()[1:4]])
+        elif l.startswith('f '): F.append([int(x.split('/')[0]) - 1 for x in l.split()[1:4]])
+    V, T, N, F = np.array(V), np.array(T), np.array(N), np.array(F)
+    k = SKULL_SCALE
+    mouth_z, back_y = 232.0, 239.0   # (its mouth's line, and the back of its head, in its own space: z up, its snout toward +y)
+    P = np.stack([-(V[:, 2] - mouth_z) * k, -V[:, 0] * k, (V[:, 1] - back_y) * k + SKULL_BACK], -1)
+    NN = np.stack([-N[:, 2], -N[:, 0], N[:, 1]], -1)
+    UV = np.stack([T[:, 0], 1.0 - T[:, 1]], -1)
+    M.add('Skull', 'vskull', P, NN, UV, F)
+
+
+SKULL_SCALE = 0.037    # (144 long in its own units: 5.3 model units here, 8.5 in the game)
+SKULL_BACK = -0.25     # (the back of its head down over the grip's top collar, its jaw's hinge on it)
 
 
 def build():
@@ -203,17 +235,14 @@ def build():
     # (the blade's material 'dbone', not 'bone': kept out of roughen()'s forge dents, so its edge runs true and keen)
     # the blade: single-edged (its spine at -x, its keen edge at +x), curving back toward its spine so the edge rides the
     # outside of the curve as a katana's does, a short sharp point; the letters cut along the spine
-    pw.blade(M, 'dbone', 2.6, 45.0, 2.15, 0.55, tip=0.1, seed=2151, ns=150, curve=-0.055, single=0.3,
-             runes=('runes', 0.28, 0.06, 0.66, 9.6, -0.42))
-    # (Noah, 2026-11-20) the scabbard, round the blade: one shape named Scb, left at the hip when the sword is drawn
-    scabbard(M, 'scb', 2.6, 45.0, 2.15, -0.055)
-    # the collar where the blade meets the guard: blackened iron
-    M.add('Iron', 'iron', *pw.box(np.array([0.0, 0.0, 2.3]), 1.15, 0.42, 0.35))
-    # the guard: an oval of bone, and two fangs rising from its sides, curving in toward the blade
-    M.add('Guard', 'hiltbone', *pw.superbox(np.array([0, 0, 1.7]), 2.3, 1.75, 0.22, 3.0, 28, 12))
-    for side in (-1, 1):
-        base = np.array([side * 1.75, 0.0, 1.8])
-        pw.talon(M, 'hiltbone', base, np.array([side * 0.45, 0, 1.0]), np.array([-side * 0.25, 0, 1.0]), 5.0, 0.42, 18)
+    pw.blade(M, 'dbone', 1.5, 46.1, 2.15, 0.55, tip=0.1, seed=2151, ns=150, curve=-0.055, single=0.3,
+             runes=('runes', 0.28, 0.1, 0.72, 9.6, -0.42))
+    # (Noah, 2026-11-20) the scabbard, round the blade: one shape named Scb, left at the hip when the sword is drawn - its mouth
+    # just past the skull's snout
+    scabbard(M, 'scb', 1.5, 46.1, 2.15, -0.055, mouth=5.35)
+    # (Noah, 2026-11-21: "redesign the hilt (where the blade connects to the handle)" - "Dragon skull guard", "use a skyrim dragons
+    # actual skull") Skyrim's own dragon skull round the blade's root
+    skull(M)
     # the grip: iron collars at each end, between them the binding of black scales
     M.add('Iron', 'iron', *pw.lathe([(1.5, 0.86), (1.3, 0.94), (0.95, 0.9)], 24))
     M.add('Grip', 'scales', *pw.lathe([(1.0, 0.82)] + [(z, 0.82 + 0.06 * math.sin(math.pi * (1.0 - z) / 16.0)) for z in np.linspace(0.95, -14.4, 30)] + [(-14.5, 0.82)], 28,
@@ -226,9 +255,10 @@ def build():
         a = 2 * math.pi * k / 3 + 0.4
         d = np.array([math.cos(a), math.sin(a), 0.0])
         pw.talon(M, 'iron', np.array([d[0] * 0.75, d[1] * 0.75, -15.0]), d * 0.4 + np.array([0, 0, -0.7]), -d * 0.8 + np.array([0, 0, -0.5]), 1.5, 0.16)
-    mats = {'dbone': f'diffuse={bD} normal={bN} spec=0.55 gloss=40 alpha=0 doublesided=0',
+    mats = {'dbone': f'diffuse={bD} normal={bN} spec=0.3 gloss=28 alpha=0 doublesided=0',
             'runes': f'diffuse={rD} normal={rN} glow={rG} emit=1,0.47,0.16 emitmult=1.7 spec=0.4 gloss=40 alpha=blend doublesided=0',
             'hiltbone': f'diffuse={hD} normal={hN} spec=0.3 gloss=22 alpha=0 doublesided=0',
+            'vskull': 'diffuse=actors\\dragon\\DragonSkeleton.dds normal=actors\\dragon\\DragonSkeleton_n.dds spec=0.3 gloss=24 alpha=0 doublesided=0',
             'scales': f'diffuse={sD} normal={sN} spec=0.5 gloss=40 alpha=0 doublesided=0',
             'scb': f'diffuse={cD} normal={cN} spec=0.45 gloss=30 alpha=0 doublesided=0',
             'iron': f'diffuse={iD} normal={iN} spec=0.45 gloss=24 alpha=0 doublesided=0'}

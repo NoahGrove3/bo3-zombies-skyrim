@@ -62,13 +62,14 @@ def glow(name, tall):
     random.seed(len(name))
     L = []
     hw, hh = (34, 110) if tall else (44, 60)
-    card(L, 'halo', FX + 'glow_disc.dds', '0.85,0.62,0.3', 1.3, hw * 1.7, -hh * 1.4, hh * 1.4, (0, 0, 0))
-    card(L, 'core', FX + 'glow_disc.dds', '1,0.9,0.7', 1.0, hw * 0.75, -hh * 0.8, hh * 0.8, (0, 0, 0))
+    # (Noah, 2026-11-21: "can you make that glowing effect dimmer") about half as bright as it was
+    card(L, 'halo', FX + 'glow_disc.dds', '0.85,0.62,0.3', 0.65, hw * 1.7, -hh * 1.4, hh * 1.4, (0, 0, 0))
+    card(L, 'core', FX + 'glow_disc.dds', '1,0.9,0.7', 0.5, hw * 0.75, -hh * 0.8, hh * 0.8, (0, 0, 0))
     for k in range(5 if tall else 4):
         a = 2 * math.pi * k / (5 if tall else 4)
-        card(L, f'm{k}', FX + 'motes_rise.dds', '1,0.82,0.45', 1.6, hw * 0.6, -hh * 1.1, hh * 1.3, (18 * math.cos(a), 18 * math.sin(a), 0), (16, 16), random.uniform(54, 66), k * 1.1)
+        card(L, f'm{k}', FX + 'motes_rise.dds', '1,0.82,0.45', 0.9, hw * 0.6, -hh * 1.1, hh * 1.3, (18 * math.cos(a), 18 * math.sin(a), 0), (16, 16), random.uniform(54, 66), k * 1.1)
     for k in range(2):
-        card(L, f's{k}', FX + 'sparks_burst.dds', '1,0.85,0.5', 1.2, hw * 0.9, -hh * 0.9, hh * 0.9, (0, 0, 10 * k), (16, 8), 30, k * 1.0)
+        card(L, f's{k}', FX + 'sparks_burst.dds', '1,0.85,0.5', 0.6, hw * 0.9, -hh * 0.9, hh * 0.9, (0, 0, 10 * k), (16, 8), 30, k * 1.0)
     write(L, name)
 
 
