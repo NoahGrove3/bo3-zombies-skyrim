@@ -66,6 +66,7 @@ def assign(S=None, write=False):
              [('WEAP', 'vortex'), ('AMMO', 'vortexarrow'), ('PROJ', 'vortexarrow'), ('ACTI', 'vortexfx'), ('ACTI', 'purplefire'), ('WEAP', 'slayer'), ('PROJ', 'throwdagger'), ('MGEF', 'throwdagger'), ('SPEL', 'throwdagger'), ('MGEF', 'throwdaggers'), ('SPEL', 'throwdaggers')] + [('EFSH', 'bowskin_' + e) for e in ('fire', 'frost', 'shock', 'wind', 'sun', 'blood', 'void')] + [('ACTI', 'burst_' + e) for e in ('fire', 'frost', 'shock', 'wind', 'sun', 'blood', 'void', 'poison', 'gold')] + [(k, 'flask_' + e) for e in ('fire', 'frost', 'shock', 'poison', 'sun', 'blood', 'philosopher') for k in ('PROJ', 'MGEF', 'SPEL')] + [('SPEL', 'throw_' + e) for e in ('fire', 'frost', 'shock', 'poison', 'sun', 'blood', 'philosopher')] + [('MGEF', 'flaskcast'), ('WEAP', 'alchknife'), ('SPEL', 'bonehorn')] + [('ALCH', 'flaskitem_' + e) for e in ('fire', 'frost', 'shock', 'poison', 'sun', 'blood', 'philosopher')] + [('EFSH', f'armglow_{c}_{t}') for c in range(4) for t in (1, 2, 3, 4, 5, 6)] + [('WEAP', 'flaskweap_' + e) for e in ('fire', 'frost', 'shock', 'poison', 'sun', 'blood', 'philosopher')] + [('BOOK', 'guide_' + c) for c in ('summoner', 'destruction', 'ranger', 'spellsword')] + [('PERK', 'steady'), ('CONT', 'classchest')] + [('MUST', 'night'), ('MUSC', 'night')] + [('WEAP', 'xbow_' + e) for e in ('fire', 'frost', 'shock')] + [('LIGH', 'lantern')] + [('WEAP', 'riftblade'), ('MGEF', 'reanimatebolt')] + [(k, f'rift{w}{n}') for n in (1, 2, 3) for k, w in (('EFSH', 'shader'), ('MGEF', 'fire'), ('ENCH', 'fire'))] + [('SPEL', f'reanimate_{n}') for n in (1, 2, 3)] + \
              [('WEAP', 'madness'), ('STAT', 'madness_1st'), ('ARMO', 'lantern'), ('ARMA', 'lantern'), ('MGEF', 'lanternlight'), ('SPEL', 'lanternlight')] + [(k, f'mad{w}{n}') for n in (1, 2, 3) for k, w in (('EFSH', 'shader'), ('MGEF', 'glow'), ('ENCH', 'glow'))] + [(k, 'tb_' + v) for v in ('mangled', 'foul', 'putrid', 'malignant', 'relentless', 'dread_putrid') for k in ('NPC_', 'ARMO', 'ARMA')] + [('MGEF', 'set_swift'), ('SPEL', 'set_swift')] + \
              [(k, f'cm_{c}_{a}') for c in CLASS_ARMOUR for a in CLASS_ARMAS for k in ('ARMA',)] + [('ARMO', f'cm_{c}_{pc}') for c in CLASS_ARMOUR for pc in CLASS_PIECES] + [('WEAP', 'carianblade')] + [(k, f'bv_{b}_{t}') for b in BLADE_VIZ for t in (1, 2, 3) for k in ('EFSH', 'MGEF', 'ENCH')] + [('EFSH', 'shadowburn')] + [(k, f'vw_{b}') for b in BLADE_VIZ for k in ('LIGH', 'ARTO', 'MGEF', 'SPEL')] + [('EFSH', 'hallghost'), ('EFSH', 'spectral'), ('EFSH', 'soulpurple'), ('EFSH', 'tabletgreen'), ('EFSH', 'tabletgold'), ('KYWD', 'scythe'), ('MGEF', 'soulcall'), ('ENCH', 'soulcaller'), ('WEAP', 'soulcaller')] + [(k, 'vae_' + c) for c in VAE_COL for k in ('MGEF', 'ENCH')] + [('ENCH', 'vae_' + c.replace('+', '_')) for c in sorted(set(VAE_WEAP.values())) if '+' in c]   # (Noah: the four crystal swords and the Dragon Slayer - their tier looks)
+    wanted += [(k, 'conj_' + c[0]) for c in CONJURE for k in ('NPC_', 'MGEF', 'SPEL')]   # (Phase 2: the Summoner's conjurations, our own)
     for kind, key in wanted:
         k = f'{kind}:{key}'
         if k not in frozen:
@@ -114,6 +115,31 @@ def echo_ids(S):
 def blasts():
     """Spell blasts: no-damage copies of Skyrim's explosions (tools/templates/expl/<name>.json)."""
     return sorted(q.stem for q in (ROOT / 'tools' / 'templates' / 'expl').glob('*.json'))
+# (Noah, 2026-11-21: "start phase 2 for prepping our mod for nexus by making our own stuff") the Summoner's conjurations, our own -
+# they were Calling of the Conjurer's (and Summonable Spriggans'): each is our own spell, effect and creature, the creature standing
+# on one of Skyrim's own (its template - body, stats, gear and ways all Skyrim's). key, spell, creature, its Skyrim template (as
+# our plugin names it: Skyrim 00, Dawnguard 02, Dragonborn 03), the spell's cost (the altar's price is a quarter of it)
+CONJURE = [
+    ('wolf', 'Conjure Wolf', 'Wolf', 0x00023ABE, 175),
+    ('icewolf', 'Conjure Ice Wolf', 'Ice Wolf', 0x00023ABF, 175),
+    ('alphawolf', 'Conjure Alpha Wolf', 'Alpha Wolf', 0x0010FE05, 175),
+    ('werebear', 'Conjure Werebear', 'Werebear', 0x030322B1, 400),
+    ('draugrwight', 'Conjure Draugr Wight', 'Draugr Wight', 0x0003B549, 250),
+    ('draugrdeathlord', 'Conjure Draugr Deathlord Warrior', 'Draugr Deathlord', 0x0004247E, 400),
+    ('draugroverlord', 'Conjure Draugr Death Overlord', 'Draugr Death Overlord', 0x0004247F, 500),
+    ('dremora', 'Conjure Dremora', 'Dremora', 0x00023A95, 500),
+    ('dremoraarcher', 'Conjure Dremora Archer', 'Dremora Archer', 0x00025D1C, 500),
+    ('dremoramage', 'Conjure Dremora Mage', 'Dremora Mage', 0x00025D1D, 500),
+    ('dwarvenspider', 'Conjure Dwarven Spider', 'Dwarven Spider', 0x00023A98, 250),
+    ('dwarvensphere', 'Conjure Dwarven Sphere', 'Dwarven Sphere', 0x00023A97, 250),
+    ('dwarvencenturion', 'Conjure Dwarven Centurion', 'Dwarven Centurion', 0x00023A96, 400),
+    ('ballistamaster', 'Conjure Dwarven Ballista Master', 'Dwarven Ballista Master', 0x03033251, 500),
+    ('ashimmolator', 'Conjure Ash Spawn Immolator', 'Ash Spawn Immolator', 0x0301B63A, 175),
+    ('spriggan', 'Conjure Spriggan', 'Spriggan', 0x00023AB9, 120),
+    ('sprigganmatron', 'Conjure Spriggan Matron', 'Spriggan Matron', 0x000F3905, 180),
+    ('sprigganburnt', 'Conjure Burnt Spriggan', 'Burnt Spriggan', 0x0301B63F, 300),
+    ('sprigganearthmother', 'Conjure Spriggan Earth Mother', 'Spriggan Earth Mother', 0x02013B74, 400),
+]
 MASTERS = ['Skyrim.esm', 'Update.esm', 'Dawnguard.esm', 'Dragonborn.esm', 'mihailzombies.esp']  # (the creature overhaul: the Thriceborn stand on Mihail's zombie race)
 
 POWERUPS = [('instakill', 'FF3030'), ('double', 'FFD040'), ('kaboom', 'FF8A20'), ('firesale', 'B060FF'), ('maxammo', '46C8FF'), ('shadow', '8040E0'), ('thuum', 'D0E8FF'), ('mercy', '50E070')]

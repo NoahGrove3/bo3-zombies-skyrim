@@ -40,11 +40,11 @@ LADDERS = [
     ('destruction', 'blood', 'Arcane', 'arcane', [(OURS, 'Arcane Bolt'), (OURS, 'Mana Void'), (OURS, 'Lunar Tide'), (APOC, 'Apocalypse')]),
     # (the class review: every rune read as frost - the Elements trial counted one element, the seals missed them) each rung
     # its own element
-    ('summoner', 'beasts', 'Beasts', 'arcane', [(COTC, 'Conjure Wolf'), (COTC, 'Conjure Ice Wolf'), (COTC, 'Conjure Alpha Wolf'), (COTC, 'Conjure Werebear')]),
-    ('summoner', 'dead', 'The Dead', 'arcane', [(MYST, 'Conjure Skeleton'), (COTC, 'Conjure Draugr Wight'), (COTC, 'Conjure Draugr Deathlord Warrior'), (COTC, 'Conjure Draugr Death Overlord')]),
-    ('summoner', 'daedra', 'Daedra', 'arcane', [(COTC, 'Conjure Dremora'), (COTC, 'Conjure Dremora Archer'), (COTC, 'Conjure Dremora Mage'), (MYST, 'Conjure Dremora Warlock')]),
-    ('summoner', 'dwemer', 'Dwemer', 'arcane', [(COTC, 'Conjure Dwarven Spider'), (COTC, 'Conjure Dwarven Sphere'), (COTC, 'Conjure Dwarven Centurion'), (COTC, 'Conjure Dwarven Ballista Master')]),
-    ('summoner', 'wild', 'The Wild', 'arcane', [(SPRIG, 'Conjure Spriggan'), (SPRIG, 'Conjure Spriggan Matron'), (SPRIG, 'Conjure Burnt Spriggan'), (SPRIG, 'Conjure Spriggan Earth Mother')]),
+    ('summoner', 'beasts', 'Beasts', 'arcane', [(OURS, 'Conjure Wolf'), (OURS, 'Conjure Ice Wolf'), (OURS, 'Conjure Alpha Wolf'), (OURS, 'Conjure Werebear')]),
+    ('summoner', 'dead', 'The Dead', 'arcane', [(MYST, 'Conjure Skeleton'), (OURS, 'Conjure Draugr Wight'), (OURS, 'Conjure Draugr Deathlord Warrior'), (OURS, 'Conjure Draugr Death Overlord')]),
+    ('summoner', 'daedra', 'Daedra', 'arcane', [(OURS, 'Conjure Dremora'), (OURS, 'Conjure Dremora Archer'), (OURS, 'Conjure Dremora Mage'), (MYST, 'Conjure Dremora Warlock')]),
+    ('summoner', 'dwemer', 'Dwemer', 'arcane', [(OURS, 'Conjure Dwarven Spider'), (OURS, 'Conjure Dwarven Sphere'), (OURS, 'Conjure Dwarven Centurion'), (OURS, 'Conjure Dwarven Ballista Master')]),
+    ('summoner', 'wild', 'The Wild', 'arcane', [(OURS, 'Conjure Spriggan'), (OURS, 'Conjure Spriggan Matron'), (OURS, 'Conjure Burnt Spriggan'), (OURS, 'Conjure Spriggan Earth Mother')]),
     ('spellsword', 'fire', 'Fire', 'fire', [(MYST, 'Burning Touch'), (MYST, 'Flame Touch'), (MYST, 'Fiery Grasp')]),
     ('spellsword', 'frost', 'Frost', 'frost', [(MYST, 'Chilling Touch'), (MYST, 'Icy Touch'), (MYST, 'Freezing Grasp')]),
     ('spellsword', 'shock', 'Shock', 'shock', [(MYST, 'Shocking Touch'), (MYST, 'Static Touch'), (MYST, 'Thundering Grasp')]),
@@ -58,7 +58,7 @@ LADDERS = [
     # (Noah: "I want them all to be 7" - every class's Armory seven items) the Summoner's four more and Destruction's three
     # (appended: a ladder's index is in the saves)
     ('summoner', 'atronachs', 'Atronachs', 'arcane', [(SKY, 'Conjure Flame Atronach'), (SKY, 'Conjure Frost Atronach'), (SKY, 'Conjure Storm Atronach'), (SKY, 'Conjure Storm Monarch')]),
-    ('summoner', 'ash', 'Ash', 'arcane', [(DB, 'Conjure Ash Spawn'), (MYST, 'Conjure Ash Husk'), (COTC, 'Conjure Ash Spawn Immolator'), (MYST, 'Conjure Ash Guardian')]),
+    ('summoner', 'ash', 'Ash', 'arcane', [(DB, 'Conjure Ash Spawn'), (MYST, 'Conjure Ash Husk'), (OURS, 'Conjure Ash Spawn Immolator'), (MYST, 'Conjure Ash Guardian')]),
     ('summoner', 'night', 'The Night', 'arcane', [(MYST, 'Conjure Death Hound'), (MYST, 'Conjure Volkihar Hound'), (MYST, 'Conjure Gargoyle'), (MYST, 'Conjure Gargoyle Brute')]),
     ('summoner', 'wrath', 'The Wrath', 'arcane', [(DG, 'Conjure Mistman'), (DG, 'Conjure Wrathman'), (MYST, 'Conjure Wrathman Marksman'), (MYST, 'Conjure Wrathman Warlock')]),
     ('destruction', 'walls', 'Walls', 'fire', [(SKY, 'Wall of Flames'), (SKY, 'Wall of Frost', 'frost'), (SKY, 'Wall of Storms', 'shock')]),
@@ -98,6 +98,10 @@ def load():
                             ('arcane_bolt', 'Arcane Bolt', 120), ('arcane_orb', 'Mana Void', 240), ('arcane_tide', 'Lunar Tide', 360),
                             ('arcane_blade1', 'Arcane Edge', 80), ('arcane_blade2', 'Arcane Brand', 120), ('arcane_blade3', 'Arcane Cascade', 160)):
         out[(OURS, name)] = (ids[('SPEL', key)], cost, False, 'Destruction' if key.startswith('arcane') else 'Conjuration')
+    # (Noah, 2026-11-21: Phase 2) the Summoner's conjurations, our own (tools/esp_ids.py CONJURE) - Calling of the Conjurer's and
+    # Summonable Spriggans' no longer read
+    for key, spell, label, tmpl, cost in esp_ids.CONJURE:
+        out[(OURS, spell)] = (ids[('SPEL', 'conj_' + key)], cost, False, 'Conjuration')
     for n, (fid, cost) in VANILLA.items():
         out[(SKY, n)] = (fid, cost, False, 'Destruction')
     for key, (fid, cost, conc) in EXTRA.items():

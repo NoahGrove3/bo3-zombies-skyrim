@@ -342,6 +342,39 @@ namespace bo3z::Arcana
 		return -1;
 	}
 
+	// (Noah, 2026-11-21: Phase 2 - the Summoner's conjurations our own) a save made before: the conjurations it learned were Calling
+	// of the Conjurer's or Summonable Spriggans' - each swapped for our own of the same name (in your hands too), so nothing learned is lost
+	void MigrateConjurations()
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (!p) return;
+		std::vector<std::pair<RE::SpellItem*, int>> swap;
+		for (auto* sp : p->GetActorRuntimeData().addedSpells) {
+			auto* f = sp ? sp->GetFile(0) : nullptr;
+			if (!f) continue;
+			const std::string_view fn = f->GetFilename();
+			if (fn != "Calling of the Conjurer.esp" && fn != "ConjureSpriggans.esp") continue;
+			for (int i = 0; i < static_cast<int>(coffer::kSpells.size()); ++i) {
+				auto* ours = Spell(i);
+				if (ours && ours != sp && std::string_view(coffer::kSpells[i].plugin) == gen::kPlugin && std::string_view(ours->GetName()) == sp->GetName()) {
+					swap.emplace_back(sp, i);
+					break;
+				}
+			}
+		}
+		auto* em = RE::ActorEquipManager::GetSingleton();
+		for (auto& [old, i] : swap) {
+			for (bool left : { false, true }) {
+				if (p->GetEquippedObject(left) == old && em) {
+					em->UnequipObject(p, old, nullptr, 1, RE::TESForm::LookupByID<RE::BGSEquipSlot>(left ? 0x13F43 : 0x13F42), false, true, false, true);
+					em->EquipSpell(p, Spell(i), RE::TESForm::LookupByID<RE::BGSEquipSlot>(left ? 0x13F43 : 0x13F42));
+				}
+			}
+			p->RemoveSpell(old);
+			if (!p->HasSpell(Spell(i))) p->AddSpell(Spell(i));
+			logger::info("arcana: {} ({}) swapped for our own", old->GetName(), old->GetFile(0)->GetFilename());
+		}
+	}
 	void Give(int a_index, bool a_equip)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();

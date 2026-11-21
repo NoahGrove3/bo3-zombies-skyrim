@@ -2,10 +2,10 @@
 Records: Perk-a-Cola magic effects (MGEF) and potions (ALCH), gun items (WEAP, stand-in crossbow models),
 and activators (ACTI) for the Mystery Box, perk machines and wall-buys."""
 import json, struct, pathlib
-from esp_ids import ROOT, sheets, assign, PLUGIN, MASTERS, dressing, blasts
+from esp_ids import ROOT, sheets, assign, PLUGIN, MASTERS, dressing, blasts, CONJURE
 S = sheets(); IDS, NEXT = assign(S, write=True)
 SELF = len(MASTERS) << 24
-T = {n: json.load(open(ROOT / 'tools/templates' / (n + '.json'))) for n in ['npc_necro_tmpl', 'weap_draugr_gs', 'mgef', 'alch', 'weap_crossbow', 'weap_dwarven', 'acti', 'sndr_ui', 'sndr_3d', 'ligh', 'weap_staff', 'arma_skin', 'armo_skin', 'npc_draugr', 'proj_bullet', 'spel_firebolt', 'mgef_firebolt', 'weap_longbow', 'ammo_iron', 'proj_arrow', 'weap_daedricdagger', 'efsh_enchfire', 'mgef_enchfire', 'ench_fire05', 'weap_madness', 'stat_madness1st', 'efsh_enchpurple', 'efsh_ghostwolf', 'npc_mihailzombie', 'weap_daedricmace']}
+T = {n: json.load(open(ROOT / 'tools/templates' / (n + '.json'))) for n in ['npc_necro_tmpl', 'weap_draugr_gs', 'mgef', 'alch', 'weap_crossbow', 'weap_dwarven', 'acti', 'sndr_ui', 'sndr_3d', 'ligh', 'weap_staff', 'arma_skin', 'armo_skin', 'npc_draugr', 'proj_bullet', 'spel_firebolt', 'mgef_firebolt', 'weap_longbow', 'ammo_iron', 'proj_arrow', 'weap_daedricdagger', 'efsh_enchfire', 'mgef_enchfire', 'ench_fire05', 'weap_madness', 'stat_madness1st', 'efsh_enchpurple', 'efsh_ghostwolf', 'npc_mihailzombie', 'weap_daedricmace', 'mgef_summon', 'spel_conjure']}
 def tsub(t, name): return bytes.fromhex(dict(T[t]['subs'])[name])
 def z(s): return s.encode('cp1252') + b'\0'
 def sub(name, data):
@@ -1616,6 +1616,35 @@ for key, label, nif in THRICEBORN:
             struct.pack_into('<I', b, 0, mz_fid(struct.unpack_from('<I', b, 0)[0]))
         subs.append(sub(name, bytes(b)))
     recs['NPC_'].append(record('NPC_', fid('NPC_', 'tb_' + key), subs))
+
+# (Noah, 2026-11-21: Phase 2 - "start phase 2 for prepping our mod for nexus by making our own stuff") the Summoner's conjurations, our
+# own (tools/esp_ids.py CONJURE): Calling of the Conjurer's and Summonable Spriggans' left behind. Each creature is our own record on
+# one of Skyrim's own - its template gives it everything (body, stats, gear, spells, factions, ways) but its name and its being
+# summonable; its effect is Skyrim's Summon Familiar's (the portal, the sounds), calling ours; its spell Skyrim's Conjure
+# Familiar's (fire and forget, aimed where you look) - an hour long, as Calling of the Conjurer's were (the Summoner's own cap
+# and swaps, src/Classes.cpp NoteCast, end them sooner)
+for key, spell, label, tmpl, cost in CONJURE:
+    acbs = bytearray(tsub('npc_draugr', 'ACBS'))
+    struct.pack_into('<I', acbs, 0, 0x4010)    # summonable, its stats worked out by level
+    struct.pack_into('<H', acbs, 18, 0x1F3F)   # its template's everything but its name (base data) and the unused model flag
+    nsubs = [sub('EDID', z('UN_Conj_' + key)), sub('OBND', tsub('npc_draugr', 'OBND')), sub('ACBS', bytes(acbs)),
+             sub('TPLT', struct.pack('<I', tmpl)), sub('RNAM', tsub('npc_draugr', 'RNAM')), sub('AIDT', tsub('npc_draugr', 'AIDT')),
+             sub('CNAM', tsub('npc_draugr', 'CNAM')), sub('FULL', z(label)), sub('DATA', b''), sub('DNAM', tsub('npc_draugr', 'DNAM')),
+             sub('NAM5', tsub('npc_draugr', 'NAM5')), sub('NAM6', struct.pack('<f', 1.0)), sub('NAM7', tsub('npc_draugr', 'NAM7')),
+             sub('NAM8', tsub('npc_draugr', 'NAM8')), sub('QNAM', tsub('npc_draugr', 'QNAM'))]
+    recs['NPC_'].append(record('NPC_', fid('NPC_', 'conj_' + key), nsubs))
+    md = bytearray(tsub('mgef_summon', 'DATA'))
+    struct.pack_into('<I', md, 8, fid('NPC_', 'conj_' + key))   # what it calls
+    recs['MGEF'].append(record('MGEF', fid('MGEF', 'conj_' + key), [
+        sub('EDID', z('UN_ConjEffect_' + key)), sub('FULL', z(spell)), sub('KSIZ', tsub('mgef_summon', 'KSIZ')), sub('KWDA', tsub('mgef_summon', 'KWDA')),
+        sub('DATA', bytes(md)), sub('SNDD', tsub('mgef_summon', 'SNDD')),
+        sub('DNAM', z(f"Summons a {label} for <dur> seconds wherever the caster is pointing."))]))
+    spit = bytearray(tsub('spel_conjure', 'SPIT'))
+    struct.pack_into('<I', spit, 0, cost)
+    recs['SPEL'].append(record('SPEL', fid('SPEL', 'conj_' + key), [
+        sub('EDID', z('UN_Conj_' + key + 'Spell')), sub('OBND', tsub('spel_conjure', 'OBND')), sub('FULL', z(spell)),
+        sub('MDOB', tsub('spel_conjure', 'MDOB')), sub('ETYP', tsub('spel_conjure', 'ETYP')), sub('DESC', z('')), sub('SPIT', bytes(spit)),
+        sub('EFID', struct.pack('<I', fid('MGEF', 'conj_' + key))), sub('EFIT', struct.pack('<fII', 0.0, 0, 3600))]))
 
 # (Noah: the class sets' powers) the Gondorian Ranger's set, Tier I: 10% faster on your feet (an ability while the
 # Ranger's set has its first tier: src/Classes.cpp)

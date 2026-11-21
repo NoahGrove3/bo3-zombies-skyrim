@@ -503,6 +503,7 @@ namespace bo3z
 		bool               Known(int a_index);
 		int                Next(int a_after);            // the next in the pool (the roll flickers through them)
 		void               Give(int a_index, bool a_equip);
+		void               MigrateConjurations();   // (a save from before Phase 2) Calling of the Conjurer's conjurations swapped for ours
 		void               GiveStarter();
 		std::string_view   Name(int a_index);
 		int                ElementOf(int a_index);
