@@ -38,23 +38,25 @@ def bone_blade_tex():
     fibre = tileable(S, S, 0.25, 2102, aniso=(0.06, 1.0))
     blot = tileable(S, S, 1.8, 2103)
     wav = tileable(S, S, 1.2, 2104, aniso=(1.0, 0.25))
-    hamon = 0.66 + 0.05 * (wav - 0.5) * 2 + 0.012 * np.sin(v * 2 * np.pi * 34)
+    hamon = 0.66 + 0.025 * (wav - 0.5) * 2 + 0.008 * np.sin(v * 2 * np.pi * 34)   # (Noah: "make sure the edge is fully finished" - a calm, even temper line)
     bev = np.clip((u - hamon) / 0.015, 0, 1)
     line = np.exp(-((u - hamon) / 0.008) ** 2)
     spine = np.clip(1 - u / 0.22, 0, 1) ** 1.5
+    hone = np.clip((u - 0.965) / 0.01, 0, 1)   # (the honed micro-bevel right at the edge: a crisp bright line the whole length)
     d1, d2 = g.cells(1024, 260, 2105)
     craze = np.kron(np.clip(1 - (np.sqrt(d2) - np.sqrt(d1)) / 1.2, 0, 1), np.ones((2, 2))) * (blot > 0.55) * (1 - bev)
     lum = 0.9 + 0.08 * (grain - 0.5) + 0.05 * (fibre - 0.5) + 0.06 * (blot - 0.5) - 0.1 * spine
     col = np.array([226, 216, 192], np.float32) * lum[..., None]
     col = col * (1 - spine[..., None] * 0.25) + np.array([190, 168, 128]) * spine[..., None] * 0.25
     col = col * (1 - bev[..., None]) + np.array([244, 240, 228]) * (0.94 + 0.06 * (fibre[..., None] - 0.5)) * bev[..., None]
+    col = col * (1 - hone[..., None]) + np.array([250, 248, 240]) * hone[..., None]
     col = col + np.array([34, 30, 22]) * line[..., None] - np.array([26, 30, 36]) * (np.clip((hamon - u) / 0.05, 0, 1) * (1 - bev))[..., None] * 0.6
     guardstain = np.clip(1 - v / 0.12, 0, 1) ** 2 * (0.4 + 0.6 * blot)
     col = col * (1 - 0.18 * guardstain[..., None]) + np.array([150, 104, 70]) * 0.18 * guardstain[..., None]
     col = col * (1 - 0.35 * craze[..., None]) + np.array([150, 136, 110]) * 0.35 * craze[..., None]
     D = pw.save(col, 'slay_bone_d.dds')
     h = 0.35 * grain + 0.25 * fibre - 0.6 * craze + 0.2 * bev
-    spec = np.clip(120 + 90 * bev + 40 * line - 50 * craze + 15 * (grain - 0.5), 0, 255)
+    spec = np.clip(70 + 50 * bev + 40 * hone + 20 * line - 40 * craze + 12 * (grain - 0.5), 0, 255)   # (Noah: "less shiny")
     N = pw.save(np.dstack([height_to_normal(gaussian_filter(h, 0.7), 5.0), spec]), 'slay_bone_n.dds', True)
     return D, N
 
@@ -107,13 +109,14 @@ def build():
     bD, bN = bone_blade_tex()
     hD, hN = hilt_bone_tex()
     sD, sN = scales_tex()
-    rD, rN, rG = pw.glyph_strip('slay_runes', (196, 184, 156), glow_rgb=(255, 120, 40), seed=2131, lit=(150, 78, 44))
+    rD, rN, rG = pw.glyph_strip('slay_runes', (196, 184, 156), glow_rgb=(255, 112, 36), seed=2131, lit=(214, 100, 42))
     iD, iN = pw.metal_tex('slay_iron', (52, 50, 48), dark=0.9, seed=2141)
     M = Mesh()
+    # (the blade's material 'dbone', not 'bone': kept out of roughen()'s forge dents, so its edge runs true and keen)
     # the blade: single-edged (its spine at -x, its keen edge at +x), curving back toward its spine so the edge rides the
     # outside of the curve as a katana's does, a short sharp point; the letters cut along the spine
-    pw.blade(M, 'bone', 2.6, 45.0, 2.15, 0.55, tip=0.1, seed=2151, ns=150, curve=-0.055, single=0.3,
-             runes=('runes', 0.2, 0.06, 0.62, 7.0, -0.42))
+    pw.blade(M, 'dbone', 2.6, 45.0, 2.15, 0.55, tip=0.1, seed=2151, ns=150, curve=-0.055, single=0.3,
+             runes=('runes', 0.28, 0.06, 0.66, 9.6, -0.42))
     # the collar where the blade meets the guard: blackened iron
     M.add('Iron', 'iron', *pw.box(np.array([0.0, 0.0, 2.3]), 1.15, 0.42, 0.35))
     # the guard: an oval of bone, and two fangs rising from its sides, curving in toward the blade
@@ -133,11 +136,11 @@ def build():
         a = 2 * math.pi * k / 3 + 0.4
         d = np.array([math.cos(a), math.sin(a), 0.0])
         pw.talon(M, 'iron', np.array([d[0] * 0.75, d[1] * 0.75, -15.0]), d * 0.4 + np.array([0, 0, -0.7]), -d * 0.8 + np.array([0, 0, -0.5]), 1.5, 0.16)
-    mats = {'bone': f'diffuse={bD} normal={bN} spec=1.6 gloss=90 alpha=0 doublesided=0',
-            'runes': f'diffuse={rD} normal={rN} glow={rG} emit=1,0.47,0.16 emitmult=0.9 spec=0.8 gloss=60 alpha=blend doublesided=0',
-            'hiltbone': f'diffuse={hD} normal={hN} spec=0.5 gloss=30 alpha=0 doublesided=0',
-            'scales': f'diffuse={sD} normal={sN} spec=1.0 gloss=60 alpha=0 doublesided=0',
-            'iron': f'diffuse={iD} normal={iN} spec=0.7 gloss=30 alpha=0 doublesided=0'}
+    mats = {'dbone': f'diffuse={bD} normal={bN} spec=0.55 gloss=40 alpha=0 doublesided=0',
+            'runes': f'diffuse={rD} normal={rN} glow={rG} emit=1,0.47,0.16 emitmult=1.7 spec=0.4 gloss=40 alpha=blend doublesided=0',
+            'hiltbone': f'diffuse={hD} normal={hN} spec=0.3 gloss=22 alpha=0 doublesided=0',
+            'scales': f'diffuse={sD} normal={sN} spec=0.5 gloss=40 alpha=0 doublesided=0',
+            'iron': f'diffuse={iD} normal={iN} spec=0.45 gloss=24 alpha=0 doublesided=0'}
     return pw.finish(M, 'dragonslayer', mats, None, 'WeaponSword')
 
 
