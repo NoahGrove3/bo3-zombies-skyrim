@@ -3468,6 +3468,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		{
 			if (a_s.freedAltars.empty() && !a_s.tabletOn) return;
 			auto* ui = RE::UI::GetSingleton();
+			// (Noah, 2026-11-21: "the tablet icon on the map overlaps some UI") never drawn over a box or menu opened on top of the map
+			// (the "You have not discovered this location yet" question, the journal, the console)
+			if (ui && (ui->IsMenuOpen(RE::MessageBoxMenu::MENU_NAME) || ui->IsMenuOpen(RE::JournalMenu::MENU_NAME) || ui->IsMenuOpen(RE::Console::MENU_NAME) || ui->IsMenuOpen(RE::TweenMenu::MENU_NAME))) return;
 			auto  menu = ui ? ui->GetMenu<RE::MapMenu>() : RE::GPtr<RE::MapMenu>{};
 			auto* d2 = menu ? menu->GetRuntimeData2() : nullptr;
 			if (!d2 || !d2->worldSpace) return;
@@ -3504,7 +3507,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				float x = 0, y = 0, z = 0;
 				const auto& p = a_s.tabletAt;
 				if (cam->WorldPtToScreenPt3(RE::NiPoint3{ p[0], p[1], flat ? 180000.0f : p[2] }, x, y, z, 1e-5f) && z >= 0 && x > -0.05f && x < 1.05f && y > -0.05f && y < 1.05f) {
-					const ImVec2 c{ x * a_size.x + 26.0f * k, (1.0f - y) * a_size.y - 26.0f * k };   // (nudged off the altar's own icon)
+					const ImVec2 c{ x * a_size.x + 46.0f * k, (1.0f - y) * a_size.y - 10.0f * k };   // (beside the altar's icon and its city's crest, not over them)
 					const float  r = 13.0f * k;
 					a_dl->AddCircleFilled(c, r * 1.5f, IM_COL32(255, 150, 60, static_cast<int>(40 * pulse)), 32);
 					a_dl->AddCircleFilled(c, r * 1.05f, IM_COL32(30, 22, 16, 220), 32);
@@ -3514,6 +3517,16 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					a_dl->PathLineTo({ c.x + w, c.y + h }); a_dl->PathLineTo({ c.x - w, c.y + h });
 					a_dl->PathFillConvex(IM_COL32(205, 196, 180, 255));
 					a_dl->AddCircle({ c.x, c.y + h * 0.15f }, w * 0.45f, IM_COL32(255, 150, 60, 255), 16, 1.4f * k);
+					// (Noah, 2026-11-21: it "doesn't have a name or let me hover over it to show the name") its name under the cursor, as
+					// Skyrim names its own map icons
+					if (g_skCursor.x >= 0 && std::hypot(g_skCursor.x - c.x, g_skCursor.y - c.y) < r * 1.6f) {
+						const std::string nm = "Tablet of Mysteries";
+						const float px = 24.0f * k;
+						const ImVec2 sz = Measure(g_body, px, nm);
+						const ImVec2 at{ c.x - sz.x * 0.5f, c.y - r * 1.6f - sz.y - 6.0f * k };
+						a_dl->AddRectFilled({ at.x - 10.0f * k, at.y - 4.0f * k }, { at.x + sz.x + 10.0f * k, at.y + sz.y + 4.0f * k }, IM_COL32(10, 8, 6, 170), 4.0f * k);
+						Txt(a_dl, g_body, px, at, IM_COL32(245, 238, 225, 255), nm);
+					}
 				}
 			}
 		}
