@@ -199,6 +199,7 @@ namespace bo3z::Eggs
 		}
 		// (the desk check: a spell "near" two seals went to whichever came first in the list) the mark you're looking at, within a_r of
 		// you and about 20 degrees of your aim; else the nearest within 400 (-1 none)
+		bool CamAim(RE::NiPoint3& a_from, RE::NiPoint3& a_dir);
 		template <class M>
 		int AimedMark(const std::vector<M>& a_marks, const RE::NiPoint3& a_you, float a_r, bool a_skipTaken)
 		{
