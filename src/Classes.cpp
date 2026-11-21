@@ -4509,7 +4509,9 @@ namespace bo3z::Classes
 			// (the test: a shy cat mauled Noah for 108) no fight in it at all: unaggressive, cowardly, and its blows harmless
 			auto* av = c->AsActorValueOwner();
 			av->SetActorValue(RE::ActorValue::kAggression, 0.0f);
-			av->SetActorValue(RE::ActorValue::kConfidence, 0.0f);
+			// (Noah, 2026-11-21: "running away even when I'm sneaking up to them") never cowardly: a cowardly one fled the moment it
+			// saw you, sneaking or not - it's src/Eggs.cpp that sends it off, and only when you come at it upright
+			av->SetActorValue(RE::ActorValue::kConfidence, 3.0f);
 			av->SetActorValue(RE::ActorValue::kAttackDamageMult, 0.0f);
 			c->StopCombat();
 			Console(c, "SetGhost 1");

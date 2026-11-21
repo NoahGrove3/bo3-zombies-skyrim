@@ -820,6 +820,42 @@ namespace bo3z
 					if (auto* em = RE::ActorEquipManager::GetSingleton()) em->EquipSpell(player, sp, RE::TESForm::LookupByID<RE::BGSEquipSlot>(hand == "l" ? 0x013F43 : 0x013F42));
 				}
 				logger::info("dev: arequip {} -> {} [{:08X}]", i, sp ? sp->GetName() : "none", sp ? sp->GetFormID() : 0);
+			} else if (cmd == "floaters" && player) {  // floaters [radius]: trees, rocks and plants round you standing in the air - whose they are
+				// (Noah, 2026-11-21: "I still see a bunch of grass bushes trees and rocks that are floating all over the map what mod would
+				// be causing this?" - up close too) every tree, rock, plant and static within reach whose foot is well above the ground
+				// under it: its plugin (the one that made it, the one that last changed it), its model, how high it hangs
+				float radius = 3000.0f;
+				in >> radius;
+				struct F { float gap; std::string line; };
+				std::vector<F> found;
+				std::map<std::string, int> byFile;
+				int seen = 0;
+				RE::TES::GetSingleton()->ForEachReferenceInRange(player, radius, [&](RE::TESObjectREFR* r) {
+					auto* b = r ? r->GetBaseObject() : nullptr;
+					if (!b || r->IsDisabled() || r->IsDeleted()) return RE::BSContainer::ForEachResult::kContinue;
+					const auto ft = b->GetFormType();
+					if (ft != RE::FormType::Static && ft != RE::FormType::Tree && ft != RE::FormType::Flora && ft != RE::FormType::MovableStatic) return RE::BSContainer::ForEachResult::kContinue;
+					++seen;
+					const auto pos = r->GetPosition();
+					float land = 0;
+					if (!RE::TES::GetSingleton()->GetLandHeight(pos, land)) return RE::BSContainer::ForEachResult::kContinue;
+					const float foot = pos.z + r->GetBoundMin().z * r->GetScale();
+					const float gap = foot - land;
+					if (gap < 40.0f || gap > 2000.0f) return RE::BSContainer::ForEachResult::kContinue;
+					auto* made = r->GetFile(0);
+					auto* last = r->GetDescriptionOwnerFile();
+					const std::string mf = made ? made->GetFilename() : std::string("(made in game)");
+					const std::string lf = last ? last->GetFilename() : mf;
+					auto* mdl = b->As<RE::TESModel>();
+					found.push_back({ gap, fmt::format("{:.0f} up: {} {:08X} base {:08X} '{}' model '{}' made by {} last {} at ({:.0f},{:.0f},{:.0f})", gap, RE::FormTypeToString(ft), r->GetFormID(), b->GetFormID(),
+						b->GetName(), mdl ? mdl->GetModel() : "?", mf, lf, pos.x, pos.y, pos.z) });
+					++byFile[lf == mf ? mf : mf + " > " + lf];
+					return RE::BSContainer::ForEachResult::kContinue;
+				});
+				std::sort(found.begin(), found.end(), [](const F& a, const F& b) { return a.gap > b.gap; });
+				logger::info("dev: floaters - {} of {} trees, rocks, plants and statics within {:.0f} stand 40+ above the ground", found.size(), seen, radius);
+				for (const auto& [f, n] : byFile) logger::info("dev: floaters   {} from {}", n, f);
+				for (std::size_t i = 0; i < found.size() && i < 25; ++i) logger::info("dev: floaters   {}", found[i].line);
 			} else if (cmd == "fxlist" && player) {  // fxlist: every effect shader and art on you (the blade's glow hunt), and your blade's enchantment
 				std::string out;
 				RE::ProcessLists::GetSingleton()->ForEachShaderEffect([&](RE::ShaderReferenceEffect* e) {

@@ -71,7 +71,7 @@ namespace bo3z::Eggs
 			h = {};
 		}
 		RE::ObjectRefHandle g_probe;
-		std::optional<RE::NiPoint3> Walkable(RE::PlayerCharacter* a_p, const RE::NiPoint3& a_at, float a_maxShift)
+		std::optional<RE::NiPoint3> Walkable(RE::PlayerCharacter* a_p, const RE::NiPoint3& a_at, float a_maxShift, bool a_dry = false)
 		{
 			auto probe = g_probe.get();
 			if (!probe || probe->IsDeleted() || probe->GetWorldspace() != a_p->GetWorldspace()) {
@@ -87,7 +87,43 @@ namespace bo3z::Eggs
 			probe->MoveToNearestNavmesh();
 			const auto got = probe->GetPosition();
 			if (std::hypot(got.x - at.x, got.y - at.y) > a_maxShift) return std::nullopt;
+			// (Noah, 2026-11-21: the spirit cats "going in water") dry ground only: no navmesh under a stream, a pond, the sea
+			if (a_dry) {
+				auto* cell = RE::TES::GetSingleton()->GetCell(got);
+				if (float wh = 0; cell && cell->GetWaterHeight(got, wh) && wh > got.z - 12.0f) return std::nullopt;
+			}
 			return got;
+		}
+		// (Noah, 2026-11-21: the Ghost Pride's cats "going in water or running away even when I'm sneaking up to them", the lone spirit
+		// "teleporting all over the place" - "following them to the fang should actually look like it's leading me there") a spirit
+		// cat goes on its own feet: a marker where it's headed, and the cat told to find its way there (PathToReference - the game's
+		// own pathing, round rocks and walls); there, it's held where it stands (SetDontMove), so its own wandering never carries it
+		// into water or off from you
+		void CatScript(RE::Actor* a_cat, const char* a_fn, RE::BSScript::IFunctionArguments* a_args)
+		{
+			auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+			if (!vm || !a_cat) {
+				delete a_args;
+				return;
+			}
+			const auto hd = vm->GetObjectHandlePolicy()->GetHandleForObject(a_cat->GetFormType(), a_cat);
+			RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> none;
+			vm->DispatchMethodCall(hd, "Actor", a_fn, a_args, none);
+		}
+		void CatHold(RE::Actor* a_cat, bool a_on) { CatScript(a_cat, "SetDontMove", RE::MakeFunctionArguments(static_cast<bool>(a_on))); }
+		void CatGo(RE::PlayerCharacter* a_p, RE::Actor* a_cat, RE::ObjectRefHandle& a_goal, const RE::NiPoint3& a_to, bool a_run)
+		{
+			auto goal = a_goal.get();
+			if (!goal) {
+				auto* xm = RE::TESForm::LookupByID<RE::TESBoundObject>(kXMarker);
+				auto  ref = xm ? a_p->PlaceObjectAtMe(xm, false) : nullptr;
+				if (!ref) return;
+				a_goal = ref->CreateRefHandle();
+				goal = ref;
+			}
+			goal->SetPosition(a_to);
+			CatHold(a_cat, false);
+			CatScript(a_cat, "PathToReference", RE::MakeFunctionArguments(static_cast<RE::TESObjectREFR*>(goal.get()), a_run ? 1.0f : 0.0f));
 		}
 		RE::ObjectRefHandle Place(RE::PlayerCharacter* a_p, std::uint32_t a_base, const RE::NiPoint3& a_at, float a_scale)
 		{
@@ -124,6 +160,10 @@ namespace bo3z::Eggs
 			float               glow = 0;      // (a roaming spirit cat) its next drift of motes
 			RE::NiPoint3        dry;           // (Noah: "they get stuck and swim around in the water") where it last stood on land
 			float               wet = 0;       // how long it's been swimming
+			RE::ObjectRefHandle goal;          // (a spirit cat on its feet) the marker it paths to
+			RE::NiPoint3        dest;
+			bool                moving = false, held = false;
+			float               moveT = 0;
 		};
 		struct Live
 		{
@@ -273,7 +313,7 @@ namespace bo3z::Eggs
 
 		void Clear()
 		{
-			for (auto& m : g_live.marks) Remove(m.obj), Remove(m.light), Gone(m.guard);
+			for (auto& m : g_live.marks) Remove(m.obj), Remove(m.light), Gone(m.guard), Remove(m.goal);
 			Remove(g_live.anchorObj), Remove(g_live.anchorLight);
 			Gone(g_live.ally);
 			if (auto b = g_live.boss.get(); b && g_live.ghosted) Con(b.get(), "SetGhost 0");
@@ -303,7 +343,7 @@ namespace bo3z::Eggs
 						std::uniform_real_distribution<float> u(0.0f, 1.0f);
 						for (int tries = 0; tries < 10 && !at; ++tries) {
 							const float ang = u(rr) * 6.2832f, r = s.r0 + u(rr) * (s.r1 - s.r0) * (tries < 6 ? 1.0f : 0.4f);
-							at = Walkable(a_p, c + RE::NiPoint3{ std::cos(ang) * r, std::sin(ang) * r, 0 }, 600.0f);
+							at = Walkable(a_p, c + RE::NiPoint3{ std::cos(ang) * r, std::sin(ang) * r, 0 }, 600.0f, true);
 							if (at && std::abs(at->z - c.z) > 1800.0f) at.reset();
 						}
 					}
@@ -472,6 +512,10 @@ namespace bo3z::Eggs
 			float                     wait = 0, growl = 0, glowT = 0, saidT = 0, wet = 0;
 			RE::NiPoint3              dry;
 			bool                      ghostDone = false, atEnd = false;
+			RE::ObjectRefHandle       goal;                 // (the lone spirit on its feet) the marker it paths to
+			RE::NiPoint3              dest;
+			bool                      moving = false, held = false;
+			float                     moveT = 0;
 			float                     starIn = -1, starT = -1, emit = 0;   // (the Eye) the star's wait, its flight
 			RE::NiPoint3              starFrom, starVel;
 			bool                      starDone = false;
@@ -490,8 +534,8 @@ namespace bo3z::Eggs
 		{
 			Remove(g_sign.drop), Remove(g_sign.dropLight);
 			g_sign.dropOut = false;
-			Gone(g_sign.cat);
-			g_sign.path.clear(), g_sign.at = 0, g_sign.wait = 0;
+			Gone(g_sign.cat), Remove(g_sign.goal);
+			g_sign.path.clear(), g_sign.at = 0, g_sign.wait = 0, g_sign.moving = false, g_sign.held = false, g_sign.atEnd = false;
 			g_sign.starT = -1, g_sign.starIn = -1;
 			g_sign.glow = {}, g_sign.glowIn = -1;
 			if (a_blade) Remove(g_sign.bladeLight), g_sign.blade = {}, g_sign.bladeHave = -1;
@@ -591,7 +635,7 @@ namespace bo3z::Eggs
 			if (v == "pride") {
 				auto cat = g_sign.cat.get();
 				if (!night || !altar || pp.GetDistance(altar->GetPosition()) > 9000.0f) {
-					if (cat || !g_sign.path.empty()) Gone(g_sign.cat), g_sign.path.clear();
+					if (cat || !g_sign.path.empty()) Gone(g_sign.cat), Remove(g_sign.goal), g_sign.path.clear(), g_sign.moving = false;
 					return;
 				}
 				if (g_sign.dropOut || g_sign.ghostDone) return;
@@ -602,7 +646,7 @@ namespace bo3z::Eggs
 					for (int t = 0; t < 12 && !at; ++t) {   // (a walled city's streets: a few tries, nearer in each time)
 						a0 = u(rr) * 6.2832f;
 						const float r = 1500.0f - t * 90.0f;
-						at = Walkable(a_p, c + RE::NiPoint3{ std::cos(a0) * r, std::sin(a0) * r, 0 }, 900.0f);
+						at = Walkable(a_p, c + RE::NiPoint3{ std::cos(a0) * r, std::sin(a0) * r, 0 }, 900.0f, true);
 					}
 					if (!at) {
 						static int miss = 0;
@@ -610,57 +654,75 @@ namespace bo3z::Eggs
 						return;
 					}
 					g_sign.path.push_back(*at);
+					// (Noah, 2026-11-21) its trail on dry ground, a stretch at a time it walks while you follow - eight stops of ~13 m
 					float a = a0;
-					for (int i = 0; i < 6 && g_sign.path.size() < 6; ++i) {
-						a += (u(rr) - 0.5f) * 1.2f;
-						if (auto nx = Walkable(a_p, g_sign.path.back() + RE::NiPoint3{ std::cos(a) * 1100.0f, std::sin(a) * 1100.0f, 0 }, 500.0f)) g_sign.path.push_back(*nx);
+					for (int i = 0; i < 16 && g_sign.path.size() < 8; ++i) {
+						a += (u(rr) - 0.5f) * 1.0f;
+						if (auto nx = Walkable(a_p, g_sign.path.back() + RE::NiPoint3{ std::cos(a) * 900.0f, std::sin(a) * 900.0f, 0 }, 450.0f, true); nx && std::abs(nx->z - g_sign.path.back().z) < 500.0f) g_sign.path.push_back(*nx);
+						else a += 0.9f;   // (blocked: try round it)
 					}
 					if (auto* k = Classes::SpiritCat(g_sign.path[0], false, 1800.0f)) g_sign.cat = k->GetHandle();
-					g_sign.at = 0, g_sign.wait = 0;
+					g_sign.at = 0, g_sign.wait = 0, g_sign.moving = false, g_sign.held = false, g_sign.atEnd = false;
 					logger::info("eggs: a lone spirit cat walks near {}'s altar ({} steps to its fang)", gen::kTowns[town], g_sign.path.size());
 					return;
 				}
-				if (!cat || cat->IsDead()) { Gone(g_sign.cat), g_sign.path.clear(); return; }
+				if (!cat || cat->IsDead()) { Gone(g_sign.cat), Remove(g_sign.goal), g_sign.path.clear(), g_sign.moving = false; return; }
 				if (cat->IsInCombat()) cat->StopCombat();
-				if (cat->AsActorState()->IsSwimming()) {   // (out of the water: back to dry land, its trail with it)
+				if (!g_sign.held && cat->Get3D()) g_sign.held = true, CatHold(cat.get(), true);   // (it stands where it was set down, waiting for you)
+				const auto  at = cat->GetPosition();
+				const float d = pp.GetDistance(at);
+				if (cat->AsActorState()->IsSwimming()) {   // (in the water all the same: back to the dry ground it last stood on - on foot while you watch)
 					if ((g_sign.wet += a_dt) > 0.8f) {
 						g_sign.wet = 0;
 						const auto back = g_sign.dry.Length() > 1.0f ? g_sign.dry : g_sign.path[0];
-						g_sign.path[g_sign.at] = back;
-						cat->SetPosition(back, true);
+						if (d > 1600.0f) cat->SetPosition(back, true), CatHold(cat.get(), true), g_sign.moving = false;
+						else CatGo(a_p, cat.get(), g_sign.goal, back, true), g_sign.moving = true, g_sign.moveT = 0, g_sign.dest = back;
 					}
 					return;
 				}
 				g_sign.wet = 0;
-				g_sign.dry = cat->GetPosition();
-				const auto  at = cat->GetPosition();
-				const float d = pp.GetDistance(at);
+				g_sign.dry = at;
 				if (d < 2100.0f && (g_sign.growl -= a_dt) <= 0) g_sign.growl = 6.0f + u(rr) * 6.0f, Audio::At(gen::Sound::boss_growl, cat.get(), 0.45f);
 				if (d < 9000.0f && (g_sign.glowT -= a_dt) <= 0) g_sign.glowT = 2.0f + u(rr), Gun::Motes(1, at + RE::NiPoint3{ 0, 0, 40.0f }, 0.35f, 1.8f);
-				if (d > 1600.0f && at.GetDistance(g_sign.path[g_sign.at]) > 700.0f) cat->SetPosition(g_sign.path[g_sign.at], true);   // (unseen, it keeps to its trail)
+				if (g_sign.moving) {   // on its way: there, it stops and waits for you; stuck where you can't see it, set down where it was going
+					g_sign.moveT += a_dt;
+					if (at.GetDistance(g_sign.dest) < 170.0f || g_sign.moveT > 16.0f) {
+						if (g_sign.moveT > 16.0f && d > 1600.0f) cat->SetPosition(g_sign.dest, true);
+						g_sign.moving = false;
+						CatHold(cat.get(), true);
+					}
+				} else if (d > 2500.0f && at.GetDistance(g_sign.path[g_sign.at]) > 700.0f) {
+					cat->SetPosition(g_sign.path[g_sign.at], true);   // (far out of sight: back on its trail)
+				}
 				const bool sneak = a_p->IsSneaking();
-				if (g_sign.atEnd) {
-					// (waiting at its trail's end for you)
-				} else if (d < 450.0f && !sneak) {   // rushed: it flees to where it first stood
+				if (g_sign.atEnd || g_sign.moving) {
+					g_sign.wait = 0;   // (on its way, or waiting at its trail's end for you)
+				} else if (d < 450.0f && !sneak) {   // rushed: it bolts back along its trail on foot - one stop lost
 					Gun::Motes(1, at, 0.6f, 1.0f);
-					g_sign.at = 0, g_sign.wait = 0;
-					cat->SetPosition(g_sign.path[0], true);
+					g_sign.at = std::max(0, g_sign.at - 1), g_sign.wait = 0;
+					auto to = g_sign.path[g_sign.at];
+					if (to.GetDistance(at) < 300.0f) {   // (already at its first stop: off to the side of it instead)
+						RE::NiPoint3 away = at - pp;
+						away.z = 0;
+						if (const float l = away.Length(); l > 1.0f) away = away * (1.0f / l);
+						if (auto side = Walkable(a_p, at + away * 900.0f, 450.0f, true)) to = *side;
+					}
+					CatGo(a_p, cat.get(), g_sign.goal, to, true), g_sign.moving = true, g_sign.moveT = 0, g_sign.dest = to;
 					SignSay("It fled from you. Come softly.");
-				} else if (d < 800.0f && sneak) {
-					if ((g_sign.wait += a_dt) > 1.2f) {   // followed softly: it slips on to its next place
+				} else if (d < 900.0f && sneak) {
+					if ((g_sign.wait += a_dt) > 1.0f) {   // followed softly: it pads on to its next stop, at a walk
 						g_sign.wait = 0;
-						Gun::Motes(1, at, 0.6f, 1.0f);
 						if (++g_sign.at >= static_cast<int>(g_sign.path.size()) - 1) g_sign.at = static_cast<int>(g_sign.path.size()) - 1, g_sign.atEnd = true;
-						cat->SetPosition(g_sign.path[g_sign.at], true);
+						CatGo(a_p, cat.get(), g_sign.goal, g_sign.path[g_sign.at], false), g_sign.moving = true, g_sign.moveT = 0, g_sign.dest = g_sign.path[g_sign.at];
 					}
 				} else {
 					g_sign.wait = 0;
 				}
 				// (Noah: "revealed once the cat and the player gets within 10 meters of it. Invisible unless following the cat to it") at its
 				// trail's end it waits; come within 10 m of it there and it sinks away, and its fang lies where it stood
-				if (g_sign.atEnd && pp.GetDistance(g_sign.path.back()) < 700.0f) {
+				if (g_sign.atEnd && !g_sign.moving && pp.GetDistance(g_sign.path.back()) < 700.0f) {
 					const auto end = g_sign.path.back();
-					Gone(g_sign.cat);
+					Gone(g_sign.cat), Remove(g_sign.goal);
 					g_sign.path.clear(), g_sign.ghostDone = true, g_sign.atEnd = false;
 					Gun::ElemBurst(1, end + RE::NiPoint3{ 0, 0, 40.0f }, 1.4f, 0.0f, 1.0f);
 					Audio::AtPoint(gen::Sound::boss_growl, end, 0.0f, 0.5f);
@@ -868,7 +930,7 @@ namespace bo3z::Eggs
 							// during the day") by day there are no cats: any out are put away where they stood, and come again at nightfall
 							if (s.night && !night) {
 								if (auto r0 = m.obj.get()) m.at = r0->GetPosition();
-								Remove(m.obj);
+								Remove(m.obj), Remove(m.goal), m.moving = false, m.held = false;
 								continue;
 							}
 							auto r = m.obj.get();
@@ -879,36 +941,45 @@ namespace bo3z::Eggs
 							if (!r || r->IsDisabled() || r->IsDeleted()) {
 								m.obj = {};
 								if (dCat < 6000.0f) {
-									if (auto* cat = Classes::SpiritCat(m.at, false, 3600.0f)) m.obj = cat->CreateRefHandle();
+									if (auto* cat = Classes::SpiritCat(m.at, false, 3600.0f)) m.obj = cat->CreateRefHandle(), m.held = false, m.moving = false;
 								}
 								continue;
 							}
 							if (dCat > 9000.0f && r->GetPosition().GetDistance(pp) > 9000.0f) {
 								m.at = r->GetPosition();
-								Remove(m.obj);
+								Remove(m.obj), Remove(m.goal), m.moving = false, m.held = false;
 								continue;
 							}
-							if (auto* act = r->As<RE::Actor>(); act && act->IsInCombat()) act->StopCombat();   // (a shy one never fights)
+							auto* act = r->As<RE::Actor>();
+							if (!act) continue;
+							if (act->IsInCombat()) act->StopCombat();   // (a shy one never fights)
+							// (Noah, 2026-11-21: "running away even when I'm sneaking up to them") it lies where it was set down - held there,
+							// never wandering off on its own; it only moves when it sees you coming
+							if (!m.held && act->Get3D()) m.held = true, CatHold(act, true);
+							const auto  at = r->GetPosition();
+							const float d = pp.GetDistance(at);
 							// (Noah: "they get stuck and swim around in the water and there's no way to sneak up on them while swimming") a cat
-							// that wanders into water is put back on the land it last stood on
-							if (auto* act = r->As<RE::Actor>(); act && act->AsActorState()->IsSwimming()) {
+							// in water goes back to the land it last stood on - on its own feet while you can see it
+							if (act->AsActorState()->IsSwimming()) {
 								if ((m.wet += a_dt) > 0.8f) {
 									m.wet = 0;
 									auto back = m.dry.Length() > 1.0f ? std::optional<RE::NiPoint3>(m.dry) : std::nullopt;
 									for (int tries = 0; tries < 8 && !back; ++tries) {
 										const float ang = u(rr) * 6.2832f, rad = s.r0 + u(rr) * (s.r1 - s.r0) * 0.6f;
-										back = Walkable(a_p, c + RE::NiPoint3{ std::cos(ang) * rad, std::sin(ang) * rad, 0 }, 500.0f);
+										back = Walkable(a_p, c + RE::NiPoint3{ std::cos(ang) * rad, std::sin(ang) * rad, 0 }, 500.0f, true);
 									}
-									if (back) Gun::Motes(1, act->GetPosition(), 0.5f, 1.0f), act->SetPosition(*back, true), m.dry = {};
+									if (back) {
+										if (d > 1600.0f) act->SetPosition(*back, true), CatHold(act, true), m.moving = false;
+										else CatGo(a_p, act, m.goal, *back, true), m.moving = true, m.moveT = 0, m.dest = *back;
+										m.dry = {};
+									}
 								}
 								continue;
 							}
 							m.wet = 0;
-							const auto at = r->GetPosition();
-							m.at = at;   // (it roams: wherever it has wandered to)
+							m.at = at;   // (wherever it has gone to)
 							m.dry = at;
-							const float d = pp.GetDistance(at);
-							const bool  sneak = a_p->IsSneaking();
+							const bool sneak = a_p->IsSneaking();
 							// (Noah: "growl + faint glow") heard close by, a ghostly growl now and then; seen far off at night, its blue motes
 							if (d < 2100.0f && (m.wait -= a_dt) <= 0) {
 								m.wait = 7.0f + u(rr) * 7.0f;
@@ -918,17 +989,24 @@ namespace bo3z::Eggs
 								m.glow = 2.2f + u(rr) * 1.2f;
 								Gun::Motes(1, at + RE::NiPoint3{ 0, 0, 40.0f }, 0.35f, 1.8f);
 							}
-							if (d < 500.0f && !sneak) {   // seen coming: it flickers off further into the night
-								for (int tries = 0; tries < 6; ++tries) {
+							if (m.moving) {   // bolting: there, it settles again; stuck where you can't see it, set down where it was going
+								m.moveT += a_dt;
+								if (at.GetDistance(m.dest) < 170.0f || m.moveT > 14.0f) {
+									if (m.moveT > 14.0f && d > 1600.0f) act->SetPosition(m.dest, true);
+									m.moving = false;
+									CatHold(act, true);
+								}
+								continue;
+							}
+							if (d < 500.0f && !sneak) {   // (Noah: "Run off on foot") seen coming: it bolts away over the ground to a new spot
+								for (int tries = 0; tries < 8; ++tries) {
 									RE::NiPoint3 away = at - pp;
 									away.z = 0;
 									const float l = std::max(1.0f, away.Length());
 									const float ang = (u(rr) - 0.5f) * 1.6f, cs = std::cos(ang), sn = std::sin(ang);
 									const RE::NiPoint3 dir{ (away.x * cs - away.y * sn) / l, (away.x * sn + away.y * cs) / l, 0 };
-									if (const auto to = Walkable(a_p, at + dir * (1300.0f + u(rr) * 700.0f), 500.0f); to && to->GetDistance(c) < s.r1) {
-										Gun::Motes(1, at, 0.6f, 1.0f);
-										if (auto* act = r->As<RE::Actor>()) act->SetPosition(*to, true);   // (an actor moved as one: its body with it)
-										m.at = *to;
+									if (const auto to = Walkable(a_p, at + dir * (1300.0f + u(rr) * 700.0f), 500.0f, true); to && to->GetDistance(c) < s.r1) {
+										CatGo(a_p, act, m.goal, *to, true), m.moving = true, m.moveT = 0, m.dest = *to;
 										break;
 									}
 								}
@@ -938,7 +1016,8 @@ namespace bo3z::Eggs
 									if (Throttle(6.0f)) Hud::QuestBanner("It won't settle by day. Come back at night.", 3.0f);
 									continue;
 								}
-								if (auto* act = r->As<RE::Actor>()) act->Disable();
+								act->Disable();
+								Remove(m.goal);
 								take(m, "light");
 								return;
 							}
