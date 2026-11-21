@@ -197,6 +197,23 @@ def scabbard(M, mat, y0, length, width, curve, mouth=2.0):
 VANILLA = ROOT / 'build' / 'vanilla'   # (the player's own Skyrim, read out of its archives - never committed as it is)
 
 
+def skull_tex():
+    """(Noah, 2026-11-21: "Match the bone colour") Skyrim's DragonSkeleton texture recoloured to the blade's ivory bone: its own
+    light and shade and every crack kept, its dirt-brown taken to ivory - read from build/vanilla (the player's own Skyrim)"""
+    src = VANILLA / 'dragonskeleton_2k.png'
+    if not src.exists():
+        subprocess.run(['convert', str(VANILLA / 'dragonskeleton.dds'), '-resize', '2048x2048', str(src)], check=True)
+    from PIL import Image
+    a = np.asarray(Image.open(src).convert('RGB'), np.float32)
+    lum = a @ np.array([0.299, 0.587, 0.114], np.float32)
+    lo, hi = np.percentile(lum, 2), np.percentile(lum, 98)
+    t = np.clip((lum - lo) / max(1.0, hi - lo), 0, 1)
+    ivory = np.array([206, 194, 164], np.float32)
+    col = ivory * (0.32 + 0.78 * t[..., None] ** 0.9)
+    col = col * 0.88 + a * (col.mean() / max(1.0, a.mean())) * 0.12   # (a breath of its own staining kept)
+    return pw.save(np.clip(col, 0, 255), 'slay_skull_d.dds')
+
+
 def skull(M):
     """(Noah, 2026-11-21: "use a skyrim dragons actual skull shrunk down and aligned" - "Merge into our sword file") Skyrim's own
     dragon skull (meshes\\clutter\\deadanimals\\dragonbonesskull01.nif, its own DragonSkeleton textures) shrunk to the guard: its
@@ -220,8 +237,8 @@ def skull(M):
     M.add('Skull', 'vskull', P, NN, UV, F)
 
 
-SKULL_SCALE = 0.037    # (144 long in its own units: 5.3 model units here, 8.5 in the game)
-SKULL_BACK = -0.25     # (the back of its head down over the grip's top collar, its jaw's hinge on it)
+SKULL_SCALE = 0.051    # (Noah, 2026-11-21: "Bigger, wrapped round blade" - 144 long in its own units: 7.3 model units here, 11.8 in the game)
+SKULL_BACK = -1.35     # (the back of its head down over the grip's top, its horns swept back over the grip)
 
 
 def build():
@@ -229,6 +246,7 @@ def build():
     hD, hN = hilt_bone_tex()
     sD, sN = scales_tex()
     cD, cN = scabbard_tex()
+    kD = skull_tex()
     rD, rN, rG = pw.glyph_strip('slay_runes', (196, 184, 156), glow_rgb=(255, 112, 36), seed=2131, lit=(214, 100, 42))
     iD, iN = pw.metal_tex('slay_iron', (52, 50, 48), dark=0.9, seed=2141)
     M = Mesh()
@@ -236,10 +254,10 @@ def build():
     # the blade: single-edged (its spine at -x, its keen edge at +x), curving back toward its spine so the edge rides the
     # outside of the curve as a katana's does, a short sharp point; the letters cut along the spine
     pw.blade(M, 'dbone', 1.5, 46.1, 2.15, 0.55, tip=0.1, seed=2151, ns=150, curve=-0.055, single=0.3,
-             runes=('runes', 0.28, 0.1, 0.72, 9.6, -0.42))
+             runes=('runes', 0.28, 0.11, 0.72, 9.6, -0.42))
     # (Noah, 2026-11-20) the scabbard, round the blade: one shape named Scb, left at the hip when the sword is drawn - its mouth
     # just past the skull's snout
-    scabbard(M, 'scb', 1.5, 46.1, 2.15, -0.055, mouth=5.35)
+    scabbard(M, 'scb', 1.5, 46.1, 2.15, -0.055, mouth=6.1)
     # (Noah, 2026-11-21: "redesign the hilt (where the blade connects to the handle)" - "Dragon skull guard", "use a skyrim dragons
     # actual skull") Skyrim's own dragon skull round the blade's root
     skull(M)
@@ -258,7 +276,7 @@ def build():
     mats = {'dbone': f'diffuse={bD} normal={bN} spec=0.3 gloss=28 alpha=0 doublesided=0',
             'runes': f'diffuse={rD} normal={rN} glow={rG} emit=1,0.47,0.16 emitmult=1.7 spec=0.4 gloss=40 alpha=blend doublesided=0',
             'hiltbone': f'diffuse={hD} normal={hN} spec=0.3 gloss=22 alpha=0 doublesided=0',
-            'vskull': 'diffuse=actors\\dragon\\DragonSkeleton.dds normal=actors\\dragon\\DragonSkeleton_n.dds spec=0.3 gloss=24 alpha=0 doublesided=0',
+            'vskull': f'diffuse={kD} normal=actors\\dragon\\DragonSkeleton_n.dds spec=0.3 gloss=24 alpha=0 doublesided=0',
             'scales': f'diffuse={sD} normal={sN} spec=0.5 gloss=40 alpha=0 doublesided=0',
             'scb': f'diffuse={cD} normal={cN} spec=0.45 gloss=30 alpha=0 doublesided=0',
             'iron': f'diffuse={iD} normal={iN} spec=0.45 gloss=24 alpha=0 doublesided=0'}

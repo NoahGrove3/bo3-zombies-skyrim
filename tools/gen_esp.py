@@ -107,14 +107,15 @@ cast_mgef('throwdaggers', 'Throwing Daggers', 1)
 # only the throw's animation) - src/Classes.cpp ThrowFlask lobs the flask itself (a tumbling glass flask, tools/flasks.py,
 # carrying nothing: where it comes down our code bursts it); the Philosopher's Flask is the class's wonder
 cast_mgef('flaskcast', 'Flask', 1)
-FLASKS = [('fire', 'Fire Flask', 'Bursts in flame where it lands.'),
+# (Noah, 2026-11-21: the item descriptions redrafted and approved - every card in one voice, matched to the game as it plays now)
+FLASKS = [('fire', 'Fire Flask', 'Bursts into flame where it lands.'),
           ('frost', 'Frost Flask', 'Bursts into killing cold where it lands.'),
           ('shock', 'Shock Flask', 'Bursts into arcing lightning where it lands.'),
-          ('poison', 'Acid Flask', 'Bursts into a corroding acid splash where it lands.'),
+          ('poison', 'Acid Flask', 'Bursts into a corroding splash where it lands.'),
           ('sun', 'Holy Water', 'Bursts into searing holy light where it lands.'),
           ('blood', 'Voidglass Flask', 'Shatters and drags the dead in to where it broke.'),
-          ('philosopher', "Mutagen Staff", "Alchemist's wonder. Hold block: throws a flask every 0.5 s, cycling the six elements. Power attack: throws the next flask.")]
-FLASK_TIERS = ' Tier I: 50% wider burst. Tier II: its kills burst too. Legendary: its own great burst.'
+          ('philosopher', "Mutagen Staff", "The Alchemist's wonder, a quarterstaff. Hold block: throws a flask every 0.5 s, cycling the six elements. Light and heavy: staff strikes for 50 damage.")]
+FLASK_TIERS = ' Tier I: the burst reaches 50% wider. Tier II: its kills burst too. Legendary: a greater burst of its own.'
 for e, label, text in FLASKS:
     pd = bytearray(tsub('proj_bullet', 'DATA'))
     struct.pack_into('<H', pd, 0, 0x0)                    # a plain magic missile
@@ -148,10 +149,10 @@ for e, label, text in FLASKS:
         sub('SPIT', bytes(sp)), sub('EFID', struct.pack('<I', fid('MGEF', 'flaskcast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 # (Noah, 2026-11-05: "Arcane / Spectral" in Blood's place, blue-white) the Destruction ladder's first three rungs and the
 # Spellsword's arcane blade: hand spells that only play the cast (cast_mgef) - src/Classes.cpp ArcaneCast does the rest
-ARCANE = [('bolt', 'Arcane Bolt', 'A bolt of blue-white arcane light.', 30), ('orb', 'Mana Void', 'An orb of the void: it bursts where it lands and drags the dead in.', 60),
-          ('tide', 'Lunar Tide', 'A ring of arcane light bursts out round you and throws the dead back.', 90),
-          ('blade1', 'Arcane Edge', 'Your blade bursts in arcane light on each hit.', 20), ('blade2', 'Arcane Brand', 'Your blade bursts in wide arcane light on each hit.', 30),
-          ('blade3', 'Arcane Cascade', 'Your blade bursts in arcane light on each hit, and the burst leaps to two more of the dead.', 40)]
+ARCANE = [('bolt', 'Arcane Bolt', 'A bolt of blue-white arcane light.', 30), ('orb', 'Mana Void', 'An orb of the void. It bursts where it lands and drags the dead in.', 60),
+          ('tide', 'Lunar Tide', 'A ring of arcane light bursts out around you and throws the dead back.', 90),
+          ('blade1', 'Arcane Edge', 'Each hit of your blade bursts in arcane light.', 20), ('blade2', 'Arcane Brand', 'Each hit of your blade bursts in wide arcane light.', 30),
+          ('blade3', 'Arcane Cascade', 'Each hit of your blade bursts in arcane light that leaps to 2 more of the dead.', 40)]
 for key, label, text, cost in ARCANE:
     cast_mgef('arcane_' + key, label, 1)
     sp = bytearray(tsub('spel_firebolt', 'SPIT'))
@@ -282,7 +283,7 @@ for name, hx in T['weap_staff']['subs']:
     elif name == 'FULL': b = z("Soulcaller's Staff")
     elif name in ('MODT', 'EAMT'): continue
     elif name == 'EITM': b = struct.pack('<I', fid('ENCH', 'soulcaller'))
-    elif name == 'DESC': b = z("Summoner's wonder. Hold to cast: each of the dead the beam kills gives a soul. Every 20 souls: a spectral sabre cat for 45 s (max 3).")
+    elif name == 'DESC': b = z("The Summoner's wonder. Hold to cast its beam: each of the dead it kills gives a soul. Every 20 souls: a spectral sabre cat for 45 s (up to 3).")
     elif name == 'DATA': b = struct.pack('<IfH', 0, 8.0, 10)
     _sc.append(sub(name, b))
     if name == 'MODL': _sc.append(sub('EAMT', struct.pack('<H', 0)))
@@ -361,14 +362,14 @@ struct.pack_into('<IIIfIIffI', sp, 0, 100, 0x1, 0, 0.25, 1, 0, 0.0, 0.0, 0)
 recs['SPEL'].append(record('SPEL', fid('SPEL', 'bonehorn'), [
     sub('EDID', z('UN_BoneThroneHorn')), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z('Call of the Violet Wyrm')),
     sub('MDOB', tsub('spel_firebolt', 'MDOB')), sub('ETYP', tsub('spel_firebolt', 'ETYP')),
-    sub('DESC', z('The Summoner\'s wonder. A violet wyrm flies in and burns the dead within 50 m of you for 90 seconds; when it departs the call rests a minute. Once the three dragons fall, a wyrmling answers beside it.')),
+    sub('DESC', z('')),   # (retired: the Soulcaller's Staff is the Summoner's wonder now)
     sub('SPIT', bytes(sp)), sub('EFID', struct.pack('<I', fid('MGEF', 'wyrmcall'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 sp = bytearray(tsub('spel_firebolt', 'SPIT'))
 struct.pack_into('<IIIfIIffI', sp, 0, 0, 0x1, 0, 0.0, 1, 0, 0.0, 0.0, 0)   # no magicka (a throw spends stamina), no charge, fire-and-forget, self
 recs['SPEL'].append(record('SPEL', fid('SPEL', 'throwdaggers'), [
     sub('EDID', z('UN_ThrowingDaggers')), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z('Throwing Daggers')),
     sub('MDOB', tsub('spel_firebolt', 'MDOB')), sub('ETYP', tsub('spel_firebolt', 'ETYP')),
-    sub('DESC', z('The Ranger\'s steel: each throw looses ember-hot knives at what you aim at, for a little stamina. Tier I throws three in a fan, Tier II five, Legendary a second volley on the first.')),
+    sub('DESC', z('')),   # (retired with the Ranger)
     sub('SPIT', bytes(sp)), sub('EFID', struct.pack('<I', fid('MGEF', 'throwdaggers'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 
 # ---- the Echo Altar's roll (src/Shops.cpp): each column's rune stone strikes the heart stone with Skyrim's own lightning
@@ -394,7 +395,7 @@ cast_mgef('tomecast', 'Six Fires', 1)   # (Noah: 100 magicka, no cooldown)
 recs['SPEL'].append(record('SPEL', fid('SPEL', 'wonder_tome'), [
     sub('EDID', z('UN_WonderTomeSixFires')), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z('Tome of the Six Fires')),
     sub('MDOB', tsub('spel_firebolt', 'MDOB')), sub('ETYP', tsub('spel_firebolt', 'ETYP')),
-    sub('DESC', z('Your class wonder. One cast looses the top spell of all six element ladders on the dead around you.')),
+    sub('DESC', z('')),   # (retired: the Staff of Magnus is the Battle-mage's wonder now)
     sub('SPIT', struct.pack('<IIIfIIffI', 100, 0x1, 0, 0.25, 1, 0, 0.0, 0.0, 0)), sub('EFID', struct.pack('<I', fid('MGEF', 'tomecast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 
 # ---- the cities' shouts (sheet: shouts): our own words of power, a voice spell per word count (it does nothing
@@ -423,7 +424,7 @@ for n, (w, tr) in enumerate(UPDRAFT_WORDS):
         sub('ETYP', struct.pack('<I', 0x025BEE)), sub('DESC', z('')), sub('SPIT', sp),
         sub('EFID', struct.pack('<I', fid('MGEF', 'shoutcast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 recs['SHOU'].append(record('SHOU', fid('SHOU', 'updraft'), [sub('EDID', z('UN_Shout_updraft')), sub('FULL', z("Dragon's Updraft")),
-    sub('DESC', z('A whirlwind lifts you high into the air - open your glider and your dragon takes you.'))] +
+    sub('DESC', z('A whirlwind lifts you high into the air. Open your glider and your dragon carries you.'))] +
     [sub('SNAM', struct.pack('<IIf', fid('WOOP', f'updraft_{n}'), fid('SPEL', f'updraft_{n}'), 5.0)) for n in range(3)]))
 
 # ---- (Noah: "Make it a shout ... once per wave ... 20 seconds ... Dance Of Death") the dead within 20 m dance; every
@@ -437,7 +438,7 @@ for n, (w, tr) in enumerate(DANCE_WORDS):
         sub('ETYP', struct.pack('<I', 0x025BEE)), sub('DESC', z('')), sub('SPIT', sp),
         sub('EFID', struct.pack('<I', fid('MGEF', 'shoutcast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 recs['SHOU'].append(record('SHOU', fid('SHOU', 'dance'), [sub('EDID', z('UN_Shout_dance')), sub('FULL', z('Dance Of Death')),
-    sub('DESC', z("The Curse's dead within twenty paces dance for twenty seconds: they cannot move or strike, and they take 50% more damage. Once a wave."))] +
+    sub('DESC', z("The dead within 20 paces dance for 20 s: they can't move or strike, and take 50% more damage. Once a wave."))] +
     [sub('SNAM', struct.pack('<IIf', fid('WOOP', f'dance_{n}'), fid('SPEL', f'dance_{n}'), 5.0)) for n in range(3)]))
 
 SCRAFT = {r['id']: r for r in S['spellcraft']['rows']}
@@ -601,7 +602,7 @@ for bw in S['bows']['rows']:
         elif name == 'MODL': b = z('CurseOfAlduin\\bow\\' + bw['id'] + '.nif')
         elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_bow_' + bw['id']))
         elif name == 'MODT': continue
-        elif name == 'DESC': b = z(bw['text'] + ' ' + BOW_TIERS[bw['element']])  # (Noah: what the bow does at each tier)
+        elif name == 'DESC': b = z('')   # (retired: bows left the loot pool)
         elif name == 'DATA': b = struct.pack('<IfH', 0, 1.0, 0)
         subs.append(sub(name, b))
     recs['WEAP'].append(record('WEAP', fid('WEAP', 'bow_' + bw['id']), subs))
@@ -634,17 +635,17 @@ KV = 'kv\\crystalsword\\'
 # (Noah: "all of the swords needs real work and attention to detail for inventory view and descriptions") what each sword is
 # and what each of its tiers does - its description, and (TIER_TEXT) the tier's own line on the item card
 SWORD_DESC = {   # (Noah, 2026-11-12: "update all the weapons descriptions so they are short and to the point"; each tier's line added by src/Classes.cpp TickItemCard)
-    'radiant': "Summoner's blade of white sunlight.",
-    'carian': "Destruction's wand. Hold to cast a bolt every 0.5 s: fire, lightning, ice.",
-    'alch': "Alchemist's scythe. Sheathe it to swap to your flasks.",
-    'ss_none': "Spellsword's blade: takes the element of your other hand's spell.",
-    'slayer': "Light: a golden fireball, 2x damage to dragons. Heavy: 5 s of golden fireballs on the dead within 20 m. Swings 50% faster.",
+    'radiant': "The Summoner's quarterstaff of white sunlight.",
+    'carian': "The Battle-mage's wand. Hold to cast a bolt every 0.5 s, cycling fire, lightning and ice.",
+    'alch': "The Alchemist's scythe. Sheathe it to bring your flasks to hand.",
+    'ss_none': "The Spellsword's blade. It takes the element of the spell in your other hand.",
+    'slayer': "The Spellsword's wonder, a two-handed dragonbone sword. Light: a golden fireball, double damage to dragons. Heavy: 5 s of golden fireballs on the dead within 20 m. Swings 50% faster.",
 }
 TIER_TEXT = {   # (the look's enchantment on the item card: what this tier adds)
-    'radiant': ("Light: white sun balls.", "Light: sun balls. Heavy: a sunbeam on your target.", "Light: sun balls. Heavy: a great sunbeam."),
-    'carian': ("A bolt every 0.5 s.", "Every 2nd bolt is a piercing great bolt.", "Every 2nd bolt is a great bolt with a volley either side."),
-    'alch': ("Light: shadowflame bolts that burn.", "Light: shadowflame bolts. Heavy: a purple fire tornado.", "Light: shadowflame bolts. Heavy: a great purple fire tornado."),
-    'ss': ("Light: bolts of your spell's element.", "Light: element bolts. Heavy: a tornado that casts your spell.", "Light: element bolts. Heavy: a great tornado that casts your spell."),
+    'radiant': ("Light attacks throw sun balls.", "Heavy attacks call a sunbeam on your target.", "Heavy attacks call a great sunbeam."),
+    'carian': ("Bolts every 0.5 s.", "Every 2nd bolt is a great bolt that pierces.", "Every 2nd bolt is a great bolt with a volley either side."),
+    'alch': ("Light attacks fire burning shadowflame bolts.", "Heavy attacks raise a purple fire tornado.", "Heavy attacks raise a great purple fire tornado."),
+    'ss': ("Light attacks fire bolts of that element.", "Heavy attacks raise a tornado that casts your spell on all it hits.", "Heavy attacks raise a great tornado."),
     'slayer': ("Light: golden fireballs. Heavy: a rain of golden fireballs.",) * 3,
 }
 TIER_NAME = {'radiant': 'Radiant Light', 'carian': 'Carian Sorcery', 'alch': 'Shadowflame', 'ss': 'Spellbound', 'slayer': 'Golden Dragonfire'}
@@ -1549,7 +1550,7 @@ for name, hx in T['weap_draugr_gs']['subs']:
     elif name == 'FULL': b = z("Alduin's Bane")
     elif name == 'MODL': b = z(lgs('bane'))   # (Noah: Light Greatswords' Dragonbone - the mod's own model)
     elif name == 'MODT': continue
-    elif name == 'DESC': b = z("Hits call a meteor on the one struck. Heavy: a wind shockwave that throws the dead within 10 m far away. Every 20 kills: a rain of fireballs. Kills heal you. Swings 50% faster.")
+    elif name == 'DESC': b = z("Taken from the Echo of Alduin. Hits call a meteor down on the one struck. Heavy: a wind shockwave that hurls the dead within 10 m. Every 20 kills: a rain of fireballs. Kills heal you. Swings 50% faster.")
     elif name == 'DNAM': struct.pack_into('<f', b, 4, 0.75 * 1.5)   # (Noah: "make 2hand attacks faster by 50% only while holding those 2 weapons")
     elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_fang'))
     elif name == 'DATA': b = bytearray(struct.pack('<IfH', 5000, 16.0, 38))
@@ -1586,7 +1587,7 @@ recs['ARMA'].append(record('ARMA', fid('ARMA', 'lantern'), [sub('EDID', z('UN_Be
 recs['ARMO'].append(record('ARMO', fid('ARMO', 'lantern'), [sub('EDID', z('UN_BeltLantern')), sub('OBND', struct.pack('<6h', -6, -6, 0, 6, 6, 18)), sub('FULL', z('Light Orb')),
     sub('MOD2', z('CurseOfAlduin\\fx\\lightorb_inv.nif')), sub('BOD2', struct.pack('<II', 1 << 30, 2)), sub('RNAM', struct.pack('<I', 0x19)),
     sub('KSIZ', struct.pack('<I', 1)), sub('KWDA', struct.pack('<I', 0x08F95B)),   # (ArmorClothing)
-    sub('DESC', z('A small orb of golden light. Worn, it floats just above your head and lights everything within fifteen metres of you; taken off, it goes dark.')),
+    sub('DESC', z('A small orb of golden light. Worn, it floats above your head and lights everything within 15 m; taken off, it goes dark.')),
     sub('MODL', struct.pack('<I', fid('ARMA', 'lantern'))), sub('DATA', struct.pack('<If', 25, 1.0)), sub('DNAM', struct.pack('<I', 0))]))
 
 # (Noah: the creature overhaul - "combine both zombie mods") the Thriceborn: Mihail's CC Zombies' bodies (its plugin needs

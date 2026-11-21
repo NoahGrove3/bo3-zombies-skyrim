@@ -3575,32 +3575,34 @@ namespace bo3z::Classes
 		struct Card { const char* name; const char* base; const char* tier[3]; };
 		// (Noah, 2026-11-12: "update all the weapons descriptions so they are short and to the point")
 		static const Card kCards[] = {
-			{ "Radiant Quarterstaff", "Summoner's blade of white sunlight.",
-				{ "Tier I: light swings fire sun balls.", "Tier II: heavy calls a sunbeam on your target.", "Tier III: heavy calls a great sunbeam." } },
-			{ "Carian Wand", "Destruction's wand. Hold to cast a bolt every 0.5 s: fire, lightning, ice.",
-				{ "Tier I: a bolt every 0.5 s.", "Tier II: every 2nd bolt is a great bolt that pierces.", "Tier III: every 2nd bolt is a great bolt with a volley either side." } },
-			{ "Shadowflame Scythe", "Alchemist's scythe. Sheathe it to swap to your flasks.",
-				{ "Tier I: light swings fire burning shadowflame bolts.", "Tier II: heavy: a purple fire tornado.", "Tier III: heavy: a great purple fire tornado." } },
-			{ "Spellbound Rapier", "Spellsword's blade: takes the element of your other hand's spell.",
-				{ "Tier I: light swings fire bolts of that element.", "Tier II: heavy: a tornado that casts your spell on all it hits.", "Tier III: heavy: a great tornado." } },
+			{ "Radiant Quarterstaff", "The Summoner's quarterstaff of white sunlight.",
+				{ "Tier I: light attacks throw sun balls.", "Tier II: heavy attacks call a sunbeam on your target.", "Tier III: heavy attacks call a great sunbeam." } },
+			{ "Carian Wand", "The Battle-mage's wand. Hold to cast a bolt every 0.5 s, cycling fire, lightning and ice.",
+				{ "Tier I: bolts every 0.5 s.", "Tier II: every 2nd bolt is a great bolt that pierces.", "Tier III: every 2nd bolt is a great bolt with a volley either side." } },
+			{ "Shadowflame Scythe", "The Alchemist's scythe. Sheathe it to bring your flasks to hand.",
+				{ "Tier I: light attacks fire burning shadowflame bolts.", "Tier II: heavy attacks raise a purple fire tornado.", "Tier III: heavy attacks raise a great purple fire tornado." } },
+			{ "Spellbound Rapier", "The Spellsword's blade. It takes the element of the spell in your other hand.",
+				{ "Tier I: light attacks fire bolts of that element.", "Tier II: heavy attacks raise a tornado that casts your spell on all it hits.", "Tier III: heavy attacks raise a great tornado." } },
+			// (Noah, 2026-11-21: the descriptions approved) Skyrim's own staff, its card in our words
+			{ "Staff of Magnus", "The Battle-mage's wonder. Hold its beam on the dead: it drains them and feeds your magicka, then erupts where it ends.", {} },
 		};
 		static const Card kFlasks[] = {
-			{ "Fire Flask", "Bursts in flame.", {} },
-			{ "Frost Flask", "Bursts into killing cold.", {} },
-			{ "Shock Flask", "Bursts into arcing lightning.", {} },
-			{ "Acid Flask", "Bursts into a corroding splash.", {} },
-			{ "Holy Water", "Bursts into searing holy light.", {} },
-			{ "Voidglass Flask", "Drags the dead in to where it breaks.", {} },
+			{ "Fire Flask", "Bursts into flame where it lands.", {} },
+			{ "Frost Flask", "Bursts into killing cold where it lands.", {} },
+			{ "Shock Flask", "Bursts into arcing lightning where it lands.", {} },
+			{ "Acid Flask", "Bursts into a corroding splash where it lands.", {} },
+			{ "Holy Water", "Bursts into searing holy light where it lands.", {} },
+			{ "Voidglass Flask", "Shatters and drags the dead in to where it broke.", {} },
 		};
-		static constexpr const char* kFlaskTier[3] = { "Tier I: 50% wider burst.", "Tier II: its kills burst too.", "Legendary: a greater burst." };
-		static constexpr const char* kFlaskLegend[6] = { "Legendary: a ring of fire.", "Legendary: a nova that halves their speed for 5 s.",
+		static constexpr const char* kFlaskTier[3] = { "Tier I: the burst reaches 50% wider.", "Tier II: its kills burst too.", "Legendary: a greater burst." };
+		static constexpr const char* kFlaskLegend[6] = { "Legendary: a ring of fire.", "Legendary: a nova that halves the dead's speed for 5 s.",
 			"Legendary: 3 lightning strikes from the sky.", "Legendary: splits into 3 more splashes.",
 			"Legendary: a beam of sunlight from the sky.", "Legendary: then a lunar tide blasts them out." };
 		static const Card kSets[] = {
-			{ "Summoner Set", "Summoner's robes.", { "Tier I: summons take 20% less harm.", "Tier II: one more summon slot.", "Tier III: your summons' kills heal you." } },
-			{ "Destruction Set", "Destruction robes.", { "Tier I: spells cost 10% less.", "Tier II: faster magicka regen.", "Tier III: spells cost 25% less." } },
-			{ "Alchemist Set", "Alchemist's armour.", { "Tier I: throw 15% faster.", "Tier II: flask bursts 20% wider.", "Tier III: flask kills heal you 2%." } },
-			{ "Spellsword Set", "Spellsword's plate.", { "Tier I: you mend in a fight.", "Tier II: blade hits restore magicka.", "Tier III: blade hits 15% harder." } },
+			{ "Summoner Set", "The Summoner's robes.", { "Tier I: your summons take 20% less harm.", "Tier II: you can hold one more summon.", "Tier III: your summons' kills heal you." } },
+			{ "Destruction Set", "The Battle-mage's robes.", { "Tier I: spells cost 10% less.", "Tier II: magicka returns faster.", "Tier III: spells cost 25% less." } },
+			{ "Alchemist Set", "The Alchemist's armour.", { "Tier I: you throw 15% faster.", "Tier II: flask bursts reach 20% wider.", "Tier III: each flask kill heals you 2%." } },
+			{ "Spellsword Set", "The Spellsword's plate.", { "Tier I: you heal slowly while fighting.", "Tier II: blade hits restore magicka.", "Tier III: your blade hits 15% harder." } },
 		};
 		std::string want;
 		const Card* c = nullptr;
