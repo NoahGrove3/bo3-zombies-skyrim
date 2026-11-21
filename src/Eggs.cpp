@@ -1628,6 +1628,9 @@ namespace bo3z::Eggs
 
 	void Replay(int a_id)
 	{
+		// (Noah, 2026-11-21: Riverwood's altar said its riddle four times, 14 s apart) a card's replay is written down, so a line said
+		// again can be told from one the altar chose to say
+		logger::info("eggs: whisper card {} chosen at the altar - said again", a_id);
 		g_say.clear(), g_sayT = 0, g_sayCard = -1;
 		const auto at = g_say.size();
 		if (a_id == 1) {
