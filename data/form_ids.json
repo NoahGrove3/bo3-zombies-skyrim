@@ -1964,6 +1964,8 @@
   "SPEL:conj_sprigganburnt": "0xfa8",
   "NPC_:conj_sprigganearthmother": "0xfa9",
   "MGEF:conj_sprigganearthmother": "0xfaa",
-  "SPEL:conj_sprigganearthmother": "0xfab"
+  "SPEL:conj_sprigganearthmother": "0xfab",
+  "ARMA:underwear": "0xfac",
+  "ARMO:underwear": "0xfad"
  }
 }

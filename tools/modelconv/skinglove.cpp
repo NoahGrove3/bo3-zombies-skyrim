@@ -4,6 +4,7 @@
 // Job file:
 //   template <nif>          (one skinned shape: its bones, skin-to-bone transforms and partition are kept)
 //   out <nif>
+//   partition <n>           (optional: the dismember partition our shapes are on - e.g. 52 for an underwear slot - not the template's)
 //   shape <name> diffuse=<tex> normal=<tex> [glow=<tex> emit=r,g,b emitmult=<f>] [spec=<f>] [gloss=<f>] [double=1]
 //   v x y z u v nx ny nz b0 w0 [b1 w1 [b2 w2 [b3 w3]]]      (positions in the template's skin space; b = the
 //                                                            template shape's bone list index)
@@ -32,6 +33,7 @@ int main(int argc, char** argv)
 	if (argc < 2) { fprintf(stderr, "usage: skinglove job.txt\n"); return 1; }
 	std::ifstream in(argv[1]);
 	std::string line, tmpl, out;
+	int partOverride = -1;
 	std::vector<Shape> shapes;
 	while (std::getline(in, line)) {
 		std::istringstream ss(line);
@@ -39,6 +41,7 @@ int main(int argc, char** argv)
 		ss >> k;
 		if (k == "template") std::getline(ss >> std::ws, tmpl);
 		else if (k == "out") std::getline(ss >> std::ws, out);
+		else if (k == "partition") ss >> partOverride;
 		else if (k == "shape") {
 			shapes.emplace_back();
 			auto& s = shapes.back();
@@ -89,6 +92,7 @@ int main(int argc, char** argv)
 	std::vector<int> triParts;
 	nif.GetShapePartitions(src, parts, triParts);
 	if (parts.size() > 1) parts.resize(1);
+	if (partOverride >= 0 && !parts.empty()) parts[0].partID = uint16_t(partOverride);
 	for (auto& s : shapes) {
 		NiShape* sh = nif.CreateShapeFromData(s.name, &s.v, &s.t, &s.uv, &s.n);
 		nif.CreateSkinning(sh);
@@ -134,7 +138,7 @@ int main(int argc, char** argv)
 		}
 		printf("shape %s: %zu verts %zu tris\n", s.name.c_str(), s.v.size(), s.t.size());
 	}
-	nif.DeleteShape(src);
+	for (auto* t : tshapes) nif.DeleteShape(t);   // (every shape of the template's - a body has more than one)
 	if (nif.Save(out)) { fprintf(stderr, "save failed\n"); return 1; }
 	printf("wrote %s\n", out.c_str());
 }

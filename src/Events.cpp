@@ -1366,7 +1366,8 @@ namespace bo3z
 				// (Noah: "if i unequip my cloths i can see my naked body through my inventory background and for a few seconds after
 				// exiting the inventory my character is naked until it puts the underwear on") the moment the body's armour comes off -
 				// in the inventory too - the underwear goes on, the very next frame
-				if (a_event && !a_event->equipped && a_event->actor && a_event->actor->IsPlayerRef()) {
+				// (Phase 2: and off the moment one goes on - ours is in its own slot)
+				if (a_event && a_event->actor && a_event->actor->IsPlayerRef()) {
 					if (auto* ar = RE::TESForm::LookupByID<RE::TESObjectARMO>(a_event->baseObject); ar && ar != Classes::Underwear() && ar->HasPartOf(RE::BGSBipedObjectForm::BipedObjectSlot::kBody)) {
 						SKSE::GetTaskInterface()->AddTask([] { Classes::DressUnder(); });
 					}

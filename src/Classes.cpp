@@ -1903,7 +1903,8 @@ namespace bo3z::Classes
 	RE::TESObjectARMO* Underwear()
 	{
 		auto* dh = RE::TESDataHandler::GetSingleton();
-		auto* uw = dh ? dh->LookupForm<RE::TESObjectARMO>(0x801, "Underwear.esp") : nullptr;
+		// (Noah, 2026-11-21: Phase 2) our own (tools/underwear.py: her briefs and bandeau, slot 52) - the Underwear mod's no longer
+		auto* uw = dh ? dh->LookupForm<RE::TESObjectARMO>(gen::kUnderwear, gen::kPlugin) : nullptr;
 		// (Noah, 2026-11-19: "remove the underwear item in my inventory and just make every player permanently wear underwear
 		// under the armor or clothes ... so that there's never nude showing") non-playable: still worn under whatever you put on
 		// (DressUnder, the equip watch), but never listed in the inventory, so it can't be dropped, sold or taken off by hand
@@ -1919,7 +1920,15 @@ namespace bo3z::Classes
 		auto* em = RE::ActorEquipManager::GetSingleton();
 		if (!p || !uw || !em || p->IsDead() || !p->Is3DLoaded()) return;
 		if (!a_anySex && !(p->GetActorBase() && p->GetActorBase()->IsFemale())) return;
-		if (p->GetWornArmor(RE::BGSBipedObjectForm::BipedObjectSlot::kBody)) return;
+		// (ours is its own slot, not the body's: a robe or cuirass going on no longer pushes it off by itself - it comes off here
+		// the moment the body is covered, so it never shows through what you wear, and goes back on the moment it isn't)
+		auto* body = p->GetWornArmor(RE::BGSBipedObjectForm::BipedObjectSlot::kBody);
+		const bool on = p->GetWornArmor(RE::BGSBipedObjectForm::BipedObjectSlot::kModPelvisSecondary) == uw;   // (slot 52)
+		if (body && body != uw) {
+			if (on) em->UnequipObject(p, uw, nullptr, 1, nullptr, false, false, false, true);
+			return;
+		}
+		if (on) return;
 		if (p->GetItemCount(uw) <= 0) p->AddObjectToContainer(uw, nullptr, 1, nullptr);
 		em->EquipObject(p, uw, nullptr, 1, nullptr, false, false, false, true);
 	}

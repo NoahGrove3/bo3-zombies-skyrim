@@ -1646,6 +1646,22 @@ for key, spell, label, tmpl, cost in CONJURE:
         sub('MDOB', tsub('spel_conjure', 'MDOB')), sub('ETYP', tsub('spel_conjure', 'ETYP')), sub('DESC', z('')), sub('SPIT', bytes(spit)),
         sub('EFID', struct.pack('<I', fid('MGEF', 'conj_' + key))), sub('EFIT', struct.pack('<fII', 0.0, 0, 3600))]))
 
+# (Noah, 2026-11-21: Phase 2 - our own underwear, "permanently attached ... under clothing and armor", never taken off) her
+# briefs and bandeau (tools/underwear.py), in slot 52 - worn whenever nothing covers the body (src/Classes.cpp DressUnder);
+# non-playable, so never in the inventory. (Him: the male bodies wear their own - HIMBO's boxers, Skyrim's loincloth.) Every
+# playable race and the vampires', as Skyrim lists them
+UW_SLOT = 1 << (52 - 30)
+UW_RACES = [0x013740, 0x013741, 0x013742, 0x013743, 0x013744, 0x013745, 0x013746, 0x013747, 0x013748, 0x013749,
+            0x067CD8, 0x088794, 0x08883A, 0x08883C, 0x08883D, 0x088840, 0x088844, 0x088845, 0x088846, 0x088884, 0x0A82B9, 0x0A82BA, 0x10760A]
+uw = z('CurseOfAlduin\\underwear\\female_underwear_1.nif')
+recs['ARMA'].append(record('ARMA', fid('ARMA', 'underwear'), [
+    sub('EDID', z('UN_UnderwearAA')), sub('BOD2', struct.pack('<II', UW_SLOT, 2)), sub('RNAM', struct.pack('<I', 0x19)),
+    sub('DNAM', bytes.fromhex('050502020000001700000000')), sub('MOD3', uw)] + [sub('MODL', struct.pack('<I', r)) for r in UW_RACES]))
+recs['ARMO'].append(record('ARMO', fid('ARMO', 'underwear'), [
+    sub('EDID', z('UN_Underwear')), sub('OBND', bytes(12)), sub('FULL', z('Underwear')), sub('BOD2', struct.pack('<II', UW_SLOT, 2)),
+    sub('RNAM', struct.pack('<I', 0x19)), sub('MODL', struct.pack('<I', fid('ARMA', 'underwear'))),
+    sub('DATA', struct.pack('<If', 0, 0.1)), sub('DNAM', struct.pack('<I', 0))], flags=0x4))
+
 # (Noah: the class sets' powers) the Gondorian Ranger's set, Tier I: 10% faster on your feet (an ability while the
 # Ranger's set has its first tier: src/Classes.cpp)
 md = bytearray(tsub('mgef', 'DATA'))
