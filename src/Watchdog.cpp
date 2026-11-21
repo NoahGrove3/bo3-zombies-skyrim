@@ -268,6 +268,27 @@ namespace bo3z::Watchdog
 		// given somewhere to be: the register holding it is pointed at a spare, empty block, and the instruction runs again -
 		// the loader fills in the spare (an extra that belongs to no one) and reads back zeros from it, and the load goes on
 		alignas(64) std::uint8_t g_spare[0x4000]{};
+		// (Noah, 2026-11-21: "my game crashed when I died" - the death's save load) the spare stood in for an extra the loader then
+		// called a function of - through the spare's first word, its table of functions, which was nothing: the game jumped to 0.
+		// The spare now carries a table of its own whose every function does nothing and answers 0, so a call through it goes on
+		// (logged, the first few)
+		std::uintptr_t NothingCall(void*, void*, void*, void*)
+		{
+			static std::atomic_int told{ 0 };
+			if (told.fetch_add(1) < 6) logger::warn("load: the stand-in extra was called on - it did nothing, answered 0");
+			return 0;
+		}
+		std::array<void*, 512> g_spareTable = [] {
+			std::array<void*, 512> t{};
+			for (auto& f : t) f = reinterpret_cast<void*>(&NothingCall);
+			return t;
+		}();
+		void ArmSpare(std::uintptr_t a_at)   // (the stand-in's own first word - where the nothing points - its table)
+		{
+			if (a_at % 8 != 0 || a_at + 8 > sizeof(g_spare)) return;
+			auto* slot = reinterpret_cast<void**>(g_spare + a_at);
+			if (!*slot) *slot = g_spareTable.data();
+		}
 		bool GiveNothingSomewhere(CONTEXT* a_ctx)
 		{
 			const auto* code = reinterpret_cast<const std::uint8_t*>(a_ctx->Rip);
@@ -279,6 +300,7 @@ namespace bo3z::Watchdog
 			if (tries.fetch_add(1) > 400) return false;  // (never a loop)
 			static std::atomic_int told{ 0 };
 			if (told.fetch_add(1) < 12) logger::warn("load: a register held nothing ({:X}) at {:X} - pointed at a spare block", v, a_ctx->Rip - REL::Module::get().base());
+			ArmSpare(v);
 			v = reinterpret_cast<std::uintptr_t>(g_spare) + v;
 			return true;
 		}
