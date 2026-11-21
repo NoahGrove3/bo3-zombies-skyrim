@@ -258,11 +258,11 @@
   "limits": {
     "maxPerks": 4,
     "slotNights": [
-      3,
-      7,
-      12,
-      18
+      1,
+      1,
+      1,
+      1
     ],
-    "note": "(Noah, 2026-11-11: \"more slots each step\" - 1 slot from night 3, 2 from night 7, 3 from night 12, 4 from night 18; shown as faint outlines above the health bar)"
+    "note": "(Noah, 2026-11-11: \"more slots each step\" - 1 slot from night 3, 2 from night 7, 3 from night 12, 4 from night 18; shown as faint outlines above the health bar) (Noah, 2026-11-21: \"No night limits at all\" - all four slots open from night 1)"
   }
 }
