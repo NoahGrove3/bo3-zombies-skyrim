@@ -250,7 +250,7 @@ def build():
     # (Noah, 2026-11-21: "the sword edge is facing my player instead of away from it") the whole sword turned half round its own
     # length - the edge leading, the letters on the spine toward you
     M.groups = [(gn, m, np.asarray(V, float) * [-1, -1, 1], np.asarray(N, float) * [-1, -1, 1], UV, F) for gn, m, V, N, UV, F in M.groups]
-    obj = pw.finish(M, 'dragonslayer', mats, None, 'WeaponSword')
+    obj = pw.finish(M, 'dragonslayer', mats, None, 'WeaponBack')   # (Noah, 2026-11-21: two-handed - carried on the back)
     nif = str(pw.MESHDIR / 'dragonslayer.nif')
     subprocess.run([tool('shapename'), nif, nif, 'Scb:', 'Scb'], check=True)   # (the scabbard: Skyrim's own name for it)
     return obj

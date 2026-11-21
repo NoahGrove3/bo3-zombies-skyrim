@@ -717,8 +717,8 @@ crystal_weapon('madness', 'UN_MadnessSword', 'Spellbound Rapier', hip('spellboun
 # (Noah: "make the Dragon Slayer sword one-handed ... use the sword I attached") the Spellsword's wonder: a one-handed sword (the
 # Madness Sword's record) with the Ayleid Crystal Saber's model (tools/wonderprops.py slayer); its spell-on-hit, lightning
 # slashes and tier in src/Classes.cpp and src/WonderProps.inl
-# (Noah, 2026-11-20: approved "our own Dragon Slayer" - tools/dragonslayer.py) our dragonbone katana; Animated Armoury's katana
-# swings kept (src/Classes.cpp SlayerLook)
+# (Noah, 2026-11-20: approved "our own Dragon Slayer" - tools/dragonslayer.py) our dragonbone sword; (2026-11-21) two-handed, its own
+# greatsword record as it is (src/Classes.cpp SlayerLook no longer gives it a katana's look)
 SLAYER_NIF = 'CurseOfAlduin\\slayer\\dragonslayer.nif'
 crystal_weapon('slayer', 'UN_DragonSlayer', 'Dragon Slayer', SLAYER_NIF, '1st_slayer',
     SWORD_DESC['slayer'],

@@ -2909,14 +2909,11 @@ namespace bo3z::Classes
 		auto* f = Lookup(0x34473D, "NewArmoury.esp");
 		auto* s = f ? f->As<RE::TESObjectWEAP>() : nullptr;
 		if (!w || !s) { logger::warn("classes: the Dragon Slayer's katana look not found (Animated Armoury's Dragonbone Katana)"); return; }
-		// (Noah, 2026-11-20: "our own Dragon Slayer sword" - "Katana (keep its moveset)", approved) the katana's swings, reach and
-		// sounds; our own dragonbone katana in the hands (tools/dragonslayer.py)
-		const std::string ownModel = w->GetModel() ? w->GetModel() : "";
-		auto* const       ownFirst = w->firstPersonModelObject;
-		AdoptLook(w, s);
-		if (!ownModel.empty()) w->SetModel(ownModel.c_str());
-		if (ownFirst) w->firstPersonModelObject = ownFirst;
-		logger::info("classes: the Dragon Slayer swung as {}, our own dragonbone katana in the hands", s->GetName());
+		// (Noah, 2026-11-21: "I think the dragonslayer sword is supposed to be a 2 hand weapon by the looks of it can you make it a 2
+		// hand weapon") no katana's look taken any more: our own record as it is - a greatsword, two hands, carried on the back -
+		// with our dragonbone sword (tools/dragonslayer.py)
+		(void)s;
+		logger::info("classes: the Dragon Slayer is our own two-handed dragonbone sword");
 	}
 	// (Noah, 2026-11-19: the Reliquary's Dragon Slayer "is still the old katana") the model the Dragon Slayer wears now, for its display
 	const char* SlayerModel()
@@ -3520,7 +3517,7 @@ namespace bo3z::Classes
 		// (Noah: Destruction's "Carian Wands") the wands carry their cast, at every tier - the bolt is ours (WandCast)
 		if (SwordClass(a_w) == 1) return RE::TESDataHandler::GetSingleton()->LookupForm<RE::EnchantmentItem>(gen::kCarianWandEnch, gen::kPlugin);
 		int key = SwordClass(a_w) >= 0 ? LookKey(SwordClass(a_w)) : -1;
-		if (a_w && a_w == Slayer()) key = 9;
+		if (a_w && a_w == Slayer()) return nullptr;   // (Noah, 2026-11-21: "remove the glow to only the engravings on the blade")
 		// (Noah: "the static red effect is still on the spellbound blade I want that removed") the Spellbound Rapier wears no
 		// look at all - other mods dress any fire enchantment in their own red art, whatever ours carries
 		// (Noah: "I want the blade to show the element of the spell in my other hand") its element looks back; bare-handed, none
@@ -3910,7 +3907,7 @@ namespace bo3z::Classes
 		if (static float art = 0; p && (art -= a_delta) <= 0) {
 			art = 0.25f;
 			int key = cls >= 0 && t >= 1 ? LookKey(cls) : -1;
-			if (w && w == Slayer()) key = 9;
+			if (w && w == Slayer()) key = -1;   // (Noah, 2026-11-21: the Dragon Slayer glows only in its engravings - no art round it)
 			if (key == 3) key = -1;   // (the Spellbound Rapier bare-handed: no look)
 			if (key == 1) key = -1;   // (Noah: the wands - no element look in the hand, only the tip's orb)
 			// (Noah: "the ice effect ... was floating" - the Radiant Quarterstaff put away on the back, its art still hung where the
@@ -3940,52 +3937,6 @@ namespace bo3z::Classes
 			// (Noah, 2026-11-21: "The swords gold glow effect is only visible in first person it goes away in third person. the weapon
 			// effects are in a teal color") in the third-person body the look's art doesn't hang under the WEAPON node - it stayed its
 			// own teal: the art's own model, wherever it hangs, coloured too
-			// (the glow check: Skyrim laid the enchantment's shader only on the first-person sword - the one in hand when it was
-			// equipped - never on the third-person one) the Dragon Slayer's gold shader laid on whichever body's sword lacks it;
-			// ours taken off again once it's put away or another blade is in hand
-			{
-				static std::vector<RE::ShaderReferenceEffect*> mine;
-				auto* pl = RE::ProcessLists::GetSingleton();
-				RE::TESEffectShader* efsh = nullptr;
-				if (key == 9 && w) if (auto* wp = w->As<RE::TESObjectWEAP>(); wp && wp->formEnchanting)
-					for (auto* ef : wp->formEnchanting->effects) if (ef && ef->baseEffect && ef->baseEffect->data.enchantShader) { efsh = ef->baseEffect->data.enchantShader; break; }
-				RE::NiAVObject* nodes[2]{};
-				for (const bool fp : { false, true }) {
-					auto& bip = p->GetBiped(fp);
-					nodes[fp ? 1 : 0] = bip ? bip->objects[RE::BIPED_OBJECT::kOneHandSword].partClone.get() : nullptr;
-				}
-				if (pl) {
-					std::vector<RE::ShaderReferenceEffect*> live;
-					pl->ForEachShaderEffect([&](RE::ShaderReferenceEffect* e) {
-						if (e && std::find(mine.begin(), mine.end(), e) != mine.end()) {
-							auto* tr = e->targetRoot.get();
-							if (!efsh || e->finished || !tr || (tr != nodes[0] && tr != nodes[1])) { e->finished = true, e->lifetime = 0.0f; }   // (a sword re-made or put away: its old glow ended)
-							else live.push_back(e);
-						}
-						return RE::BSContainer::ForEachResult::kContinue;
-					});
-					mine = std::move(live);
-				}
-				if (efsh && pl) {
-					for (const bool fp : { false, true }) {
-						auto* node = nodes[fp ? 1 : 0];
-						if (!node) continue;
-						bool has = false;
-						pl->ForEachShaderEffect([&](RE::ShaderReferenceEffect* e) {
-							if (e && !e->finished && e->target.get().get() == p && e->effectData == efsh) {
-								for (auto* q = e->targetRoot.get(); q && !has; q = q->parent) has = q == node;
-							}
-							return RE::BSContainer::ForEachResult::kContinue;
-						});
-						if (!has) {
-							if (auto* e = p->ApplyEffectShader(efsh, -1.0f, nullptr, false, false, node, false)) {
-								mine.push_back(e);
-								if (static int said = 0; said++ < 4) logger::info("swords: the Dragon Slayer's gold laid on the {} sword", fp ? "first-person" : "third-person");
-							}
-						}
-					}
-				}
-			}
 			if ((key == 9 || key == 2) && want) {
 				std::vector<const RE::BGSArtObject*> arts;
 				const auto addArts = [&](RE::MagicItem* a_mi) {
@@ -4048,10 +3999,11 @@ namespace bo3z::Classes
 				// (Noah, 2026-11-11: "The dragon slayer sword should be the dragon bone katana with a golden fire weapon animation")
 				// Visual Animated Enchants' golden fire along the blade again (its Dawnbreaker sunfire, at the look's height), with
 				// its art circling the blade (TickSwords); a little charge so Skyrim draws it, and its looks cost none
-				if (auto* want = RE::TESDataHandler::GetSingleton()->LookupForm<RE::EnchantmentItem>(gen::kBladeViz[9][2], gen::kPlugin); want && d->formEnchanting != want) {
-					PatchLookArt();
-					d->formEnchanting = want;
-					d->amountofEnchantment = 100;
+				// (Noah, 2026-11-21: "remove the glow to only the engravings on the blade") no enchantment's look on it at all - its runes
+				// glow on their own; its golden fireballs are its swings' own (SlayerSwing)
+				if (d->formEnchanting) {
+					d->formEnchanting = nullptr;
+					d->amountofEnchantment = 0;
 					auto* em = RE::ActorEquipManager::GetSingleton();
 					if (em && p->GetEquippedObject(false) == d && !ItemMenusOpen()) {
 						em->UnequipObject(p, d, nullptr, 1, nullptr, false, false, false, true);
