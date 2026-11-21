@@ -2346,10 +2346,19 @@ namespace bo3z
 						// stands, not from its drawn node - which may have been sunk with an altar not yet found
 						s.baseZ = r->GetPosition().z, s.based = true, s.node = node, s.ang = r->GetAngleZ();
 					}
-					if (s.town == -2) {   // (only an altar's own pieces follow its sink - not the Tablet's)
-						s.town = TownOf(r.get());
-						auto* al = s.town >= 0 ? Placed(s.town, 0) : nullptr;
-						if (!al || al->GetPosition().GetDistance(r->GetPosition()) > 500.0f) s.town = -1;
+					// (only an altar's own pieces follow its sink - not the Tablet's)
+					// (Noah, 2026-11-21: "the echo alter stones don't rise with the alter in the reveal animation" - in Solitude: a walled
+					// city's pieces were matched to the nearest town gate outside, in Tamriel, never to their own altar in the city's world,
+					// so they hung in the air over the sunk altar) the altar standing within 500 of it, in its own world; looked for again
+					// until that altar is placed
+					if (s.town == -2) {
+						for (int t = 0; t < static_cast<int>(gen::kTowns.size()) && t < 16; ++t) {
+							auto* al = Placed(t, 0);
+							if (al && al->GetWorldspace() == r->GetWorldspace() && al->GetParentCell() && al->GetPosition().GetDistance(r->GetPosition()) < 500.0f) {
+								s.town = t;
+								break;
+							}
+						}
 					}
 					const float sink = s.town >= 0 && s.town < 16 ? g_sinkOff[s.town] : 0.0f;
 					s.ang += s.degPerSec * boost * RE::NI_PI / 180.0f * a_delta;

@@ -760,10 +760,16 @@ namespace bo3z::Eggs
 
 		// the step's city, chosen as the step begins (never the city of the step before) - so every altar can point to it
 		bool Eligible(int t) { return g_dev || Curse::Freed(t); }
+		// (Noah, 2026-11-21: "the summoners quest should only be done at cities that aren't walled in (require door entrance to render)
+		// so it's outdoors and feels more natural") the walled cities - Whiterun, Solitude, Windhelm, Markarth, Riften
+		bool Walled(int t) { return t >= 1 && t <= 5; }
+		bool OpenOnly(int e) { return gen::kEggs[e].cls == 0; }   // (the Ghost Pride: out under the sky, its cats roaming free)
 		int PickTown(int e)
 		{
 			std::vector<int> c;
-			for (int t = 0; t < 10; ++t) if (Eligible(t) && t != PrevTown(e)) c.push_back(t);
+			for (int t = 0; t < 10; ++t) if (Eligible(t) && t != PrevTown(e) && !(OpenOnly(e) && Walled(t))) c.push_back(t);
+			if (c.empty() && OpenOnly(e)) for (int t = 0; t < 10; ++t) if (Eligible(t) && !Walled(t)) c.push_back(t);   // (only one open town freed: it again)
+			if (c.empty()) for (int t = 0; t < 10; ++t) if (Eligible(t) && t != PrevTown(e)) c.push_back(t);
 			if (c.empty()) return -1;
 			static std::mt19937 rr{ std::random_device{}() };
 			return c[std::uniform_int_distribution<std::size_t>(0, c.size() - 1)(rr)];
@@ -858,6 +864,13 @@ namespace bo3z::Eggs
 						std::uniform_real_distribution<float> u(0.0f, 1.0f);
 						for (auto& m : g_live.marks) {
 							if (m.taken) continue;
+							// (Noah, 2026-11-21: "Make them only spawn at night when the step of the quest is reached so they aren't running around
+							// during the day") by day there are no cats: any out are put away where they stood, and come again at nightfall
+							if (s.night && !night) {
+								if (auto r0 = m.obj.get()) m.at = r0->GetPosition();
+								Remove(m.obj);
+								continue;
+							}
 							auto r = m.obj.get();
 							// (the crash at Dawnstar's altar: a cat set down 200 m out stood in ground not yet loaded, and its feet's footing
 							// was worked out against a world that wasn't there) each cat is made only as you come within the loaded ground
@@ -1268,6 +1281,13 @@ namespace bo3z::Eggs
 		if (e < 0) {
 			if (g_live.egg >= 0) Clear();
 			return;
+		}
+		// (Noah, 2026-11-21) a Ghost Pride step waiting in a walled city, not yet begun there: moved out to an open town
+		if (OpenOnly(e) && CurTown(e) >= 0 && Walled(CurTown(e)) && Prog(e) == 0 && g_live.egg < 0) {
+			if (const int t = PickTown(e); t >= 0 && !Walled(t)) {
+				logger::info("eggs: {} step {} moved from walled {} to {}", gen::kEggs[e].id, Step(e) + 1, gen::kTowns[CurTown(e)], gen::kTowns[t]);
+				SetTowns(e, (PrevTown(e) + 1) * 100 + t + 1);
+			}
 		}
 		// (Noah, 2026-11-19) the step's city is chosen as the step begins, so every altar's riddle can point to it
 		if (CurTown(e) < 0) {
