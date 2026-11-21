@@ -229,8 +229,26 @@ def skull(M):
         elif l.startswith('vn '): N.append([float(x) for x in l.split()[1:4]])
         elif l.startswith('f '): F.append([int(x.split('/')[0]) - 1 for x in l.split()[1:4]])
     V, T, N, F = np.array(V), np.array(T), np.array(N), np.array(F)
+    # (Noah, 2026-11-21: "Angle the jaw up more so the blade is coming from the center of the dragon skull") its lower jaw (its own
+    # pieces in the model: the jaw's two parts and its teeth) swung up about its hinge, closing on the blade
+    from scipy.sparse import coo_matrix
+    from scipy.sparse.csgraph import connected_components
+    r_, c_ = np.r_[F[:, 0], F[:, 1], F[:, 2]], np.r_[F[:, 1], F[:, 2], F[:, 0]]
+    _, lab = connected_components(coo_matrix((np.ones(len(r_)), (r_, c_)), shape=(len(V), len(V))), directed=False)
+    cz = np.array([V[lab == q, 2].mean() for q in range(lab.max() + 1)])
+    cy = np.array([V[lab == q, 1].mean() for q in range(lab.max() + 1)])
+    top = np.array([V[lab == q, 2].max() for q in range(lab.max() + 1)])
+    size = np.bincount(lab)
+    jawpart = ((size > 50) & (top < 275) & (cz < 245)) | ((size < 20) & (top < 215))   # (the jaw's two halves, and the teeth along them)
+    jaw = jawpart[lab]
+    a = np.radians(SKULL_JAW_UP)
+    py, pz = 268.0, 255.0                                      # (its hinge)
+    dy, dz = V[jaw, 1] - py, V[jaw, 2] - pz
+    V[jaw, 1], V[jaw, 2] = py + dy * np.cos(a) - dz * np.sin(a), pz + dy * np.sin(a) + dz * np.cos(a)
+    ny, nz = N[jaw, 1].copy(), N[jaw, 2].copy()
+    N[jaw, 1], N[jaw, 2] = ny * np.cos(a) - nz * np.sin(a), ny * np.sin(a) + nz * np.cos(a)
     k = SKULL_SCALE
-    mouth_z, back_y = 232.0, 239.0   # (its mouth's line, and the back of its head, in its own space: z up, its snout toward +y)
+    mouth_z, back_y = SKULL_MOUTH, 239.0   # (its mouth's line, and the back of its head, in its own space: z up, its snout toward +y)
     P = np.stack([-(V[:, 2] - mouth_z) * k, -V[:, 0] * k, (V[:, 1] - back_y) * k + SKULL_BACK], -1)
     NN = np.stack([-N[:, 2], -N[:, 0], N[:, 1]], -1)
     UV = np.stack([T[:, 0], 1.0 - T[:, 1]], -1)
@@ -238,6 +256,8 @@ def skull(M):
 
 
 SKULL_SCALE = 0.051    # (Noah, 2026-11-21: "Bigger, wrapped round blade" - 144 long in its own units: 7.3 model units here, 11.8 in the game)
+SKULL_JAW_UP = 20.0    # (degrees the jaw is swung up, closing on the blade)
+SKULL_MOUTH = 236.0    # (the blade's middle line through it, in its own height)
 SKULL_BACK = -1.35     # (the back of its head down over the grip's top, its horns swept back over the grip)
 
 
