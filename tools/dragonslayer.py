@@ -266,6 +266,7 @@ def skull(M):
 
 
 SKULL_SCALE = 0.051    # (Noah, 2026-11-21: "Bigger, wrapped round blade" - 144 long in its own units: 7.3 model units here, 11.8 in the game)
+SKULL_GUARD = False    # (the skull on the sword at all)
 SKULL_JAW_UP = -8.0    # (degrees the jaw is swung up about its hinge: below 0, opened - its chin on the blade's edge)
 SKULL_JAW_DROP = 2.0   # (and barely lowered: Noah, 2026-11-21: "close the back of the skull a bit more so it's not broken looking" - its hinge kept on the skull)
 SKULL_PITCH = 26.0     # (degrees the whole skull is tipped snout-up: its palate along the blade's spine, the back of its head lowered)
@@ -289,10 +290,12 @@ def build():
              runes=('runes', 0.28, 0.11, 0.72, 9.6, -0.42))
     # (Noah, 2026-11-20) the scabbard, round the blade: one shape named Scb, left at the hip when the sword is drawn - its mouth
     # just past the skull's snout
-    scabbard(M, 'scb', 1.5, 46.1, 2.15, -0.055, mouth=6.1)
+    scabbard(M, 'scb', 1.5, 46.1, 2.15, -0.055, mouth=6.1 if SKULL_GUARD else 1.6)
     # (Noah, 2026-11-21: "redesign the hilt (where the blade connects to the handle)" - "Dragon skull guard", "use a skyrim dragons
     # actual skull") Skyrim's own dragon skull round the blade's root
-    skull(M)
+    # (Noah, 2026-11-21: "Remove the dragon skull so it's just the hilt and blade" - his hand clipped into it in first person)
+    if SKULL_GUARD:
+        skull(M)
     # the grip: iron collars at each end, between them the binding of black scales
     M.add('Iron', 'iron', *pw.lathe([(1.5, 0.86), (1.3, 0.94), (0.95, 0.9)], 24))
     M.add('Grip', 'scales', *pw.lathe([(1.0, 0.82)] + [(z, 0.82 + 0.06 * math.sin(math.pi * (1.0 - z) / 16.0)) for z in np.linspace(0.95, -14.4, 30)] + [(-14.5, 0.82)], 28,
