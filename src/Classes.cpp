@@ -196,41 +196,10 @@ namespace bo3z::Classes
 			if (!p) return;
 			const bool female = p->GetActorBase() && p->GetActorBase()->IsFemale();
 			(void)female;
-			switch (a_cls) {
-			case coffer::kSummoner:
-				// (Noah: "remove the staff the Summoner comes with - an upgradable spell of an element no other class uses")
-				// Corrosion in the right hand (its bolts tell your summons what to kill), the Beasts in the left, the Dead in
-				// the book
-				// (Noah, the altar rework: "only the summons and the Riftblade") the Beasts in the left hand, the Dead in the
-				// book, the Riftblade in the right
-				Arcana::Give(Rung1(a_cls, "The Dead"), false);
-				GiveSpell(Rung1(a_cls, "Beasts"), true);
-				GiveItem(p, Riftblade(), 1, true);
-				break;
-			case coffer::kDestruction:
-				GiveSpell(Rung1(a_cls, "Fire"), false);
-				GiveSpell(Rung1(a_cls, "Frost"), true);
-				// (Noah: "the destruction class should only be allowed to hold one wand at a time") the wand in the right hand
-				GiveItem(p, CarianBlade(), 1, false);
-				if (auto* em = RE::ActorEquipManager::GetSingleton(); em && CarianBlade()) {
-					em->EquipObject(p, CarianBlade(), nullptr, 1, RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F42), false, false, false, true);
-				}
-				break;
-			case coffer::kAlchemist:
-				// (Noah: "replace it with the Alchemist class") the knife in the right hand, the Fire Flask in your pack (a hotkey throws it)
-				GiveItem(p, AlchemistKnife(), 1, true);
-				GiveFlask(0);
-				// (the scythe is two-handed: the Fire Flask waits in your pack - sheathe the scythe and it comes to hand, TickScytheSwap)
-				break;
-			case coffer::kSpellsword:
-				// (Noah, the altar rework: "remove shields entirely - a one-hand sword from one of the weapon mods, and a fire
-				// touch") the blade in the right hand, Burning Touch in the left
-				GiveItem(p, SpellswordBlade(), 1, true);
-				GiveSpell(Rung1(a_cls, "Fire"), true);
-				break;
-			}
-			// (Noah: "each class's armour set part of its starting kit") the set, worn (Kit owns it as an upgradable item)
-			GiveArmourSet(a_cls, 0, true);
+			// (Noah, 2026-11-21: "After a player selects a class it should go back to the echo alter UI under the kit section saying
+			// Claim on each of the sets kits ... Players should have to claim their loot in the Echo Alter UI instead of it just
+			// appearing in their inventory") nothing is handed over here: the starting kit (its weapon, its spells, its set) is the
+			// class's own, waiting in the altar's Your Kit to be claimed (Kit::Select)
 			GiveLantern(p);
 			g_kit[a_cls] = true;
 			Kit::OnKitGiven(a_cls);
@@ -593,7 +562,7 @@ namespace bo3z::Classes
 		// (Noah: "since the curse of Alduin book contains everything for the classes and the lore remove the class path books so
 		// everyone just gets the curse of Alduin book") your class's pages are a tab in it
 		TakeGuides();
-		Hud::Lore("THE CURSE OF ALDUIN", "Your class's path is a tab in The Curse of Alduin, in your pack under Books (F1). It shows how your class grows and keeps a live page of how far you have come.", 9.0f);
+		Hud::Lore("THE CURSE OF ALDUIN", "Claim your starting kit in the Echo Altar's Your Kit. Your class's path is a tab in The Curse of Alduin, in your pack under Books (F1).", 9.0f);
 		logger::info("classes: {} -> {}{}", Name(from), Name(a_cls), g_switching ? " (switched at an altar)" : "");
 		Party::CheckpointSave(std::string(coffer::kClassName[a_cls]) + " chosen");
 	}

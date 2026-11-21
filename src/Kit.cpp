@@ -14,6 +14,7 @@ namespace bo3z::Kit
 		// (Noah: "remove Poison, Poison Breath and Blood Breath from the Armory") an item no longer offered: kept in the list
 		// (its place is in the saves), never shown unless a save already owns it
 		constexpr int kGone = 100;
+		constexpr int kClaimAll = 39;   // (the altar's row: every unclaimed thing at once)
 		struct Def { Kind kind; const char* ref; int at; };  // ref: a ladder's label, a blade's id, a flask's element; at: cities freed (-1: the start)
 		constexpr Def kSummoner[] = { { Kind::Blade, "riftblade", -1 }, { Kind::Ladder, "Beasts", -1 }, { Kind::Ladder, "The Dead", -1 },
 			{ Kind::Ladder, "Daedra", 5 }, { Kind::Ladder, "The Wild", kGone }  /* (Noah, 2026-11-18: Summonable Spriggans cut from the mod) */, { Kind::Ladder, "Dwemer", 1 },
@@ -318,6 +319,10 @@ namespace bo3z::Kit
 		const int c = Cls();
 		if (c < 0) return out;
 		const auto defs = Defs(c);
+		// (Noah, 2026-11-21: "Per item + Claim All") a row to take every unclaimed thing at once, while there's one
+		bool unclaimed = false;
+		for (int i = 0; i < static_cast<int>(defs.size()); ++i) unclaimed = unclaimed || ((g_cls[c].owned >> i & 1) && !Carried(c, i));
+		if (unclaimed) out.push_back(kClaimAll);
 		for (int i = 0; i < static_cast<int>(defs.size()); ++i) if (g_cls[c].owned >> i & 1) out.push_back(40 + i);
 		std::vector<int> locked;
 		for (int i = 0; i < static_cast<int>(defs.size()); ++i) if (!(g_cls[c].owned >> i & 1) && defs[i].at < kGone) locked.push_back(i);
@@ -335,6 +340,16 @@ namespace bo3z::Kit
 		const int  pts = Points::Get();
 		const auto defs = Defs(c);
 		const auto& st = g_cls[c];
+		// (Noah, 2026-11-21: "Players should have to claim their loot in the Echo Alter UI instead of it just appearing in their
+		// inventory") the unclaimed: one row to take them all
+		int unclaimedN = 0;
+		for (int i = 0; i < static_cast<int>(defs.size()); ++i) unclaimedN += ((st.owned >> i & 1) && !Carried(c, i)) ? 1 : 0;
+		if (unclaimedN > 0) {
+			Hud::State::KitLine l;
+			l.id = kClaimAll, l.name = "Claim all", l.tier = -1, l.cost = 0, l.can = true, l.carried = false;
+			l.info = fmt::format("Take all {} unclaimed {} into your pack", unclaimedN, unclaimedN == 1 ? "item" : "items");
+			a_h.kitLines.push_back(std::move(l));
+		}
 		auto line = [&](int a_id, int a_item) {
 			Hud::State::KitLine l;
 			l.id = a_id;
@@ -344,7 +359,7 @@ namespace bo3z::Kit
 			l.color = ItemColor(c, a_item);
 			l.carried = Carried(c, a_item);
 			if (!l.carried) {
-				l.info = "In your class's chest - select to take it", l.cost = 0, l.can = true;
+				l.info = "Waiting at the altar - claim it", l.cost = 0, l.can = true;
 			} else if (t >= kMaxTier) {
 				l.info = "Ascended as far as it goes";
 			} else {
@@ -403,10 +418,23 @@ namespace bo3z::Kit
 			}
 			if (ItemMenusOpen() || !Points::Spend(ArmoryCost(defs[i].at))) return false;
 			st.owned |= 1u << i;
-			Grant(c, i, false);
+			// (Noah, 2026-11-21: "Moves to Your Kit as Claim") bought: it waits in Your Kit until it's claimed
 			if (a_altar) Forms::PlayAt(gen::Sound::forge_upgrade, a_altar);
-			Hud::Banner(ItemName(c, i) + "  -  yours", 4.0f);
+			Hud::Banner(ItemName(c, i) + "  -  yours: claim it in Your Kit", 4.0f);
 			logger::info("kit: {} bought ({})", ItemName(c, i), Classes::Name(c));
+			return true;
+		}
+		if (a_id == kClaimAll) {   // every unclaimed thing, into your pack
+			if (ItemMenusOpen()) return false;
+			int n = 0;
+			for (int i = 0; i < static_cast<int>(defs.size()); ++i) {
+				if (!(st.owned >> i & 1) || Carried(c, i)) continue;
+				Grant(c, i, n == 0 || defs[i].kind == Kind::Armour);   // (the first weapon or spell to hand, the set worn)
+				++n;
+			}
+			if (n == 0) return false;
+			Hud::Banner(fmt::format("{} {} claimed", n, n == 1 ? "item" : "items"), 2.5f);
+			logger::info("kit: claim all - {} items ({})", n, Classes::Name(c));
 			return true;
 		}
 		const int item = a_id - 40;
@@ -414,7 +442,7 @@ namespace bo3z::Kit
 		if (!Carried(c, item)) {  // out of the chest, into your hands (free)
 			if (ItemMenusOpen()) return false;
 			Grant(c, item, true);
-			Hud::Banner(ItemName(c, item) + "  -  taken up", 2.5f);
+			Hud::Banner(ItemName(c, item) + "  -  claimed", 2.5f);
 			return true;
 		}
 		const int t = ItemTier(c, item);
@@ -459,9 +487,8 @@ namespace bo3z::Kit
 		}
 		if (best >= 0) {
 			st.owned |= 1u << best;
-			Grant(c, best, false);
-			logger::info("kit: a mini-boss's spoils - {} ({}) free", ItemName(c, best), Classes::Name(c));
-			return ItemName(c, best) + " - added to your kit";
+			logger::info("kit: a mini-boss's spoils - {} ({}) free, to claim at an altar", ItemName(c, best), Classes::Name(c));
+			return ItemName(c, best) + " - claim it at an Echo Altar";
 		}
 		int low = -1;
 		for (int i = 0; i < static_cast<int>(defs.size()); ++i) {

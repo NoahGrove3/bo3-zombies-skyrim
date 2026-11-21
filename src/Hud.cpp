@@ -3043,19 +3043,35 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						if (a_asc > 0) Txt(dl, g_body, 14 * k, { sx + 48 * k, sy - 9 * k }, kGold, "+" + std::to_string(a_asc));
 					};
 					auto rgb = [](std::uint32_t c, int a) { return IM_COL32((c >> 16) & 255, (c >> 8) & 255, c & 255, a); };
-					int ready = 0;
-					for (const auto& l : s.kitLines) ready += l.can ? 1 : 0;
-					std::string kitSum = fmt::format("{} items", s.kitLines.size()) + (ready ? fmt::format("  -  {} to upgrade", ready) : std::string());
+					int ready = 0, toClaim = 0, items = 0;
+					for (const auto& l : s.kitLines) {
+						if (l.tier < 0) continue;   // (the Claim all row)
+						++items;
+						if (!l.carried) ++toClaim;
+						else ready += l.can ? 1 : 0;
+					}
+					std::string kitSum = fmt::format("{} items", items) + (toClaim ? fmt::format("  -  {} to claim", toClaim) : std::string()) + (ready ? fmt::format("  -  {} to upgrade", ready) : std::string());
 					if (s.armorBonus > 0.001f) kitSum += fmt::format("  -  armor {:.0f}%", s.armorBonus * 100.0f);
-					if (section(210, "YOUR KIT", kitSum, ready > 0)) {
+					if (section(210, "YOUR KIT", kitSum, ready > 0 || toClaim > 0)) {
 						for (const auto& l : s.kitLines) {
 							focusRow(l.id, y - 6 * k, y + 52 * k);
 							bullet({ L, y + 2 * k }, l.id, l.can);
 							const ImU32 col = rgb(l.color, 255);
-							Txt(dl, g_title, 19 * k, { L + 36 * k, y + 3 * k }, l.carried ? kParch : IM_COL32(170, 160, 140, 230), Upper(l.name));
-							stars(L + 36 * k + Measure(g_title, 19 * k, Upper(l.name)).x + 16 * k, y + 14 * k, l.tier, l.asc, col);
+							const bool all = l.tier < 0;   // (the Claim all row)
+							Txt(dl, g_title, 19 * k, { L + 36 * k, y + 3 * k }, all ? kGold : l.carried ? kParch : IM_COL32(236, 226, 206, 245), Upper(l.name));
+							if (!all) stars(L + 36 * k + Measure(g_title, 19 * k, Upper(l.name)).x + 16 * k, y + 14 * k, l.tier, l.asc, col);
 							Txt(dl, g_body, 15 * k, { L + 36 * k, y + 29 * k }, IM_COL32(196, 182, 160, 235), l.info);
 							if (l.cost > 0) price(y + 2 * k, l.cost, l.can);
+							// (Noah, 2026-11-21: "saying Claim on each") an unclaimed thing: CLAIM where its price would be, gold, breathing
+							if (!l.carried) {
+								const float pulse = 0.75f + 0.25f * std::sin(static_cast<float>(ImGui::GetTime()) * 3.0f);
+								const std::string cl = all ? "CLAIM ALL" : "CLAIM";
+								const ImVec2 csz = Measure(g_title, 18 * k, cl);
+								const ImVec2 c0{ Rr - csz.x - 14 * k, y + 1 * k }, c1{ Rr + 2 * k, y + csz.y + 9 * k };
+								dl->AddRectFilled(c0, c1, IM_COL32(60, 44, 16, static_cast<int>(150 * pulse)), 4 * k);
+								dl->AddRect(c0, c1, Fade(kGold, 0.85f * pulse), 4 * k, 0, 1.4f * k);
+								Txt(dl, g_title, 18 * k, { c0.x + 8 * k, c0.y + 4 * k }, Fade(kGold, 0.95f), cl);
+							}
 							y += 56 * k;
 						}
 						y += 6 * k;

@@ -1880,7 +1880,7 @@ namespace bo3z
 				// the whispers - each a header that opens to its rows - and leave
 				std::vector<int> rows{ kRowClass };  // (Noah: the class is chosen and changed at the altar)
 				const auto sectionOf = [](int id) {
-					if (id >= 40 && id < 100) return static_cast<int>(kSecKit);
+					if (id >= 39 && id < 100) return static_cast<int>(kSecKit);   // (39: Claim all)
 					if (id >= 100 && id < 200) return static_cast<int>(kSecArmory);
 					if (id == kRowPerk) return static_cast<int>(kSecPerks);
 					if (id == kRowShout) return static_cast<int>(kSecVoice);
@@ -1981,6 +1981,7 @@ namespace bo3z
 					case kRowClass:
 						g_menu = false;
 						g_closedAt = std::chrono::steady_clock::now();
+						g_pickAltar = g_menuRef;   // (a class chosen: this altar opens again on its Your Kit)
 						Classes::OpenPicker(Classes::Get() >= 0);  // (the first is free; a change costs)
 						break;
 					case kRowPerk: act(2); break;
@@ -1988,7 +1989,7 @@ namespace bo3z
 					case kRowBond: act(5); break;
 					case kRowLeave: act(4); break;
 					default:
-						if (g_focus >= 40) {
+						if (g_focus >= 39) {
 							kitOk = Kit::Select(g_focus, ref);
 							if (kitOk && g_focus >= 100) g_focus = g_focus - 100 + 40;  // (bought: the focus stays on it, now in your kit)
 						} else if (g_focus >= kRowTrial && g_focus < kRowTrial + 5) {
@@ -2094,6 +2095,11 @@ namespace bo3z
 				if (pr && Classes::Get() >= 0 && OnAltarBase(pr.get()) && !g_menu) {
 					g_menu = true;
 					g_focus = kRowClass, g_sel = 0;
+					// (Noah, 2026-11-21: "After a player selects a class it should go back to the echo alter UI under the kit section")
+					// Your Kit open, on its Claim all (or its first row)
+					g_open = kSecKit;
+					if (const auto kit = Kit::Rows(); !kit.empty() && kit.front() < 100) g_focus = kit.front();
+					else g_focus = kSecKit;
 					g_menuRef = pr->CreateRefHandle();
 					PlayUi(UiSnd::kOpen, 0.6f);
 				}
