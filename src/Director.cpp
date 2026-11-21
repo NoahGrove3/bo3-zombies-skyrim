@@ -4091,6 +4091,7 @@ namespace bo3z
 			auto c = g_champ.handle.get();
 			return c && !c->IsDead() && !c->IsDisabled();
 		}
+		RE::Actor* Champion() { return g_champ.handle.get().get(); }
 		bool ChampionPos(RE::NiPoint3& a_at)
 		{
 			auto c = g_champ.handle.get();

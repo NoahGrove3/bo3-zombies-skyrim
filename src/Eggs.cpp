@@ -153,7 +153,7 @@ namespace bo3z::Eggs
 		std::unordered_map<RE::FormID, int> g_flaskHit;      // the last flask's element on each of the wrapped dead
 		bool g_dawnArmed = false;                            // (the crucible) the essences were carried by night
 		constexpr const char* kEl[5] = { "", "fire", "frost", "storm", "sun" };
-		constexpr const char* kFlaskEl[6] = { "fire", "frost", "shock", "acid", "holy", "blood" };
+		constexpr const char* kFlaskEl[6] = { "fire", "frost", "shock", "acid", "holy water", "void" };   // (Classes' flasks, in order)
 		constexpr int kElFx[5] = { 0, 0, 1, 2, 4 };          // an element's burst look (Gun::ElemBurst)
 		constexpr int kFlaskFx[6] = { 0, 1, 2, 7, 10, 5 };
 		int SpellEl(RE::TESForm* a_f)
@@ -197,11 +197,47 @@ namespace bo3z::Eggs
 			}
 			return nullptr;
 		}
+		// (the desk check: a spell "near" two seals went to whichever came first in the list) the mark you're looking at, within a_r of
+		// you and about 20 degrees of your aim; else the nearest within 400 (-1 none)
+		template <class M>
+		int AimedMark(const std::vector<M>& a_marks, const RE::NiPoint3& a_you, float a_r, bool a_skipTaken)
+		{
+			RE::NiPoint3 from, dir;
+			const bool   aim = CamAim(from, dir);
+			int          best = -1, nearest = -1;
+			float        bestCos = 0.94f, nearD = 400.0f;
+			for (int i = 0; i < static_cast<int>(a_marks.size()); ++i) {
+				const auto& m = a_marks[i];
+				if (a_skipTaken && m.taken) continue;
+				const float d = a_you.GetDistance(m.at);
+				if (d > a_r) continue;
+				if (d < nearD) nearD = d, nearest = i;
+				if (!aim) continue;
+				RE::NiPoint3 to = (m.at + RE::NiPoint3{ 0, 0, 50.0f }) - from;
+				const float  l = to.Length();
+				if (l < 1.0f) continue;
+				if (const float c = (to.x * dir.x + to.y * dir.y + to.z * dir.z) / l; c > bestCos) bestCos = c, best = i;
+			}
+			return best >= 0 ? best : nearest;
+		}
 		// a cast of yours close by, a moment ago: its element (consumed)
 		int CastNear(const RE::NiPoint3& a_at, float a_r)
 		{
 			if (!g_castEl || std::chrono::steady_clock::now() - g_castAt > std::chrono::milliseconds(1200) || g_castFrom.GetDistance(a_at) > a_r) return 0;
 			return std::exchange(g_castEl, 0);
+		}
+		// (the desk check: the player's own pitch isn't where a third-person camera looks) where you're looking from, and which way
+		bool CamAim(RE::NiPoint3& a_from, RE::NiPoint3& a_dir)
+		{
+			auto* cam = RE::PlayerCamera::GetSingleton();
+			if (!cam || !cam->cameraRoot) return false;
+			const auto& w = cam->cameraRoot->world;
+			a_from = w.translate;
+			a_dir = { w.rotate.entry[0][1], w.rotate.entry[1][1], w.rotate.entry[2][1] };
+			const float l = a_dir.Length();
+			if (l < 0.01f) return false;
+			a_dir = a_dir / l;
+			return true;
 		}
 		bool Swinging(RE::PlayerCharacter* a_p)
 		{
@@ -500,14 +536,18 @@ namespace bo3z::Eggs
 		void SignCast(RE::PlayerCharacter* a_p, int a_el)
 		{
 			if (g_sign.starT < 0 || !a_el) return;
-			const auto star = g_sign.starFrom + g_sign.starVel * g_sign.starT;
-			const float pitch = a_p->GetAngleX(), yaw = a_p->GetAngleZ();
-			const RE::NiPoint3 aim{ std::sin(yaw) * std::cos(pitch), std::cos(yaw) * std::cos(pitch), -std::sin(pitch) };
-			RE::NiPoint3 to = star - (a_p->GetPosition() + RE::NiPoint3{ 0, 0, 120.0f });
+			const auto   star = g_sign.starFrom + g_sign.starVel * g_sign.starT;
+			RE::NiPoint3 from, aim;
+			if (!CamAim(from, aim)) {
+				const float pitch = a_p->GetAngleX(), yaw = a_p->GetAngleZ();
+				aim = { std::sin(yaw) * std::cos(pitch), std::cos(yaw) * std::cos(pitch), -std::sin(pitch) };
+				from = a_p->GetPosition() + RE::NiPoint3{ 0, 0, 120.0f };
+			}
+			RE::NiPoint3 to = star - from;
 			const float d = to.Length();
 			if (d < 1.0f || d > 14000.0f) return;
 			to = to / d;
-			if (aim.x * to.x + aim.y * to.y + aim.z * to.z < 0.985f) return;   // (within ~10 degrees)
+			if (aim.x * to.x + aim.y * to.y + aim.z * to.z < 0.98f) return;   // (within ~11 degrees)
 			g_sign.starT = -1, g_sign.starDone = true;
 			Gun::ElemBurst(4, star, 3.0f, 0.0f, 1.2f);
 			Gun::LightningArc(a_p->GetPosition() + RE::NiPoint3{ 0, 0, 150.0f }, star, 0.0f);
@@ -632,7 +672,7 @@ namespace bo3z::Eggs
 					const auto at = g_sign.starFrom + g_sign.starVel * g_sign.starT;
 					if ((g_sign.emit -= a_dt) <= 0) {
 						g_sign.emit = 0.05f;
-						Gun::QueueFx("CurseOfAlduin\\fx\\lightorb.nif", at, 2.4f, 0.0f, 0.55f, false);
+						Gun::QueueFx("CurseOfAlduin\\fx\\lightorb.nif", at, 4.0f, 0.0f, 0.6f, false);
 					}
 					if (g_sign.starT > 9.0f) g_sign.starT = -1, g_sign.starDone = true;   // (missed: another night)
 					return;
@@ -710,6 +750,9 @@ namespace bo3z::Eggs
 					g_sign.bladeHave = count();
 					return;
 				}
+				static float look = 0;   // (your pack counted twice a second, not every frame)
+				if ((look -= a_dt) > 0 && !b->IsDeleted() && b->GetParentCell()) return;
+				look = 0.5f;
 				if (count() > g_sign.bladeHave || b->IsDeleted() || !b->GetParentCell()) Begin(e);   // lifted
 			}
 		}
@@ -891,10 +934,10 @@ namespace bo3z::Eggs
 					// (The Eye of Magnus) each seal opens to a spell of its own element cast close by
 					if (mech == "seals") {
 						for (auto& m : g_live.marks) {
-							if (m.taken) continue;
-							const float d = pp.GetDistance(m.at);
-							if (d < 400.0f && !m.told) m.told = true, Hud::QuestBanner(fmt::format("A {} seal. It wants {}.", m.el == 1 ? "ember" : m.el == 2 ? "rime" : "storm", kEl[m.el]), 3.0f);
-							if (d > 1400.0f) continue;
+							if (!m.taken && !m.told && pp.GetDistance(m.at) < 400.0f) m.told = true, Hud::QuestBanner(fmt::format("A {} seal. It wants {}.", m.el == 1 ? "ember" : m.el == 2 ? "rime" : "storm", kEl[m.el]), 3.0f);
+						}
+						if (const int i = AimedMark(g_live.marks, pp, 1400.0f, true); i >= 0) {
+							auto& m = g_live.marks[i];
 							if (const int el = CastNear(m.at, 1400.0f); el) {
 								if (el == m.el) {
 									Gun::ElemBurst(kElFx[m.el], m.at + RE::NiPoint3{ 0, 0, 40.0f }, 1.0f, 0.0f, 0.9f);
@@ -1015,10 +1058,8 @@ namespace bo3z::Eggs
 							const float d = pp.GetDistance(g_live.marks[i].at);
 							if (d < 350.0f && !g_live.marks[i].told) g_live.marks[i].told = true, Hud::QuestBanner(fmt::format("The {}-stone.", kEl[g_live.marks[i].el]), 2.5f);
 						}
-						int best = -1;
-						float bd = 900.0f;
-						for (int i = 0; i < n; ++i) if (const float d = pp.GetDistance(g_live.marks[i].at); d < bd) bd = d, best = i;
-						if (best >= 0) if (const int ce = CastNear(g_live.marks[best].at, 900.0f); ce) hit = best, el = ce;
+						const int best = AimedMark(g_live.marks, pp, 1200.0f, false);
+						if (best >= 0) if (const int ce = CastNear(g_live.marks[best].at, 1200.0f); ce) hit = best, el = ce;
 					} else if (mech == "flaskorder") {   // a flask burst on it
 						for (const auto& f : g_flaskEvents) {
 							for (int i = 0; i < n && hit < 0; ++i) if (f.at.GetDistance(g_live.marks[i].at) < 240.0f) hit = i, el = f.el;
@@ -1131,7 +1172,11 @@ namespace bo3z::Eggs
 						auto b = g_live.boss.get();
 						if (!b && g_live.started && (g_live.holdT -= a_dt) <= 0) {
 							g_live.holdT = 1.0f;
-							if (auto* f = FindNamed(s.name, c, 4000.0f)) g_live.boss = f->GetHandle(), b = f->GetHandle().get();
+							// (the desk check: a champion wears its own kind's name - the quest's name is only its banner) the champion
+							// raised for this city's step, by its handle
+							auto* f = Director::ChampionActive(-10 - CurTown(e)) ? Director::Champion() : nullptr;
+							if (!f) f = FindNamed(s.name, c, 4000.0f);
+							if (f) g_live.boss = f->GetHandle(), b = f->GetHandle().get();
 						}
 						if (!b || b->IsDead()) break;
 						if (mech == "chains") {   // (The Ghost Pride) untouchable while a soul-chain stands
@@ -1225,7 +1270,12 @@ namespace bo3z::Eggs
 		}
 		// (Noah, 2026-11-19) the step's city is chosen as the step begins, so every altar's riddle can point to it
 		if (CurTown(e) < 0) {
-			if (const int t = PickTown(e); t >= 0) {
+			// (the desk check: carried by night to another city's altar, the essences could never beat dawn across Skyrim) the
+			// crucible's step is this same city's altar
+			if (Step(e) < gen::kEggs[e].nSteps && Mech(e, Step(e)) == "dawn" && PrevTown(e) >= 0) {
+				SetTowns(e, (PrevTown(e) + 1) * 100 + PrevTown(e) + 1);
+				logger::info("eggs: {} step {} waits in {} (the same altar)", gen::kEggs[e].id, Step(e) + 1, gen::kTowns[PrevTown(e)]);
+			} else if (const int t = PickTown(e); t >= 0) {
 				SetTowns(e, (PrevTown(e) + 1) * 100 + t + 1);
 				logger::info("eggs: {} step {} waits in {}", gen::kEggs[e].id, Step(e) + 1, gen::kTowns[t]);
 			}

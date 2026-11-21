@@ -232,6 +232,7 @@ namespace bo3z
 		bool             PriestHold();                // the night's last wave is down and its Dragon Priest is still to come (the night waits for it)
 		bool             ChampionPos(RE::NiPoint3& a_at);          // a city freed: dawn comes now, the next night brings the next round
 		bool             ChampionAlive();  // a champion (a city's, a dragon's) is up and alive
+		RE::Actor*       Champion();       // that champion (null none)
 	}
 
 	// The new dead (Undead.cpp): body language and attacks of our own on the draugr skeleton
