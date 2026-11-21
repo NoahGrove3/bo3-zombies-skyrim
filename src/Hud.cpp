@@ -744,15 +744,25 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		void DrawClassPicker(ImDrawList* dl, ImVec2 size, float k, float now)
 		{
 			struct Card { const char* name; const char* lore; ImU32 col; const char* tag; const char* arms; const char* grow; const char* kit; };
+			// (Noah, 2026-11-21: "update the wording of the class descriptions and have the text centered and match the UI theme text font
+			// design" - the drafts approved) a motto, then what it fights with, how it grows, what it starts with
 			static const Card kCards[4] = {
-				{ "SUMMONER", "Conjurer of the College of Winterhold", IM_COL32(170, 120, 255, 255), "An army that grows family by family", "Summons - beasts, the dead, Daedra, Dwemer - and the Radiant Quarterstaff",
-				  "Your kit grows at the altar: every family and the Radiant Quarterstaff to Legendary", "Conjure Wolf, Conjure Skeleton, the Radiant Quarterstaff, the Summoner Set" },
-				{ "DESTRUCTION", "Battle-mage of the College of Winterhold", IM_COL32(255, 120, 60, 255), "Master the elements one at a time", "Ranged spells: fire, frost, shock, sun, blood and runes",
-				  "Your kit grows at the altar: each element, and the Carian Wand, to Legendary", "Firebolt, Ice Spike, the Carian Wand, the Destruction Set" },
-				{ "ALCHEMIST", "A wanderer of the Drifter's road", IM_COL32(150, 230, 90, 255), "Flasks of fire, frost, storm, acid and blood", "Thrown flask bombs that burst where they land - and a sword of shadowflame",
-				  "Your kit grows at the altar: each flask and the scythe to Legendary", "The Shadowflame Scythe, the Fire Flask, the Alchemist Set" },
-				{ "SPELLSWORD", "A Vigilant of Stendarr", IM_COL32(120, 180, 255, 255), "Steel in one hand, a spell in the other", "A one-handed blade and touch spells - and the Vigilants' relic spells",
-				  "Your kit grows at the altar: the rapier and each spell to Legendary", "The Spellbound Rapier, Burning Touch, the Spellsword Set" } };
+				{ "SUMMONER", "Conjurer of the College of Winterhold", IM_COL32(170, 120, 255, 255), "Never fight alone.",
+				  "Summoned beasts, the risen dead, Daedra and Dwemer machines, with the Radiant Quarterstaff in hand",
+				  "Each freed city opens a new family of summons; every one can be raised to Legendary",
+				  "Radiant Quarterstaff \xC2\xB7 Conjure Wolf \xC2\xB7 Conjure Skeleton \xC2\xB7 Summoner Set" },
+				{ "DESTRUCTION", "Battle-mage of the College of Winterhold", IM_COL32(255, 120, 60, 255), "Unmake the dead with the elements.",
+				  "Fire, frost, shock, sun and arcane spells cast from range, and the Carian Wand",
+				  "Freed cities open new elements; every spell and the wand climb to Legendary",
+				  "Firebolt \xC2\xB7 Ice Spike \xC2\xB7 Carian Wand \xC2\xB7 Destruction Set" },
+				{ "ALCHEMIST", "A wanderer of the Drifter's road", IM_COL32(150, 230, 90, 255), "Every flask is a bomb.",
+				  "Thrown flasks of fire, frost, shock, acid, holy water and void, and a scythe of shadowflame",
+				  "Freed cities open a new flask each; the flasks and the scythe climb to Legendary",
+				  "Shadowflame Scythe \xC2\xB7 Fire Flask \xC2\xB7 Alchemist Set" },
+				{ "SPELLSWORD", "A Vigilant of Stendarr", IM_COL32(120, 180, 255, 255), "Steel in one hand, a spell in the other.",
+				  "A blade that takes on the element of the touch spell in your other hand",
+				  "Freed cities open frost, shock, sun and arcane touches; the blade and every spell climb to Legendary",
+				  "Spellbound Rapier \xC2\xB7 Burning Touch \xC2\xB7 Spellsword Set" } };
 			// (Noah: "the background for each class a photo of a character from the modded loading screens ... the selected box
 			// to grow bigger when hovering over it and hide the text unless it's being hovered ... smooth like the echo alter
 			// nav animations") each card wears a Lore-Based Loading Screens painting (read from the player's own install, never
@@ -839,16 +849,47 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					// (Noah: "when moving from one class to another the text looks weird like it expands with more text for a split
 					// second") the words are laid out once at the open card's width and never re-wrapped as it grows or shrinks -
 					// only clipped to the card while it is still opening
-					const float tw = cwB - 44 * k;
+					const float tw = cwB - 56 * k;
 					dl->PushClipRect(a, b, true);
-					float y = b.y - 292 * k + (1.0f - ta) * 18 * k;   // (the words rise into place as they fade in)
+					// (Noah, 2026-11-21) every line centred on the card: words wrapped at the open card's width, each line centred
+					const auto wrapC = [&](ImFont* f, float px, float lh, float y0, ImU32 col, const std::string& t, bool draw) {
+						std::vector<std::string> lines;
+						std::string cur, word;
+						const auto flush = [&] { if (!cur.empty()) lines.push_back(cur), cur.clear(); };
+						for (std::size_t q = 0; q <= t.size(); ++q) {
+							if (q == t.size() || t[q] == ' ') {
+								const std::string tryLine = cur.empty() ? word : cur + " " + word;
+								if (!cur.empty() && Measure(f, px, tryLine).x > tw) flush(), cur = word;
+								else cur = tryLine;
+								word.clear();
+							} else {
+								word += t[q];
+							}
+						}
+						flush();
+						if (draw) for (std::size_t q = 0; q < lines.size(); ++q) TxtC(dl, f, px, cx, y0 + q * lh, col, lines[q]);
+						return static_cast<float>(lines.size()) * lh;
+					};
+					const float hPx = 14 * k, bPx = 15.5f * k, bLh = 20 * k, mPx = 21 * k;
+					// its height first, so the block sits on the card's foot
+					float total = mPx + 22 * k;
+					for (const char* t : { c.arms, c.grow, c.kit }) total += hPx + 8 * k + wrapC(g_body, bPx, bLh, 0, 0, t, false) + 14 * k;
+					float y = b.y - 20 * k - total + (1.0f - ta) * 18 * k;   // (the words rise into place as they fade in)
 					TxtC(dl, g_body, 14 * k, cx, a.y + 74 * k, Fade(c.col, 0.85f * ta), c.lore);
-					TxtWrap(dl, g_body, 18 * k, { a.x + 22 * k, y }, Fade(IM_COL32(236, 226, 206, 245), ta), c.tag, tw, 2);
-					y += 50 * k;
+					// the motto: a short gold rule over it, the title face
+					dl->AddRectFilledMultiColor({ cx - 70 * k, y - 8 * k }, { cx, y - 6.8f * k }, Fade(kGold, 0), Fade(kGold, ta), Fade(kGold, ta), Fade(kGold, 0));
+					dl->AddRectFilledMultiColor({ cx, y - 8 * k }, { cx + 70 * k, y - 6.8f * k }, Fade(kGold, ta), Fade(kGold, 0), Fade(kGold, 0), Fade(kGold, ta));
+					TxtC(dl, g_title, mPx, cx, y, Fade(IM_COL32(246, 236, 214, 255), ta), c.tag, 1.5f * k * ta, Fade(c.col, 0.6f * ta));
+					y += mPx + 22 * k;
 					const auto sec = [&](const char* h, const char* t) {
-						Txt(dl, g_body, 14 * k, { a.x + 22 * k, y }, Fade(c.col, 0.95f * ta), h);
-						const int n = TxtWrap(dl, g_body, 16 * k, { a.x + 22 * k, y + 20 * k }, Fade(IM_COL32(205, 196, 178, 235), ta), t, tw, 3);
-						y += 28 * k + n * 20 * k;
+						// the heading in the title face, gold, with a fine rule either side
+						const float hw = Measure(g_title, hPx, h).x;
+						const float ry = y + hPx * 0.55f;
+						dl->AddRectFilledMultiColor({ cx - hw * 0.5f - 46 * k, ry }, { cx - hw * 0.5f - 8 * k, ry + 1.0f * k }, Fade(kGold, 0), Fade(kGold, 0.8f * ta), Fade(kGold, 0.8f * ta), Fade(kGold, 0));
+						dl->AddRectFilledMultiColor({ cx + hw * 0.5f + 8 * k, ry }, { cx + hw * 0.5f + 46 * k, ry + 1.0f * k }, Fade(kGold, 0.8f * ta), Fade(kGold, 0), Fade(kGold, 0), Fade(kGold, 0.8f * ta));
+						TxtC(dl, g_title, hPx, cx, y, Fade(kGold, ta), h);
+						y += hPx + 8 * k;
+						y += wrapC(g_body, bPx, bLh, y, Fade(IM_COL32(222, 212, 192, 240), ta), t, true) + 14 * k;
 					};
 					sec("FIGHTS WITH", c.arms);
 					sec("GROWS BY", c.grow);
