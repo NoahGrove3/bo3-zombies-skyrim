@@ -823,7 +823,16 @@ namespace bo3z
 			} else if (cmd == "fxlist" && player) {  // fxlist: every effect shader and art on you (the blade's glow hunt), and your blade's enchantment
 				std::string out;
 				RE::ProcessLists::GetSingleton()->ForEachShaderEffect([&](RE::ShaderReferenceEffect* e) {
-					if (e && e->target.get().get() == player) out += fmt::format("[shader {} {:08X} worn {}] ", e->effectData ? e->effectData->GetFormEditorID() : "?", e->effectData ? e->effectData->GetFormID() : 0, e->wornObject ? e->wornObject->GetName() : "-");
+					if (e && e->target.get().get() == player) {
+						// (Noah, 2026-11-21: the Dragon Slayer's glow only in first person) which body each shader is laid on, and on what
+						const auto in = [](RE::NiAVObject* a_o, RE::NiAVObject* a_root) { for (auto* q = a_o; q; q = q->parent) if (q == a_root) return true; return false; };
+						auto* tr = e->targetRoot.get();
+						const char* body = !tr ? "none" : in(tr, player->Get3D(true)) ? "1st" : in(tr, player->Get3D(false)) ? "3rd" : "elsewhere";
+						int geos = 0;
+						if (tr) RE::BSVisit::TraverseScenegraphGeometries(tr, [&](RE::BSGeometry*) { ++geos; return RE::BSVisit::BSVisitControl::kContinue; });
+						out += fmt::format("[shader {} {:08X} worn {} flags {:X} root '{}' ({}, {} shapes) last '{}' age {:.1f} fin {}] ", e->effectData ? e->effectData->GetFormEditorID() : "?", e->effectData ? e->effectData->GetFormID() : 0,
+							e->wornObject ? e->wornObject->GetName() : "-", e->flags.underlying(), tr ? tr->name.c_str() : "-", body, geos, e->lastRootNode ? e->lastRootNode->name.c_str() : "-", e->effectShaderAge, e->finished);
+					}
 					return RE::BSContainer::ForEachResult::kContinue;
 				});
 				RE::ProcessLists::GetSingleton()->ForEachModelEffect([&](RE::ModelReferenceEffect* e) {

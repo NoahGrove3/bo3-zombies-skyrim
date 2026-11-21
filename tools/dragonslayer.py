@@ -232,6 +232,21 @@ def build():
             'scales': f'diffuse={sD} normal={sN} spec=0.5 gloss=40 alpha=0 doublesided=0',
             'scb': f'diffuse={cD} normal={cN} spec=0.45 gloss=30 alpha=0 doublesided=0',
             'iron': f'diffuse={iD} normal={iN} spec=0.45 gloss=24 alpha=0 doublesided=0'}
+    # (Noah, 2026-11-21: "like my fist isn't fully closed around the handle" in third person) the hand's pose is Animated Armoury's
+    # katana's, closed round its oval grip - 2.6 across the edge's way, 1.65 through the flat's: ours was round, 2.8 both ways. The
+    # grip, its collars and the pommel pressed to that oval (through the flat: model y)
+    flat = 0.6
+    G = []
+    for gn, m, V, N, UV, F in M.groups:
+        V = np.asarray(V, float).copy(); N = np.asarray(N, float).copy()
+        sel = np.zeros(len(V), bool)
+        if m in ('scales', 'iron'): sel = V[:, 2] < 1.55            # (the grip's binding and its iron collars and claws)
+        if m == 'hiltbone': sel = V[:, 2] < -14.0                    # (the pommel)
+        V[sel, 1] *= flat
+        N[sel, 1] /= flat
+        N[sel] /= np.linalg.norm(N[sel], axis=1, keepdims=True) + 1e-9
+        G.append((gn, m, V, N, UV, F))
+    M.groups = G
     # (Noah, 2026-11-21: "the sword edge is facing my player instead of away from it") the whole sword turned half round its own
     # length - the edge leading, the letters on the spine toward you
     M.groups = [(gn, m, np.asarray(V, float) * [-1, -1, 1], np.asarray(N, float) * [-1, -1, 1], UV, F) for gn, m, V, N, UV, F in M.groups]
