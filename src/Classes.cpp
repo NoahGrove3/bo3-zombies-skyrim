@@ -3940,6 +3940,52 @@ namespace bo3z::Classes
 			// (Noah, 2026-11-21: "The swords gold glow effect is only visible in first person it goes away in third person. the weapon
 			// effects are in a teal color") in the third-person body the look's art doesn't hang under the WEAPON node - it stayed its
 			// own teal: the art's own model, wherever it hangs, coloured too
+			// (the glow check: Skyrim laid the enchantment's shader only on the first-person sword - the one in hand when it was
+			// equipped - never on the third-person one) the Dragon Slayer's gold shader laid on whichever body's sword lacks it;
+			// ours taken off again once it's put away or another blade is in hand
+			{
+				static std::vector<RE::ShaderReferenceEffect*> mine;
+				auto* pl = RE::ProcessLists::GetSingleton();
+				RE::TESEffectShader* efsh = nullptr;
+				if (key == 9 && w) if (auto* wp = w->As<RE::TESObjectWEAP>(); wp && wp->formEnchanting)
+					for (auto* ef : wp->formEnchanting->effects) if (ef && ef->baseEffect && ef->baseEffect->data.enchantShader) { efsh = ef->baseEffect->data.enchantShader; break; }
+				RE::NiAVObject* nodes[2]{};
+				for (const bool fp : { false, true }) {
+					auto& bip = p->GetBiped(fp);
+					nodes[fp ? 1 : 0] = bip ? bip->objects[RE::BIPED_OBJECT::kOneHandSword].partClone.get() : nullptr;
+				}
+				if (pl) {
+					std::vector<RE::ShaderReferenceEffect*> live;
+					pl->ForEachShaderEffect([&](RE::ShaderReferenceEffect* e) {
+						if (e && std::find(mine.begin(), mine.end(), e) != mine.end()) {
+							auto* tr = e->targetRoot.get();
+							if (!efsh || e->finished || !tr || (tr != nodes[0] && tr != nodes[1])) { e->finished = true, e->lifetime = 0.0f; }   // (a sword re-made or put away: its old glow ended)
+							else live.push_back(e);
+						}
+						return RE::BSContainer::ForEachResult::kContinue;
+					});
+					mine = std::move(live);
+				}
+				if (efsh && pl) {
+					for (const bool fp : { false, true }) {
+						auto* node = nodes[fp ? 1 : 0];
+						if (!node) continue;
+						bool has = false;
+						pl->ForEachShaderEffect([&](RE::ShaderReferenceEffect* e) {
+							if (e && !e->finished && e->target.get().get() == p && e->effectData == efsh) {
+								for (auto* q = e->targetRoot.get(); q && !has; q = q->parent) has = q == node;
+							}
+							return RE::BSContainer::ForEachResult::kContinue;
+						});
+						if (!has) {
+							if (auto* e = p->ApplyEffectShader(efsh, -1.0f, nullptr, false, false, node, false)) {
+								mine.push_back(e);
+								if (static int said = 0; said++ < 4) logger::info("swords: the Dragon Slayer's gold laid on the {} sword", fp ? "first-person" : "third-person");
+							}
+						}
+					}
+				}
+			}
 			if ((key == 9 || key == 2) && want) {
 				std::vector<const RE::BGSArtObject*> arts;
 				const auto addArts = [&](RE::MagicItem* a_mi) {
