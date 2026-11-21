@@ -848,8 +848,8 @@ namespace bo3z
 					if (gap < 40.0f || gap > 2000.0f) return RE::BSContainer::ForEachResult::kContinue;
 					auto* made = r->GetFile(0);
 					auto* last = r->GetDescriptionOwnerFile();
-					const std::string mf = made ? made->GetFilename() : std::string("(made in game)");
-					const std::string lf = last ? last->GetFilename() : mf;
+					const std::string mf = made ? std::string(made->GetFilename()) : std::string("(made in game)");
+					const std::string lf = last ? std::string(last->GetFilename()) : mf;
 					auto* mdl = b->As<RE::TESModel>();
 					found.push_back({ gap, fmt::format("{:.0f} up: {} {:08X} base {:08X} '{}' model '{}' made by {} last {} at ({:.0f},{:.0f},{:.0f})", gap, RE::FormTypeToString(ft), r->GetFormID(), b->GetFormID(),
 						b->GetName(), mdl ? mdl->GetModel() : "?", mf, lf, pos.x, pos.y, pos.z) });
