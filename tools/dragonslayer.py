@@ -58,9 +58,13 @@ def bone_blade_tex():
     guardstain = np.clip(1 - v / 0.12, 0, 1) ** 2 * (0.4 + 0.6 * blot)
     col = col * (1 - 0.18 * guardstain[..., None]) + np.array([150, 104, 70]) * 0.18 * guardstain[..., None]
     col = col * (1 - 0.35 * craze[..., None]) + np.array([150, 136, 110]) * 0.35 * craze[..., None]
+    # (Noah, 2026-11-21: "the sword still has a glow when light hits the sword. THE GLOW SHOULD ONLY BE IN THE DRAGON LANGUAGE
+    # SYMBOLS ON THE BLADE" - "make it matte") in first person the torchlit bone blew out to white and bloomed gold round it:
+    # the bone darker still and all but without shine, so only the letters' own light shows
+    col = col * 0.82
     D = pw.save(col, 'slay_bone_d.dds')
     h = 0.35 * grain + 0.25 * fibre - 0.6 * craze + 0.2 * bev
-    spec = np.clip(45 + 30 * bev + 20 * hone + 10 * line - 30 * craze + 10 * (grain - 0.5), 0, 255)   # (Noah: "less shiny")
+    spec = np.clip(14 + 8 * bev + 6 * hone + 4 * line - 10 * craze + 4 * (grain - 0.5), 0, 255)   # (Noah: "less shiny"; "make it matte")
     N = pw.save(np.dstack([height_to_normal(gaussian_filter(h, 0.7), 5.0), spec]), 'slay_bone_n.dds', True)
     return D, N
 
@@ -308,8 +312,8 @@ def build():
         a = 2 * math.pi * k / 3 + 0.4
         d = np.array([math.cos(a), math.sin(a), 0.0])
         pw.talon(M, 'iron', np.array([d[0] * 0.75, d[1] * 0.75, -15.0]), d * 0.4 + np.array([0, 0, -0.7]), -d * 0.8 + np.array([0, 0, -0.5]), 1.5, 0.16)
-    mats = {'dbone': f'diffuse={bD} normal={bN} spec=0.3 gloss=28 alpha=0 doublesided=0',
-            'runes': f'diffuse={rD} normal={rN} glow={rG} emit=1,0.47,0.16 emitmult=1.7 spec=0.4 gloss=40 alpha=blend doublesided=0',
+    mats = {'dbone': f'diffuse={bD} normal={bN} spec=0.06 gloss=8 alpha=0 doublesided=0',
+            'runes': f'diffuse={rD} normal={rN} glow={rG} emit=1,0.47,0.16 emitmult=1.7 spec=0.06 gloss=8 alpha=blend doublesided=0',
             'hiltbone': f'diffuse={hD} normal={hN} spec=0.3 gloss=22 alpha=0 doublesided=0',
             'vskull': f'diffuse={kD} normal=actors\\dragon\\DragonSkeleton_n.dds spec=0.3 gloss=24 alpha=0 doublesided=0',
             'scales': f'diffuse={sD} normal={sN} spec=0.5 gloss=40 alpha=0 doublesided=0',
