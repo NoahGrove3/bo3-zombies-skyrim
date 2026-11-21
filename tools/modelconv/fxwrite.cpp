@@ -11,6 +11,7 @@
 //     parent=<node>: under that node of the base NIF (e.g. a bone: the shape moves with it; with billboard, the
 //                    billboard node hangs there and at= is in that node's space)
 //     vscroll / uscroll: the texture slides one whole turn in that many seconds (a looping shader controller)
+//     pulse=<period>,<lo>,<hi>: its brightness (emissive multiple) eases from lo up to hi and back down over that many seconds, looping
 //   v x y z u v [r g b a]        (vertex colours optional: per-vertex tint and fade)
 //   n x y z                      (optional, after its v: that vertex's normal - needed by falloff / rim)
 //   t a b c
@@ -19,6 +20,7 @@
 //   w <i> <weight> [<i> <weight> ...]   after its v: that vertex's bones (indices into skin=) and weights
 #include "NifFile.hpp"
 #include <cstdio>
+#include <cmath>
 #include <fstream>
 #include <sstream>
 #include <unordered_map>
@@ -31,6 +33,7 @@ struct Shape
 	float                col[4]{ 1, 1, 1, 1 }, scale = 1.0f;
 	bool                 falloff = false, vcol = false, rim = false, single = false;
 	float                vscroll = 0.0f, uscroll = 0.0f;
+	float                pulse[3]{ 0, 0, 0 };
 	bool                 billboard = false;
 	int                  bbMode = 0;
 	float                at[3]{ 0, 0, 0 };  // at=x,y,z: where the billboard's node stands (it turns about it)  // billboard=1: always face the camera; billboard=<n>: that NiBillboardNode mode (2 rigid: stays upright on screen)
@@ -94,6 +97,7 @@ int main(int argc, char** argv)
 				else if (key == "phase") s.phase = std::stof(val);
 				else if (key == "vscroll") s.vscroll = std::stof(val);
 				else if (key == "uscroll") s.uscroll = std::stof(val);
+				else if (key == "pulse") sscanf(val.c_str(), "%f,%f,%f", &s.pulse[0], &s.pulse[1], &s.pulse[2]);
 				else if (key == "parent") s.parent = val;
 				else if (key == "skin") {
 					std::stringstream bs(val); std::string b;
@@ -254,6 +258,34 @@ int main(int argc, char** argv)
 				if (prevCtrl != 0xFFFFFFFF) ctrl->nextControllerRef.index = prevCtrl;
 				prevCtrl = nif.GetHeader().AddBlock(std::move(ctrl));
 			}
+			s.vscroll = std::max(s.vscroll, 0.001f);  // (counts as animated below)
+		}
+		// (Noah, 2026-11-21: "it should pulse gradually over 10 [seconds] slowly getting brighter then dimmer on a loop") a float
+		// controller on the emissive multiple: lo at the start, hi halfway, lo again at the end - eased (a cosine, sampled)
+		if (s.pulse[0] > 0.0f) {
+			auto data = std::make_unique<NiFloatData>();
+			data->data.SetInterpolationType(LINEAR_KEY);
+			for (int k = 0; k <= 40; ++k) {
+				const float t = s.pulse[0] * k / 40.0f;
+				NiAnimationKey<float> a; a.type = LINEAR_KEY; a.time = t;
+				a.value = s.pulse[1] + (s.pulse[2] - s.pulse[1]) * 0.5f * (1.0f - std::cos(6.2831853f * k / 40.0f));
+				data->data.AddKey(a);
+			}
+			const auto dataRef = nif.GetHeader().AddBlock(std::move(data));
+			auto interp = std::make_unique<NiFloatInterpolator>();
+			interp->dataRef.index = dataRef;
+			const auto interpRef = nif.GetHeader().AddBlock(std::move(interp));
+			auto ctrl = std::make_unique<BSEffectShaderPropertyFloatController>();
+			ctrl->flags = 0x48;
+			ctrl->frequency = 1.0f;
+			ctrl->phase = 0.0f;
+			ctrl->startTime = 0.0f;
+			ctrl->stopTime = s.pulse[0];
+			ctrl->targetRef.index = ref;
+			ctrl->interpolatorRef.index = interpRef;
+			ctrl->typeOfControlledVariable = 0u;  // emissive multiple
+			if (prevCtrl != 0xFFFFFFFF) ctrl->nextControllerRef.index = prevCtrl;
+			prevCtrl = nif.GetHeader().AddBlock(std::move(ctrl));
 			s.vscroll = std::max(s.vscroll, 0.001f);  // (counts as animated below)
 		}
 		if (prevCtrl != 0xFFFFFFFF) fxp->controllerRef.index = prevCtrl;

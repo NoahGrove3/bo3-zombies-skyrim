@@ -488,7 +488,7 @@ namespace bo3z::Classes
 			return out;
 		}
 
-		void GrantWonder(int a_cls)
+		void GrantWonder(int a_cls, bool a_own = true)
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			if (!p) return;
@@ -506,7 +506,7 @@ namespace bo3z::Classes
 				GiveItem(p, Slayer(), 1, true);
 				break;
 			}
-		g_wStep[a_cls] = kWonderTaken;
+		if (a_own) g_wStep[a_cls] = kWonderTaken;   // (a friend's, lent from its pedestal: its quest stays theirs)
 			Forms::Play(gen::Sound::shout_learned);
 			static constexpr const char* kText[4] = {   // (Noah, 2026-11-12: short and to the point)
 				"Hold to cast: each of the dead the beam kills gives a soul. Every 20 souls: a spectral sabre cat for 45 s (max 3).",
@@ -1348,6 +1348,47 @@ namespace bo3z::Classes
 			}
 		}
 		return false;
+	}
+	// (Noah, 2026-11-21: "When I pickup the wonders from their pedestals they should disappear from the pedestal ... with the ability to
+	// place them back for other players to use as well as to start the final quest") the wonder's own thing in the pack
+	RE::TESBoundObject* WonderItem(int a_cls)
+	{
+		switch (a_cls) {
+		case coffer::kSummoner: return Soulcaller();
+		case coffer::kDestruction: return Magnus();
+		case coffer::kAlchemist: return FlaskItem(6);
+		case coffer::kSpellsword: return Slayer();
+		}
+		return nullptr;
+	}
+	bool CarriesWonder(int a_cls)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* it = WonderItem(a_cls);
+		return p && it && p->GetItemCount(it) > 0;
+	}
+	// a friend's wonder standing in our Reliquary, taken up: the thing itself, its quest still theirs
+	void LendWonder(int a_cls)
+	{
+		if (a_cls >= 0 && a_cls < 4) GrantWonder(a_cls, false);
+	}
+	// set back on its pedestal: every copy out of the pack (unequipped first); one of ours waits there again
+	bool PutBackWonder(int a_cls)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* it = WonderItem(a_cls);
+		if (!p || !it || a_cls < 0 || a_cls >= 4) return false;
+		const int n = p->GetItemCount(it);
+		if (n <= 0) return false;
+		auto* em = RE::ActorEquipManager::GetSingleton();
+		for (bool left : { false, true }) {
+			if (em && p->GetEquippedObject(left) == it) em->UnequipObject(p, it, nullptr, 1, nullptr, false, false, false, true);
+		}
+		p->RemoveItem(it, n, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+		if (g_wStep[a_cls] == kWonderTaken) g_wStep[a_cls] = kWonderWaiting;
+		Forms::Play(gen::Sound::ward_lit);
+		logger::info("classes: {} set back on its pedestal", kWonderName[a_cls]);
+		return true;
 	}
 	bool WonderEarned()
 	{
@@ -3927,6 +3968,27 @@ namespace bo3z::Classes
 			if (key == 9) for (const bool fp : { false, true }) if (auto* root = p->Get3D(fp)) Gun::TintGold(root->GetObjectByName("WEAPON"));
 			// (Noah, clips 8-9: the Radiant Quarterstaff's art showed frost-blue and green - "should be white") the Summoner's in white
 			if (key == 2) for (const bool fp : { false, true }) if (auto* root = p->Get3D(fp)) Gun::TintPal(root->GetObjectByName("WEAPON"), "textures\\CurseOfAlduin\\fx\\pal_white.dds", false);
+			// (Noah, 2026-11-21: "The swords gold glow effect is only visible in first person it goes away in third person. the weapon
+			// effects are in a teal color") in the third-person body the look's art doesn't hang under the WEAPON node - it stayed its
+			// own teal: the art's own model, wherever it hangs, coloured too
+			if ((key == 9 || key == 2) && want) {
+				std::vector<const RE::BGSArtObject*> arts;
+				const auto addArts = [&](RE::MagicItem* a_mi) {
+					if (!a_mi) return;
+					for (auto* ef : a_mi->effects) if (ef && ef->baseEffect) for (auto* ar : { ef->baseEffect->data.castingArt, ef->baseEffect->data.hitEffectArt, ef->baseEffect->data.enchantEffectArt }) if (ar) arts.push_back(ar);
+				};
+				addArts(want);
+				if (w) if (auto* wp = w->As<RE::TESObjectWEAP>()) addArts(wp->formEnchanting);
+				if (auto* pl = RE::ProcessLists::GetSingleton(); pl && !arts.empty()) pl->ForEachModelEffect([&](RE::ModelReferenceEffect* e) {
+					if (e && !e->finished && e->target.get().get() == p && std::find(arts.begin(), arts.end(), e->artObject) != arts.end()) {
+						if (auto* o = e->artObject3D.get()) {
+							if (key == 9) Gun::TintGold(o);
+							else Gun::TintPal(o, "textures\\CurseOfAlduin\\fx\\pal_white.dds", false);
+						}
+					}
+					return RE::BSContainer::ForEachResult::kContinue;
+				});
+			}
 			// (Noah, clips 301-302: the Shadowflame Whip and the Spellbound Rapier unseen in the hand, in both views) a flask's
 			// throw hides the hand's weapon node from the release to the end of the throw: never left hidden once no throw is on
 			if (!Gun::Throwing()) {

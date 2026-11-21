@@ -24,7 +24,9 @@ pw.MESHDIR = ROOT / 'assets' / 'fx' / 'Meshes' / 'CurseOfAlduin' / 'slayer'
 g.TEXDIR = ROOT / 'assets' / 'fx' / 'Textures' / 'CurseOfAlduin' / 'slayer'
 g.TEXREL = 'CurseOfAlduin\\slayer\\'
 pw.WORK = g.WORK = ROOT / 'build' / 'dragonslayer'
-pw.FIT['dragonslayer'] = (1.4, 1.6)   # (the grip's top, model units -> game units: the hand just under the guard)
+# (Noah, 2026-11-21: "its placement in my hand is off" - the fingers lay against the fangs) the hand sits four units further down
+# the grip than it did: the guard 8.5 above the hand, the pommel at -20.5 as Animated Armoury's katana's is
+pw.FIT['dragonslayer'] = (-1.1, 1.6)   # (the model's height that lands 4 units above the hand; model units -> game units)
 S = 2048
 
 
@@ -230,6 +232,9 @@ def build():
             'scales': f'diffuse={sD} normal={sN} spec=0.5 gloss=40 alpha=0 doublesided=0',
             'scb': f'diffuse={cD} normal={cN} spec=0.45 gloss=30 alpha=0 doublesided=0',
             'iron': f'diffuse={iD} normal={iN} spec=0.45 gloss=24 alpha=0 doublesided=0'}
+    # (Noah, 2026-11-21: "the sword edge is facing my player instead of away from it") the whole sword turned half round its own
+    # length - the edge leading, the letters on the spine toward you
+    M.groups = [(gn, m, np.asarray(V, float) * [-1, -1, 1], np.asarray(N, float) * [-1, -1, 1], UV, F) for gn, m, V, N, UV, F in M.groups]
     obj = pw.finish(M, 'dragonslayer', mats, None, 'WeaponSword')
     nif = str(pw.MESHDIR / 'dragonslayer.nif')
     subprocess.run([tool('shapename'), nif, nif, 'Scb:', 'Scb'], check=True)   # (the scabbard: Skyrim's own name for it)

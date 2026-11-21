@@ -38,6 +38,7 @@ namespace bo3z::Party
 			std::string      name;
 			std::int8_t      wonder{ -1 };  // the class wonders they have won (bits, class order; -1 not heard)
 			std::int8_t      cls{ -1 };     // their class (-1 none chosen)
+			std::int8_t      held{ 0 };     // the wonders they carry out of the Reliquary (bits)
 			std::uint32_t    credit{ 0 };   // their own trials per city (3 bits a city)
 		};
 
@@ -48,6 +49,7 @@ namespace bo3z::Party
 		Life                                           g_life = Life::Alive;
 		float                                          g_left = 0;     // seconds left while down
 		std::atomic<int>                               g_wonder{ 0 };  // the class wonders we have won (bits)
+		std::atomic<int>                               g_held{ 0 };    // the wonders we carry out of the Reliquary (bits)
 		RE::NiPoint3                                   g_at{};
 		float                                          g_reviveT = 0;  // our hold on a fallen friend
 		std::uint64_t                                  g_reviveWho = 0;
@@ -693,6 +695,7 @@ namespace bo3z::Party
 		o.left = g_left;
 		o.revive = 0;
 		o.wonder = static_cast<std::int8_t>(g_wonder.load());
+		o.held = static_cast<std::int8_t>(g_held.load() & 0xF);
 		o.cls = static_cast<std::int8_t>(Classes::Get());
 		if (g_outRevive.size() == 8) {
 			std::memcpy(&o.revive, g_outRevive.data(), 8);
@@ -715,15 +718,23 @@ namespace bo3z::Party
 		}
 		return pooled;
 	}
+	void SetHeld(int a_mask) { g_held = a_mask & 0xF; }
+	int  PartyHeld()
+	{
+		std::scoped_lock l(g_lock);
+		int m = 0;
+		for (auto& [id, r] : g_remote) m |= r.held & 0xF;
+		return m;
+	}
 	std::string WonderHolder(int) { return {}; }  // (retired: the staffs' one-wielder rule)
-	void Heard(std::uint64_t a_from, const std::string& a_name, std::uint8_t a_life, const RE::NiPoint3& a_at, float a_left, std::int8_t a_wonder, std::int8_t a_cls, std::uint32_t a_credit)
+	void Heard(std::uint64_t a_from, const std::string& a_name, std::uint8_t a_life, const RE::NiPoint3& a_at, float a_left, std::int8_t a_wonder, std::int8_t a_cls, std::uint32_t a_credit, std::int8_t a_held)
 	{
 		std::scoped_lock l(g_lock);
 		auto& r = g_remote[a_from];
 		if (a_life == static_cast<std::uint8_t>(Life::Down) && r.state != a_life) {
 			Tasks::Add([] { Forms::Play(gen::Sound::rite_fail); });  // a friend just went down: you hear it
 		}
-		r.state = a_life, r.at = a_at, r.left = a_left, r.heard = Clock::now(), r.name = a_name, r.wonder = a_wonder, r.cls = a_cls, r.credit = a_credit;
+		r.state = a_life, r.at = a_at, r.left = a_left, r.heard = Clock::now(), r.name = a_name, r.wonder = a_wonder, r.cls = a_cls, r.credit = a_credit, r.held = a_held;
 	}
 
 	// (Noah: in a party every player takes three trials at an altar) who of the party (heard in the last 15 s) still lacks them

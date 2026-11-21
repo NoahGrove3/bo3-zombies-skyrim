@@ -49,7 +49,7 @@ def texture():
 
 def band(L, name, z0, z1, r0, r1, reps, segs=72):
     """a ring of runes standing round the pillar from z0 (radius r0) to z1 (radius r1)"""
-    L.append(f'shape {name} tex={T} color=0.45,0.7,1,1 scale=2.0 blend=add single=0')
+    L.append(f'shape {name} tex={T} color=0.45,0.7,1,1 scale=2.0 pulse=10,0.45,2.4 blend=add single=0')
     for k in range(segs + 1):
         a = 2 * math.pi * k / segs
         for j, (z, r) in enumerate(((z0, r0), (z1, r1))):
@@ -62,7 +62,7 @@ def band(L, name, z0, z1, r0, r1, reps, segs=72):
 
 def floor(L, r0, r1, reps, segs=96):
     """the circle of runes on the floor round the pillar's foot"""
-    L.append(f'shape floor tex={T} color=0.45,0.7,1,1 scale=1.6 blend=add single=0')
+    L.append(f'shape floor tex={T} color=0.45,0.7,1,1 scale=1.6 pulse=10,0.35,1.9 blend=add single=0')
     for k in range(segs + 1):
         a = 2 * math.pi * k / segs
         for j, r in enumerate((r1, r0)):

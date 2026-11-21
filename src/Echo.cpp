@@ -161,6 +161,7 @@ namespace bo3z
 		constexpr int kWordsTold = 1 << 21, kFlagBone = 1 << 9, kFlagEndless = 1 << 10, kFlagRobes = 1 << 11, kFlagHallOpen = 1 << 17;
 		constexpr int kFlagWondersAll = 1 << 18, kFlagEchoTold = 1 << 19, kFlagCleaned = 1 << 20;
 		constexpr int kFlagBaneOut = 1 << 16;  // (Alduin's Bane taken from its stand and not put back)
+		constexpr int kFlagLentShift = 4;      // bits 4-7: a friend's wonder taken up from our pedestal, not yet set back
 		constexpr int kNgShift = 12, kNgMask = 0xF << kNgShift;
 		bool Flag(int a_f) { return (Read(gen::kEchoGlobWords) & a_f) != 0; }
 		void SetFlag(int a_f, bool a_on) { Write(gen::kEchoGlobWords, a_on ? (Read(gen::kEchoGlobWords) | a_f) : (Read(gen::kEchoGlobWords) & ~a_f)); }
@@ -174,13 +175,28 @@ namespace bo3z
 			for (int t = 0; t < kTownCount; ++t) n += Curse::Freed(t) ? 1 : 0;
 			return n;
 		}
-		// Act III: the four class wonders won between you and your party (latched once true)
+		// (Noah, 2026-11-21: "When I pickup the wonders from their pedestals they should disappear from the pedestal because logically
+		// the player would be picking it up with the ability to place them back for other players to use as well as to start the final
+		// quest" - "All 4 placed starts it", "Anyone in the party") a wonder out of the Reliquary: one of ours taken up and not set
+		// back, or a friend's we took from our pedestal; a friend carrying one out of theirs empties ours too
+		bool Lent(int a_c) { return Flag(1 << (kFlagLentShift + a_c)); }
+		void SetLent(int a_c, bool a_on) { SetFlag(1 << (kFlagLentShift + a_c), a_on); }
+		bool HeldByMe(int a_c) { return Classes::WonderState(a_c) == 4 || Lent(a_c); }
+		int  MyHeld()
+		{
+			int m = 0;
+			for (int c = 0; c < 4; ++c) m |= HeldByMe(c) ? 1 << c : 0;
+			return m;
+		}
+		bool HeldByParty(int a_c) { return (Party::PartyHeld() >> a_c) & 1; }
+		// Act III: the four class wonders won between you and your party, and all four set on their pedestals together - none
+		// carried out by you or a friend (latched once true)
 		bool AllWonders()
 		{
 			if (Flag(kFlagWondersAll)) return true;
-			if (((Classes::WonderMask() | Party::PartyWonders()) & 0xF) == 0xF) {
+			if (((Classes::WonderMask() | Party::PartyWonders()) & 0xF) == 0xF && MyHeld() == 0 && Party::PartyHeld() == 0) {
 				SetFlag(kFlagWondersAll, true);
-				logger::info("echo: all four wonders won - the three dragons wake");
+				logger::info("echo: all four wonders on their pedestals together - the three dragons wake");
 				return true;
 			}
 			return false;
@@ -410,6 +426,7 @@ namespace bo3z
 		std::array<Native, 5> g_native{};
 		std::array<float, 5> g_glowT{};
 		float g_pillarT = 0;
+		std::vector<RE::ObjectRefHandle> g_pillarRefs;   // (the runes lit now: put out when they're lit again)
 		// (Noah, 2026-11-19: the Endless Flame "looks really poorly done" - "Brazier ring") the pillar's base ringed by six of
 		// Sovngarde's stone braziers, each burning with Skyrim's own animated fire and embers, and the hall's warm firelight on
 		// the pillar: Skyrim.esm's SOVBrazier01, FXfireWithEmbersLight, HHIntLightFireMd
@@ -429,7 +446,9 @@ namespace bo3z
 			auto* bane = Bane();
 			return Flag(kFlagHallOpen) && bane && a_p->GetItemCount(bane) <= 0;
 		}
-		bool FloatShown(RE::PlayerCharacter* a_p, int a_i) { return a_i == 4 ? BaneShown(a_p) : Waiting(a_i); }  // (yours to take)
+		bool OnDisplay(int a_i) { return Won(a_i) && !HeldByMe(a_i) && !HeldByParty(a_i); }   // (on its pedestal: anyone in the party takes it)
+		bool FloatShown(RE::PlayerCharacter* a_p, int a_i) { return a_i == 4 ? BaneShown(a_p) : OnDisplay(a_i); }  // (yours to take)
+		bool SpotEmpty(int a_i) { return a_i < 4 && (HeldByMe(a_i) || HeldByParty(a_i)); }   // (carried out: its pedestal stands empty)
 		// (Noah: "a grayed out version so that I can see when I have it unlocked") in its colours once it's unlocked - won or waiting -
 		// grey until then
 		bool FloatLit(int a_i) { return a_i == 4 ? Flag(kFlagHallOpen) : (Won(a_i) || Waiting(a_i)); }
@@ -491,6 +510,13 @@ namespace bo3z
 		std::string AimLabel(RE::PlayerCharacter* a_p, int a_i)
 		{
 			if (a_i == 5) return "The Pillar of Time";
+			if (a_i < 4 && SpotEmpty(a_i)) {
+				const std::string nm(Classes::WonderName(a_i));
+				if (!HeldByMe(a_i)) return nm + " - carried by your party";
+				if (Classes::CarriesWonder(a_i)) return "Set the " + nm + " back on its pedestal";
+				const bool weapon = a_i == 1 || a_i == 3;   // (the Staff of Magnus and the Dragon Slayer: made again for 5,000)
+				return "Make the " + nm + " again" + (weapon ? std::string(" (5,000 Cursed Essence)") : std::string());
+			}
 			if (a_i < 5 && !FloatShown(a_p, a_i)) {  // (nothing to take: its grey likeness, or one already yours)
 				if (a_i == 4) return a_p->GetItemCount(Bane()) > 0 ? "Alduin's Bane - in your hands" : "Alduin's Bane - wakes when the Echo of Alduin falls";
 				const int st = Classes::WonderState(a_i);
@@ -577,8 +603,18 @@ namespace bo3z
 				// (Noah: "a grayed out version so that I can see when I have it unlocked") each spot always holds something: the
 				// wonder itself in its glow when it's yours to take, its grey likeness until then
 				for (int i = 0; i < 5; ++i) {
-					const int want = FloatLit(i) ? 1 : 2;
+					const int want = SpotEmpty(i) ? 0 : FloatLit(i) ? 1 : 2;
 					auto r = g_hall.item[i].get();
+					if (want == 0) {   // (carried out of the Reliquary: nothing floats there till it's set back)
+						if (g_hallKind[i] != 0 || r) {
+							Drop(g_hall.item[i]), Drop(g_hall.glow[i]);
+							g_native[i] = {};
+							g_hallFixed[i] = false;
+							g_hallKind[i] = 0;
+							logger::info("echo: the hall's spot {} stands empty - its wonder carried out", i);
+						}
+						continue;
+					}
 					if (want != g_hallKind[i] || !r || r->IsDeleted() || r->GetParentCell() != a_p->GetParentCell()) {
 						Drop(g_hall.item[i]), Drop(g_hall.glow[i]);
 						// (Noah, 2026-11-19: "don't gray out any of the weapons. I think the text that says not yet won is good
@@ -604,11 +640,17 @@ namespace bo3z
 				// (tools/pillarrunes.py), turning slowly
 				// (Noah: "I don't see any runic effects on the pillar of time" - placed as an object, a model of only light never drew) laid
 				// as the glows are: a lingering model of light, lit again just before it burns out
+				// (Noah, 2026-11-21: "it keeps flashing a bright glow on the runic symbols every like 10 seconds" - the new runes were
+				// lit half a second before the old went out, the two added together) the runes' own slow ten-second pulse is in the
+				// model (tools/pillarrunes.py); they're lit again once a minute, on a pulse's dim, and the old ones put out that moment
 				if ((g_pillarT -= 0.5f) <= 0) {
-					Gun::Hazard("CurseOfAlduin\\reliquary\\pillar_runes.nif", kPillarAt, 1.0f, 20.0f);
+					std::vector<RE::ObjectRefHandle> fresh;
+					Gun::Hazard("CurseOfAlduin\\reliquary\\pillar_runes.nif", kPillarAt, 1.0f, 75.0f, 0.0f, &fresh);
+					for (auto& h : g_pillarRefs) if (auto r = h.get()) r->Disable(), r->SetDelete(true);
+					g_pillarRefs = std::move(fresh);
 					static bool said = false;
 					if (!said) said = true, logger::info("echo: the Pillar of Time's runes lit");
-					g_pillarT = 19.5f;
+					g_pillarT = 60.0f;
 				}
 				for (int i = 0; i < 5; ++i) {
 					if (g_hallKind[i] != 1 || (g_glowT[i] -= 0.5f) > 0) continue;
@@ -729,7 +771,7 @@ namespace bo3z
 					const RE::NiPoint3 eye = cam->cameraRoot->world.translate;
 					float best = FLT_MAX;
 					for (int i = 0; i < 6; ++i) {
-						if (i < 5 && !g_hall.item[i]) continue;
+						if (i < 5 && !g_hall.item[i] && !(i < 4 && HeldByMe(i))) continue;   // (an empty pedestal: yours to set it back on)
 						const RE::NiPoint3 c = i < 5 ? FloatSpots()[i].at : kPillarAt + RE::NiPoint3{ 0, 0, 110.0f };
 						const RE::NiPoint3 to = c - eye;
 						const float along = to.Dot(fwd);
@@ -745,14 +787,30 @@ namespace bo3z
 		}
 		void UseAim(RE::PlayerCharacter* a_p)
 		{
-			if (g_aim >= 0 && g_aim < 5 && !FloatShown(a_p, g_aim)) return;  // (nothing to take: grey, or yours already)
+			if (g_aim >= 0 && g_aim < 5 && !FloatShown(a_p, g_aim) && !(g_aim < 4 && HeldByMe(g_aim))) return;  // (nothing to take or set back: grey, or a friend carries it)
 			if (g_aim == 5) {
 				g_hallMenu = true, g_hallFocus = 0;
 				Forms::Play(gen::Sound::ward_lit);
 			} else if (g_aim == 4) {
 				(void)TakeBane(a_p);  // (it keeps floating, lit: yours)
-			} else if (g_aim >= 0 && Classes::TakeWonder(g_aim)) {
-				logger::info("echo: {} taken up in the hall", Classes::WonderName(g_aim));
+			} else if (g_aim >= 0 && g_aim < 4 && HeldByMe(g_aim)) {
+				const int c = g_aim;
+				if (Classes::CarriesWonder(c)) {   // set back on its pedestal
+					if (Classes::PutBackWonder(c)) SetLent(c, false);
+				} else if (Classes::WonderState(c) == 4) {   // lost: made again (the weapons for 5,000)
+					(void)Classes::TakeWonder(c);
+				} else if (Lent(c)) {
+					const bool weapon = c == 1 || c == 3;
+					if (!weapon || Points::Spend(5000)) Classes::LendWonder(c);
+				}
+			} else if (g_aim >= 0 && g_aim < 4 && OnDisplay(g_aim)) {
+				if (Classes::WonderState(g_aim) == 5) {
+					if (Classes::TakeWonder(g_aim)) logger::info("echo: {} taken up in the hall", Classes::WonderName(g_aim));
+				} else {   // (a friend's: anyone in the party takes it up)
+					Classes::LendWonder(g_aim);
+					SetLent(g_aim, true);
+					logger::info("echo: {} (the party's) taken up in the hall", Classes::WonderName(g_aim));
+				}
 			}
 			PushHallHud(a_p);
 		}
@@ -1217,6 +1275,7 @@ namespace bo3z
 			TickAllies(0.5f);
 			CleanUp(p);
 			Party::SetWonder(Classes::WonderMask());  // (the party pools its wonders)
+			Party::SetHeld(MyHeld());                 // (and says which it carries out of the Reliquary)
 			TickPortal(p, 0.5f);  // (the Reliquary room and its portal are retired: the hall itself holds everything - TickHall)
 			TickSky();
 			TickWords(p, 0.5f);

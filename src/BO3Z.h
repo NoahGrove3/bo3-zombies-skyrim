@@ -469,6 +469,10 @@ namespace bo3z
 		void             KitWonders();                    // the test kit: the Staff of Magnus and the Philosopher's Flask
 		void             DevGiveWonder(int a_cls);        // dev (trailer filming): the class's wonder straight into your hands, no Reliquary
 		bool             TakeWonder(int a_cls);        // (the Reliquary's pedestal) a waiting wonder taken up - or a lost one given again
+		RE::TESBoundObject* WonderItem(int a_cls);     // the wonder's own thing in the pack
+		bool             CarriesWonder(int a_cls);     // it's in your pack
+		void             LendWonder(int a_cls);        // a friend's wonder taken up from our pedestal (its quest stays theirs)
+		bool             PutBackWonder(int a_cls);     // set back on its pedestal: out of the pack, waiting there again
 		bool             WonderOpen();                 // your class's secret quest is open (six cities freed) and the wonder not yet won
 		void             EarnWonder(int a_cls);        // (Eggs) the quest done: the wonder
 		std::string      WonderLine();                 // the altar's line: your class wonder's trial
@@ -606,7 +610,7 @@ namespace bo3z
 			struct Mark { std::string name; float x, y, dist; bool front; Life life; float hp{ 1.0f }; float ang{ 0 }; int cls{ -1 }; };  // cls: their class  // hp: 0..1 from their figure
 			std::vector<Mark>   marks;            // where each friend is (screen 0..1)
 		};
-		struct Out { std::uint8_t life; RE::NiPoint3 at; float left; std::uint64_t revive; std::int8_t wonder; std::int8_t cls{ -1 }; };
+		struct Out { std::uint8_t life; RE::NiPoint3 at; float left; std::uint64_t revive; std::int8_t wonder; std::int8_t cls{ -1 }; std::int8_t held{ 0 }; };
 		void OnLoad();                                 // a save is loading: the fall's screen and hold let go
 		void Tick(float a_delta);                      // game thread
 		bool OnButton(const RE::ButtonEvent* a_b);     // Activate held (revive); arrows switch whom you watch
@@ -614,13 +618,15 @@ namespace bo3z
 		Life State();
 		View Now();
 		Out  Outgoing();                               // Net: what to tell the party
-		void Heard(std::uint64_t a_from, const std::string& a_name, std::uint8_t a_life, const RE::NiPoint3& a_at, float a_left, std::int8_t a_wonder = -1, std::int8_t a_cls = -1, std::uint32_t a_credit = 0);
+		void Heard(std::uint64_t a_from, const std::string& a_name, std::uint8_t a_life, const RE::NiPoint3& a_at, float a_left, std::int8_t a_wonder = -1, std::int8_t a_cls = -1, std::uint32_t a_credit = 0, std::int8_t a_held = 0);
 		int  FriendsShort(int a_town, int a_need, std::string* a_names = nullptr);  // (co-op altars) friends in the party with fewer than a_need own trials there
 		int  FriendCount();                                // other players in the party now
 		std::string WonderHolder(int a_wonder);         // (retired: always '')
 		void        SetWonder(int a_mask);              // the class wonders we have won (bits): told to the party
 		int         PartyWonders();                     // the class wonders our friends have won (bits, pooled while this game is played)
 		void        ResetWonders();                     // (a load or a new game: the pool starts empty)
+		void        SetHeld(int a_mask);                // (Noah, 2026-11-21) the wonders we carry out of the Reliquary (bits): told to the party
+		int         PartyHeld();                        // the wonders our friends carry out of theirs right now (their pedestals stand empty in ours too)
 		void Revived(std::uint64_t a_by);
 		void Forget(std::uint64_t a_who);
 		// The party's save points: every dawn (and the dawn a freed city brings) each game saves itself a few seconds
@@ -817,7 +823,7 @@ namespace bo3z
 		void                  StartThrow(bool a_left, std::function<void()> a_release);  // the underhand throw on that arm; a_release at the top of the swing
 		bool                  Throwing();  // the Light Orb over your head, lit or put away
 		void                  Lob(const std::string& a_model, const RE::NiPoint3& a_from, const RE::NiPoint3& a_vel, float a_scale, std::function<void(const RE::NiPoint3&)> a_land, float a_spin = 12.0f, float a_grav = 900.0f);  // (a_spin 0: it flies nose first - a meteor)  // a thrown thing flown on its arc; a_land where it comes down
-		void                  Hazard(const std::string& a_model, const RE::NiPoint3& a_at, float a_scale, float a_life, float a_yaw = 0.0f);  // a model of light lingering a_life seconds where it's set (drawn as the flasks' ground fires are)
+		void                  Hazard(const std::string& a_model, const RE::NiPoint3& a_at, float a_scale, float a_life, float a_yaw = 0.0f, std::vector<RE::ObjectRefHandle>* a_placed = nullptr);  // a model of light lingering a_life seconds where it's set (drawn as the flasks' ground fires are)
 		RE::ObjectRefHandle   PlaceAt(RE::TESBoundObject* a_obj, const RE::NiPoint3& a_at, float a_yaw);  // a placed object made at the point itself (its 3D drawn there, not made at the player and moved)
 	}
 
