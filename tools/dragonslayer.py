@@ -247,6 +247,16 @@ def skull(M):
     V[jaw, 1], V[jaw, 2] = py + dy * np.cos(a) - dz * np.sin(a), pz + dy * np.sin(a) + dz * np.cos(a)
     ny, nz = N[jaw, 1].copy(), N[jaw, 2].copy()
     N[jaw, 1], N[jaw, 2] = ny * np.cos(a) - nz * np.sin(a), ny * np.sin(a) + nz * np.cos(a)
+    V[jaw, 2] -= SKULL_JAW_DROP
+    # (Noah, 2026-11-21: "Lower the back of the skull, open the jaws more and make the skull flush with the bottom jaw on one side
+    # of the blade and the top jaw on the other side") the whole skull pitched snout-up about its mouth, the back of its head down
+    # toward the grip; its palate then lies along the blade's spine and its chin along the edge (the jaw opened to the blade's width)
+    b = np.radians(SKULL_PITCH)
+    py, pz = 300.0, 240.0
+    dy, dz = V[:, 1] - py, V[:, 2] - pz
+    V[:, 1], V[:, 2] = py + dy * np.cos(b) - dz * np.sin(b), pz + dy * np.sin(b) + dz * np.cos(b)
+    ny, nz = N[:, 1].copy(), N[:, 2].copy()
+    N[:, 1], N[:, 2] = ny * np.cos(b) - nz * np.sin(b), ny * np.sin(b) + nz * np.cos(b)
     k = SKULL_SCALE
     mouth_z, back_y = SKULL_MOUTH, 239.0   # (its mouth's line, and the back of its head, in its own space: z up, its snout toward +y)
     P = np.stack([-(V[:, 2] - mouth_z) * k, -V[:, 0] * k, (V[:, 1] - back_y) * k + SKULL_BACK], -1)
@@ -256,8 +266,10 @@ def skull(M):
 
 
 SKULL_SCALE = 0.051    # (Noah, 2026-11-21: "Bigger, wrapped round blade" - 144 long in its own units: 7.3 model units here, 11.8 in the game)
-SKULL_JAW_UP = 20.0    # (degrees the jaw is swung up, closing on the blade)
-SKULL_MOUTH = 236.0    # (the blade's middle line through it, in its own height)
+SKULL_JAW_UP = 10.0    # (degrees the jaw is swung up about its hinge: its top line then parallel to its palate's)
+SKULL_JAW_DROP = 34.0  # (and lowered, the jaws held apart by the blade's width: its palate on the spine, its jaw along the edge)
+SKULL_PITCH = 26.0     # (degrees the whole skull is tipped snout-up: its palate along the blade's spine, the back of its head lowered)
+SKULL_MOUTH = 234.0    # (the blade's middle line through it, in its own height: its palate 255 and its jaw 213, the blade 42 wide)
 SKULL_BACK = -1.35     # (the back of its head down over the grip's top, its horns swept back over the grip)
 
 
