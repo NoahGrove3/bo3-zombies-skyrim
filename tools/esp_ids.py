@@ -16,7 +16,7 @@ BLADE_VIZ = ('alch', 'carian', 'radiant', 'ss_none', 'ss_fire', 'ss_frost', 'ss_
 PRIEST_WEAPONS = {
     # (Noah: "I want to remove bows ... out of the loot pool" - "New melee weapons") Vahlok's Keyhammer: the Stendarr warhammer
     # (Noah, after the Royal Guard's was unseen in the hands: "H3"; armor_replacer, read from the install); Vokun's Nightcaller's Scythe: Battle Scythe's Daedric scythe
-    'Riverwood': ('vahlok', "Jailor's Keyhammer", 'armor_replacer\\1_stendarr\\weapon\\warhammer.nif', 'warhammer', 42, "Vahlok's warhammer. Hits shackle the dead in place. Heavy: chains yank the nearby dead together."),
+    'Riverwood': ('vahlok', "Jailor's Keyhammer", 'vahlok_keyhammer', 'warhammer', 42, "Vahlok's warhammer. Hits shackle the dead in place. Heavy: chains yank the nearby dead together."),
     'Whiterun': ('nahkriin', 'Mistblade', 'nahkriin_mistblade', 'sword', 26, "Nahkriin's sword. Hits blind the dead: they slow and hit weaker. Heavy: a fog where they wander lost."),
     'Solitude': ('volsung', 'Windcutter', 'volsung_windcutter', 'sword', 26, "Volsung's sword. Light: a gust that staggers the dead 8 m ahead. Heavy: a 12 m cone that knocks them down."),
     'Windhelm': ('zahkriisos', 'Glacier Greatsword', 'zahkriisos_greatsword', 'greatsword', 38, "Zahkriisos's greatsword. Hits freeze the dead until they die. Heavy: shatters every frozen one around you."),

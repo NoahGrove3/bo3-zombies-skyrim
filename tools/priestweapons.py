@@ -481,7 +481,7 @@ def roughen(M, seed=0):
 # (Noah: "the glacier greatsword's hilt still clips into my players right hand") its guard raised 3 units clear of the upper hand
 FIT = {'zahkriisos_greatsword': (1.2, 1.3), 'nahkriin_mistblade': (1.5, 1.4), 'volsung_windcutter': (1.7, 1.6),
        'otar_stormblade': (8.0, 1.4), 'rahgot_dagger': (0.6, 1.75), 'krosis_griefblade': (1.5, 1.5),
-       'hevnoraak_sealbreaker': (12.0, 1.15), 'morokei_maul': (12.0, 1.15)}
+       'hevnoraak_sealbreaker': (12.0, 1.15), 'morokei_maul': (12.0, 1.15), 'vahlok_keyhammer': (12.0, 1.15)}
 
 
 def fit_lines(L, top, sc, root):
@@ -1399,7 +1399,73 @@ def morokei(texonly=False):
     return finish(M, 'morokei_maul', mats, fx.L, 'WeaponBack')
 
 
-WEAPONS = {'zahkriisos': zahkriisos, 'nahkriin': nahkriin, 'volsung': volsung, 'otar': otar, 'rahgot': rahgot,
+def vahlok(texonly=False):
+    """(Noah, 2026-11-18: "our own Jailor's Keyhammer") Vahlok the Jailor's warhammer: a two-handed hammer whose head is a
+    great iron lock - a heavy block bound in straps, a keyhole on each face, its back a jailor's key-bit of bronze with its
+    wards cut in steps, a padlock's shackle arched over the top - hung with a short length of chain; the haft of dark iron
+    wound with leather, a chain coiled up it under the head, iron collars and a spike for a pommel. Rust in the seams."""
+    iD, iN = metal_tex('vahl_iron', (66, 62, 58), rust=0.45, dark=0.8, seed=151)
+    bD, bN = metal_tex('vahl_bronze', (142, 104, 58), rust=0.15, dark=0.55, seed=152)
+    lD, lN = leather_tex('vahl_leather', (44, 30, 22), seed=153)
+    M = Mesh()
+    # the haft
+    M.add('Iron', 'iron', *lathe([(-22.0, 0.0), (-22.0, 1.0), (-21.4, 1.2)] + [(z, 1.0) for z in np.linspace(-21.0, 45.0, 10)] + [(45.5, 1.1)], 24))
+    grip_wrap(M, 'leather', -18.0, -3.0, 1.08, 1.15)
+    grip_wrap(M, 'leather', 3.5, 12.0, 1.08, 1.15)
+    for z in (-22.3, -18.4, -2.6, 3.0, 12.4, 22.0, 32.0, 44.5):
+        M.add('Iron', 'iron', *lathe([(z - 0.6, 1.06), (z - 0.45, 1.42), (z + 0.45, 1.42), (z + 0.6, 1.06)], 24))
+    # the pommel spike
+    M.add('Iron', 'iron', *lathe([(-22.0, 1.0), (-23.4, 0.9), (-26.5, 0.12)], 16))
+    # a chain coiled up the haft under the head: links round a helix, each turned to the last
+    turns, z0, z1, rad = 3.0, 25.0, 42.0, 1.55
+    L = math.hypot(2 * math.pi * rad * turns, z1 - z0)
+    n = int(L / 0.95)
+    for k in range(n):   # (links touching: each about a link's inner length on from the last)
+        t = k / (n - 1)
+        z = z0 + t * (z1 - z0); a_ = t * 2 * math.pi * turns
+        c = np.array([rad * math.cos(a_), rad * math.sin(a_), z])
+        tang = unit(np.array([-math.sin(a_) * rad * 2 * math.pi * turns, math.cos(a_) * rad * 2 * math.pi * turns, z1 - z0]))
+        out = np.array([math.cos(a_), math.sin(a_), 0])
+        ax = unit(np.cross(tang, out)) if k % 2 else out
+        M.add('Chain', 'iron', *torus(c, 0.42, 0.16, ax, 14, 6, 1.5, tang))
+    # the head: the lock-block, across the haft (striking along x), its edges softened
+    hc = np.array([0.0, 0.0, 51.0])
+    M.add('Head', 'iron', *superbox(hc, 7.5, 3.6, 4.6, 5.0, 48, 24))
+    # straps of iron round it, riveted
+    for xo in (-4.8, 4.8):
+        M.add('Head', 'iron', *superbox(hc + [xo, 0, 0], 0.7, 3.85, 4.85, 8.0, 16, 12))
+        for yy in (-3.95, 3.95):
+            for zz in (-3.2, 0.0, 3.2):
+                M.add('Head', 'iron', *superbox(hc + [xo, yy, zz], 0.35, 0.25, 0.35, 2.2, 10, 6))
+    # the striking face: a raised square boss on the front end, cross-hatched by use
+    M.add('Head', 'iron', *superbox(hc + [8.0, 0, 0], 0.9, 3.2, 4.1, 6.0, 20, 12))
+    # keyholes on both broad faces, bronze escutcheons
+    for sy in (-1, 1):
+        M.add('Bronze', 'bronze', *superbox(hc + [0, sy * 3.65, 0.3], 1.9, 0.18, 2.5, 3.0, 20, 10))
+        M.add('Dark', 'dark', *superbox(hc + [0, sy * 3.82, 1.0], 0.55, 0.05, 0.55, 2.0, 12, 8))
+        M.add('Dark', 'dark', *superbox(hc + [0, sy * 3.82, -0.4], 0.25, 0.05, 0.9, 6.0, 10, 8))
+    # the back: a jailor's key-bit of bronze - a stem out of the block, its wards cut in steps
+    M.add('Bronze', 'bronze', *superbox(hc + [-10.0, 0, 0], 2.6, 0.9, 0.9, 4.0, 20, 12))
+    for k, (h, w) in enumerate(((4.0, 1.2), (2.6, 1.0), (3.4, 1.1), (1.8, 0.9))):
+        M.add('Bronze', 'bronze', *superbox(hc + [-12.2 - k * 1.9, 0, -h / 2 + 0.6], w * 0.5 + 0.35, 0.75, h / 2, 6.0, 14, 10))
+    M.add('Bronze', 'bronze', *superbox(hc + [-19.2, 0, -0.2], 0.9, 0.8, 1.6, 4.0, 12, 8))
+    # the shackle: an iron arch over the top of the lock
+    a = np.linspace(0, math.pi, 40)
+    arch = np.stack([3.6 * np.cos(a), np.zeros_like(a), 4.6 + 4.2 * np.sin(a)], -1) + hc
+    M.add('Iron', 'iron', *rod(arch, 0.75, 14))
+    # chain hanging from the shackle: five links swinging down one side
+    for k in range(6):
+        c = hc + np.array([3.6 + 0.2 * k, 0.0, 3.2 - 1.05 * k])
+        ax = np.array([0, 1.0, 0]) if k % 2 else np.array([1.0, 0, 0])
+        M.add('Chain', 'iron', *torus(c, 0.5, 0.15, ax, 14, 6, 1.5, np.array([0, 0, 1.0])))
+    mats = {'iron': f'diffuse={iD} normal={iN} spec=0.5 gloss=20 alpha=0 doublesided=0',
+            'bronze': f'diffuse={bD} normal={bN} spec=0.7 gloss=30 alpha=0 doublesided=0',
+            'dark': f'diffuse={iD} normal={iN} spec=0.05 gloss=4 alpha=0 doublesided=0',
+            'leather': f'diffuse={lD} normal={lN} spec=0.2 gloss=12 alpha=0 doublesided=0'}
+    return finish(M, 'vahlok_keyhammer', mats, None, 'WeaponBack')
+
+
+WEAPONS = {'vahlok': vahlok, 'zahkriisos': zahkriisos, 'nahkriin': nahkriin, 'volsung': volsung, 'otar': otar, 'rahgot': rahgot,
            'krosis': krosis, 'hevnoraak': hevnoraak, 'morokei': morokei}   # (Vahlok's and Vokun's are bows: tools/priestbows.py)
 
 if __name__ == '__main__':
