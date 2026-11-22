@@ -872,8 +872,9 @@ for combo in sorted(set(v for v in VAE_WEAP.values() if '+' in v)):   # (Noah: t
 
 # (Noah: "make them required") Vibrant Weapons' own art (its files, read from the mod): the one-handed swords its sword art, the
 # Dragon Slayer its greatsword art - each look the element nearest its colour
-VW_ART = {k: 'vibrant weapons\\magic\\' + v + '.nif' for k, v in {'alch': 'ShockSwordR', 'carian': 'ShockSwordR', 'radiant': 'FrostSwordR', 'ss_none': 'FireSwordR',
-          'ss_fire': 'FireSwordR', 'ss_frost': 'FrostSwordR', 'ss_shock': 'ShockSwordR', 'ss_sun': 'FireSwordR', 'ss_blood': 'FrostSwordR', 'slayer': 'FireSwordR'}.items()}
+# (Noah, 2026-11-18: "our own element art for the class weapons") ours now (tools/bladeart.py) - Vibrant Weapons no longer used
+VW_ART = {k: 'CurseOfAlduin\\fx\\blade_' + v + '.nif' for k, v in {'alch': 'shock', 'carian': 'shock', 'radiant': 'frost', 'ss_none': 'fire',
+          'ss_fire': 'fire', 'ss_frost': 'frost', 'ss_shock': 'shock', 'ss_sun': 'fire', 'ss_blood': 'frost', 'slayer': 'fire'}.items()}
 # (Noah: "for the weapon effects around the swords in hand use the effects mod we downloaded for that" - "Both layered") each
 # look also wears Vibrant Weapons' art along the blade and a
 # small light of its colour: an ability of a light effect carrying the art, laid on you while the sword is in your hand
