@@ -77,6 +77,38 @@ namespace bo3z
 			return g_freshGame || (a_player->GetLevel() <= 1 && days < 2.0f);
 		}
 
+		// (Noah, 2026-11-22: "my character for male and female have an axe at their hip, and when I create a character I see
+		// Axe Received, but it's not in my inventory") the quick start hands a new character Skyrim's Iron War Axe as Helgen is
+		// skipped - and it hung at the hip through the creator until the pack was emptied at the start. Until the game has
+		// started, any weapon a new character holds or carries (not a quest's) is taken out of the hands and the pack at once,
+		// and the body made again so nothing stays sheathed at the hip
+		void StripStartWeapons(RE::PlayerCharacter* a_p)
+		{
+			static auto last = std::chrono::steady_clock::now() - std::chrono::seconds(5);
+			if (std::chrono::steady_clock::now() - last < std::chrono::milliseconds(500)) return;
+			last = std::chrono::steady_clock::now();
+			auto* em = RE::ActorEquipManager::GetSingleton();
+			bool  held = false;
+			int   gone = 0;
+			for (bool left : { false, true }) {
+				if (auto* eq = a_p->GetEquippedObject(left); eq && em && (eq->Is(RE::FormType::Weapon) || eq->Is(RE::FormType::Ammo))) {
+					if (a_p->AsActorState()->IsWeaponDrawn()) a_p->DrawWeaponMagicHands(false);
+					em->UnequipObject(a_p, eq->As<RE::TESBoundObject>(), nullptr, 1, nullptr, false, true, false, true);
+					held = true;
+				}
+			}
+			for (auto& [obj, data] : a_p->GetInventory()) {
+				if (!obj || data.first <= 0 || !(obj->Is(RE::FormType::Weapon) || obj->Is(RE::FormType::Ammo))) continue;
+				if (data.second && data.second->IsQuestObject()) continue;
+				a_p->RemoveItem(obj, data.first, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+				gone += data.first;
+			}
+			if (held || gone) {
+				if (a_p->Is3DLoaded()) a_p->DoReset3D(false);
+				logger::info("intro: the start's weapons taken ({} held, {} carried) - nothing at the hip", held ? "one" : "none", gone);
+			}
+		}
+
 		// Survival Mode stays off in The Curse of Alduin: hunger/cold/fatigue fight the nights' own pacing, and its attribute
 		// penalties (it keeps them in Variable02-04) fought the mod's old save values. When the game has it on (the
 		// Gameplay setting, or a new game's prompt) we switch it off the way its own toggle does.
@@ -167,6 +199,7 @@ namespace bo3z
 			auto* ui = RE::UI::GetSingleton();
 			static auto movedAt = std::chrono::steady_clock::now();
 			if (!g_moved) movedAt = std::chrono::steady_clock::now();
+			if (player && !Save::Flag(Save::kFlagStarted) && Classes::Get() < 0 && FreshQuickstartGame(player)) StripStartWeapons(player);
 			// (the axe that wasn't there) while the hands hold nothing, the animation graph is told so: no weapon type in
 			// either hand, so the first-person arms stand empty instead of gripping an axe that's gone
 			if (player && g_emptyHandsFor > 0) {

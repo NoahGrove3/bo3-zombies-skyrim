@@ -83,7 +83,7 @@ def closest_tri(X, P, F, k=6):
     return q[r, m], C[r, m], bc[r, m], dd[r, m], within
 
 
-def fit(armour, sex, out, role='body', tri=None, textures=None, glows=None, clearance=0.6):
+def fit(armour, sex, out, role='body', tri=None, textures=None, glows=None, clearance=0.6, keep=None):
     """role 'body': a robe/cuirass - Skyrim's skin pieces in it dropped: the player's own body is worn under it by the armour
     record itself (Skyrim's NakedTorso addon beside ours, so whatever body they have shows, none of it shipped here); anything else (boots, gauntlets, a hood) keeps its own feet and hands, moved with it. tri = (its path as the game
     names it, under meshes\\; the file to write) - the body's sliders carried onto it, written from the _1 fit; weight from
@@ -114,7 +114,12 @@ def fit(armour, sex, out, role='body', tri=None, textures=None, glows=None, clea
     WORK.mkdir(parents=True, exist_ok=True)
     moved, faces, dropped = {}, {}, False
     for name, (V, F, tex) in A.items():
-        skin = 'actors\\character' in tex.lower()
+        if keep is not None:   # (one piece lifted out of a mesh - Skyrim's own underwear out of its body: the rest dropped)
+            if name not in keep:
+                job.append(f'drop {name}'); continue
+            skin = False
+        else:
+            skin = 'actors\\character' in tex.lower()
         if skin and role == 'body':   # (Skyrim's skin pieces: the new body stands in for them)
             job.append(f'drop {name}'); dropped = True; continue
         dd, ii = st.query(V, k=12)

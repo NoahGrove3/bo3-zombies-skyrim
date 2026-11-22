@@ -424,6 +424,8 @@ namespace bo3z
 					a_player->RemoveItem(obj, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
 					logger::info("perk: a ghost in the hand taken off ({})", obj->GetName());
 					continue;
+				} else if (obj && g_rearmLoad && !Save::Flag(Save::kFlagStarted) && (obj->Is(RE::FormType::Weapon) || obj->Is(RE::FormType::Ammo))) {
+					continue;   // (a new game not yet started: the quick start's axe is not put back - Intro takes it)
 				} else if (obj) {
 					em->UnequipObject(a_player, obj, nullptr, 1, slot, false, true, false, true);
 					em->EquipObject(a_player, obj, nullptr, 1, slot, false, false, false, true);
