@@ -409,7 +409,7 @@ namespace bo3z::Classes
 	{
 		constexpr int kWonderSteps = 3, kWonderOpensAt = 6;  // (g_wStep: 0 shut, 1-3 its quest open, 4 won and taken up, 5 won - waiting on its pedestal)
 		constexpr int kWonderTaken = kWonderSteps + 1, kWonderWaiting = kWonderSteps + 2;
-		constexpr const char* kWonderName[4] = { "Soulcaller's Staff", "Staff of Magnus", "Mutagen Staff", "Dragon Slayer" };  // (Noah: the Summoner's, Destruction's and the Alchemist's remade)
+		constexpr const char* kWonderName[4] = { "Soulcaller's Staff", "Wyrmspine Javelin", "Mutagen Staff", "Dragon Slayer" };  // (Noah: the Summoner's, Destruction's and the Alchemist's remade; 2026-11-21 Destruction's the Wyrmspine Javelin - "you can obtain the staff of Magnus in base Skyrim")
 		std::array<std::uint8_t, 4>  g_wStep{};    // per class: 0 not open, 1..3 the step under way, 4 earned
 		std::array<std::uint16_t, 4> g_wKills{};
 		std::array<std::uint32_t, 4> g_wTowns{};   // cities where a step was done (bits)
@@ -431,7 +431,8 @@ namespace bo3z::Classes
 		bool AfterSovngarde() { return Echo::DragonsSlain(); }  // (the story: the wonders' Legendary form - once the three dragons fall)
 		RE::TESObjectWEAP* Soulcaller() { auto* f = Lookup(gen::kSoulcaller, gen::kPlugin); return f ? f->As<RE::TESObjectWEAP>() : nullptr; }  // (the Summoner's wonder now)
 		RE::SpellItem* WyrmSpell() { auto* dh = RE::TESDataHandler::GetSingleton(); return dh ? dh->LookupForm<RE::SpellItem>(gen::kBoneHorn, gen::kPlugin) : nullptr; }  // (the Bone-Throne Horn)
-		RE::TESObjectWEAP* Magnus() { auto* f = Lookup(0x035369, "Skyrim.esm"); return f ? f->As<RE::TESObjectWEAP>() : nullptr; }  // (Destruction's wonder: Skyrim's own Staff of Magnus)
+		RE::TESObjectWEAP* Magnus() { auto* f = Lookup(0x035369, "Skyrim.esm"); return f ? f->As<RE::TESObjectWEAP>() : nullptr; }  // (Skyrim's own Staff of Magnus: its beam lent to the Soulcaller's and Mutagen Staffs)
+		RE::TESObjectWEAP* Javelin() { auto* f = Lookup(gen::kJavelinWeap, gen::kPlugin); return f ? f->As<RE::TESObjectWEAP>() : nullptr; }  // (Destruction's wonder: the Wyrmspine Javelin)
 		RE::SpellItem* TomeSpell() { auto* dh = RE::TESDataHandler::GetSingleton(); return dh ? dh->LookupForm<RE::SpellItem>(gen::kWonderTomeSpell, gen::kPlugin) : nullptr; }
 		RE::TESObjectWEAP* Slayer() { auto* f = Lookup(gen::kSlayerWeap, gen::kPlugin); return f ? f->As<RE::TESObjectWEAP>() : nullptr; }  // (our own one-handed sword: the Ayleid Crystal Saber)
 		RE::SpellItem* Myst(std::uint32_t a_id) { auto* f = Lookup(a_id, "MysticismMagic.esp"); return f ? f->As<RE::SpellItem>() : nullptr; }
@@ -466,7 +467,7 @@ namespace bo3z::Classes
 				GiveItem(p, Soulcaller(), 1, true);
 				break;
 			case coffer::kDestruction:
-				GiveItem(p, Magnus(), 1, true);
+				GiveItem(p, Javelin(), 1, true);
 				break;
 			case coffer::kAlchemist:
 				GiveFlask(6);
@@ -661,7 +662,7 @@ namespace bo3z::Classes
 			if (woke) {
 				Forms::Play(gen::Sound::quest_start);
 				Hud::Lore("THE FOUR SECRETS",
-					"Six cities are free, and the four wonders stir somewhere beneath the Echo Altars - the Soulcaller's Staff, the Staff of Magnus, the Mutagen Staff and the Dragon Slayer. Any of you may win any of them. Nobody will tell you how. Stand at a freed altar and listen to its whispers.", 12.0f);
+					"Six cities are free, and the four wonders stir somewhere beneath the Echo Altars - the Soulcaller's Staff, the Wyrmspine Javelin, the Mutagen Staff and the Dragon Slayer. Any of you may win any of them. Nobody will tell you how. Stand at a freed altar and listen to its whispers.", 12.0f);
 			}
 		}
 		// (Noah's plan, the Spellsword's resonance) its touch spells climb on melee kills only - a power attack counts twice
@@ -1255,11 +1256,11 @@ namespace bo3z::Classes
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (!p) return;
-		if (auto* m = Magnus(); m && p->GetItemCount(m) <= 0) GiveItem(p, m, 1, false);
+		if (auto* m = Javelin(); m && p->GetItemCount(m) <= 0) GiveItem(p, m, 1, false);
 		GiveFlask(6);
 		if (auto* sc = Soulcaller(); sc && p->GetItemCount(sc) <= 0) GiveItem(p, sc, 1, false);   // (the Summoner's: the Soulcaller's Staff)
 		for (int c = 0; c < 4; ++c) g_wStep[c] = kWonderTaken;   // (every class's wonder: the Dragon Slayer is given beside the kit)
-		logger::info("testkit: the four wonders - the Soulcaller's Staff, the Staff of Magnus, the Mutagen Staff, the Dragon Slayer");
+		logger::info("testkit: the four wonders - the Soulcaller's Staff, the Wyrmspine Javelin, the Mutagen Staff, the Dragon Slayer");
 	}
 	void DevGiveWonder(int a_cls)
 	{
@@ -1268,7 +1269,7 @@ namespace bo3z::Classes
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		auto* em = RE::ActorEquipManager::GetSingleton();
 		auto* dh = RE::TESDataHandler::GetSingleton();
-		RE::TESBoundObject* w = a_cls == coffer::kDestruction ? static_cast<RE::TESBoundObject*>(Magnus()) : a_cls == coffer::kSpellsword ? static_cast<RE::TESBoundObject*>(Slayer())
+		RE::TESBoundObject* w = a_cls == coffer::kDestruction ? static_cast<RE::TESBoundObject*>(Javelin()) : a_cls == coffer::kSpellsword ? static_cast<RE::TESBoundObject*>(Slayer())
 		                      : nullptr;
 		(void)dh;
 		if (p && em && w) em->EquipObject(p, w);
@@ -1302,7 +1303,7 @@ namespace bo3z::Classes
 			return true;
 		}
 		if (g_wStep[a_cls] == kWonderTaken && p) {  // (lost from the pack, or a new copy wanted: given again)
-			const bool have = a_cls == coffer::kSummoner ? (Soulcaller() && p->GetItemCount(Soulcaller()) > 0) : a_cls == coffer::kDestruction ? (Magnus() && p->GetItemCount(Magnus()) > 0)
+			const bool have = a_cls == coffer::kSummoner ? (Soulcaller() && p->GetItemCount(Soulcaller()) > 0) : a_cls == coffer::kDestruction ? (Javelin() && p->GetItemCount(Javelin()) > 0)
 			                : a_cls == coffer::kAlchemist ? (FlaskItem(6) && p->GetItemCount(FlaskItem(6)) > 0) : (Slayer() && p->GetItemCount(Slayer()) > 0);
 			if (!have) {
 				// (the audit: a dropped bow or blade was given again for free - copies without end) a lost weapon is made
@@ -1324,7 +1325,7 @@ namespace bo3z::Classes
 	{
 		switch (a_cls) {
 		case coffer::kSummoner: return Soulcaller();
-		case coffer::kDestruction: return Magnus();
+		case coffer::kDestruction: return Javelin();
 		case coffer::kAlchemist: return FlaskItem(6);
 		case coffer::kSpellsword: return Slayer();
 		}
@@ -1423,6 +1424,8 @@ namespace bo3z::Classes
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			auto* mg = Magnus();
+			// (Noah, 2026-11-21: "you can obtain the staff of Magnus in base Skyrim") no longer a wonder: Skyrim's staff is Skyrim's
+			if (constexpr bool kMagnusWonder = false; !kMagnusWonder) return;
 			if (!p || !mg) return;
 			// its charge never runs down (the class's wonder, not a soul-gem staff)
 			for (const bool left : { false, true }) if (p->GetEquippedObject(left) == mg) p->AsActorValueOwner()->RestoreActorValue(left ? RE::ActorValue::kLeftItemCharge : RE::ActorValue::kRightItemCharge, 1.0e6f);
@@ -1453,6 +1456,190 @@ namespace bo3z::Classes
 		}
 	}
 
+	// ---- (Noah, 2026-11-21: Destruction's new wonder, "Wyrmspine Javelin: Carved from a dragon's spine. Hold to charge it like a
+	// bow draw; the longer the charge, the bigger the blast. A kill makes it ricochet to the next enemy before it returns" - and,
+	// as every one of the spears offered, "switches element to match the fire, frost or shock spell in your other hand, and comes
+	// back to your hand after a throw") Held: the attack drawn back overhand and held while it charges (full at 1.5 s, the
+	// element's light gathering at the point); let go: thrown where you aim, flat and fast. Where it strikes it bursts in the
+	// element of the spell in the other hand (fire if none) - the burst's size and harm grow with the charge. If the burst kills,
+	// it flies on to the nearest of the dead it hasn't struck (one more, up to three at full charge, each a little weaker), then
+	// home to your hand through anything in its way. Your hand is empty while it's away ----
+	namespace
+	{
+		constexpr const char* kJavModel = "CurseOfAlduin\\wyrmspine\\wyrmspine.nif";
+		struct Javelin_ { bool charging = false, away = false, left = false; float charge = 0, away_t = 0, glow = 0; int el = 0, bounces = 0; float power = 0; std::vector<RE::FormID> struck; };
+		Javelin_ g_jav;
+		float JavTop() { return UpgradeMult(AfterSovngarde() ? kWonderUps + 1 : kWonderUps) * (0.7f + 0.3f * Arcana::Power()); }
+		// the spell in the other hand's element, as the bursts draw them (0 fire 1 frost 2 shock 3 wind 4 sun 5 blood 6 void 7 poison)
+		int JavElement(bool a_left)
+		{
+			const int sp = Arcana::Hands()[a_left ? 1 : 0];
+			if (sp < 0) return 0;
+			switch (Arcana::ElementOf(sp)) {
+			case coffer::kFrost: return 1;
+			case coffer::kShock: return 2;
+			case coffer::kPoison: case coffer::kCorrosion: return 7;
+			case coffer::kSun: return 4;
+			case coffer::kBlood: return 5;
+			case coffer::kArcane: return 6;
+			default: return 0;
+			}
+		}
+		RE::NiPoint3 JavHand(RE::PlayerCharacter* a_p, bool a_left)
+		{
+			auto* cam = RE::PlayerCamera::GetSingleton();
+			if (auto* root = a_p->Get3D(cam && cam->IsInFirstPerson())) {
+				if (auto* hand = root->GetObjectByName(a_left ? "NPC L Hand [LHnd]" : "NPC R Hand [RHnd]")) {
+					if (hand->world.translate.GetDistance(a_p->GetPosition()) < 250.0f) return hand->world.translate;
+				}
+			}
+			return Gun::SwingFrom();
+		}
+		void JavHide(RE::PlayerCharacter* a_p, bool a_hide)
+		{
+			for (const bool p1 : { false, true }) {
+				auto* rt = a_p->Get3D(p1);
+				if (auto* node = rt ? rt->GetObjectByName(g_jav.left ? "SHIELD" : "WEAPON") : nullptr) node->SetAppCulled(a_hide);
+			}
+		}
+		void JavHome(const RE::NiPoint3& a_from);
+		void JavBurst(const RE::NiPoint3& a_at, float a_c, bool a_first);
+		void JavFly(const RE::NiPoint3& a_from, RE::Actor* a_to, float a_c)
+		{
+			RE::NiPoint3 v = (a_to->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f }) - a_from;
+			const float d = v.Length();
+			v = d > 1.0f ? v * (2600.0f / d) : RE::NiPoint3{ 0, 0, 2600.0f };
+			Gun::Lob(kJavModel, a_from, v, 1.0f, [a_c](const RE::NiPoint3& at) { JavBurst(at, a_c, false); }, 0.0f, 0.0f);
+			Gun::LobChaseLast(a_to);
+		}
+		void JavBurst(const RE::NiPoint3& a_at, float a_c, bool a_first)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p) return;
+			const int el = g_jav.el;
+			const float c = std::clamp(a_c, 0.0f, 1.0f);
+			const float radius = 170.0f + 280.0f * c, share = (0.45f + 1.35f * c) * JavTop();
+			Gun::ElemBurst(el, a_at + RE::NiPoint3{ 0, 0, 20.0f }, 0.9f + 1.3f * c, 0.0f, 0.9f);
+			static constexpr const char* kBlast[8] = { "fireball", "frost", "shockmass", "shoutarea", "light", "dark", "dark", "poisongas" };
+			static constexpr const char* kSnd[8] = { "fireball", "frost", "runeshock", "fireball", "light", "bloodplague", "fireball", "poisongas" };
+			static constexpr const char* kRing[8] = { "fire", "frost", "shock", "white", "sun", "blood", "purple", "white" };
+			Gun::FxBlastSized(kBlast[el], a_at, 0.6f + 0.8f * c);
+			Gun::BlastSound(kSnd[el], a_at, 0.8f + 0.2f * c);
+			if (c >= 0.5f) Gun::Ring(kRing[el], a_at, 30.0f, radius * 1.1f, 0.55f);
+			Gun::Motes(std::min(el, 6), a_at, 0.8f + 1.2f * c, 1.5f + c);
+			std::vector<RE::ActorHandle> caught;
+			for (auto* f : NearFoes(a_at, radius, 24)) {
+				caught.push_back(f->GetHandle());
+				g_jav.struck.push_back(f->GetFormID());
+				g_lastHit[f->GetFormID()] = Javelin() ? Javelin()->GetFormID() : 0;
+			}
+			Gun::AreaHurt(a_at, radius, share, "");
+			logger::info("javelin: burst {} at charge {:.2f} - radius {:.0f}, {} caught (bounce {})", el, c, radius, caught.size(), g_jav.bounces);
+			// a kill sends it on: to the nearest of the dead it hasn't struck yet, within 20 m
+			Tasks::Later(0.2f, [caught, a_at, c]() {
+				auto* pl = RE::PlayerCharacter::GetSingleton();
+				if (!pl) return;
+				bool killed = false;
+				for (auto& h : caught) if (auto a = h.get(); a && a->IsDead()) killed = true;
+				const int most = 1 + static_cast<int>(std::floor(g_jav.power * 2.0f + 0.01f));   // (one more; at full charge up to three)
+				if (killed && g_jav.bounces < most) {
+					RE::Actor* next = nullptr;
+					float best = 1400.0f;
+					for (auto* f : NearFoes(a_at, 1400.0f, 32)) {
+						if (std::find(g_jav.struck.begin(), g_jav.struck.end(), f->GetFormID()) != g_jav.struck.end()) continue;
+						if (const float d = f->GetPosition().GetDistance(a_at); d < best) best = d, next = f;
+					}
+					if (next) {
+						++g_jav.bounces;
+						logger::info("javelin: a kill - on to the next of the dead ({:.0f} away)", best);
+						JavFly(a_at + RE::NiPoint3{ 0, 0, 70.0f }, next, c * 0.8f);
+						return;
+					}
+				}
+				JavHome(a_at + RE::NiPoint3{ 0, 0, 70.0f });
+			});
+			(void)a_first;
+		}
+		void JavHome(const RE::NiPoint3& a_from)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p) return;
+			Gun::Lob(kJavModel, a_from, RE::NiPoint3{ 0, 0, 600.0f }, 1.0f, [](const RE::NiPoint3&) {
+				auto* pl = RE::PlayerCharacter::GetSingleton();
+				if (!pl) return;
+				g_jav.away = false;
+				JavHide(pl, false);
+				Gun::ElemBurst(g_jav.el, JavHand(pl, g_jav.left), 0.35f, 0.0f, 0.3f);
+				logger::info("javelin: back in your hand");
+			}, 0.0f, 0.0f);
+			Gun::LobHomeLast(p);
+		}
+		void JavThrow()
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* cam = RE::PlayerCamera::GetSingleton();
+			if (!p || !cam || !cam->cameraRoot) { g_jav.away = false; return; }
+			const auto& w = cam->cameraRoot->world;
+			RE::NiPoint3 dir{ w.rotate.entry[0][1], w.rotate.entry[1][1], w.rotate.entry[2][1] };
+			dir.Unitize();
+			RE::NiPoint3 from = JavHand(p, g_jav.left) + dir * 25.0f;
+			RE::NiPoint3 aim = (w.translate + dir * 2400.0f) - from;   // (from the hand at the crosshair's point ahead, in either view)
+			if (aim.Length() > 1e-3f) aim.Unitize(); else aim = dir;
+			const float c = g_jav.power;
+			Gun::Lob(kJavModel, from, aim * (3000.0f + 900.0f * c) + RE::NiPoint3{ 0, 0, 60.0f }, 1.0f, [c](const RE::NiPoint3& at) { JavBurst(at, c, true); }, 0.0f, 260.0f);
+			Gun::BlastSound("frost", from, 0.35f);   // (the air torn as it goes)
+			logger::info("javelin: thrown at charge {:.2f}, element {}", c, g_jav.el);
+		}
+		void TickJavelin(float a_delta)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p) return;
+			if (g_jav.away) {
+				g_jav.away_t += a_delta;
+				JavHide(p, true);
+				if (g_jav.away_t > 12.0f) { g_jav.away = false; JavHide(p, false); logger::warn("javelin: lost in flight - back in your hand"); }
+				return;
+			}
+			if (!g_jav.charging) return;
+			if (!JavelinInHand(g_jav.left) || p->IsDead()) { g_jav.charging = false; return; }
+			g_jav.charge = std::min(1.5f, g_jav.charge + a_delta);
+			g_jav.el = JavElement(g_jav.left);
+			// the element gathering at the point as it charges: brighter, then a flare when it's full
+			if ((g_jav.glow -= a_delta) <= 0) {
+				const float c = g_jav.charge / 1.5f;
+				g_jav.glow = 0.28f;
+				Gun::ElemBurst(g_jav.el, JavHand(p, g_jav.left) + RE::NiPoint3{ 0, 0, 30.0f }, 0.15f + 0.35f * c, 0.0f, 0.3f);
+			}
+			static bool full = false;
+			if (g_jav.charge >= 1.5f && !full) { full = true; Gun::BlastSound("runeshock", p->GetPosition(), 0.4f); }
+			if (g_jav.charge < 1.5f) full = false;
+		}
+	}
+	bool JavelinInHand(bool a_left)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* j = Javelin();
+		return p && j && p->AsActorState()->IsWeaponDrawn() && p->GetEquippedObject(a_left) == j;
+	}
+	void JavelinButton(bool a_left, bool a_down)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (!p || p->IsDead()) return;
+		if (a_down) {
+			if (g_jav.away || g_jav.charging || Gun::Throwing()) return;
+			g_jav.charging = true, g_jav.left = a_left, g_jav.charge = 0, g_jav.glow = 0;
+			g_jav.el = JavElement(a_left);
+			Gun::JavelinDraw(a_left);
+			return;
+		}
+		if (!g_jav.charging) return;
+		g_jav.charging = false;
+		g_jav.power = std::clamp(g_jav.charge / 1.5f, 0.0f, 1.0f);
+		g_jav.away = true, g_jav.away_t = 0, g_jav.bounces = 0;
+		g_jav.struck.clear();
+		Gun::JavelinLoose([]() { JavThrow(); });
+	}
+
 	namespace { void MaceHit(RE::PlayerCharacter* a_p, RE::Actor* a_target, bool a_power); }
 	void NoteHit(RE::Actor* a_target, RE::FormID a_source, bool a_power)
 	{
@@ -1470,9 +1657,7 @@ namespace bo3z::Classes
 		if (!Director::IsFoe(a_target) || a_target->IsDead()) return;
 		if (!src) return;
 		if (auto* w = src->As<RE::TESObjectWEAP>(); w && !w->IsBow() && !w->IsCrossbow() && !w->IsStaff()) Perks::OnMeleeHit();  // (Bladesong Mead)
-		if (auto* mg = Magnus(); mg && (src == mg || (mg->formEnchanting && src == mg->formEnchanting))) {
-			MagnusHit(p, a_target);
-		}
+		(void)&MagnusHit;   // (the Staff of Magnus is Skyrim's own again: its beam's touch does only what Skyrim's does)
 		// (Noah: "the old weapon abilities ... would be fully replaced") the class swords' and the Dragon Slayer's work is done by
 		// their swings (MaceSwing, SlayerSwing)
 		(void)a_power;
@@ -2617,6 +2802,7 @@ namespace bo3z::Classes
 		TickAlchemy(a_delta);
 		TickWand(a_delta);
 		TickMagnus(a_delta);
+		TickJavelin(a_delta);
 		g_tomeCool = std::max(0.0f, g_tomeCool - a_delta);
 		if (g_tomeHold > 0 && (g_tomeHold -= a_delta) <= 0) {
 			for (auto& [idx, lv] : g_tomeHeld) Arcana::SetLevel(idx, lv);
@@ -3593,7 +3779,7 @@ namespace bo3z::Classes
 			{ "Spellbound Rapier", "The Spellsword's blade. It takes the element of the spell in your other hand.",
 				{ "Tier I: light attacks fire bolts of that element.", "Tier II: heavy attacks raise a tornado that casts your spell on all it hits.", "Tier III: heavy attacks raise a great tornado." } },
 			// (Noah, 2026-11-21: the descriptions approved) Skyrim's own staff, its card in our words
-			{ "Staff of Magnus", "The Battle-mage's wonder. Hold its beam on the dead: it drains them and feeds your magicka, then erupts where it ends.", {} },
+			{ "Wyrmspine Javelin", "The Battle-mage's wonder. Hold attack to charge, let go to throw: it bursts in your other hand's element, bigger the longer you held. A kill sends it on to the next enemy; then it flies back to you.", {} },
 		};
 		static const Card kFlasks[] = {
 			{ "Fire Flask", "Bursts into flame where it lands.", {} },
@@ -4034,6 +4220,7 @@ namespace bo3z::Classes
 
 	bool FlaskSwingBlocked(bool a_left)
 	{
+		if (JavelinInHand(a_left)) return true;   // (the Wyrmspine Javelin is thrown, never swung)
 		const int el = FlaskHeld(a_left);
 		if (el < 0 || el == 6) return false;   // (the Mutagen Staff: Skyrim's staff cast plays)
 		// (Noah: "my character is still making swing grunt sounds when throwing") Skyrim's own swing never plays with a flask in

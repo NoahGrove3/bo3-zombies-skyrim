@@ -11,9 +11,9 @@
   },
   {
    "id": "frostbinder",
-   "label": "Staff of Magnus",
+   "label": "Wyrmspine Javelin",
    "color": "9FD8FF",
-   "text": "The Staff of Magnus. Its beam drains the dead and feeds your magicka, and erupts where it lets go; held two seconds, the eruption leaves an orb of searing light pulsing on everything round it.",
+   "text": "The Wyrmspine Javelin, carved from a dragon's spine. Hold to charge it, let go to throw: it bursts in the element of the spell in your other hand, bigger the longer you held. A kill sends it on to the next of the dead before it flies back to your hand.",
    "cls": "Destruction"
   },
   {

@@ -724,6 +724,12 @@ SLAYER_NIF = 'CurseOfAlduin\\slayer\\dragonslayer.nif'
 crystal_weapon('slayer', 'UN_DragonSlayer', 'Dragon Slayer', SLAYER_NIF, '1st_slayer',
     SWORD_DESC['slayer'],
     (6000, 16.0, 26), 'weap_draugr_gs', 0.75 * 1.5)   # (Noah: "make 2hand attacks faster by 50% only while holding those 2 weapons")
+# (Noah, 2026-11-21: Destruction's wonder, "Wyrmspine Javelin" - in place of the Staff of Magnus, which Skyrim gives anyone) a
+# one-handed record held as a spear and carried on the back (tools/wyrmspine.py); its throw, charge, blast and ricochet are
+# src/Classes.cpp's (TickJavelin) - its attack is never swung
+crystal_weapon('javelin', 'UN_WyrmspineJavelin', 'Wyrmspine Javelin', 'CurseOfAlduin\\wyrmspine\\wyrmspine.nif', '1st_javelin',
+    "Destruction's wonder, a javelin carved from a dragon's spine. Hold attack to charge, let go to throw: it bursts in the element of the spell in your other hand, bigger the longer you held. A kill sends it on to the next enemy, then it flies back to your hand.",
+    (6000, 8.0, 30))
 
 # (Noah: "I want the armor kits for all classes to stay the same visually through all the upgrades ... the upgraded version
 # to make the item look enchanted") each class's set glows with its colour from Tier I, stronger each tier (Classes::TickArmour
@@ -1519,7 +1525,7 @@ recs['ACTI'].append(record('ACTI', fid('ACTI', 'rel_portal'), [sub('EDID', z('UN
 # glow, and a fiery pillar holds the Hall's rewards: nameless activators (no prompt of Skyrim's - src/Echo.cpp aims and takes them)
 # (Noah, 2026-11-18: the old wonders' leftovers out) each class's wonder floats as itself: the Summoner's Soulcaller's Staff
 # (Fulcimentum's Glass Staff), the Alchemist's Mutagen Staff; their greyed likenesses made by tools/modelconv/ghostnif.cpp
-for key, model, r in (('hf_gravecaller', 'SSS\\GlassStaff.nif', 80), ('hf_frostbinder', 'Weapons\\StaffofMagnus\\StaffofMagnus.nif', 80),
+for key, model, r in (('hf_gravecaller', 'SSS\\GlassStaff.nif', 80), ('hf_frostbinder', 'CurseOfAlduin\\wyrmspine\\wyrmspine.nif', 80),
                       ('hf_wolfcrown', 'CurseOfAlduin\\alchemist\\mutagen_staff.nif', 80), ('hf_barrowhorn', 'CurseOfAlduin\\slayer\\dragonslayer.nif', 60),
                       ('hf_bane', lgs('bane'), 90), ('hf_glow', 'CurseOfAlduin\\fx\\hall_glow.nif', 60),
                       ('hf_glowtall', 'CurseOfAlduin\\fx\\hall_glow_tall.nif', 120), ('hf_pillar', 'CurseOfAlduin\\reliquary\\pillar_runes.nif', 170)):
@@ -1527,7 +1533,7 @@ for key, model, r in (('hf_gravecaller', 'SSS\\GlassStaff.nif', 80), ('hf_frostb
         sub('MODL', z(model)), sub('FNAM', b'\0\0')]))
 for k in ('gravecaller', 'frostbinder', 'wolfcrown', 'barrowhorn', 'bane'):  # (greyed out, until it's yours: tools/modelconv/ghostnif.cpp; the Staff of Magnus's made on the machine from the game's own)
     recs['ACTI'].append(record('ACTI', fid('ACTI', 'hg_' + k), [sub('EDID', z('UN_hg_' + k)), sub('OBND', struct.pack('<6h', -80, -80, -80, 80, 80, 160)),
-        sub('MODL', z({'bane': lgs('bane'), 'barrowhorn': 'CurseOfAlduin\\slayer\\dragonslayer.nif', 'gravecaller': 'SSS\\GlassStaff.nif', 'wolfcrown': 'CurseOfAlduin\\wonder\\ghost_mutagen.nif'}.get(k, 'CurseOfAlduin\\wonder\\ghost_' + k + '.nif'))), sub('FNAM', b'\0\0')]))   # (the Bane and the Slayer: Light Greatswords' models)
+        sub('MODL', z({'bane': lgs('bane'), 'frostbinder': 'CurseOfAlduin\\wyrmspine\\wyrmspine.nif', 'barrowhorn': 'CurseOfAlduin\\slayer\\dragonslayer.nif', 'gravecaller': 'SSS\\GlassStaff.nif', 'wolfcrown': 'CurseOfAlduin\\wonder\\ghost_mutagen.nif'}.get(k, 'CurseOfAlduin\\wonder\\ghost_' + k + '.nif'))), sub('FNAM', b'\0\0')]))   # (the Bane and the Slayer: Light Greatswords' models)
 # Stage 5 (src/Echo.cpp Hall): the Hall of the Awakened's stations, and Alduin's Fang
 for key, name, verb in (('hall_fang', "Alduin's Bane", 'Take'), ('hall_robes', "The First Dragonborn's Regalia", 'Take'),
                         ('hall_skull', "The Bone-Wyrm's Skull", 'Bind'), ('hall_endless', 'Brazier of the Endless Night', 'Kindle'),

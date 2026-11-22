@@ -109,7 +109,7 @@
    "cls": "destruction",
    "title": "The Eye of Magnus",
    "reward": "wonder",
-   "rewardText": "The Greybeards call you to High Hrothgar: the Staff of Magnus waits in the great hall.",
+   "rewardText": "The Greybeards call you to High Hrothgar: the Wyrmspine Javelin waits in the great hall.",
    "steps": [
     {
      "type": "touch",
@@ -203,8 +203,8 @@
     }
    ],
    "voice": "eye",
-   "open": "A god's eye fell to Nirn, and the curse buried its light. Wake its fire, frost and storm, and the Staff of Magnus is yours to claim.",
-   "final": "The Eye sees again. The Greybeards are calling. The Staff of Magnus waits at High Hrothgar."
+   "open": "A god's eye fell to Nirn, and the curse buried its light. Wake its fire, frost and storm, and the Wyrmspine Javelin is yours to claim.",
+   "final": "The Eye sees again. The Greybeards are calling. The Wyrmspine Javelin waits at High Hrothgar."
   },
   {
    "id": "vortex",

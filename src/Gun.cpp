@@ -1413,13 +1413,35 @@ namespace bo3z
 		// leaves the hand ahead of you; a follow-through up and out, then home. The glass clinks as it is drawn back, the air
 		// whips past as it goes. Laid over the animation in the body you're seen in; the flask in the hand hidden from the
 		// release until the next is in it
-		struct ThrowPose { bool on = false, left = false, released = false, clinked = false, whooshed = false; float t = 0; std::function<void()> release; };
+		struct ThrowPose { bool on = false, left = false, released = false, clinked = false, whooshed = false; float t = 0; std::function<void()> release; bool over = false, hold = false; };
 		ThrowPose g_throw;
 		constexpr float kThrowLen = 0.95f, kThrowRelease = 0.46f;   // (Noah: "a little more weight" - a slower draw back, a heavier swing)
+		// (Noah, 2026-11-21: the Wyrmspine Javelin, "hold to charge it like a bow draw") a javelin's throw is overhand: the arm
+		// raised back behind the head with the elbow bent and the shoulders turned away - held there for as long as you charge -
+		// then whipped over and forward, the shoulders turning through, let go above and ahead of the head
+		constexpr float kJavBack = 0.32f, kJavRelease = 0.47f, kJavLen = 0.9f;
 		float Ease(float k) { k = std::clamp(k, 0.0f, 1.0f); return k * k * (3.0f - 2.0f * k); }
 		// the throw's channels at time t: the upper arm about your right (+ forward and up), the elbow's bend, the wrist's
 		// cock (- back, + the flick), the shoulders' turn (+ toward the throwing side, back)
 		struct ThrowKeys { float arm, elbow, wrist, turn; };
+		ThrowKeys JavAt(float t)
+		{
+			constexpr float tFollow = 0.62f;
+			if (t < kJavBack) {          // drawn back: up over the shoulder and behind, the elbow folded, the wrist cocked back
+				const float k = Ease(t / kJavBack);
+				return { 3.35f * k, 1.35f * k, -0.45f * k, 0.6f * k };
+			}
+			if (t < kJavRelease) {       // whipped through: the arm over and forward, the elbow opening, the shoulders turning back
+				const float k = Ease((t - kJavBack) / (kJavRelease - kJavBack));
+				return { 3.35f - 1.55f * k, 1.35f - 1.2f * k, -0.45f + 0.75f * k, 0.6f - 0.85f * k };
+			}
+			if (t < tFollow) {           // the follow-through: down and across
+				const float k = Ease((t - kJavRelease) / (tFollow - kJavRelease));
+				return { 1.8f - 0.6f * k, 0.15f + 0.15f * k, 0.3f, -0.25f - 0.1f * k };
+			}
+			const float k = Ease((t - tFollow) / (kJavLen - tFollow));   // and home
+			return { 1.2f * (1 - k), 0.3f * (1 - k), 0.3f * (1 - k), -0.35f * (1 - k) };
+		}
 		ThrowKeys ThrowAt(float t)
 		{
 			constexpr float tBack = 0.30f, tRel = kThrowRelease, tFollow = 0.62f;
@@ -1485,7 +1507,7 @@ namespace bo3z
 			auto* root = a_player->Get3D(first);
 			if (!root) return;
 			g_turnFirst = first;
-			const ThrowKeys k = ThrowAt(g_throw.t);
+			const ThrowKeys k = g_throw.over ? JavAt(g_throw.t) : ThrowAt(g_throw.t);
 			const float yaw = a_player->data.angle.z;
 			const RE::NiPoint3 r{ std::cos(yaw), -std::sin(yaw), 0 };
 			const RE::NiPoint3 up{ 0, 0, 1 };
@@ -1511,7 +1533,7 @@ namespace bo3z
 			// the flask in that hand: hidden from the release until the throw is over (the next one is in your hand)
 			for (const bool p1 : { false, true }) {
 				auto* rt = a_player->Get3D(p1);
-				if (auto* node = rt ? rt->GetObjectByName(g_throw.left ? "SHIELD" : "WEAPON") : nullptr) node->SetAppCulled(g_throw.released && g_throw.t < kThrowLen);
+				if (auto* node = rt ? rt->GetObjectByName(g_throw.left ? "SHIELD" : "WEAPON") : nullptr) node->SetAppCulled(g_throw.released && g_throw.t < (g_throw.over ? kJavLen : kThrowLen));
 			}
 		}
 		// (Noah: "my players hands should be holding the flask from the circle bowl part of the flask not the snout/cork area. the
@@ -1660,6 +1682,15 @@ namespace bo3z
 		{
 			if (!g_throw.on) return;
 			g_throw.t += a_delta;
+			if (g_throw.over) {   // (the javelin: held drawn back while it charges; its own sounds are its thrower's)
+				if (g_throw.hold) g_throw.t = std::min(g_throw.t, kJavBack);
+				if (!g_throw.released && !g_throw.hold && g_throw.t >= kJavRelease) {
+					g_throw.released = true;
+					if (g_throw.release) g_throw.release();
+				}
+				if (g_throw.t >= kJavLen + 0.05f) g_throw = {};
+				return;
+			}
 			// (Noah: "the throwing sound also sounds like a blade cutting through the air like a dagger. make the throw sound a cork
 			// popping") the cork pulled as the flask is drawn back - no blade's whoosh
 			if (!g_throw.clinked) {
@@ -1685,6 +1716,18 @@ namespace bo3z
 			g_throw.on = true, g_throw.left = a_left, g_throw.released = false, g_throw.t = 0, g_throw.release = std::move(a_release);
 		}
 		bool ThrowingImpl() { return g_throw.on; }
+		void JavelinDrawImpl(bool a_left)
+		{
+			if (g_throw.on) return;
+			g_throw = {};
+			g_throw.on = true, g_throw.left = a_left, g_throw.over = true, g_throw.hold = true, g_throw.clinked = true;
+		}
+		void JavelinLooseImpl(std::function<void()> a_release)
+		{
+			if (!g_throw.on || !g_throw.over) return;
+			g_throw.hold = false, g_throw.release = std::move(a_release);
+			g_throw.t = std::max(g_throw.t, kJavBack);
+		}
 
 		struct PoseHook
 		{
@@ -2516,11 +2559,13 @@ namespace bo3z
 			} else logger::info("dev: orb not hung (want {})", g_orb.want);
 		}
 		void  StartThrow(bool a_left, std::function<void()> a_release) { StartThrowImpl(a_left, std::move(a_release)); }
+		void  JavelinDraw(bool a_left) { JavelinDrawImpl(a_left); }
+		void  JavelinLoose(std::function<void()> a_release) { JavelinLooseImpl(std::move(a_release)); }
 		bool  Throwing() { return ThrowingImpl(); }
 		// (Noah: the Alchemist's flasks "explode right in front of my face - there's no travel, it doesn't arc") a thrown
 		// flask is flown here: its model hung in the scene, carried along its arc under gravity, tumbling; it comes down on
 		// the first body or wall or ground its path crosses, and its burst is called there
-		struct Lobbed { Spellcraft::Fx fx; RE::ObjectRefHandle ref; RE::NiPoint3 p, v; float t = 0, spin = 12.0f, scale = 1.0f; std::function<void(const RE::NiPoint3&)> land; bool done = false; bool meteor = false; RE::NiPoint3 target; RE::NiMatrix3 turn; std::vector<std::pair<RE::ObjectRefHandle, FxPart>> trail; RE::ActorHandle chase; float grav = 900.0f; float hold = 0; bool held = false; };
+		struct Lobbed { Spellcraft::Fx fx; RE::ObjectRefHandle ref; RE::NiPoint3 p, v; float t = 0, spin = 12.0f, scale = 1.0f; std::function<void(const RE::NiPoint3&)> land; bool done = false; bool meteor = false; RE::NiPoint3 target; RE::NiMatrix3 turn; std::vector<std::pair<RE::ObjectRefHandle, FxPart>> trail; RE::ActorHandle chase; float grav = 900.0f; float hold = 0; bool held = false; RE::ActorHandle home; };
 		std::vector<Lobbed> g_lobs;
 		void TickLobs(float a_delta)
 		{
@@ -2533,7 +2578,23 @@ namespace bo3z
 				l.t += dt;
 				// (Noah: "The Dragon Slayer's meteors should be homing ... realistic, smaller fireballs that home in on enemies") one
 				// chasing one of the dead: steered onto it as it moves, no falling
-				if (auto ca = l.chase.get(); ca && !ca->IsDead()) {
+				// (Noah: the Wyrmspine Javelin "returns" to your hand) one flying home: straight back to whoever threw it, through
+				// anything in its way, and down in their hand
+				if (auto ho = l.home.get()) {
+					const RE::NiPoint3 to = ho->GetPosition() + RE::NiPoint3{ 0, 0, 100.0f };
+					RE::NiPoint3 want = to - l.p;
+					const float d = want.Length();
+					if (d < 90.0f || l.t > 6.0f) {
+						l.fx.Detach();
+						if (auto r = l.ref.get()) r->Disable(), r->SetDelete(true);
+						for (auto& [h, fp] : l.trail) if (auto r = h.get()) r->Disable(), r->SetDelete(true);
+						l.done = true;
+						if (l.land) landed.push_back({ l.land, to });
+						continue;
+					}
+					want = want * (3400.0f / std::max(d, 1.0f));
+					l.v = l.v + (want - l.v) * std::min(1.0f, 7.0f * dt);
+				} else if (auto ca = l.chase.get(); ca && !ca->IsDead()) {
 					l.target = ca->GetPosition() + RE::NiPoint3{ 0, 0, 40.0f };
 					RE::NiPoint3 want = l.target - l.p;
 					const float d = want.Length();
@@ -2553,7 +2614,7 @@ namespace bo3z
 					if (next.z <= l.target.z + 25.0f || next.GetDistance(l.target) < 60.0f) { hit = l.target; down = true; }
 					else if (l.p.z > l.target.z + 260.0f) { l.p = next; goto placed; }
 				}
-				if (!down && l.t > 0.04f) {  // (out of your own hand first)
+				if (!down && l.t > 0.04f && !l.home.get()) {  // (out of your own hand first; one flying home passes through)
 					if (const float wf = Spellcraft::WorldHit(l.p, next); wf <= 1.0f) hit = l.p + (next - l.p) * wf, down = true;
 					for (auto* f : foes) {
 						if (down) break;
@@ -2645,6 +2706,8 @@ namespace bo3z
 			logger::info("lob: {} ({})", a_model, l.ref ? "placed" : "NOT PLACED");
 			g_lobs.push_back(std::move(l));
 		}
+		void LobChaseLast(RE::Actor* a_target) { if (a_target && !g_lobs.empty()) g_lobs.back().chase = a_target->GetHandle(); }
+		void LobHomeLast(RE::Actor* a_to) { if (a_to && !g_lobs.empty()) g_lobs.back().home = a_to->GetHandle(), g_lobs.back().grav = 0.0f; }
 		void Hazard(const std::string& a_model, const RE::NiPoint3& a_at, float a_scale, float a_life, float a_yaw, std::vector<RE::ObjectRefHandle>* a_placed)
 		{
 			for (const auto& fp : FxParts(a_model)) {
@@ -3359,6 +3422,12 @@ namespace bo3z
 				if (Classes::MutagenInHand()) {
 					if (left && down) Classes::MutagenBlock(true);
 					else if (left && up) Classes::MutagenBlock(false);
+					return false;
+				}
+				// (Noah, 2026-11-21: the Wyrmspine Javelin) held to charge, let go to throw
+				if (Classes::JavelinInHand(left)) {
+					if (down) Classes::JavelinButton(left, true);
+					else if (up) Classes::JavelinButton(left, false);
 					return false;
 				}
 				if (Classes::FlaskInHand(left)) {

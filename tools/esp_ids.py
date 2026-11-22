@@ -68,6 +68,7 @@ def assign(S=None, write=False):
              [(k, f'cm_{c}_{a}') for c in CLASS_ARMOUR for a in CLASS_ARMAS for k in ('ARMA',)] + [('ARMO', f'cm_{c}_{pc}') for c in CLASS_ARMOUR for pc in CLASS_PIECES] + [('WEAP', 'carianblade')] + [(k, f'bv_{b}_{t}') for b in BLADE_VIZ for t in (1, 2, 3) for k in ('EFSH', 'MGEF', 'ENCH')] + [('EFSH', 'shadowburn')] + [(k, f'vw_{b}') for b in BLADE_VIZ for k in ('LIGH', 'ARTO', 'MGEF', 'SPEL')] + [('EFSH', 'hallghost'), ('EFSH', 'spectral'), ('EFSH', 'soulpurple'), ('EFSH', 'tabletgreen'), ('EFSH', 'tabletgold'), ('KYWD', 'scythe'), ('MGEF', 'soulcall'), ('ENCH', 'soulcaller'), ('WEAP', 'soulcaller')] + [(k, 'vae_' + c) for c in VAE_COL for k in ('MGEF', 'ENCH')] + [('ENCH', 'vae_' + c.replace('+', '_')) for c in sorted(set(VAE_WEAP.values())) if '+' in c]   # (Noah: the four crystal swords and the Dragon Slayer - their tier looks)
     wanted += [(k, 'conj_' + c[0]) for c in CONJURE for k in ('NPC_', 'MGEF', 'SPEL')]   # (Phase 2: the Summoner's conjurations, our own)
     wanted += [('ARMA', 'underwear'), ('ARMO', 'underwear')]   # (Phase 2: our own underwear, tools/underwear.py)
+    wanted += [('WEAP', 'javelin')]   # (Noah, 2026-11-21: Destruction's wonder, the Wyrmspine Javelin - tools/wyrmspine.py)
     for kind, key in wanted:
         k = f'{kind}:{key}'
         if k not in frozen:
@@ -175,6 +176,7 @@ def dressing(S):
         records[('STAT', '1st_flask_' + _e)] = {'model': 'CurseOfAlduin\\alchemist\\mutagen_staff_qs.nif' if _e == 'philosopher' else 'CurseOfAlduin\\alchemist\\flask_' + _e + '_held.nif', 'color': '', 'radius': 0}
     for _t, (_k, _n, _m, _kind, _d, _x) in PRIEST_WEAPONS.items():   # (the Dragon Priests' weapons, held)
         records[('STAT', '1st_priest_' + _k)] = {'model': PRIEST_FIRST.get(_k, _m if '\\' in _m else 'CurseOfAlduin\\priests\\' + _m + '.nif'), 'color': '', 'radius': 0}
+    records[('STAT', '1st_javelin')] = {'model': 'CurseOfAlduin\\wyrmspine\\wyrmspine.nif', 'color': '', 'radius': 0}   # (Noah, 2026-11-21) the Wyrmspine Javelin
     records[('STAT', '1st_slayer')] = {'model': 'CurseOfAlduin\\slayer\\dragonslayer.nif', 'color': '', 'radius': 0}        # (Noah, 2026-11-20) the Dragon Slayer: our own dragonbone katana (tools/dragonslayer.py)
     records[('STAT', '1st_mace')] = {'model': 'CurseOfAlduin\\hipblades\\daedric.nif', 'color': '', 'radius': 0}  # (Noah) the Alchemist's Shadowflame Sword: Kv's purple crystal sword
     records[('STAT', '1st_kvred')] = {'model': 'CurseOfAlduin\\hipblades\\nordic.nif', 'color': '', 'radius': 0}  # the Spellsword's

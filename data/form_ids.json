@@ -1966,6 +1966,8 @@
   "MGEF:conj_sprigganearthmother": "0xfaa",
   "SPEL:conj_sprigganearthmother": "0xfab",
   "ARMA:underwear": "0xfac",
-  "ARMO:underwear": "0xfad"
+  "ARMO:underwear": "0xfad",
+  "STAT:1st_javelin": "0xfae",
+  "WEAP:javelin": "0xfaf"
  }
 }

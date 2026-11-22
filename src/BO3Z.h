@@ -408,6 +408,8 @@ namespace bo3z
 		bool               ArcaneBladeHit(RE::Actor* a_target, RE::SpellItem* a_spell);   // the Spellsword's arcane rung on a blade hit (false: not one)
 		bool               Gilded(RE::Actor* a_a);    // turned to gold by the Philosopher's Flask (held fast, every blow twice as hard)
 		bool               FlaskInHand(bool a_left);  // a flask held, drawn, in that hand
+		bool               JavelinInHand(bool a_left);  // the Wyrmspine Javelin drawn in that hand
+		void               JavelinButton(bool a_left, bool a_down);  // its attack pressed (charge) / let go (throw)
 		int                FlaskElementInHand(bool a_left);  // which flask that hand holds (drawn or not): 0-6, -1 none
 		void               FlaskAttack(bool a_left);  // its throw
 		void               FlaskAttackUp(bool a_left);  // the attack let go (the Mutagen Gauntlet's beam stops)
@@ -821,6 +823,10 @@ namespace bo3z
 		void                  TintPal(RE::NiAVObject* a_root, const std::string& a_pal, bool a_hideFlames);   // ... in any palette
 		void                  DevSwing(int a_power);
 		void                  TickLooks(float a_delta);
+		void                  JavelinDraw(bool a_left);  // the javelin's overhand throw drawn back, held there
+		void                  JavelinLoose(std::function<void()> a_release);  // ...and whipped through: a_release as it leaves the hand
+		void                  LobChaseLast(RE::Actor* a_target);  // the last thing lobbed steers onto that one
+		void                  LobHomeLast(RE::Actor* a_to);  // the last thing lobbed flies home to that one, through anything
 		void                  StartThrow(bool a_left, std::function<void()> a_release);  // the underhand throw on that arm; a_release at the top of the swing
 		bool                  Throwing();  // the Light Orb over your head, lit or put away
 		void                  Lob(const std::string& a_model, const RE::NiPoint3& a_from, const RE::NiPoint3& a_vel, float a_scale, std::function<void(const RE::NiPoint3&)> a_land, float a_spin = 12.0f, float a_grav = 900.0f);  // (a_spin 0: it flies nose first - a meteor)  // a thrown thing flown on its arc; a_land where it comes down

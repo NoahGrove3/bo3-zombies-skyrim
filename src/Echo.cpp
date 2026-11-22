@@ -411,7 +411,7 @@ namespace bo3z
 		const RE::NiPoint3 kPillarAt{ -155.0f, -1547.0f, kHallFloor };
 		// each model's middle along its long axis (+Y) and the size it floats at: the horn, the Staff of Magnus (Skyrim's: 175 long),
 		// the Philosopher's Flask (the hand's - no spin of its own), the Dragon Slayer, Alduin's Bane
-		constexpr float kFloatMid[5] = { 2.3f, -20.0f, -6.3f, 33.0f, 50.0f };
+		constexpr float kFloatMid[5] = { 2.3f, 11.2f, -6.3f, 33.0f, 50.0f };   // (2026-11-21: Destruction's the Wyrmspine Javelin, -50.6..73)
 		constexpr float kFloatScale[5] = { 1.6f, 0.75f, 2.6f, 1.1f, 0.95f };
 		struct HallRefs { std::array<RE::ObjectRefHandle, 5> item, glow; RE::ObjectRefHandle pillar; };
 		HallRefs g_hall;
