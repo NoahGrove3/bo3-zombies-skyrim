@@ -4,6 +4,7 @@
 // Job file:
 //   template <nif>          (one skinned shape: its bones, skin-to-bone transforms and partition are kept)
 //   out <nif>
+//   bodytri <path>          (optional: the BODYTRI string on the root - the morph file RaceMenu/BodySlide sliders shape it by)
 //   partition <n>           (optional: the dismember partition our shapes are on - e.g. 52 for an underwear slot - not the template's)
 //   shape <name> diffuse=<tex> normal=<tex> [glow=<tex> emit=r,g,b emitmult=<f>] [spec=<f>] [gloss=<f>] [double=1]
 //   v x y z u v nx ny nz b0 w0 [b1 w1 [b2 w2 [b3 w3]]]      (positions in the template's skin space; b = the
@@ -33,7 +34,7 @@ int main(int argc, char** argv)
 	if (argc < 2) { fprintf(stderr, "usage: skinglove job.txt\n"); return 1; }
 	std::ifstream in(argv[1]);
 	std::string line, tmpl, out;
-	int partOverride = -1;
+	int partOverride = -1; std::string bodytri;
 	std::vector<Shape> shapes;
 	while (std::getline(in, line)) {
 		std::istringstream ss(line);
@@ -42,6 +43,7 @@ int main(int argc, char** argv)
 		if (k == "template") std::getline(ss >> std::ws, tmpl);
 		else if (k == "out") std::getline(ss >> std::ws, out);
 		else if (k == "partition") ss >> partOverride;
+		else if (k == "bodytri") std::getline(ss >> std::ws, bodytri);
 		else if (k == "shape") {
 			shapes.emplace_back();
 			auto& s = shapes.back();
@@ -139,6 +141,16 @@ int main(int argc, char** argv)
 		printf("shape %s: %zu verts %zu tris\n", s.name.c_str(), s.v.size(), s.t.size());
 	}
 	for (auto* t : tshapes) nif.DeleteShape(t);   // (every shape of the template's - a body has more than one)
+	if (!bodytri.empty()) {
+		auto& h = nif.GetHeader(); bool had = false;
+		for (uint32_t i = 0; i < h.GetNumBlocks(); ++i)
+			if (auto* x = h.GetBlock<NiStringExtraData>(i); x && x->name.get() == "BODYTRI") x->stringData.get() = bodytri, had = true;
+		if (!had) {
+			auto x = std::make_unique<NiStringExtraData>();
+			x->name.get() = "BODYTRI"; x->stringData.get() = bodytri;
+			nif.GetRootNode()->extraDataRefs.AddBlockRef(h.AddBlock(std::move(x)));
+		}
+	}
 	if (nif.Save(out)) { fprintf(stderr, "save failed\n"); return 1; }
 	printf("wrote %s\n", out.c_str());
 }
