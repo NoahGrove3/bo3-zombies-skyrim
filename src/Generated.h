@@ -1662,7 +1662,7 @@ namespace bo3z::gen
 	struct EchoWonder { std::string_view id, label, text; std::uint32_t color, pedestal, gem; };
 	inline constexpr std::array<EchoWonder, 4> kEchoWonders{ {
 		EchoWonder{ "gravecaller", "Soulcaller's Staff", "The Soulcaller's Staff. Hold to cast its beam: each of the dead it kills gives a soul. At twenty souls a spectral sabre cat leaps out at your side for 45 seconds - three at most, and the next waits for a place.", 0x9CFF6A, 0xC44, 0xC4A },
-		EchoWonder{ "frostbinder", "Wyrmspine Javelin", "The Wyrmspine Javelin, carved from a dragon's spine. Hold to charge it, let go to throw: it bursts in the element of the spell in your other hand, bigger the longer you held. A kill sends it on to the next of the dead before it flies back to your hand.", 0x9FD8FF, 0xC45, 0xC4B },
+		EchoWonder{ "frostbinder", "Wyrmspine Javelin", "The Wyrmspine Javelin, carved from a dragon's spine. Light attack jabs; hold attack to charge it, let go to throw: it bursts in the element of the spell in your other hand, bigger the longer you held. A kill sends it on to the next of the dead before it flies back to your hand.", 0x9FD8FF, 0xC45, 0xC4B },
 		EchoWonder{ "wolfcrown", "Mutagen Staff", "The Mutagen Staff. Its orb is fed by six vials of the elements: hold attack to loose a beam that pierces the dead, pouring each vial in turn for 5 seconds; let go and the emptied vials refill.", 0xFFD24A, 0xC46, 0xC4C },
 		EchoWonder{ "barrowhorn", "Dragon Slayer", "The Akaviri dragon slayer. Every hit carries the spell in your other hand. Once the three dragons fall, a power attack sends that spell down the line.", 0xFF7A3C, 0xC47, 0xC4D },
 	} };

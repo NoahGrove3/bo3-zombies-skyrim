@@ -13,7 +13,7 @@
    "id": "frostbinder",
    "label": "Wyrmspine Javelin",
    "color": "9FD8FF",
-   "text": "The Wyrmspine Javelin, carved from a dragon's spine. Hold to charge it, let go to throw: it bursts in the element of the spell in your other hand, bigger the longer you held. A kill sends it on to the next of the dead before it flies back to your hand.",
+   "text": "The Wyrmspine Javelin, carved from a dragon's spine. Light attack jabs; hold attack to charge it, let go to throw: it bursts in the element of the spell in your other hand, bigger the longer you held. A kill sends it on to the next of the dead before it flies back to your hand.",
    "cls": "Destruction"
   },
   {

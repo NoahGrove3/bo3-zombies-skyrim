@@ -728,7 +728,7 @@ crystal_weapon('slayer', 'UN_DragonSlayer', 'Dragon Slayer', SLAYER_NIF, '1st_sl
 # one-handed record held as a spear and carried on the back (tools/wyrmspine.py); its throw, charge, blast and ricochet are
 # src/Classes.cpp's (TickJavelin) - its attack is never swung
 crystal_weapon('javelin', 'UN_WyrmspineJavelin', 'Wyrmspine Javelin', 'CurseOfAlduin\\wyrmspine\\wyrmspine.nif', '1st_javelin',
-    "Destruction's wonder, a javelin carved from a dragon's spine. Hold attack to charge, let go to throw: it bursts in the element of the spell in your other hand, bigger the longer you held. A kill sends it on to the next enemy, then it flies back to your hand.",
+    "Destruction's wonder, a javelin carved from a dragon's spine. Light attack: a quick jab. Hold attack to charge, let go to throw: it bursts in the element of the spell in your other hand, bigger the longer you held. A kill sends it on to the next enemy, then it flies back to your hand.",
     (6000, 8.0, 30))
 
 # (Noah: "I want the armor kits for all classes to stay the same visually through all the upgrades ... the upgraded version

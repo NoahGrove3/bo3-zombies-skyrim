@@ -125,6 +125,7 @@ namespace bo3z
 					auto* uev = RE::UserEvents::GetSingleton();
 					const auto& ue = b->QUserEvent();
 					if (uev && (ue == uev->leftAttack || ue == uev->rightAttack) && Classes::FlaskSwingBlocked(ue == uev->leftAttack)) return false;
+					if (uev && (ue == uev->leftAttack || ue == uev->rightAttack) && Classes::JavelinEats(ue == uev->leftAttack, b)) return false;   // (the javelin held: its throw, not a power attack)
 				}
 				if (Echo::Eats(a_event)) return false;  // (the hall: a left click takes what's in your sights, no swing)
 				if (MeleeRefused(a_event)) return false;
@@ -3425,9 +3426,8 @@ namespace bo3z
 					return false;
 				}
 				// (Noah, 2026-11-21: the Wyrmspine Javelin) held to charge, let go to throw
-				if (Classes::JavelinInHand(left)) {
-					if (down) Classes::JavelinButton(left, true);
-					else if (up) Classes::JavelinButton(left, false);
+				if (Classes::JavelinInHand(left) && up) {   // (let go: a charged throw flies; a tap was only the jab)
+					Classes::JavelinButton(left, false);
 					return false;
 				}
 				if (Classes::FlaskInHand(left)) {

@@ -1419,6 +1419,7 @@ namespace bo3z
 			// Base look from the start - before any is given or equipped (their tiers' looks follow on a load)
 			for (int c = 0; c < 4; ++c) if (auto* w = Classes::ClassWeapon(c)) Classes::AdoptTierLook(w, 0);
 			Classes::MutagenLook();
+			Classes::JavelinLook();
 			Classes::WandReady();
 			Director::QuietWind();
 			Classes::SlayerLook();

@@ -1621,17 +1621,48 @@ namespace bo3z::Classes
 		auto* j = Javelin();
 		return p && j && p->AsActorState()->IsWeaponDrawn() && p->GetEquippedObject(a_left) == j;
 	}
+	// (Noah, 2026-11-21: "I want light attack to be a close range jab attack and heavy attack would be the charged throw") a tap is
+	// the rapier's thrust (its look's moveset, JavelinLook); held past a light attack's length the attack becomes the throw: the
+	// held button is kept from Skyrim from then on (no power attack of its own starts), any jab still going is stopped, and the
+	// arm draws back to charge
+	bool JavelinEats(bool a_left, const RE::ButtonEvent* a_b)
+	{
+		if (!a_b || !JavelinInHand(a_left)) return false;
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (!p || p->IsDead()) return false;
+		if (a_b->IsHeld() && a_b->HeldDuration() >= 0.28f) {
+			if (!g_jav.charging && !g_jav.away && !Gun::Throwing()) {
+				g_jav.charging = true, g_jav.left = a_left, g_jav.charge = 0, g_jav.glow = 0;
+				g_jav.el = JavElement(a_left);
+				p->NotifyAnimationGraph("attackStop");
+				Gun::JavelinDraw(a_left);
+			}
+			return true;
+		}
+		return false;
+	}
+	void JavelinLook()
+	{
+		auto* j = Javelin();
+		auto* f = Lookup(0x019D0D, "NewArmoury.esp");   // Animated Armoury's Steel Rapier
+		auto* s = f ? f->As<RE::TESObjectWEAP>() : nullptr;
+		if (!j || !s) { logger::warn("javelin: no rapier to take the thrusts of - is Animated Armoury installed?"); return; }
+		const std::string ownModel = j->GetModel() ? j->GetModel() : "";
+		auto* const ownFirst = j->firstPersonModelObject;
+		const auto ownSlot = j->GetEquipSlot();
+		AdoptLook(j, s);
+		if (!ownModel.empty()) j->SetModel(ownModel.c_str());
+		if (ownFirst) j->firstPersonModelObject = ownFirst;
+		if (ownSlot) j->SetEquipSlot(ownSlot);
+		j->weaponData.reach = std::max(j->weaponData.reach, 1.3f);   // (a spear's length: a longer reach than the rapier's)
+		logger::info("javelin: jabs as {} (reach {:.2f})", s->GetName(), j->weaponData.reach);
+	}
 	void JavelinButton(bool a_left, bool a_down)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (!p || p->IsDead()) return;
-		if (a_down) {
-			if (g_jav.away || g_jav.charging || Gun::Throwing()) return;
-			g_jav.charging = true, g_jav.left = a_left, g_jav.charge = 0, g_jav.glow = 0;
-			g_jav.el = JavElement(a_left);
-			Gun::JavelinDraw(a_left);
-			return;
-		}
+		if (a_down) return;   // (a press is the jab's: Skyrim's own; the charge begins once it's held - JavelinEats)
+		(void)a_left;
 		if (!g_jav.charging) return;
 		g_jav.charging = false;
 		g_jav.power = std::clamp(g_jav.charge / 1.5f, 0.0f, 1.0f);
@@ -3779,7 +3810,7 @@ namespace bo3z::Classes
 			{ "Spellbound Rapier", "The Spellsword's blade. It takes the element of the spell in your other hand.",
 				{ "Tier I: light attacks fire bolts of that element.", "Tier II: heavy attacks raise a tornado that casts your spell on all it hits.", "Tier III: heavy attacks raise a great tornado." } },
 			// (Noah, 2026-11-21: the descriptions approved) Skyrim's own staff, its card in our words
-			{ "Wyrmspine Javelin", "The Battle-mage's wonder. Hold attack to charge, let go to throw: it bursts in your other hand's element, bigger the longer you held. A kill sends it on to the next enemy; then it flies back to you.", {} },
+			{ "Wyrmspine Javelin", "The Battle-mage's wonder. Light attack jabs. Hold attack to charge, let go to throw: it bursts in your other hand's element, bigger the longer you held. A kill sends it on to the next enemy; then it flies back to you.", {} },
 		};
 		static const Card kFlasks[] = {
 			{ "Fire Flask", "Bursts into flame where it lands.", {} },
@@ -4220,7 +4251,6 @@ namespace bo3z::Classes
 
 	bool FlaskSwingBlocked(bool a_left)
 	{
-		if (JavelinInHand(a_left)) return true;   // (the Wyrmspine Javelin is thrown, never swung)
 		const int el = FlaskHeld(a_left);
 		if (el < 0 || el == 6) return false;   // (the Mutagen Staff: Skyrim's staff cast plays)
 		// (Noah: "my character is still making swing grunt sounds when throwing") Skyrim's own swing never plays with a flask in
