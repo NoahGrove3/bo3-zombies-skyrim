@@ -5089,7 +5089,7 @@ namespace bo3z::Classes
 			auto* aa = dh->LookupForm<RE::TESObjectARMA>(gen::kClassSetLook[a_cls][i][t], gen::kPlugin);
 			if (!a || !aa || a->armorAddons.empty() || a->armorAddons[0] == aa) continue;
 			a->armorAddons[0] = aa;
-			if (p->GetWornArmor(a->GetSlotMask()) == a) reset = true;
+			if (p->GetWornArmor(a->GetFormID()) == a) reset = true;
 		}
 		if (reset && p->Is3DLoaded()) {
 			p->DoReset3D(false);
