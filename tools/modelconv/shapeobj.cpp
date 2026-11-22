@@ -13,6 +13,13 @@ int main(int argc, char** argv)
 	for (auto* s : n.GetShapes()) {
 		MatTransform t;
 		n.GetNodeTransformToGlobal(s->name.get(), t);
+		// (a skinned shape: the game draws it from its skin space, its own node transform ignored - out of skin space to the
+		// skeleton's, so helmets and gloves land on the body as worn)
+		if (s->IsSkinned()) {
+			MatTransform g2s;
+			n.CalcShapeTransformGlobalToSkin(s, g2s);
+			t = g2s.InverseTransform();
+		}
 		auto* vs = n.GetVertsForShape(s);
 		auto* uv = n.GetUvsForShape(s);
 		auto* nm = n.GetNormalsForShape(s);

@@ -8,7 +8,7 @@ WeaponBack, WeaponAxe/Mace, WeaponDagger, WeaponStaff). Built along Z (the head 
     python3 tools/priestweapons.py [names...] [--keep]
       -> assets/fx/Meshes/CurseOfAlduin/priests/<name>.nif
          assets/fx/Textures/CurseOfAlduin/priests/<name>_*.dds"""
-import math, pathlib, shutil, subprocess, sys
+import math, re, pathlib, shutil, subprocess, sys
 import numpy as np
 from scipy.ndimage import gaussian_filter
 from PIL import Image, ImageDraw, ImageFilter
@@ -481,7 +481,7 @@ def roughen(M, seed=0):
 # (Noah: "the glacier greatsword's hilt still clips into my players right hand") its guard raised 3 units clear of the upper hand
 FIT = {'zahkriisos_greatsword': (1.2, 1.3), 'nahkriin_mistblade': (1.5, 1.4), 'volsung_windcutter': (1.7, 1.6),
        'otar_stormblade': (8.0, 1.4), 'rahgot_dagger': (0.6, 1.75), 'krosis_griefblade': (1.5, 1.5),
-       'hevnoraak_sealbreaker': (12.0, 1.15), 'morokei_maul': (12.0, 1.15), 'vahlok_keyhammer': (12.0, 1.15)}
+       'hevnoraak_sealbreaker': (12.0, 1.15), 'morokei_maul': (12.0, 1.15)}
 
 
 def fit_lines(L, top, sc, root):
@@ -1399,69 +1399,96 @@ def morokei(texonly=False):
     return finish(M, 'morokei_maul', mats, fx.L, 'WeaponBack')
 
 
+def nordic_parts():
+    """Skyrim's own Nordic Warhammer (Dragonborn), read from the player's game (build/vanilla/nordicwarhammer.nif - staged from
+    the archive, never committed): its shapes as build groups, in our building space (along +Z), its blood decals left out"""
+    src = ROOT / 'build' / 'vanilla' / 'nordicwarhammer.nif'
+    if not src.exists(): raise SystemExit(f'{src} missing: stage dlc02\\weapons\\nordic\\nordicwarhammer.nif from Skyrim - Meshes0.bsa')
+    WORK.mkdir(parents=True, exist_ok=True)
+    obj = WORK / 'nordic.obj'
+    subprocess.run([str(TOOLS / 'shapeobj'), str(src), str(obj)], check=True, capture_output=True)
+    dump = subprocess.run([str(TOOLS / 'nifdump'), str(src)], capture_output=True, text=True).stdout
+    xf, cur = {}, None
+    for l in dump.splitlines():
+        m = re.match(r"shape '(.*?)' type", l)
+        if m: cur = m.group(1)
+        m = re.match(r'\s+xform t\(([-\d.]+) ([-\d.]+) ([-\d.]+)\)', l)
+        if m and cur: xf[cur] = np.array([float(x) for x in m.groups()])
+    groups, cur, V, T, Nn, F = [], None, [], [], [], []
+    for l in open(obj):
+        if l.startswith('usemtl'):
+            cur = l[7:].strip(); groups.append([cur, []])
+        elif l.startswith('v '): V.append([float(x) for x in l.split()[1:4]])
+        elif l.startswith('vt '): T.append([float(x) for x in l.split()[1:3]])
+        elif l.startswith('vn '): Nn.append([float(x) for x in l.split()[1:4]])
+        elif l.startswith('f '): groups[-1][1].append([int(x.split('/')[0]) - 1 for x in l.split()[1:4]])
+    V, T, Nn = np.array(V), np.array(T), np.array(Nn)
+    out = []
+    for name, faces in groups:
+        if 'blood' in name.lower(): continue
+        Fa = np.array(faces); idx = np.unique(Fa)
+        remap = {v: k for k, v in enumerate(idx)}
+        P = V[idx] + xf.get(name, np.zeros(3))          # (its node's offset: the grip at the origin)
+        P = np.stack([P[:, 0], -P[:, 2], P[:, 1]], -1)  # (game +Y up the haft -> our +Z)
+        Nb = np.stack([Nn[idx][:, 0], -Nn[idx][:, 2], Nn[idx][:, 1]], -1)
+        UV = np.stack([T[idx][:, 0], 1 - T[idx][:, 1]], -1)
+        out.append((P, Nb, UV, np.vectorize(remap.get)(Fa)))
+    return out
+
+
 def vahlok(texonly=False):
-    """(Noah, 2026-11-18: "our own Jailor's Keyhammer") Vahlok the Jailor's warhammer: a two-handed hammer whose head is a
-    great iron lock - a heavy block bound in straps, a keyhole on each face, its back a jailor's key-bit of bronze with its
-    wards cut in steps, a padlock's shackle arched over the top - hung with a short length of chain; the haft of dark iron
-    wound with leather, a chain coiled up it under the head, iron collars and a spike for a pommel. Rust in the seams."""
-    iD, iN = metal_tex('vahl_iron', (66, 62, 58), rust=0.45, dark=0.8, seed=151)
-    bD, bN = metal_tex('vahl_bronze', (142, 104, 58), rust=0.15, dark=0.55, seed=152)
-    lD, lN = leather_tex('vahl_leather', (44, 30, 22), seed=153)
+    """(Noah, 2026-11-21: remake the Jailor's Keyhammer - "Start from a Skyrim hammer": "Nordic Warhammer") Vahlok the Jailor's
+    warhammer: Skyrim's own Nordic warhammer, its curved beak kept - a keyhole plate let into each knotworked face of the head, a ring
+    of three old cell keys hanging under the head on an iron ring, and a chain coiled up the haft beneath it. The hammer
+    face, the haft, the fur and the bound grip are Skyrim's; its textures are the game's own (Nordic hammer), ours only for
+    the added iron."""
+    iD, iN = metal_tex('vahl2_iron', (54, 54, 56), rust=0.25, dark=0.9, seed=161)
     M = Mesh()
-    # the haft
-    M.add('Iron', 'iron', *lathe([(-22.0, 0.0), (-22.0, 1.0), (-21.4, 1.2)] + [(z, 1.0) for z in np.linspace(-21.0, 45.0, 10)] + [(45.5, 1.1)], 24))
-    grip_wrap(M, 'leather', -18.0, -3.0, 1.08, 1.15)
-    grip_wrap(M, 'leather', 3.5, 12.0, 1.08, 1.15)
-    for z in (-22.3, -18.4, -2.6, 3.0, 12.4, 22.0, 32.0, 44.5):
-        M.add('Iron', 'iron', *lathe([(z - 0.6, 1.06), (z - 0.45, 1.42), (z + 0.45, 1.42), (z + 0.6, 1.06)], 24))
-    # the pommel spike
-    M.add('Iron', 'iron', *lathe([(-22.0, 1.0), (-23.4, 0.9), (-26.5, 0.12)], 16))
-    # a chain coiled up the haft under the head: links round a helix, each turned to the last
-    turns, z0, z1, rad = 3.0, 25.0, 42.0, 1.55
-    L = math.hypot(2 * math.pi * rad * turns, z1 - z0)
-    n = int(L / 0.95)
-    for k in range(n):   # (links touching: each about a link's inner length on from the last)
+    NORD = 'dlc02\\weapons\\nordic\\hammer_nordic\\hammer_nordic_'
+    head_y = None
+    for P, Nb, UV, F in nordic_parts():
+        M.add('Nordic', 'nordic', P, Nb, UV, F)
+        hz = P[(P[:, 2] > 30.0) & (np.abs(P[:, 0]) < 6)][:, 2]
+        if len(hz): head_y = (hz.min(), hz.max())
+    z0, z1 = head_y if head_y else (33.7, 42.6)
+    zc = (z0 + z1) / 2
+    hc = np.array([0.0, 0.0, zc])
+    # (Noah, 2026-11-21: "replace the key on the back of the hammer head" - "Nordic beak back") the beak stays Skyrim's
+    # a keyhole plate on each face of the head, a dark keyhole in it
+    for sy in (-1, 1):
+        M.add('Plate', 'iron', *superbox(hc + [-5.0, sy * 3.35, 0.0], 3.0, 0.25, 3.6, 3.0, 24, 12))
+        for q in (-1, 1):   # (rivets at its corners)
+            for r_ in (-1, 1):
+                M.add('Plate', 'iron', *superbox(hc + [-5.0 + q * 2.4, sy * 3.62, r_ * 3.0], 0.32, 0.12, 0.32, 2.2, 10, 6))
+        M.add('Hole', 'hole', *superbox(hc + [-5.0, sy * 3.62, 0.9], 0.95, 0.06, 0.95, 2.0, 14, 8))
+        M.add('Hole', 'hole', *superbox(hc + [-5.0, sy * 3.62, -0.8], 0.42, 0.06, 1.4, 6.0, 10, 8))
+    # the key ring under the head: an iron ring round the haft's collar, three cell keys hanging from it
+    rz_ = z0 - 15.0
+    a = np.linspace(0, 2 * np.pi, 49)
+    ring = np.stack([2.6 * np.cos(a) + 1.9, 2.6 * np.sin(a) * 0.3, rz_ + 2.6 * np.sin(a)], -1)
+    M.add('Ring', 'iron', *rod(ring, 0.28, 10))
+    for k, ang in enumerate((-0.5, 0.15, 0.75)):
+        top = np.array([1.9 + 2.6 * math.cos(-math.pi / 2 + ang), 0.0, rz_ - 2.5 + 0.2 * k])
+        d = np.array([math.sin(ang) * 0.3, 0.0, -1.0]); d = d / np.linalg.norm(d)
+        M.add('Keys', 'iron', *torus(top + d * 0.9, 0.75, 0.18, np.array([0, 1.0, 0]), 16, 6))   # (the bow)
+        M.add('Keys', 'iron', *rod(np.array([top + d * 1.6, top + d * (5.5 - 0.6 * k)]), 0.2, 8))   # (the shank)
+        tip = top + d * (5.5 - 0.6 * k)
+        M.add('Keys', 'iron', *superbox(tip + [0.6, 0, 0.35], 0.6, 0.15, 0.45, 4.0, 10, 6))   # (the bit)
+    # the chain coiled up the haft under the ring
+    turns, cz0, cz1, rad = 3.0, z0 - 34.0, z0 - 19.0, 1.3
+    L = math.hypot(2 * math.pi * rad * turns, cz1 - cz0)
+    n = int(L / 0.9)
+    for k in range(n):
         t = k / (n - 1)
-        z = z0 + t * (z1 - z0); a_ = t * 2 * math.pi * turns
+        z = cz0 + t * (cz1 - cz0); a_ = t * 2 * math.pi * turns
         c = np.array([rad * math.cos(a_), rad * math.sin(a_), z])
-        tang = unit(np.array([-math.sin(a_) * rad * 2 * math.pi * turns, math.cos(a_) * rad * 2 * math.pi * turns, z1 - z0]))
+        tang = unit(np.array([-math.sin(a_) * rad * 2 * math.pi * turns, math.cos(a_) * rad * 2 * math.pi * turns, cz1 - cz0]))
         out = np.array([math.cos(a_), math.sin(a_), 0])
         ax = unit(np.cross(tang, out)) if k % 2 else out
-        M.add('Chain', 'iron', *torus(c, 0.42, 0.16, ax, 14, 6, 1.5, tang))
-    # the head: the lock-block, across the haft (striking along x), its edges softened
-    hc = np.array([0.0, 0.0, 51.0])
-    M.add('Head', 'iron', *superbox(hc, 7.5, 3.6, 4.6, 5.0, 48, 24))
-    # straps of iron round it, riveted
-    for xo in (-4.8, 4.8):
-        M.add('Head', 'iron', *superbox(hc + [xo, 0, 0], 0.7, 3.85, 4.85, 8.0, 16, 12))
-        for yy in (-3.95, 3.95):
-            for zz in (-3.2, 0.0, 3.2):
-                M.add('Head', 'iron', *superbox(hc + [xo, yy, zz], 0.35, 0.25, 0.35, 2.2, 10, 6))
-    # the striking face: a raised square boss on the front end, cross-hatched by use
-    M.add('Head', 'iron', *superbox(hc + [8.0, 0, 0], 0.9, 3.2, 4.1, 6.0, 20, 12))
-    # keyholes on both broad faces, bronze escutcheons
-    for sy in (-1, 1):
-        M.add('Bronze', 'bronze', *superbox(hc + [0, sy * 3.65, 0.3], 1.9, 0.18, 2.5, 3.0, 20, 10))
-        M.add('Dark', 'dark', *superbox(hc + [0, sy * 3.82, 1.0], 0.55, 0.05, 0.55, 2.0, 12, 8))
-        M.add('Dark', 'dark', *superbox(hc + [0, sy * 3.82, -0.4], 0.25, 0.05, 0.9, 6.0, 10, 8))
-    # the back: a jailor's key-bit of bronze - a stem out of the block, its wards cut in steps
-    M.add('Bronze', 'bronze', *superbox(hc + [-10.0, 0, 0], 2.6, 0.9, 0.9, 4.0, 20, 12))
-    for k, (h, w) in enumerate(((4.0, 1.2), (2.6, 1.0), (3.4, 1.1), (1.8, 0.9))):
-        M.add('Bronze', 'bronze', *superbox(hc + [-12.2 - k * 1.9, 0, -h / 2 + 0.6], w * 0.5 + 0.35, 0.75, h / 2, 6.0, 14, 10))
-    M.add('Bronze', 'bronze', *superbox(hc + [-19.2, 0, -0.2], 0.9, 0.8, 1.6, 4.0, 12, 8))
-    # the shackle: an iron arch over the top of the lock
-    a = np.linspace(0, math.pi, 40)
-    arch = np.stack([3.6 * np.cos(a), np.zeros_like(a), 4.6 + 4.2 * np.sin(a)], -1) + hc
-    M.add('Iron', 'iron', *rod(arch, 0.75, 14))
-    # chain hanging from the shackle: five links swinging down one side
-    for k in range(6):
-        c = hc + np.array([3.6 + 0.2 * k, 0.0, 3.2 - 1.05 * k])
-        ax = np.array([0, 1.0, 0]) if k % 2 else np.array([1.0, 0, 0])
-        M.add('Chain', 'iron', *torus(c, 0.5, 0.15, ax, 14, 6, 1.5, np.array([0, 0, 1.0])))
-    mats = {'iron': f'diffuse={iD} normal={iN} spec=0.5 gloss=20 alpha=0 doublesided=0',
-            'bronze': f'diffuse={bD} normal={bN} spec=0.7 gloss=30 alpha=0 doublesided=0',
-            'dark': f'diffuse={iD} normal={iN} spec=0.05 gloss=4 alpha=0 doublesided=0',
-            'leather': f'diffuse={lD} normal={lN} spec=0.2 gloss=12 alpha=0 doublesided=0'}
+        M.add('Chain', 'iron', *torus(c, 0.4, 0.15, ax, 14, 6, 1.5, tang))
+    mats = {'nordic': f'diffuse={NORD}d.dds normal={NORD}n.dds spec=0.6 gloss=30 alpha=0 doublesided=0',
+            'iron': f'diffuse={iD} normal={iN} spec=0.5 gloss=22 alpha=0 doublesided=0',
+            'hole': f'diffuse={iD} normal={iN} spec=0.02 gloss=4 alpha=0 doublesided=0'}
     return finish(M, 'vahlok_keyhammer', mats, None, 'WeaponBack')
 
 
