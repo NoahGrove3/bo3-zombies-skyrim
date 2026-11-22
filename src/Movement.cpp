@@ -207,7 +207,7 @@ namespace bo3z
 		}
 		bool ParaGliding(RE::PlayerCharacter* a_p, bool& a_out)
 		{
-			return OnThirdGraph(a_p, [&] { return ParaGliding(a_p, a_out); });
+			return OnThirdGraph(a_p, [&] { return a_p->GetGraphVariableBool("bParaGliding", a_out); });   // (Skyrim's own flag - not this function again: that recursed without end and crashed the game on the first frame in the world)
 		}
 		void DevFpGlide(std::string_view a_mode)
 		{
