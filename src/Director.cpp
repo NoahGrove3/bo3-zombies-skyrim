@@ -2887,7 +2887,7 @@ namespace bo3z
 		void Dawn()
 		{
 			int n = 0;
-			if (Fighting()) Classes::VoiceSay(gen::VoTrigger::kNightEnd, 3.0f);   // (a night won - not a load by day)
+			if (g_phase == Phase::Fighting) Classes::VoiceSay(gen::VoTrigger::kNightEnd, 3.0f);   // (a night won - not a load by day)
 			g_boss.spawnIn = -1, g_wantHerald = false;  // (the audit: a boss still waiting to rise came the next night, with no reward)
 			// Anyone still fighting our undead lets go first.
 			for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
