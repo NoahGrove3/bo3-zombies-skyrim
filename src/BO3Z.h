@@ -411,7 +411,9 @@ namespace bo3z
 		bool               JavelinInHand(bool a_left);  // the Wyrmspine Javelin drawn in that hand
 		void               JavelinButton(bool a_left, bool a_down);  // its attack pressed (charge) / let go (throw)
 		bool               JavelinEats(bool a_left, const RE::ButtonEvent* a_b);  // its attack held past a jab: the charge starts, the button kept from Skyrim
-		void               JavelinLook();  // the javelin jabs with Animated Armoury's rapier moveset (its own model kept)
+		void               JavelinLook();
+		void               VoiceSay(gen::VoTrigger a_trigger, float a_delay = 0.0f);  // (Noah) your class's voice line for that moment, male or female as you are
+		void               TickVoice(float a_delta);  // idle lines by day, the first step into a city still cursed  // the javelin jabs with Animated Armoury's rapier moveset (its own model kept)
 		int                FlaskElementInHand(bool a_left);  // which flask that hand holds (drawn or not): 0-6, -1 none
 		void               FlaskAttack(bool a_left);  // its throw
 		void               FlaskAttackUp(bool a_left);  // the attack let go (the Mutagen Gauntlet's beam stops)

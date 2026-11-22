@@ -1,0 +1,417 @@
+{
+ "sheet": "classvo",
+ "about": "(Noah, 2026-11-21: 'give each class voice lines for their class chosen' - male + female per class, rounds and story triggers; 20 per class to test) each line's id; its words are in the Class Voices and Story Roles doc. Files: assets/sound/classvo/<id>_male.wav, <id>_female.wav (from Noah's mp3s).",
+ "triggers": [
+  "night_start",
+  "night_end",
+  "boss",
+  "dragon",
+  "special",
+  "freed",
+  "enter",
+  "egg",
+  "idle"
+ ],
+ "rows": [
+  {
+   "id": "sum_night_start_1",
+   "cls": 0,
+   "trigger": "night_start"
+  },
+  {
+   "id": "sum_night_start_2",
+   "cls": 0,
+   "trigger": "night_start"
+  },
+  {
+   "id": "sum_night_start_3",
+   "cls": 0,
+   "trigger": "night_start"
+  },
+  {
+   "id": "sum_night_end_1",
+   "cls": 0,
+   "trigger": "night_end"
+  },
+  {
+   "id": "sum_night_end_2",
+   "cls": 0,
+   "trigger": "night_end"
+  },
+  {
+   "id": "sum_night_end_3",
+   "cls": 0,
+   "trigger": "night_end"
+  },
+  {
+   "id": "sum_boss_1",
+   "cls": 0,
+   "trigger": "boss"
+  },
+  {
+   "id": "sum_boss_2",
+   "cls": 0,
+   "trigger": "boss"
+  },
+  {
+   "id": "sum_dragon_1",
+   "cls": 0,
+   "trigger": "dragon"
+  },
+  {
+   "id": "sum_dragon_2",
+   "cls": 0,
+   "trigger": "dragon"
+  },
+  {
+   "id": "sum_special_1",
+   "cls": 0,
+   "trigger": "special"
+  },
+  {
+   "id": "sum_special_2",
+   "cls": 0,
+   "trigger": "special"
+  },
+  {
+   "id": "sum_freed_1",
+   "cls": 0,
+   "trigger": "freed"
+  },
+  {
+   "id": "sum_freed_2",
+   "cls": 0,
+   "trigger": "freed"
+  },
+  {
+   "id": "sum_enter_1",
+   "cls": 0,
+   "trigger": "enter"
+  },
+  {
+   "id": "sum_enter_2",
+   "cls": 0,
+   "trigger": "enter"
+  },
+  {
+   "id": "sum_egg_1",
+   "cls": 0,
+   "trigger": "egg"
+  },
+  {
+   "id": "sum_egg_2",
+   "cls": 0,
+   "trigger": "egg"
+  },
+  {
+   "id": "sum_idle_1",
+   "cls": 0,
+   "trigger": "idle"
+  },
+  {
+   "id": "sum_idle_2",
+   "cls": 0,
+   "trigger": "idle"
+  },
+  {
+   "id": "des_night_start_1",
+   "cls": 1,
+   "trigger": "night_start"
+  },
+  {
+   "id": "des_night_start_2",
+   "cls": 1,
+   "trigger": "night_start"
+  },
+  {
+   "id": "des_night_start_3",
+   "cls": 1,
+   "trigger": "night_start"
+  },
+  {
+   "id": "des_night_end_1",
+   "cls": 1,
+   "trigger": "night_end"
+  },
+  {
+   "id": "des_night_end_2",
+   "cls": 1,
+   "trigger": "night_end"
+  },
+  {
+   "id": "des_night_end_3",
+   "cls": 1,
+   "trigger": "night_end"
+  },
+  {
+   "id": "des_boss_1",
+   "cls": 1,
+   "trigger": "boss"
+  },
+  {
+   "id": "des_boss_2",
+   "cls": 1,
+   "trigger": "boss"
+  },
+  {
+   "id": "des_dragon_1",
+   "cls": 1,
+   "trigger": "dragon"
+  },
+  {
+   "id": "des_dragon_2",
+   "cls": 1,
+   "trigger": "dragon"
+  },
+  {
+   "id": "des_special_1",
+   "cls": 1,
+   "trigger": "special"
+  },
+  {
+   "id": "des_special_2",
+   "cls": 1,
+   "trigger": "special"
+  },
+  {
+   "id": "des_freed_1",
+   "cls": 1,
+   "trigger": "freed"
+  },
+  {
+   "id": "des_freed_2",
+   "cls": 1,
+   "trigger": "freed"
+  },
+  {
+   "id": "des_enter_1",
+   "cls": 1,
+   "trigger": "enter"
+  },
+  {
+   "id": "des_enter_2",
+   "cls": 1,
+   "trigger": "enter"
+  },
+  {
+   "id": "des_egg_1",
+   "cls": 1,
+   "trigger": "egg"
+  },
+  {
+   "id": "des_egg_2",
+   "cls": 1,
+   "trigger": "egg"
+  },
+  {
+   "id": "des_idle_1",
+   "cls": 1,
+   "trigger": "idle"
+  },
+  {
+   "id": "des_idle_2",
+   "cls": 1,
+   "trigger": "idle"
+  },
+  {
+   "id": "alc_night_start_1",
+   "cls": 2,
+   "trigger": "night_start"
+  },
+  {
+   "id": "alc_night_start_2",
+   "cls": 2,
+   "trigger": "night_start"
+  },
+  {
+   "id": "alc_night_start_3",
+   "cls": 2,
+   "trigger": "night_start"
+  },
+  {
+   "id": "alc_night_end_1",
+   "cls": 2,
+   "trigger": "night_end"
+  },
+  {
+   "id": "alc_night_end_2",
+   "cls": 2,
+   "trigger": "night_end"
+  },
+  {
+   "id": "alc_night_end_3",
+   "cls": 2,
+   "trigger": "night_end"
+  },
+  {
+   "id": "alc_boss_1",
+   "cls": 2,
+   "trigger": "boss"
+  },
+  {
+   "id": "alc_boss_2",
+   "cls": 2,
+   "trigger": "boss"
+  },
+  {
+   "id": "alc_dragon_1",
+   "cls": 2,
+   "trigger": "dragon"
+  },
+  {
+   "id": "alc_dragon_2",
+   "cls": 2,
+   "trigger": "dragon"
+  },
+  {
+   "id": "alc_special_1",
+   "cls": 2,
+   "trigger": "special"
+  },
+  {
+   "id": "alc_special_2",
+   "cls": 2,
+   "trigger": "special"
+  },
+  {
+   "id": "alc_freed_1",
+   "cls": 2,
+   "trigger": "freed"
+  },
+  {
+   "id": "alc_freed_2",
+   "cls": 2,
+   "trigger": "freed"
+  },
+  {
+   "id": "alc_enter_1",
+   "cls": 2,
+   "trigger": "enter"
+  },
+  {
+   "id": "alc_enter_2",
+   "cls": 2,
+   "trigger": "enter"
+  },
+  {
+   "id": "alc_egg_1",
+   "cls": 2,
+   "trigger": "egg"
+  },
+  {
+   "id": "alc_egg_2",
+   "cls": 2,
+   "trigger": "egg"
+  },
+  {
+   "id": "alc_idle_1",
+   "cls": 2,
+   "trigger": "idle"
+  },
+  {
+   "id": "alc_idle_2",
+   "cls": 2,
+   "trigger": "idle"
+  },
+  {
+   "id": "ssw_night_start_1",
+   "cls": 3,
+   "trigger": "night_start"
+  },
+  {
+   "id": "ssw_night_start_2",
+   "cls": 3,
+   "trigger": "night_start"
+  },
+  {
+   "id": "ssw_night_start_3",
+   "cls": 3,
+   "trigger": "night_start"
+  },
+  {
+   "id": "ssw_night_end_1",
+   "cls": 3,
+   "trigger": "night_end"
+  },
+  {
+   "id": "ssw_night_end_2",
+   "cls": 3,
+   "trigger": "night_end"
+  },
+  {
+   "id": "ssw_night_end_3",
+   "cls": 3,
+   "trigger": "night_end"
+  },
+  {
+   "id": "ssw_boss_1",
+   "cls": 3,
+   "trigger": "boss"
+  },
+  {
+   "id": "ssw_boss_2",
+   "cls": 3,
+   "trigger": "boss"
+  },
+  {
+   "id": "ssw_dragon_1",
+   "cls": 3,
+   "trigger": "dragon"
+  },
+  {
+   "id": "ssw_dragon_2",
+   "cls": 3,
+   "trigger": "dragon"
+  },
+  {
+   "id": "ssw_special_1",
+   "cls": 3,
+   "trigger": "special"
+  },
+  {
+   "id": "ssw_special_2",
+   "cls": 3,
+   "trigger": "special"
+  },
+  {
+   "id": "ssw_freed_1",
+   "cls": 3,
+   "trigger": "freed"
+  },
+  {
+   "id": "ssw_freed_2",
+   "cls": 3,
+   "trigger": "freed"
+  },
+  {
+   "id": "ssw_enter_1",
+   "cls": 3,
+   "trigger": "enter"
+  },
+  {
+   "id": "ssw_enter_2",
+   "cls": 3,
+   "trigger": "enter"
+  },
+  {
+   "id": "ssw_egg_1",
+   "cls": 3,
+   "trigger": "egg"
+  },
+  {
+   "id": "ssw_egg_2",
+   "cls": 3,
+   "trigger": "egg"
+  },
+  {
+   "id": "ssw_idle_1",
+   "cls": 3,
+   "trigger": "idle"
+  },
+  {
+   "id": "ssw_idle_2",
+   "cls": 3,
+   "trigger": "idle"
+  }
+ ]
+}

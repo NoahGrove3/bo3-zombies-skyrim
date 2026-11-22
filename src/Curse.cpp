@@ -335,6 +335,7 @@ namespace bo3z
 			Director::LiftWave(shrine ? shrine->GetPosition() : a_player->GetPosition());
 			Points::Add(5000);
 			logger::info("curse: {} is freed", gen::kTowns[a_town]);
+			Classes::VoiceSay(gen::VoTrigger::kFreed, 4.0f);
 			bool all = true;
 			for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) {
 				all &= Get(t).freed;

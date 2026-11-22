@@ -1811,6 +1811,7 @@ namespace bo3z
 			Forms::PlayAt(gen::Sound::boss_growl, boss.get());
 			Audio::BossMusic(true);
 			Hud::Banner(std::string(gen::kEnemies[row].label).append(" rises!"), 5.0f);
+			Classes::VoiceSay(gen::VoTrigger::kBoss, 3.0f);
 			logger::info("boss: {} risen with {:.0f} health", gen::kEnemies[row].id, want);
 			return true;
 		}
@@ -2522,6 +2523,7 @@ namespace bo3z
 				Hud::Banner(fmt::format("NIGHT {} - WAVE 1 OF {}{}", a_round, g_waves, g_special ? " - THE HOUNDS ARE LOOSE" : ""));
 			}
 			Stats::NightBegins(a_round);
+			Classes::VoiceSay(g_event >= 0 ? gen::VoTrigger::kSpecial : gen::VoTrigger::kNightStart, 2.5f);   // (Noah: the class's voice at the night's start)
 			logger::info("round {} starts: {} waves (the first of {}, 10 more each), up to {} undead at once, {:.0f} Skyrim health each{}", a_round, g_waves, g_waveSize, g_toSpawn, HealthFor(a_round), g_special ? " (hound night)" : "");
 		}
 
@@ -2885,6 +2887,7 @@ namespace bo3z
 		void Dawn()
 		{
 			int n = 0;
+			if (Fighting()) Classes::VoiceSay(gen::VoTrigger::kNightEnd, 3.0f);   // (a night won - not a load by day)
 			g_boss.spawnIn = -1, g_wantHerald = false;  // (the audit: a boss still waiting to rise came the next night, with no reward)
 			// Anyone still fighting our undead lets go first.
 			for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {

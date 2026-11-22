@@ -865,6 +865,7 @@ namespace bo3z::Eggs
 			const int st = Step(e) + 1;
 			Forms::Play(gen::Sound::quest_step);
 			Say(StepKey(e, st - 1, true), gen::kEggs[e].steps[st - 1].done);   // (it counted: Felldir says so, wherever you are)
+			Classes::VoiceSay(gen::VoTrigger::kEgg, 7.0f);   // (and after Felldir, your own word on it)
 			if (st >= gen::kEggs[e].nSteps) {
 				Complete(e);
 				return;

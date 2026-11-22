@@ -1671,6 +1671,75 @@ namespace bo3z::Classes
 		Gun::JavelinLoose([]() { JavThrow(); });
 	}
 
+	// ---- (Noah, 2026-11-21: "the dragon born doesn't have any voice lines except for the shouts. What would really make this feel
+	// like bo3 zombies is to give each class voice lines for their class chosen" - "Male + female per class", "Rounds" and "Story and
+	// exploring", "The Dragonborn, class-flavoured", 20 per class to test) a line of your class's, in your character's voice (her
+	// lines if she's a woman), at the night's turns and the story's: one at a time, none twice running, never more than one in
+	// 8 s; a line whose file isn't there yet is passed over (sheets/classvo.json, assets/sound/classvo) ----
+	namespace
+	{
+		struct VoiceState { float since = 999.0f, idle = 120.0f; int lastTown = -1; std::array<int, 16> last{}; std::unordered_map<int, float> entered; };
+		VoiceState g_vo;
+		bool VoFile(std::string_view a_id, bool a_female)
+		{
+			static std::unordered_map<std::string, bool> known;
+			const std::string key = std::string(a_id) + (a_female ? "_female" : "_male");
+			auto it = known.find(key);
+			if (it != known.end()) return it->second;
+			std::error_code ec;
+			const bool ok = std::filesystem::exists("Data/Sound/fx/CurseOfAlduin/classvo/" + key + ".wav", ec);
+			return known.emplace(key, ok).first->second;
+		}
+		void VoicePlay(gen::VoTrigger a_t)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			const int cls = Get();
+			if (!p || cls < 0 || p->IsDead() || g_vo.since < 8.0f) return;
+			auto* base = p->GetActorBase();
+			const bool female = base && base->GetSex() == RE::SEX::kFemale;
+			std::vector<int> pick;
+			for (int i = 0; i < static_cast<int>(gen::kClassVo.size()); ++i) {
+				const auto& l = gen::kClassVo[i];
+				if (l.cls == cls && l.trigger == a_t && VoFile(l.id, female)) pick.push_back(i);
+			}
+			if (pick.empty()) return;
+			int& last = g_vo.last[static_cast<int>(a_t) & 15];
+			if (pick.size() > 1) std::erase(pick, last);
+			const int i = pick[static_cast<std::size_t>(std::rand()) % pick.size()];
+			last = i;
+			const auto& l = gen::kClassVo[i];
+			Audio::Ui(female ? l.female : l.male, 1.0f);
+			g_vo.since = 0, g_vo.idle = 90.0f + static_cast<float>(std::rand() % 60);
+			logger::info("voice: {} ({})", l.id, female ? "female" : "male");
+		}
+	}
+	void VoiceSay(gen::VoTrigger a_trigger, float a_delay)
+	{
+		if (a_delay <= 0.0f) { VoicePlay(a_trigger); return; }
+		Tasks::Later(a_delay, [a_trigger]() { VoicePlay(a_trigger); });
+	}
+	void TickVoice(float a_delta)
+	{
+		g_vo.since += a_delta;
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* ui = RE::UI::GetSingleton();
+		if (!p || (ui && ui->GameIsPaused())) return;
+		// a city still under the curse, walked into: a line (once in five minutes for each)
+		const int t = Curse::ZoneTown();
+		if (t != g_vo.lastTown) {
+			g_vo.lastTown = t;
+			if (t >= 0 && !Curse::Freed(t)) {
+				auto& at = g_vo.entered[t];
+				if (at <= 0.0f) { VoicePlay(gen::VoTrigger::kEnter); at = 300.0f; }
+			}
+		}
+		for (auto& [k, v] : g_vo.entered) v -= a_delta;
+		// by day, with nothing going on for a minute and a half or more: an idle line
+		if (!Director::Fighting() && !p->IsInCombat()) {
+			if ((g_vo.idle -= a_delta) <= 0.0f) { g_vo.idle = 90.0f; VoicePlay(gen::VoTrigger::kIdle); }
+		} else g_vo.idle = std::max(g_vo.idle, 60.0f);
+	}
+
 	namespace { void MaceHit(RE::PlayerCharacter* a_p, RE::Actor* a_target, bool a_power); }
 	void NoteHit(RE::Actor* a_target, RE::FormID a_source, bool a_power)
 	{
@@ -2834,6 +2903,7 @@ namespace bo3z::Classes
 		TickWand(a_delta);
 		TickMagnus(a_delta);
 		TickJavelin(a_delta);
+		TickVoice(a_delta);
 		g_tomeCool = std::max(0.0f, g_tomeCool - a_delta);
 		if (g_tomeHold > 0 && (g_tomeHold -= a_delta) <= 0) {
 			for (auto& [idx, lv] : g_tomeHeld) Arcana::SetLevel(idx, lv);

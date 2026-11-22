@@ -389,6 +389,13 @@ def _secs(w):
     except Exception: return 4.0
 o.append(f'\tstruct WhisperSound {{ std::string_view key; Sound sound; float secs; }};')
 o.append(f'\tinline constexpr std::array<WhisperSound, {len(_wh)}> kWhispers{{ {{ ' + ', '.join(f'WhisperSound{{ "echo_{w[3:]}", Sound::{w}, {_secs(w):.2f}f }}' for w in _wh) + ' } };')
+# (Noah, 2026-11-21) the class voice lines: per line its class (0 Summoner .. 3 Spellsword), its trigger, its male and female sound
+import json as _json
+_cv = _json.load(open(root / 'sheets' / 'classvo.json'))
+_trig = _cv['triggers']
+o.append('\tenum class VoTrigger : std::uint8_t { ' + ', '.join('k' + ''.join(w.capitalize() for w in t.split('_')) for t in _trig) + ' };')
+o.append('\tstruct ClassVoLine { std::string_view id; std::uint8_t cls; VoTrigger trigger; Sound male, female; };')
+o.append(f'\tinline constexpr std::array<ClassVoLine, {len(_cv["rows"])}> kClassVo{{ {{ ' + ', '.join(f'ClassVoLine{{ "{r["id"]}", {r["cls"]}, VoTrigger::k' + ''.join(w.capitalize() for w in r['trigger'].split('_')) + f', Sound::cv_{r["id"]}_m, Sound::cv_{r["id"]}_f }}' for r in _cv['rows']) + ' } };')
 o.append('}')
 with open(root / 'src/Generated.h', 'a') as f: f.write('\n'.join(o) + '\n')
 print('appended v0.2 tables')

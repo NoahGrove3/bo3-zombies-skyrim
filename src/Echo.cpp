@@ -1054,6 +1054,7 @@ namespace bo3z
 					g_siege.stage = 2, g_siege.flying = w;
 					if (Settings::ScreenShake()) RE::ShakeCamera(0.6f, a_p->GetPosition(), 1.5f);
 					logger::info("words: {} - {} comes", W.word, W.bearerName);
+					Classes::VoiceSay(gen::VoTrigger::kDragon, 2.0f);
 				} else {
 					g_siege.retry = 2.0f;
 				}
