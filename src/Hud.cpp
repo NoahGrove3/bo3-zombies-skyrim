@@ -5785,41 +5785,169 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			return true;
 		}
 
-		void DrawBootScreen(ImVec2 a_size)
+		// (Noah, 2026-11-22: "make a custom loading screen until it's ready to land on our custom menu" - "an entirely new loading
+		// screen like the same art style as the loading screens mod we have like the class pictures" - "A - Alduin") from the
+		// first menu Skyrim opens until ours is ready: Lore-Based Loading Screens' painting of Alduin (read from the player's own
+		// install, never shipped; another of theirs if it is missing) filling the screen, darkened into a band at its foot with
+		// the mod's title, a line of lore, what is loading and a slim bronze progress line - then it fades into the menu. The
+		// progress is the launch so far against the last launch's length (Skyrim draws nothing while it reads the plugins)
+		std::atomic<bool> g_dataReady{ false };
+		bool              g_bootDone = false;
+		float             g_bootFade = 0.0f;
+		double LaunchSeconds()
+		{
+			FILETIME c{}, e{}, k{}, u{}, now{};
+			if (!::GetProcessTimes(::GetCurrentProcess(), &c, &e, &k, &u)) return ImGui::GetTime();
+			::GetSystemTimeAsFileTime(&now);
+			const auto q = [](FILETIME f) { return (static_cast<unsigned long long>(f.dwHighDateTime) << 32) | f.dwLowDateTime; };
+			return static_cast<double>(q(now) - q(c)) / 1e7;
+		}
+		constexpr const char* kBootFile = "Data/SKSE/Plugins/CurseOfAlduin/launch_seconds.txt";
+		double LastLaunch()
+		{
+			static double v = [] {
+				double d = 40.0;
+				if (std::ifstream in(kBootFile); in) in >> d;
+				return std::clamp(d, 8.0, 240.0);
+			}();
+			return v;
+		}
+		float BootProgress()
+		{
+			static float atReady = -1.0f;
+			if (!g_dataReady.load()) {
+				const double t = LaunchSeconds(), L = LastLaunch();
+				const double p = t < L ? 0.9 * (t / L) : 0.9 + 0.06 * (1.0 - std::exp(-(t - L) / 12.0));
+				return static_cast<float>(p);
+			}
+			if (atReady < 0.0f) {
+				const double t = LaunchSeconds(), L = LastLaunch();
+				atReady = static_cast<float>(t < L ? 0.9 * (t / L) : 0.93);
+				std::error_code ec;
+				std::filesystem::create_directories("Data/SKSE/Plugins/CurseOfAlduin", ec);
+				if (std::ofstream out(kBootFile); out) out << static_cast<int>(t + 0.5);
+				logger::info("hud: the launch took {:.0f} s to the data loaded", t);
+			}
+			return atReady + (1.0f - atReady) * std::clamp(g_bootFade * 1.6f, 0.0f, 1.0f);
+		}
+		void DrawBootScreen(ImVec2 a_size, float a_alpha = 1.0f)
 		{
 			static ID3D11ShaderResourceView* pic = nullptr;
-			static ImVec2                    picSize{ 16, 9 };
+			static ImVec2                    picSize{ 2048, 2048 };
+			static ID3D11ShaderResourceView* title = nullptr;
+			static ImVec2                    titleSize{ 3200, 430 };
 			static bool                      tried = false;
-			if (!tried && g_device) {
-				tried = true;
-				std::vector<std::filesystem::path> all;
-				std::error_code ec;
-				for (const auto& e : std::filesystem::directory_iterator("Data/textures/loreloadscreens", ec)) {
-					if (e.is_regular_file(ec) && e.path().extension() == ".dds") all.push_back(e.path());
-				}
-				std::shuffle(all.begin(), all.end(), std::mt19937(static_cast<unsigned>(std::chrono::steady_clock::now().time_since_epoch().count())));
-				for (std::size_t i = 0; i < all.size() && i < 5 && !pic; ++i) {
-					ID3D11Resource* res = nullptr;
-					if (SUCCEEDED(DirectX::CreateDDSTextureFromFile(g_device, all[i].wstring().c_str(), &res, &pic)) && res) {
-						if (ID3D11Texture2D* tex = nullptr; SUCCEEDED(res->QueryInterface(__uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&tex))) && tex) {
-							D3D11_TEXTURE2D_DESC td{};
-							tex->GetDesc(&td);
-							picSize = { static_cast<float>(td.Width), static_cast<float>(td.Height) };
-							tex->Release();
-						}
-						res->Release();
-						logger::info("hud: the first loading screen is {}", all[i].filename().string());
+			const auto load = [](const std::filesystem::path& a_p, ID3D11ShaderResourceView** a_srv, ImVec2* a_sz, bool a_dds) {
+				ID3D11Resource* res = nullptr;
+				const bool ok = a_dds ? SUCCEEDED(DirectX::CreateDDSTextureFromFile(g_device, a_p.wstring().c_str(), &res, a_srv)) : SUCCEEDED(DirectX::CreateWICTextureFromFile(g_device, a_p.wstring().c_str(), &res, a_srv));
+				if (ok && res) {
+					if (ID3D11Texture2D* tex = nullptr; SUCCEEDED(res->QueryInterface(__uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&tex))) && tex) {
+						D3D11_TEXTURE2D_DESC td{};
+						tex->GetDesc(&td);
+						*a_sz = { static_cast<float>(td.Width), static_cast<float>(td.Height) };
+						tex->Release();
 					}
 				}
-				if (!pic) logger::info("hud: no Load Screen Compendium picture for the first loading screen ({} found)", all.size());
+				if (res) res->Release();
+				return ok && *a_srv;
+			};
+			if (!tried && g_device) {
+				tried = true;
+				if (!load("Data/Textures/loreloadscreens/DragonNamedAlduin03.dds", &pic, &picSize, true)) {
+					std::vector<std::filesystem::path> all;
+					std::error_code ec;
+					for (const auto& e : std::filesystem::directory_iterator("Data/Textures/loreloadscreens", ec)) {
+						if (e.is_regular_file(ec) && e.path().extension() == ".dds") all.push_back(e.path());
+					}
+					std::shuffle(all.begin(), all.end(), std::mt19937(static_cast<unsigned>(std::chrono::steady_clock::now().time_since_epoch().count())));
+					for (std::size_t i = 0; i < all.size() && i < 5 && !pic; ++i) load(all[i], &pic, &picSize, true);
+				}
+				load("Data/Interface/CurseOfAlduin/menu_title.png", &title, &titleSize, false);
+				logger::info("hud: the launch's loading screen - painting {}, title {}", pic != nullptr, title != nullptr);
 			}
-			auto* dl = ImGui::GetBackgroundDrawList();
-			dl->AddRectFilled({ 0, 0 }, a_size, IM_COL32(0, 0, 0, 255));
-			if (pic) {  // (filling the screen, cropped to keep its shape)
-				const float s = std::max(a_size.x / picSize.x, a_size.y / picSize.y);
-				const ImVec2 sz{ picSize.x * s, picSize.y * s }, at{ (a_size.x - sz.x) * 0.5f, (a_size.y - sz.y) * 0.5f };
-				dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(pic)), at, { at.x + sz.x, at.y + sz.y });
+			auto*       dl = ImGui::GetForegroundDrawList();
+			const float k = a_size.y / 1080.0f, al = std::clamp(a_alpha, 0.0f, 1.0f), W = a_size.x, H = a_size.y;
+			dl->AddRectFilled({ 0, 0 }, a_size, Fade(IM_COL32(0, 0, 0, 255), al));
+			if (pic) {   // (the painting is the middle 2048 x 1152 of its texture; cropped to the screen's shape, breathing in a little)
+				const float v0 = 448.0f / 2048.0f, v1 = 1600.0f / 2048.0f, picAsp = picSize.x / (picSize.y * (v1 - v0)), asp = W / H;
+				float u0 = 0, u1 = 1, a0 = v0, a1 = v1;
+				if (asp > picAsp) { const float keep = (v1 - v0) * picAsp / asp; a0 = (v0 + v1 - keep) * 0.5f, a1 = a0 + keep; }
+				else { const float keep = asp / picAsp; u0 = (1 - keep) * 0.5f, u1 = u0 + keep; }
+				const float z = 0.02f * std::clamp(static_cast<float>(LaunchSeconds()) / 60.0f, 0.0f, 1.0f), du = (u1 - u0) * z * 0.5f, dv = (a1 - a0) * z * 0.5f;
+				dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(pic)), { 0, 0 }, a_size, { u0 + du, a0 + dv }, { u1 - du, a1 - dv }, Fade(IM_COL32(255, 255, 255, 255), al));
 			}
+			// the vignette, and the foot darkened into a band for the words
+			const ImU32 clear = IM_COL32(4, 4, 6, 0), dark = Fade(IM_COL32(4, 4, 6, 150), al), deep = Fade(IM_COL32(4, 4, 6, 235), al);
+			dl->AddRectFilledMultiColor({ 0, 0 }, { W * 0.22f, H }, dark, clear, clear, dark);
+			dl->AddRectFilledMultiColor({ W * 0.78f, 0 }, { W, H }, clear, dark, dark, clear);
+			dl->AddRectFilledMultiColor({ 0, 0 }, { W, H * 0.18f }, dark, dark, clear, clear);
+			dl->AddRectFilledMultiColor({ 0, H * 0.66f }, { W, H * 0.90f }, clear, clear, deep, deep);
+			dl->AddRectFilled({ 0, H * 0.90f }, a_size, deep);
+			if (title) {
+				const float tw = 620 * k, th = tw * titleSize.y / titleSize.x;
+				dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(title)), { 96 * k, H - 214 * k }, { 96 * k + tw, H - 214 * k + th }, { 0, 0 }, { 1, 1 }, Fade(IM_COL32(255, 255, 255, 255), al));
+			} else {
+				Txt(dl, g_title, 40 * k, { 100 * k, H - 210 * k }, Fade(kParch, al), "THE CURSE OF ALDUIN");
+			}
+			{
+				const std::string lore = "Alduin wakes, and the dead of Skyrim answer his call.";
+				Txt(dl, g_body, 19 * k, { 100 * k, H - 128 * k - Measure(g_body, 19 * k, lore).y * 0.5f }, Fade(IM_COL32(196, 182, 160, 215), al), lore);
+			}
+			// the progress: a bronze hairline, lit as far as the launch has come, a diamond at its head
+			const float x0 = 100 * k, x1 = W - 100 * k, y = H - 70 * k, xp = x0 + (x1 - x0) * std::clamp(BootProgress(), 0.0f, 1.0f);
+			dl->AddRectFilled({ x0, y - 1 * k }, { x1, y + 1 * k }, Fade(kGold, 0.24f * al));
+			const float lead = std::min(xp, x0 + 90 * k);
+			const ImU32 lit = Fade(IM_COL32(222, 196, 132, 235), al), none = Fade(IM_COL32(222, 196, 132, 0), al);
+			dl->AddRectFilledMultiColor({ x0, y - 1.5f * k }, { lead, y + 1.5f * k }, none, lit, lit, none);
+			if (xp > lead) dl->AddRectFilled({ lead, y - 1.5f * k }, { xp, y + 1.5f * k }, lit);
+			const float d = 6 * k;
+			dl->AddQuadFilled({ xp, y - d }, { xp + d, y }, { xp, y + d }, { xp - d, y }, Fade(IM_COL32(244, 224, 166, 255), al));
+			{   // what is loading, its letters spaced, over the line's right end
+				const std::string st = g_dataReady.load() ? "RAISING THE CURSE" : "READING THE ELDER SCROLLS";
+				const float px = 17 * k, tr = 3 * k;
+				float w = 0;
+				for (const char ch : st) w += Measure(g_title, px, std::string(1, ch)).x;
+				w += tr * static_cast<float>(st.size() - 1);
+				float x = x1 - w;
+				const float top = y - 28 * k - Measure(g_title, px, st).y * 0.5f;
+				for (const char ch : st) {
+					const std::string c1(1, ch);
+					dl->AddText(g_title, px, { x, top }, Fade(kParch, 0.92f * al), c1.c_str());
+					x += Measure(g_title, px, c1).x + tr;
+				}
+			}
+		}
+		// (the launch, before Skyrim's data has loaded) the loading screen alone: nothing else of ours runs yet
+		void BootFrame(IDXGISwapChain* a_swap)
+		{
+			if (!Init(a_swap)) return;
+			DXGI_SWAP_CHAIN_DESC desc{};
+			a_swap->GetDesc(&desc);
+			ID3D11Texture2D* back = nullptr;
+			if (FAILED(a_swap->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&back)))) return;
+			ID3D11RenderTargetView* rtv = nullptr;
+			g_device->CreateRenderTargetView(back, nullptr, &rtv);
+			back->Release();
+			if (!rtv) return;
+			static auto last = std::chrono::steady_clock::now();
+			const auto  now = std::chrono::steady_clock::now();
+			auto& io = ImGui::GetIO();
+			io.DisplaySize = { static_cast<float>(desc.BufferDesc.Width), static_cast<float>(desc.BufferDesc.Height) };
+			io.DeltaTime = std::clamp(std::chrono::duration<float>(now - last).count(), 0.0001f, 0.25f);
+			last = now;
+			ImGui_ImplDX11_NewFrame();
+			ImGui::NewFrame();
+			DrawBootScreen(io.DisplaySize);
+			ImGui::Render();
+			ID3D11RenderTargetView* oldRtv = nullptr;
+			ID3D11DepthStencilView* oldDsv = nullptr;
+			g_context->OMGetRenderTargets(1, &oldRtv, &oldDsv);
+			g_context->OMSetRenderTargets(1, &rtv, nullptr);
+			ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+			g_context->OMSetRenderTargets(1, &oldRtv, oldDsv);
+			if (oldRtv) oldRtv->Release();
+			if (oldDsv) oldDsv->Release();
+			rtv->Release();
 		}
 
 		bool InGame()
@@ -6074,7 +6202,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			ImGui_ImplDX11_NewFrame();
 			ImGui::NewFrame();
 			if (bootScreen) {
-				DrawBootScreen(io.DisplaySize);
+				DrawBootScreen(io.DisplaySize, 1.0f);
 			} else if (codex) {
 				DrawCodex(io.DisplaySize, static_cast<float>(ImGui::GetTime()), clicks);
 			} else if (mainMenu) {
@@ -6243,6 +6371,13 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			if (g_veil > 0 && !g_filmOn && !mainMenu) {
 				ImGui::GetForegroundDrawList()->AddRectFilled({ 0, 0 }, io.DisplaySize, IM_COL32(0, 0, 0, static_cast<int>(255 * g_veil * g_veil * (3 - 2 * g_veil))));
 			}
+			// (the launch's loading screen, once Skyrim's data is in and our menu ready: faded off over it)
+			if (!g_bootDone && !bootScreen) {
+				g_bootFade += dt / 1.1f;
+				const float u = std::clamp(g_bootFade, 0.0f, 1.0f);
+				DrawBootScreen(io.DisplaySize, 1.0f - u * u * (3.0f - 2.0f * u));
+				if (g_bootFade >= 1.0f) g_bootDone = true;
+			}
 			ImGui::Render();
 			if (static int n = 0; n++ % 600 == 0) {
 				auto* dd = ImGui::GetDrawData();
@@ -6280,6 +6415,13 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		HRESULT WINAPI PresentHook(IDXGISwapChain* a_swap, UINT a_sync, UINT a_flags)
 		{
 			Watchdog::Beat();
+			if (!g_dataReady.load()) {   // (the launch: Skyrim still reading its data - our loading screen alone)
+				try {
+					BootFrame(a_swap);
+				} catch (...) {
+				}
+				return g_present(a_swap, a_sync, a_flags);
+			}
 			// (Noah: "my wait timer should stop when it hits the time that the night starts") waiting runs the clock with
 			// the game's own update stopped: the night's arrival is watched from here, every frame, and ends the wait
 			if (auto* uiW = RE::UI::GetSingleton(); uiW && uiW->IsMenuOpen(RE::SleepWaitMenu::MENU_NAME) && Save::Flag(Save::kFlagStarted) && Director::NightNow()) {
@@ -6721,8 +6863,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			g_state.loreTime = g_state.loreTotal = a_seconds;
 		}
 
-		void Install()
+		void Install(bool a_dataLoaded)
 		{
+			if (a_dataLoaded) g_dataReady = true;
+			static bool hooked = false;
+			if (hooked) return;
 			auto* window = RE::BSGraphics::Renderer::GetCurrentRenderWindow();
 			auto* swap = window ? reinterpret_cast<IDXGISwapChain*>(window->swapChain) : nullptr;
 			if (!swap) {
@@ -6735,7 +6880,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			g_present = reinterpret_cast<PresentFn>(vtable[8]);
 			vtable[8] = reinterpret_cast<void*>(&PresentHook);
 			::VirtualProtect(&vtable[8], sizeof(void*), old, &old);
-			logger::info("hud: Present hooked");
+			hooked = true;
+			logger::info("hud: Present hooked{}", a_dataLoaded ? "" : " (early: the launch's loading screen)");
 		}
 	}
 }

@@ -1255,7 +1255,7 @@ namespace bo3z
 		bool        PadLast();                                // the last input was a controller (prompts follow it)
 		void        NotePad();                                // a stick moved: the player is on a controller
 		std::string PadWord(std::string_view a_xbox);         // a pad button's name as the player's pad prints it (A -> Cross with PlayStation icons)  // the altar's runes give up a shout's three words (Curse::ClaimRelic)  // a scroll of the Curse
-		void        Install();
+		void        Install(bool a_dataLoaded = true);   // the Present hook (early: at the first menu, the launch's loading screen only)
 		void        OnClick();  // a left click (menus: the party panel's buttons)
 		void        OnMouseMove(float a_dx, float a_dy);  // raw mouse movement (the menu cursor never sticks)
 		void        OnMenuButton(const RE::ButtonEvent* a_b);

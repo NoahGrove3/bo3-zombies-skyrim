@@ -452,6 +452,12 @@ namespace bo3z
 					return RE::BSEventNotifyControl::kContinue;
 				}
 				Audio::SetMenuMusic();  // the main menu plays our track (read by the game when the menu opens)
+				// (Noah: the launch's own loading screen) the first menu Skyrim opens: our Present hook goes in now, drawing only
+				// the loading screen until the data has loaded
+				if (static bool early = false; !early && a_event->opening) {
+					early = true;
+					Hud::Install(false);
+				}
 				if (a_event->opening && a_event->menuName == RE::TutorialMenu::MENU_NAME) {
 					// Skyrim's tutorial pop-ups (low health, low stamina, low magicka...) close the moment they open
 					if (auto* q = RE::UIMessageQueue::GetSingleton()) {
