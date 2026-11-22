@@ -8,6 +8,10 @@ IDFILE = ROOT / 'data' / 'form_ids.json'
 # hand, the Dragon Slayer's gold dragonfire
 CLASS_ARMOUR = ('summoner', 'destruction', 'alchemist', 'spellsword')   # (Noah: every class in the Black Mage set, its accents its own colour)
 CLASS_PIECES = ('robes', 'hood', 'wraps', 'boots')
+# (Noah, 2026-11-21: the class sets on Skyrim's own armour, refitted - tools/armoursets.py) each class's three pieces, body first,
+# each with an addon per tier (Base, I, II, III)
+CLASS_SET = {'summoner': ('robes', 'hood', 'boots'), 'destruction': ('robes', 'hood', 'boots'),
+             'alchemist': ('cuirass', 'gauntlets', 'boots'), 'spellsword': ('cuirass', 'gauntlets', 'boots')}
 CLASS_ARMAS = ('01413D', '014141', '014142', '014C0A', '018766', '018767', '014140')
 BLADE_VIZ = ('alch', 'carian', 'radiant', 'ss_none', 'ss_fire', 'ss_frost', 'ss_shock', 'ss_sun', 'ss_blood', 'slayer')
 # (Noah: "the 10 priest drop weapons ... all players receive the weapon") each city's Dragon Priest drops his weapon
@@ -44,7 +48,10 @@ def assign(S=None, write=False):
     S = S or sheets()
     store = json.load(open(IDFILE)) if IDFILE.exists() else {"about": "", "ids": {}}
     frozen = {k: int(v, 16) for k, v in store['ids'].items()}
-    nxt = max(frozen.values(), default=0x7FF) + 1
+    # (a light plugin holds ids 0x800-0xFFF only: new rows take the free ids there first - ids of records never written are
+    # parked from 0x2000 up, out of the way)
+    free = sorted(set(range(0x800, 0x1000)) - set(frozen.values()))
+    nxt = max([v for v in frozen.values() if v < 0x2000], default=0x7FF) + 1
     ids = {}
     wanted = [('MGEF', p['id']) for p in S['perks']['rows']] + [('ACTI', o['id']) for o in S['objects']['rows']] + \
              [('WEAP', w['id']) for w in S['weapons']['rows']] + [('ALCH', p['id']) for p in S['perks']['rows']] + \
@@ -68,11 +75,13 @@ def assign(S=None, write=False):
              [(k, f'cm_{c}_{a}') for c in CLASS_ARMOUR for a in CLASS_ARMAS for k in ('ARMA',)] + [('ARMO', f'cm_{c}_{pc}') for c in CLASS_ARMOUR for pc in CLASS_PIECES] + [('WEAP', 'carianblade')] + [(k, f'bv_{b}_{t}') for b in BLADE_VIZ for t in (1, 2, 3) for k in ('EFSH', 'MGEF', 'ENCH')] + [('EFSH', 'shadowburn')] + [(k, f'vw_{b}') for b in BLADE_VIZ for k in ('LIGH', 'ARTO', 'MGEF', 'SPEL')] + [('EFSH', 'hallghost'), ('EFSH', 'spectral'), ('EFSH', 'soulpurple'), ('EFSH', 'tabletgreen'), ('EFSH', 'tabletgold'), ('KYWD', 'scythe'), ('MGEF', 'soulcall'), ('ENCH', 'soulcaller'), ('WEAP', 'soulcaller')] + [(k, 'vae_' + c) for c in VAE_COL for k in ('MGEF', 'ENCH')] + [('ENCH', 'vae_' + c.replace('+', '_')) for c in sorted(set(VAE_WEAP.values())) if '+' in c]   # (Noah: the four crystal swords and the Dragon Slayer - their tier looks)
     wanted += [(k, 'conj_' + c[0]) for c in CONJURE for k in ('NPC_', 'MGEF', 'SPEL')]   # (Phase 2: the Summoner's conjurations, our own)
     wanted += [('ARMA', 'underwear'), ('ARMO', 'underwear')]   # (Phase 2: our own underwear, tools/underwear.py)
+    wanted += [('ARMO', f'ca_{c}_{p}') for c in CLASS_ARMOUR for p in CLASS_SET[c]] + [('ARMA', f'ca_{c}_{p}_t{t}') for c in CLASS_ARMOUR for p in CLASS_SET[c] for t in range(4)]   # (the class sets, tools/armoursets.py)
     wanted += [('WEAP', 'javelin')]   # (Noah, 2026-11-21: Destruction's wonder, the Wyrmspine Javelin - tools/wyrmspine.py)
     for kind, key in wanted:
         k = f'{kind}:{key}'
         if k not in frozen:
-            frozen[k] = nxt; nxt += 1
+            if free: frozen[k] = free.pop(0)
+            else: frozen[k] = nxt; nxt += 1
         ids[(kind, key)] = frozen[k]
     if write:
         store['ids'] = {k: hex(v) for k, v in frozen.items()}

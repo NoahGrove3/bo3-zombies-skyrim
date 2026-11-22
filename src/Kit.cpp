@@ -618,6 +618,14 @@ namespace bo3z::Kit
 			g_cls[c].owned |= 1u << i;
 			Classes::GiveArmourSet(c, 0, true);
 			Hud::Banner(Classes::ArmourSetName(c, 0) + " - your class's armor, upgradable at the Echo Altar", 5.0f);
+		} else if (static std::array<bool, 4> renewed{}; i >= 0 && (g_cls[c].owned >> i & 1) && !renewed[c]) {
+			// (the class sets made anew on Skyrim's own armour: a character who owned the old one gets the new, once, worn - the
+			// old pieces taken back)
+			renewed[c] = true;
+			if (!Classes::ArmourCarried(c, std::max(0, ArmourTier(c)))) {
+				Classes::GiveArmourSet(c, std::max(0, ArmourTier(c)), true);
+				Hud::Banner(Classes::ArmourSetName(c, std::max(0, ArmourTier(c))) + " - your class's armor, made anew", 5.0f);
+			}
 		}
 		auto* av = p->AsActorValueOwner();
 		if (c == 3 && ArmourTier(3) >= 1 && p->IsInCombat()) av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.006f);  // (Tier I: mending in a fight)

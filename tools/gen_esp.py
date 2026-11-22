@@ -1669,6 +1669,31 @@ recs['ARMO'].append(record('ARMO', fid('ARMO', 'underwear'), [
     sub('RNAM', struct.pack('<I', 0x19)), sub('MODL', struct.pack('<I', fid('ARMA', 'underwear'))),
     sub('DATA', struct.pack('<If', 0, 0.1)), sub('DNAM', struct.pack('<I', 0))], flags=0x4))
 
+# (Noah, 2026-11-21: the class sets "hyper realistic" on Skyrim's own armour, refitted to 3BA and HIMBO - tools/armoursets.py;
+# "the appearance of the armor sets needs to change each upgraded tier") each piece an armour of ours wearing its Base look;
+# an addon per tier (Base, I, II, III) that src/Classes.cpp swaps in as the set is upgraded. A robe or cuirass also wears
+# Skyrim's own NakedTorso addon: the player's installed body (whatever it is) shows under it - none of it is in our meshes
+from esp_ids import CLASS_SET
+CS_SLOT = {'robes': 1 << 2, 'cuirass': 1 << 2, 'hood': 1 << 1, 'gauntlets': 1 << 3, 'boots': 1 << 7}
+CS_KW = {'robes': 0x06C0EC, 'cuirass': 0x06C0EC, 'hood': 0x06C0EE, 'gauntlets': 0x06C0EF, 'boots': 0x06C0ED}   # ArmorCuirass, Helmet, Gauntlets, Boots
+CS_NAME = {'summoner': 'Summoner', 'destruction': 'Destruction', 'alchemist': 'Alchemist', 'spellsword': 'Spellsword'}
+NAKED_TORSO = 0x000D67
+for _c, _ps in CLASS_SET.items():
+    for _p in _ps:
+        for _t in range(4):
+            m = lambda sx: z(f'CurseOfAlduin\\armour\\{_c}\\{_p}_{sx}_t{_t}_1.nif')
+            recs['ARMA'].append(record('ARMA', fid('ARMA', f'ca_{_c}_{_p}_t{_t}'), [
+                sub('EDID', z(f'UN_CS_{_c}_{_p}_T{_t}AA')), sub('BOD2', struct.pack('<II', CS_SLOT[_p], 0)), sub('RNAM', struct.pack('<I', 0x19)),
+                sub('DNAM', bytes.fromhex('000002020000001700000000')),
+                sub('MOD2', m('m')), sub('MOD3', m('f')), sub('MOD4', m('m')), sub('MOD5', m('f'))] + [sub('MODL', struct.pack('<I', r)) for r in UW_RACES]))
+        addons = [fid('ARMA', f'ca_{_c}_{_p}_t0')] + ([NAKED_TORSO] if CS_SLOT[_p] == 1 << 2 else [])
+        recs['ARMO'].append(record('ARMO', fid('ARMO', f'ca_{_c}_{_p}'), [
+            sub('EDID', z(f'UN_CS_{_c}_{_p}')), sub('OBND', bytes(12)), sub('FULL', z(f'{CS_NAME[_c]} Set {_p.title()}')),
+            sub('BOD2', struct.pack('<II', CS_SLOT[_p], 0)), sub('RNAM', struct.pack('<I', 0x19)),
+            sub('KSIZ', struct.pack('<I', 2)), sub('KWDA', struct.pack('<II', CS_KW[_p], 0x06BBD3))] +
+            [sub('MODL', struct.pack('<I', a)) for a in addons] +
+            [sub('DATA', struct.pack('<If', 0, 1.0)), sub('DNAM', struct.pack('<I', 0))]))
+
 # (Noah: the class sets' powers) the Gondorian Ranger's set, Tier I: 10% faster on your feet (an ability while the
 # Ranger's set has its first tier: src/Classes.cpp)
 md = bytearray(tsub('mgef', 'DATA'))
@@ -1775,6 +1800,17 @@ _efsh_on = {fid('EFSH', k) for k in ('soulpurple', 'tabletgreen', 'tabletgold')}
 out += group('EFSH', [r for r in recs['EFSH'] if struct.unpack_from('<I', r, 12)[0] in _efsh_on])
 for k in ['KYWD', 'GLOB', 'FACT', 'VTYP', 'FSTS', 'LSCR', 'MUSC', 'MUST', 'ARTO', 'MGEF', 'BOOK', 'ENCH', 'SPEL', 'WOOP', 'SHOU', 'ACTI', 'ARMO', 'LIGH', 'STAT', 'WEAP', 'AMMO', 'NPC_', 'ALCH', 'PROJ', 'PERK', 'ARMA', 'SNDR', 'QUST', 'CONT']: out += group(k, recs[k])  # (PERK: the Summoner's command - it was never written before)  # Bethesda's group order: effects load before the spells that use them
 (ROOT / 'data').mkdir(exist_ok=True)
+def _written_ids(d):
+    got = []
+    def walk(o, end):
+        while o + 24 <= end:
+            size, = struct.unpack_from('<I', d, o + 4)
+            if d[o:o + 4] == b'GRUP': walk(o + 24, o + size); o += size
+            else: got.append((d[o:o + 4].decode('latin1'), struct.unpack_from('<I', d, o + 12)[0])); o += 24 + size
+    hs, = struct.unpack_from('<I', d, 4); walk(24 + hs, len(d)); return got
+# (a light plugin's records must be 0x800-0xFFF: past it they wrap onto other ids in game - tools/esp_ids.py fills the gaps first)
+_bad = [(t, hex(f)) for t, f in _written_ids(out) if (f >> 24) == len(MASTERS) and (f & 0xFFFFFF) > 0xFFF]
+if _bad: raise SystemExit(f'{len(_bad)} records past the light plugin\'s 0xFFF: {_bad[:8]}')
 (ROOT / 'data' / PLUGIN).write_bytes(out)
 print('wrote', PLUGIN, len(out), 'bytes,', count, 'records')
 

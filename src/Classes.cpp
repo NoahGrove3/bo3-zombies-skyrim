@@ -4948,17 +4948,24 @@ namespace bo3z::Classes
 		// (Noah, from the armour lookbook: "for Summoner use #9 without the gauntlets. for Destruction use #7 mage robes without
 		// the gauntlets. for Alchemist use #33 without the gauntlets. for Spellsword use #6" - the gauntlets clipped the cloth;
 		// "exactly as previewed": each set in its own mod's colours, the class colour only in the upgrade aura)
+		// (Noah, 2026-11-21: the class sets "hyper realistic" on Skyrim's own armour, refitted to 3BA and HIMBO - no helmets but
+		// hoods: Summoner the Necromancer robes, Destruction the Arch-Mage's, Alchemist the Morag Tong, Spellsword Ahzidal's) each
+		// class's three pieces, ours (tools/armoursets.py); their look follows the tier (ApplySetLooks)
 		std::vector<Piece> SetPieces(int a_cls, int, bool)
 		{
+			if (a_cls < 0 || a_cls > 3) return {};
+			std::vector<Piece> out;
+			for (const auto id : gen::kClassSet[a_cls]) out.push_back({ gen::kPlugin.data(), id });
+			return out;
+		}
+		// the sets the classes wore just before ours (other mods' - taken back from a character still carrying them)
+		std::vector<Piece> PrevSetPieces(int a_cls)
+		{
 			switch (a_cls) {
-			case coffer::kSummoner:  // Calling of the Conjurer's Conjurer's Robe (Rogues 'n Raiders), its boots, the Arch Conjurer's hood
-				return { { "Rogues 'n Raiders.esp", 0x8C94A2 }, { "Rogues 'n Raiders.esp", 0x2998A6 }, { "Rogues 'n Raiders.esp", 0x91A4FB } };
-			case coffer::kDestruction:  // Black Mage Armor SE: the College robes, the leather hood, the College boots
-				return { { "Black Mage Armor SE.esp", 0x0146A5 }, { "Black Mage Armor SE.esp", 0x000D71 }, { "Black Mage Armor SE.esp", 0x0146A6 } };
-			case coffer::kAlchemist:  // the Gondorian Ranger's cuirass and boots, the Ithilien hood
-				return { { "GondorianRangerArmor.esp", 0x000D64 }, { "GondorianRangerArmor.esp", 0x000D66 }, { "GondorianRangerArmor.esp", 0x000D63 } };
-			case coffer::kSpellsword:  // Black Mage Armor SE: the Black Archmage's plate - cuirass, helm, gauntlets, sabatons
-				return { { "Black Mage Armor SE.esp", 0x00DA79 }, { "Black Mage Armor SE.esp", 0x00DFDD }, { "Black Mage Armor SE.esp", 0x00EAC2 }, { "Black Mage Armor SE.esp", 0x00EAC1 } };
+			case coffer::kSummoner: return { { "Rogues 'n Raiders.esp", 0x8C94A2 }, { "Rogues 'n Raiders.esp", 0x2998A6 }, { "Rogues 'n Raiders.esp", 0x91A4FB } };
+			case coffer::kDestruction: return { { "Black Mage Armor SE.esp", 0x0146A5 }, { "Black Mage Armor SE.esp", 0x000D71 }, { "Black Mage Armor SE.esp", 0x0146A6 } };
+			case coffer::kAlchemist: return { { "GondorianRangerArmor.esp", 0x000D64 }, { "GondorianRangerArmor.esp", 0x000D66 }, { "GondorianRangerArmor.esp", 0x000D63 } };
+			case coffer::kSpellsword: return { { "Black Mage Armor SE.esp", 0x00DA79 }, { "Black Mage Armor SE.esp", 0x00DFDD }, { "Black Mage Armor SE.esp", 0x00EAC2 }, { "Black Mage Armor SE.esp", 0x00EAC1 } };
 			default: return {};
 			}
 		}
@@ -5004,6 +5011,9 @@ namespace bo3z::Classes
 			for (auto* a : SetFormsAt(a_cls, 0)) if (std::find(out.begin(), out.end(), a) == out.end()) out.push_back(a);  // (the earlier tiers' looks, taken back)
 			for (int i = 0; i < 4; ++i) {   // (the class-coloured Black Mage robes every class wore before the lookbook's sets)
 				if (auto* f = Lookup(gen::kClassArmour[a_cls][i], gen::kPlugin.data())) if (auto* a = f->As<RE::TESObjectARMO>(); a && std::find(out.begin(), out.end(), a) == out.end()) out.push_back(a);
+			}
+			for (const auto& pc : PrevSetPieces(a_cls)) {   // (the other mods' sets the classes wore just before ours)
+				if (auto* f = Lookup(pc.id, pc.plugin)) if (auto* a = f->As<RE::TESObjectARMO>(); a && std::find(out.begin(), out.end(), a) == out.end()) out.push_back(a);
 			}
 			for (int t = 0; t <= 3; ++t) {   // (and the sets the classes wore before every class wore the Black Mage's)
 				for (const bool fem : { false, true }) {
@@ -5064,6 +5074,28 @@ namespace bo3z::Classes
 		for (auto* a : want) GiveItem(p, a, p->GetItemCount(a) > 0 ? 0 : 1, a_wear);
 		logger::info("classes: {} - {} (tier {}) given{}", Name(a_cls), ArmourSetName(a_cls, a_tier), a_tier, a_wear ? ", worn" : "");
 	}
+	// (Noah: "the appearance of the armor sets needs to change each upgraded tier" - "Worn to legendary", the hood too) each
+	// piece of the class's set wears its tier's look (Base worn, I its colour, II new trims, III glowing): its addon swapped
+	// for the tier's; what you have on is put on again so the new look shows (Skyrim starts every load at the Base look)
+	void ApplySetLooks(int a_cls, int a_tier)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* dh = RE::TESDataHandler::GetSingleton();
+		if (!p || !dh || a_cls < 0 || a_cls > 3) return;
+		const int t = std::clamp(a_tier, 0, 3);
+		bool reset = false;
+		for (int i = 0; i < 3; ++i) {
+			auto* a = dh->LookupForm<RE::TESObjectARMO>(gen::kClassSet[a_cls][i], gen::kPlugin);
+			auto* aa = dh->LookupForm<RE::TESObjectARMA>(gen::kClassSetLook[a_cls][i][t], gen::kPlugin);
+			if (!a || !aa || a->armorAddons.empty() || a->armorAddons[0] == aa) continue;
+			a->armorAddons[0] = aa;
+			if (p->GetWornArmor(a->GetSlotMask()) == a) reset = true;
+		}
+		if (reset && p->Is3DLoaded()) {
+			p->DoReset3D(false);
+			logger::info("classes: {}'s set - tier {} look", Name(a_cls), t);
+		}
+	}
 	// every second: the set's pieces as the rules want them (light, weight 1, the set's armour shared out), the Ranger's stride
 	void TickArmour()
 	{
@@ -5072,6 +5104,7 @@ namespace bo3z::Classes
 		if (!p || c < 0) return;
 		const int  rating = Kit::ArmourRating(c);
 		const auto set = SetForms(c, std::max(0, Kit::ArmourTier(c)));
+		ApplySetLooks(c, Kit::ArmourTier(c));
 		static auto* lightKw = RE::TESForm::LookupByID<RE::BGSKeyword>(0x06BBD3);  // ArmorLight
 		static auto* heavyKw = RE::TESForm::LookupByID<RE::BGSKeyword>(0x06BBD2);  // ArmorHeavy (no heavy armour's weight on you)
 		for (int k = 0; k < 4; ++k) {

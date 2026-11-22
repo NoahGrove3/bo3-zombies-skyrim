@@ -1366,86 +1366,86 @@ namespace bo3z::gen
 		FormRef{ "CurseOfAlduin.esp", 0x000FFD, "UN_cv_des_idle_1_f" },
 		FormRef{ "CurseOfAlduin.esp", 0x000FFE, "UN_cv_des_idle_2_m" },
 		FormRef{ "CurseOfAlduin.esp", 0x000FFF, "UN_cv_des_idle_2_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x001000, "UN_cv_alc_night_start_1_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x001001, "UN_cv_alc_night_start_1_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x001002, "UN_cv_alc_night_start_2_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x001003, "UN_cv_alc_night_start_2_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x001004, "UN_cv_alc_night_start_3_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x001005, "UN_cv_alc_night_start_3_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x001006, "UN_cv_alc_night_end_1_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x001007, "UN_cv_alc_night_end_1_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x001008, "UN_cv_alc_night_end_2_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x001009, "UN_cv_alc_night_end_2_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x00100A, "UN_cv_alc_night_end_3_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x00100B, "UN_cv_alc_night_end_3_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x00100C, "UN_cv_alc_boss_1_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x00100D, "UN_cv_alc_boss_1_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x00100E, "UN_cv_alc_boss_2_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x00100F, "UN_cv_alc_boss_2_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x001010, "UN_cv_alc_dragon_1_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x001011, "UN_cv_alc_dragon_1_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x001012, "UN_cv_alc_dragon_2_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x001013, "UN_cv_alc_dragon_2_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x001014, "UN_cv_alc_special_1_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x001015, "UN_cv_alc_special_1_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x001016, "UN_cv_alc_special_2_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x001017, "UN_cv_alc_special_2_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x001018, "UN_cv_alc_freed_1_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x001019, "UN_cv_alc_freed_1_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x00101A, "UN_cv_alc_freed_2_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x00101B, "UN_cv_alc_freed_2_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x00101C, "UN_cv_alc_enter_1_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x00101D, "UN_cv_alc_enter_1_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x00101E, "UN_cv_alc_enter_2_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x00101F, "UN_cv_alc_enter_2_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x001020, "UN_cv_alc_egg_1_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x001021, "UN_cv_alc_egg_1_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x001022, "UN_cv_alc_egg_2_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x001023, "UN_cv_alc_egg_2_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x001024, "UN_cv_alc_idle_1_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x001025, "UN_cv_alc_idle_1_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x001026, "UN_cv_alc_idle_2_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x001027, "UN_cv_alc_idle_2_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x001028, "UN_cv_ssw_night_start_1_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x001029, "UN_cv_ssw_night_start_1_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x00102A, "UN_cv_ssw_night_start_2_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x00102B, "UN_cv_ssw_night_start_2_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x00102C, "UN_cv_ssw_night_start_3_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x00102D, "UN_cv_ssw_night_start_3_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x00102E, "UN_cv_ssw_night_end_1_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x00102F, "UN_cv_ssw_night_end_1_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x001030, "UN_cv_ssw_night_end_2_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x001031, "UN_cv_ssw_night_end_2_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x001032, "UN_cv_ssw_night_end_3_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x001033, "UN_cv_ssw_night_end_3_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x001034, "UN_cv_ssw_boss_1_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x001035, "UN_cv_ssw_boss_1_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x001036, "UN_cv_ssw_boss_2_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x001037, "UN_cv_ssw_boss_2_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x001038, "UN_cv_ssw_dragon_1_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x001039, "UN_cv_ssw_dragon_1_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x00103A, "UN_cv_ssw_dragon_2_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x00103B, "UN_cv_ssw_dragon_2_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x00103C, "UN_cv_ssw_special_1_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x00103D, "UN_cv_ssw_special_1_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x00103E, "UN_cv_ssw_special_2_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x00103F, "UN_cv_ssw_special_2_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x001040, "UN_cv_ssw_freed_1_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x001041, "UN_cv_ssw_freed_1_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x001042, "UN_cv_ssw_freed_2_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x001043, "UN_cv_ssw_freed_2_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x001044, "UN_cv_ssw_enter_1_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x001045, "UN_cv_ssw_enter_1_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x001046, "UN_cv_ssw_enter_2_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x001047, "UN_cv_ssw_enter_2_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x001048, "UN_cv_ssw_egg_1_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x001049, "UN_cv_ssw_egg_1_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x00104A, "UN_cv_ssw_egg_2_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x00104B, "UN_cv_ssw_egg_2_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x00104C, "UN_cv_ssw_idle_1_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x00104D, "UN_cv_ssw_idle_1_f" },
-		FormRef{ "CurseOfAlduin.esp", 0x00104E, "UN_cv_ssw_idle_2_m" },
-		FormRef{ "CurseOfAlduin.esp", 0x00104F, "UN_cv_ssw_idle_2_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x00084F, "UN_cv_alc_night_start_1_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x000850, "UN_cv_alc_night_start_1_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x000853, "UN_cv_alc_night_start_2_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x000855, "UN_cv_alc_night_start_2_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x000857, "UN_cv_alc_night_start_3_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x000859, "UN_cv_alc_night_start_3_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x00085B, "UN_cv_alc_night_end_1_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x00085D, "UN_cv_alc_night_end_1_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x00085F, "UN_cv_alc_night_end_2_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x000861, "UN_cv_alc_night_end_2_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x000871, "UN_cv_alc_night_end_3_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x000872, "UN_cv_alc_night_end_3_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x000873, "UN_cv_alc_boss_1_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x000874, "UN_cv_alc_boss_1_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x0008DD, "UN_cv_alc_boss_2_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x0008DE, "UN_cv_alc_boss_2_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x00090A, "UN_cv_alc_dragon_1_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x00090B, "UN_cv_alc_dragon_1_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x00090C, "UN_cv_alc_dragon_2_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x00090D, "UN_cv_alc_dragon_2_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x00090E, "UN_cv_alc_special_1_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x00090F, "UN_cv_alc_special_1_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x000910, "UN_cv_alc_special_2_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x000911, "UN_cv_alc_special_2_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x000912, "UN_cv_alc_freed_1_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x000913, "UN_cv_alc_freed_1_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x000914, "UN_cv_alc_freed_2_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x000915, "UN_cv_alc_freed_2_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x00093E, "UN_cv_alc_enter_1_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x00093F, "UN_cv_alc_enter_1_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x000940, "UN_cv_alc_enter_2_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x000941, "UN_cv_alc_enter_2_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x000942, "UN_cv_alc_egg_1_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x000943, "UN_cv_alc_egg_1_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x000944, "UN_cv_alc_egg_2_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x000945, "UN_cv_alc_egg_2_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x000946, "UN_cv_alc_idle_1_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x000947, "UN_cv_alc_idle_1_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x000948, "UN_cv_alc_idle_2_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x000949, "UN_cv_alc_idle_2_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x00094A, "UN_cv_ssw_night_start_1_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x00094B, "UN_cv_ssw_night_start_1_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x00094C, "UN_cv_ssw_night_start_2_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x00094D, "UN_cv_ssw_night_start_2_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x00094E, "UN_cv_ssw_night_start_3_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x00094F, "UN_cv_ssw_night_start_3_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x000950, "UN_cv_ssw_night_end_1_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x000951, "UN_cv_ssw_night_end_1_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x000952, "UN_cv_ssw_night_end_2_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x000953, "UN_cv_ssw_night_end_2_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x000954, "UN_cv_ssw_night_end_3_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x000955, "UN_cv_ssw_night_end_3_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x000956, "UN_cv_ssw_boss_1_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x000957, "UN_cv_ssw_boss_1_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x000980, "UN_cv_ssw_boss_2_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x000981, "UN_cv_ssw_boss_2_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x000982, "UN_cv_ssw_dragon_1_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x000983, "UN_cv_ssw_dragon_1_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x000984, "UN_cv_ssw_dragon_2_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x000985, "UN_cv_ssw_dragon_2_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x000986, "UN_cv_ssw_special_1_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x000987, "UN_cv_ssw_special_1_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x000988, "UN_cv_ssw_special_2_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x000989, "UN_cv_ssw_special_2_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x00098A, "UN_cv_ssw_freed_1_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x00098B, "UN_cv_ssw_freed_1_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x000A60, "UN_cv_ssw_freed_2_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x000A61, "UN_cv_ssw_freed_2_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x000A62, "UN_cv_ssw_enter_1_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x000A63, "UN_cv_ssw_enter_1_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x000A64, "UN_cv_ssw_enter_2_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x000A65, "UN_cv_ssw_enter_2_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x000B0C, "UN_cv_ssw_egg_1_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x000B8D, "UN_cv_ssw_egg_1_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x000BCD, "UN_cv_ssw_egg_2_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x000BCE, "UN_cv_ssw_egg_2_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x000BF9, "UN_cv_ssw_idle_1_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x000C0E, "UN_cv_ssw_idle_1_f" },
+		FormRef{ "CurseOfAlduin.esp", 0x000C1A, "UN_cv_ssw_idle_2_m" },
+		FormRef{ "CurseOfAlduin.esp", 0x000C1B, "UN_cv_ssw_idle_2_f" },
 	} };
 	inline constexpr std::array<int, 636> kSoundLayer{ { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 } };  // a second sound played with each (-1 none)
 	inline constexpr std::uint32_t kMusicBoss = 0xB09, kMusicFreed = 0xB0B, kMusicIntro = 0xB15, kMusicNight = 0xD03;  // our MUSC records
@@ -1855,7 +1855,7 @@ namespace bo3z::gen
 	inline constexpr std::array<std::uint32_t, 7> kSummonCapPerks{ 0xCAD, 0xCAE, 0xCAF, 0xCCF, 0xCF9, 0xCFA, 0xCFB };   // the Summoner holds 2 .. 8 summons
 	inline constexpr std::uint32_t kSteadyPerk = 0xCD8;   // the night's dead never stagger you (Mod Incoming Stagger x0)
 	inline constexpr std::uint32_t kWonderTomeSpell = 0xCB1;   // the Destruction wonder (Classes::OnCast)
-	inline constexpr std::uint32_t kPurpleFire = 0xD41; inline constexpr std::array<std::uint32_t, 9> kBurst{ 0xD51, 0xD52, 0xD53, 0xD54, 0xD55, 0xD56, 0xD57, 0xD58, 0xD59 }; inline constexpr std::array<std::uint32_t, 7> kFlaskSpell{ 0xD6F, 0xD70, 0xD71, 0xD72, 0xD73, 0xD74, 0xD75 }; inline constexpr std::array<std::uint32_t, 7> kFlaskProj{ 0xD5C, 0xD5F, 0xD62, 0xD65, 0xD68, 0xD6B, 0xD6E }; inline constexpr std::array<std::uint32_t, 7> kFlaskItem{ 0xD93, 0xD94, 0xD95, 0xD96, 0xD97, 0xD98, 0xD99 }; inline constexpr std::array<std::uint32_t, 24> kArmGlow{ 0xD80, 0xD81, 0xD82, 0xED4, 0xED5, 0xED6, 0xD83, 0xD84, 0xD85, 0xED7, 0xED8, 0xED9, 0xD86, 0xD87, 0xD88, 0xEDA, 0xEDB, 0xEDC, 0xD89, 0xD8A, 0xD8B, 0xEDD, 0xEDE, 0xEDF }; inline constexpr std::array<std::uint32_t, 7> kFlaskPotion{ 0xD79, 0xD7A, 0xD7B, 0xD7C, 0xD7D, 0xD7E, 0xD7F }; inline constexpr std::uint32_t kAlchKnife = 0xD77, kBoneHorn = 0xD78; inline constexpr std::uint32_t kSlayerWeap = 0xD4B; inline constexpr std::uint32_t kDaggerSpell = 0xD50; inline constexpr std::uint32_t kDaggerHit = 0xD4E; inline constexpr std::uint32_t kWyrmGlow = 0xD48;  // the Violet Wyrm's glow
+	inline constexpr std::uint32_t kPurpleFire = 0xD41; inline constexpr std::array<std::uint32_t, 9> kBurst{ 0xD51, 0xD52, 0xD53, 0xD54, 0xD55, 0xD56, 0xD57, 0xD58, 0xD59 }; inline constexpr std::array<std::uint32_t, 7> kFlaskSpell{ 0xD6F, 0xD70, 0xD71, 0xD72, 0xD73, 0xD74, 0xD75 }; inline constexpr std::array<std::uint32_t, 7> kFlaskProj{ 0xD5C, 0xD5F, 0xD62, 0xD65, 0xD68, 0xD6B, 0xD6E }; inline constexpr std::array<std::uint32_t, 7> kFlaskItem{ 0xD93, 0xD94, 0xD95, 0xD96, 0xD97, 0xD98, 0xD99 }; inline constexpr std::array<std::uint32_t, 24> kArmGlow{ 0xD80, 0xD81, 0xD82, 0xED4, 0xED5, 0xED6, 0xD83, 0xD84, 0xD85, 0xED7, 0xED8, 0xED9, 0xD86, 0xD87, 0xD88, 0xEDA, 0xEDB, 0xEDC, 0xD89, 0xD8A, 0xD8B, 0xEDD, 0xEDE, 0xEDF }; inline constexpr std::array<std::uint32_t, 7> kFlaskPotion{ 0xD79, 0xD7A, 0xD7B, 0xD7C, 0xD7D, 0xD7E, 0xD7F }; inline constexpr std::uint32_t kAlchKnife = 0xD77, kBoneHorn = 0xD78; inline constexpr std::uint32_t kSlayerWeap = 0xD4B; inline constexpr std::uint32_t kDaggerSpell = 0xD50; inline constexpr std::uint32_t kDaggerHit = 0xD4E; inline constexpr std::uint32_t kWyrmGlow = 0x2084;  // the Violet Wyrm's glow
 	inline constexpr std::array<std::uint32_t, 4> kClassGuides{ 0xCD4, 0xCD5, 0xCD6, 0xCD7 };   // each class's guide book
 	inline constexpr std::uint32_t kReaperScythe = 0x96C;
 	inline constexpr std::uint32_t kWyrmClaws = 0x9DD, kShadowClaws = 0x9DE, kZombieClaws = 0x9DF;
@@ -1868,12 +1868,14 @@ namespace bo3z::gen
 	inline constexpr std::uint32_t kRiftblade = 0xD10;  // the Summoner dagger: Rift Stab
 	inline constexpr std::array<std::uint32_t, 6> kArcaneSpell{ 0xE6E, 0xE70, 0xE72, 0xE74, 0xE76, 0xE78 };  // (Blood made Arcane) bolt orb tide, the arcane blade I-III
 	inline constexpr std::uint32_t kMadEnch[3] = { 0xD26, 0xD29, 0xD2C };  // the Madness Sword's violet fire, brighter each tier
-	inline constexpr std::uint32_t kMadShader[3] = { 0xD24, 0xD27, 0xD2A };  // the Madness Sword's violet fire, drawn on the blade itself (src/Kit.cpp)
-	inline constexpr std::uint32_t kShadowburnShader = 0xE14;  // Shadowflame on its victim
+	inline constexpr std::uint32_t kMadShader[3] = { 0x207B, 0x207C, 0x207D };  // the Madness Sword's violet fire, drawn on the blade itself (src/Kit.cpp)
+	inline constexpr std::uint32_t kShadowburnShader = 0x20A4;  // Shadowflame on its victim
 	inline constexpr std::uint32_t kCarianWeap = 0xDB9;  // Destruction's Carian Blade
+	inline constexpr std::uint32_t kClassSet[4][3] = { { 0xC1C, 0xC29, 0xC2A }, { 0xC2B, 0xC2C, 0xC2D }, { 0xC2E, 0xC2F, 0xC30 }, { 0xC5D, 0xC5E, 0xC5F } };  // each class's set (tools/armoursets.py): body, hood/gauntlets, boots
+	inline constexpr std::uint32_t kClassSetLook[4][3][4] = { { { 0xC60, 0xC61, 0xC62, 0xC63 }, { 0xC64, 0xC8A, 0xC91, 0xC92 }, { 0xC93, 0xC94, 0xC95, 0xC96 } }, { { 0xC97, 0xC98, 0xC99, 0xC9A }, { 0xC9C, 0xC9D, 0xC9E, 0xC9F }, { 0xCA0, 0xCA1, 0xCDD, 0xCDE } }, { { 0xCDF, 0xCE0, 0xD07, 0xD08 }, { 0xD15, 0xD18, 0xD1B, 0xD24 }, { 0xD27, 0xD2A, 0xD42, 0xD43 } }, { { 0xD44, 0xD45, 0xD46, 0xD47 }, { 0xD48, 0xD9E, 0xDBA, 0xDBD }, { 0xDC0, 0xDC3, 0xDC6, 0xDC9 } } };  // each piece's look at Base, I, II, III
 	inline constexpr std::uint32_t kClassArmour[4][4] = { { 0xE31, 0xE32, 0xE33, 0xE34 }, { 0xE35, 0xE36, 0xE37, 0xE38 }, { 0xE39, 0xE3A, 0xE3B, 0xE3C }, { 0xE3D, 0xE3E, 0xE3F, 0xE40 } };  // each class's Black Mage robes, hood, wraps, boots (its accents): summoner destruction alchemist spellsword
 	inline constexpr std::uint32_t kBladeViz[10][3] = { { 0xDBC, 0xDBF, 0xDC2 }, { 0xDC5, 0xDC8, 0xDCB }, { 0xDCE, 0xDD1, 0xDD4 }, { 0xDD7, 0xDDA, 0xDDD }, { 0xDE0, 0xDE3, 0xDE6 }, { 0xDE9, 0xDEC, 0xDEF }, { 0xDF2, 0xDF5, 0xDF8 }, { 0xDFB, 0xDFE, 0xE01 }, { 0xE04, 0xE07, 0xE0A }, { 0xE0D, 0xE10, 0xE13 } };  // the swords' tier looks: alch carian radiant ss_none ss_fire ss_frost ss_shock ss_sun ss_blood slayer
-	inline constexpr std::uint32_t kHallGhostShader = 0xE6C;  // the Reliquary's pale likenesses of the Bane and the Slayer
+	inline constexpr std::uint32_t kHallGhostShader = 0x20A5;  // the Reliquary's pale likenesses of the Bane and the Slayer
 	inline constexpr std::uint32_t kBladeVizArt[10] = { 0xE47, 0xE4B, 0xE4F, 0xE53, 0xE57, 0xE5B, 0xE5F, 0xE63, 0xE67, 0xE6B };  // each look's Vibrant Weapons art on the blade (an ability, laid on while the sword is in your hand)
 	inline constexpr std::uint32_t kBladeVizFx[10][3] = { { 0xDBB, 0xDBE, 0xDC1 }, { 0xDC4, 0xDC7, 0xDCA }, { 0xDCD, 0xDD0, 0xDD3 }, { 0xDD6, 0xDD9, 0xDDC }, { 0xDDF, 0xDE2, 0xDE5 }, { 0xDE8, 0xDEB, 0xDEE }, { 0xDF1, 0xDF4, 0xDF7 }, { 0xDFA, 0xDFD, 0xE00 }, { 0xE03, 0xE06, 0xE09 }, { 0xE0C, 0xE0F, 0xE12 } };
 	inline constexpr std::uint32_t kRiftEnch[3] = { 0xD17, 0xD1A, 0xD1D };  // its fire, brighter each tier
@@ -1973,7 +1975,7 @@ namespace bo3z::gen
 	} };
 	inline constexpr std::uint32_t kTabletArrow = 0xEC9;
 	inline constexpr std::array<std::pair<std::string_view, std::uint32_t>, 10> kScytheFirst{ { { "CurseOfAlduin\\scythes\\forsworn.nif", 0xF1C }, { "CurseOfAlduin\\scythes\\falmer.nif", 0xF1D }, { "CurseOfAlduin\\scythes\\dwarven.nif", 0xF1E }, { "CurseOfAlduin\\scythes\\glass.nif", 0xF1F }, { "CurseOfAlduin\\scythes\\dragonpriest.nif", 0xF20 }, { "CurseOfAlduin\\scythes\\silver.nif", 0xF21 }, { "CurseOfAlduin\\scythes\\Skeleton.nif", 0xF22 }, { "CurseOfAlduin\\scythes\\dragonTeeth.nif", 0xF23 }, { "CurseOfAlduin\\scythes\\vampire.nif", 0xF24 }, { "CurseOfAlduin\\scythes\\daedric.nif", 0xF25 } } };  // (each scythe model: its first-person STAT, the item menu's view)
-	inline constexpr std::uint32_t kSpectralShader = 0xF26;  // (the Soulcaller's wolves)
+	inline constexpr std::uint32_t kSpectralShader = 0x20A6;  // (the Soulcaller's wolves)
 	inline constexpr std::uint32_t kSoulPurple = 0xF2B;  // (the Soulcaller's violet ghost glow: its wolves and the dead its beam holds)
 	inline constexpr std::uint32_t kTabletGreen = 0xF28, kTabletGold = 0xF29;  // the Tablet reel's rarity glows
 	inline constexpr std::uint32_t kArmAura = 0xF2E;  // (the class armour's aura: the Flame Cloak in the class's colour)

@@ -7,8 +7,8 @@ BodySlide's conversions are made:
     nearest skin's displacement (its 12 nearest, the nearest counting most) - a robe's skirt far from any skin moves with the
     hips and thighs it hangs from;
   - then nothing of it is left inside the new body: any part nearer the skin than a hair is pushed out along the skin's normal;
-  - Skyrim's own skin pieces in it are dropped and the new body cloned in whole (as worn under it), so what shows is the
-    player's own body;
+  - Skyrim's own skin pieces in a robe or cuirass are dropped: the armour record wears Skyrim's NakedTorso addon beside it, so
+    what shows under it is the player's own installed body (3BA, HIMBO - never copied into ours);
   - the body's RaceMenu/BodySlide sliders carried onto it (the body's own shape keeps its morphs whole) - tools/underwear.py's
     transfer - in a .tri of its own, named on the root.
 
@@ -84,8 +84,8 @@ def closest_tri(X, P, F, k=6):
 
 
 def fit(armour, sex, out, role='body', tri=None, textures=None, glows=None, clearance=0.6):
-    """role 'body': a robe/cuirass - Skyrim's skin pieces in it dropped and the player's body cloned in their place (if it had
-    any); anything else (boots, gauntlets, a hood) keeps its own feet and hands, moved with it. tri = (its path as the game
+    """role 'body': a robe/cuirass - Skyrim's skin pieces in it dropped: the player's own body is worn under it by the armour
+    record itself (Skyrim's NakedTorso addon beside ours, so whatever body they have shows, none of it shipped here); anything else (boots, gauntlets, a hood) keeps its own feet and hands, moved with it. tri = (its path as the game
     names it, under meshes\\; the file to write) - the body's sliders carried onto it, written from the _1 fit; weight from
     the armour's own _0/_1."""
     textures = textures or {}; glows = glows or {}; trispec = tri
@@ -173,7 +173,6 @@ def fit(armour, sex, out, role='body', tri=None, textures=None, glows=None, clea
         moved[name] = P; faces[name] = F
         for slot, path in textures.get(name, {}).items(): job.append(f'tex {name} {slot} {path}')
         if name in glows: job.append(f'glow {name} ' + ' '.join(str(x) for x in glows[name]))
-    if dropped: job.append(f'body "{tgt_nif}" {BODY[sex][1]}')
     if trispec: job.append(f'bodytri {trispec[0]}')
     jf = WORK / (pathlib.Path(out).stem + '.job'); jf.write_text('\n'.join(job) + '\n')
     pathlib.Path(out).parent.mkdir(parents=True, exist_ok=True)
@@ -187,7 +186,7 @@ def fit(armour, sex, out, role='body', tri=None, textures=None, glows=None, clea
                 n, v = l[3:].split('|'); v = [float(x) for x in v.split()]
                 xf[n] = np.array(v[:9]).reshape(3, 3) * v[9]
         globals()['_TF'] = TF
-        sliders(sex, TV, TN, moved, faces, xf, dropped, pathlib.Path(trispec[1]))
+        sliders(sex, TV, TN, moved, faces, xf, False, pathlib.Path(trispec[1]))
     return moved
 
 

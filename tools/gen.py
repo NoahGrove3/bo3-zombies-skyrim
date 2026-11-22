@@ -220,6 +220,9 @@ o.append('\tinline constexpr std::uint32_t kShadowburnShader = 0x' + f'{IDS[("EF
 o.append('\tinline constexpr std::uint32_t kCarianWeap = 0x' + f'{IDS[("WEAP", "carianblade")]:03X};  // Destruction\'s Carian Blade')
 from esp_ids import BLADE_VIZ
 from esp_ids import CLASS_ARMOUR, CLASS_PIECES
+from esp_ids import CLASS_SET
+o.append('\tinline constexpr std::uint32_t kClassSet[4][3] = { ' + ', '.join('{ ' + ', '.join(f'0x{IDS[("ARMO", f"ca_{c}_{p}")]:03X}' for p in CLASS_SET[c]) + ' }' for c in CLASS_ARMOUR) + ' };  // each class\'s set (tools/armoursets.py): body, hood/gauntlets, boots')
+o.append('\tinline constexpr std::uint32_t kClassSetLook[4][3][4] = { ' + ', '.join('{ ' + ', '.join('{ ' + ', '.join(f'0x{IDS[("ARMA", f"ca_{c}_{p}_t{t}")]:03X}' for t in range(4)) + ' }' for p in CLASS_SET[c]) + ' }' for c in CLASS_ARMOUR) + ' };  // each piece\'s look at Base, I, II, III')
 o.append('\tinline constexpr std::uint32_t kClassArmour[4][4] = { ' + ', '.join('{ ' + ', '.join(f'0x{IDS[("ARMO", f"cm_{c}_{pc}")]:03X}' for pc in CLASS_PIECES) + ' }' for c in CLASS_ARMOUR) + ' };  // each class\'s Black Mage robes, hood, wraps, boots (its accents): ' + ' '.join(CLASS_ARMOUR))
 o.append('\tinline constexpr std::uint32_t kBladeViz[' + str(len(BLADE_VIZ)) + '][3] = { ' + ', '.join('{ ' + ', '.join(f'0x{IDS[("ENCH", f"bv_{b}_{n}")]:03X}' for n in (1, 2, 3)) + ' }' for b in BLADE_VIZ) + ' };  // the swords\' tier looks: ' + ' '.join(BLADE_VIZ))
 o.append(f'\tinline constexpr std::uint32_t kHallGhostShader = 0x{IDS[("EFSH", "hallghost")]:03X};  // the Reliquary\'s pale likenesses of the Bane and the Slayer')
