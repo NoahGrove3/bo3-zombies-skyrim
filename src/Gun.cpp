@@ -415,6 +415,7 @@ namespace bo3z
 			av->DamageActorValue(RE::ActorValue::kHealth, damage);
 			const bool ours = Director::IsRoundUndead(a_target);
 			g_hits[a_target->GetFormID()] = { Clock::now(), a_head && !a_melee };
+			if (ours) Events::NoteTouch(a_target, 1);  // (a kill Skyrim takes before ours lands still pays)
 			if (ours) {
 				Curse::NoteHit(tid, a_melee);  // (the knife counts for the Trial of Steel; spells and wands don't)
 			}

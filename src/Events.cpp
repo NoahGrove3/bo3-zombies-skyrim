@@ -654,6 +654,7 @@ namespace bo3z
 
 		bool SummonStruckLast(RE::Actor* a_z);
 		bool PlayerStruckLast(RE::Actor* a_z);
+		int  Touched(RE::Actor* a_z, float a_secs);
 		class DeathWatch : public RE::BSTEventSink<RE::TESDeathEvent>
 		{
 		public:
@@ -712,17 +713,35 @@ namespace bo3z
 				}
 				Audio::Voice(dying, Audio::VoiceEvent::kDeath);
 				Audio::Flesh(dying, true);
-				if (a_event->actorKiller.get() != player) {
-					// a party member's kill counts for everyone (each player gets the points: nobody goes without)
+				{
 					auto* killer = a_event->actorKiller.get() ? a_event->actorKiller->As<RE::Actor>() : nullptr;
-					if (Net::InLobby() && Party::IsFriend(killer)) {
+					const bool friendKill = killer && killer != player && Net::InLobby() && Party::IsFriend(killer);
+					bool       summonKill = killer && killer != player && ((killer->IsCommandedActor() && killer->GetCommandingActor().get() == player) || Classes::IsOwnSummon(killer) || Echo::IsAlly(killer));
+					bool       playerKill = killer == player;
+					bool       late = false;
+					if (!playerKill && !summonKill && !friendKill) {
+						// (Noah: "I wasn't getting Cursed Essence from every kill") no killer, or one not ours: whoever of
+						// us struck it in the last 6 seconds made the kill (dawn's crumbling and the dead's own quarrels,
+						// untouched, still pay nothing)
+						const int t = Touched(dying, 6.0f);
+						playerKill = t == 1, summonKill = t == 2, late = t != 0;
+					}
+					static int told = 0;
+					if (late && told < 12) ++told, logger::info("essence: {} died to {} - paid as {} kill", dying->GetName(), killer ? killer->GetName() : "nobody", playerKill ? "your" : "a summon's");
+					if (friendKill) {
+						// a party member's kill counts for everyone (each player gets the points: nobody goes without)
 						Points::Add(static_cast<int>(std::lround(gen::kPoints_kill * Director::KillEssenceScale())));
-					} else if (killer && ((killer->IsCommandedActor() && killer->GetCommandingActor().get() == player) || Classes::IsOwnSummon(killer) || Echo::IsAlly(killer))) {
+						return RE::BSEventNotifyControl::kContinue;
+					}
+					if (summonKill) {
 						// (the audit: since a summon's kill became the summon's, it paid nothing) your summons' and allies' kills pay
 						Points::Add(static_cast<int>(std::lround(gen::kPoints_kill * Director::KillEssenceScale() * Perks::KillEssenceMult(dying))));
 						Hud::Essence(dying->GetPosition());
+						return RE::BSEventNotifyControl::kContinue;
 					}
-					return RE::BSEventNotifyControl::kContinue;  // dawn, followers, guards: no points
+					if (!playerKill) {
+						return RE::BSEventNotifyControl::kContinue;  // dawn, followers, guards: no points
+					}
 				}
 				const auto [gun, head] = Gun::RecentHit(dying->GetFormID());
 				Points::Add(static_cast<int>(std::lround((gun ? (head ? gen::kPoints_headshot_kill : gen::kPoints_kill) : gen::kPoints_melee_kill) * Director::KillEssenceScale() * Perks::KillEssenceMult(dying))));
@@ -825,6 +844,23 @@ namespace bo3z
 			return true;
 		}
 
+		// (Noah: "I wasn't getting Cursed Essence from every kill - it was random") every blow on the dead, yours or your
+		// summons', with its time: a kill Skyrim credits to nobody (a blow's death taken by the engine before ours lands, a
+		// Bloater's burst, a fire left burning) or to someone not ours still pays whoever struck it last
+		std::unordered_map<RE::FormID, std::pair<int, std::chrono::steady_clock::time_point>> g_touch;
+		void Touch(RE::Actor* a_z, int a_who)
+		{
+			if (!a_z || a_who <= 0) return;
+			const auto now = std::chrono::steady_clock::now();
+			if (g_touch.size() > 600) std::erase_if(g_touch, [&](const auto& e) { return now - e.second.second > std::chrono::seconds(15); });
+			g_touch[a_z->GetFormID()] = { a_who, now };
+		}
+		int Touched(RE::Actor* a_z, float a_secs)
+		{
+			auto it = a_z ? g_touch.find(a_z->GetFormID()) : g_touch.end();
+			if (it == g_touch.end()) return 0;
+			return std::chrono::steady_clock::now() - it->second.second < std::chrono::duration<float>(a_secs) ? it->second.first : 0;
+		}
 		// who struck each of the dead last: one of your summons, or you (the Pact of the Host's kills)
 		std::unordered_map<RE::FormID, std::pair<bool, std::chrono::steady_clock::time_point>> g_struckBy;
 		void NoteStruck(RE::Actor* a_z, bool a_bySummon)
@@ -832,6 +868,7 @@ namespace bo3z
 			if (!a_z) return;
 			if (g_struckBy.size() > 400) g_struckBy.clear();
 			g_struckBy[a_z->GetFormID()] = { a_bySummon, std::chrono::steady_clock::now() };
+			Touch(a_z, a_bySummon ? 2 : 1);
 		}
 		bool SummonStruckLast(RE::Actor* a_z)
 		{
@@ -849,6 +886,8 @@ namespace bo3z
 			// summon's kill is the summon's (it was always counted as yours, and so never as a summon's)
 			auto* player = a_by ? a_by : RE::PlayerCharacter::GetSingleton();
 			auto* av = a_actor->AsActorValueOwner();
+			if (auto* pc = RE::PlayerCharacter::GetSingleton(); player == pc) Touch(a_actor, 1);
+			else if (player && ((player->IsCommandedActor() && player->GetCommandingActor().get() == pc) || Classes::IsOwnSummon(player) || Echo::IsAlly(player))) Touch(a_actor, 2);
 			if (Undead::IsDancing(a_actor)) a_damage *= 1.5f;  // (the Dance Of Death: half again as hard)
 			a_damage *= Director::TakenMult(a_actor) * Kit::ArmorAscendMult() * Echo::SetDamageMult() * Perks::TakenMult(a_actor) * Tablet::TakenMult(a_actor);  // (Catalyst Philter) (the Saltrice Sickle's salt)  // (a brute dazed or berserk; your armor's Ascends; the First Dragonborn's Regalia)
 			av->DamageActorValue(RE::ActorValue::kHealth, a_damage);
@@ -1062,6 +1101,7 @@ namespace bo3z
 				if (a_event && a_event->cause.get() == player && a_event->target) {
 					auto* z = a_event->target->As<RE::Actor>();
 					auto* src = RE::TESForm::LookupByID(a_event->source);
+					if (z && Director::IsRoundUndead(z)) Touch(z, 1);
 					if (z && Director::IsRoundUndead(z)) {  // Trial of Steel: was it a blade, an axe, a mace or a fist?
 						auto*      w = src ? src->As<RE::TESObjectWEAP>() : nullptr;
 						const bool melee = !a_event->projectile && (src ? (w && !w->IsBow() && !w->IsCrossbow() && !w->IsStaff()) : true);
@@ -1680,6 +1720,8 @@ namespace bo3z
 
 	namespace Events
 	{
+		void NoteTouch(RE::Actor* a_z, int a_who) { Touch(a_z, a_who); }
+		int  Toucher(RE::Actor* a_z, float a_secs) { return Touched(a_z, a_secs); }
 		void FreeCamTick() { FreeCamTickImpl(); }
 		void InstallLoadGuard()
 		{

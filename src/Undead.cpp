@@ -1472,8 +1472,10 @@ namespace bo3z
 						const auto at = a->GetPosition();
 						Gun::FxBlast("poisongas", at + RE::NiPoint3{ 0, 0, 40 });
 						Director::Hazard(at, 0.05f, 230.0f, 0.15f, "", false);  // (no stagger: Noah)
+						const int popper = Events::Toucher(a.get(), 8.0f);  // (whoever popped it owns what its burst kills)
 						for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
 							if (auto z = h.get(); z && z.get() != a.get() && !z->IsDead() && Director::IsRoundUndead(z.get()) && z->GetPosition().GetDistance(at) < 260.0f) {
+								if (popper) Events::NoteTouch(z.get(), popper);
 								z->AsActorValueOwner()->DamageActorValue(RE::ActorValue::kHealth, Director::RoundHealth() * 0.6f);
 							}
 						}

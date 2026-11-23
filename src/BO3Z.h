@@ -1304,6 +1304,11 @@ namespace bo3z
 		void InstallMenuWatch();
 		void InstallLoadGuard();  // (a save holding an extra twice no longer crashes as it loads)
 		void FreeCamTick();       // (the free camera: the mod's frame from the screen's frame, since Skyrim stops updating you)
+		// (Noah: "I wasn't getting Cursed Essence from every kill") who last laid a blow on one of the dead: 1 you, 2 your
+		// summons and allies. A death whose killer isn't ours (none, one of the dead's own blasts, a guard) still pays its
+		// toucher, if the blow was within a few seconds.
+		void NoteTouch(RE::Actor* a_z, int a_who);
+		int  Toucher(RE::Actor* a_z, float a_secs);
 	}
 
 	// (Noah: "each class has its set starting gear that can be scaled as the player progresses") the altar rework: your
