@@ -624,7 +624,7 @@ namespace bo3z::Net
 			}
 			return;
 		}
-		g_pendingCreate = A.CreateLobby(A.mm, 1, 8);  // friends only, up to 8
+		g_pendingCreate = A.CreateLobby(A.mm, 1, 4);  // friends only, up to 4 (Noah, 2026-11-23: "co-op is 1-4 players only")
 		g_status = "Opening a party...";
 		logger::info("net: creating a lobby");
 	}

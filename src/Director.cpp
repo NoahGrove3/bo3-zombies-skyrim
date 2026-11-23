@@ -150,7 +150,7 @@ namespace bo3z
 		constexpr int kNightCapPerPlayer = 2000;
 		int WaveSize(int a_wave)
 		{
-			const int   players = Net::InLobby() ? Net::Members() + 1 : 1;
+			const int   players = std::min(4, Net::InLobby() ? Net::Members() + 1 : 1);  // (co-op is 1-4 players)
 			const float party = 1.0f + 0.5f * static_cast<float>(std::max(0, players - 1));  // (each friend: half again)
 			const int   th = ThemeNowImpl();
 			const float size = static_cast<float>(WaveStep() + 10 * (std::max(1, a_wave) - 1)) * party * (th >= 0 ? gen::kEvents[th].waveCount : 1.0f);

@@ -1,11 +1,11 @@
 THE CURSE OF ALDUIN - PARTY PACK
 ================================
 
-You need: Skyrim Special Edition or Anniversary Edition on Steam, updated, started once. Both players need
-this SAME pack (an older pack loads an older build of the mod, or none at all). This pack replaces the
+Co-op is 1 to 4 players. You need: Skyrim Special Edition or Anniversary Edition on Steam, updated, started once.
+Every player needs this SAME pack (an older pack loads an older build of the mod, or none at all). This pack replaces the
 old "Undying Nights" pack - the mod was renamed; old Undying Nights saves will not load, start a new character.
 
-ONE-TIME SETUP (both players)
+ONE-TIME SETUP (every player)
  1. Close Skyrim.
  2. Unzip this pack anywhere (Desktop is fine) and double-click  JOIN THE PARTY.bat
     (the host - Noah - runs  HOST THE PARTY (Noah only).bat  instead).
@@ -27,7 +27,7 @@ EVERY TIME YOU PLAY
     password to type). Each of you starts where your own save is - meet up in game (Skyrim Together's
     party list shows the others).
 
-THE PARTY MODS (installed for both players - Skyrim Together needs the same plugins on both sides)
+THE PARTY MODS (installed for every player - Skyrim Together needs the same plugins on both sides)
  - Spells the shrine's Coffer hands out (200 attack spells, Destruction first): Apocalypse, Mysticism,
    Forgotten Magic Redone, Stormcaller Magic II, Strange Runes, Bone Colossus' blue fire - plus Conduit and
    Enhanced Atronachs.

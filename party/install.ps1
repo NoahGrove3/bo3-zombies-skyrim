@@ -63,7 +63,7 @@ function Restore-Copies([string]$kind) {
     }
     if ($n) { Say "  ($n shared files placed)" }
 }
-# ---- the party's gameplay mods (required: both players need the same plugins): the spell mods the Coffer draws
+# ---- the party's gameplay mods (required: every player needs the same plugins): the spell mods the Coffer draws
 #      from, Ordinator, animations and movement (Open Animation Replacer, True Directional Movement, Goetia, ...),
 #      spell effects and sounds. Already installed and sorted in files\Mods\Data.
 $mods = Join-Path $pack 'files\Mods\Data'
@@ -164,6 +164,7 @@ if ($Role -eq 'host') {
     $t = $t -replace '^sServerName=.*', 'sServerName=The Curse of Alduin'
     $t = $t -replace '^bAutoPartyJoin=.*', 'bAutoPartyJoin=true'
     $t = $t -replace '^bEnableDeathSystem=.*', 'bEnableDeathSystem=true'
+    $t = $t -replace '^uMaxPlayerCount=.*', 'uMaxPlayerCount=4'                       # (Noah: co-op is 1-4 players)
     Set-Content $ini $t
     Say 'Server set up (30-minute days, your password).' Green
 }
