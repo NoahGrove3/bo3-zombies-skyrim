@@ -222,7 +222,6 @@ namespace bo3z
 			for (auto& h : g_seals.runes) Gone(h);
 			g_seals = {};
 		}
-		RE::ObjectRefHandle g_probe;
 
 		void ClearRun()
 		{
