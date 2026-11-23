@@ -254,11 +254,14 @@ o.append('\tenum EventId : int { ' + ', '.join(f'kEvent_{e["id"]} = {i}' for i, 
 CU = S['curse']
 cityOf = {c['town']: c for c in CU['cities']}
 assert all(t in cityOf for t in towns), 'curse.cities must list every town'
-o.append('\tstruct CurseCity { std::string_view landmark; std::uint32_t location; std::uint32_t global; };')
+o.append('\tstruct CursePlace { std::string_view place; float x, y, z; };  // a spot in the city\'s worldspace (just outside a building\'s door)')
+o.append('\tstruct CurseCity { std::string_view landmark; std::uint32_t location; std::uint32_t global; CursePlace whisper; std::string_view riddle; std::array<CursePlace, 3> seals; };')
 o.append(f'\tinline constexpr std::array<CurseCity, {len(towns)}> kCurseCities{{ {{')
+_pl = lambda q: f'CursePlace{{ {cs(q["place"])}, {F(q["x"])}, {F(q["y"])}, {F(q["z"])} }}'
 for t in towns:
     c = cityOf[t]
-    o.append(f'\t\tCurseCity{{ {cs(c["landmark"])}, 0x{int(c["location"], 16):06X}, 0x{IDS[("GLOB", "curse_" + t)]:03X} }},')
+    assert len(c['seals']) == 3, t
+    o.append(f'\t\tCurseCity{{ {cs(c["landmark"])}, 0x{int(c["location"], 16):06X}, 0x{IDS[("GLOB", "curse_" + t)]:03X}, {_pl(c["whisper"])}, {cs(c["whisper"]["riddle"])}, {{ ' + ', '.join(_pl(q) for q in c['seals']) + ' } },')
 o.append('\t} };')
 o.append('\tinline constexpr std::array<std::uint32_t, ' + str(len(towns)) + '> kRiteQuests{ ' + ', '.join(f'0x{IDS[("QUST", "rites_" + t)]:03X}' for t in towns) + ' };   // the cities\' quests in the journal')
 o.append('\tstruct TrialDef { std::string_view id, title, shortText, goal, text; std::array<int, 6> n, seconds; };  // per Skyrim difficulty, Novice..Legendary')
@@ -279,6 +282,7 @@ o.append('\t} };')
 o.append(f'\tinline constexpr std::uint32_t kCurseIntroGlobal = 0x{IDS[("GLOB", "curse_intro")]:03X}, kStandLayoutGlobal = 0x{IDS[("GLOB", "stand_layout")]:03X}, kDirgeBook = 0x{IDS[("BOOK", "dirge")]:03X}, kGuideBook = 0x{IDS[("BOOK", "guide")]:03X};')
 o.append(f'\tinline constexpr std::string_view kCursePrologueTitle = {cs(CU["prologueTitle"])}, kCursePrologue = {cs(CU["prologue"])}, kCurseLiftedBanner = {cs(CU["liftedBanner"])}, kCurseLiftedText = {cs(CU["liftedText"])}, kCurseFreedAll = {cs(CU["freedAll"])};')
 o.append(f'\tinline constexpr float kCurseZone = {F(CU["zoneRadius"])}, kCurseHoldRadius = {F(CU["holdRadius"])};')
+o.append(f'\tinline constexpr float kCurseLight = {F(CU["lightRadius"])}, kCurseWhisperRadius = {F(CU["whisperRadius"])}, kCurseEchoRadius = {F(CU["echoRadius"])};')
 o.append(f'\tinline constexpr std::uint32_t kWardBrazier = 0x{IDS[("STAT", "ward_brazier")]:03X}, kWardFire = 0x{IDS[("STAT", "ward_fire")]:03X}, kWardLight = 0x{IDS[("LIGH", "ward_light")]:03X};')
 # the ten spells (sheet: spellcraft): their numbers, colours and attacks for src/Spellcraft.inl
 SC = S['spellcraft']['rows']

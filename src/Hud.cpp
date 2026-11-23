@@ -2690,6 +2690,19 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					line += "     " + std::to_string(t / 60) + ":" + (t % 60 < 10 ? "0" : "") + std::to_string(t % 60);
 				}
 				TxtC(dl, g_body, 17 * k, cxs, y0 + 27 * k, blink ? warn : IM_COL32(225, 216, 196, 235), line, 1.2f * k, IM_COL32(0, 0, 0, 220));
+				if (!s.questSub.empty()) {  // (the trials remade) the altar voice's riddle, in two lines at most, under the bar
+					std::vector<std::string> rows(1), words;
+					for (std::size_t p0 = 0, p1; p0 < s.questSub.size(); p0 = p1 + 1) {
+						p1 = s.questSub.find(' ', p0);
+						if (p1 == std::string::npos) p1 = s.questSub.size();
+						if (p1 > p0) words.push_back(s.questSub.substr(p0, p1 - p0));
+					}
+					for (const auto& w : words) {
+						if (!rows.back().empty() && Measure(g_body, 16 * k, rows.back() + " " + w).x > 640 * k && rows.size() < 3) rows.emplace_back();
+						rows.back() += (rows.back().empty() ? "" : " ") + w;
+					}
+					for (std::size_t r = 0; r < rows.size(); ++r) TxtC(dl, g_body, 16 * k, cxs, y0 + (62 + 20 * static_cast<float>(r)) * k, IM_COL32(190, 205, 235, 235), rows[r], 1.2f * k, IM_COL32(0, 0, 0, 220));
+				}
 				const float bw = 220 * k;
 				const float fr = std::clamp(s.questFrac, 0.0f, 1.0f);
 				dl->AddRectFilled({ cxs - bw * 0.5f, y0 + 52 * k }, { cxs + bw * 0.5f, y0 + 55 * k }, IM_COL32(20, 16, 12, 170));
@@ -2952,7 +2965,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						dl->AddCircleFilled(c, spacing * 0.5f, Fade(white, 0.10f + 0.08f * pulse), 24);
 					}
 				}
-				if (s.ringLabelOn) {
+				if (s.ringLabelOn && !s.ringHead.empty()) {  // (the trials remade: a count, not seconds)
+					const ImVec2 c{ s.ringLabelX * size.x, s.ringLabelY * size.y };
+					TxtC(dl, g_title, 20 * k, c.x, c.y, fl > 0.01f ? IM_COL32(255, 120, 100, 255) : kParch, s.ringHead, 2 * k, cold);
+					if (!s.ringSub.empty()) TxtC(dl, g_num, 26 * k, c.x, c.y + 26 * k, IM_COL32(230, 238, 255, 240), s.ringSub, 1.5f * k, cold);
+				} else if (s.ringLabelOn) {
 					const ImVec2 c{ s.ringLabelX * size.x, s.ringLabelY * size.y };
 					const std::string head = s.ringHold ? (s.ringInside ? "STAND IN THE CIRCLE" : "HOLD THE CIRCLE") : (s.ringInside ? "THE DEAD ARE IN THE CIRCLE" : "KEEP THE DEAD OUT");
 					TxtC(dl, g_title, 20 * k, c.x, c.y, fl > 0.01f || s.ringInside ? IM_COL32(255, 120, 100, 255) : kParch, head, 2 * k, cold);
@@ -3335,24 +3352,22 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					y += 64 * k;
 				}
 				if (voiceOpen) endSection();
-				// [5b] the city's trials: any three of the five, then its Dragon Priest
+				// [5b] the city's trials: four, one after another, then its Dragon Priest (Noah, 2026-11-23: the trials remade)
 				int trialsDone = 0;
-				for (int q = 0; q < 5; ++q) trialsDone += (s.trialDone >> q) & 1;
+				for (int q = 0; q < 4; ++q) trialsDone += (s.trialDone >> q) & 1;
 				if (s.trialsOn && section(214, "TRIALS OF " + Upper(s.trialCity), !s.trialLock.empty() ? std::string("LOCKED") : s.trialActive == 6 ? std::string("the Dragon Priest walks") : fmt::format("{} of 4 done", std::min(trialsDone, 4)), s.trialActive > 0)) {
 					const float TL = L, TR = Rr, tcx = cx;
 					const int doneCount = trialsDone;
-					const bool party = Party::FriendCount() > 0;  // (in a party: three of your own each, then the night's waves together)
+					const bool party = Party::FriendCount() > 0;  // (in a party: every trial shared)
 					const bool full = doneCount >= 4 || s.trialActive == 6;
 					y -= 34 * k;  // (the section's header names the city)
 					if (!s.trialLock.empty()) TxtC(dl, g_body, 16 * k, tcx, y + 34 * k, kLockedCol, "LOCKED  -  " + s.trialLock);
-					else TxtC(dl, g_body, 16 * k, tcx, y + 34 * k, IM_COL32(196, 182, 160, 235), party ? "The three shared trials with your party's help, your class's trial on your own  -  " + std::to_string(std::min(doneCount, 4)) + " of 4 done"
-					                                                                                     : "Three shared trials and your class's own, in any order  -  " + std::to_string(std::min(doneCount, 4)) + " of 4 done");
+					else TxtC(dl, g_body, 16 * k, tcx, y + 34 * k, IM_COL32(196, 182, 160, 235), std::string(party ? "Four trials, shared with your party, one after another, at night" : "Four trials, one after another, at night") + "  -  " + std::to_string(std::min(doneCount, 4)) + " of 4 done");
 					float ty = y + 66 * k;
-					static constexpr const char* kRoman[5] = { "I", "II", "III", "IV", "V" };
-					static constexpr int kOrder[4] = { 0, 1, 4, 3 };  // (the Unbroken is folded into the Long Night's Breath; the steel slot is the class trial)
+					static constexpr const char* kRoman[4] = { "I", "II", "III", "IV" };
 					for (int qi = 0; qi < 4; ++qi) {
-						const int  q = kOrder[qi];
-						const bool done = (s.trialDone >> q) & 1, active = s.trialActive == q + 1, open = !done && !active && !full;
+						const int  q = qi;
+						const bool done = (s.trialDone >> q) & 1, active = s.trialActive == q + 1, open = !done && !active && !full && q == s.trialNext;
 						if (active) {
 							dl->AddRectFilled({ a.x + 10 * k, ty - 6 * k }, { b.x - 10 * k, ty + 62 * k }, IM_COL32(120, 60, 20, static_cast<int>(70 + 40 * std::sin(now * 3.0f))), 3 * k);
 						}
@@ -3360,8 +3375,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						const bool sel = s.altarFocus == 10 + q;
 						TxtC(dl, g_title, 18 * k, TL + 13 * k, ty + 4 * k, sel || done ? kGold : IM_COL32(170, 156, 132, 220), kRoman[qi]);
 						const ImU32 tc = done ? kGold : active ? IM_COL32(255, 196, 120, 255) : open ? kParch : IM_COL32(140, 130, 116, 220);
-						Txt(dl, g_title, 20 * k, { TL + 38 * k, ty + 2 * k }, tc, q == 3 ? Curse::TrialTitle(3) : std::string(gen::kTrials[q].title));
-						TxtWrap(dl, g_body, 16 * k, { TL + 38 * k, ty + 30 * k }, done || open || active ? IM_COL32(196, 182, 160, 235) : IM_COL32(130, 120, 108, 210), s.trialDesc[q], TR - TL - 40 * k, 1);
+						Txt(dl, g_title, 20 * k, { TL + 38 * k, ty + 2 * k }, tc, Curse::TrialTitle(q));
+						TxtWrap(dl, g_body, 16 * k, { TL + 38 * k, ty + 30 * k }, done || open || active ? IM_COL32(196, 182, 160, 235) : IM_COL32(130, 120, 108, 210), s.trialDesc[q], TR - TL - 40 * k, q == 1 && (open || active) ? 2 : 1);
 						const char* state = done ? "DONE" : active ? "UNDER WAY" : "";
 						if (*state) {
 							Txt(dl, g_body, 15 * k, { TR - Measure(g_body, 15 * k, state).x, ty + 6 * k }, done ? kGold : IM_COL32(255, 176, 90, 255), state);
@@ -3371,7 +3386,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 							dl->AddLine({ t.x - 4 * k, t.y }, { t.x - 1 * k, t.y + 4 * k }, kGold, 2.0f * k);
 							dl->AddLine({ t.x - 1 * k, t.y + 4 * k }, { t.x + 5 * k, t.y - 4 * k }, kGold, 2.0f * k);
 						}
-						ty += 70 * k;
+						ty += (q == 1 && (open || active) ? 88 : 70) * k;
 					}
 					Divider(dl, tcx, ty + 2 * k, w * 0.30f, k, 0.6f);
 					ty += 16 * k;

@@ -1082,7 +1082,8 @@ LOADING_TIPS = [
     "Gloomstalkers shriek to wound everyone near them. Kill them first.",
     "Necromancers hang back and raise more dead. Kill them first.",
     "Hold right mouse to gather a spell's full power in both hands. Let go too soon and the power gutters out.",
-    "When the runic circle wakes round the altar, stand inside it until its count runs out. The dead come harder while you do.",
+    "The dead you slay in an Echo Altar's light do not rise again: their souls slip through Alduin's mist to Sovngarde.",
+    "At midnight an altar's stones sing. Touch them in the order they light, and the altar answers you.",
     "Solitude's bards know a shout that makes the dead very small. Free their city and Tiny Terrors is yours.",
     "Wake a city's Echo Altar and its dead sleep again: no curse-dead rise inside a freed city, by night or by day.",
     "Three dragons carry Alduin's words. Slay them and only his echo is left, on the summit of the Throat of the World.",
@@ -1260,16 +1261,17 @@ for c in CU['cities']:
     # the altar asks as a whole, then the trial in hand
     # (Noah: "much shorter text, and the steps you still need to do in view - no check mark until it's done") a line or two;
     # the steps themselves are the objectives below (ticked only once won)
-    overview = (f"Win the four trials at the Echo Altar of {c['town']}, in any order. Then {boss['name']}, its Dragon Priest, rises - "
-                f"slay it to free the city.")
+    # (Noah, 2026-11-23: the trials remade to the story) four, one after another, the last calling the Dragon Priest out
+    overview = (f"Win the four trials at the Echo Altar of {c['town']}, one after another. Breaking the last seal calls out {boss['name']}, "
+                f"its Dragon Priest - slay it to free the city.")
     stages = [(10, overview)]
-    stages += [(20 + i, overview + f"\n\nNow: {tr['title']} - {fill(tr['goal'], c)}.") for i, tr in enumerate(CU['trials'])]
-    stages += [(100, f"The trials are won. {boss['name']} walks the night near the Echo Altar of {c['town']} - slay it and the altar wakes.")]
+    stages += [(20 + i, overview + f"\n\nNow: {tr['title']} - {fill(tr['goal'], c)}." + (f"\n\nThe altar's voice: \"{c['whisper']['riddle']}\"" if tr['id'] == 'whisper' else '')) for i, tr in enumerate(CU['trials'])]
+    stages += [(100, f"The seals are broken. {boss['name']} walks the night in {c['town']} - slay it and the altar wakes.")]
     for st, text in stages:
         assert '{' not in text, text
         subs += [sub('INDX', struct.pack('<HBB', st, 0, 0)), sub('QSDT', b'\x00'), sub('CNAM', z(text))]
     subs += [sub('INDX', struct.pack('<HBB', 200, 0, 0)), sub('QSDT', b'\x01'), sub('CNAM', z(c['town'] + ' is free. ' + CU['liftedText'].replace('{city}', c['town'])))]
-    objectives = [f"Choose a trial at the Echo Altar of {c['town']}"] + [f"{tr['title']}: {fill(tr['goal'], c)}" for tr in CU['trials']] + [f"Slay {boss['name']}, the Dragon Priest"]
+    objectives = [f"Take up the trials at the Echo Altar of {c['town']}"] + [f"{tr['title']}: {fill(tr['goal'], c)}" for tr in CU['trials']] + [f"Slay {boss['name']}, the Dragon Priest"]
     for i, text in enumerate(objectives):
         subs += [sub('QOBJ', struct.pack('<H', i)), sub('FNAM', struct.pack('<I', 0)), sub('NNAM', z(text)),
                  sub('QSTA', struct.pack('<iI', 0, 1))]
@@ -1323,9 +1325,9 @@ def lore_text():
            "<p>{freed>=6}The voice is <b>Felldir the Old</b>, the Tongue who read the Elder Scroll and cast Alduin out of time. He waits in Sovngarde behind "
            "Alduin's mist, and through the altars he raised he whispers to the living. Now that six cities are free, he will lead you to the wonders the Tongues hid.</p>",
            "[pagebreak]", "<p align='center'><font size='24'>IV. Waking an Altar</font></p>",
-           "<p>Stand at an altar and it sets you <b>trials</b>: hold its rune circle, cull the dead in its streets, hold the altar through a night's waves, "
-           "and pass the trial of your own path. "
-           "Finish them and its Dragon Priest rises at night. Kill him and the altar wakes.</p>",
+           "<p>Stand at an altar and it sets you four <b>trials</b>, one after another. Lay the restless dead to rest in its light, so their souls can pass the mist. "
+           "Follow the riddle its voice speaks to a place in the city. Sing its song back to it at midnight, the way the Tongues once did. "
+           "Then break the three seals its Dragon Priest set in the city's great places: the last one calls him out. Kill him and the altar wakes.</p>",
            "<p>A woken altar makes its city a <b>sanctuary</b>: none of the curse's dead rise inside it, by night or by day. Step outside its walls and they find you again.</p>",
            "[pagebreak]", "<p align='center'><font size='24'>V. The Dragonborn's Road</font></p>",
            "<p>The Curse walks beside your own story; it does not replace it. Your own road against Alduin - the Greybeards, Paarthurnax, Sovngarde - is still ahead of you.</p>",
@@ -1364,13 +1366,14 @@ def guide_text():
            p("<b>The Armory</b> - more of your class's spells, summons or bows open as you free cities."),
                       p("<b>Relics</b> - every Dragon Priest you slay leaves a relic for your class: take it at any altar."),
            p("<b>Perks</b> - one of each a life: death takes them all."),
-           p("<b>Trials</b> - the quest that wakes the altar. It sets four; win all four, in any order (step over to them with D-pad left or right, or A and D). "
-             "Then the city's Dragon Priest rises at night near the altar. Slay it and the night ends at once - dawn breaks and the city is safe for good. Skyrim's difficulty sets how hard the trials are."),
+           p("<b>Trials</b> - the quest that wakes the altar. It sets four, won one after another (take up the first in its Trials section). "
+             "The last of them calls out the city's Dragon Priest. Slay it and the night ends at once - dawn breaks and the city is safe for good. Skyrim's difficulty sets how hard the trials are."),
            "[pagebreak]", h("The Four Trials"),
-           p("<b>Ward of the Tongues</b> - stand in the runic circle round the altar while the dead come faster. Step out and the count waits for you."),
-           p("<b>The Culling</b> - kill a number of the risen in the city."),
-           p("<b>Your class's trial</b> - the Summoner's summons make the kills, the Battle-mage kills with two elements, the Ranger from thirty metres, the Spellsword with a blade and a spell in the other hand."),
-           p("<b>The Long Night's Breath</b> - stay by the altar while the night's waves are cleared. On Expert and above, never below half health."),
+           p("All four are won at night, one after another, and your party shares them."),
+           p("<b>Lay the Restless to Rest</b> - slay the dead inside the altar's light, the circle round it. Their souls rise to Sovngarde."),
+           p("<b>The Stone's Whisper</b> - the altar's voice speaks a riddle naming a place in the city. Find it at night and slay the dead there."),
+           p("<b>Repeat the Echo</b> - at midnight six stones round the altar light up one by one. Touch them in the same order. Miss one and they sing again at the next hour."),
+           p("<b>Break the Priest's Seals</b> - three seals in the city's great places, each kept by an elite. Kill the guard, then strike the seal. The last one calls the Dragon Priest out."),
            "[pagebreak]", h("Spells"),
            p("Tap the attack to throw a bolt. Hold it, and both hands gather the spell's full power: the longer you hold, the harder it strikes. "
              "Let go too soon and the power gutters out. Magicka comes back fast."),

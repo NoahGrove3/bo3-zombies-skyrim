@@ -811,7 +811,7 @@ namespace bo3z::Classes
 			}
 			break;
 		case coffer::kDestruction:
-			out.push_back("Hold a different element in each hand: the Trial of the Elements wants kills with two elements or more.");
+			out.push_back("Hold a different element in each hand: fire, frost and shock each have their own way with the dead.");
 			break;
 		case coffer::kAlchemist:
 			break;

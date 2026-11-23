@@ -1912,7 +1912,7 @@ namespace bo3z
 				const bool trials = t >= 0 && Curse::Altar(t).on;
 				if (trials) {
 					rows.push_back(kSecTrials);
-					if (g_open == kSecTrials) for (int q : { 0, 1, 4, 3 }) rows.push_back(kRowTrial + q);  // (the Unbroken folded into the Breath; 3 is the class trial)
+					if (g_open == kSecTrials) for (int q : { 0, 1, 2, 3 }) rows.push_back(kRowTrial + q);  // (the four trials, in order)
 				}
 				const auto whispers = r ? Eggs::Whispers(TownOf(r)) : std::vector<Eggs::Whisper>{};
 				if (!whispers.empty()) {
@@ -2030,7 +2030,7 @@ namespace bo3z
 					}
 				}
 				if (code >= 0x07 && code <= 0x0A) {  // 6 7 8 9: the trials, as listed
-					static constexpr int kKeyTrial[4] = { 0, 1, 4, 3 };
+					static constexpr int kKeyTrial[4] = { 0, 1, 2, 3 };
 					g_trialSel = kKeyTrial[static_cast<int>(code) - 0x07];
 					Curse::StartTrial(ref ? TownOf(ref) : -1, g_trialSel);
 					return true;
@@ -2303,7 +2303,7 @@ namespace bo3z
 						h.altarFreed = Curse::Freed(t);
 						if (const auto v = Curse::Altar(t); v.on) {  // the city still held: its trials
 							h.trialsOn = true;
-							h.trialDone = v.done, h.trialActive = v.active, h.trialSel = g_trialSel;
+							h.trialDone = v.done, h.trialActive = v.active, h.trialSel = g_trialSel, h.trialNext = v.next;
 							h.trialDesc = v.desc;
 							h.trialCity = std::string(gen::kTowns[t]);
 							h.trialBoss = v.boss, h.trialBossLine = v.bossLine;

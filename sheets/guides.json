@@ -46,7 +46,6 @@
                 {
                     "title": "Your Trial and Wonder",
                     "paras": [
-                        "<b>Pact of the Host</b> (your city trial): let your summons make the kills - 20 on Novice up to 60 on Legendary.",
                         "<b>Soulcaller's Staff</b> (your wonder, a staff): it can't be bought. Once six cities are freed, all four <b>secrets</b> wake - long hidden quests played from altar to altar, never twice in a row in the same city, one at a time (your own class's first). Any class may win and wield any wonder. Listen to the freed altars' whispers. When it is won the Greybeards call: the wonder floats waiting in High Hrothgar's great hall. Hold its cast: its beam tears at the dead along your aim, and each one that dies while you hold it gives the staff its soul (up to six - a pack - counted under your crosshair). Let go and the souls return as violet spectral wolves that hunt for 20 seconds - one for each soul, never more than six at once (souls with no room in the pack wait in the staff)."
                     ]
                 }
@@ -89,7 +88,6 @@
                 {
                     "title": "Your Trial and Wonder",
                     "paras": [
-                        "<b>Trial of the Elements</b> (your city trial): kill with two or more elements - 20 on Novice up to 60 on Legendary.",
                         "<b>The Wyrmspine Javelin</b> (your wonder): it can't be bought. Once six cities are freed, all four <b>secrets</b> wake - long hidden quests played from altar to altar, never twice in a row in the same city, one at a time (your own class's first). Any class may win and wield any wonder. Listen to the freed altars' whispers. When it is won the Greybeards call: the wonder floats waiting in High Hrothgar's great hall. Hold its beam on the dead to drain them and feed your magicka; where the beam lets go it erupts. Hold it two seconds or more and the eruption leaves an orb of searing light pulsing on everything round it. Hotter still once the three dragons fall."
                     ]
                 }
@@ -134,7 +132,6 @@
                 {
                     "title": "Your Trial and Wonder",
                     "paras": [
-                        "<b>Trial of the Crucible</b> (your city trial): kills with your flasks - 10 on Novice up to 30 on Legendary.",
                         "<b>The Mutagen Staff</b> (your wonder): it can't be bought. Once six cities are freed, all four <b>secrets</b> wake - long hidden quests played from altar to altar, never twice in a row in the same city, one at a time (your own class's first). Any class may win and wield any wonder. Listen to the freed altars' whispers. When it is won the Greybeards call: the wonder floats waiting in High Hrothgar's great hall. Its orb is fed by six vials of the elements: hold attack to loose a beam that pierces the dead, pouring each vial in turn for 5 seconds; let go and the emptied vials refill."
                     ]
                 }
@@ -177,7 +174,6 @@
                 {
                     "title": "Your Trial and Wonder",
                     "paras": [
-                        "<b>Trial of Steel</b> (your city trial): melee kills with a spell in your other hand - 10 on Novice up to 30 on Legendary.",
                         "<b>Dragon Slayer</b> (your wonder): it can't be bought. Once six cities are freed, all four <b>secrets</b> wake - long hidden quests played from altar to altar, never twice in a row in the same city, one at a time (your own class's first). Any class may win and wield any wonder. Listen to the freed altars' whispers. When it is won the Greybeards call: the wonder floats waiting in High Hrothgar's great hall. It stands two tiers above your blade, and every hit carries the last Spellsword spell you held; once the three dragons fall it grows stronger again, and power attacks loose that spell on the dead round you."
                     ]
                 }
@@ -203,7 +199,7 @@
                 "Every city has one. Step onto it and activate it. Move with the D-pad or W/S, choose with A or Enter, leave with B.",
                 "From the top: <b>your class</b> (change it for Cursed Essence - each class keeps its own kit and progress), then sections that open one at a time: <b>Your Kit</b> (select an item to upgrade it), <b>the Armory</b> (new items, opened by freed cities), <b>Perks</b>, <b>Your Dragon</b>, the city's <b>Trials</b> and the <b>Whispers</b> of your path's secret.",
                 "<b>Brews</b> (the Perks section): the seven every class can take - <b>Troll's Hide Mead</b> +50 health; <b>Wellspring Draught</b> +50 magicka; <b>Stormrunner Brew</b> you move 15% faster; <b>Bounty Hunter's Ale</b> elites and mini-bosses give twice the Cursed Essence; <b>Last Stand Ale</b> below a quarter of your health you take 25% less; <b>Gilded Tongue Tonic</b> 15% more Cursed Essence from kills; <b>Dragonsblood Cider</b> your shouts recharge 25% faster - and three of your class's own. Up to five at once, 3,000 each, kept through death; select one you hold to give it back for half.",
-                "<b>Freeing a city</b>: finish four trials (three shared, one your class's), then slay its <b>Dragon Priest</b>, who rises at night. Its fall ends the night and drops 3,000 Cursed Essence. A freed city is a sanctuary: none of the curse's dead rise inside it. Whiterun gives you a dragon to ride and Dragon's Updraft; Solitude gives you Tiny Terrors, a shout that shrinks the dead.",
+                "<b>Freeing a city</b>: win its four trials, one after another - Lay the Restless to Rest, The Stone's Whisper, Repeat the Echo and Break the Priest's Seals. The last seal calls out its <b>Dragon Priest</b>: slay it. Its fall ends the night and drops 3,000 Cursed Essence. A freed city is a sanctuary: none of the curse's dead rise inside it. Whiterun gives you a dragon to ride and Dragon's Updraft; Solitude gives you Tiny Terrors, a shout that shrinks the dead.",
                 "<b>Every 5th night</b> a great boss walks with the dead - kill it before dawn.",
                 "<b>Waking an altar</b>: Riverwood's altar is open from the first night. Every other city's trials stay locked until that city's own quest is done - Whiterun: <b>Dragon Rising</b>; Solitude: <b>The Wolf Queen Awakened</b>; Windhelm: <b>The White Phial</b>; Markarth: <b>The Forsworn Conspiracy</b>; Riften: <b>The Book of Love</b>; Falkreath: <b>Ill Met By Moonlight</b>; Morthal: <b>Laid to Rest</b>; Dawnstar: <b>Waking Nightmare</b>; Winterhold: the Jarl's <b>Helm of Winterhold</b> (Dungeon Delving)."
             ]

@@ -673,7 +673,7 @@ namespace bo3z
 		void  ForgetPendingLift();  // a load: no Jarl's fall is waiting
 		void  MigrateRites();               // a save from the four-rite cities: freed stays freed, the rest begin the trials
 		void  NewGamePlus();                // Stage 5, the Seat of the Awakened: every city back under the curse, the nights start over
-		bool  Freed(int a_town);            // its Echo Altar is awake (three trials and its Dragon Priest)
+		bool  Freed(int a_town);            // its Echo Altar is awake (four trials and its Dragon Priest)
 		std::uint32_t CreditBits();          // (co-op) your own trials per city, 3 bits a city: told to the party
 		std::vector<std::uint8_t> MineState();               // the co-save: which trials you did yourself, per city
 		void                      SetMineState(const std::vector<std::uint8_t>& a_s);
@@ -683,15 +683,15 @@ namespace bo3z
 		int   ClaimableShout(int a_town);                // the freed city's Thu'um not yet learned (-1)
 		int   Raw(int a_town);                           // the city's progress value (1000000 + done*100000 + active*10000 + progress; 9000000 freed)
 		void  SetRaw(int a_town, int a_value);
-		int   Steps(int a_town);                         // trials done (0-3), 4 when freed
-		void  StartTrial(int a_town, int a_trial);       // the altar's menu: take up one of the five trials (gen::kTrials)
+		int   Steps(int a_town);                         // trials done (0-4), 5 when freed
+		void  StartTrial(int a_town, int a_trial);       // the altar's menu: take up the next of the four trials (gen::kTrials, in order)
 		void  NoteHit(RE::FormID a_target, bool a_melee);  // the player's last blow on one of the dead (Trial of Steel)
 		void  OnClassKill(int a_how, int a_element, float a_dist);  // the class trial: 0 summon, 1 Destruction spell, 2 bow/crossbow, 3 melee
 		std::string TrialTitle(int a_trial);             // its name (the class trial's follows your class)
 		struct AltarView
 		{
 			bool                       on{ false };  // the city is still held (its trials are offered)
-			int                        done{ 0 }, active{ 0 };  // bits of trials done; 0 none, 1-5 a trial, 6 the Dragon Priest
+			int                        done{ 0 }, active{ 0 }, next{ 0 };  // bits of trials done; 0 none, 1-4 a trial, 6 the Dragon Priest; next: the one to take up (0-3, 4 none)
 			std::array<std::string, 5> desc;         // each trial with tonight's numbers
 			std::string                boss, bossLine;
 		};
@@ -1171,7 +1171,7 @@ namespace bo3z
 			std::string           tabletName;
 			float                 holdFrac{ -1.0f };   // (the Tablet: hold Activate) 0..1 while held (-1: not drawn)
 			std::string           holdText;            // what holding does ("to roll the tablet")
-			int         trialDone{ 0 }, trialActive{ 0 }, trialSel{ 0 };
+			int         trialDone{ 0 }, trialActive{ 0 }, trialSel{ 0 }, trialNext{ 0 };  // trialNext: the one to take up next (in order)
 			std::array<std::string, 5> trialDesc;
 			std::string trialCity, trialBoss, trialBossLine, trialLock;  // (trialLock: why the altar's trials are shut)
 			float       questTimer{ -1 };  // the trial under way: seconds left on its clock (-1 none)
@@ -1180,6 +1180,7 @@ namespace bo3z
 			bool        pulseOn{ false };
 			int         nightEvent{ -1 };   // gen::kEvents index while it runs
 			std::string questCity, questTitle, questGoal;  // the city's current curse quest (empty = none)
+			std::string questSub;                          // (the trials remade) a second line under it: the altar voice's riddle
 			float       questFrac{ 0 };
 			int         questStep{ 0 };
 			std::string sanctuary;         // in a freed city at night: its name
@@ -1206,6 +1207,7 @@ namespace bo3z
 			std::vector<std::array<float, 3>> ringPts;
 			float       ringFrac{ 0 }, ringFlash{ 0 };
 			int         ringSeconds{ 0 }, ringInside{ 0 };
+			std::string ringHead, ringSub;    // (the trials remade) its words, when a trial counts the dead rather than seconds
 			bool        objOn{ false }, objFront{ false };
 			float       objX{ 0 }, objY{ 0 }, objDist{ 0 };
 			std::string objLabel;

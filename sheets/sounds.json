@@ -11847,6 +11847,168 @@
       "cat": "ui",
       "loop": false,
       "use": "class voice line ssw_idle_2 (female)"
+    },
+    {
+      "id": "echo_tone_0",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_echo_tone_0",
+      "file": "fx\\CurseOfAlduin\\un\\echo_tone_0.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\un\\echo_tone_0.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "sfx",
+      "loop": false,
+      "use": "Repeat the Echo: stone 1's tone (tools/echosfx.py)"
+    },
+    {
+      "id": "echo_tone_1",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_echo_tone_1",
+      "file": "fx\\CurseOfAlduin\\un\\echo_tone_1.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\un\\echo_tone_1.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "sfx",
+      "loop": false,
+      "use": "Repeat the Echo: stone 2's tone (tools/echosfx.py)"
+    },
+    {
+      "id": "echo_tone_2",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_echo_tone_2",
+      "file": "fx\\CurseOfAlduin\\un\\echo_tone_2.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\un\\echo_tone_2.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "sfx",
+      "loop": false,
+      "use": "Repeat the Echo: stone 3's tone (tools/echosfx.py)"
+    },
+    {
+      "id": "echo_tone_3",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_echo_tone_3",
+      "file": "fx\\CurseOfAlduin\\un\\echo_tone_3.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\un\\echo_tone_3.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "sfx",
+      "loop": false,
+      "use": "Repeat the Echo: stone 4's tone (tools/echosfx.py)"
+    },
+    {
+      "id": "echo_tone_4",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_echo_tone_4",
+      "file": "fx\\CurseOfAlduin\\un\\echo_tone_4.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\un\\echo_tone_4.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "sfx",
+      "loop": false,
+      "use": "Repeat the Echo: stone 5's tone (tools/echosfx.py)"
+    },
+    {
+      "id": "echo_tone_5",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_echo_tone_5",
+      "file": "fx\\CurseOfAlduin\\un\\echo_tone_5.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\un\\echo_tone_5.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "sfx",
+      "loop": false,
+      "use": "Repeat the Echo: stone 6's tone (tools/echosfx.py)"
+    },
+    {
+      "id": "echo_wrong",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_echo_wrong",
+      "file": "fx\\CurseOfAlduin\\un\\echo_wrong.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\un\\echo_wrong.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "sfx",
+      "loop": false,
+      "use": "Repeat the Echo: a wrong stone"
+    },
+    {
+      "id": "echo_sing",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_echo_sing",
+      "file": "fx\\CurseOfAlduin\\un\\echo_sing.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\un\\echo_sing.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "sfx",
+      "loop": false,
+      "use": "Repeat the Echo: the altar begins its song"
+    },
+    {
+      "id": "wisp_rise",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_wisp_rise",
+      "file": "fx\\CurseOfAlduin\\un\\wisp_rise.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\CurseOfAlduin\\un\\wisp_rise.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "cat": "sfx",
+      "loop": false,
+      "use": "Lay the Restless to Rest: a soul rises from the altar's light"
     }
   ]
 }

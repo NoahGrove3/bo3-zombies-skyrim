@@ -2188,6 +2188,15 @@
   "ARMA:ca_spellsword_boots_t0": "0xdc0",
   "ARMA:ca_spellsword_boots_t1": "0xdc3",
   "ARMA:ca_spellsword_boots_t2": "0xdc6",
-  "ARMA:ca_spellsword_boots_t3": "0xdc9"
+  "ARMA:ca_spellsword_boots_t3": "0xdc9",
+  "SNDR:echo_tone_0": "0xdcc",
+  "SNDR:echo_tone_1": "0xdcf",
+  "SNDR:echo_tone_2": "0xdd2",
+  "SNDR:echo_tone_3": "0xdd5",
+  "SNDR:echo_tone_4": "0xdd8",
+  "SNDR:echo_tone_5": "0xddb",
+  "SNDR:echo_wrong": "0xdde",
+  "SNDR:echo_sing": "0xde1",
+  "SNDR:wisp_rise": "0xde4"
  }
 }

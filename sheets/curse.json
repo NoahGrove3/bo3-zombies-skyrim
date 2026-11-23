@@ -1,6 +1,6 @@
 {
   "sheet": "curse",
-  "about": "The Curse of Alduin: lore, and the trials every city's Echo Altar sets before it wakes. At the altar the player takes the three shared trials (ward, culling, breath) and the class trial (the steel slot: Pact of the Host, Trial of the Elements, Trial of the Long Shot or Trial of Steel, by the player's class), in any order; the Unbroken is folded into the Long Night's Breath (Expert and up: waves held above half health). When the four are done the city's Dragon Priest (bosses, by town) rises near the altar at night, and slaying it frees the city. Each trial's n and seconds are given per Skyrim difficulty, Novice to Legendary (iDifficulty 0-5). Progress lives in one global per city (1000000 + doneBits*100000 + active*10000 + progress, 9000000 = freed), saved with the game. {city} is filled per city, {n} and {s} with the trial's count and seconds. A freed city is a sanctuary: no undead rise within zoneRadius of its station or in its own location; its shout waits at the altar.",
+  "about": "The Curse of Alduin: lore, and the trials every city's Echo Altar sets before it wakes. (Noah, 2026-11-23: the trials remade to the story - the same four in every city, each with the city's own places) In order, all at night, shared by the party: restless (Lay the Restless to Rest: n of the risen slain in the altar's light, lightRadius, their souls rising past Alduin's mist), whisper (The Stone's Whisper - Felldir's Whisper once six altars are free: the altar speaks a riddle naming a place in the city (cities.whisper); find it at night and slay n of the risen there, within whisperRadius), echo (Repeat the Echo: at midnight, and every hour after until dawn, the altar flashes n runes on six stones in a ring round it, echoRadius out; touch them in the same order) and seals (Break the Priest's Seals: three dragon-script seals at city landmarks (cities.seals), each guarded by an elite; kill the guard, then strike the seal; the last calls the city's Dragon Priest out at once). Slaying the Dragon Priest frees the city and ends the night. Each trial's n is given per Skyrim difficulty, Novice to Legendary (iDifficulty 0-5). Progress lives in one global per city (5000000 + doneBits*100000 + active*10000 + progress, 9000000 = freed; a value from the old trials, under 5000000, starts the city fresh), saved with the game. Positions are x, y, z in the city's worldspace (the station's): the spot just outside each building's door, from Skyrim.esm. {city} is filled per city, {n} with the trial's count. A freed city is a sanctuary: no undead rise within zoneRadius of its station or in its own location.",
   "prologueTitle": "THE CURSE OF ALDUIN",
   "prologue": "Helgen burned, and you lived. Alduin did not stay to finish what he started: he flew north over the smoke, and as he went he shouted three words into the earth - SLEN TIID VO, Flesh, Time, Undo. It is the shout he uses to raise his dragons from their burial mounds, but this time it fell on every grave in Skyrim, and every barrow answered. His shout hangs like a mist across the road to Sovngarde, and now the dead of Skyrim cannot pass to Shor's hall: they lie restless in the ground, and when the sun goes down they claw their way up. The Dragon Priests who swore themselves to Alduin in the Merethic Era remember their oaths and wake with them. Only the Echo Altars the ancient Tongues raised in every hold can still his voice, and they have gone dark. Wake them, city by city, and their dead will sleep again.",
   "liftedBanner": "THE ECHO ALTAR OF {CITY} AWAKENS",
@@ -12,91 +12,338 @@
     {
       "town": "Riverwood",
       "landmark": "the Sleeping Giant Inn",
-      "location": "0x013163"
+      "location": "0x013163",
+      "whisper": {
+        "place": "Alvor's forge",
+        "riddle": "Where the hammer wakes the anvil every morning and the river hears it ring, the valley's dead are gathering. Go to the smith's fire.",
+        "x": 21406,
+        "y": -44778,
+        "z": -82
+      },
+      "seals": [
+        {
+          "place": "the Sleeping Giant Inn",
+          "x": 23260,
+          "y": -44476,
+          "z": -8
+        },
+        {
+          "place": "the Riverwood Trader",
+          "x": 21954,
+          "y": -45644,
+          "z": 105
+        },
+        {
+          "place": "the mill",
+          "x": 23509,
+          "y": -47197,
+          "z": -5
+        }
+      ]
     },
     {
       "town": "Whiterun",
       "landmark": "the Gildergreen",
-      "location": "0x018A56"
+      "location": "0x018A56",
+      "whisper": {
+        "place": "the Hall of the Dead",
+        "riddle": "Below the Jarl's hall, where Arkay's priest lays the city's dead in beds of stone, the beds are empty. Go where Whiterun buries its own.",
+        "x": 22752,
+        "y": -2016,
+        "z": -3008
+      },
+      "seals": [
+        {
+          "place": "Jorrvaskr",
+          "x": 27392,
+          "y": -4202,
+          "z": -2569
+        },
+        {
+          "place": "the Temple of Kynareth",
+          "x": 23241,
+          "y": -3404,
+          "z": -2966
+        },
+        {
+          "place": "the Bannered Mare",
+          "x": 25670,
+          "y": -7633,
+          "z": -3237
+        }
+      ]
     },
     {
       "town": "Solitude",
       "landmark": "the Blue Palace",
-      "location": "0x018A5A"
+      "location": "0x018A5A",
+      "whisper": {
+        "place": "the Bards College",
+        "riddle": "Where Solitude teaches its young to sing of the dead, the dead have come to listen. Go where the songs are learned.",
+        "x": -54480,
+        "y": 104736,
+        "z": -8608
+      },
+      "seals": [
+        {
+          "place": "Castle Dour",
+          "x": -62806,
+          "y": 108069,
+          "z": -7200
+        },
+        {
+          "place": "the Temple of the Divines",
+          "x": -58718,
+          "y": 110639,
+          "z": -7936
+        },
+        {
+          "place": "the Blue Palace",
+          "x": -50608,
+          "y": 99960,
+          "z": -8608
+        }
+      ]
     },
     {
       "town": "Windhelm",
       "landmark": "the Palace of the Kings",
-      "location": "0x018A57"
+      "location": "0x018A57",
+      "whisper": {
+        "place": "Candlehearth Hall",
+        "riddle": "There is a candle in this city that has burned since its first stone was laid, and never once gone out. The dead are drawn to it like moths. Find the hearth that never goes cold.",
+        "x": 134591,
+        "y": 37193,
+        "z": -12111
+      },
+      "seals": [
+        {
+          "place": "the Palace of the Kings",
+          "x": 134716,
+          "y": 42717,
+          "z": -11867
+        },
+        {
+          "place": "the Hall of the Dead",
+          "x": 131492,
+          "y": 38362,
+          "z": -12608
+        },
+        {
+          "place": "the Grey Quarter",
+          "x": 140312,
+          "y": 39816,
+          "z": -13101
+        }
+      ]
     },
     {
       "town": "Markarth",
       "landmark": "the Hall of the Dead",
-      "location": "0x018A59"
+      "location": "0x018A59",
+      "whisper": {
+        "place": "the Temple of Dibella",
+        "riddle": "High in the city of stone, where Markarth kneels to beauty, beauty has turned grey and cold. Climb to the goddess's door.",
+        "x": -176860,
+        "y": 4485,
+        "z": -1741
+      },
+      "seals": [
+        {
+          "place": "Understone Keep",
+          "x": -179040,
+          "y": 3308,
+          "z": -2176
+        },
+        {
+          "place": "the Hall of the Dead",
+          "x": -177740,
+          "y": 1528,
+          "z": -2296
+        },
+        {
+          "place": "the Silver-Blood Inn",
+          "x": -174538,
+          "y": 4971,
+          "z": -3306
+        }
+      ]
     },
     {
       "town": "Riften",
       "landmark": "the Temple of Mara",
-      "location": "0x018A58"
+      "location": "0x018A58",
+      "whisper": {
+        "place": "the Ratway's gate",
+        "riddle": "Below the boardwalk, by the green water where thieves come and go unseen, the drowned are climbing out. Go down to the canal's iron door.",
+        "x": 172802,
+        "y": -97209,
+        "z": 10693
+      },
+      "seals": [
+        {
+          "place": "Mistveil Keep",
+          "x": 173396,
+          "y": -100216,
+          "z": 11496
+        },
+        {
+          "place": "the Temple of Mara",
+          "x": 176323,
+          "y": -97022,
+          "z": 11392
+        },
+        {
+          "place": "the Bee and Barb",
+          "x": 172928,
+          "y": -96100,
+          "z": 11140
+        }
+      ]
     },
     {
       "town": "Falkreath",
       "landmark": "the old graveyard",
-      "location": "0x018A49"
+      "location": "0x018A49",
+      "whisper": {
+        "place": "the graveyard",
+        "riddle": "More dead than living lie in this town's earth, and tonight they are restless in their rows. Go where Falkreath counts its dead.",
+        "x": -34558,
+        "y": -84351,
+        "z": -3448
+      },
+      "seals": [
+        {
+          "place": "the Jarl's Longhouse",
+          "x": -29466,
+          "y": -87603,
+          "z": -2960
+        },
+        {
+          "place": "Dead Man's Drink",
+          "x": -32175,
+          "y": -87653,
+          "z": -3099
+        },
+        {
+          "place": "Dengeir's Hall",
+          "x": -30503,
+          "y": -85227,
+          "z": -3108
+        }
+      ]
     },
     {
       "town": "Morthal",
       "landmark": "the edge of the marsh",
-      "location": "0x018A53"
+      "location": "0x018A53",
+      "whisper": {
+        "place": "the Thaumaturgist's Hut",
+        "riddle": "In a crooked hut at the marsh's edge, roots and mushrooms steep in the dark, and the drowned of the swamp come to drink. Find the brewer's door.",
+        "x": -37996,
+        "y": 64969,
+        "z": -13681
+      },
+      "seals": [
+        {
+          "place": "Highmoon Hall",
+          "x": -38660,
+          "y": 63424,
+          "z": -13786
+        },
+        {
+          "place": "the Moorside Inn",
+          "x": -40054,
+          "y": 65484,
+          "z": -13802
+        },
+        {
+          "place": "Falion's House",
+          "x": -35451,
+          "y": 65876,
+          "z": -13913
+        }
+      ]
     },
     {
       "town": "Dawnstar",
       "landmark": "the frozen harbour",
-      "location": "0x018A50"
+      "location": "0x018A50",
+      "whisper": {
+        "place": "the Quicksilver Mine",
+        "riddle": "Where men cut a metal that runs like water out of the cold hill, the dead have dug their way up. Go to the mouth of the mine.",
+        "x": 27359,
+        "y": 105202,
+        "z": -13795
+      },
+      "seals": [
+        {
+          "place": "the White Hall",
+          "x": 32883,
+          "y": 102685,
+          "z": -13187
+        },
+        {
+          "place": "the Windpeak Inn",
+          "x": 29359,
+          "y": 102088,
+          "z": -13209
+        },
+        {
+          "place": "Rustleif's forge",
+          "x": 29742,
+          "y": 104129,
+          "z": -13771
+        }
+      ]
     },
     {
       "town": "Winterhold",
       "landmark": "the bridge to the College",
-      "location": "0x018A51"
+      "location": "0x018A51",
+      "whisper": {
+        "place": "the Frozen Hearth",
+        "riddle": "The rest of this town turns mages from its door. One fire still burns for them, and tonight the dead have found it. Go to the hearth that welcomes the College.",
+        "x": 110268,
+        "y": 101613,
+        "z": -8955
+      },
+      "seals": [
+        {
+          "place": "the Jarl's Longhouse",
+          "x": 109763,
+          "y": 101024,
+          "z": -8950
+        },
+        {
+          "place": "Ranmir's house",
+          "x": 108591,
+          "y": 103006,
+          "z": -8783
+        },
+        {
+          "place": "the north road houses",
+          "x": 108755,
+          "y": 104026,
+          "z": -8997
+        }
+      ]
     }
   ],
   "trials": [
     {
-      "id": "ward",
-      "title": "Ward of the Tongues",
-      "short": "Hold the runic circle at the altar",
-      "goal": "Stand in the runic circle at the Echo Altar of {city}",
-      "text": "The Tongues who raised the Echo Altar of {city} sealed it with a circle of runes that only a living voice can hold open. Stand inside it while Alduin's echo summons the dead against you, thicker than any night before; step out and the runes fall quiet until you return. Hold the circle for {s} seconds.",
+      "id": "restless",
+      "title": "Lay the Restless to Rest",
+      "short": "Slay the risen in the altar's light",
+      "goal": "Slay the risen in the light of the Echo Altar of {city}",
+      "text": "Alduin's mist bars the road to Sovngarde, and the dead of {city} have nowhere to go. Put them down within the light of the city's Echo Altar and their souls rise through the mist at last. Lay {n} of the risen to rest in the altar's light.",
       "n": [
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-      ],
-      "seconds": [
-        40,
-        50,
-        60,
-        75,
-        90,
-        105
-      ]
-    },
-    {
-      "id": "culling",
-      "title": "The Culling",
-      "short": "Slay the risen within the city",
-      "goal": "Slay the risen within {city}",
-      "text": "SLEN - Flesh. The first of Alduin's three words puts flesh back on the dead, and the altar answers by striking it off again. Put {n} of the risen down within {city} - every one the night conjures up counts.",
-      "n": [
-        40,
-        50,
-        60,
-        75,
-        90,
-        110
+        15,
+        19,
+        23,
+        27,
+        31,
+        35
       ],
       "seconds": [
         0,
@@ -108,41 +355,18 @@
       ]
     },
     {
-      "id": "unbroken",
-      "title": "The Unbroken",
-      "short": "Folded into the Long Night's Breath",
-      "goal": "Clear waves of the risen in {city} without falling below half health",
-      "text": "TIID - Time. Alduin's second word gives the dead back the years the grave took, and it feeds on the wounded. Clear {n} whole waves of the risen in {city} without letting your health fall below half; bleed past it and that wave does not count.",
-      "n": [
-        1,
-        1,
-        2,
-        2,
-        2,
-        3
-      ],
-      "seconds": [
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-      ]
-    },
-    {
-      "id": "steel",
-      "title": "Your Class's Trial",
-      "short": "The trial of your own class",
-      "goal": "Win your class's trial in {city}",
-      "text": "The altar of {city} asks each who comes of their own craft. A Summoner, a conjurer of the College, lets the host make the kills (Pact of the Host); a Destruction mage, a College battle-mage, kills with two elements or more (Trial of the Elements); an Alchemist kills with flasks (Trial of the Crucible); a Spellsword of the Vigilants kills in melee with a spell in the other hand (Trial of Steel).",
+      "id": "whisper",
+      "title": "The Stone's Whisper",
+      "short": "Find the place the altar's voice names",
+      "goal": "Find the place the altar's voice names in {city}, and slay the risen there",
+      "text": "At night a voice speaks from the Echo Altar of {city}, and it speaks in riddles. Find the place it names, and hold it against the dead: slay {n} of the risen there.",
       "n": [
         10,
         12,
-        15,
-        20,
-        25,
-        30
+        14,
+        16,
+        18,
+        20
       ],
       "seconds": [
         0,
@@ -154,18 +378,41 @@
       ]
     },
     {
-      "id": "breath",
-      "title": "The Long Night's Breath",
-      "short": "Hold the altar while the waves are cleared",
-      "goal": "Hold the Echo Altar of {city} through the night's waves",
-      "text": "VO - Undo. The last word undoes death itself, and the dead keep coming while it is spoken. Stand by the altar of {city} while the night's waves rise against it: clear {n} waves without straying from it, and its word is undone in turn. On Expert and above the Unbroken's rule holds too: a wave counts only if you never fell below half health.",
+      "id": "echo",
+      "title": "Repeat the Echo",
+      "short": "Touch the stones in the order the altar sings them",
+      "goal": "At midnight, touch the altar's six stones in the order it sings them",
+      "text": "The Tongues woke their altars by answering them: the stone sang, and they sang it back. At midnight six stones rise round the Echo Altar of {city} and it flashes its runes on them, one by one. Touch the stones in the same order while the dead come for you. Miss a note and it sings again at the next hour.",
       "n": [
-        1,
-        2,
-        2,
+        4,
+        4,
+        5,
+        5,
+        6,
+        6
+      ],
+      "seconds": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "seals",
+      "title": "Break the Priest's Seals",
+      "short": "Shatter the Dragon Priest's three seals",
+      "goal": "Break the Dragon Priest's three seals in {city}",
+      "text": "The Dragon Priest who holds the altar of {city} silent has bound it with three seals of dragon script, set at the city's great places and each kept by one of his chosen. Kill each guard and strike its seal. When the last one breaks, the priest comes out to meet you.",
+      "n": [
         3,
         3,
-        4
+        3,
+        3,
+        3,
+        3
       ],
       "seconds": [
         0,
@@ -238,5 +485,8 @@
       "health": 24,
       "text": "Morokei once held the Staff of Magnus in Labyrinthian, and the College has feared him ever since. He has come to the cliffs above Winterhold, and the storm he calls has not finished yet."
     }
-  }
+  },
+  "lightRadius": 1400,
+  "whisperRadius": 750,
+  "echoRadius": 650
 }
