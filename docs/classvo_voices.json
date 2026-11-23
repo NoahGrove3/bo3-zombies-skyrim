@@ -1,0 +1,18 @@
+{
+ "sum": {
+  "male": "A man in his 50s with a deep, breathy baritone and a light Scandinavian accent. Calm, reverent and slightly eerie, like a necromancer speaking to spirits. Slow, deliberate pacing, close to the mic, never raises his voice. Studio-quality recording, no background noise.",
+  "female": "A woman in her 40s with a soft, low alto and a light Scandinavian accent. Hushed, measured and reverent, with an eerie calm, as if speaking to the dead. Slow pacing, close and intimate. Studio-quality recording, no background noise."
+ },
+ "des": {
+  "male": "A man in his 30s with a strong, gravelly mid-range voice and a light Scandinavian accent. A proud, cocky battle-mage who enjoys the fight a little too much, with dry, sarcastic humour. Confident, punchy delivery at a medium-fast pace. Studio-quality recording, no background noise.",
+  "female": "A woman in her 30s with a sharp, bright, commanding voice and a light Scandinavian accent. A proud, hot-tempered battle-mage with a smile in her voice and dry, teasing wit. Confident, energetic delivery. Studio-quality recording, no background noise."
+ },
+ "alc": {
+  "male": "A man in his 40s with a warm, slightly hoarse tenor and a light Scandinavian accent. Curious, practical and wry, like a scholar treating a plague as an interesting puzzle. Quick, chatty pacing with dry asides. Studio-quality recording, no background noise.",
+  "female": "A woman in her 30s with a lively, clever, quick voice and a light Scandinavian accent. Curious and a little mischievous, a witty alchemist who talks to her potions. Brisk, playful pacing. Studio-quality recording, no background noise."
+ },
+ "ssw": {
+  "male": "A man in his 40s with a deep, even, clipped voice and a light Scandinavian accent. A disciplined veteran soldier: few words, steady under pressure, quiet resolve. Calm, measured pacing, no theatrics. Studio-quality recording, no background noise.",
+  "female": "A woman in her 30s with a firm, level, low mid-range voice and a light Scandinavian accent. A disciplined soldier, controlled and steady, with quiet resolve; speaks only when needed. Calm, clipped pacing. Studio-quality recording, no background noise."
+ }
+}
