@@ -6736,7 +6736,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		{
 			std::atomic<std::uint32_t> g_subGen{ 0 };
 			std::string                g_subShown;
-			struct SubBase { bool read = false; double x = 0, y = 0, w = 0, h = 0, sx = 100, sy = 100; bool vis = true; };
+			struct SubBase { bool read = false; double x = 0, y = 0, w = 0, h = 0, sx = 100, sy = 100; bool vis = true, en = true; };
 			SubBase g_subBase;
 			constexpr const char* kSubHolder = "_root.HUDMovieBaseInstance.SubtitleTextHolder";
 			RE::GFxMovieView* HudMovie()
@@ -6773,6 +6773,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					g_subBase.sx = SubNum(mv, h + "._xscale", 100), g_subBase.sy = SubNum(mv, h + "._yscale", 100);
 					RE::GFxValue vis;
 					g_subBase.vis = !(mv->GetVariable(&vis, (h + "._visible").c_str()) && vis.IsBool()) || vis.GetBool();
+					RE::GFxValue en;   // (Skyrim's own subtitle setting: ShowSubtitle shows the field only when it is on)
+					g_subBase.en = !(mv->GetVariable(&en, (h + ".textField.enabled").c_str()) && en.IsBool()) || en.GetBool();
 				}
 				const double k = size;
 				mv->SetVariable((h + "._xscale").c_str(), RE::GFxValue(g_subBase.sx * k));
@@ -6780,6 +6782,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				mv->SetVariable((h + "._x").c_str(), RE::GFxValue(g_subBase.x + g_subBase.w * (1.0 - k) * 0.5));
 				mv->SetVariable((h + "._y").c_str(), RE::GFxValue(g_subBase.y + g_subBase.h * (1.0 - k)));
 				mv->SetVariable((h + "._visible").c_str(), RE::GFxValue(true));   // (ours show even with Skyrim's own subtitles off)
+				mv->SetVariable((h + ".textField.enabled").c_str(), RE::GFxValue(true));
 				RE::GFxValue arg(t.c_str());
 				mv->Invoke("_root.HUDMovieBaseInstance.ShowSubtitle", nullptr, &arg, 1);
 				g_subShown = t;
@@ -6790,7 +6793,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					auto* mv = HudMovie();
 					if (!mv || g_subShown.empty()) return;
 					RE::GFxValue now;
-					const bool read = mv->GetVariable(&now, (std::string(kSubHolder) + ".SubtitleText.text").c_str()) && now.IsString();
+					const bool read = mv->GetVariable(&now, (std::string(kSubHolder) + ".textField.text").c_str()) && now.IsString();
 					if (!read || std::string(now.GetString()).find(g_subShown.substr(0, 12)) != std::string::npos) {
 						mv->Invoke("_root.HUDMovieBaseInstance.HideSubtitle", nullptr, nullptr, 0);
 					}
@@ -6801,6 +6804,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					mv->SetVariable((h + "._x").c_str(), RE::GFxValue(g_subBase.x));
 					mv->SetVariable((h + "._y").c_str(), RE::GFxValue(g_subBase.y));
 					mv->SetVariable((h + "._visible").c_str(), RE::GFxValue(g_subBase.vis));
+					mv->SetVariable((h + ".textField.enabled").c_str(), RE::GFxValue(g_subBase.en));
 					g_subShown.clear();
 				});
 			});
@@ -6858,7 +6862,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					std::transform(up.begin(), up.end(), up.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
 					RE::GFxValue args[9] = { RE::GFxValue(up.c_str()), RE::GFxValue(""), RE::GFxValue(""), RE::GFxValue(0.0), RE::GFxValue(3.0),
 						RE::GFxValue(0.0), RE::GFxValue(0.0), RE::GFxValue(0.0), RE::GFxValue(words.c_str()) };
-					ok = hud->uiMovie->Invoke("_root.HUDMovieBaseInstance.ShowNotification", nullptr, args, 9);
+					ok = hud->uiMovie->Invoke("_root.HUDMovieBaseInstance.QuestUpdateBaseInstance.ShowNotification", nullptr, args, 9);   // (QuestNotification: its 9th, the dragon words, drawn when the kind is 3)
 				}
 				if (!ok) {
 					logger::warn("hud: the HUD's shout notice could not be shown - our own line instead");
