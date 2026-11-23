@@ -1,0 +1,2439 @@
+{
+ "about": "(Noah, 2026-11-23) the full class voice set to record: 80 lines a class, read male and female (sum, des, alc, ssw). Same as the Class Voices doc. tag = Eleven v3 audio tag. When the mp3s arrive this replaces sheets/classvo.json's rows; triggers with wired=false need code.",
+ "triggers": [
+  {
+   "id": "night_start",
+   "when": "The night countdown ends and the first wave rises",
+   "lines": 4,
+   "wired": true
+  },
+  {
+   "id": "night_end",
+   "when": "The last wave of a night falls (dawn)",
+   "lines": 4,
+   "wired": true
+  },
+  {
+   "id": "boss",
+   "when": "A Dragon Priest or a boss night begins",
+   "lines": 3,
+   "wired": true
+  },
+  {
+   "id": "dragon",
+   "when": "One of the word dragons is first seen",
+   "lines": 3,
+   "wired": true
+  },
+  {
+   "id": "special",
+   "when": "An event night starts (fog, harpies, themed waves)",
+   "lines": 3,
+   "wired": true
+  },
+  {
+   "id": "freed",
+   "when": "You free a city",
+   "lines": 3,
+   "wired": true
+  },
+  {
+   "id": "enter",
+   "when": "You walk into a city you haven't freed yet",
+   "lines": 3,
+   "wired": true
+  },
+  {
+   "id": "egg",
+   "when": "An easter egg step is done",
+   "lines": 3,
+   "wired": true
+  },
+  {
+   "id": "idle",
+   "when": "Daytime, nothing happening for 90 s",
+   "lines": 4,
+   "wired": true
+  },
+  {
+   "id": "multikill",
+   "when": "Three or more of the dead fall within two seconds",
+   "lines": 4,
+   "wired": false
+  },
+  {
+   "id": "lowhealth",
+   "when": "Your health drops below a quarter",
+   "lines": 4,
+   "wired": false
+  },
+  {
+   "id": "elite",
+   "when": "An elite or champion appears near you",
+   "lines": 3,
+   "wired": false
+  },
+  {
+   "id": "empty",
+   "when": "You run out of magicka (the Alchemist: out of flasks)",
+   "lines": 3,
+   "wired": false
+  },
+  {
+   "id": "downed",
+   "when": "You fall (bleed-out in co-op, or the killing blow solo)",
+   "lines": 3,
+   "wired": false
+  },
+  {
+   "id": "revived",
+   "when": "You get back up (revived, Quick Revive, a second life)",
+   "lines": 3,
+   "wired": false
+  },
+  {
+   "id": "restless_start",
+   "when": "Lay the Restless to Rest is taken up",
+   "lines": 2,
+   "wired": false
+  },
+  {
+   "id": "whisper_start",
+   "when": "The Stone's Whisper begins: the altar speaks its riddle",
+   "lines": 2,
+   "wired": false
+  },
+  {
+   "id": "whisper_found",
+   "when": "You find the place the riddle names",
+   "lines": 2,
+   "wired": false
+  },
+  {
+   "id": "echo_start",
+   "when": "Repeat the Echo: the stones start to sing",
+   "lines": 2,
+   "wired": false
+  },
+  {
+   "id": "echo_wrong",
+   "when": "Repeat the Echo: a wrong stone, or too slow",
+   "lines": 1,
+   "wired": false
+  },
+  {
+   "id": "echo_done",
+   "when": "Repeat the Echo: the song answered",
+   "lines": 1,
+   "wired": false
+  },
+  {
+   "id": "seal_broken",
+   "when": "A Priest's Seal breaks (the first two)",
+   "lines": 2,
+   "wired": false
+  },
+  {
+   "id": "priest_called",
+   "when": "The last seal breaks and the Dragon Priest comes out",
+   "lines": 2,
+   "wired": false
+  },
+  {
+   "id": "priest_slain",
+   "when": "A Dragon Priest falls",
+   "lines": 2,
+   "wired": false
+  },
+  {
+   "id": "word_slain",
+   "when": "One of Alduin's word dragons is slain",
+   "lines": 2,
+   "wired": false
+  },
+  {
+   "id": "wonder",
+   "when": "A wonder is won",
+   "lines": 2,
+   "wired": false
+  },
+  {
+   "id": "echo_alduin",
+   "when": "The Echo of Alduin appears on the Throat of the World",
+   "lines": 1,
+   "wired": false
+  },
+  {
+   "id": "all_free",
+   "when": "Every Echo Altar in Skyrim is awake",
+   "lines": 1,
+   "wired": false
+  },
+  {
+   "id": "upgrade",
+   "when": "You upgrade an item of your kit at the altar",
+   "lines": 3,
+   "wired": false
+  },
+  {
+   "id": "perk",
+   "when": "You take a perk (a brew) at the altar",
+   "lines": 2,
+   "wired": false
+  },
+  {
+   "id": "relic",
+   "when": "You take a Dragon Priest's relic",
+   "lines": 2,
+   "wired": false
+  },
+  {
+   "id": "armory",
+   "when": "You buy something new from the Armory",
+   "lines": 1,
+   "wired": false
+  }
+ ],
+ "lines": [
+  {
+   "id": "sum_night_start_1",
+   "class": "sum",
+   "trigger": "night_start",
+   "text": "The dead are waking. Good... so are mine.",
+   "tag": "whispers"
+  },
+  {
+   "id": "sum_night_start_2",
+   "class": "sum",
+   "trigger": "night_start",
+   "text": "Hush now. I can hear them clawing at the earth.",
+   "tag": "quietly"
+  },
+  {
+   "id": "sum_night_start_3",
+   "class": "sum",
+   "trigger": "night_start",
+   "text": "Another night. Come, spirits. Stand with me.",
+   "tag": "calm"
+  },
+  {
+   "id": "sum_night_start_4",
+   "class": "sum",
+   "trigger": "night_start",
+   "text": "Rise, old friends. The restless need someone to show them the way.",
+   "tag": "reverent"
+  },
+  {
+   "id": "sum_night_end_1",
+   "class": "sum",
+   "trigger": "night_end",
+   "text": "Dawn. Rest now, all of you. Even the ones I didn't call.",
+   "tag": "softly"
+  },
+  {
+   "id": "sum_night_end_2",
+   "class": "sum",
+   "trigger": "night_end",
+   "text": "The sun takes them back. Until tonight.",
+   "tag": ""
+  },
+  {
+   "id": "sum_night_end_3",
+   "class": "sum",
+   "trigger": "night_end",
+   "text": "Quiet again. I can still hear the dead complaining.",
+   "tag": "dry"
+  },
+  {
+   "id": "sum_night_end_4",
+   "class": "sum",
+   "trigger": "night_end",
+   "text": "My spirits fade with the light. They earned their sleep.",
+   "tag": "tired"
+  },
+  {
+   "id": "sum_boss_1",
+   "class": "sum",
+   "trigger": "boss",
+   "text": "A Dragon Priest. His mask still hums with the old words.",
+   "tag": "awed"
+  },
+  {
+   "id": "sum_boss_2",
+   "class": "sum",
+   "trigger": "boss",
+   "text": "That one has been dead longer than this land has had a name.",
+   "tag": ""
+  },
+  {
+   "id": "sum_boss_3",
+   "class": "sum",
+   "trigger": "boss",
+   "text": "Bound to Alduin even in death. I know a stronger binding.",
+   "tag": "cold"
+  },
+  {
+   "id": "sum_dragon_1",
+   "class": "sum",
+   "trigger": "dragon",
+   "text": "A dragon. Its soul is louder than all the rest.",
+   "tag": "awed"
+  },
+  {
+   "id": "sum_dragon_2",
+   "class": "sum",
+   "trigger": "dragon",
+   "text": "Alduin calls, and his kin answer. So will mine.",
+   "tag": ""
+  },
+  {
+   "id": "sum_dragon_3",
+   "class": "sum",
+   "trigger": "dragon",
+   "text": "Even a dragon's bones remember how to fly.",
+   "tag": "whispers"
+  },
+  {
+   "id": "sum_special_1",
+   "class": "sum",
+   "trigger": "special",
+   "text": "Something is wrong with tonight. Even my spirits won't come near it.",
+   "tag": "uneasy"
+  },
+  {
+   "id": "sum_special_2",
+   "class": "sum",
+   "trigger": "special",
+   "text": "The veil is thin tonight. I can feel cold hands on my shoulders.",
+   "tag": "hushed"
+  },
+  {
+   "id": "sum_special_3",
+   "class": "sum",
+   "trigger": "special",
+   "text": "Strange dead walk tonight. They don't answer when I call.",
+   "tag": "quietly"
+  },
+  {
+   "id": "sum_freed_1",
+   "class": "sum",
+   "trigger": "freed",
+   "text": "The curse let go of this place. Its dead can sleep again.",
+   "tag": "relieved"
+  },
+  {
+   "id": "sum_freed_2",
+   "class": "sum",
+   "trigger": "freed",
+   "text": "Listen... no screaming under the stones. Just wind.",
+   "tag": "softly"
+  },
+  {
+   "id": "sum_freed_3",
+   "class": "sum",
+   "trigger": "freed",
+   "text": "Go on, all of you. Sovngarde's road is open from here.",
+   "tag": "reverent"
+  },
+  {
+   "id": "sum_enter_1",
+   "class": "sum",
+   "trigger": "enter",
+   "text": "So many restless souls in these streets. They're watching me.",
+   "tag": "uneasy"
+  },
+  {
+   "id": "sum_enter_2",
+   "class": "sum",
+   "trigger": "enter",
+   "text": "This city still belongs to the dead. Not for long.",
+   "tag": ""
+  },
+  {
+   "id": "sum_enter_3",
+   "class": "sum",
+   "trigger": "enter",
+   "text": "Every grave here is awake. I can hear them breathing.",
+   "tag": "quietly"
+  },
+  {
+   "id": "sum_egg_1",
+   "class": "sum",
+   "trigger": "egg",
+   "text": "The bones remember... and they're showing me the way.",
+   "tag": "whispers"
+  },
+  {
+   "id": "sum_egg_2",
+   "class": "sum",
+   "trigger": "egg",
+   "text": "Something old just turned to look at me.",
+   "tag": "uneasy"
+  },
+  {
+   "id": "sum_egg_3",
+   "class": "sum",
+   "trigger": "egg",
+   "text": "A spirit I've never met. It wants me to follow.",
+   "tag": "curious"
+  },
+  {
+   "id": "sum_idle_1",
+   "class": "sum",
+   "trigger": "idle",
+   "text": "I can feel them, waiting under every footstep.",
+   "tag": "calm"
+  },
+  {
+   "id": "sum_idle_2",
+   "class": "sum",
+   "trigger": "idle",
+   "text": "Even silence has a voice, if I'm patient enough to hear it.",
+   "tag": ""
+  },
+  {
+   "id": "sum_idle_3",
+   "class": "sum",
+   "trigger": "idle",
+   "text": "The day is too loud. I miss the quiet of the barrows.",
+   "tag": "softly"
+  },
+  {
+   "id": "sum_idle_4",
+   "class": "sum",
+   "trigger": "idle",
+   "text": "Sleep while you can, little ghosts. Night is coming.",
+   "tag": "whispers"
+  },
+  {
+   "id": "sum_multikill_1",
+   "class": "sum",
+   "trigger": "multikill",
+   "text": "Down together. You'll walk the long road together, too.",
+   "tag": "cold"
+  },
+  {
+   "id": "sum_multikill_2",
+   "class": "sum",
+   "trigger": "multikill",
+   "text": "So many at once. The spirits will feast tonight.",
+   "tag": "satisfied"
+  },
+  {
+   "id": "sum_multikill_3",
+   "class": "sum",
+   "trigger": "multikill",
+   "text": "Rest, all of you. You won't be lonely on the road.",
+   "tag": ""
+  },
+  {
+   "id": "sum_multikill_4",
+   "class": "sum",
+   "trigger": "multikill",
+   "text": "That's how it ends. Quietly, and all at once.",
+   "tag": "grim"
+  },
+  {
+   "id": "sum_lowhealth_1",
+   "class": "sum",
+   "trigger": "lowhealth",
+   "text": "Spirits... closer. I need you closer.",
+   "tag": "pained"
+  },
+  {
+   "id": "sum_lowhealth_2",
+   "class": "sum",
+   "trigger": "lowhealth",
+   "text": "Not yet. I'm not ready to join you yet.",
+   "tag": "breathless"
+  },
+  {
+   "id": "sum_lowhealth_3",
+   "class": "sum",
+   "trigger": "lowhealth",
+   "text": "My own soul is slipping. I have to hold on to it.",
+   "tag": "pained"
+  },
+  {
+   "id": "sum_lowhealth_4",
+   "class": "sum",
+   "trigger": "lowhealth",
+   "text": "The cold's in me now. Stay back, all of you.",
+   "tag": "gasping"
+  },
+  {
+   "id": "sum_elite_1",
+   "class": "sum",
+   "trigger": "elite",
+   "text": "That one is stronger. Its soul is wrapped in iron.",
+   "tag": "wary"
+  },
+  {
+   "id": "sum_elite_2",
+   "class": "sum",
+   "trigger": "elite",
+   "text": "An old warrior of the mound. Careful, my friends.",
+   "tag": "quietly"
+  },
+  {
+   "id": "sum_elite_3",
+   "class": "sum",
+   "trigger": "elite",
+   "text": "A champion of the dead. Let's see whom it truly serves.",
+   "tag": "cold"
+  },
+  {
+   "id": "sum_empty_1",
+   "class": "sum",
+   "trigger": "empty",
+   "text": "My well is dry. Hold them, spirits, just a moment.",
+   "tag": "strained"
+  },
+  {
+   "id": "sum_empty_2",
+   "class": "sum",
+   "trigger": "empty",
+   "text": "No more power to give. I have to wait for it.",
+   "tag": "breathless"
+  },
+  {
+   "id": "sum_empty_3",
+   "class": "sum",
+   "trigger": "empty",
+   "text": "Empty. The dead will have to fight for me.",
+   "tag": "tired"
+  },
+  {
+   "id": "sum_downed_1",
+   "class": "sum",
+   "trigger": "downed",
+   "text": "I can see the mist... it's so close.",
+   "tag": "weakly"
+  },
+  {
+   "id": "sum_downed_2",
+   "class": "sum",
+   "trigger": "downed",
+   "text": "I'm falling... spirits, don't leave me.",
+   "tag": "pained"
+  },
+  {
+   "id": "sum_downed_3",
+   "class": "sum",
+   "trigger": "downed",
+   "text": "So this is what they feel.",
+   "tag": "whispers"
+  },
+  {
+   "id": "sum_revived_1",
+   "class": "sum",
+   "trigger": "revived",
+   "text": "Back. The dead weren't ready for me.",
+   "tag": "gasping"
+  },
+  {
+   "id": "sum_revived_2",
+   "class": "sum",
+   "trigger": "revived",
+   "text": "I stood at the edge of the mist. It's colder than I thought.",
+   "tag": "shaken"
+  },
+  {
+   "id": "sum_revived_3",
+   "class": "sum",
+   "trigger": "revived",
+   "text": "Breath again. I won't waste it.",
+   "tag": "relieved"
+  },
+  {
+   "id": "sum_restless_start_1",
+   "class": "sum",
+   "trigger": "restless_start",
+   "text": "The altar's light. Any soul that falls here can pass.",
+   "tag": "reverent"
+  },
+  {
+   "id": "sum_restless_start_2",
+   "class": "sum",
+   "trigger": "restless_start",
+   "text": "Bring them into the light. I'll walk them home.",
+   "tag": "softly"
+  },
+  {
+   "id": "sum_whisper_start_1",
+   "class": "sum",
+   "trigger": "whisper_start",
+   "text": "The stone is speaking. A riddle... it wants me to find something.",
+   "tag": "hushed"
+  },
+  {
+   "id": "sum_whisper_start_2",
+   "class": "sum",
+   "trigger": "whisper_start",
+   "text": "A voice in the altar. Old, and very tired. I'll listen.",
+   "tag": "curious"
+  },
+  {
+   "id": "sum_whisper_found_1",
+   "class": "sum",
+   "trigger": "whisper_found",
+   "text": "Here. This is the place the voice meant.",
+   "tag": "whispers"
+  },
+  {
+   "id": "sum_whisper_found_2",
+   "class": "sum",
+   "trigger": "whisper_found",
+   "text": "I found it. Now I hold it, whatever comes.",
+   "tag": "firm"
+  },
+  {
+   "id": "sum_echo_start_1",
+   "class": "sum",
+   "trigger": "echo_start",
+   "text": "The stones are singing. I have to remember every note.",
+   "tag": "awed"
+  },
+  {
+   "id": "sum_echo_start_2",
+   "class": "sum",
+   "trigger": "echo_start",
+   "text": "Midnight. The altar wants its song sung back.",
+   "tag": "hushed"
+  },
+  {
+   "id": "sum_echo_wrong_1",
+   "class": "sum",
+   "trigger": "echo_wrong",
+   "text": "Wrong stone. The song breaks... I'll wait for the next hour.",
+   "tag": "frustrated"
+  },
+  {
+   "id": "sum_echo_done_1",
+   "class": "sum",
+   "trigger": "echo_done",
+   "text": "The song is answered. The altar heard me.",
+   "tag": "awed"
+  },
+  {
+   "id": "sum_seal_broken_1",
+   "class": "sum",
+   "trigger": "seal_broken",
+   "text": "One seal broken. The priest will feel that.",
+   "tag": "cold"
+  },
+  {
+   "id": "sum_seal_broken_2",
+   "class": "sum",
+   "trigger": "seal_broken",
+   "text": "His binding cracks. I know bindings.",
+   "tag": "satisfied"
+  },
+  {
+   "id": "sum_priest_called_1",
+   "class": "sum",
+   "trigger": "priest_called",
+   "text": "The last seal falls. Come out, priest. I'm waiting.",
+   "tag": "grim"
+  },
+  {
+   "id": "sum_priest_called_2",
+   "class": "sum",
+   "trigger": "priest_called",
+   "text": "There you are. Your oath ends tonight.",
+   "tag": "cold"
+  },
+  {
+   "id": "sum_priest_slain_1",
+   "class": "sum",
+   "trigger": "priest_slain",
+   "text": "Sleep, old priest. Alduin can't call you anymore.",
+   "tag": "quietly"
+  },
+  {
+   "id": "sum_priest_slain_2",
+   "class": "sum",
+   "trigger": "priest_slain",
+   "text": "His soul is free of the oath. Even he deserved that.",
+   "tag": "reverent"
+  },
+  {
+   "id": "sum_word_slain_1",
+   "class": "sum",
+   "trigger": "word_slain",
+   "text": "One of his words falls silent. I felt it in every grave.",
+   "tag": "awed"
+  },
+  {
+   "id": "sum_word_slain_2",
+   "class": "sum",
+   "trigger": "word_slain",
+   "text": "The dragon is gone, and the dead breathe easier.",
+   "tag": "whispers"
+  },
+  {
+   "id": "sum_wonder_1",
+   "class": "sum",
+   "trigger": "wonder",
+   "text": "The Tongues left this for us. I can feel their hands on it.",
+   "tag": "awed"
+  },
+  {
+   "id": "sum_wonder_2",
+   "class": "sum",
+   "trigger": "wonder",
+   "text": "Another wonder found. The old masters are with me.",
+   "tag": "reverent"
+  },
+  {
+   "id": "sum_echo_alduin_1",
+   "class": "sum",
+   "trigger": "echo_alduin",
+   "text": "Alduin's echo. Not even a ghost. Just his voice, refusing to die.",
+   "tag": "grim"
+  },
+  {
+   "id": "sum_all_free_1",
+   "class": "sum",
+   "trigger": "all_free",
+   "text": "Every altar sings. The dead of Skyrim can go home.",
+   "tag": "softly"
+  },
+  {
+   "id": "sum_upgrade_1",
+   "class": "sum",
+   "trigger": "upgrade",
+   "text": "Stronger. My spirits will feel that too.",
+   "tag": "satisfied"
+  },
+  {
+   "id": "sum_upgrade_2",
+   "class": "sum",
+   "trigger": "upgrade",
+   "text": "The altar gives, and I'll use it well.",
+   "tag": "calm"
+  },
+  {
+   "id": "sum_upgrade_3",
+   "class": "sum",
+   "trigger": "upgrade",
+   "text": "A fallen mage's last spell, given to me. I'll honour it.",
+   "tag": ""
+  },
+  {
+   "id": "sum_perk_1",
+   "class": "sum",
+   "trigger": "perk",
+   "text": "A little more strength for the long nights.",
+   "tag": "quietly"
+  },
+  {
+   "id": "sum_perk_2",
+   "class": "sum",
+   "trigger": "perk",
+   "text": "That should help. The night is patient, but so am I.",
+   "tag": "calm"
+  },
+  {
+   "id": "sum_relic_1",
+   "class": "sum",
+   "trigger": "relic",
+   "text": "The priest's relic. It still remembers his voice.",
+   "tag": "reverent"
+  },
+  {
+   "id": "sum_relic_2",
+   "class": "sum",
+   "trigger": "relic",
+   "text": "It's cold in my hands. Good. Cold things last.",
+   "tag": "uneasy"
+  },
+  {
+   "id": "sum_armory_1",
+   "class": "sum",
+   "trigger": "armory",
+   "text": "A new spell from the altar. Some mage gave everything for this.",
+   "tag": "curious"
+  },
+  {
+   "id": "des_night_start_1",
+   "class": "des",
+   "trigger": "night_start",
+   "text": "Here they come. Time to light this place up.",
+   "tag": "excited"
+  },
+  {
+   "id": "des_night_start_2",
+   "class": "des",
+   "trigger": "night_start",
+   "text": "Fire, frost or lightning. Pick how you'd like to die.",
+   "tag": "grinning"
+  },
+  {
+   "id": "des_night_start_3",
+   "class": "des",
+   "trigger": "night_start",
+   "text": "Night falls. My hands are already burning.",
+   "tag": ""
+  },
+  {
+   "id": "des_night_start_4",
+   "class": "des",
+   "trigger": "night_start",
+   "text": "More of you than last night? Good. I was getting bored.",
+   "tag": "cocky"
+  },
+  {
+   "id": "des_night_end_1",
+   "class": "des",
+   "trigger": "night_end",
+   "text": "Dawn. And not a single one left standing. Shame.",
+   "tag": ""
+  },
+  {
+   "id": "des_night_end_2",
+   "class": "des",
+   "trigger": "night_end",
+   "text": "Ash and morning. My favourite smell.",
+   "tag": "satisfied"
+  },
+  {
+   "id": "des_night_end_3",
+   "class": "des",
+   "trigger": "night_end",
+   "text": "Another night survived. Barely broke a sweat.",
+   "tag": "breathless"
+  },
+  {
+   "id": "des_night_end_4",
+   "class": "des",
+   "trigger": "night_end",
+   "text": "Sun's up. Party's over.",
+   "tag": "sighs"
+  },
+  {
+   "id": "des_boss_1",
+   "class": "des",
+   "trigger": "boss",
+   "text": "A Dragon Priest. Let's see how that mask handles a firestorm.",
+   "tag": "cocky"
+  },
+  {
+   "id": "des_boss_2",
+   "class": "des",
+   "trigger": "boss",
+   "text": "Big, old and angry. Burns the same as the rest.",
+   "tag": ""
+  },
+  {
+   "id": "des_boss_3",
+   "class": "des",
+   "trigger": "boss",
+   "text": "All that power and you still rot. Let me speed it up.",
+   "tag": "laughs"
+  },
+  {
+   "id": "des_dragon_1",
+   "class": "des",
+   "trigger": "dragon",
+   "text": "A dragon! Finally, something worth my magicka.",
+   "tag": "excited"
+  },
+  {
+   "id": "des_dragon_2",
+   "class": "des",
+   "trigger": "dragon",
+   "text": "You breathe fire? Cute. Watch this.",
+   "tag": "mocking"
+  },
+  {
+   "id": "des_dragon_3",
+   "class": "des",
+   "trigger": "dragon",
+   "text": "Come down here and fight me, you overgrown lizard!",
+   "tag": "shouting"
+  },
+  {
+   "id": "des_special_1",
+   "class": "des",
+   "trigger": "special",
+   "text": "Tonight's different. Good. I was getting bored.",
+   "tag": ""
+  },
+  {
+   "id": "des_special_2",
+   "class": "des",
+   "trigger": "special",
+   "text": "Something's off tonight. Nothing a bigger fireball won't fix.",
+   "tag": ""
+  },
+  {
+   "id": "des_special_3",
+   "class": "des",
+   "trigger": "special",
+   "text": "New kind of dead. Wonder if they burn faster.",
+   "tag": "curious"
+  },
+  {
+   "id": "des_freed_1",
+   "class": "des",
+   "trigger": "freed",
+   "text": "City's free. The bards had better say I did most of it.",
+   "tag": "proud"
+  },
+  {
+   "id": "des_freed_2",
+   "class": "des",
+   "trigger": "freed",
+   "text": "Curse broken. Somebody owes me a drink. Several.",
+   "tag": ""
+  },
+  {
+   "id": "des_freed_3",
+   "class": "des",
+   "trigger": "freed",
+   "text": "That's what happens when you let a professional work.",
+   "tag": "satisfied"
+  },
+  {
+   "id": "des_enter_1",
+   "class": "des",
+   "trigger": "enter",
+   "text": "This place reeks of the curse. Time I cleaned it out.",
+   "tag": ""
+  },
+  {
+   "id": "des_enter_2",
+   "class": "des",
+   "trigger": "enter",
+   "text": "Another city under Alduin's boot. Not for long.",
+   "tag": ""
+  },
+  {
+   "id": "des_enter_3",
+   "class": "des",
+   "trigger": "enter",
+   "text": "Nice city. Shame about the dead. I'll fix that.",
+   "tag": "cocky"
+  },
+  {
+   "id": "des_egg_1",
+   "class": "des",
+   "trigger": "egg",
+   "text": "Ha! That did something. I'm doing that again.",
+   "tag": "laughs"
+  },
+  {
+   "id": "des_egg_2",
+   "class": "des",
+   "trigger": "egg",
+   "text": "Old magic. Strong, too. I like it.",
+   "tag": ""
+  },
+  {
+   "id": "des_egg_3",
+   "class": "des",
+   "trigger": "egg",
+   "text": "What happens if I set it on fire? Only one way to find out.",
+   "tag": "curious"
+  },
+  {
+   "id": "des_idle_1",
+   "class": "des",
+   "trigger": "idle",
+   "text": "Nothing to burn. I hate waiting.",
+   "tag": "impatient"
+  },
+  {
+   "id": "des_idle_2",
+   "class": "des",
+   "trigger": "idle",
+   "text": "Come on, night. My spells are going stale.",
+   "tag": ""
+  },
+  {
+   "id": "des_idle_3",
+   "class": "des",
+   "trigger": "idle",
+   "text": "I could be in Winterhold blowing things up. Properly.",
+   "tag": "sighs"
+  },
+  {
+   "id": "des_idle_4",
+   "class": "des",
+   "trigger": "idle",
+   "text": "I could set that cart on fire. I won't. Probably.",
+   "tag": "bored"
+  },
+  {
+   "id": "des_multikill_1",
+   "class": "des",
+   "trigger": "multikill",
+   "text": "Look at them go. Up in smoke!",
+   "tag": "laughs"
+  },
+  {
+   "id": "des_multikill_2",
+   "class": "des",
+   "trigger": "multikill",
+   "text": "One spell, a whole crowd. I'm wasted on this town.",
+   "tag": "cocky"
+  },
+  {
+   "id": "des_multikill_3",
+   "class": "des",
+   "trigger": "multikill",
+   "text": "Did you all line up for me? How thoughtful.",
+   "tag": "excited"
+  },
+  {
+   "id": "des_multikill_4",
+   "class": "des",
+   "trigger": "multikill",
+   "text": "Crispy. Every last one.",
+   "tag": ""
+  },
+  {
+   "id": "des_lowhealth_1",
+   "class": "des",
+   "trigger": "lowhealth",
+   "text": "Ow. Fine. Now I'm angry.",
+   "tag": "pained"
+  },
+  {
+   "id": "des_lowhealth_2",
+   "class": "des",
+   "trigger": "lowhealth",
+   "text": "Bleeding. Doesn't matter. Keep casting.",
+   "tag": "strained"
+  },
+  {
+   "id": "des_lowhealth_3",
+   "class": "des",
+   "trigger": "lowhealth",
+   "text": "I need a healer. Or a bigger spell. Bigger spell.",
+   "tag": "pained"
+  },
+  {
+   "id": "des_lowhealth_4",
+   "class": "des",
+   "trigger": "lowhealth",
+   "text": "That one actually hurt. Lucky shot.",
+   "tag": "breathless"
+  },
+  {
+   "id": "des_elite_1",
+   "class": "des",
+   "trigger": "elite",
+   "text": "Oh, a big one. Finally, a challenge.",
+   "tag": "cocky"
+  },
+  {
+   "id": "des_elite_2",
+   "class": "des",
+   "trigger": "elite",
+   "text": "Armoured, is it? Armour melts.",
+   "tag": ""
+  },
+  {
+   "id": "des_elite_3",
+   "class": "des",
+   "trigger": "elite",
+   "text": "Thinks it's special. Let's test that.",
+   "tag": "mocking"
+  },
+  {
+   "id": "des_empty_1",
+   "class": "des",
+   "trigger": "empty",
+   "text": "Out of magicka. Of all the times.",
+   "tag": "frustrated"
+  },
+  {
+   "id": "des_empty_2",
+   "class": "des",
+   "trigger": "empty",
+   "text": "Empty. Come on, come on, fill back up.",
+   "tag": "strained"
+  },
+  {
+   "id": "des_empty_3",
+   "class": "des",
+   "trigger": "empty",
+   "text": "No sparks left. Time to run like I meant to.",
+   "tag": "annoyed"
+  },
+  {
+   "id": "des_downed_1",
+   "class": "des",
+   "trigger": "downed",
+   "text": "Not like this... not to some walking corpse.",
+   "tag": "pained"
+  },
+  {
+   "id": "des_downed_2",
+   "class": "des",
+   "trigger": "downed",
+   "text": "This is embarrassing. Don't tell the College.",
+   "tag": "weakly"
+  },
+  {
+   "id": "des_downed_3",
+   "class": "des",
+   "trigger": "downed",
+   "text": "Can't... feel my hands. That's the worst part.",
+   "tag": "gasping"
+  },
+  {
+   "id": "des_revived_1",
+   "class": "des",
+   "trigger": "revived",
+   "text": "Back! I knew I was too stubborn to die.",
+   "tag": "laughs"
+  },
+  {
+   "id": "des_revived_2",
+   "class": "des",
+   "trigger": "revived",
+   "text": "Death took one look at me and said no thanks.",
+   "tag": "cocky"
+  },
+  {
+   "id": "des_revived_3",
+   "class": "des",
+   "trigger": "revived",
+   "text": "Right. Where was I? Burning things.",
+   "tag": "breathless"
+  },
+  {
+   "id": "des_restless_start_1",
+   "class": "des",
+   "trigger": "restless_start",
+   "text": "Kill them in the altar's light? Easy. They'll glow either way.",
+   "tag": ""
+  },
+  {
+   "id": "des_restless_start_2",
+   "class": "des",
+   "trigger": "restless_start",
+   "text": "Send them to Sovngarde. I'll provide the fire.",
+   "tag": "cocky"
+  },
+  {
+   "id": "des_whisper_start_1",
+   "class": "des",
+   "trigger": "whisper_start",
+   "text": "A talking rock with riddles. Of course it is.",
+   "tag": "curious"
+  },
+  {
+   "id": "des_whisper_start_2",
+   "class": "des",
+   "trigger": "whisper_start",
+   "text": "Fine, voice. I'll play your guessing game.",
+   "tag": "sighs"
+  },
+  {
+   "id": "des_whisper_found_1",
+   "class": "des",
+   "trigger": "whisper_found",
+   "text": "Found it. Riddles are easy when you're this clever.",
+   "tag": "proud"
+  },
+  {
+   "id": "des_whisper_found_2",
+   "class": "des",
+   "trigger": "whisper_found",
+   "text": "This is the spot. Now let them come.",
+   "tag": "cocky"
+  },
+  {
+   "id": "des_echo_start_1",
+   "class": "des",
+   "trigger": "echo_start",
+   "text": "Singing stones. Fine. Watch, remember, repeat.",
+   "tag": "impatient"
+  },
+  {
+   "id": "des_echo_start_2",
+   "class": "des",
+   "trigger": "echo_start",
+   "text": "Midnight show. Don't blink.",
+   "tag": "focused"
+  },
+  {
+   "id": "des_echo_wrong_1",
+   "class": "des",
+   "trigger": "echo_wrong",
+   "text": "That was the wrong one. Obviously. I was testing it.",
+   "tag": "annoyed"
+  },
+  {
+   "id": "des_echo_done_1",
+   "class": "des",
+   "trigger": "echo_done",
+   "text": "Perfect. Was there ever any doubt?",
+   "tag": "proud"
+  },
+  {
+   "id": "des_seal_broken_1",
+   "class": "des",
+   "trigger": "seal_broken",
+   "text": "Seal's cracked. Next.",
+   "tag": "satisfied"
+  },
+  {
+   "id": "des_seal_broken_2",
+   "class": "des",
+   "trigger": "seal_broken",
+   "text": "So much for ancient protection.",
+   "tag": "laughs"
+  },
+  {
+   "id": "des_priest_called_1",
+   "class": "des",
+   "trigger": "priest_called",
+   "text": "That's the last seal. Come out, priest!",
+   "tag": "excited"
+  },
+  {
+   "id": "des_priest_called_2",
+   "class": "des",
+   "trigger": "priest_called",
+   "text": "There he is. Took him long enough.",
+   "tag": "cocky"
+  },
+  {
+   "id": "des_priest_slain_1",
+   "class": "des",
+   "trigger": "priest_slain",
+   "text": "Mask and all. Ashes.",
+   "tag": "laughs"
+  },
+  {
+   "id": "des_priest_slain_2",
+   "class": "des",
+   "trigger": "priest_slain",
+   "text": "A Dragon Priest, down. Somebody write that down.",
+   "tag": "proud"
+  },
+  {
+   "id": "des_word_slain_1",
+   "class": "des",
+   "trigger": "word_slain",
+   "text": "One word down! Who's next?",
+   "tag": "shouting"
+  },
+  {
+   "id": "des_word_slain_2",
+   "class": "des",
+   "trigger": "word_slain",
+   "text": "Killed a word of Alduin's shout. I'm saying that twice.",
+   "tag": "proud"
+  },
+  {
+   "id": "des_wonder_1",
+   "class": "des",
+   "trigger": "wonder",
+   "text": "Now that's what I call a reward.",
+   "tag": "excited"
+  },
+  {
+   "id": "des_wonder_2",
+   "class": "des",
+   "trigger": "wonder",
+   "text": "Old Tongue magic. I can feel it humming. Lovely.",
+   "tag": "curious"
+  },
+  {
+   "id": "des_echo_alduin_1",
+   "class": "des",
+   "trigger": "echo_alduin",
+   "text": "Alduin's echo. A voice with no throat. Let's hear it scream.",
+   "tag": "cocky"
+  },
+  {
+   "id": "des_all_free_1",
+   "class": "des",
+   "trigger": "all_free",
+   "text": "Every altar awake. I'd like that in a song, please.",
+   "tag": "proud"
+  },
+  {
+   "id": "des_upgrade_1",
+   "class": "des",
+   "trigger": "upgrade",
+   "text": "More power. Always more power.",
+   "tag": "satisfied"
+  },
+  {
+   "id": "des_upgrade_2",
+   "class": "des",
+   "trigger": "upgrade",
+   "text": "Oh, that's going to hurt them.",
+   "tag": "excited"
+  },
+  {
+   "id": "des_upgrade_3",
+   "class": "des",
+   "trigger": "upgrade",
+   "text": "Upgraded. As if I needed it.",
+   "tag": "cocky"
+  },
+  {
+   "id": "des_perk_1",
+   "class": "des",
+   "trigger": "perk",
+   "text": "That'll do. For now.",
+   "tag": ""
+  },
+  {
+   "id": "des_perk_2",
+   "class": "des",
+   "trigger": "perk",
+   "text": "Every edge counts. Even mine.",
+   "tag": "satisfied"
+  },
+  {
+   "id": "des_relic_1",
+   "class": "des",
+   "trigger": "relic",
+   "text": "The priest's toy. Mine now.",
+   "tag": "curious"
+  },
+  {
+   "id": "des_relic_2",
+   "class": "des",
+   "trigger": "relic",
+   "text": "Spoils of war. I've earned them.",
+   "tag": "cocky"
+  },
+  {
+   "id": "des_armory_1",
+   "class": "des",
+   "trigger": "armory",
+   "text": "A new spell! Let's see what it blows up.",
+   "tag": "excited"
+  },
+  {
+   "id": "alc_night_start_1",
+   "class": "alc",
+   "trigger": "night_start",
+   "text": "Flasks full, corks loose. Let's begin, my darlings.",
+   "tag": "playful"
+  },
+  {
+   "id": "alc_night_start_2",
+   "class": "alc",
+   "trigger": "night_start",
+   "text": "The dead rise right on schedule. Shame nothing else in Skyrim does.",
+   "tag": ""
+  },
+  {
+   "id": "alc_night_start_3",
+   "class": "alc",
+   "trigger": "night_start",
+   "text": "Tonight's experiment: how many of them can one flask take?",
+   "tag": "curious"
+  },
+  {
+   "id": "alc_night_start_4",
+   "class": "alc",
+   "trigger": "night_start",
+   "text": "Fresh samples, walking right to me. How convenient.",
+   "tag": "cheerful"
+  },
+  {
+   "id": "alc_night_end_1",
+   "class": "alc",
+   "trigger": "night_end",
+   "text": "Dawn. Note to self: subjects unresponsive. Very unresponsive.",
+   "tag": "dry"
+  },
+  {
+   "id": "alc_night_end_2",
+   "class": "alc",
+   "trigger": "night_end",
+   "text": "Morning. Time to scrape them off my boots and restock.",
+   "tag": ""
+  },
+  {
+   "id": "alc_night_end_3",
+   "class": "alc",
+   "trigger": "night_end",
+   "text": "Made it. Mostly in one piece. Mostly.",
+   "tag": "relieved"
+  },
+  {
+   "id": "alc_night_end_4",
+   "class": "alc",
+   "trigger": "night_end",
+   "text": "Another night of data. My notes are getting gruesome.",
+   "tag": "sighs"
+  },
+  {
+   "id": "alc_boss_1",
+   "class": "alc",
+   "trigger": "boss",
+   "text": "A Dragon Priest. I'd love a sample of whatever keeps him going.",
+   "tag": "curious"
+  },
+  {
+   "id": "alc_boss_2",
+   "class": "alc",
+   "trigger": "boss",
+   "text": "A big one. Good thing I brought the strong stuff.",
+   "tag": ""
+  },
+  {
+   "id": "alc_boss_3",
+   "class": "alc",
+   "trigger": "boss",
+   "text": "Preserved for a thousand years. What a remarkable recipe.",
+   "tag": "intrigued"
+  },
+  {
+   "id": "alc_dragon_1",
+   "class": "alc",
+   "trigger": "dragon",
+   "text": "A dragon! Its blood alone would pay for a new laboratory.",
+   "tag": "excited"
+  },
+  {
+   "id": "alc_dragon_2",
+   "class": "alc",
+   "trigger": "dragon",
+   "text": "Scales, bone, heartblood... hold still, you beautiful thing.",
+   "tag": "excited"
+  },
+  {
+   "id": "alc_dragon_3",
+   "class": "alc",
+   "trigger": "dragon",
+   "text": "Big. Very big. I'll need a much bigger flask.",
+   "tag": "nervous"
+  },
+  {
+   "id": "alc_special_1",
+   "class": "alc",
+   "trigger": "special",
+   "text": "Something in the air tonight. I'm not breathing that.",
+   "tag": ""
+  },
+  {
+   "id": "alc_special_2",
+   "class": "alc",
+   "trigger": "special",
+   "text": "Odd night. My flasks are bubbling on their own.",
+   "tag": ""
+  },
+  {
+   "id": "alc_special_3",
+   "class": "alc",
+   "trigger": "special",
+   "text": "New symptoms tonight. Fascinating. Terrible, but fascinating.",
+   "tag": "curious"
+  },
+  {
+   "id": "alc_freed_1",
+   "class": "alc",
+   "trigger": "freed",
+   "text": "There. The rot's gone out of this place. My work here is done.",
+   "tag": ""
+  },
+  {
+   "id": "alc_freed_2",
+   "class": "alc",
+   "trigger": "freed",
+   "text": "City cured. If only every illness were this satisfying.",
+   "tag": ""
+  },
+  {
+   "id": "alc_freed_3",
+   "class": "alc",
+   "trigger": "freed",
+   "text": "Clean air again. I'll miss the smell. No, I won't.",
+   "tag": "pleased"
+  },
+  {
+   "id": "alc_enter_1",
+   "class": "alc",
+   "trigger": "enter",
+   "text": "I can smell it. The curse is in the water here.",
+   "tag": ""
+  },
+  {
+   "id": "alc_enter_2",
+   "class": "alc",
+   "trigger": "enter",
+   "text": "A sick city. Time to find out what the cure looks like.",
+   "tag": ""
+  },
+  {
+   "id": "alc_enter_3",
+   "class": "alc",
+   "trigger": "enter",
+   "text": "Ah, the familiar scent of plague and poor decisions.",
+   "tag": "wry"
+  },
+  {
+   "id": "alc_egg_1",
+   "class": "alc",
+   "trigger": "egg",
+   "text": "Interesting. Very interesting.",
+   "tag": ""
+  },
+  {
+   "id": "alc_egg_2",
+   "class": "alc",
+   "trigger": "egg",
+   "text": "That reaction shouldn't be possible. I have to try it again.",
+   "tag": ""
+  },
+  {
+   "id": "alc_egg_3",
+   "class": "alc",
+   "trigger": "egg",
+   "text": "Write that down. No, wait, I'm the one who writes things down.",
+   "tag": "excited"
+  },
+  {
+   "id": "alc_idle_1",
+   "class": "alc",
+   "trigger": "idle",
+   "text": "I'll just reorganise my flasks again. Third time today.",
+   "tag": ""
+  },
+  {
+   "id": "alc_idle_2",
+   "class": "alc",
+   "trigger": "idle",
+   "text": "Nirnroot, deathbell, a pinch of patience... still waiting.",
+   "tag": ""
+  },
+  {
+   "id": "alc_idle_3",
+   "class": "alc",
+   "trigger": "idle",
+   "text": "Three parts frost salts, one part spite...",
+   "tag": "humming"
+  },
+  {
+   "id": "alc_idle_4",
+   "class": "alc",
+   "trigger": "idle",
+   "text": "If nothing happens soon, I'm testing something on myself.",
+   "tag": "bored"
+  },
+  {
+   "id": "alc_multikill_1",
+   "class": "alc",
+   "trigger": "multikill",
+   "text": "One flask, many results. Excellent efficiency.",
+   "tag": "delighted"
+  },
+  {
+   "id": "alc_multikill_2",
+   "class": "alc",
+   "trigger": "multikill",
+   "text": "Ha! Textbook reaction.",
+   "tag": "laughs"
+  },
+  {
+   "id": "alc_multikill_3",
+   "class": "alc",
+   "trigger": "multikill",
+   "text": "That's the stuff. Literally.",
+   "tag": "satisfied"
+  },
+  {
+   "id": "alc_multikill_4",
+   "class": "alc",
+   "trigger": "multikill",
+   "text": "They really should have stood further apart.",
+   "tag": "wry"
+  },
+  {
+   "id": "alc_lowhealth_1",
+   "class": "alc",
+   "trigger": "lowhealth",
+   "text": "Ow. I need a potion. I have potions. Where are my potions?",
+   "tag": "pained"
+  },
+  {
+   "id": "alc_lowhealth_2",
+   "class": "alc",
+   "trigger": "lowhealth",
+   "text": "Bleeding. Note to self: stop bleeding.",
+   "tag": "strained"
+  },
+  {
+   "id": "alc_lowhealth_3",
+   "class": "alc",
+   "trigger": "lowhealth",
+   "text": "That wound will need a poultice. Later. Much later.",
+   "tag": "pained"
+  },
+  {
+   "id": "alc_lowhealth_4",
+   "class": "alc",
+   "trigger": "lowhealth",
+   "text": "Not good. Not good at all. Steady hands.",
+   "tag": "breathless"
+  },
+  {
+   "id": "alc_elite_1",
+   "class": "alc",
+   "trigger": "elite",
+   "text": "That one's mutated. I want to know how.",
+   "tag": "curious"
+  },
+  {
+   "id": "alc_elite_2",
+   "class": "alc",
+   "trigger": "elite",
+   "text": "Armoured specimen. I'll need something corrosive.",
+   "tag": "nervous"
+  },
+  {
+   "id": "alc_elite_3",
+   "class": "alc",
+   "trigger": "elite",
+   "text": "A big, angry sample. Fine. I'll dilute it.",
+   "tag": "wry"
+  },
+  {
+   "id": "alc_empty_1",
+   "class": "alc",
+   "trigger": "empty",
+   "text": "Empty flask. Empty flask! Refill, refill.",
+   "tag": "alarmed"
+  },
+  {
+   "id": "alc_empty_2",
+   "class": "alc",
+   "trigger": "empty",
+   "text": "Out of reagents. Improvising now.",
+   "tag": "strained"
+  },
+  {
+   "id": "alc_empty_3",
+   "class": "alc",
+   "trigger": "empty",
+   "text": "Nothing left to throw but insults.",
+   "tag": "annoyed"
+  },
+  {
+   "id": "alc_downed_1",
+   "class": "alc",
+   "trigger": "downed",
+   "text": "I didn't... finish my notes.",
+   "tag": "weakly"
+  },
+  {
+   "id": "alc_downed_2",
+   "class": "alc",
+   "trigger": "downed",
+   "text": "Wrong dose. Definitely the wrong dose.",
+   "tag": "pained"
+  },
+  {
+   "id": "alc_downed_3",
+   "class": "alc",
+   "trigger": "downed",
+   "text": "Somebody... label this one a failure.",
+   "tag": "gasping"
+  },
+  {
+   "id": "alc_revived_1",
+   "class": "alc",
+   "trigger": "revived",
+   "text": "Back! Fascinating. Terrible, but fascinating.",
+   "tag": "gasping"
+  },
+  {
+   "id": "alc_revived_2",
+   "class": "alc",
+   "trigger": "revived",
+   "text": "So that's what dying tastes like. Bitter.",
+   "tag": "shaken"
+  },
+  {
+   "id": "alc_revived_3",
+   "class": "alc",
+   "trigger": "revived",
+   "text": "Breathing again. Strongly recommend it.",
+   "tag": "relieved"
+  },
+  {
+   "id": "alc_restless_start_1",
+   "class": "alc",
+   "trigger": "restless_start",
+   "text": "Souls rising through the light? I'd love to bottle that.",
+   "tag": "curious"
+  },
+  {
+   "id": "alc_restless_start_2",
+   "class": "alc",
+   "trigger": "restless_start",
+   "text": "Kill them by the altar. Simple enough. Even I can follow that.",
+   "tag": ""
+  },
+  {
+   "id": "alc_whisper_start_1",
+   "class": "alc",
+   "trigger": "whisper_start",
+   "text": "A riddle from a rock. My favourite kind of puzzle.",
+   "tag": "intrigued"
+  },
+  {
+   "id": "alc_whisper_start_2",
+   "class": "alc",
+   "trigger": "whisper_start",
+   "text": "The altar talks. I'm writing all of this down.",
+   "tag": "curious"
+  },
+  {
+   "id": "alc_whisper_found_1",
+   "class": "alc",
+   "trigger": "whisper_found",
+   "text": "Solved it. Never doubt a good mind.",
+   "tag": "triumphant"
+  },
+  {
+   "id": "alc_whisper_found_2",
+   "class": "alc",
+   "trigger": "whisper_found",
+   "text": "Here it is. Now, who brought snacks? Oh. The dead did.",
+   "tag": "wry"
+  },
+  {
+   "id": "alc_echo_start_1",
+   "class": "alc",
+   "trigger": "echo_start",
+   "text": "Six stones, one order. Like measuring reagents. I can do that.",
+   "tag": "focused"
+  },
+  {
+   "id": "alc_echo_start_2",
+   "class": "alc",
+   "trigger": "echo_start",
+   "text": "They're glowing! Pay attention, pay attention.",
+   "tag": "excited"
+  },
+  {
+   "id": "alc_echo_wrong_1",
+   "class": "alc",
+   "trigger": "echo_wrong",
+   "text": "Wrong stone. Contaminated the whole sequence.",
+   "tag": "annoyed"
+  },
+  {
+   "id": "alc_echo_done_1",
+   "class": "alc",
+   "trigger": "echo_done",
+   "text": "Perfect sequence. Precise as a balance scale.",
+   "tag": "delighted"
+  },
+  {
+   "id": "alc_seal_broken_1",
+   "class": "alc",
+   "trigger": "seal_broken",
+   "text": "Seal dissolved. Everything dissolves eventually.",
+   "tag": "satisfied"
+  },
+  {
+   "id": "alc_seal_broken_2",
+   "class": "alc",
+   "trigger": "seal_broken",
+   "text": "Interesting runes. Pity I had to break them.",
+   "tag": "curious"
+  },
+  {
+   "id": "alc_priest_called_1",
+   "class": "alc",
+   "trigger": "priest_called",
+   "text": "Last seal's gone. And there's the priest. Big. Angry.",
+   "tag": "nervous"
+  },
+  {
+   "id": "alc_priest_called_2",
+   "class": "alc",
+   "trigger": "priest_called",
+   "text": "Here he comes. I'd hoped for a smaller priest.",
+   "tag": "wry"
+  },
+  {
+   "id": "alc_priest_slain_1",
+   "class": "alc",
+   "trigger": "priest_slain",
+   "text": "The priest is down. Now, about that sample...",
+   "tag": "delighted"
+  },
+  {
+   "id": "alc_priest_slain_2",
+   "class": "alc",
+   "trigger": "priest_slain",
+   "text": "Old magic, old bones. Neither lasts forever.",
+   "tag": "satisfied"
+  },
+  {
+   "id": "alc_word_slain_1",
+   "class": "alc",
+   "trigger": "word_slain",
+   "text": "A word of Alduin, gone. The whole world feels lighter.",
+   "tag": "awed"
+  },
+  {
+   "id": "alc_word_slain_2",
+   "class": "alc",
+   "trigger": "word_slain",
+   "text": "A dead dragon. I'm going to need a lot more flasks.",
+   "tag": "excited"
+  },
+  {
+   "id": "alc_wonder_1",
+   "class": "alc",
+   "trigger": "wonder",
+   "text": "The Tongues' own work. I could study this for years.",
+   "tag": "awed"
+  },
+  {
+   "id": "alc_wonder_2",
+   "class": "alc",
+   "trigger": "wonder",
+   "text": "A wonder! I don't know what it does yet. That's the best part.",
+   "tag": "excited"
+  },
+  {
+   "id": "alc_echo_alduin_1",
+   "class": "alc",
+   "trigger": "echo_alduin",
+   "text": "Alduin's echo. A disease that won't stop talking. Time for the cure.",
+   "tag": "grim"
+  },
+  {
+   "id": "alc_all_free_1",
+   "class": "alc",
+   "trigger": "all_free",
+   "text": "Every altar awake. Skyrim's fever has broken.",
+   "tag": "satisfied"
+  },
+  {
+   "id": "alc_upgrade_1",
+   "class": "alc",
+   "trigger": "upgrade",
+   "text": "Better formula. Better results.",
+   "tag": "pleased"
+  },
+  {
+   "id": "alc_upgrade_2",
+   "class": "alc",
+   "trigger": "upgrade",
+   "text": "Stronger. I wonder how strong it can get.",
+   "tag": "curious"
+  },
+  {
+   "id": "alc_upgrade_3",
+   "class": "alc",
+   "trigger": "upgrade",
+   "text": "Refined. That's how I like my tools.",
+   "tag": "satisfied"
+  },
+  {
+   "id": "alc_perk_1",
+   "class": "alc",
+   "trigger": "perk",
+   "text": "A useful little tonic.",
+   "tag": "pleased"
+  },
+  {
+   "id": "alc_perk_2",
+   "class": "alc",
+   "trigger": "perk",
+   "text": "Every advantage helps. Especially the ones in bottles.",
+   "tag": "wry"
+  },
+  {
+   "id": "alc_relic_1",
+   "class": "alc",
+   "trigger": "relic",
+   "text": "The priest's relic. I'll study it later. Carefully.",
+   "tag": "curious"
+  },
+  {
+   "id": "alc_relic_2",
+   "class": "alc",
+   "trigger": "relic",
+   "text": "It's still warm. Old magic never cools.",
+   "tag": "intrigued"
+  },
+  {
+   "id": "alc_armory_1",
+   "class": "alc",
+   "trigger": "armory",
+   "text": "New equipment! Oh, I can do terrible things with this.",
+   "tag": "excited"
+  },
+  {
+   "id": "ssw_night_start_1",
+   "class": "ssw",
+   "trigger": "night_start",
+   "text": "They're coming. Blade up. Spell ready.",
+   "tag": "focused"
+  },
+  {
+   "id": "ssw_night_start_2",
+   "class": "ssw",
+   "trigger": "night_start",
+   "text": "I hold this line. Nothing gets past me.",
+   "tag": "firm"
+  },
+  {
+   "id": "ssw_night_start_3",
+   "class": "ssw",
+   "trigger": "night_start",
+   "text": "Night again. Same as always: steel first, then fire.",
+   "tag": ""
+  },
+  {
+   "id": "ssw_night_start_4",
+   "class": "ssw",
+   "trigger": "night_start",
+   "text": "Breathe. Count them. Then cut them down.",
+   "tag": "steady"
+  },
+  {
+   "id": "ssw_night_end_1",
+   "class": "ssw",
+   "trigger": "night_end",
+   "text": "Dawn. Clean the blade. Count the wounds.",
+   "tag": "tired"
+  },
+  {
+   "id": "ssw_night_end_2",
+   "class": "ssw",
+   "trigger": "night_end",
+   "text": "I held. That's all that matters.",
+   "tag": ""
+  },
+  {
+   "id": "ssw_night_end_3",
+   "class": "ssw",
+   "trigger": "night_end",
+   "text": "Another night survived. They won't remember me. Good.",
+   "tag": "quietly"
+  },
+  {
+   "id": "ssw_night_end_4",
+   "class": "ssw",
+   "trigger": "night_end",
+   "text": "Rest now. Tonight comes soon enough.",
+   "tag": "tired"
+  },
+  {
+   "id": "ssw_boss_1",
+   "class": "ssw",
+   "trigger": "boss",
+   "text": "A Dragon Priest. Watch the hands, not the mask.",
+   "tag": "focused"
+  },
+  {
+   "id": "ssw_boss_2",
+   "class": "ssw",
+   "trigger": "boss",
+   "text": "That one's the real fight. I stay sharp.",
+   "tag": ""
+  },
+  {
+   "id": "ssw_boss_3",
+   "class": "ssw",
+   "trigger": "boss",
+   "text": "Old, powerful, and alone. It still bleeds like the rest.",
+   "tag": "steady"
+  },
+  {
+   "id": "ssw_dragon_1",
+   "class": "ssw",
+   "trigger": "dragon",
+   "text": "A dragon. I get under its wings and I don't stop moving.",
+   "tag": ""
+  },
+  {
+   "id": "ssw_dragon_2",
+   "class": "ssw",
+   "trigger": "dragon",
+   "text": "It bleeds. Then it can die.",
+   "tag": ""
+  },
+  {
+   "id": "ssw_dragon_3",
+   "class": "ssw",
+   "trigger": "dragon",
+   "text": "I've fought worse. No, I haven't. Doesn't matter.",
+   "tag": "grim"
+  },
+  {
+   "id": "ssw_special_1",
+   "class": "ssw",
+   "trigger": "special",
+   "text": "Something's changed tonight. I keep my eyes open.",
+   "tag": ""
+  },
+  {
+   "id": "ssw_special_2",
+   "class": "ssw",
+   "trigger": "special",
+   "text": "Different enemy. Same answer.",
+   "tag": ""
+  },
+  {
+   "id": "ssw_special_3",
+   "class": "ssw",
+   "trigger": "special",
+   "text": "Strange night. Back to the walls.",
+   "tag": "wary"
+  },
+  {
+   "id": "ssw_freed_1",
+   "class": "ssw",
+   "trigger": "freed",
+   "text": "The city's ours again. Its people can sleep tonight.",
+   "tag": ""
+  },
+  {
+   "id": "ssw_freed_2",
+   "class": "ssw",
+   "trigger": "freed",
+   "text": "The curse breaks here. One less to carry.",
+   "tag": ""
+  },
+  {
+   "id": "ssw_freed_3",
+   "class": "ssw",
+   "trigger": "freed",
+   "text": "Done. On to the next.",
+   "tag": "quietly"
+  },
+  {
+   "id": "ssw_enter_1",
+   "class": "ssw",
+   "trigger": "enter",
+   "text": "The curse is thick here. Weapon drawn.",
+   "tag": ""
+  },
+  {
+   "id": "ssw_enter_2",
+   "class": "ssw",
+   "trigger": "enter",
+   "text": "These people need a sword, not a speech.",
+   "tag": ""
+  },
+  {
+   "id": "ssw_enter_3",
+   "class": "ssw",
+   "trigger": "enter",
+   "text": "Too quiet. I know this kind of quiet.",
+   "tag": "wary"
+  },
+  {
+   "id": "ssw_egg_1",
+   "class": "ssw",
+   "trigger": "egg",
+   "text": "That's a sign. I follow it.",
+   "tag": ""
+  },
+  {
+   "id": "ssw_egg_2",
+   "class": "ssw",
+   "trigger": "egg",
+   "text": "Old magic answers. I keep moving.",
+   "tag": ""
+  },
+  {
+   "id": "ssw_egg_3",
+   "class": "ssw",
+   "trigger": "egg",
+   "text": "I don't trust it. I'll follow it anyway.",
+   "tag": "wary"
+  },
+  {
+   "id": "ssw_idle_1",
+   "class": "ssw",
+   "trigger": "idle",
+   "text": "Waiting is part of the work.",
+   "tag": ""
+  },
+  {
+   "id": "ssw_idle_2",
+   "class": "ssw",
+   "trigger": "idle",
+   "text": "I rest while I can. The night doesn't wait.",
+   "tag": ""
+  },
+  {
+   "id": "ssw_idle_3",
+   "class": "ssw",
+   "trigger": "idle",
+   "text": "Check the edge. Check the straps. Check them again.",
+   "tag": "focused"
+  },
+  {
+   "id": "ssw_idle_4",
+   "class": "ssw",
+   "trigger": "idle",
+   "text": "Too much daylight. I'd rather be ready than rested.",
+   "tag": "quietly"
+  },
+  {
+   "id": "ssw_multikill_1",
+   "class": "ssw",
+   "trigger": "multikill",
+   "text": "Three down. More coming.",
+   "tag": "grim"
+  },
+  {
+   "id": "ssw_multikill_2",
+   "class": "ssw",
+   "trigger": "multikill",
+   "text": "That's how you hold a line.",
+   "tag": "firm"
+  },
+  {
+   "id": "ssw_multikill_3",
+   "class": "ssw",
+   "trigger": "multikill",
+   "text": "Clean. Next.",
+   "tag": "steady"
+  },
+  {
+   "id": "ssw_multikill_4",
+   "class": "ssw",
+   "trigger": "multikill",
+   "text": "They fall together. Good.",
+   "tag": "grim"
+  },
+  {
+   "id": "ssw_lowhealth_1",
+   "class": "ssw",
+   "trigger": "lowhealth",
+   "text": "I'm hit. Still standing.",
+   "tag": "pained"
+  },
+  {
+   "id": "ssw_lowhealth_2",
+   "class": "ssw",
+   "trigger": "lowhealth",
+   "text": "Pull back a step. Heal. Then forward again.",
+   "tag": "strained"
+  },
+  {
+   "id": "ssw_lowhealth_3",
+   "class": "ssw",
+   "trigger": "lowhealth",
+   "text": "Blood in my eyes. I don't need to see to swing.",
+   "tag": "pained"
+  },
+  {
+   "id": "ssw_lowhealth_4",
+   "class": "ssw",
+   "trigger": "lowhealth",
+   "text": "Not yet. Not here.",
+   "tag": "gritted"
+  },
+  {
+   "id": "ssw_elite_1",
+   "class": "ssw",
+   "trigger": "elite",
+   "text": "Big one. Watch its swing.",
+   "tag": "wary"
+  },
+  {
+   "id": "ssw_elite_2",
+   "class": "ssw",
+   "trigger": "elite",
+   "text": "Armoured. Find the gap.",
+   "tag": "firm"
+  },
+  {
+   "id": "ssw_elite_3",
+   "class": "ssw",
+   "trigger": "elite",
+   "text": "A champion. I'll take it head on.",
+   "tag": "steady"
+  },
+  {
+   "id": "ssw_empty_1",
+   "class": "ssw",
+   "trigger": "empty",
+   "text": "Out of magicka. Steel it is.",
+   "tag": "steady"
+  },
+  {
+   "id": "ssw_empty_2",
+   "class": "ssw",
+   "trigger": "empty",
+   "text": "Spell's spent. The blade isn't.",
+   "tag": "focused"
+  },
+  {
+   "id": "ssw_empty_3",
+   "class": "ssw",
+   "trigger": "empty",
+   "text": "No magic left. Doesn't matter.",
+   "tag": "firm"
+  },
+  {
+   "id": "ssw_downed_1",
+   "class": "ssw",
+   "trigger": "downed",
+   "text": "Down... I'm down.",
+   "tag": "pained"
+  },
+  {
+   "id": "ssw_downed_2",
+   "class": "ssw",
+   "trigger": "downed",
+   "text": "I held as long as I could.",
+   "tag": "weakly"
+  },
+  {
+   "id": "ssw_downed_3",
+   "class": "ssw",
+   "trigger": "downed",
+   "text": "Not... finished yet.",
+   "tag": "gasping"
+  },
+  {
+   "id": "ssw_revived_1",
+   "class": "ssw",
+   "trigger": "revived",
+   "text": "Up. Back to the line.",
+   "tag": "gasping"
+  },
+  {
+   "id": "ssw_revived_2",
+   "class": "ssw",
+   "trigger": "revived",
+   "text": "Still breathing. Still fighting.",
+   "tag": "firm"
+  },
+  {
+   "id": "ssw_revived_3",
+   "class": "ssw",
+   "trigger": "revived",
+   "text": "Death can wait its turn.",
+   "tag": "grim"
+  },
+  {
+   "id": "ssw_restless_start_1",
+   "class": "ssw",
+   "trigger": "restless_start",
+   "text": "Fight by the altar. Give them their rest.",
+   "tag": "firm"
+  },
+  {
+   "id": "ssw_restless_start_2",
+   "class": "ssw",
+   "trigger": "restless_start",
+   "text": "Hold the light. Every one that falls here goes home.",
+   "tag": "steady"
+  },
+  {
+   "id": "ssw_whisper_start_1",
+   "class": "ssw",
+   "trigger": "whisper_start",
+   "text": "A voice in the stone. I'll listen. I won't trust it yet.",
+   "tag": "wary"
+  },
+  {
+   "id": "ssw_whisper_start_2",
+   "class": "ssw",
+   "trigger": "whisper_start",
+   "text": "A riddle. Think like a scout. Where would they gather?",
+   "tag": "focused"
+  },
+  {
+   "id": "ssw_whisper_found_1",
+   "class": "ssw",
+   "trigger": "whisper_found",
+   "text": "This is the place. I hold it.",
+   "tag": "firm"
+  },
+  {
+   "id": "ssw_whisper_found_2",
+   "class": "ssw",
+   "trigger": "whisper_found",
+   "text": "Found it. Now they come to me.",
+   "tag": "steady"
+  },
+  {
+   "id": "ssw_echo_start_1",
+   "class": "ssw",
+   "trigger": "echo_start",
+   "text": "Watch the stones. Remember the order.",
+   "tag": "focused"
+  },
+  {
+   "id": "ssw_echo_start_2",
+   "class": "ssw",
+   "trigger": "echo_start",
+   "text": "Midnight. Eyes on the light.",
+   "tag": "steady"
+  },
+  {
+   "id": "ssw_echo_wrong_1",
+   "class": "ssw",
+   "trigger": "echo_wrong",
+   "text": "Wrong one. Reset. Do it right next time.",
+   "tag": "frustrated"
+  },
+  {
+   "id": "ssw_echo_done_1",
+   "class": "ssw",
+   "trigger": "echo_done",
+   "text": "Done. In order. Like a drill.",
+   "tag": "satisfied"
+  },
+  {
+   "id": "ssw_seal_broken_1",
+   "class": "ssw",
+   "trigger": "seal_broken",
+   "text": "Seal's broken. Keep moving.",
+   "tag": "firm"
+  },
+  {
+   "id": "ssw_seal_broken_2",
+   "class": "ssw",
+   "trigger": "seal_broken",
+   "text": "Guard down, seal gone. Next.",
+   "tag": "steady"
+  },
+  {
+   "id": "ssw_priest_called_1",
+   "class": "ssw",
+   "trigger": "priest_called",
+   "text": "Last seal. Here he comes.",
+   "tag": "grim"
+  },
+  {
+   "id": "ssw_priest_called_2",
+   "class": "ssw",
+   "trigger": "priest_called",
+   "text": "Face me, priest. Your guards are gone.",
+   "tag": "firm"
+  },
+  {
+   "id": "ssw_priest_slain_1",
+   "class": "ssw",
+   "trigger": "priest_slain",
+   "text": "The priest falls. His oath dies with him.",
+   "tag": "quietly"
+  },
+  {
+   "id": "ssw_priest_slain_2",
+   "class": "ssw",
+   "trigger": "priest_slain",
+   "text": "Done. The altar is free to wake.",
+   "tag": "firm"
+  },
+  {
+   "id": "ssw_word_slain_1",
+   "class": "ssw",
+   "trigger": "word_slain",
+   "text": "One of his words is silent. I keep going until they all are.",
+   "tag": "grim"
+  },
+  {
+   "id": "ssw_word_slain_2",
+   "class": "ssw",
+   "trigger": "word_slain",
+   "text": "The dragon's down. I keep moving.",
+   "tag": "steady"
+  },
+  {
+   "id": "ssw_wonder_1",
+   "class": "ssw",
+   "trigger": "wonder",
+   "text": "The Tongues' work. I'll carry it well.",
+   "tag": "quietly"
+  },
+  {
+   "id": "ssw_wonder_2",
+   "class": "ssw",
+   "trigger": "wonder",
+   "text": "A weapon worth having. Good.",
+   "tag": "firm"
+  },
+  {
+   "id": "ssw_echo_alduin_1",
+   "class": "ssw",
+   "trigger": "echo_alduin",
+   "text": "Alduin's echo. The last of him. I end this.",
+   "tag": "grim"
+  },
+  {
+   "id": "ssw_all_free_1",
+   "class": "ssw",
+   "trigger": "all_free",
+   "text": "Every altar awake. The oath is kept.",
+   "tag": "quietly"
+  },
+  {
+   "id": "ssw_upgrade_1",
+   "class": "ssw",
+   "trigger": "upgrade",
+   "text": "Sharper. Good.",
+   "tag": "satisfied"
+  },
+  {
+   "id": "ssw_upgrade_2",
+   "class": "ssw",
+   "trigger": "upgrade",
+   "text": "Better steel, better odds.",
+   "tag": "steady"
+  },
+  {
+   "id": "ssw_upgrade_3",
+   "class": "ssw",
+   "trigger": "upgrade",
+   "text": "Test the weight. Good balance.",
+   "tag": "focused"
+  },
+  {
+   "id": "ssw_perk_1",
+   "class": "ssw",
+   "trigger": "perk",
+   "text": "It'll help. That's enough.",
+   "tag": ""
+  },
+  {
+   "id": "ssw_perk_2",
+   "class": "ssw",
+   "trigger": "perk",
+   "text": "One more edge. I'll use it.",
+   "tag": "steady"
+  },
+  {
+   "id": "ssw_relic_1",
+   "class": "ssw",
+   "trigger": "relic",
+   "text": "The priest's relic. A trophy, and a warning.",
+   "tag": "quietly"
+  },
+  {
+   "id": "ssw_relic_2",
+   "class": "ssw",
+   "trigger": "relic",
+   "text": "I'll carry it. I've carried worse.",
+   "tag": "firm"
+  },
+  {
+   "id": "ssw_armory_1",
+   "class": "ssw",
+   "trigger": "armory",
+   "text": "New gear. I'll learn it before nightfall.",
+   "tag": "satisfied"
+  }
+ ]
+}
