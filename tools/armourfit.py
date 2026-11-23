@@ -83,7 +83,7 @@ def closest_tri(X, P, F, k=6):
     return q[r, m], C[r, m], bc[r, m], dd[r, m], within
 
 
-def fit(armour, sex, out, role='body', tri=None, textures=None, glows=None, clearance=0.6, keep=None):
+def fit(armour, sex, out, role='body', tri=None, textures=None, glows=None, clearance=0.6, keep=None, hug=None):
     """role 'body': a robe/cuirass - Skyrim's skin pieces in it dropped: the player's own body is worn under it by the armour
     record itself (Skyrim's NakedTorso addon beside ours, so whatever body they have shows, none of it shipped here); anything else (boots, gauntlets, a hood) keeps its own feet and hands, moved with it. tri = (its path as the game
     names it, under meshes\\; the file to write) - the body's sliders carried onto it, written from the _1 fit; weight from
@@ -171,6 +171,17 @@ def fit(armour, sex, out, role='body', tri=None, textures=None, glows=None, clea
             dk, jk = tt.query(P, k=8)
             wk = 1 / np.maximum(dk, 1.0); wk /= wk.sum(1, keepdims=True)
             P = P + (vec[jk] * wk[..., None]).sum(1)
+        if hug is not None:
+            # (Noah, 2026-11-23: "the bra looks strange, like there's too much of a gap from the skin" - and its size followed
+            # the weight slider while his body doesn't) a skin-tight piece laid back onto the new body: each vertex near the
+            # skin set at the offset it had on Skyrim's own body (h0), held between hug[0] and hug[1] - so it follows the
+            # body the player has at each weight, never floating off it
+            Qh, trh, bch, dh, _ = closest_tri(P, TV, TF)
+            nh = (TN[TF[trh]] * bch[..., None]).sum(1); nh /= np.linalg.norm(nh, axis=1, keepdims=True) + 1e-9
+            near = dh < 6.0
+            want = np.clip(h0, hug[0], hug[1])
+            P = np.where(near[:, None], Qh + nh * want[:, None], P)
+            print(f'  {name}: hugged {int(near.sum())} of {len(P)} to the skin ({hug[0]}..{hug[1]})', file=sys.stderr)
         print(f'  {name}: {it + 1} rounds, last need {need.max():.2f}', file=sys.stderr)
         f = WORK / f'{pathlib.Path(out).stem}_{len(moved)}.f32'
         f.write_bytes(P.astype('<f4').tobytes())
