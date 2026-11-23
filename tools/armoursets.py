@@ -206,10 +206,53 @@ def tiers(cls, made):
         print(cls, piece, 'tiers', {k: v for k, v in texs.items()})
 
 
+# (Noah, 2026-11-23: "part of my forearm is invisible as a Male with the summoner class") in first person Skyrim draws an addon's
+# first-person model, and ours was the third-person robe - nothing of it showed there. Skyrim's own first-person piece of each
+# body armour (its sleeves, as Skyrim draws them in first person) wears the tier's own texture instead
+FIRST = {'summoner': ('clothes/necromancer/1stpersonnecromancerrobes_f_1.nif', 'clothes/necromancer/1stpersonnecromancerrobes_1.nif'),
+         'destruction': ('clothes/archmage/f/1stpersonarchmagerobesf_1.nif', 'clothes/archmage/m/1stpersonarchmagerobesm_1.nif'),
+         'alchemist': ('dlc02/armor/chitinlight/f/1stpersoncuirass_1.nif', 'dlc02/armor/chitinlight/m/1stpersoncuirass_1.nif'),
+         'spellsword': ('armor/draugr/1stpersondraugrarmorfemale_1.nif', 'armor/draugr/1stpersondraugrarmormale_1.nif')}
+
+
+def first_person(cls):
+    piece = next(p for p, v in SETS[cls].items() if v[0] == 'body')
+    for sx, nif in zip('fm', FIRST[cls]):
+        third, _ = shapes(BASE / cls / f'{piece}_{sx}_1.nif')
+        stems = []
+        for tex in third.values():
+            if not tex or 'actors\\character' in tex.lower(): continue
+            rel = tex.lower().replace('/', '\\')
+            if not rel.startswith('textures\\'): rel = 'textures\\' + rel
+            st = '_'.join(rel[len('textures\\'):-4].replace('\\', '_').split('_')[-3:])
+            if st not in stems: stems.append(st)
+        for t in range(4):
+            for wt in '01':
+                src = A.VAN / 'meshes' / nif.replace('_1.nif', f'_{wt}.nif')
+                fsh, _ = shapes(src)
+                job = [f'armour {src}', f'out {OUT / cls / f"{piece}_{sx}_1p_t{t}_{wt}.nif"}']
+                for name, tex in fsh.items():
+                    if not tex or 'actors\\character' in tex.lower(): continue   # (its bare skin stays the player's own)
+                    words = set(tex.lower().replace('\\', '_').replace('.', '_').split('_'))
+                    st = max(stems, key=lambda x: len(words & set(x.split('_'))))   # (the tier texture most like its own)
+                    job.append(f'tex {name} 0 textures\\CurseOfAlduin\\armour\\{cls}\\{st}_t{t}.dds')
+                    if t == 3:
+                        job.append(f'tex {name} 2 textures\\CurseOfAlduin\\armour\\{cls}\\{st}_g.dds')
+                        job.append(f'glow {name} ' + ' '.join(f'{x:.2f}' for x in PAL[cls][2]) + ' 1.6')
+                jf = A.WORK / f'fp_{cls}_{sx}_{t}_{wt}.job'; jf.write_text('\n'.join(job) + '\n')
+                r = subprocess.run([str(A.TOOLS / 'armourfit'), str(jf)], capture_output=True, text=True)
+                if r.returncode: raise SystemExit(f'{jf.name}: {r.stderr}')
+        print(cls, sx, 'first person:', stems)
+
+
 if __name__ == '__main__':
     classes = [a for a in sys.argv[1:] if a in SETS] or list(SETS)
     if '--tiers-only' not in sys.argv:
         with ProcessPoolExecutor(2) as ex:
             for o in ex.map(one, list(jobs(classes))): pass
+    if '--first-person' in sys.argv:
+        for cls in classes: first_person(cls)
+        raise SystemExit
     made = {}
     for cls in classes: tiers(cls, made)
+    for cls in classes: first_person(cls)

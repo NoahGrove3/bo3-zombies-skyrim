@@ -1683,10 +1683,13 @@ for _c, _ps in CLASS_SET.items():
     for _p in _ps:
         for _t in range(4):
             m = lambda sx: z(f'CurseOfAlduin\\armour\\{_c}\\{_p}_{sx}_t{_t}_1.nif')
+            # (2026-11-23: the forearm unseen in first person) a robe or cuirass is seen in first person through Skyrim's own
+            # first-person piece in the tier's look (tools/armoursets.py first_person); the rest keep their own model
+            fp = (lambda sx: z(f'CurseOfAlduin\\armour\\{_c}\\{_p}_{sx}_1p_t{_t}_1.nif')) if CS_SLOT[_p] == 1 << 2 else m
             recs['ARMA'].append(record('ARMA', fid('ARMA', f'ca_{_c}_{_p}_t{_t}'), [
                 sub('EDID', z(f'UN_CS_{_c}_{_p}_T{_t}AA')), sub('BOD2', struct.pack('<II', CS_SLOT[_p], 0)), sub('RNAM', struct.pack('<I', 0x19)),
                 sub('DNAM', bytes.fromhex('000002020000001700000000')),
-                sub('MOD2', m('m')), sub('MOD3', m('f')), sub('MOD4', m('m')), sub('MOD5', m('f'))] + [sub('MODL', struct.pack('<I', r)) for r in UW_RACES]))
+                sub('MOD2', m('m')), sub('MOD3', m('f')), sub('MOD4', fp('m')), sub('MOD5', fp('f'))] + [sub('MODL', struct.pack('<I', r)) for r in UW_RACES]))
         addons = [fid('ARMA', f'ca_{_c}_{_p}_t0')] + ([NAKED_TORSO] if CS_SLOT[_p] == 1 << 2 else [])
         recs['ARMO'].append(record('ARMO', fid('ARMO', f'ca_{_c}_{_p}'), [
             sub('EDID', z(f'UN_CS_{_c}_{_p}')), sub('OBND', bytes(12)), sub('FULL', z(f'{CS_NAME[_c]} Set {_p.title()}')),

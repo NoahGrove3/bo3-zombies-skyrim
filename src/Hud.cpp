@@ -5612,6 +5612,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			if (opens("<i>") > opens("</i>")) o += "</i>";
 			return o;
 		}
+		bool LoreArtOwn(int a_index) { return a_index == 3 || a_index == 4; }
 		// the lore's paintings (Lore Load Screens' own files): each chapter's, by its place in the book
 		ID3D11ShaderResourceView* LoreArt(int a_index)
 		{
@@ -5622,7 +5623,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			if (a_index < 0 || a_index >= 8 || !g_device) return nullptr;
 			if (!tried[a_index]) {
 				tried[a_index] = true;
-				const std::wstring path = L"Data/textures/loreloadscreens/" + std::wstring(kArt[a_index], kArt[a_index] + std::strlen(kArt[a_index])) + L".dds";
+				// (Noah, 2026-11-23: "change the images for the Echo Altars and Waking an Altar tabs" - "our own Echo Altar") those
+				// two are the mod's own altar, rendered (tools/codexaltar.py): full 16:9 pictures, no bars
+				const std::wstring path = LoreArtOwn(a_index) ? std::wstring(a_index == 3 ? L"Data/Textures/CurseOfAlduin/codex/echoaltars.dds" : L"Data/Textures/CurseOfAlduin/codex/wakingaltar.dds")
+				                                              : L"Data/textures/loreloadscreens/" + std::wstring(kArt[a_index], kArt[a_index] + std::strlen(kArt[a_index])) + L".dds";
 				ID3D11Resource* res = nullptr;
 				if (SUCCEEDED(DirectX::CreateDDSTextureFromFile(g_device, path.c_str(), &res, &tex[a_index])) && res) res->Release();
 				logger::info("hud: the Codex's painting for chapter {} ({}) {}", a_index, kArt[a_index], tex[a_index] ? "loaded" : "not found - is Lore Load Screens installed?");
@@ -5863,7 +5867,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const int   loreIdx = g_cxOpenBook == 0 ? at : -1;
 				if (auto* t = loreIdx >= 0 ? LoreArt(loreIdx) : nullptr) {
 					// (the paintings are 16:9 inside a square frame with black bars above and below)
-					dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(t)), aa, az, { 0.0f, 0.219f }, { 1.0f, 0.781f });
+					const bool own = LoreArtOwn(loreIdx);   // (ours: the whole picture)
+					dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(t)), aa, az, { 0.0f, own ? 0.0f : 0.219f }, { 1.0f, own ? 1.0f : 0.781f });
 				} else {
 					dl->AddRectFilled(aa, az, kCard);
 					TxtC(dl, g_title, 18 * k, (aa.x + az.x) * 0.5f, (aa.y + az.y) * 0.5f - 10 * k, kMuted, Upper(std::string(ch.title)));
@@ -6304,7 +6309,14 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			const auto  tCover = std::chrono::steady_clock::now();
 			const auto  secs = [](std::chrono::steady_clock::duration d) { return std::chrono::duration<float>(d).count(); };
 			const bool newPressed = g_menuNewPressed.time_since_epoch().count() && secs(tCover - g_menuNewPressed) < 60.0f;
-			if (wasOnMain && !onMainMenu && (newPressed || (g_menuNewAt.time_since_epoch().count() && secs(tCover - g_menuNewAt) < 2.0f))) {
+			// (Noah, 2026-11-23: "this time I didn't see the loading screen" - chosen with the pad, NEW is pressed by Skyrim's own
+			// list, and the menu only closes once the new game is loading, seconds later) NEW last chosen within 30 s counts
+			const bool newChosen = g_menuNewAt.time_since_epoch().count() && secs(tCover - g_menuNewAt) < 30.0f;
+			if (wasOnMain && !onMainMenu) {
+				logger::info("hud: the main menu closed (NEW pressed {}, chosen {:.1f}s ago)", newPressed,
+					g_menuNewAt.time_since_epoch().count() ? secs(tCover - g_menuNewAt) : -1.0f);
+			}
+			if (wasOnMain && !onMainMenu && (newPressed || newChosen)) {
 				g_menuNewPressed = {};
 				coverPhase = 1, coverStart = tCover, creatorSince = {};
 				logger::info("hud: a new game - its loading screen up until the creator at Riverwood");

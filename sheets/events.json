@@ -43,8 +43,8 @@
    "sound": "sound:event_bloodmoon",
    "bed": "sound:amb_iron",
    "members": [
-    "plague_wolf",
-    "plague_wolf2",
+    "death_hound",
+    "death_hound2",
     "werewolf",
     "wereskeever"
    ],

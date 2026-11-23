@@ -494,6 +494,26 @@ namespace bo3z
 				if (dataLoaded) {
 					Intro::Install();  // keep MQQuickstart at 3 for the next new game
 				}
+				// (Noah, 2026-11-23: "it looks normal on my monitor but my laptop screen it looks off" - the character creator and the
+				// pause menu) their pictures are made for 16:9; on a 16:10 screen Skyrim shows them whole with bands above and below,
+				// so the creator's panel runs past its bottom bar. On a screen of another shape they are stretched to fill it
+				// (16:10 is 11% taller - hardly seen); on 16:9 nothing changes
+				if (a_event->opening && (a_event->menuName == RE::RaceSexMenu::MENU_NAME || a_event->menuName == RE::TweenMenu::MENU_NAME)) {
+					const std::string name{ a_event->menuName.c_str() };
+					Tasks::AddUI([name] {
+						auto* ui = RE::UI::GetSingleton();
+						auto  menu = ui ? ui->GetMenu(name) : nullptr;
+						if (!menu || !menu->uiMovie) return;
+						auto*       mc = RE::MenuCursor::GetSingleton();
+						const auto  sw = mc ? static_cast<float>(mc->GetRuntimeData().screenWidthX) : 0.0f, sh = mc ? static_cast<float>(mc->GetRuntimeData().screenWidthY) : 0.0f;
+						const float aspect = sw > 1 && sh > 1 ? sw / sh : 16.0f / 9.0f;
+						if (std::abs(aspect - 16.0f / 9.0f) > 0.02f) {
+							menu->uiMovie->SetViewScaleMode(RE::GFxMovieView::ScaleModeType::kExactFit);
+							static int told = 0;
+							if (told++ < 4) logger::info("menus: {} stretched to fill a {:.2f}:1 screen", name, aspect);
+						}
+					});
+				}
 				// (Noah) making your character: your armour comes off while the menu is up (you see the body and face you are
 				// shaping), and goes back on as it closes
 				if (a_event->menuName == RE::RaceSexMenu::MENU_NAME) {

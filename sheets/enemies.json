@@ -303,11 +303,11 @@
    "rig": false
   },
   {
-   "id": "plague_wolf",
-   "label": "Plague Wolf",
-   "plugin": "Skyrim Immersive Creatures Special Edition.esp",
-   "localId": "0x420C91",
-   "editorId": "_00EncPlagueWolf01",
+   "id": "death_hound",
+   "label": "Death Hound",
+   "plugin": "Dawnguard.esm",
+   "localId": "0x00C5EF",
+   "editorId": "DLC1encDeathHound",
    "recordType": "NPC_",
    "minRound": 1,
    "weight": 2,
@@ -323,11 +323,11 @@
    "rig": false
   },
   {
-   "id": "plague_wolf2",
-   "label": "Feral Plague Wolf",
-   "plugin": "Skyrim Immersive Creatures Special Edition.esp",
-   "localId": "0x420C94",
-   "editorId": "_00EncPlagueWolf02",
+   "id": "death_hound2",
+   "label": "Feral Death Hound",
+   "plugin": "Dawnguard.esm",
+   "localId": "0x00C5EF",
+   "editorId": "DLC1encDeathHound",
    "recordType": "NPC_",
    "minRound": 3,
    "weight": 1,
@@ -338,8 +338,8 @@
    "elite": false,
    "verify": [],
    "kind": "zombie",
-   "healthMult": 0.8,
-   "speedMult": 1.0,
+   "healthMult": 0.95,
+   "speedMult": 1.08,
    "rig": false
   },
   {

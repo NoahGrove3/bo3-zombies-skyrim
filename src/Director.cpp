@@ -5111,7 +5111,10 @@ namespace bo3z
 				if (party) {
 					break;
 				}
-				if (auto a = h.get(); a && a.get() != a_player && !g_ours.contains(a->GetFormID()) && IsOurBase(a.get()) && !a->IsDisabled()) {
+				// (Noah, 2026-11-23: "the wolf summon spawns a wolf then it disappears after 5 seconds") the Summoner's summons are
+				// ours by their base record too: anything conjured, commanded or following you is never a stray
+				if (auto a = h.get(); a && a.get() != a_player && !g_ours.contains(a->GetFormID()) && IsOurBase(a.get()) && !a->IsDisabled() &&
+					!a->IsCommandedActor() && !a->IsPlayerTeammate()) {
 					Vanish(a.get());
 					++n;
 				}
