@@ -4089,6 +4089,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		}
 
 		std::chrono::steady_clock::time_point g_menuNewAt{};   // when NEW was last the main list's choice
+		std::chrono::steady_clock::time_point g_menuNewPressed{};   // when NEW was pressed (the menu may take a while to close after)
 		std::vector<MenuEntry> ReadMainList(RE::GFxMovieView** a_movie = nullptr)
 		{
 			std::vector<MenuEntry> out;
@@ -4173,6 +4174,18 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				list.SetMember("selectedIndex", RE::GFxValue(static_cast<double>(a_index)));
 			}
 			if (a_press) {
+				// (Noah, 2026-11-23: the new game's loading screen never came up - NEW was clicked, and the menu closed before
+				// the list was read again with it chosen) the entry pressed is looked at here too
+				RE::GFxValue entries, e, t;
+				list.GetMember("entryList", &entries);
+				if (entries.IsArray() && a_index >= 0 && static_cast<std::uint32_t>(a_index) < entries.GetArraySize() && entries.GetElement(a_index, &e) &&
+					e.GetMember("text", &t) && t.IsString()) {
+					std::string lo = t.GetString();
+					if (!lo.empty() && lo[0] == '$') lo = lo.substr(1);
+					std::transform(lo.begin(), lo.end(), lo.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+					if (lo == "new" || lo.rfind("new ", 0) == 0) g_menuNewAt = g_menuNewPressed = std::chrono::steady_clock::now();
+					logger::info("menu: '{}' pressed", t.GetString());
+				}
 				RE::GFxValue arg(0.0);
 				list.Invoke("onItemPress", nullptr, &arg, 1);
 			}
@@ -6290,7 +6303,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			static std::chrono::steady_clock::time_point coverStart{}, coverFade{}, creatorSince{};
 			const auto  tCover = std::chrono::steady_clock::now();
 			const auto  secs = [](std::chrono::steady_clock::duration d) { return std::chrono::duration<float>(d).count(); };
-			if (wasOnMain && !onMainMenu && g_menuNewAt.time_since_epoch().count() && secs(tCover - g_menuNewAt) < 2.0f) {
+			const bool newPressed = g_menuNewPressed.time_since_epoch().count() && secs(tCover - g_menuNewPressed) < 60.0f;
+			if (wasOnMain && !onMainMenu && (newPressed || (g_menuNewAt.time_since_epoch().count() && secs(tCover - g_menuNewAt) < 2.0f))) {
+				g_menuNewPressed = {};
 				coverPhase = 1, coverStart = tCover, creatorSince = {};
 				logger::info("hud: a new game - its loading screen up until the creator at Riverwood");
 			}
