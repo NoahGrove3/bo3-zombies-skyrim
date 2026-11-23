@@ -4,7 +4,7 @@ lifted out of the body, both weights, and refitted to 3BA by tools/armourfit.py 
 weights kept, the body's sliders carried onto it). Its texture is Skyrim's, read from the game; nothing of 3BA's is in it.
 
     python3 tools/vanillaunderwear.py  ->  assets/fx/Meshes/CurseOfAlduin/underwear/female_underwear_<0|1>.nif + female_underwear.tri"""
-import pathlib, sys
+import pathlib, subprocess, sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import armourfit as A
 
@@ -15,3 +15,8 @@ TRI = ('CurseOfAlduin\\underwear\\female_underwear.tri', OUT / 'female_underwear
 if __name__ == '__main__':
     for wt in '10':   # (_1 first: the sliders are written from it)
         A.fit(SRC / f'femalebody_{wt}.nif', 'female', OUT / f'female_underwear_{wt}.nif', role='piece', tri=TRI, keep={'FemaleUnderwear'}, clearance=0.25)
+        # (Noah, 2026-11-23: "the female body still doesn't have underwear on in the race menu") lifted off Skyrim's body, its
+        # skin still named the body's part (32) while our underwear is worn in slot 52 - and Skyrim never draws an addon's mesh
+        # whose part isn't its own slot: its part made 52 (tools/modelconv/setpart.cpp)
+        out = OUT / f'female_underwear_{wt}.nif'
+        subprocess.run([str(A.TOOLS / 'setpart'), str(out), str(out), '52'], check=True)
