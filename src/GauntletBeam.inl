@@ -22,7 +22,7 @@
 	int GbFirst() { for (int e = 0; e < 6; ++e) if (g_gb.fill[e] > 0.001f) return e; return -1; }
 	void GauntletPress(bool a_left)
 	{
-		if (g_gb.locked) { Hud::QuestBanner("The Mutagen Staff's vials are refilling", 1.5f); return; }
+		if (g_gb.locked) { Hud::Hint("The Mutagen Staff's vials are refilling", 1.5f); return; }
 		g_gb.held = true, g_gb.left = a_left;
 	}
 	void GbStop()
@@ -103,7 +103,7 @@
 			if (e < 0) {
 				GbStop();
 				g_gb.locked = true;
-				Hud::QuestBanner("The Mutagen Staff's vials are spent - refilling", 2.0f);
+				Hud::Hint("The Mutagen Staff's vials are spent - refilling", 2.0f);
 				break;
 			}
 			g_gb.fill[e] = std::max(0.0f, g_gb.fill[e] - a_delta / kGbVial);
@@ -140,7 +140,7 @@
 			}
 			if (g_gb.locked && std::all_of(std::begin(g_gb.fill), std::end(g_gb.fill), [](float f) { return f >= 1.0f; })) {
 				g_gb.locked = false;
-				Hud::QuestBanner("The Mutagen Staff is ready", 1.5f);
+				Hud::Hint("The Mutagen Staff is ready", 1.5f);
 			}
 		}
 		Gun::GauntletState st;

@@ -427,18 +427,19 @@ recs['SHOU'].append(record('SHOU', fid('SHOU', 'updraft'), [sub('EDID', z('UN_Sh
     sub('DESC', z('A whirlwind lifts you high into the air. Open your glider and your dragon carries you.'))] +
     [sub('SNAM', struct.pack('<IIf', fid('WOOP', f'updraft_{n}'), fid('SPEL', f'updraft_{n}'), 5.0)) for n in range(3)]))
 
-# ---- (Noah: "Make it a shout ... once per wave ... 20 seconds ... Dance Of Death") the dead within 20 m dance; every
-# word count does the same (Gun::DanceOfDeath); learned when Solitude's altar wakes (the Bards' city)
-DANCE_WORDS = [('DUN', 'Grace'), ('GRAH', 'Battle'), ('MAAR', 'Terror')]
+# ---- (Noah, 2026-11-23: Dance of Death out - "Tiny Terrors" in its place, on the same records) the dead within 60 m
+# shrink to knee height for 20 s and hit like toddlers; every word count does the same (Director::TinyTerrors); once a
+# wave; learned when Solitude's altar wakes (the Bards' city)
+DANCE_WORDS = [('MAL', 'Small'), ('DIIL', 'Dead'), ('KROH', 'Weak')]
 for n, (w, tr) in enumerate(DANCE_WORDS):
     recs['WOOP'].append(record('WOOP', fid('WOOP', f'dance_{n}'), [sub('EDID', z(f'UN_Word_dance_{n}')), sub('FULL', z(w)), sub('TNAM', z(tr))]))
     sp = struct.pack('<IIIfIIffI', 0, 0x1, 11, 0.0, 1, 0, 0.0, 0.0, 0)
     recs['SPEL'].append(record('SPEL', fid('SPEL', f'dance_{n}'), [
-        sub('EDID', z(f'UN_ShoutSpell_dance_{n}')), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z('Dance Of Death')),
+        sub('EDID', z(f'UN_ShoutSpell_dance_{n}')), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z('Tiny Terrors')),
         sub('ETYP', struct.pack('<I', 0x025BEE)), sub('DESC', z('')), sub('SPIT', sp),
         sub('EFID', struct.pack('<I', fid('MGEF', 'shoutcast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
-recs['SHOU'].append(record('SHOU', fid('SHOU', 'dance'), [sub('EDID', z('UN_Shout_dance')), sub('FULL', z('Dance Of Death')),
-    sub('DESC', z("The dead within 20 paces dance for 20 s: they can't move or strike, and take 50% more damage. Once a wave."))] +
+recs['SHOU'].append(record('SHOU', fid('SHOU', 'dance'), [sub('EDID', z('UN_Shout_dance')), sub('FULL', z('Tiny Terrors')),
+    sub('DESC', z("The dead within 60 m shrink to knee height for 20 s and hit like toddlers. Once a wave."))] +
     [sub('SNAM', struct.pack('<IIf', fid('WOOP', f'dance_{n}'), fid('SPEL', f'dance_{n}'), 5.0)) for n in range(3)]))
 
 SCRAFT = {r['id']: r for r in S['spellcraft']['rows']}
@@ -1082,7 +1083,7 @@ LOADING_TIPS = [
     "Necromancers hang back and raise more dead. Kill them first.",
     "Hold right mouse to gather a spell's full power in both hands. Let go too soon and the power gutters out.",
     "When the runic circle wakes round the altar, stand inside it until its count runs out. The dead come harder while you do.",
-    "Solitude's bards remember a song the dead cannot resist. Free their city and the Dance of Death is yours.",
+    "Solitude's bards know a shout that makes the dead very small. Free their city and Tiny Terrors is yours.",
     "Wake a city's Echo Altar and its dead sleep again: no curse-dead rise inside a freed city, by night or by day.",
     "Three dragons carry Alduin's words. Slay them and only his echo is left, on the summit of the Throat of the World.",
     "The altars take no gold - only the Cursed Essence the dead leave behind.",
@@ -1331,14 +1332,14 @@ def lore_text():
            "<p>Even if Alduin himself falls in Sovngarde, the Curse does not die with him. A shout, once spoken, keeps its own voice: his three Words still ring in the earth, "
            "and his <b>Echo</b> still circles the Throat of the World. Only the altars and the slaying of the Words can silence them.</p>",
            "<p><b>Riverwood's</b> altar, nearest Helgen, wakes first. <b>Whiterun's</b> answers your first dragon soul and gives you a dragon to ride - and its Thu'um, "
-           "<i>Dragon's Updraft</i>. <b>Solitude's</b> bards give you the <i>Dance of Death</i>.</p>",
+           "<i>Dragon's Updraft</i>. <b>Solitude's</b> bards give you <i>Tiny Terrors</i>.</p>",
            "<p>Free six cities and the four paths' <b>secrets</b> wake, one at a time. Win one and the Greybeards call you to <b>High Hrothgar</b>: its <b>wonder</b> floats waiting "
            "in the great hall, and any path may take it up.</p>",
            "<p>With all four wonders won - alone or with friends - Alduin's three Words wake as <b>dragons</b>: <b>SLEN</b> in the Reach, <b>TIID</b> at Labyrinthian and "
            "<b>VO</b> on Mount Anthor. Slay all three, wake every altar, and only his <b>Echo</b> is left, on the summit of the Throat of the World. End it, and the Curse is broken.</p>",
            "[pagebreak]", "<p align='center'><font size='24'>VI. The Voices of the Holds</font></p>",
            "<p><b>Whiterun</b>: <i>Dragon's Updraft</i>. A whirlwind lifts you high - and a dragon to carry you.</p>",
-           "<p><b>Solitude</b>: <i>Dance of Death</i>. The dead near you dance for twenty seconds, unable to move or strike, and they take 50% more damage. Once a wave.</p>"]
+           "<p><b>Solitude</b>: <i>Tiny Terrors</i>. The dead near you shrink to knee height for twenty seconds and hit like toddlers. Once a wave.</p>"]
     out += [
             "[pagebreak]", f"<p>{S['curse']['freedAll']}</p>", "<p align='right'><i>- written in the silence of High Hrothgar</i></p>", "</font>"]
     return '\n'.join(out)
@@ -1374,7 +1375,7 @@ def guide_text():
            p("Tap the attack to throw a bolt. Hold it, and both hands gather the spell's full power: the longer you hold, the harder it strikes. "
              "Let go too soon and the power gutters out. Magicka comes back fast."),
            "[pagebreak]", h("Shouts"),
-           p("Two cities teach a Thu'um of their own. Free <b>Whiterun</b> and <i>Dragon's Updraft</i> is yours; free <b>Solitude</b> and its bards give you the <i>Dance of Death</i>. Equip them like any shout. A shout's cooldown shows on the rim of your stat plate."),
+           p("Two cities teach a Thu'um of their own. Free <b>Whiterun</b> and <i>Dragon's Updraft</i> is yours; free <b>Solitude</b> and its bards give you <i>Tiny Terrors</i>. Equip them like any shout. A shout's cooldown shows on the rim of your stat plate."),
            "[pagebreak]", h("The Dragon"),
            p("Wake Whiterun's altar and a dragon will answer you. Jump and press Activate in mid-air: it swoops down and you take hold of its harness."),
            p("Steer with the stick or WASD. Forward dives, back climbs. Attack to make it breathe fire on the dead below - only the dead, never your friends. "

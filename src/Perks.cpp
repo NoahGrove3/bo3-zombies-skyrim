@@ -299,7 +299,7 @@ namespace bo3z
 			}
 			// the first nights are gentler (a new character learns the dead): a quarter less on night 1, full by night 9
 			const float early = std::clamp(0.75f + 0.03125f * static_cast<float>(Save::Get(gen::kAV_round)), 0.75f, 1.0f);
-			DamagePlayer(baseHealth * (boss ? gen::boss::meleeShare : elite ? gen::elite::hitShare : gen::kHitDamageFraction * kindMult * early) * Settings::UndeadDamageMult() * guard);
+			DamagePlayer(baseHealth * (boss ? gen::boss::meleeShare : elite ? gen::elite::hitShare : gen::kHitDamageFraction * kindMult * early) * Settings::UndeadDamageMult() * guard * Director::TinyHitMult(a_zombie));   // (Tiny Terrors: a toddler's blow)
 			if (elite) {  // Life Drain
 				auto* zav = a_zombie->AsActorValueOwner();
 				zav->RestoreActorValue(RE::ActorValue::kHealth, zav->GetPermanentActorValue(RE::ActorValue::kHealth) * gen::elite::drainShare);

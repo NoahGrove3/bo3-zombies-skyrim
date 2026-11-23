@@ -4321,13 +4321,15 @@ namespace bo3z
 			auto c = g_champ.handle.get();
 			return c && c.get() == a_actor;
 		}
-		// ---- (Noah: "Make it a shout and can be used once per wave. Make it last 20 seconds and make the name of it Dance Of
-		// Death. It should only work on enemies of The Curse Of Alduin") every one of the night's dead within 20 m (1400
-		// units) dances for 20 s - a dance of the four at random each - unable to move or strike, taking half again as much
-		// from every blow (Gun, Events); the song plays (Noah's own cut, 0:37-0:57, installed beside the mod). Once a wave.
-		// Learned when Solitude's altar wakes - the Bards' city (TickDanceShout)
-		int g_danceWave = -1;
-		bool DanceOfDeath(RE::FormID a_spell)
+		// ---- (Noah, 2026-11-23: "remove the dance of death shout ... something funny that actually works" - "Tiny Terrors") the
+		// shout Solitude's bards teach: every one of the night's dead within 60 m (4,200 units) shrinks to knee height for 20 s
+		// and hits like a toddler (a sixth of its blow: Perks::OnZombieHit). Once a wave; then each grows back to its own size.
+		// (It keeps the Dance Of Death's records - the shout, its words and spells - renamed: gen_esp.py)
+		int g_tinyWave = -1;
+		struct Tiny { RE::ActorHandle h; float t; float scale; };
+		std::vector<Tiny> g_tiny;
+		constexpr float   kTinyScale = 0.35f, kTinySecs = 20.0f, kTinyHit = 1.0f / 6.0f;
+		bool TinyTerrors(RE::FormID a_spell)
 		{
 			auto* dh = RE::TESDataHandler::GetSingleton();
 			bool ours = false;
@@ -4338,34 +4340,44 @@ namespace bo3z
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			if (!p) return true;
 			if (g_phase != Phase::Fighting) {
-				Hud::Banner("The dead only dance at night", 3.0f);
+				logger::info("tiny terrors: by day - nothing to shrink");
 				return true;
 			}
 			const int key = g_current * 1000 + g_wave;
-			if (g_danceWave == key) {
-				Hud::Banner("The dead won't dance again until the next wave", 3.0f);
+			if (g_tinyWave == key) {
+				logger::info("tiny terrors: already shouted this wave");
 				return true;
 			}
-			g_danceWave = key;
+			g_tinyWave = key;
 			int n = 0;
 			for (auto& s : g_alive) {
 				auto a = s.handle.get();
-				// (Noah: "The shout effect range should be within 60 meters") 60 m, 4,200 units (20 m before)
 				if (!a || a->IsDead() || a->IsDisabled() || a->GetPosition().GetDistance(p->GetPosition()) > 4200.0f) continue;
-				if (Undead::Dance(a.get(), 20.0f)) {
-					++n;
-					Web(a->GetPosition(), 60.0f, 20.0f, 100.0f, false);   // (held where it dances)
-				}
+				if (IsBoss(a.get())) continue;   // (the Dragon Priests and the night's bosses stand their full height)
+				const auto it = std::find_if(g_tiny.begin(), g_tiny.end(), [&](const Tiny& t) { return t.h.get().get() == a.get(); });
+				if (it != g_tiny.end()) { it->t = kTinySecs; ++n; continue; }
+				const float was = a->GetScale();
+				g_tiny.push_back({ a->GetHandle(), kTinySecs, was > 0.05f ? was : 1.0f });
+				a->SetScale(g_tiny.back().scale * kTinyScale);
+				++n;
 			}
-			if (auto* snd = dh->LookupForm<RE::BGSSoundDescriptorForm>(gen::kDanceSong, gen::kPlugin)) {
-				static RE::BSSoundHandle h;
-				h.Stop();
-				// (Noah: "the music is too loud") at a third of its loudness
-				if (auto* am = RE::BSAudioManager::GetSingleton(); am && am->GetSoundHandle(h, static_cast<RE::BSISoundDescriptor*>(snd))) h.SetVolume(0.35f), h.Play();
-			}
-			Hud::Banner(n > 0 ? fmt::format("DANCE OF DEATH - {} of the dead dance", n) : std::string("DANCE OF DEATH - no one near enough to dance"), 3.5f);
-			logger::info("dance of death: {} dance (night {}, wave {})", n, g_current, g_wave);
+			logger::info("tiny terrors: {} of the dead shrunk (night {}, wave {})", n, g_current, g_wave);
 			return true;
+		}
+		void TickTiny(float a_delta)
+		{
+			for (auto& t : g_tiny) {
+				if ((t.t -= a_delta) > 0) continue;
+				if (auto a = t.h.get(); a && !a->IsDisabled()) a->SetScale(t.scale);   // (grown back: dead or alive)
+			}
+			std::erase_if(g_tiny, [](const Tiny& t) { return t.t <= 0; });
+		}
+		float TinyHitMult(RE::Actor* a_actor)
+		{
+			for (const auto& t : g_tiny) {
+				if (t.t > 0 && t.h.get().get() == a_actor) return kTinyHit;
+			}
+			return 1.0f;
 		}
 		// (Noah: "I also noticed the static sound in white run from the water please fix this") Whiterun's small-rapids loops
 		// (Skyrim.esm AMBWaterfallRapidsSmall, by its streams) hiss like static - silenced while you're there; found by hushing
@@ -4426,13 +4438,14 @@ namespace bo3z
 		}
 		void TickDanceShout(float a_delta)
 		{
+			TickTiny(a_delta);
 			static float t = 0;
 			if ((t += a_delta) < 5.0f) return;
 			t = 0;
 			if (Curse::Freed(2)) LearnDance(true);  // (2: Solitude)
 		}
-		// (Noah: "make sure the test kit has all the echo alter rewards like the shout dance of death") taught by Solitude's
-		// freeing, or by the test kit (quietly)
+		// (Noah: "make sure the test kit has all the echo alter rewards") Tiny Terrors, taught by Solitude's freeing, or by the
+		// test kit (quietly)
 		void LearnDance(bool a_announce)
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
@@ -4446,13 +4459,11 @@ namespace bo3z
 			}
 			p->AddShout(sh);
 			if (!a_announce) {
-				logger::info("testkit: Dance of Death");
+				logger::info("testkit: Tiny Terrors");
 				return;
 			}
-			Forms::Play(gen::Sound::shout_learned);
-			Hud::Lore("DANCE OF DEATH", "The Bards of Solitude remember an old song the dead cannot resist. Shout it, and the Curse's dead within twenty paces dance for twenty seconds - unable to move or strike, and they take 50% more damage. Once a wave.", 12.0f);
-			logger::info("dance of death: learned");
-			Hud::ShoutLearned("Dance of Death", "the dead near you dance, helpless, for twenty seconds");
+			logger::info("tiny terrors: learned");
+			Hud::ShoutLearned("Tiny Terrors", "MAL DIIL KROH");
 		}
 		void  QueueZombieHit(RE::Actor* a_zombie, float a_seconds) { if (a_zombie && g_queuedHits.size() < 64) g_queuedHits.emplace_back(a_zombie->GetHandle(), a_seconds); }
 		void  Noise(float a_amount) { if (g_phase == Phase::Fighting) g_noise = std::min(kNoiseFull * 1.5f, g_noise + a_amount); }

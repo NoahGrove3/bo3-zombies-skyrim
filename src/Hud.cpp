@@ -6728,8 +6728,89 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			std::scoped_lock l(g_lock);
 			if (g_state.motes.size() < 24) g_state.motes.push_back({ x, y, 0.0f });
 		}
+		// (Noah, 2026-11-23: "include subtitles for the echo alter and character (player) voices ... use Edge's UI for subtitles so
+		// it's all consistent" - "subtitle the altar with Edge UI's subtitle design, not a pop-up card") the line goes into the HUD's
+		// own subtitle line (Edge UI draws it), at the size the Mod Configuration menu sets, and is taken off again when it has
+		// been said - unless someone else's words have taken the line meanwhile
+		namespace
+		{
+			std::atomic<std::uint32_t> g_subGen{ 0 };
+			std::string                g_subShown;
+			struct SubBase { bool read = false; double x = 0, y = 0, w = 0, h = 0, sx = 100, sy = 100; bool vis = true; };
+			SubBase g_subBase;
+			constexpr const char* kSubHolder = "_root.HUDMovieBaseInstance.SubtitleTextHolder";
+			RE::GFxMovieView* HudMovie()
+			{
+				auto* ui = RE::UI::GetSingleton();
+				auto  hud = ui ? ui->GetMenu(RE::HUDMenu::MENU_NAME) : nullptr;
+				return hud && hud->uiMovie ? hud->uiMovie.get() : nullptr;
+			}
+			double SubNum(RE::GFxMovieView* a_mv, const std::string& a_path, double a_def)
+			{
+				RE::GFxValue v;
+				return a_mv->GetVariable(&v, a_path.c_str()) && v.IsNumber() ? v.GetNumber() : a_def;
+			}
+		}
+		void Subtitle(std::string a_text, float a_seconds)
+		{
+			if (a_text.empty() || !Settings::Subtitles()) return;
+			const auto  my = ++g_subGen;
+			const float size = Settings::SubtitleSize();
+			logger::info("subtitle: {}", a_text);
+			Tasks::AddUI([t = std::move(a_text), size] {
+				auto* mv = HudMovie();
+				if (!mv) return;
+				const std::string h = kSubHolder;
+				if (!g_subBase.read) {   // (Edge UI's own place and size for the line, read once: ours scales about its centre)
+					RE::GFxValue probe;
+					if (!mv->GetVariable(&probe, kSubHolder) || !probe.IsDisplayObject()) {
+						logger::warn("subtitle: the HUD has no subtitle line ({}) - not shown", h);
+						return;
+					}
+					g_subBase.read = true;
+					g_subBase.x = SubNum(mv, h + "._x", 0), g_subBase.y = SubNum(mv, h + "._y", 0);
+					g_subBase.w = SubNum(mv, h + "._width", 0), g_subBase.h = SubNum(mv, h + "._height", 0);
+					g_subBase.sx = SubNum(mv, h + "._xscale", 100), g_subBase.sy = SubNum(mv, h + "._yscale", 100);
+					RE::GFxValue vis;
+					g_subBase.vis = !(mv->GetVariable(&vis, (h + "._visible").c_str()) && vis.IsBool()) || vis.GetBool();
+				}
+				const double k = size;
+				mv->SetVariable((h + "._xscale").c_str(), RE::GFxValue(g_subBase.sx * k));
+				mv->SetVariable((h + "._yscale").c_str(), RE::GFxValue(g_subBase.sy * k));
+				mv->SetVariable((h + "._x").c_str(), RE::GFxValue(g_subBase.x + g_subBase.w * (1.0 - k) * 0.5));
+				mv->SetVariable((h + "._y").c_str(), RE::GFxValue(g_subBase.y + g_subBase.h * (1.0 - k)));
+				mv->SetVariable((h + "._visible").c_str(), RE::GFxValue(true));   // (ours show even with Skyrim's own subtitles off)
+				RE::GFxValue arg(t.c_str());
+				mv->Invoke("_root.HUDMovieBaseInstance.ShowSubtitle", nullptr, &arg, 1);
+				g_subShown = t;
+			});
+			Tasks::Later(std::max(1.5f, a_seconds), [my] {
+				if (g_subGen.load() != my) return;   // (a newer line of ours is up)
+				Tasks::AddUI([] {
+					auto* mv = HudMovie();
+					if (!mv || g_subShown.empty()) return;
+					RE::GFxValue now;
+					const bool read = mv->GetVariable(&now, (std::string(kSubHolder) + ".SubtitleText.text").c_str()) && now.IsString();
+					if (!read || std::string(now.GetString()).find(g_subShown.substr(0, 12)) != std::string::npos) {
+						mv->Invoke("_root.HUDMovieBaseInstance.HideSubtitle", nullptr, nullptr, 0);
+					}
+					// Edge UI's own size and place back for everyone else's words
+					const std::string h = kSubHolder;
+					mv->SetVariable((h + "._xscale").c_str(), RE::GFxValue(g_subBase.sx));
+					mv->SetVariable((h + "._yscale").c_str(), RE::GFxValue(g_subBase.sy));
+					mv->SetVariable((h + "._x").c_str(), RE::GFxValue(g_subBase.x));
+					mv->SetVariable((h + "._y").c_str(), RE::GFxValue(g_subBase.y));
+					mv->SetVariable((h + "._visible").c_str(), RE::GFxValue(g_subBase.vis));
+					g_subShown.clear();
+				});
+			});
+		}
 		void Say(std::string a_who, std::string a_line, float a_seconds)
 		{
+			// (Noah, 2026-11-23: "remove 5" - the townsfolk's lines) never shown any more
+			logger::info("townsfolk (not shown): {}: {}", a_who, a_line);
+			(void)a_seconds;
+			return;
 			std::scoped_lock l(g_lock);
 			g_state.sayWho = std::move(a_who), g_state.sayLine = std::move(a_line), g_state.sayTime = a_seconds;
 		}
@@ -6753,15 +6834,37 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		// (Noah: "I also want the quest & new shout unlocked UI to come back") the quests' own lines - a trial taken up, its
 		// progress, a trial or a hidden quest done, a city freed, a relic reclaimed - cross the screen again, as the shout learned
 		// does; every other banner stays in the log
+		// (Noah, 2026-11-23: "remove all of these pop ups ... keep the hints for Carian Wand and Mutagen Staff") the quests'
+		// lines go to the log only now; the two weapons' hints (Hint) are the only lines still shown across the screen
 		void QuestBanner(std::string a_text, float a_seconds)
 		{
-			logger::info("quest: {}", a_text);
-			ShowBanner(std::move(a_text), a_seconds);
+			(void)a_seconds;
+			logger::info("quest (not shown): {}", a_text);
 		}
+		void Hint(std::string a_text, float a_seconds) { ShowBanner(std::move(a_text), a_seconds); }
+		// (Noah, 2026-11-23: "use the Edge's UI for learning the new shouts from our mod") Skyrim's own word-of-power notice -
+		// the dragon words drawn letter by letter over the shout's name, as Edge UI styles it - through the HUD's own
+		// ShowNotification (its kind 3, SHOUT_UPDATE); our banner only if the HUD can't be reached
 		void ShoutLearned(std::string_view a_name, std::string_view a_words)
 		{
 			logger::info("hud: shout learned - {} ({})", a_name, a_words);
-			ShowBanner("SHOUT LEARNED: " + std::string(a_name) + (a_words.empty() ? std::string() : "  -  " + std::string(a_words)), 6.0f);
+			Forms::Play(gen::Sound::shout_learned);
+			Tasks::AddUI([name = std::string(a_name), words = std::string(a_words)] {
+				auto* ui = RE::UI::GetSingleton();
+				auto  hud = ui ? ui->GetMenu(RE::HUDMenu::MENU_NAME) : nullptr;
+				bool  ok = false;
+				if (hud && hud->uiMovie) {
+					std::string up = name;
+					std::transform(up.begin(), up.end(), up.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
+					RE::GFxValue args[9] = { RE::GFxValue(up.c_str()), RE::GFxValue(""), RE::GFxValue(""), RE::GFxValue(0.0), RE::GFxValue(3.0),
+						RE::GFxValue(0.0), RE::GFxValue(0.0), RE::GFxValue(0.0), RE::GFxValue(words.c_str()) };
+					ok = hud->uiMovie->Invoke("_root.HUDMovieBaseInstance.ShowNotification", nullptr, args, 9);
+				}
+				if (!ok) {
+					logger::warn("hud: the HUD's shout notice could not be shown - our own line instead");
+					ShowBanner("SHOUT LEARNED: " + name + (words.empty() ? std::string() : "  -  " + words), 6.0f);
+				}
+			});
 		}
 		void ShowBanner(std::string a_text, float a_seconds)
 		{
@@ -7033,6 +7136,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		}
 		void Lore(std::string a_title, std::string a_text, float a_seconds)
 		{
+			// (Noah, 2026-11-23: "switch off the lore cards too") never shown: the card's words go to the log
+			logger::info("lore card (not shown): {} - {}", a_title, a_text);
+			(void)a_seconds;
+			return;
 			if (LoreOff()) return;
 			std::scoped_lock l(g_lock);
 			a_seconds = std::clamp(a_seconds, 4.0f, 14.0f);  // (long enough to read, never in the way for long)

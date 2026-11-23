@@ -479,6 +479,7 @@ namespace bo3z::Eggs
 				Audio::Voice(l.snd);   // (one voice at a time: a card clicked cuts off the line before it)
 				g_sayCard = l.card;
 				logger::info("eggs: the altar says \"{}\"", l.text);   // (Noah: "remove the subtitle cards when the altar is speaking so it's more cryptic")
+				Hud::Subtitle(l.text, l.secs + 0.4f);   // (Noah, 2026-11-23: its words in Edge UI's subtitle line - never a card)
 				g_sayT = l.secs + 0.5f;
 			}
 			// (the timing) walking within about 12 m of an altar, out of a fight, once a visit, and one whisper every 3 minutes

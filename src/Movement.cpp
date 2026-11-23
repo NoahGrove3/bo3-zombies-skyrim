@@ -1209,7 +1209,7 @@ namespace bo3z
 					em->EquipShout(a_player, sh);
 				}
 			}
-			Hud::ShoutLearned("Dragon's Updraft", "shout it and a whirlwind lifts you - open your glider at the top");
+			Hud::ShoutLearned("Dragon's Updraft", "VEN GAAR NOS");
 			logger::info("glider: Dragon's Updraft learned ({:08X})", sh->GetFormID());
 		}
 		// (Noah: "the test kit to unlock the glider and shout for me so I can get clips") the glider unlocked on this computer

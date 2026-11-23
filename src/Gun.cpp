@@ -3120,7 +3120,7 @@ namespace bo3z
 				RE::ActorEquipManager::GetSingleton()->EquipObject(p, bane);
 			}
 			Movement::TestKit();  // (Dragon's Updraft, the third bond, the glider)
-			Director::LearnDance(false);  // (Noah: "all the echo alter rewards like the shout dance of death")
+			Director::LearnDance(false);  // (Noah: "all the echo alter rewards" - Tiny Terrors)
 			Kit::DevTestKit();    // (the four crystal swords and every flask at Tier III, the four Black Mage robes)
 			Classes::KitWonders();   // (the four wonders)
 			Tablet::DevKit();        // (Noah: the Tablet of Mysteries' donated weapons)
@@ -3146,7 +3146,7 @@ namespace bo3z
 			if (auto* av = p->AsActorValueOwner(); av && av->GetActorValue(RE::ActorValue::kCarryWeight) < 10000.0f) {
 				av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kCarryWeight, 10000.0f - av->GetActorValue(RE::ActorValue::kCarryWeight));
 			}
-			Hud::Banner(fmt::format("TEST KIT: the Echo Altar's {} spells, every class's spells, weapons, flasks and robes (Tier III), the four wonders, Dragon's Updraft and the Dance of Death, the ten Dragon Priest weapons, the Tablet's weapons, Alduin's Bane, the glider, 150,000 Cursed Essence", spells), 8.0f);
+			Hud::Banner(fmt::format("TEST KIT: the Echo Altar's {} spells, every class's spells, weapons, flasks and robes (Tier III), the four wonders, Dragon's Updraft and Tiny Terrors, the ten Dragon Priest weapons, the Tablet's weapons, Alduin's Bane, the glider, 150,000 Cursed Essence", spells), 8.0f);
 			std::string list;
 			for (auto& [el, c] : byEl) list += fmt::format("{} {}, ", el, c);
 			logger::info("testkit: {} altar spells ({}) - {} others taken away; essence {}", spells, list, removed, Points::Get());

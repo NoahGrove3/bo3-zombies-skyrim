@@ -1709,6 +1709,12 @@ namespace bo3z::Classes
 			last = i;
 			const auto& l = gen::kClassVo[i];
 			Audio::Ui(female ? l.female : l.male, 1.0f);
+			{   // (Noah, 2026-11-23) its words in Edge UI's subtitle line, for as long as it is said (the wav: mono 44.1 kHz 16-bit)
+				std::error_code ec;
+				const auto bytes = std::filesystem::file_size("Data/Sound/fx/CurseOfAlduin/classvo/" + std::string(l.id) + (female ? "_female" : "_male") + ".wav", ec);
+				const float secs = ec ? 4.0f : static_cast<float>(bytes) / 88200.0f;
+				Hud::Subtitle(std::string(l.text), secs + 0.6f);
+			}
 			g_vo.since = 0, g_vo.idle = 90.0f + static_cast<float>(std::rand() % 60);
 			logger::info("voice: {} ({})", l.id, female ? "female" : "male");
 		}
@@ -2737,7 +2743,7 @@ namespace bo3z::Classes
 		if (!w->formEnchanting || w->amountofEnchantment == 0) WandReady();
 		if (em && p->GetEquippedObject(true) == w) {
 			em->UnequipObject(p, w, nullptr, 1, RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F43), false, true, false, true);
-			Hud::QuestBanner("The Carian Wand is held in the right hand only", 2.5f);
+			Hud::Hint("The Carian Wand is held in the right hand only", 2.5f);
 		}
 		if (const int n = p->GetItemCount(w); n > 1) {
 			p->RemoveItem(w, n - 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
@@ -4430,7 +4436,7 @@ namespace bo3z::Classes
 		if (el == 6) { GauntletPress(a_left); return; }   // (Noah: the Mutagen Gauntlet's beam - held, not thrown)
 		float& cool = el == 6 ? g_philCool : g_flaskCool;
 		if (cool > 0) {
-			if (el == 6) Hud::QuestBanner(fmt::format("The Mutagen Gauntlet is recharging ({:.0f} s)", std::ceil(cool)), 1.5f);
+			if (el == 6) Hud::Hint(fmt::format("The Mutagen Staff is recharging ({:.0f} s)", std::ceil(cool)), 1.5f);
 			return;
 		}
 		cool = el == 6 ? 30.0f :   /* (Noah: the Mutagen Gauntlet "once every 30s") */ 0.9f * (Kit::ArmourTier(coffer::kAlchemist) >= 1 ? 0.85f : 1.0f) * Perks::FlaskCostMult();

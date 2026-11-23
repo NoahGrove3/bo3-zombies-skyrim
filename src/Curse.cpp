@@ -289,7 +289,7 @@ namespace bo3z
 		// The city's shout (sheet: shouts): what freeing it earns, claimed at the Echo Altar.
 		// (Noah: "remove the shouts from the echo alter rewards but keep the dance of death shout and dragons updraft") no
 		// altar teaches a shout now: Whiterun's Dragon's Updraft comes with the dragon (src/Movement.cpp EnsureUpdraft) and
-		// Solitude's Dance of Death from its bards (src/Director.cpp TickDanceShout), both the moment the city is freed
+		// Solitude's Tiny Terrors from its bards (once the Dance of Death) (src/Director.cpp TickDanceShout), both the moment the city is freed
 		int ShoutOf(int)
 		{
 			return -1;

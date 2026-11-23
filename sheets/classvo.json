@@ -1,6 +1,6 @@
 {
  "sheet": "classvo",
- "about": "(Noah, 2026-11-21: 'give each class voice lines for their class chosen' - male + female per class, rounds and story triggers; 20 per class to test) each line's id; its words are in the Class Voices and Story Roles doc. Files: assets/sound/classvo/<id>_male.wav, <id>_female.wav (from Noah's mp3s).",
+ "about": "(Noah, 2026-11-21: 'give each class voice lines for their class chosen' - male + female per class, rounds and story triggers; 20 per class to test) each line's id; its words (as in the Class Voices and Story Roles doc, 2026-11-23; shown as its subtitle). Files: assets/sound/classvo/<id>_male.wav, <id>_female.wav (from Noah's mp3s).",
  "triggers": [
   "night_start",
   "night_end",
@@ -16,402 +16,482 @@
   {
    "id": "sum_night_start_1",
    "cls": 0,
-   "trigger": "night_start"
+   "trigger": "night_start",
+   "text": "The dead are waking. Good. So are mine."
   },
   {
    "id": "sum_night_start_2",
    "cls": 0,
-   "trigger": "night_start"
+   "trigger": "night_start",
+   "text": "Hush now... get ready."
   },
   {
    "id": "sum_night_start_3",
    "cls": 0,
-   "trigger": "night_start"
+   "trigger": "night_start",
+   "text": "Another night. Come, spirits. Stand with me."
   },
   {
    "id": "sum_night_end_1",
    "cls": 0,
-   "trigger": "night_end"
+   "trigger": "night_end",
+   "text": "Dawn. Rest now, all of you. Even the ones I didn't call."
   },
   {
    "id": "sum_night_end_2",
    "cls": 0,
-   "trigger": "night_end"
+   "trigger": "night_end",
+   "text": "The sun takes them back. Until tonight."
   },
   {
    "id": "sum_night_end_3",
    "cls": 0,
-   "trigger": "night_end"
+   "trigger": "night_end",
+   "text": "Quiet again. I can hear the dead complaining."
   },
   {
    "id": "sum_boss_1",
    "cls": 0,
-   "trigger": "boss"
+   "trigger": "boss",
+   "text": "A Dragon Priest... his mask still hums with the old words."
   },
   {
    "id": "sum_boss_2",
    "cls": 0,
-   "trigger": "boss"
+   "trigger": "boss",
+   "text": "That one has been dead longer than this land has had a name."
   },
   {
    "id": "sum_dragon_1",
    "cls": 0,
-   "trigger": "dragon"
+   "trigger": "dragon",
+   "text": "A dragon. Its soul is louder than all the rest."
   },
   {
    "id": "sum_dragon_2",
    "cls": 0,
-   "trigger": "dragon"
+   "trigger": "dragon",
+   "text": "Alduin calls, and his kin answer. So will mine."
   },
   {
    "id": "sum_special_1",
    "cls": 0,
-   "trigger": "special"
+   "trigger": "special",
+   "text": "Something is wrong with tonight. The spirits won't come near it."
   },
   {
    "id": "sum_special_2",
    "cls": 0,
-   "trigger": "special"
+   "trigger": "special",
+   "text": "The veil is thin tonight. Stay close to me."
   },
   {
    "id": "sum_freed_1",
    "cls": 0,
-   "trigger": "freed"
+   "trigger": "freed",
+   "text": "The curse let go of this place. The dead can sleep here again."
   },
   {
    "id": "sum_freed_2",
    "cls": 0,
-   "trigger": "freed"
+   "trigger": "freed",
+   "text": "Listen... No screaming under the stones... Just wind."
   },
   {
    "id": "sum_enter_1",
    "cls": 0,
-   "trigger": "enter"
+   "trigger": "enter",
+   "text": "So many restless souls in these streets."
   },
   {
    "id": "sum_enter_2",
    "cls": 0,
-   "trigger": "enter"
+   "trigger": "enter",
+   "text": "This city still belongs to the dead. Not for long."
   },
   {
    "id": "sum_egg_1",
    "cls": 0,
-   "trigger": "egg"
+   "trigger": "egg",
+   "text": "The bones remember. Keep going."
   },
   {
    "id": "sum_egg_2",
    "cls": 0,
-   "trigger": "egg"
+   "trigger": "egg",
+   "text": "Something old just turned to look at us."
   },
   {
    "id": "sum_idle_1",
    "cls": 0,
-   "trigger": "idle"
+   "trigger": "idle",
+   "text": "Do you feel them? Waiting under every footstep."
   },
   {
    "id": "sum_idle_2",
    "cls": 0,
-   "trigger": "idle"
+   "trigger": "idle",
+   "text": "Even the silence has a voice, if you're patient enough to hear it."
   },
   {
    "id": "des_night_start_1",
    "cls": 1,
-   "trigger": "night_start"
+   "trigger": "night_start",
+   "text": "Here they come. Let's light this place up."
   },
   {
    "id": "des_night_start_2",
    "cls": 1,
-   "trigger": "night_start"
+   "trigger": "night_start",
+   "text": "Fire, frost or lightning. Pick how you'd like to die."
   },
   {
    "id": "des_night_start_3",
    "cls": 1,
-   "trigger": "night_start"
+   "trigger": "night_start",
+   "text": "Night falls. My hands are already burning."
   },
   {
    "id": "des_night_end_1",
    "cls": 1,
-   "trigger": "night_end"
+   "trigger": "night_end",
+   "text": "Dawn. And not a single one left standing. Shame."
   },
   {
    "id": "des_night_end_2",
    "cls": 1,
-   "trigger": "night_end"
+   "trigger": "night_end",
+   "text": "Smell that? Ash and morning. My favourite."
   },
   {
    "id": "des_night_end_3",
    "cls": 1,
-   "trigger": "night_end"
+   "trigger": "night_end",
+   "text": "Survived another one. Barely broke a sweat."
   },
   {
    "id": "des_boss_1",
    "cls": 1,
-   "trigger": "boss"
+   "trigger": "boss",
+   "text": "A Dragon Priest. Let's see how well that mask handles a firestorm."
   },
   {
    "id": "des_boss_2",
    "cls": 1,
-   "trigger": "boss"
+   "trigger": "boss",
+   "text": "Big, old and angry. Burns the same as the rest."
   },
   {
    "id": "des_dragon_1",
    "cls": 1,
-   "trigger": "dragon"
+   "trigger": "dragon",
+   "text": "Dragon! Finally, something worth the magicka."
   },
   {
    "id": "des_dragon_2",
    "cls": 1,
-   "trigger": "dragon"
+   "trigger": "dragon",
+   "text": "You breathe fire? Cute. Watch this."
   },
   {
    "id": "des_special_1",
    "cls": 1,
-   "trigger": "special"
+   "trigger": "special",
+   "text": "Tonight's different. Good. I was getting bored."
   },
   {
    "id": "des_special_2",
    "cls": 1,
-   "trigger": "special"
+   "trigger": "special",
+   "text": "Something's off. Stay behind me. Way behind me."
   },
   {
    "id": "des_freed_1",
    "cls": 1,
-   "trigger": "freed"
+   "trigger": "freed",
+   "text": "City's free. Tell the bards I did most of it."
   },
   {
    "id": "des_freed_2",
    "cls": 1,
-   "trigger": "freed"
+   "trigger": "freed",
+   "text": "Curse broken. Someone owes me a drink. Several."
   },
   {
    "id": "des_enter_1",
    "cls": 1,
-   "trigger": "enter"
+   "trigger": "enter",
+   "text": "This place reeks of the curse. Time to clean it out."
   },
   {
    "id": "des_enter_2",
    "cls": 1,
-   "trigger": "enter"
+   "trigger": "enter",
+   "text": "Another city under Alduin's boot. Not for long."
   },
   {
    "id": "des_egg_1",
    "cls": 1,
-   "trigger": "egg"
+   "trigger": "egg",
+   "text": "Ha! That did something. Do it again."
   },
   {
    "id": "des_egg_2",
    "cls": 1,
-   "trigger": "egg"
+   "trigger": "egg",
+   "text": "Old magic. Strong, too. I like it."
   },
   {
    "id": "des_idle_1",
    "cls": 1,
-   "trigger": "idle"
+   "trigger": "idle",
+   "text": "Nothing to burn. I hate waiting."
   },
   {
    "id": "des_idle_2",
    "cls": 1,
-   "trigger": "idle"
+   "trigger": "idle",
+   "text": "Come on, night. I've got spells going stale here."
   },
   {
    "id": "alc_night_start_1",
    "cls": 2,
-   "trigger": "night_start"
+   "trigger": "night_start",
+   "text": "Right. Flasks full, corks loose. Let's begin."
   },
   {
    "id": "alc_night_start_2",
    "cls": 2,
-   "trigger": "night_start"
+   "trigger": "night_start",
+   "text": "The dead rise on schedule. Shame nothing else in Skyrim does."
   },
   {
    "id": "alc_night_start_3",
    "cls": 2,
-   "trigger": "night_start"
+   "trigger": "night_start",
+   "text": "Tonight's experiment: how many of you fit in one fireball."
   },
   {
    "id": "alc_night_end_1",
    "cls": 2,
-   "trigger": "night_end"
+   "trigger": "night_end",
+   "text": "Dawn. Write it down: subjects, unresponsive. Very unresponsive."
   },
   {
    "id": "alc_night_end_2",
    "cls": 2,
-   "trigger": "night_end"
+   "trigger": "night_end",
+   "text": "Morning. Time to scrape them off my boots and restock."
   },
   {
    "id": "alc_night_end_3",
    "cls": 2,
-   "trigger": "night_end"
+   "trigger": "night_end",
+   "text": "Made it. Mostly in one piece. Mostly."
   },
   {
    "id": "alc_boss_1",
    "cls": 2,
-   "trigger": "boss"
+   "trigger": "boss",
+   "text": "A Dragon Priest. I'd love a sample of whatever keeps him going."
   },
   {
    "id": "alc_boss_2",
    "cls": 2,
-   "trigger": "boss"
+   "trigger": "boss",
+   "text": "Big one. Good thing I brought the strong stuff."
   },
   {
    "id": "alc_dragon_1",
    "cls": 2,
-   "trigger": "dragon"
+   "trigger": "dragon",
+   "text": "A dragon! Do you know what its blood would fetch?"
   },
   {
    "id": "alc_dragon_2",
    "cls": 2,
-   "trigger": "dragon"
+   "trigger": "dragon",
+   "text": "Scales, bone, heartblood... hold still, you beautiful thing."
   },
   {
    "id": "alc_special_1",
    "cls": 2,
-   "trigger": "special"
+   "trigger": "special",
+   "text": "Something in the air tonight. Don't breathe it. Trust me."
   },
   {
    "id": "alc_special_2",
    "cls": 2,
-   "trigger": "special"
+   "trigger": "special",
+   "text": "Odd night. My flasks are bubbling on their own."
   },
   {
    "id": "alc_freed_1",
    "cls": 2,
-   "trigger": "freed"
+   "trigger": "freed",
+   "text": "There. The rot's gone out of this place. My work here is done."
   },
   {
    "id": "alc_freed_2",
    "cls": 2,
-   "trigger": "freed"
+   "trigger": "freed",
+   "text": "City cured. If only every illness were this satisfying."
   },
   {
    "id": "alc_enter_1",
    "cls": 2,
-   "trigger": "enter"
+   "trigger": "enter",
+   "text": "Smell that? The curse is in the water here."
   },
   {
    "id": "alc_enter_2",
    "cls": 2,
-   "trigger": "enter"
+   "trigger": "enter",
+   "text": "Sick city. Let's see what the cure looks like."
   },
   {
    "id": "alc_egg_1",
    "cls": 2,
-   "trigger": "egg"
+   "trigger": "egg",
+   "text": "Interesting. Very interesting."
   },
   {
    "id": "alc_egg_2",
    "cls": 2,
-   "trigger": "egg"
+   "trigger": "egg",
+   "text": "That reaction shouldn't be possible. Let's do it again."
   },
   {
    "id": "alc_idle_1",
    "cls": 2,
-   "trigger": "idle"
+   "trigger": "idle",
+   "text": "I'll just reorganise my flasks again. Third time today."
   },
   {
    "id": "alc_idle_2",
    "cls": 2,
-   "trigger": "idle"
+   "trigger": "idle",
+   "text": "Nirnroot, deathbell, a pinch of patience... still waiting."
   },
   {
    "id": "ssw_night_start_1",
    "cls": 3,
-   "trigger": "night_start"
+   "trigger": "night_start",
+   "text": "They're coming. Blade up. Spell ready."
   },
   {
    "id": "ssw_night_start_2",
    "cls": 3,
-   "trigger": "night_start"
+   "trigger": "night_start",
+   "text": "Hold the line. Nothing gets past us."
   },
   {
    "id": "ssw_night_start_3",
    "cls": 3,
-   "trigger": "night_start"
+   "trigger": "night_start",
+   "text": "Night again. Same as before: steel first, then fire."
   },
   {
    "id": "ssw_night_end_1",
    "cls": 3,
-   "trigger": "night_end"
+   "trigger": "night_end",
+   "text": "Dawn. Clean your blade. Count your wounds."
   },
   {
    "id": "ssw_night_end_2",
    "cls": 3,
-   "trigger": "night_end"
+   "trigger": "night_end",
+   "text": "We held. That's all that matters."
   },
   {
    "id": "ssw_night_end_3",
    "cls": 3,
-   "trigger": "night_end"
+   "trigger": "night_end",
+   "text": "Another night survived. They won't remember us. Good."
   },
   {
    "id": "ssw_boss_1",
    "cls": 3,
-   "trigger": "boss"
+   "trigger": "boss",
+   "text": "Dragon Priest. Watch his hands, not his mask."
   },
   {
    "id": "ssw_boss_2",
    "cls": 3,
-   "trigger": "boss"
+   "trigger": "boss",
+   "text": "That one's the real fight. Stay sharp."
   },
   {
    "id": "ssw_dragon_1",
    "cls": 3,
-   "trigger": "dragon"
+   "trigger": "dragon",
+   "text": "Dragon. Get under its wings and don't stop moving."
   },
   {
    "id": "ssw_dragon_2",
    "cls": 3,
-   "trigger": "dragon"
+   "trigger": "dragon",
+   "text": "It bleeds. Then it can die."
   },
   {
    "id": "ssw_special_1",
    "cls": 3,
-   "trigger": "special"
+   "trigger": "special",
+   "text": "Something's changed tonight. Eyes open."
   },
   {
    "id": "ssw_special_2",
    "cls": 3,
-   "trigger": "special"
+   "trigger": "special",
+   "text": "Different enemy, same answer."
   },
   {
    "id": "ssw_freed_1",
    "cls": 3,
-   "trigger": "freed"
+   "trigger": "freed",
+   "text": "City's ours. The people can sleep tonight."
   },
   {
    "id": "ssw_freed_2",
    "cls": 3,
-   "trigger": "freed"
+   "trigger": "freed",
+   "text": "The curse breaks here. One less to carry."
   },
   {
    "id": "ssw_enter_1",
    "cls": 3,
-   "trigger": "enter"
+   "trigger": "enter",
+   "text": "Curse is thick here. Weapons drawn."
   },
   {
    "id": "ssw_enter_2",
    "cls": 3,
-   "trigger": "enter"
+   "trigger": "enter",
+   "text": "These people need a sword, not a speech."
   },
   {
    "id": "ssw_egg_1",
    "cls": 3,
-   "trigger": "egg"
+   "trigger": "egg",
+   "text": "That's a sign. We follow it."
   },
   {
    "id": "ssw_egg_2",
    "cls": 3,
-   "trigger": "egg"
+   "trigger": "egg",
+   "text": "Old magic answers. Keep moving."
   },
   {
    "id": "ssw_idle_1",
    "cls": 3,
-   "trigger": "idle"
+   "trigger": "idle",
+   "text": "Waiting is part of the work."
   },
   {
    "id": "ssw_idle_2",
    "cls": 3,
-   "trigger": "idle"
+   "trigger": "idle",
+   "text": "Rest while you can. The night doesn't wait."
   }
  ]
 }

@@ -15,6 +15,8 @@ namespace bo3z::Settings
 		float g_melee = 1.3f, g_draw = 1.0f, g_fovFirst = 130.0f, g_fovThird = 120.0f, g_corpse = 10.0f, g_hp = 1.0f, g_dmg = 1.0f, g_bright = 1.5f;  // (Noah's own: 130 / 120 / 1.5)
 		bool  g_shelter = true, g_follow = true, g_padPS = false, g_bankRev = false, g_diveInv = false;
 		bool  g_blood = true, g_shake = true, g_softFlash = false, g_scout = false;
+		bool  g_subs = true;      // (Noah, 2026-11-23) subtitles for the Echo Altar's voice and your character's lines
+		float g_subSize = 1.0f;   // their size, against Edge UI's own
 		float g_fog = 1.0f;
 		float g_adsSens = 1.0f;  // (Noah) the look's speed while aiming down sights, against Skyrim's own sensitivity
 		int   g_keys[kKeys] = { 0x02, 0x03, 0x04, 0x05, 0x0E, 0x06, 0x30 };
@@ -203,6 +205,8 @@ namespace bo3z::Settings
 			g_fog = std::clamp(Read(L"Effects", L"fFogStrength", 1.0f), 0.0f, 1.5f);
 			g_shake = Read(L"Effects", L"bScreenShake", 1.0f) != 0.0f;
 			g_softFlash = Read(L"Effects", L"bReduceFlashes", 0.0f) != 0.0f;
+			g_subs = Read(L"Subtitles", L"bSubtitles", 1.0f) != 0.0f;
+			g_subSize = std::clamp(Read(L"Subtitles", L"fSubtitleSize", 1.0f), 0.5f, 2.0f);
 			g_padPS = Read(L"Controls", L"bPlayStationIcons", 0.0f) != 0.0f;
 			g_bankRev = Read(L"Dragon", L"bBankReverse", 0.0f) != 0.0f;
 			g_diveInv = Read(L"Dragon", L"bInvertDive", 0.0f) != 0.0f;
@@ -278,6 +282,8 @@ namespace bo3z::Settings
 	float FogStrength() { Ensure(); return g_fog; }
 	bool  ScreenShake() { Ensure(); return g_shake; }
 	bool  ReduceFlashes() { Ensure(); return g_softFlash; }
+	bool  Subtitles() { Ensure(); return g_subs; }
+	float SubtitleSize() { Ensure(); return g_subSize; }
 	bool  PlayStationIcons() { Ensure(); return g_padPS; }
 	bool  DragonBankReverse() { Ensure(); return g_bankRev; }
 	bool  DragonInvertDive() { Ensure(); return g_diveInv; }

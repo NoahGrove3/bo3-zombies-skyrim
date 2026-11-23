@@ -397,8 +397,8 @@ import json as _json
 _cv = _json.load(open(root / 'sheets' / 'classvo.json'))
 _trig = _cv['triggers']
 o.append('\tenum class VoTrigger : std::uint8_t { ' + ', '.join('k' + ''.join(w.capitalize() for w in t.split('_')) for t in _trig) + ' };')
-o.append('\tstruct ClassVoLine { std::string_view id; std::uint8_t cls; VoTrigger trigger; Sound male, female; };')
-o.append(f'\tinline constexpr std::array<ClassVoLine, {len(_cv["rows"])}> kClassVo{{ {{ ' + ', '.join(f'ClassVoLine{{ "{r["id"]}", {r["cls"]}, VoTrigger::k' + ''.join(w.capitalize() for w in r['trigger'].split('_')) + f', Sound::cv_{r["id"]}_m, Sound::cv_{r["id"]}_f }}' for r in _cv['rows']) + ' } };')
+o.append('\tstruct ClassVoLine { std::string_view id; std::uint8_t cls; VoTrigger trigger; Sound male, female; std::string_view text; };')   # (text: its subtitle)
+o.append(f'\tinline constexpr std::array<ClassVoLine, {len(_cv["rows"])}> kClassVo{{ {{ ' + ', '.join(f'ClassVoLine{{ "{r["id"]}", {r["cls"]}, VoTrigger::k' + ''.join(w.capitalize() for w in r['trigger'].split('_')) + f', Sound::cv_{r["id"]}_m, Sound::cv_{r["id"]}_f, ' + _json.dumps(r.get('text', '')) + ' }' for r in _cv['rows']) + ' } };')
 o.append('}')
 with open(root / 'src/Generated.h', 'a') as f: f.write('\n'.join(o) + '\n')
 print('appended v0.2 tables')

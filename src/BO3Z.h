@@ -143,7 +143,8 @@ namespace bo3z
 
 	namespace Director
 	{
-		void LearnDance(bool a_announce);  // Dance of Death taught (Solitude freed, or the test kit)
+		void LearnDance(bool a_announce);  // Tiny Terrors taught (Solitude freed, or the test kit)
+		float TinyHitMult(RE::Actor* a_actor);  // (Tiny Terrors) a shrunk one's blow: a sixth; anyone else's: 1
 		void QuietWind();                   // (data loaded) the ambient wind 12 dB down
 		void ShoutLooks();                  // (data loaded) our shouts shown in the Magic menu as Skyrim's are
 		void             Tick(float a_delta);
@@ -195,7 +196,7 @@ namespace bo3z
 		RestView         RestNow();
 		void             QueueZombieHit(RE::Actor* a_zombie, float a_seconds);  // its blow lands when its swing does
 		void             Noise(float a_amount);  // the night hears you (spells bursting, shouts, fights): enough draws a Volatile
-		bool             DanceOfDeath(RE::FormID a_spell);  // (Noah) the Dance Of Death spoken: the dead near you dance (true: it was that shout)
+		bool             TinyTerrors(RE::FormID a_spell);  // (Noah, 2026-11-23) Tiny Terrors spoken: the dead near you shrink for 20 s (true: it was that shout)
 		std::string_view HeadNodeFor(RE::Actor* a_actor);
 		void             LogState();
 		void             Web(const RE::NiPoint3& a_at, float a_radius, float a_seconds, float a_amount = 60.0f, bool a_frostFx = false);   // Widow's Wine / wand slows
@@ -559,6 +560,8 @@ namespace bo3z
 		float       FogStrength();                // the night's fog, 0 .. 1.5
 		bool        ScreenShake();
 		bool        ReduceFlashes();              // softer lightning, fewer white flashes
+		bool        Subtitles();                  // (MCM: View & Effects) the Echo Altar's voice and your character's lines subtitled
+		float       SubtitleSize();               // their size, 0.5 .. 2 (1 = Edge UI's own)
 		bool        PlayStationIcons();           // controller prompts drawn as PlayStation buttons (a PS5 pad looks like an Xbox one to Skyrim)
 		bool        DragonBankReverse();          // the dragon leans out of its turns instead of into them (Noah's choice)
 		bool        DragonInvertDive();           // forward pulls up, back dives
@@ -1255,7 +1258,9 @@ namespace bo3z
 		State&      Edit();
 		std::mutex& Lock();
 		void        Banner(std::string a_text, float a_seconds = 4.0f);
-		void        QuestBanner(std::string a_text, float a_seconds);  // a quest's line across the screen (shown even with the other banners off)
+		void        QuestBanner(std::string a_text, float a_seconds);  // (log only, 2026-11-23: no quest lines across the screen)
+		void        Subtitle(std::string a_text, float a_seconds);     // a spoken line in the HUD's own subtitle line (Edge UI), if the MCM's subtitles are on
+		void        Hint(std::string a_text, float a_seconds);         // a weapon's hint across the screen (the Carian Wand, the Mutagen Staff - the only ones left)
 		void        ShoutLearned(std::string_view a_name, std::string_view a_words);  // the shout-learned pop-up (the one banner still shown)
 		void        Say(std::string a_who, std::string a_line, float a_seconds = 4.5f);  // a townsperson's words, as a subtitle
 		void        Essence(const RE::NiPoint3& a_at);  // a kill's essence flies from the body to your count

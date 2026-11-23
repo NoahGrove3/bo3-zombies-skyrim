@@ -1181,8 +1181,8 @@ namespace bo3z
 					Eggs::OnSpellCast(a_event->spell);  // (the wonders' secrets hear its element: never claims it)
 					if (Classes::OnCast(a_event->spell)) {
 						// (the Tome of the Six Fires)
-					} else if (Director::DanceOfDeath(a_event->spell)) {
-						// (the Dance Of Death)
+					} else if (Director::TinyTerrors(a_event->spell)) {
+						// (Tiny Terrors)
 					} else if (Movement::OnSpellCast(a_event->spell)) {
 						// (Bond II's Updraft)
 					} else if (const int sh = Gun::ShoutOfSpell(a_event->spell, level); sh >= 0) {
