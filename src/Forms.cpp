@@ -305,6 +305,7 @@ namespace bo3z
 			bool                                  g_stacksLoaded = false;
 			int                                   g_stamBonus = 0;
 			int                                   g_bond = 0;  // the dragon's bond  // the extra stamina given to this character  // SKSE's serialization is ours (else: the old actor values)
+			int                                   g_setup = 0;  // (Noah, 2026-11-23) a new character's setup: Save::kSetupDone | kSetupImperial | kSetupSurvival
 			constexpr std::uint32_t               kRecord = 'VALS', kRecordVersion = 1;
 
 			int Index(int a_av)
@@ -355,6 +356,9 @@ namespace bo3z
 				if (a_s->OpenRecord('DBND', 1)) {
 					a_s->WriteRecordData(&g_bond, sizeof(int));
 				}
+				if (a_s->OpenRecord('SETP', 1)) {
+					a_s->WriteRecordData(&g_setup, sizeof(int));
+				}
 				const auto lv = Arcana::Levels();
 				if (a_s->OpenRecord('SPLV', 3)) {  // (3: the class pools; older levels are dropped)
 					a_s->WriteRecordData(lv.data(), static_cast<std::uint32_t>(lv.size()));
@@ -392,6 +396,8 @@ namespace bo3z
 						g_stacksLoaded = a_s->ReadRecordData(g_stacks.data(), length) == length;
 					} else if (type == 'STAM' && length == sizeof(int)) {
 						a_s->ReadRecordData(&g_stamBonus, length);
+					} else if (type == 'SETP' && length == sizeof(int)) {
+						a_s->ReadRecordData(&g_setup, length);
 					} else if (type == 'DBND' && length == sizeof(int)) {
 						a_s->ReadRecordData(&g_bond, length);
 						g_bond = std::clamp(g_bond, 0, 3);
@@ -448,7 +454,7 @@ namespace bo3z
 					Migrate();
 				}
 			}
-			void OnRevert(SKSE::SerializationInterface*) { g_val.fill(0), g_stacks.fill(0), g_stacksLoaded = false, g_stamBonus = 0, g_bond = 0, Arcana::SetLevels({}), Shops::SetRollState({}), Curse::SetMineState({}), Classes::Revert(), Kit::Revert(), Party::OnLoad(); }
+			void OnRevert(SKSE::SerializationInterface*) { g_val.fill(0), g_stacks.fill(0), g_stacksLoaded = false, g_stamBonus = 0, g_bond = 0, g_setup = 0, Arcana::SetLevels({}), Shops::SetRollState({}), Curse::SetMineState({}), Classes::Revert(), Kit::Revert(), Party::OnLoad(); }
 		}
 
 		void InstallCoSave()
@@ -465,6 +471,8 @@ namespace bo3z
 
 		int  StaminaBonus() { return g_stamBonus; }
 		void SetStaminaBonus(int a_n) { g_stamBonus = a_n; }
+		int  Setup() { return g_setup; }
+		void SetSetup(int a_bits) { g_setup = a_bits; }
 		int  DragonBond() { return g_bond; }
 		void SetDragonBond(int a_bond) { g_bond = std::clamp(a_bond, 0, 3); }
 

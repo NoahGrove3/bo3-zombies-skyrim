@@ -512,6 +512,23 @@ namespace bo3z
 							em->UnequipObject(pl, o, nullptr, 1, nullptr, false, false, false, true);
 						}
 						Classes::DressUnder(true);  // (Noah: her bra and underwear on while you shape her, not bare)
+						// (Noah, 2026-11-23: "my female character is naked in the race menu") a change of sex or race inside the
+						// creator rebuilds you and drops what you wear, and nothing dressed you again while it was up: every half
+						// second the menu is open, the underwear goes back on if it isn't
+						static std::atomic<bool> watching{ false };
+						if (!watching.exchange(true)) {
+							std::thread([] {
+								for (int i = 0; i < 20 * 60 * 60; ++i) {   // (an hour at most)
+									std::this_thread::sleep_for(std::chrono::milliseconds(500));
+									auto* ui = RE::UI::GetSingleton();
+									if (!ui || !ui->IsMenuOpen(RE::RaceSexMenu::MENU_NAME)) break;
+									SKSE::GetTaskInterface()->AddTask([] {
+										if (auto* ui2 = RE::UI::GetSingleton(); ui2 && ui2->IsMenuOpen(RE::RaceSexMenu::MENU_NAME)) Classes::DressUnder(true);
+									});
+								}
+								watching = false;
+							}).detach();
+						}
 						logger::info("character menu: {} pieces of armour taken off", worn.size());
 					} else if (pl && em && !a_event->opening) {
 						if (auto* under = Classes::Underwear(); under && !(pl->GetActorBase() && pl->GetActorBase()->IsFemale()) && pl->GetItemCount(under) > 0) {
@@ -729,6 +746,9 @@ namespace bo3z
 						Hud::OnMenuButton(b);
 						Director::ScoutKey(b);
 						if (Director::RestButton(b)) {  // the rest screen has the keys while it is up
+							continue;
+						}
+						if (Intro::SetupButton(b)) {  // a new character's setup has the keys while it is up
 							continue;
 						}
 						if (Classes::OnButton(b)) {  // the class picker has the keys while it is up

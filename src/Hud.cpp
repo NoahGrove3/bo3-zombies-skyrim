@@ -903,6 +903,121 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		}
 
 
+		// (Noah, 2026-11-23: "the option to choose who my companion is and survival mode yes or no after Helgen when a new player
+		// loads in") a new character's setup, after the creator at Riverwood: two cards a step, like the class picker's - who
+		// brought you out of Helgen (Ralof and the Stormcloaks, or Hadvar and the Imperial Legion), then Skyrim's Survival Mode
+		void DrawSetup(ImDrawList* dl, ImVec2 size, float k, float now)
+		{
+			struct Card { const char* name; const char* side; ImU32 col; const char* line; const wchar_t* pic; float fx; };
+			static const Card kCards[2][2] = {
+				{ { "RALOF", "THE STORMCLOAKS", IM_COL32(110, 150, 235, 255), "His sister Gerdur takes you in at Riverwood's lumber mill.",
+					L"Data\\Textures\\loreloadscreens\\CivilWarStormcloak01.dds", 0.42f },
+				  { "HADVAR", "THE IMPERIAL LEGION", IM_COL32(220, 80, 64, 255), "His uncle Alvor, Riverwood's smith, takes you in.",
+					L"Data\\Textures\\loreloadscreens\\CivilWarLegion01.dds", 0.38f } },
+				{ { "YES", "SURVIVAL MODE", IM_COL32(150, 205, 235, 255), "Hunger, cold and fatigue. No fast travel, a lighter pack, and you sleep to level up.",
+					L"Data\\Textures\\loreloadscreens\\GeneralSurvival.dds", 0.62f },
+				  { "NO", "SKYRIM AS USUAL", IM_COL32(222, 190, 120, 255), "No hunger, cold or fatigue. Fast travel and your full carry weight.",
+					L"Data\\Textures\\loreloadscreens\\CityRiverwood.dds", 0.46f } } };
+			static ID3D11ShaderResourceView* pic[2][2]{};
+			static bool tried = false;
+			if (!tried && g_device) {
+				tried = true;
+				for (int st = 0; st < 2; ++st)
+					for (int i = 0; i < 2; ++i)
+						if (FAILED(DirectX::CreateDDSTextureFromFile(g_device, kCards[st][i].pic, nullptr, &pic[st][i]))) pic[st][i] = nullptr;
+			}
+			const int   step = std::clamp(Intro::SetupStep(), 0, 1);
+			static int   lastStep = -1;
+			static float shownAt = -100.0f, stepAt = 0.0f, ease[2] = { 0, 0 };
+			if (now - shownAt > 0.5f) stepAt = now, lastStep = -1;   // (just opened)
+			shownAt = now;
+			if (step != lastStep) {
+				lastStep = step, stepAt = now;
+				for (int i = 0; i < 2; ++i) ease[i] = i == Intro::SetupSel() ? 1.0f : 0.0f;
+			}
+			const float in = EaseOut(std::clamp((now - stepAt) / 0.45f, 0.0f, 1.0f));
+			dl->AddRectFilled({ 0, 0 }, size, IM_COL32(4, 4, 8, static_cast<int>(225 * (step == 0 ? in : 1.0f))));
+			TxtC(dl, g_body, 15 * k, size.x * 0.5f, size.y * 0.12f - 34 * k, Fade(kGold, 0.8f * in), step == 0 ? "1  /  2" : "2  /  2");
+			TxtC(dl, g_title, 46 * k, size.x * 0.5f, size.y * 0.12f, Fade(kParch, in), step == 0 ? "WHO BROUGHT YOU OUT OF HELGEN?" : "SURVIVAL MODE", 3 * k, Fade(kGold, 0.6f * in));
+			TxtC(dl, g_body, 20 * k, size.x * 0.5f, size.y * 0.12f + 58 * k, Fade(IM_COL32(210, 200, 180, 230), in),
+				step == 0 ? "Your friend from the escape waits in Riverwood. Either side can still be joined later."
+				          : "Skyrim's own Survival Mode, chosen once for this character.");
+			const float cwS = 520 * k, cwB = 600 * k, gap = 34 * k, chS = 420 * k, chB = 480 * k;
+			const float x0 = size.x * 0.5f - (cwS + cwB + gap) * 0.5f, cy0 = size.y * 0.5f + 40 * k + (1.0f - in) * 20 * k;
+			const ImVec2 m = Cursor(size);
+			static ImVec2 lastMouse{ -1, -1 };
+			const bool moved = lastMouse.x >= 0 && m.x >= 0 && std::abs(m.x - lastMouse.x) + std::abs(m.y - lastMouse.y) > 0.5f;
+			lastMouse = m;
+			const float dt = std::clamp(ImGui::GetIO().DeltaTime, 0.0f, 0.1f);
+			float xs[3];
+			xs[0] = x0;
+			for (int i = 0; i < 2; ++i) xs[i + 1] = xs[i] + cwS + (cwB - cwS) * ease[i] + gap;
+			int over = -1;
+			if (!g_padLast && m.x >= 0) {
+				for (int i = 0; i < 2; ++i) {
+					const float h = chS + (chB - chS) * ease[i];
+					if (m.x >= xs[i] && m.x <= xs[i + 1] - gap && m.y >= cy0 - h * 0.5f && m.y <= cy0 + h * 0.5f) over = i;
+				}
+			}
+			Intro::SetupHover(over, moved && !g_padLast);
+			const int   sel = Intro::SetupSel();
+			const float rate = 1.0f - std::exp(-dt * 11.0f);
+			for (int i = 0; i < 2; ++i) ease[i] += ((i == sel ? 1.0f : 0.0f) - ease[i]) * rate;
+			for (int i = 0; i < 2; ++i) {
+				const Card&  c = kCards[step][i];
+				const float  e = std::clamp(ease[i], 0.0f, 1.0f), eo = EaseOut(e);
+				const float  w = xs[i + 1] - xs[i] - gap, ch = chS + (chB - chS) * e;
+				const ImVec2 a{ xs[i], cy0 - ch * 0.5f }, b{ a.x + w, a.y + ch };
+				Panel(dl, a, b, k, (0.75f + 0.25f * e) * in);
+				if (auto* tex = pic[step][i]) {   // (the painting is the middle 2048 x 1152 of its texture: cropped round its figure)
+					const float v0 = 448.0f / 2048.0f, v1 = 1600.0f / 2048.0f, picAsp = 2048.0f / 1152.0f, asp = w / ch;
+					const float uw = std::min(1.0f, asp / picAsp);
+					const float u0 = std::clamp(c.fx - uw * 0.5f, 0.0f, 1.0f - uw);
+					const int   lit = static_cast<int>(120 + 135 * eo);
+					dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(tex)), a, b, { u0, v0 }, { u0 + uw, v1 }, IM_COL32(lit, lit, lit, static_cast<int>(255 * in)));
+				}
+				// the foot darkened under the words, the top shaded for the name
+				dl->AddRectFilledMultiColor({ a.x, a.y + ch * 0.50f }, { b.x, a.y + ch * 0.72f }, IM_COL32(6, 5, 5, 0), IM_COL32(6, 5, 5, 0), Fade(IM_COL32(6, 5, 5, 225), in), Fade(IM_COL32(6, 5, 5, 225), in));
+				dl->AddRectFilled({ a.x, a.y + ch * 0.72f }, b, Fade(IM_COL32(6, 5, 5, 225), in));
+				dl->AddRectFilledMultiColor(a, { b.x, a.y + 120 * k }, Fade(IM_COL32(6, 5, 5, 200), in), Fade(IM_COL32(6, 5, 5, 200), in), IM_COL32(6, 5, 5, 0), IM_COL32(6, 5, 5, 0));
+				dl->AddRect(a, b, Fade(IM_COL32(196, 170, 112, 255), (0.35f + 0.4f * e) * in), 0, 0, 1.0f * k);
+				if (e > 0.01f) {
+					dl->AddRect({ a.x - 3 * k, a.y - 3 * k }, { b.x + 3 * k, b.y + 3 * k }, Fade(c.col, 0.9f * eo * in), 10 * k, 0, 2.5f * k);
+					dl->AddRectFilledMultiColor(a, { b.x, a.y + 90 * k }, Fade(c.col, 0.28f * eo * in), Fade(c.col, 0.28f * eo * in), Fade(c.col, 0.0f), Fade(c.col, 0.0f));
+				}
+				const float cx = (a.x + b.x) * 0.5f;
+				TxtC(dl, g_body, 16 * k, cx, a.y + 18 * k, Fade(c.col, 0.9f * in), std::to_string(i + 1));
+				TxtC(dl, g_title, (32 + 4 * eo) * k, cx, a.y + 38 * k, Fade(e > 0.5f ? IM_COL32(255, 248, 232, 255) : kParch, in), c.name, 2.5f * k * eo, Fade(c.col, 0.8f * in));
+				TxtC(dl, g_title, 15 * k, cx, a.y + 84 * k, Fade(c.col, (0.6f + 0.35f * eo) * in), c.side);
+				// the line, wrapped and centred on the card's foot
+				{
+					const float tw = w - 60 * k, px = 18 * k, lh = 24 * k;
+					std::vector<std::string> lines;
+					std::string cur, word;
+					const std::string t = c.line;
+					for (std::size_t q = 0; q <= t.size(); ++q) {
+						if (q == t.size() || t[q] == ' ') {
+							const std::string tryLine = cur.empty() ? word : cur + " " + word;
+							if (!cur.empty() && Measure(g_body, px, tryLine).x > tw) lines.push_back(cur), cur = word;
+							else cur = tryLine;
+							word.clear();
+						} else {
+							word += t[q];
+						}
+					}
+					if (!cur.empty()) lines.push_back(cur);
+					float y = b.y - 30 * k - lh * static_cast<float>(lines.size());
+					dl->AddRectFilledMultiColor({ cx - 70 * k, y - 16 * k }, { cx, y - 14.8f * k }, Fade(kGold, 0), Fade(kGold, (0.4f + 0.6f * eo) * in), Fade(kGold, (0.4f + 0.6f * eo) * in), Fade(kGold, 0));
+					dl->AddRectFilledMultiColor({ cx, y - 16 * k }, { cx + 70 * k, y - 14.8f * k }, Fade(kGold, (0.4f + 0.6f * eo) * in), Fade(kGold, 0), Fade(kGold, 0), Fade(kGold, (0.4f + 0.6f * eo) * in));
+					for (const auto& l : lines) {
+						TxtC(dl, g_body, px, cx, y, Fade(IM_COL32(230, 220, 200, 245), (0.7f + 0.3f * eo) * in), l);
+						y += lh;
+					}
+				}
+			}
+			if (!g_padLast && m.x >= 0) DrawPingCursor(dl, m, k, now, false);
+		}
+
 		// (Noah: "BO3 death style instead of reloading a save - high quality, Edge's UI") you fell: the world darkens and
 		// drains of colour, the night's tally rises out of it in Edge's smoked pane, and a ring fills toward rising again
 		void DrawDeath(ImDrawList* dl, const Hud::State& s, ImVec2 size, float k, float now)
@@ -1242,7 +1357,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		void Draw(const Hud::State& s, ImVec2 size)
 		{
 			DrawBody(s, size);
-			if (!Classes::Open()) DrawMessages(s, size);
+			if (!Classes::Open() && !Intro::SetupOpen()) DrawMessages(s, size);
 		}
 		void DrawBody(const Hud::State& s, ImVec2 size)
 		{
@@ -1259,6 +1374,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			roundFlash = std::max(0.0f, roundFlash - dt);
 			if (Classes::Open()) {  // (the class picker takes the whole screen)
 				DrawClassPicker(dl, size, k, now);
+				return;
+			}
+			if (Intro::SetupOpen()) {  // (a new character's setup: the side, then survival)
+				DrawSetup(dl, size, k, now);
 				return;
 			}
 			if (const auto rest = Director::RestNow(); rest.open) {  // (the rest screen, in place of Skyrim's wait menu)
@@ -3969,6 +4088,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			});
 		}
 
+		std::chrono::steady_clock::time_point g_menuNewAt{};   // when NEW was last the main list's choice
 		std::vector<MenuEntry> ReadMainList(RE::GFxMovieView** a_movie = nullptr)
 		{
 			std::vector<MenuEntry> out;
@@ -4023,6 +4143,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					txt = txt.substr(1);
 				}
 				out.push_back({ txt, static_cast<int>(i), static_cast<int>(i) == sel, dis.IsBool() && dis.GetBool() });
+				if (static_cast<int>(i) == sel) {   // (the new game's loading screen starts when the menu closes on NEW)
+					std::string lo = txt;
+					std::transform(lo.begin(), lo.end(), lo.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+					if (lo == "new" || lo.rfind("new ", 0) == 0) g_menuNewAt = std::chrono::steady_clock::now();
+				}
 			}
 			// Skyrim's own list leaves the screen (it keeps working for keys and pad)
 			RE::GFxValue::DisplayInfo li;
@@ -5830,7 +5955,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			return atReady + (1.0f - atReady) * std::clamp(g_bootFade * 1.6f, 0.0f, 1.0f);
 		}
-		void DrawBootScreen(ImVec2 a_size, float a_alpha = 1.0f)
+		// (a_progress, a_status, a_lore: the new game's own; a_black: the black under the painting, when it fades apart from it)
+		void DrawBootScreen(ImVec2 a_size, float a_alpha = 1.0f, float a_progress = -1.0f, const char* a_status = nullptr, const char* a_lore = nullptr, float a_black = -1.0f)
 		{
 			static ID3D11ShaderResourceView* pic = nullptr;
 			static ImVec2                    picSize{ 2048, 2048 };
@@ -5867,7 +5993,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			auto*       dl = ImGui::GetForegroundDrawList();
 			const float k = a_size.y / 1080.0f, al = std::clamp(a_alpha, 0.0f, 1.0f), W = a_size.x, H = a_size.y;
-			dl->AddRectFilled({ 0, 0 }, a_size, Fade(IM_COL32(0, 0, 0, 255), al));
+			dl->AddRectFilled({ 0, 0 }, a_size, Fade(IM_COL32(0, 0, 0, 255), a_black < 0.0f ? al : std::clamp(a_black, 0.0f, 1.0f)));
 			if (pic) {   // (the painting is the middle 2048 x 1152 of its texture; cropped to the screen's shape, breathing in a little)
 				const float v0 = 448.0f / 2048.0f, v1 = 1600.0f / 2048.0f, picAsp = picSize.x / (picSize.y * (v1 - v0)), asp = W / H;
 				float u0 = 0, u1 = 1, a0 = v0, a1 = v1;
@@ -5890,11 +6016,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				Txt(dl, g_title, 40 * k, { 100 * k, H - 210 * k }, Fade(kParch, al), "THE CURSE OF ALDUIN");
 			}
 			{
-				const std::string lore = "Alduin wakes, and the dead of Skyrim answer his call.";
+				const std::string lore = a_lore ? a_lore : "Alduin wakes, and the dead of Skyrim answer his call.";
 				Txt(dl, g_body, 19 * k, { 100 * k, H - 128 * k - Measure(g_body, 19 * k, lore).y * 0.5f }, Fade(IM_COL32(196, 182, 160, 215), al), lore);
 			}
 			// the progress: a bronze hairline, lit as far as the launch has come, a diamond at its head
-			const float x0 = 100 * k, x1 = W - 100 * k, y = H - 70 * k, xp = x0 + (x1 - x0) * std::clamp(BootProgress(), 0.0f, 1.0f);
+			const float x0 = 100 * k, x1 = W - 100 * k, y = H - 70 * k, xp = x0 + (x1 - x0) * std::clamp(a_progress >= 0.0f ? a_progress : BootProgress(), 0.0f, 1.0f);
 			dl->AddRectFilled({ x0, y - 1 * k }, { x1, y + 1 * k }, Fade(kGold, 0.24f * al));
 			const float lead = std::min(xp, x0 + 90 * k);
 			const ImU32 lit = Fade(IM_COL32(222, 196, 132, 235), al), none = Fade(IM_COL32(222, 196, 132, 0), al);
@@ -5903,7 +6029,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			const float d = 6 * k;
 			dl->AddQuadFilled({ xp, y - d }, { xp + d, y }, { xp, y + d }, { xp - d, y }, Fade(IM_COL32(244, 224, 166, 255), al));
 			{   // what is loading, its letters spaced, over the line's right end
-				const std::string st = g_dataReady.load() ? "RAISING THE CURSE" : "READING THE ELDER SCROLLS";
+				const std::string st = a_status ? a_status : g_dataReady.load() ? "RAISING THE CURSE" : "READING THE ELDER SCROLLS";
 				const float px = 17 * k, tr = 3 * k;
 				float w = 0;
 				for (const char ch : st) w += Measure(g_title, px, std::string(1, ch)).x;
@@ -6154,18 +6280,58 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			static bool sawMainMenu = false;
 			if (onMainMenu) sawMainMenu = true;
 			const bool bootScreen = !sawMainMenu && !g_filmOn;
+			// (Noah, 2026-11-23: "change how a character loads in for the first time - a solid black screen with some pop ups that
+			// flash for a second and the player level on the top right. Make it one loading screen with no pop ups, then it fades
+			// dark and fades into the race menu") from NEW on the main menu, the launch's loading screen stands over everything -
+			// Skyrim's loading, the skip past Helgen, the walk to Riverwood and its pop-ups - until the creator is up at Riverwood's
+			// gate: then the painting fades to black, and the black off the creator
+			static int  coverPhase = 0;   // 0 off, 1 up, 2 fading off
+			static bool wasOnMain = false;
+			static std::chrono::steady_clock::time_point coverStart{}, coverFade{}, creatorSince{};
+			const auto  tCover = std::chrono::steady_clock::now();
+			const auto  secs = [](std::chrono::steady_clock::duration d) { return std::chrono::duration<float>(d).count(); };
+			if (wasOnMain && !onMainMenu && g_menuNewAt.time_since_epoch().count() && secs(tCover - g_menuNewAt) < 2.0f) {
+				coverPhase = 1, coverStart = tCover, creatorSince = {};
+				logger::info("hud: a new game - its loading screen up until the creator at Riverwood");
+			}
+			wasOnMain = onMainMenu;
+			if (onMainMenu) coverPhase = 0;
+			constexpr const char* kNewGameFile = "Data/SKSE/Plugins/CurseOfAlduin/newgame_seconds.txt";
+			static double newGameLen = [] {
+				double d = 30.0;
+				if (std::ifstream in("Data/SKSE/Plugins/CurseOfAlduin/newgame_seconds.txt"); in) in >> d;
+				return std::clamp(d, 8.0, 180.0);
+			}();
+			if (coverPhase == 1) {
+				const float up = secs(tCover - coverStart);
+				if (!Intro::CreatorAtRiverwood()) creatorSince = {};
+				else if (!creatorSince.time_since_epoch().count()) creatorSince = tCover;
+				const bool creator = creatorSince.time_since_epoch().count() && secs(tCover - creatorSince) > 0.8f;   // (its own fade in done)
+				const bool oldGame = up > 3.0f && InGame() && Save::Flag(Save::kFlagStarted);   // (a save loaded after all)
+				if (creator || oldGame || Classes::Open() || Intro::SetupOpen() || up > 150.0f) {
+					coverPhase = 2, coverFade = tCover;
+					logger::info("hud: the new game's loading screen fades off after {:.1f}s ({})", up, creator ? "the creator is up" : oldGame ? "a game already begun" : "timed out");
+					if (creator) {
+						newGameLen = up;
+						std::error_code ec;
+						std::filesystem::create_directories("Data/SKSE/Plugins/CurseOfAlduin", ec);
+						if (std::ofstream out(kNewGameFile); out) out << static_cast<int>(up + 0.5f);
+					}
+				}
+			}
+			const bool coverOn = coverPhase != 0;
 			// (a menu with a pointer - the world map, the inventory - still draws: our cursor is the only one there)
 			// (Noah: "only hide my gameplay HUD - keep my inventory HUDs available ... also keep the Echo Altar UI") filming
 			// mode hides the bars, the feed, the compass and Skyrim's own HUD - never a screen you work in: the Echo Altar, the
 			// High Hrothgar menu, the rest screen, the class and crew screens
-			const bool keepUi = s.perkMenu || s.hallMenu || Classes::Open() || Director::RestOpen();
+			const bool keepUi = s.perkMenu || s.hallMenu || Classes::Open() || Intro::SetupOpen() || Director::RestOpen();
 			if (static bool was = false; was != DevTools::HudOff()) {
 				was = DevTools::HudOff();
 				if (auto hud = uiM ? uiM->GetMenu(RE::HUDMenu::MENU_NAME) : nullptr; hud && hud->uiMovie) hud->uiMovie->SetVisible(!was);
 			} else if (was) {   // (Skyrim shows its HUD again on a load or a menu closing: kept hidden)
 				if (auto hud = uiM ? uiM->GetMenu(RE::HUDMenu::MENU_NAME) : nullptr; hud && hud->uiMovie && hud->uiMovie->GetVisible()) hud->uiMovie->SetVisible(false);
 			}
-			if (((!InGame() && !mainMenu && !journal && !escJournal && !cursorUp && !codex) || (DevTools::HudOff() && !keepUi && !mainMenu && !codex)) && !g_filmOn && g_veil <= 0 && !bootScreen) {
+			if (((!InGame() && !mainMenu && !journal && !escJournal && !cursorUp && !codex) || (DevTools::HudOff() && !keepUi && !mainMenu && !codex)) && !g_filmOn && g_veil <= 0 && !bootScreen && !coverOn) {
 				if (static int m = 0; m++ % 1200 == 0) {
 					auto* ui = RE::UI::GetSingleton();
 					auto* pl = RE::PlayerCharacter::GetSingleton();
@@ -6203,6 +6369,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			ImGui::NewFrame();
 			if (bootScreen) {
 				DrawBootScreen(io.DisplaySize, 1.0f);
+			} else if (coverPhase == 1) {
+				// (the new game's loading screen alone: nothing of ours under it - no banners, no level, no pop-ups)
 			} else if (codex) {
 				DrawCodex(io.DisplaySize, static_cast<float>(ImGui::GetTime()), clicks);
 			} else if (mainMenu) {
@@ -6243,7 +6411,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 			} else if (InGame() && (!DevTools::HudOff() || keepUi)) {
 				Draw(s, io.DisplaySize);
-				g_drewHud = !Classes::Open();
+				g_drewHud = !Classes::Open() && !Intro::SetupOpen();
 				// looking at the Echo Altar: Skyrim's own "Commune" prompt gives way to ours (s.orbAim), back for everything else
 				if (static bool dumped = false; !dumped) {
 					if (auto hud = uiM ? uiM->GetMenu(RE::HUDMenu::MENU_NAME) : nullptr; hud && hud->uiMovie) {
@@ -6370,6 +6538,20 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			if (g_veil > 0 && !g_filmOn && !mainMenu) {
 				ImGui::GetForegroundDrawList()->AddRectFilled({ 0, 0 }, io.DisplaySize, IM_COL32(0, 0, 0, static_cast<int>(255 * g_veil * g_veil * (3 - 2 * g_veil))));
+			}
+			if (coverPhase) {   // the new game's loading screen: the painting to black (0.6 s), then the black off the creator (1 s)
+				float paint = 1.0f, black = 1.0f, fin = 0.0f;
+				if (coverPhase == 2) {
+					const float u = secs(tCover - coverFade);
+					const auto  sm = [](float x) { x = std::clamp(x, 0.0f, 1.0f); return x * x * (3.0f - 2.0f * x); };
+					paint = 1.0f - sm(u / 0.6f), black = 1.0f - sm((u - 0.6f) / 1.0f), fin = sm(u / 0.5f);
+					if (u >= 1.6f) coverPhase = 0;
+				}
+				const float  tUp = secs(tCover - coverStart);
+				const double L = newGameLen;
+				float p = static_cast<float>(tUp < L ? 0.92 * (tUp / L) : 0.92 + 0.06 * (1.0 - std::exp(-(tUp - L) / 10.0)));
+				p += (1.0f - p) * fin;
+				if (coverPhase) DrawBootScreen(io.DisplaySize, paint, p, "THE ROAD TO RIVERWOOD", "Every night they rise again. Every night, a few more.", black);
 			}
 			// (the launch's loading screen, once Skyrim's data is in and our menu ready: faded off over it)
 			if (!g_bootDone && !bootScreen) {

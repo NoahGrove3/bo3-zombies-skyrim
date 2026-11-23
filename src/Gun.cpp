@@ -172,7 +172,7 @@ namespace bo3z
 		{
 			static bool thunk(RE::PlayerInputHandler* a_this, RE::InputEvent* a_event)
 			{
-				if (Shops::MenuEats(a_event) || Classes::MenuEats(a_event) || Director::RestEats(a_event) || Loot::Eats(a_event) || Echo::Eats(a_event) || Director::BedEats(a_event)) {  // the shrine's keys (1-4, D-pad) and the loot list's never reach the hotkeys
+				if (Shops::MenuEats(a_event) || Classes::MenuEats(a_event) || Intro::SetupEats(a_event) || Director::RestEats(a_event) || Loot::Eats(a_event) || Echo::Eats(a_event) || Director::BedEats(a_event)) {  // the shrine's keys (1-4, D-pad) and the loot list's never reach the hotkeys
 					return false;
 				}
 				return func(a_this, a_event);
@@ -186,7 +186,7 @@ namespace bo3z
 		{
 			static bool thunk(void* a_this, RE::InputEvent* a_event)
 			{
-				if (Shops::MenuEats(a_event) || Classes::MenuEats(a_event) || Director::RestEats(a_event) || Loot::Eats(a_event) || Echo::Eats(a_event) || Director::BedEats(a_event)) {
+				if (Shops::MenuEats(a_event) || Classes::MenuEats(a_event) || Intro::SetupEats(a_event) || Director::RestEats(a_event) || Loot::Eats(a_event) || Echo::Eats(a_event) || Director::BedEats(a_event)) {
 					return false;
 				}
 				if constexpr (N == 2) {  // (the menu-open handler) the Wait key opens the Curse's rest screen - Skyrim's "enemies nearby" never stops it
@@ -201,7 +201,7 @@ namespace bo3z
 		{
 			static bool thunk(RE::PlayerInputHandler* a_this, RE::InputEvent* a_event)
 			{
-				if (Shops::MenuEats(a_event) || Classes::MenuEats(a_event) || Director::RestEats(a_event) || Loot::Eats(a_event) || Echo::Eats(a_event) || Director::BedEats(a_event)) {
+				if (Shops::MenuEats(a_event) || Classes::MenuEats(a_event) || Intro::SetupEats(a_event) || Director::RestEats(a_event) || Loot::Eats(a_event) || Echo::Eats(a_event) || Director::BedEats(a_event)) {
 					return false;
 				}
 				return func(a_this, a_event);

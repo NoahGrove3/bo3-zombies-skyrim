@@ -44,19 +44,15 @@ namespace bo3z
 		void DoSkip()
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
-			const auto mq = Forms::MQ102();  // MQ102A, MQ102B (helpers), MQ102 Before the Storm
 			// (Noah: "my quests from Helgen aren't up to date") the main quest where a Helgen survivor at Riverwood would have
 			// it: Unbound completed (its stage 900 completes it, with its journal entry), Before the Storm on "Talk to the
 			// Jarl of Whiterun" (stage 30) - the Jarl then moves it on and gives Bleak Falls Barrow as Skyrim does.
 			// (Before: Before the Storm was set to its last stage 200, which neither completes it nor ever starts Bleak Falls)
-			// (Noah: "I should be on the Stormcloaks' side and start just before speaking to the Jarl") the escape with Ralof:
-			// his helper quest (MQ102B) at stage 10 picks the Stormcloak lines, then Before the Storm straight to stage 30 -
-			// "Ralof's sister Gerdur asked me to take word to the Jarl" - with only "Talk to the Jarl of Whiterun" shown
+			// (start just before speaking to the Jarl: the friend's helper quest at 10, then Before the Storm at 30 - ApplySide)
 			Stage(Forms::IntroQuest(), 900);
 			Stage(Forms::IntroQuest(), 1000);
-			Stage(mq[1], 10);
-			Stage(mq[2], 30);
-			HideFriendObjectives(mq[2]);
+			// (Noah, 2026-11-23: "choose stormcloak or the other option") Before the Storm's friend - Ralof's helper quest or
+			// Hadvar's - waits for the setup's choice after the creator (ApplySide)
 			g_skip = true;  // Tick moves you once the quests are done
 			if (p) {
 				auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
@@ -66,8 +62,7 @@ namespace bo3z
 				}
 				p->NotifyAnimationGraph("IdleForceDefaultState");  // (the bound hands, the cart's seat: let go)
 			}
-			Hud::Banner("You wake at Riverwood's gate", 4.0f);
-			logger::info("intro: Helgen skipped (MQ101 900/1000, MQ102B 10, MQ102 30)");
+			logger::info("intro: Helgen skipped (MQ101 900/1000; Before the Storm waits for the side chosen)");   // (no banner: the new game's loading screen covers all of this)
 		}
 
 		bool FreshQuickstartGame(RE::PlayerCharacter* a_player)
@@ -109,6 +104,58 @@ namespace bo3z
 			}
 		}
 
+		// (Noah, 2026-11-23: "the option to choose [Stormcloak or Imperial] and survival mode yes or no after Helgen when a new
+		// player loads in") after the creator: who brought you out of Helgen, then Skyrim's Survival Mode - chosen once
+		std::atomic<bool> g_setupOpen{ false };
+		std::atomic<int>  g_setupStep{ 0 }, g_setupSel{ 0 };
+		std::chrono::steady_clock::time_point g_setupClosed{};
+		void ApplySide(bool a_imperial)
+		{
+			const auto mq = Forms::MQ102();   // MQ102A (Hadvar's), MQ102B (Ralof's), MQ102 Before the Storm
+			// (Skyrim's own new-game question - "Who did you befriend while escaping from Helgen?" - is answered Ralof before you
+			// are made (Hud's AnswerStartPrompts: MQ101's fragment sets MQ102B 1 and Ralof outside the keep); Hadvar chosen here,
+			// Ralof's helper quest is stopped and Hadvar's run the way that answer would have: 1, then on to Riverwood)
+			if (a_imperial) {
+				Papyrus(mq[1], "Quest", "Stop", RE::MakeFunctionArguments());
+				Stage(mq[0], 1);
+			}
+			Stage(mq[a_imperial ? 0 : 1], 10);
+			Stage(mq[2], 30);   // "Talk to the Jarl of Whiterun" - its journal names Alvor or Gerdur after the helper quest
+			HideFriendObjectives(mq[2]);
+			logger::info("intro: Before the Storm with {} ({} 10, MQ102 30)", a_imperial ? "Hadvar - the Imperial Legion" : "Ralof - the Stormcloaks", a_imperial ? "MQ102A" : "MQ102B");
+		}
+		void StartSurvival()
+		{
+			if (auto* toggle = RE::TESForm::LookupByEditorID<RE::TESGlobal>("Survival_ModeToggle")) toggle->value = 1.0f;
+			auto* quest = RE::TESForm::LookupByEditorID<RE::TESQuest>("SurvivalModeMainQuest");
+			auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+			if (!quest || !vm) {
+				logger::warn("intro: survival mode chosen, but its quest or the script machine is missing");
+				return;
+			}
+			const auto handle = vm->GetObjectHandlePolicy()->GetHandleForObject(quest->GetFormType(), quest);
+			RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> none;
+			const bool ok = vm->DispatchMethodCall(handle, "Survival_MainScript", "StartSurvivalMode", RE::MakeFunctionArguments(), none);
+			logger::info("intro: survival mode chosen: switched on ({})", ok ? "its StartSurvivalMode runs" : "call failed");
+		}
+		void SetupChoose(int a_sel)
+		{
+			if (!g_setupOpen) return;
+			if (g_setupStep == 0) {
+				const bool imperial = a_sel == 1;
+				Save::SetSetup((Save::Setup() & ~Save::kSetupImperial) | (imperial ? Save::kSetupImperial : 0));
+				ApplySide(imperial);
+				g_setupStep = 1, g_setupSel = 0;
+				return;
+			}
+			const bool survival = a_sel == 0;
+			Save::SetSetup(Save::Setup() | Save::kSetupDone | (survival ? Save::kSetupSurvival : 0));
+			if (survival) StartSurvival();
+			g_setupOpen = false;
+			g_setupClosed = std::chrono::steady_clock::now();
+			logger::info("intro: setup done - {}, survival {}", (Save::Setup() & Save::kSetupImperial) ? "Imperial" : "Stormcloak", survival ? "on" : "off");
+		}
+
 		// Survival Mode stays off in The Curse of Alduin: hunger/cold/fatigue fight the nights' own pacing, and its attribute
 		// penalties (it keeps them in Variable02-04) fought the mod's old save values. When the game has it on (the
 		// Gameplay setting, or a new game's prompt) we switch it off the way its own toggle does.
@@ -119,6 +166,7 @@ namespace bo3z
 				return;
 			}
 			last = std::chrono::steady_clock::now();
+			if (Save::Setup() & Save::kSetupSurvival) return;   // (Noah, 2026-11-23: chosen for this character - Skyrim's own, as it is)
 			auto* enabled = RE::TESForm::LookupByEditorID<RE::TESGlobal>("Survival_ModeEnabled");
 			if (!enabled || enabled->value < 0.5f) {
 				return;
@@ -185,8 +233,50 @@ namespace bo3z
 			}
 		}
 		bool NewGameThisSession() { return g_moved; }
+		bool SetupOpen() { return g_setupOpen.load(); }
+		int  SetupStep() { return g_setupStep.load(); }
+		int  SetupSel() { return g_setupSel.load(); }
+		std::atomic<bool> g_setupOver{ false };   // (the mouse is on a card: a click chooses it)
+		void SetupHover(int a_i, bool a_moved)
+		{
+			g_setupOver = a_i >= 0 && a_i < 2;
+			if (g_setupOpen && a_moved && g_setupOver) g_setupSel = a_i;
+		}
+		bool SetupEats(RE::InputEvent* a_e)
+		{
+			if (!a_e || !a_e->AsButtonEvent()) return false;
+			return g_setupOpen || std::chrono::steady_clock::now() - g_setupClosed < std::chrono::milliseconds(350);
+		}
+		bool SetupButton(const RE::ButtonEvent* a_b)
+		{
+			if (!g_setupOpen || !a_b) return false;
+			if (!a_b->IsDown()) return true;
+			const auto code = a_b->GetIDCode();
+			const int  sel = g_setupSel;
+			if (a_b->GetDevice() == RE::INPUT_DEVICE::kKeyboard) {
+				if (code == 0x02 || code == 0x03) { g_setupSel = static_cast<int>(code) - 0x02; SetupChoose(g_setupSel); return true; }  // 1-2
+				if (code == 0xCB || code == 0x1E || code == 0xCD || code == 0x20) g_setupSel = 1 - sel;   // Left / A, Right / D
+				else if (code == 0x1C || code == 0x9C || code == 0x12) SetupChoose(sel);   // Enter / E
+				return true;
+			}
+			if (a_b->GetDevice() == RE::INPUT_DEVICE::kGamepad) {
+				if (code == 0x0004 || code == 0x0008) g_setupSel = 1 - sel;   // D-pad left / right
+				else if (code == 0x1000) SetupChoose(sel);   // A
+				return true;
+			}
+			if (a_b->GetDevice() == RE::INPUT_DEVICE::kMouse && code == 0) {
+				if (g_setupOver) SetupChoose(sel);
+				return true;
+			}
+			return true;
+		}
+		bool CreatorAtRiverwood()
+		{
+			auto* ui = RE::UI::GetSingleton();
+			return g_raceAfterSkip == 2 && ui && ui->IsMenuOpen(RE::RaceSexMenu::MENU_NAME);
+		}
 		bool FreshGame() { auto* p = RE::PlayerCharacter::GetSingleton(); return p && FreshQuickstartGame(p); }
-		void OnMainMenu() { g_freshGame = false, g_moved = false, g_settle = 0, g_skip = false, g_skipRace = false, g_raceSeen = false, reachedHelgen = false, g_creatorDeferred = false, g_skipHold = 0, g_skipHeld = false, g_raceAfterSkip = 0; }  // the BO3 crew picker is gone: you play your own character
+		void OnMainMenu() { g_freshGame = false, g_moved = false, g_settle = 0, g_skip = false, g_skipRace = false, g_raceSeen = false, reachedHelgen = false, g_creatorDeferred = false, g_skipHold = 0, g_skipHeld = false, g_raceAfterSkip = 0, g_setupOpen = false; }  // the BO3 crew picker is gone: you play your own character
 
 		void Tick()
 		{
@@ -477,9 +567,17 @@ namespace bo3z
 				if (g_raceAfterSkip == 2 && (ui->IsMenuOpen(RE::RaceSexMenu::MENU_NAME) || !g_raceSeen) && Classes::Get() < 0) return;
 				g_raceAfterSkip = 0;  // (made: on to the class)
 			}
+			// the setup: once the creator at Riverwood is done and the screen is clear
+			if (!g_setupOpen && !(Save::Setup() & Save::kSetupDone) && (g_raceSeen || !g_moved) && g_raceAfterSkip == 0 && Save::Flag(Save::kFlagMoved) && !Save::Flag(Save::kFlagStarted) &&
+				FreshQuickstartGame(player) && player->Is3DLoaded() && !ui->IsMenuOpen(RE::RaceSexMenu::MENU_NAME) && !ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME) && !Hud::IntroBusy()) {
+				g_setupOpen = true, g_setupStep = 0, g_setupSel = 0;
+				logger::info("intro: the new character's setup - the side, then survival");
+			}
+			if (g_setupOpen) return;
 			// (Noah: "the class pop-up came at the end of the cave, not when I left it") only out under the sky
 			const bool outside = player->GetParentCell() && !player->GetParentCell()->IsInteriorCell() && !ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME);
-			if (Save::Flag(Save::kFlagMoved) && Forms::IntroDone() && !Save::Flag(Save::kFlagStarted) && outside) {
+			const bool setupWaits = !(Save::Setup() & Save::kSetupDone) && FreshQuickstartGame(player);   // (a new character's choices come first)
+			if (Save::Flag(Save::kFlagMoved) && Forms::IntroDone() && !Save::Flag(Save::kFlagStarted) && outside && !setupWaits) {
 				// (Noah: "I should start with nothing but the Curse of Alduin lore book, and what comes with my race") whatever
 				// the quick start and other mods put in the pack goes (quest items and the underwear stay); the lore book
 				// follows at once (src/Curse.cpp), the race's powers are spells and stay

@@ -65,6 +65,9 @@ namespace bo3z
 		int  StaminaBonus();  // extra stamina already given to this character
 		void SetStaminaBonus(int a_n);  // blessings stack: how many of this one
 		void SetPerkStacks(int a_perk, int a_n);
+		int  Setup();                    // (Noah, 2026-11-23) a new character's choices after the creator: the bits below
+		void SetSetup(int a_bits);
+		inline constexpr int kSetupDone = 1, kSetupImperial = 2, kSetupSurvival = 4;
 		int  DragonBond();               // the glider's dragon: 0 none, 1-3 the Echo Altar's bonds (kept for the whole game)
 		void SetDragonBond(int a_bond);
 		inline constexpr int kFlagInit = 0, kFlagReserveV2 = 4, kFlagStarted = 5, kFlagMoved = 11, kPerkShift = 14, kFlagPerksV2 = 23, kOldPerkBits = 9;  // bits: init | (the old crew 1-3) | (old perks 4-10) | moved 11 | (the old weapon slot 12-13) | perks 14-22 | v2 23
@@ -736,6 +739,15 @@ namespace bo3z
 		void Tick();
 		bool OnButton(const RE::ButtonEvent* a_event);  // true = consumed
 		void OnRaceMenu(bool a_opening);  // the character creator opened or closed (whoever opened it)
+		// (Noah, 2026-11-23) after the creator, a new character chooses who brought them out of Helgen (Ralof's Stormcloaks or
+		// Hadvar's Legion) and whether Skyrim's Survival Mode is on
+		bool SetupOpen();
+		int  SetupStep();   // 0 the side, 1 survival
+		int  SetupSel();
+		void SetupHover(int a_i, bool a_moved);
+		bool SetupButton(const RE::ButtonEvent* a_b);   // true = consumed
+		bool SetupEats(RE::InputEvent* a_e);
+		bool CreatorAtRiverwood();   // the creator is up at Riverwood's gate (the new game's own, after the skip)
 	}
 
 	namespace Gun
