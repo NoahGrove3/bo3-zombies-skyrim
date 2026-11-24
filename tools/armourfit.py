@@ -141,6 +141,19 @@ def fit(armour, sex, out, role='body', tri=None, textures=None, glows=None, clea
         # Either swells the body there (the swelling spread a few units round, smoothly, far enough to reach the corners of the
         # triangle over it), and every layer of cloth over a spot of skin moves out by that spot's swelling - a tabard over a
         # tunic as far as the tunic, so their order holds
+        # (2026-11-23, Test Night: "the nipple pokes through the bra at Weight 0") the hug comes first and the
+        # nothing-through-it rounds after it, so the skin's sharper spots (3BA's nipples) still lift the cloth over them
+        if hug is not None:
+            # (Noah, 2026-11-23: "the bra looks strange, like there's too much of a gap from the skin" - and its size followed
+            # the weight slider while his body doesn't) a skin-tight piece laid back onto the new body: each vertex near the
+            # skin set at the offset it had on Skyrim's own body (h0), held between hug[0] and hug[1] - so it follows the
+            # body the player has at each weight, never floating off it
+            Qh, trh, bch, dh, _ = closest_tri(P, TV, TF)
+            nh = (TN[TF[trh]] * bch[..., None]).sum(1); nh /= np.linalg.norm(nh, axis=1, keepdims=True) + 1e-9
+            near = dh < 6.0
+            want = np.clip(h0, hug[0], hug[1])
+            P = np.where(near[:, None], Qh + nh * want[:, None], P)
+            print(f'  {name}: hugged {int(near.sum())} of {len(P)} to the skin ({hug[0]}..{hug[1]})', file=sys.stderr)
         grown = np.zeros(len(TV))
         for it in range(8):
             Q, tri, bc, dist, within = closest_tri(TV, P, F)
@@ -171,17 +184,6 @@ def fit(armour, sex, out, role='body', tri=None, textures=None, glows=None, clea
             dk, jk = tt.query(P, k=8)
             wk = 1 / np.maximum(dk, 1.0); wk /= wk.sum(1, keepdims=True)
             P = P + (vec[jk] * wk[..., None]).sum(1)
-        if hug is not None:
-            # (Noah, 2026-11-23: "the bra looks strange, like there's too much of a gap from the skin" - and its size followed
-            # the weight slider while his body doesn't) a skin-tight piece laid back onto the new body: each vertex near the
-            # skin set at the offset it had on Skyrim's own body (h0), held between hug[0] and hug[1] - so it follows the
-            # body the player has at each weight, never floating off it
-            Qh, trh, bch, dh, _ = closest_tri(P, TV, TF)
-            nh = (TN[TF[trh]] * bch[..., None]).sum(1); nh /= np.linalg.norm(nh, axis=1, keepdims=True) + 1e-9
-            near = dh < 6.0
-            want = np.clip(h0, hug[0], hug[1])
-            P = np.where(near[:, None], Qh + nh * want[:, None], P)
-            print(f'  {name}: hugged {int(near.sum())} of {len(P)} to the skin ({hug[0]}..{hug[1]})', file=sys.stderr)
         print(f'  {name}: {it + 1} rounds, last need {need.max():.2f}', file=sys.stderr)
         f = WORK / f'{pathlib.Path(out).stem}_{len(moved)}.f32'
         f.write_bytes(P.astype('<f4').tobytes())

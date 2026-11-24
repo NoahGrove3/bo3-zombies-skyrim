@@ -3759,6 +3759,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		// is put into the main menu's own list just under LOAD - Edge UI draws it like the rest - and taking it (A / Enter /
 		// a click while it is the one selected) opens the party window. False while the list can't be found.
 		std::atomic<int> g_mainAccept{ 0 };
+		std::chrono::steady_clock::time_point g_menuNewAt{};   // when NEW was last the main list's choice
+		std::chrono::steady_clock::time_point g_menuNewPressed{};   // when NEW was pressed (the menu may take a while to close after)
 		bool PartyInMainList(int a_clicks)
 		{
 			// (Noah: "when I'm at the main menu, I can't select continue, new, or any of the buttons with my mouse") a test
@@ -3853,6 +3855,20 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			const int pressed = g_mainAccept.exchange(0) + a_clicks;
 			RE::GFxValue sel;
+			// (Noah, 2026-11-23: the new game's loading screen still never came up - Edge UI's own list was pressed, by pad or keys,
+			// and our drawn list never saw it) the entry under the press: NEW starts the cover
+			if (pressed > 0 && !g_partyOpen && list.GetMember("selectedIndex", &sel) && sel.IsNumber()) {
+				RE::GFxValue entries, e, t;
+				list.GetMember("entryList", &entries);
+				const int si = static_cast<int>(sel.GetNumber());
+				if (entries.IsArray() && si >= 0 && static_cast<std::uint32_t>(si) < entries.GetArraySize() && entries.GetElement(si, &e) && e.GetMember("text", &t) && t.IsString()) {
+					std::string lo = t.GetString();
+					if (!lo.empty() && lo[0] == '$') lo = lo.substr(1);
+					std::transform(lo.begin(), lo.end(), lo.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+					if (lo == "new" || lo.rfind("new ", 0) == 0) g_menuNewAt = g_menuNewPressed = std::chrono::steady_clock::now();
+					logger::info("menu: '{}' pressed (Skyrim's list)", t.GetString());
+				}
+			}
 			if (pressed > 0 && !g_partyOpen && list.GetMember("selectedIndex", &sel) && sel.IsNumber() && static_cast<int>(sel.GetNumber()) == ours) {
 				g_partyOpen = true;
 				g_partyFocus = 0;
@@ -4103,8 +4119,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			});
 		}
 
-		std::chrono::steady_clock::time_point g_menuNewAt{};   // when NEW was last the main list's choice
-		std::chrono::steady_clock::time_point g_menuNewPressed{};   // when NEW was pressed (the menu may take a while to close after)
 		std::vector<MenuEntry> ReadMainList(RE::GFxMovieView** a_movie = nullptr)
 		{
 			std::vector<MenuEntry> out;
