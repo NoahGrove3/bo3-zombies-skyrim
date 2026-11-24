@@ -57,6 +57,9 @@ def build(key):
     r = subprocess.run(['/home/claude/tools/fxwrite', str(jf)], capture_output=True, text=True)
     print(key, r.stdout.strip()[-120:], r.stderr.strip()[-300:])
     if r.returncode: raise SystemExit('fxwrite failed')
+    # (2026-11-24: the art stood on the floor at the feet) hung on the weapon in the hand, as Vibrant Weapons' arts are:
+    # the root's AttachT names the WEAPON node (tools/modelconv/addattach.cpp)
+    subprocess.run(['/home/claude/tools/addattach', str(MESH / f'blade_{key}.nif'), 'WEAPON'], check=True)
 
 
 if __name__ == '__main__':
