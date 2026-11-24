@@ -1,4 +1,4 @@
-#include "BO3Z.h"
+#include "CurseOfAlduin.h"
 
 // (Noah: "something like the mystery box from call of duty zombies" - the Tablet of Mysteries; docs/TABLET_OF_MYSTERIES.md)
 // (Noah, 2026-11-11: "accessible from night 1 ... only appears at night time ... a spawning in and leaving animation ... a beacon
@@ -18,7 +18,7 @@
 // the skull comes instead: the essence back, and the tablet moves to another freed city.
 // Saved with the altars' rolls (Shops::RollState): the city, the rolls since it last moved, tonight's price steps, the
 // weapon you carry and its uses.
-namespace bo3z::Tablet
+namespace coa::Tablet
 {
 	namespace
 	{

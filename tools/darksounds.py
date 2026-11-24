@@ -107,9 +107,9 @@ for k, v in M.items():
     files, shift, layer = v
     r = rows.get(k)
     if not r:
-        r = {'id': k, 'plugin': 'CurseOfAlduin.esp', 'localId': 'auto', 'editorId': 'UN_' + k, 'file': '', 'space': '3d' if k in ('wailer_scream', 'bloater_burst', 'grab') else '2d', 'verify': []}
+        r = {'id': k, 'plugin': 'CurseOfAlduin.esp', 'localId': 'auto', 'editorId': 'COA_' + k, 'file': '', 'space': '3d' if k in ('wailer_scream', 'bloater_burst', 'grab') else '2d', 'verify': []}
         S['rows'].append(r); rows[k] = r
-    r.update(plugin='CurseOfAlduin.esp', localId='auto', editorId='UN_' + k, file=files[0], files=files, shift=shift, layer=layer or 'none')
+    r.update(plugin='CurseOfAlduin.esp', localId='auto', editorId='COA_' + k, file=files[0], files=files, shift=shift, layer=layer or 'none')
 for c in ('files', 'shift', 'layer'):
     if c not in S['columns']: S['columns'].append(c)
 for r in S['rows']:

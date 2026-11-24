@@ -1,4 +1,4 @@
-#include "BO3Z.h"
+#include "CurseOfAlduin.h"
 
 // (Noah: the Curse synced with the main story) Alduin's return at Helgen starts the Curse and his fall ends it; each
 // main-quest step opens the next part of it:
@@ -13,7 +13,7 @@
 // Alduin's Herald, hunts on the Fog Nights once the three dragons wake; the wonders' Legendary form comes with their fall.
 // and the story's set pieces are never interrupted: no night begins while you're in one (the Watchtower's dragon,
 // Dragonsreach's trap, the Throat of the World, the Peace Council, Sovngarde).
-namespace bo3z::Story
+namespace coa::Story
 {
 	namespace
 	{

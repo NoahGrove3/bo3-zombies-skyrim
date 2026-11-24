@@ -7,7 +7,7 @@
 #include <string_view>
 #include <psapi.h>
 
-namespace bo3z::Perf
+namespace coa::Perf
 {
 	enum Slot { kDirector, kGun, kShops, kClasses, kPerks, kParty, kCompass, kLoot, kMovement, kAudio, kIntro, kSave, kAnim, kHud, kSlots };
 	inline constexpr std::array<std::string_view, kSlots> kNames{ "director", "gun", "shops", "classes", "perks", "party", "compass", "loot", "movement", "audio", "intro", "save", "anim", "hud" };

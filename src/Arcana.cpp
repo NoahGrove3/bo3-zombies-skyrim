@@ -1,4 +1,4 @@
-#include "BO3Z.h"
+#include "CurseOfAlduin.h"
 #include "CofferSpells.h"
 
 // The Coffer's spells (sheets/coffer_spells.json, src/CofferSpells.h, tools/spellpool.py): 200 attack spells (Destruction first) from the
@@ -8,7 +8,7 @@
 // Two changes to every one of them, made when the game's data is loaded:
 //   - its magicka cost is the pool's (a new character can cast it; the strongest still take most of a bar)
 //   - a fire-and-forget spell has no charge time (no wind-up before a regular cast)
-namespace bo3z::Arcana
+namespace coa::Arcana
 {
 	namespace
 	{

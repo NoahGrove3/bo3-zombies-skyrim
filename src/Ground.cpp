@@ -1,4 +1,4 @@
-#include "BO3Z.h"
+#include "CurseOfAlduin.h"
 
 // (Noah, 2026-11-24: "Anything that is floating should be fixed for the whole map so nothing looks broken") trees, plants,
 // shrubs and rocks that Skyrim's own plugins (Update.esm above all, round Riverwood) place well above the ground they stand
@@ -8,7 +8,7 @@
 // any of its foot for 30 units or more is moved, and only by the least of those gaps (it comes to rest on its highest
 // support). Water plants over water, markers, effects, ivy, clutter and anything made by people (signs, lanterns, banners,
 // buildings) are never touched. Each ref is looked at once a game session; a move is kept in the save like any other.
-namespace bo3z::Ground
+namespace coa::Ground
 {
 	namespace
 	{

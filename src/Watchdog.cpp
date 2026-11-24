@@ -1,10 +1,10 @@
-#include "BO3Z.h"
+#include "CurseOfAlduin.h"
 #include <psapi.h>
 #include <tlhelp32.h>
 
 // The watchdog: if the game stops drawing frames (a hang - after a load, at the main menu), it writes where the main
 // thread is stuck to the log (module + offset per frame of its stack), so a hang can be traced to the mod behind it.
-namespace bo3z::Watchdog
+namespace coa::Watchdog
 {
 	namespace
 	{

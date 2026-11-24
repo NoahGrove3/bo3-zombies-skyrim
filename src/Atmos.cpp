@@ -1,10 +1,10 @@
-#include "BO3Z.h"
+#include "CurseOfAlduin.h"
 
 // (Noah: night atmosphere you can feel) the sky's lightning at a wave's start (brighter for a themed wave and the
 // mini-boss's warning) with thunder rolling in after it, and whispers in the dark when you are close to death. The
 // rest of the night's mood is drawn by the HUD from the night's progress (the sky reddening toward the last wave) and
 // laid in the world by the Director (the ground fog thickening). Settings: Effects (reduce flashes, fog strength).
-namespace bo3z::Atmos
+namespace coa::Atmos
 {
 	namespace
 	{

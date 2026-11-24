@@ -1,4 +1,4 @@
-#include "BO3Z.h"
+#include "CurseOfAlduin.h"
 
 // Co-op with Skyrim Together Reborn (first stage, no network of our own yet). CurseOfAlduin.ini next to SkyrimSE.exe:
 //   [Coop]
@@ -6,7 +6,7 @@
 //   Role=client   a friend's game: raises nothing itself; the host's undead count as the night's undead here
 //                 (points, quests, power-up timers stay per player)
 //   Role=solo     (default) as before
-namespace bo3z::Coop
+namespace coa::Coop
 {
 	namespace
 	{

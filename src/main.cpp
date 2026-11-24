@@ -1,4 +1,4 @@
-#include "BO3Z.h"
+#include "CurseOfAlduin.h"
 
 // Loaded two ways, same file:
 //  - as CurseOfAlduin.asi by Ultimate ASI Loader (what Melty installs; no Script Extender on 1.7.104):
@@ -94,22 +94,22 @@ namespace
 	{
 		SetupLog();
 		FitResolution();
-		logger::info("The Curse of Alduin {} loading as .asi", bo3z::kVersion);
+		logger::info("The Curse of Alduin {} loading as .asi", coa::kVersion);
 		for (int i = 0; i < 6000 && !RE::UI::GetSingleton(); ++i) {  // up to 10 minutes
 			if (i % 5 == 0) {
-				bo3z::Audio::SetMenuMusic();  // as soon as the game's settings exist, before the main menu plays
+				coa::Audio::SetMenuMusic();  // as soon as the game's settings exist, before the main menu plays
 			}
 			::Sleep(100);
 		}
-		bo3z::Audio::SetMenuMusic();
+		coa::Audio::SetMenuMusic();
 		if (!RE::UI::GetSingleton()) {
 			logger::error("game UI never came up; not starting");
 			return 0;
 		}
 		logger::info("game UI is up; Skyrim runtime {}", REL::Module::get().version().string());
-		bo3z::Events::InstallMenuWatch();
-		bo3z::Net::PatchTogether();
-		bo3z::Watchdog::Start(false);
+		coa::Events::InstallMenuWatch();
+		coa::Net::PatchTogether();
+		coa::Watchdog::Start(false);
 		return 0;
 	}
 
@@ -152,8 +152,8 @@ BOOL APIENTRY DllMain(HMODULE a_module, DWORD a_reason, LPVOID)
 {
 	if (a_reason == DLL_PROCESS_ATTACH && IsAsi(a_module) && !g_booted.exchange(true) && FirstCopy(a_module)) {
 		::DisableThreadLibraryCalls(a_module);
-		bo3z::PluginList::Ensure();  // before the game reads Plugins.txt
-		bo3z::Display::FitScreen(false);  // (and its screen size, before its window)
+		coa::PluginList::Ensure();  // before the game reads Plugins.txt
+		coa::Display::FitScreen(false);  // (and its screen size, before its window)
 		if (auto h = ::CreateThread(nullptr, 0, BootThread, nullptr, 0, nullptr)) {
 			::CloseHandle(h);
 		}
@@ -167,17 +167,17 @@ SKSEPluginLoad(const SKSE::LoadInterface* a_skse)
 		return false;  // another copy (the .asi, or a build under an older name) is already running
 	}
 	SKSE::Init(a_skse, { .log = false });
-	bo3z::PluginList::Ensure();
+	coa::PluginList::Ensure();
 	SetupLog();
-	bo3z::Display::FitScreen(true);
+	coa::Display::FitScreen(true);
 #ifndef CA_BUILD
 #	define CA_BUILD "local"
 #endif
-	logger::info("The Curse of Alduin {} (build {}) loading as SKSE plugin", bo3z::kVersion, CA_BUILD);
-	bo3z::Save::InstallCoSave();
-	bo3z::Events::InstallMenuWatch();
-	bo3z::Events::InstallLoadGuard();
-	bo3z::Net::PatchTogether();  // (Skyrim Together loads us through SKSE: its menu must learn to follow the party here too)
-	bo3z::Watchdog::Start(true);  // (SKSE loads plugins on the game's main thread)
+	logger::info("The Curse of Alduin {} (build {}) loading as SKSE plugin", coa::kVersion, CA_BUILD);
+	coa::Save::InstallCoSave();
+	coa::Events::InstallMenuWatch();
+	coa::Events::InstallLoadGuard();
+	coa::Net::PatchTogether();  // (Skyrim Together loads us through SKSE: its menu must learn to follow the party here too)
+	coa::Watchdog::Start(true);  // (SKSE loads plugins on the game's main thread)
 	return true;
 }

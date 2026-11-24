@@ -3,7 +3,7 @@
 #include <array>
 #include <cstdint>
 
-namespace bo3z::coffer
+namespace coa::coffer
 {
 	enum Element : std::uint8_t { kFire, kFrost, kShock, kPoison, kCorrosion, kSun, kBlood, kArcane, kElements };
 	inline constexpr const char* kElementName[kElements] = { "fire", "frost", "shock", "poison", "corrosion", "sun", "blood", "arcane" };

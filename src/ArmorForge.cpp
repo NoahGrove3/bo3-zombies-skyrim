@@ -10,12 +10,12 @@
 //
 // Written into Data\Meshes\CurseOfAlduin\classarmor\<class>\ and Data\Textures\UNarmor_<A-D>\; done again only when the
 // recipe's version changes or a file is missing.
-#include "BO3Z.h"
+#include "CurseOfAlduin.h"
 
 #include <DirectXTex.h>
 #include <fstream>
 
-namespace bo3z::ArmorForge
+namespace coa::ArmorForge
 {
 	namespace
 	{

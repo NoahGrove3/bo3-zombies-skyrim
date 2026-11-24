@@ -3,11 +3,11 @@
 // cursor, clicks ignored. Now whichever was used last wins - move the mouse or press a key and the game is in keyboard
 // and mouse mode (the cursor back, the clicks taken); touch the controller and it's back in controller mode. The
 // controller is watched directly (XInput), since Skyrim stops reading it while it is switched off.
-#include "BO3Z.h"
+#include "CurseOfAlduin.h"
 
 #include <Xinput.h>
 
-namespace bo3z::InputSwitch
+namespace coa::InputSwitch
 {
 	namespace
 	{

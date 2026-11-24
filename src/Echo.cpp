@@ -9,12 +9,12 @@
 // the curse (no more of its nights) and the Reliquary becomes the Hall of the Awakened.
 // A freed city's sky also clears at night.
 //
-// Saved with the game: UN_EchoWords (a bit per words row, and the story's flags); the wonders themselves in the
+// Saved with the game: COA_EchoWords (a bit per words row, and the story's flags); the wonders themselves in the
 // classes' co-save (src/Classes.cpp).
-#include "BO3Z.h"
+#include "CurseOfAlduin.h"
 #include "CofferSpells.h"
 
-namespace bo3z
+namespace coa
 {
 	namespace
 	{
@@ -154,7 +154,7 @@ namespace bo3z
 		}
 
 
-		// ---- the story's state (UN_EchoWords): bit per words row (0-2 the three dragons, 3 the Echo of Alduin this cycle),
+		// ---- the story's state (COA_EchoWords): bit per words row (0-2 the three dragons, 3 the Echo of Alduin this cycle),
 		// and its flags
 		constexpr int kWordCount = static_cast<int>(gen::kWords.size());
 		constexpr int kDragons = 3, kEchoRow = 3;

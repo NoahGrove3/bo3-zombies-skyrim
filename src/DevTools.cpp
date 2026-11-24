@@ -1,4 +1,4 @@
-#include "BO3Z.h"
+#include "CurseOfAlduin.h"
 
 #include <ScreenGrab.h>
 #include <wincodec.h>
@@ -14,7 +14,7 @@
 //                 frames are made into a video outside the game (Noah: recordings of the tests to review)
 //   hour <h>      set Skyrim's clock to hour h (0-24)
 //   state         write round, points, gun and player position to the log
-namespace bo3z
+namespace coa
 {
 	static std::vector<RE::SpellItem*>& DevAddedSpells() { static std::vector<RE::SpellItem*> v; return v; }   // (arequip: the spells it taught, for arclean)
 	namespace
@@ -543,7 +543,7 @@ namespace bo3z
 				std::string id;
 				in >> id;
 				for (std::size_t i = 0; i < gen::kSounds.size(); ++i) {
-					if (gen::kSounds[i].editorId == "UN_" + id) {
+					if (gen::kSounds[i].editorId == "COA_" + id) {
 						Audio::Ui(static_cast<gen::Sound>(i));
 						logger::info("dev: sound {}", id);
 					}

@@ -1,4 +1,4 @@
-#include "BO3Z.h"
+#include "CurseOfAlduin.h"
 
 // The Curse of Alduin audio (Spec 12): every sound the mod plays goes through here.
 //  - one-shots: 2D (UI, the player's own casts) or 3D (at a reference, following it, or at a point), optionally
@@ -13,7 +13,7 @@
 //    (sMainMenuMusic), Grimmvar's fight and a city freed (our MUSC records).
 // Sound is always local: in co-op each game plays the cues for what it sees (the host's night state arrives
 // over the network, the sounds don't).
-namespace bo3z::Audio
+namespace coa::Audio
 {
 	namespace
 	{

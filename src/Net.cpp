@@ -1,4 +1,4 @@
-#include "BO3Z.h"
+#include "CurseOfAlduin.h"
 
 #include <atomic>
 #include <thread>
@@ -15,7 +15,7 @@
 //   client -> host, once a second: its Curse progress (the larger of the two wins, so anyone's quest work counts)
 //   anyone -> everyone: a power-up taken (the host relays a client's)
 // Everything goes through steam_api64.dll's flat C API, loaded at run time (Skyrim ships it and runs its callbacks).
-namespace bo3z::Relay
+namespace coa::Relay
 {
 	bool          PortInUse(std::uint16_t a_port);
 	bool          OpenClient(std::uint16_t a_port);
@@ -26,7 +26,7 @@ namespace bo3z::Relay
 	void          CloseAll();
 }
 
-namespace bo3z::Net
+namespace coa::Net
 {
 	namespace
 	{
@@ -34,10 +34,10 @@ namespace bo3z::Net
 		constexpr int kChannel = 7;
 		constexpr std::uint8_t kVersion = 3;  // (2: a player's wonder field is the class wonders won, as bits; 3: the power-ups gone from the state)
 		enum : std::uint8_t { kHello = 1, kState = 2, kRetired3 = 3, kCurse = 4, kPlayer = 5, kRevive = 6, kStats = 7, kEgg = 8, kAltar = 9, kClass = 10, kWord = 11, kPriest = 12, kVoice = 13 };
-#ifndef UN_BUILD
-#	define UN_BUILD "dev"
+#ifndef COA_BUILD
+#	define COA_BUILD "dev"
 #endif
-		constexpr char kBuild[8] = UN_BUILD;  // the commit this game was built from (CI): every player must run the same one
+		constexpr char kBuild[8] = COA_BUILD;  // the commit this game was built from (CI): every player must run the same one
 #pragma pack(push, 1)
 		struct Hello { std::uint8_t type, version; char build[8]; };
 		struct PlayerMsg { std::uint8_t type, life; float x, y, z, left; std::int8_t wonder; std::int8_t cls{ -1 }; std::int8_t held{ 0 }; std::uint32_t credit{ 0 }; };  // held: the wonders they carry out of the Reliquary (bits)  // credit: their own trials per city (3 bits a city)  // cls: their class (the party HUD)
@@ -314,7 +314,7 @@ namespace bo3z::Net
 				if (c == '"' || c == '\\') esc += '\\';
 				esc += c;
 			}
-			std::ofstream f(dir / "UI" / "undying_connect.json", std::ios::trunc);
+			std::ofstream f(dir / "UI" / "curseofalduin_connect.json", std::ios::trunc);
 			f << "{\"action\":\"" << a_action << "\",\"host\":\"127.0.0.1\",\"port\":" << g_appPort << ",\"password\":\"" << esc << "\",\"nonce\":\""
 			  << std::chrono::steady_clock::now().time_since_epoch().count() << "\"}";
 			logger::info("net: Skyrim Together told to {}", a_action);
@@ -445,7 +445,7 @@ namespace bo3z::Net
 				const bool got = A.GetAPICallResult(A.ut, g_pendingCreate, &r, sizeof(r), 513, &failed);
 				g_pendingCreate = 0;
 				if (got && !failed && r.result == 1 && r.lobby) {
-					A.SetLobbyData(A.mm, r.lobby, "undying_nights", std::to_string(kVersion).c_str());
+					A.SetLobbyData(A.mm, r.lobby, "curse_of_alduin", std::to_string(kVersion).c_str());
 					A.SetLobbyJoinable(A.mm, r.lobby, true);
 					Entered(r.lobby, true);
 					A.InviteDialog(A.fr, r.lobby);
@@ -583,7 +583,8 @@ namespace bo3z::Net
 	}
 
 	// Once per install: a few lines added to Skyrim Together's menu script (its browser runs with file access on),
-	// so it connects or disconnects when our party says so (UI/undying_connect.json). A backup is kept.
+	// so it connects or disconnects when our party says so (UI/curseofalduin_connect.json). A backup is kept.
+	// (2026-11-24: the mod's old name gone from its files too - an older patch, marked undying-nights, is taken out first)
 	void PatchTogether()
 	{
 		const auto dir = TogetherDir();
@@ -595,15 +596,24 @@ namespace bo3z::Net
 		std::string   text((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
 		in.close();
 		TellTogether("none");  // nothing stale from last time
-		constexpr std::string_view kMark = "/*undying-nights-connect*/";
+		constexpr std::string_view kMark = "/*curse-of-alduin-connect*/";
 		if (text.find(kMark) != std::string::npos) {
 			return;
 		}
 		std::error_code ec;
-		std::filesystem::copy_file(js, dir / "UI" / "main.js.before-undying-nights", std::filesystem::copy_options::skip_existing, ec);
+		if (const auto at = text.find("/*undying-nights-connect*/"); at != std::string::npos) {   // (the older patch, under the mod's old name)
+			const auto from = at > 0 && text[at - 1] == '\n' ? at - 1 : at;
+			const auto end = text.find('\n', at);
+			text.erase(from, end == std::string::npos ? std::string::npos : end - from + (from < at ? 0 : 1));
+			std::ofstream rw(js, std::ios::binary | std::ios::trunc);
+			rw << text;
+			std::filesystem::remove(dir / "UI" / "undying_connect.json", ec);
+		} else {
+			std::filesystem::copy_file(js, dir / "UI" / "main.js.before-curse-of-alduin", std::filesystem::copy_options::skip_existing, ec);
+		}
 		std::ofstream out(js, std::ios::binary | std::ios::app);
 		out << "\n" << kMark
-			<< ";(function(){var last=null;function poll(){try{var x=new XMLHttpRequest();x.open('GET','undying_connect.json?'+Date.now(),true);"
+			<< ";(function(){var last=null;function poll(){try{var x=new XMLHttpRequest();x.open('GET','curseofalduin_connect.json?'+Date.now(),true);"
 			   "x.onload=function(){try{var j=JSON.parse(x.responseText);if(!j||!j.nonce)return;if(last===null){last=j.nonce;return;}if(j.nonce===last)return;last=j.nonce;"
 			   "if(j.action==='connect'){skyrimtogether.connect(j.host,j.port,j.password||'');}else if(j.action==='disconnect'){skyrimtogether.disconnect();}}catch(e){}};"
 			   "x.send();}catch(e){}}setInterval(poll,1500);})();\n";

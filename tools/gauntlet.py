@@ -12,7 +12,7 @@ the lens's swirl; and motes of the six colours circling the wrist.
 Hung by src/WonderProps.inl (TickGauntlet) on the hand bone that holds it - "NPC R Hand [RHnd]" or "NPC L Hand [LHnd]" -
 in first person and third. The model is in that bone's own frame (read from Skyrim's 1stpersonmalehands_1.nif: fingers
 up +Z, the back of the hand +Y, the thumb's side +X on the right hand, -X on the left; tools/data/gauntlet_fit.json holds
-the hand's measured cross-sections the glove is fitted over). The weapon in the hand (UN_Flask_philosopher) shows
+the hand's measured cross-sections the glove is fitted over). The weapon in the hand (COA_Flask_philosopher) shows
 gauntlet_hold.nif: nothing visible.
 
     python3 tools/gauntlet.py [--preview <png>]
@@ -993,7 +993,7 @@ def build_model(mirror, tex):
 
 
 def build_hold():
-    """the weapon's own model (UN_Flask_philosopher's MODL and its first-person STAT): one tiny clear card - the glove is
+    """the weapon's own model (COA_Flask_philosopher's MODL and its first-person STAT): one tiny clear card - the glove is
     hung on the hand bone instead (src/WonderProps.inl)"""
     nif = MESHDIR / 'gauntlet_hold.nif'
     L = [f'out {nif}', f'shape Hold tex={FX["glow"]} color=0,0,0,0 scale=0 blend=add',

@@ -1,4 +1,4 @@
-#include "BO3Z.h"
+#include "CurseOfAlduin.h"
 #include "CofferSpells.h"
 
 // The four classes (Noah, the classes overhaul): Summoner, Destruction, Ranger, Spellsword. A new character picks one
@@ -7,7 +7,7 @@
 // and match") everything you carry - weapons, armour, spells - stays with you; a class's own powers (the horn, the
 // Mutagen Staff, the flasks) answer only to that class. The class you take up gets its kit the first time.
 // Co-save 'CLAS': [class+1] then, per class, [kit given][n] and n x [spell index, level].
-namespace bo3z::Classes
+namespace coa::Classes
 {
 	namespace
 	{
@@ -329,7 +329,7 @@ namespace bo3z::Classes
 			}
 			if (!a_make) return nullptr;
 			if (!base) {
-				logger::warn("classes: the class chest (UN_ClassChest) not found - {}'s things held in the save instead", Name(a_cls));
+				logger::warn("classes: the class chest (COA_ClassChest) not found - {}'s things held in the save instead", Name(a_cls));
 				return nullptr;
 			}
 			auto ref = p->PlaceObjectAtMe(base, true);
@@ -4727,11 +4727,11 @@ namespace bo3z::Classes
 				for (auto* eye : { le, re }) {
 					for (int i = static_cast<int>(eye->GetChildren().size()) - 1; i >= 0; --i) {
 						auto& ch = eye->GetChildren()[i];
-						if (ch && ch->name == "UN_EyeFlame") eye->DetachChildAt(i);
+						if (ch && ch->name == "COA_EyeFlame") eye->DetachChildAt(i);
 					}
 					auto fl = Gun::LoadModel("CurseOfAlduin\\fx\\eyeflame_blue.nif");
 					if (!fl) return;
-					fl->name = "UN_EyeFlame";
+					fl->name = "COA_EyeFlame";
 					fl->local.translate = { g_eye.z * side, g_eye.x, g_eye.y };
 					for (int r = 0; r < 3; ++r) for (int q = 0; q < 3; ++q) fl->local.rotate.entry[r][q] = r == q ? 1.0f : 0.0f;
 					fl->local.scale = 0.75f;
@@ -4748,7 +4748,7 @@ namespace bo3z::Classes
 			if (!head) { logger::warn("summoner: no head bone found on {:08X} - no eye flames", a_c ? a_c->GetFormID() : 0); return; }
 			for (int i = static_cast<int>(head->GetChildren().size()) - 1; i >= 0; --i) {   // (flames hung before - a retune)
 				auto& ch = head->GetChildren()[i];
-				if (ch && ch->name == "UN_EyeFlame") head->DetachChildAt(i);
+				if (ch && ch->name == "COA_EyeFlame") head->DetachChildAt(i);
 			}
 			const float z = a_c->GetAngleZ(), sc = a_c->GetScale();
 			const RE::NiPoint3 fwd{ std::sin(z), std::cos(z), 0.0f }, right{ std::cos(z), -std::sin(z), 0.0f }, up{ 0.0f, 0.0f, 1.0f };
@@ -4757,7 +4757,7 @@ namespace bo3z::Classes
 				auto fl = Gun::LoadModel("CurseOfAlduin\\fx\\eyeflame_blue.nif");
 				if (!fl) return;
 				const RE::NiPoint3 w = head->world.translate + (fwd * g_eye.x + up * g_eye.y + right * (g_eye.z * side)) * sc;
-				fl->name = "UN_EyeFlame";
+				fl->name = "COA_EyeFlame";
 				fl->local.translate = (inv * (w - head->world.translate)) / std::max(0.01f, head->world.scale);
 				fl->local.rotate = inv;
 				fl->local.scale = 1.0f;

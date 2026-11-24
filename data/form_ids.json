@@ -1,5 +1,5 @@
 {
- "about": "Frozen form IDs in BO3Zombies.esp. Never change or reuse a number: saves refer to them. New things get the next free id.",
+ "about": "Frozen form IDs in CurseOfAlduin.esp (once BO3Zombies.esp). Never change or reuse a number: saves refer to them. New things get the next free id.",
  "ids": {
   "MGEF:trollshide": "0x800",
   "MGEF:quicksilver": "0x801",

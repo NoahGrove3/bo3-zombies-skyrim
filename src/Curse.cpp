@@ -1,4 +1,4 @@
-#include "BO3Z.h"
+#include "CurseOfAlduin.h"
 
 // The Curse of Alduin (sheet: curse). At Helgen, Alduin shouted SLEN TIID VO (his raising shout) into the earth and every barrow in
 // Skyrim answered; the Echo Altars the Tongues raised in every city have woken only half. (Noah, 2026-11-23: the trials remade to
@@ -14,7 +14,7 @@
 // difficulty (Novice..Legendary). Progress: one global per city, 5000000 + doneBits*100000 + active*10000 + progress (active 0
 // none, 1-4 a trial, 6 the Dragon Priest), 9000000 freed; a value from the old trials (1000000..4999999) starts the city fresh.
 // Every step only grows the value, so the party's sync (the biggest wins) carries it.
-namespace bo3z
+namespace coa
 {
 	namespace
 	{
@@ -1252,7 +1252,7 @@ namespace bo3z
 		{
 			for (int t = 0; t < static_cast<int>(gen::kCurseCities.size()); ++t) {
 				SetValue(t, kBase);
-				Gun::Console("resetquest UN_Rites_" + std::string(gen::kTowns[t]));
+				Gun::Console("resetquest COA_Rites_" + std::string(gen::kTowns[t]));
 			}
 			Save::Set(gen::kAV_round, 0);
 			g_mine.fill(0);
@@ -1266,7 +1266,7 @@ namespace bo3z
 				if (v > 0 && v < kOldBase) {  // (the four rites: under the old trials' values)
 					SetValue(t, v / 1000 >= 4 ? kFreedValue : kBase);
 					if (v / 1000 < 4) {
-						Gun::Console("resetquest UN_Rites_" + std::string(gen::kTowns[t]));
+						Gun::Console("resetquest COA_Rites_" + std::string(gen::kTowns[t]));
 					}
 				}
 			}
@@ -1293,7 +1293,7 @@ namespace bo3z
 				if (!q) {
 					continue;
 				}
-				const std::string edid = "UN_Rites_" + std::string(gen::kTowns[t]);
+				const std::string edid = "COA_Rites_" + std::string(gen::kTowns[t]);
 				const St  s = Decode(Value(t));
 				const int v = s.freed ? kFreedValue : Encode(St{ false, s.done, s.active, 0 });  // (its state, not each kill or second: no churn)
 				if (!q->IsEnabled() && !q->IsCompleted()) {
@@ -1402,12 +1402,12 @@ namespace bo3z
 							// (Noah, 2026-11-23: "start fresh") a city part-way through the old trials begins the new ones
 							SetValue(t, kBase);
 							if (t < 16) g_mine[t] = 0;
-							Gun::Console("resetquest UN_Rites_" + std::string(gen::kTowns[t]));
+							Gun::Console("resetquest COA_Rites_" + std::string(gen::kTowns[t]));
 							logger::info("curse: {} begins the new trials (it was part-way through the old ones)", gen::kTowns[t]);
 						} else if (v < kOldBase) {
 							SetValue(t, v / 1000 >= 10 ? kFreedValue : kBase);
 							if (v > 0 && v / 1000 < 10) {
-								Gun::Console("resetquest UN_Rites_" + std::string(gen::kTowns[t]));
+								Gun::Console("resetquest COA_Rites_" + std::string(gen::kTowns[t]));
 								logger::info("curse: {} moved from the rites to the trials", gen::kTowns[t]);
 							}
 						}

@@ -1,4 +1,4 @@
-#include "BO3Z.h"
+#include "CurseOfAlduin.h"
 #include "CofferSpells.h"
 #include <sstream>
 
@@ -7,7 +7,7 @@
 // the attack button; this file does the shots: hitscan from the camera with spread, pellets, bursts, element bolts
 // and each wand's ability. Wands never run dry; tomes and grimoires spend magicka per shot. Two slots, three with
 // Mammoth Back Porter.
-namespace bo3z
+namespace coa
 {
 	namespace
 	{
@@ -2993,7 +2993,7 @@ namespace bo3z
 		// (Noah: every spell from my mods that imbues a weapon or does direct damage, to choose the Echo Altar's from)
 		// every castable spell of a mod (not the base game's own) with a damaging effect on health, or one that imbues a
 		// weapon; each named for its element first ("Fire: ...") so the Magic menu lists them by element. The names are
-		// only changed while the test kit is on (UN_TestKit), and again after each load.
+		// only changed while the test kit is on (COA_TestKit), and again after each load.
 		std::string ElementOfSpell(RE::SpellItem* a_sp)
 		{
 			auto has = [](RE::EffectSetting* m, RE::FormID kw) {
@@ -4395,7 +4395,7 @@ namespace bo3z
 
 }
 
-namespace bo3z::Difficulty
+namespace coa::Difficulty
 {
 	int Level()
 	{

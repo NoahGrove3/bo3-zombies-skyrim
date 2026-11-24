@@ -1,8 +1,8 @@
-#include "BO3Z.h"
+#include "CurseOfAlduin.h"
 
 // Brews (sheet: perks). Bought at the Echo Altar for a fixed price, one of each, up to nine at once; (Noah: "permanent
 // even through death") never lost in death; any can be refunded at the altar for half its price. Effects live in code.
-namespace bo3z
+namespace coa
 {
 	namespace
 	{

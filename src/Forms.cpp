@@ -1,7 +1,7 @@
 #include <shlobj.h>
-#include "BO3Z.h"
+#include "CurseOfAlduin.h"
 
-namespace bo3z
+namespace coa
 {
 	namespace
 	{

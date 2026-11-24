@@ -1,4 +1,4 @@
-#include "BO3Z.h"
+#include "CurseOfAlduin.h"
 #include "CofferSpells.h"
 
 // (Noah, the altar rework) "each class has its set starting gear that can be scaled as the player progresses through the
@@ -6,7 +6,7 @@
 // gated by the cities freed and paid for in Cursed Essence; every upgrade bought adds a little armour. Co-op: each class
 // lends the party an aura.
 // Co-save 'KIT1': per class its owned items, the tiers kept here (blades, flasks, armour) and its upgrades bought.
-namespace bo3z::Kit
+namespace coa::Kit
 {
 	namespace
 	{

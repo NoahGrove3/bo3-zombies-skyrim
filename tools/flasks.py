@@ -1,5 +1,5 @@
 """(Noah: the Alchemist) the Alchemist's thrown bomb flasks: the projectile (PROJ, Missile) models src/Classes.cpp ThrowFlask
-lobs (tools/gen_esp.py UN_FlaskProj_<el>). Each a round-bellied glass flask modelled here from scratch (no one else's mesh):
+lobs (tools/gen_esp.py COA_FlaskProj_<el>). Each a round-bellied glass flask modelled here from scratch (no one else's mesh):
 a single-shell glass belly and neck (alpha blend, lit, glossy), the element's liquid glowing inside (glow map: it reads at
 night), a cork stopper, and a cloth rag knotted round the neck (fire, poison, sun, blood) or a copper wire coil (frost,
 shock). The fire flask's rag runs up through the cork as a wick and burns. The Philosopher's Flask, the class's wonder, is

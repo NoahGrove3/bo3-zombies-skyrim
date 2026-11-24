@@ -1,4 +1,4 @@
-#include "BO3Z.h"
+#include "CurseOfAlduin.h"
 
 // (Noah: "one longer Easter egg for each class ... make the wonders harder to obtain") the hidden quests, Black Ops style
 // (sheet: eggs): one per class, waking once six cities are freed, never explained in game - and finishing it is the
@@ -11,7 +11,7 @@
 //   boss     a named foe (Director's champion, town -10 - city)
 // Progress lives in one global per quest (step x 1000 + progress; 99000 done) and one for its cities (the city of the
 // step under way + 1, and x 100 the city of the step before + 1).
-namespace bo3z::Eggs
+namespace coa::Eggs
 {
 	namespace
 	{
@@ -1740,7 +1740,7 @@ namespace bo3z::Eggs
 	// ---- (Noah, 2026-11-24: "give the echo alter a lot more voice lines that players can interact with like talking with npcs,
 	// having a list of things to say that changes as the mod's story progresses") the altar's Talk: four topics, each a list of
 	// what you can ask - the list changing with the story (each prompt's gate, tools/altarvo_script.py) - and Felldir's answers,
-	// said one after another with their words in the subtitle line. What you have asked is kept in the save (UN_TalkHeard0-5).
+	// said one after another with their words in the subtitle line. What you have asked is kept in the save (COA_TalkHeard0-5).
 	namespace
 	{
 		constexpr int kTalkCard = 5000;   // (a Talk answer's card: 5000 + its prompt - the row lit while it's said)

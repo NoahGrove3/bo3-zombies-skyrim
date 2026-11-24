@@ -3,9 +3,9 @@
 // EYES & BROWS, HAIR, BODY, SKIN & PAINT, EXPRESSIONS - with the body sliders in sections, and the duplicates and the
 // extras he chose to hide taken out ("hide them and hide the himbo morphs tab"). Nothing in RaceMenu's files changes:
 // its lists are rearranged in the open menu, again whenever it rebuilds them (a race or sex change, a preset).
-#include "BO3Z.h"
+#include "CurseOfAlduin.h"
 
-namespace bo3z::RaceTidy
+namespace coa::RaceTidy
 {
 	namespace
 	{

@@ -1,4 +1,4 @@
-#include "BO3Z.h"
+#include "CurseOfAlduin.h"
 #include "Codex.h"
 #include <sstream>
 #include <unordered_set>
@@ -11,7 +11,7 @@
 
 // BO3-style HUD (sheet: hud), drawn with Dear ImGui over Skyrim's frame from a Present hook
 // (the hook itself follows SkyCraft's Overlay.cpp, MIT, chasmlol).
-namespace bo3z
+namespace coa
 {
 	namespace
 	{

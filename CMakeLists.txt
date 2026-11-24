@@ -18,14 +18,14 @@ find_package(imgui CONFIG REQUIRED)
 find_package(directxtk CONFIG REQUIRED)
 find_package(directxtex CONFIG REQUIRED)
 
-file(GLOB BO3Z_SOURCES CONFIGURE_DEPENDS src/*.cpp src/*.h)
+file(GLOB COA_SOURCES CONFIGURE_DEPENDS src/*.cpp src/*.h)
 
 add_commonlibsse_plugin(
 	CurseOfAlduin
 	NAME "CurseOfAlduin"
 	AUTHOR "Noah Grove"
 	USE_ADDRESS_LIBRARY
-	SOURCES ${BO3Z_SOURCES}
+	SOURCES ${COA_SOURCES}
 )
 
 set_target_properties(CurseOfAlduin PROPERTIES OUTPUT_NAME CurseOfAlduin)  # CurseOfAlduin.dll / .asi
@@ -43,8 +43,8 @@ string(SUBSTRING "${CA_BUILD}" 0 7 CA_BUILD)
 target_compile_definitions(CurseOfAlduin PRIVATE CA_BUILD="${CA_BUILD}")
 # the build's commit (CI), so players in a party can see they run the same build (Net.cpp only: no full rebuild)
 if(DEFINED ENV{GITHUB_SHA})
-	string(SUBSTRING "$ENV{GITHUB_SHA}" 0 7 UN_BUILD_SHA)
-	set_source_files_properties(src/Net.cpp PROPERTIES COMPILE_DEFINITIONS "UN_BUILD=\"${UN_BUILD_SHA}\"")
+	string(SUBSTRING "$ENV{GITHUB_SHA}" 0 7 COA_BUILD_SHA)
+	set_source_files_properties(src/Net.cpp PROPERTIES COMPILE_DEFINITIONS "COA_BUILD=\"${COA_BUILD_SHA}\"")
 endif()
 if(MSVC)
 	target_compile_options(CurseOfAlduin PRIVATE /W4 /permissive- /Zc:preprocessor /utf-8 /wd4200)

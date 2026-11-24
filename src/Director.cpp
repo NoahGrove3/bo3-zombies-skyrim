@@ -1,11 +1,11 @@
 #include <set>
 #include <sstream>
-#include "BO3Z.h"
+#include "CurseOfAlduin.h"
 
 // Night rounds (sheet: rounds). Rounds run from nightStartHour to nightEndHour on Skyrim's clock.
 // The round number saved on the player is the last round CLEARED; a round cut off by dawn starts
 // again the next night.
-namespace bo3z
+namespace coa
 {
 	namespace
 	{

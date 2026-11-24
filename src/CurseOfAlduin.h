@@ -2,7 +2,7 @@
 // BO3 Zombies x Skyrim. Every number comes from Generated.h (built from sheets/*.json).
 #include "Generated.h"
 
-namespace bo3z
+namespace coa
 {
 	inline constexpr auto kVersion = "0.2.0";
 
@@ -782,7 +782,7 @@ namespace bo3z
 		void                  TestKitOff();  // dev: the kit off - the spells cost their own again
 		void                  PaintAura(RE::NiAVObject* a_root, const char* a_pal, float a_strength);   // an art painted in one of our colour ramps, dimmed
 		void                  TestKit();  // dev: every mod's attack spell (named by element), every bow and shout, the glider, 150,000 septims
-		bool                  TestKitOn();         // a test character (UN_TestKit): the glider unlocked, its spells named by element
+		bool                  TestKitOn();         // a test character (COA_TestKit): the glider unlocked, its spells named by element
 		void                  TestKitIfFlagged();  // a new character: the kit, if CurseOfAlduin-testkit.flag is beside the log
 		void                  EyeBeam();  // Winterhold's hidden quest: a beam of the Eye's light through the dead ahead
 		bool                  OnButton(const RE::ButtonEvent* a_event);

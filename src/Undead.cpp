@@ -1,4 +1,4 @@
-#include "BO3Z.h"
+#include "CurseOfAlduin.h"
 #include "ClipBlend.h"
 #include "Perf.h"
 
@@ -17,7 +17,7 @@
 //    horde and drives it on, the bloater bursting when it dies, Grimmvar's roars and swipes (Director cues).
 // The rig runs in the actor's animation update (Character::UpdateAnimation), possibly off the main thread:
 // per-actor state is created on the main thread and only that actor's own update touches it.
-namespace bo3z
+namespace coa
 {
 	namespace
 	{

@@ -1,4 +1,4 @@
-#include "BO3Z.h"
+#include "CurseOfAlduin.h"
 #include "DragonPoses.h"
 
 // Fast, smooth movement on Skyrim's controller (sheet: movement), aiming for an arena-shooter feel:
@@ -8,7 +8,7 @@
 //  - air strafing: steer a little while airborne.
 // Speed changes use a temporary SpeedMult (CarryWeight nudged so the game picks it up at once);
 // the slide and air control also write the character controller's velocity directly.
-namespace bo3z
+namespace coa
 {
 	namespace
 	{

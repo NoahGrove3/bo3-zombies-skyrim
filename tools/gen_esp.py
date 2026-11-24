@@ -28,7 +28,7 @@ for p in S['perks']['rows']:
     struct.pack_into('<i', data, 68, -1)                     # no actor value
     struct.pack_into('<I', data, 96, 0)                      # no hit art
     recs['MGEF'].append(record('MGEF', fid('MGEF', p['id']), [
-        sub('EDID', z('BO3Z_Perk_' + p['id'])), sub('FULL', z(p['label'])), sub('MDOB', tsub('mgef', 'MDOB')),
+        sub('EDID', z('COA_Perk_' + p['id'])), sub('FULL', z(p['label'])), sub('MDOB', tsub('mgef', 'MDOB')),
         sub('DATA', bytes(data)), sub('DNAM', z(p['description']))]))  # (no SNDD: no Skyrim sounds on the brews)
 
 def obnd(r): return struct.pack('<6h', -r, -r, 0, r, r, r * 2)
@@ -36,7 +36,7 @@ for o in S['objects']['rows']:
     radius = {'box': 50, 'perk': 40, 'wallbuy': 40, 'ammo': 40, 'perkmenu': 50, 'forge': 90, 'relic': 50, 'tablet': 70}[o['kind']]
     verb = f"{o['activateText']} ({o['cost']})" if o['cost'] else o['activateText']
     recs['ACTI'].append(record('ACTI', fid('ACTI', o['id']), [
-        sub('EDID', z('BO3Z_' + o['id'])), sub('OBND', obnd(radius)), sub('FULL', z(o['label'])),
+        sub('EDID', z('COA_' + o['id'])), sub('OBND', obnd(radius)), sub('FULL', z(o['label'])),
         sub('MODL', z(o['model'])), sub('RNAM', z(verb)), sub('FNAM', b'\0\0')]))
 
 # ---- casting: every weapon is cast natively (staff or hand animation), our code does the hits ----
@@ -47,7 +47,7 @@ struct.pack_into('<f', pd, 4, 0.0); struct.pack_into('<f', pd, 8, 1500.0); struc
 struct.pack_into('<I', pd, 16, 0); struct.pack_into('<I', pd, 20, 0)   # no light, no muzzle light
 struct.pack_into('<I', pd, 36, 0); struct.pack_into('<I', pd, 40, 0)
 recs['PROJ'].append(record('PROJ', fid('PROJ', 'castflame'), [
-    sub('EDID', z('UN_CastCarrier')), sub('OBND', tsub('proj_bullet', 'OBND')), sub('MODL', z('')),
+    sub('EDID', z('COA_CastCarrier')), sub('OBND', tsub('proj_bullet', 'OBND')), sub('MODL', z('')),
     sub('DATA', bytes(pd)), sub('NAM1', b'\0'), sub('VNAM', struct.pack('<I', 0))]))
 
 def cast_mgef(key, label, cast=2, aimed=False):
@@ -64,7 +64,7 @@ def cast_mgef(key, label, cast=2, aimed=False):
         struct.pack_into('<I', md, 72, fid('PROJ', 'castflame')); struct.pack_into('<I', md, 84, 2)
     for off in (92, 96, 100, 116): struct.pack_into('<I', md, off, 0)  # casting art set at runtime from the matching vanilla spell
     recs['MGEF'].append(record('MGEF', fid('MGEF', key), [
-        sub('EDID', z('UN_' + key)), sub('FULL', z(label)), sub('MDOB', tsub('mgef_firebolt', 'MDOB')), sub('DATA', bytes(md)), sub('DNAM', z(''))]))
+        sub('EDID', z('COA_' + key)), sub('FULL', z(label)), sub('MDOB', tsub('mgef_firebolt', 'MDOB')), sub('DATA', bytes(md)), sub('DNAM', z(''))]))
 cast_mgef('wandcast', 'Wand Cast', 1)
 # (Noah: the Carian Wand "point like a staff ... holding the attack should cast automatically every 2s") held: Skyrim's
 # staff concentration keeps the wand pointed while the attack is held; src/Classes.cpp TickWand looses the bolts
@@ -86,7 +86,7 @@ struct.pack_into('<I', pd, 16, 0); struct.pack_into('<I', pd, 20, 0)
 struct.pack_into('<I', pd, 36, 0); struct.pack_into('<I', pd, 40, 0)
 struct.pack_into('<I', pd, 56, 0); struct.pack_into('<I', pd, 60, 0)
 recs['PROJ'].append(record('PROJ', fid('PROJ', 'throwdagger'), [
-    sub('EDID', z('UN_ThrowDaggerProj')), sub('OBND', tsub('proj_bullet', 'OBND')), sub('MODL', z('CurseOfAlduin\\ranger\\throwdagger.nif')),
+    sub('EDID', z('COA_ThrowDaggerProj')), sub('OBND', tsub('proj_bullet', 'OBND')), sub('MODL', z('CurseOfAlduin\\ranger\\throwdagger.nif')),
     sub('DATA', bytes(pd)), sub('NAM1', b'\0'), sub('VNAM', struct.pack('<I', 0))]))
 md = bytearray(tsub('mgef_firebolt', 'DATA'))
 struct.pack_into('<I', md, 16, 0xFFFFFFFF)            # no resistance: steel and ember
@@ -95,11 +95,11 @@ struct.pack_into('<I', md, 72, fid('PROJ', 'throwdagger'))
 struct.pack_into('<I', md, 76, 0)
 struct.pack_into('<I', md, 92, 0)                     # no casting art
 recs['MGEF'].append(record('MGEF', fid('MGEF', 'throwdagger'), [
-    sub('EDID', z('UN_ThrowDaggerHit')), sub('FULL', z('Throwing Dagger')), sub('MDOB', tsub('mgef_firebolt', 'MDOB')), sub('DATA', bytes(md)), sub('DNAM', z(''))]))
+    sub('EDID', z('COA_ThrowDaggerHit')), sub('FULL', z('Throwing Dagger')), sub('MDOB', tsub('mgef_firebolt', 'MDOB')), sub('DATA', bytes(md)), sub('DNAM', z(''))]))
 sp = bytearray(tsub('spel_firebolt', 'SPIT'))
 struct.pack_into('<I', sp, 0, 0); struct.pack_into('<I', sp, 4, 0x1)
 recs['SPEL'].append(record('SPEL', fid('SPEL', 'throwdagger'), [
-    sub('EDID', z('UN_ThrowDaggerHitSpell')), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('ETYP', tsub('spel_firebolt', 'ETYP')),
+    sub('EDID', z('COA_ThrowDaggerHitSpell')), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('ETYP', tsub('spel_firebolt', 'ETYP')),
     sub('SPIT', bytes(sp)), sub('EFID', struct.pack('<I', fid('MGEF', 'throwdagger'))), sub('EFIT', struct.pack('<fII', 20.0, 0, 0))]))
 cast_mgef('throwdaggers', 'Throwing Daggers', 1)
 
@@ -125,7 +125,7 @@ for e, label, text in FLASKS:
     struct.pack_into('<I', pd, 36, 0); struct.pack_into('<I', pd, 40, 0)
     struct.pack_into('<I', pd, 56, 0); struct.pack_into('<I', pd, 60, 0)
     recs['PROJ'].append(record('PROJ', fid('PROJ', 'flask_' + e), [
-        sub('EDID', z('UN_FlaskProj_' + e)), sub('OBND', tsub('proj_bullet', 'OBND')), sub('MODL', z('CurseOfAlduin\\alchemist\\flask_' + e + '.nif')),
+        sub('EDID', z('COA_FlaskProj_' + e)), sub('OBND', tsub('proj_bullet', 'OBND')), sub('MODL', z('CurseOfAlduin\\alchemist\\flask_' + e + '.nif')),
         sub('DATA', bytes(pd)), sub('NAM1', b'\0'), sub('VNAM', struct.pack('<I', 0))]))
     md = bytearray(tsub('mgef_firebolt', 'DATA'))
     struct.pack_into('<I', md, 0, 0x200 | 0x400 | 0x800)  # not hostile: the flask itself does nothing (its burst is ours)
@@ -134,16 +134,16 @@ for e, label, text in FLASKS:
     struct.pack_into('<I', md, 72, fid('PROJ', 'flask_' + e))
     for off in (76, 92, 96, 100): struct.pack_into('<I', md, off, 0)
     recs['MGEF'].append(record('MGEF', fid('MGEF', 'flask_' + e), [
-        sub('EDID', z('UN_FlaskFlight_' + e)), sub('MDOB', tsub('mgef_firebolt', 'MDOB')), sub('DATA', bytes(md)), sub('DNAM', z(''))]))
+        sub('EDID', z('COA_FlaskFlight_' + e)), sub('MDOB', tsub('mgef_firebolt', 'MDOB')), sub('DATA', bytes(md)), sub('DNAM', z(''))]))
     sp = bytearray(tsub('spel_firebolt', 'SPIT'))
     struct.pack_into('<I', sp, 0, 0); struct.pack_into('<I', sp, 4, 0x1)
     recs['SPEL'].append(record('SPEL', fid('SPEL', 'flask_' + e), [
-        sub('EDID', z('UN_FlaskFlightSpell_' + e)), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('ETYP', tsub('spel_firebolt', 'ETYP')),
+        sub('EDID', z('COA_FlaskFlightSpell_' + e)), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('ETYP', tsub('spel_firebolt', 'ETYP')),
         sub('SPIT', bytes(sp)), sub('EFID', struct.pack('<I', fid('MGEF', 'flask_' + e))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
     sp = bytearray(tsub('spel_firebolt', 'SPIT'))
     struct.pack_into('<IIIfIIffI', sp, 0, 100 if e == 'philosopher' else 25, 0x1, 0, 0.0, 1, 0, 0.0, 0.0, 0)  # (its magicka the code spends: the class spells' one cost)
     recs['SPEL'].append(record('SPEL', fid('SPEL', 'throw_' + e), [
-        sub('EDID', z('UN_Throw_' + e)), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z(label)),
+        sub('EDID', z('COA_Throw_' + e)), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z(label)),
         sub('MDOB', tsub('spel_firebolt', 'MDOB')), sub('ETYP', tsub('spel_firebolt', 'ETYP')),
         sub('DESC', z(text)),
         sub('SPIT', bytes(sp)), sub('EFID', struct.pack('<I', fid('MGEF', 'flaskcast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
@@ -158,7 +158,7 @@ for key, label, text, cost in ARCANE:
     sp = bytearray(tsub('spel_firebolt', 'SPIT'))
     struct.pack_into('<IIIfIIffI', sp, 0, cost, 0x1, 0, 0.0, 1, 0, 0.5, 0.0, 0)
     recs['SPEL'].append(record('SPEL', fid('SPEL', 'arcane_' + key), [
-        sub('EDID', z('UN_Arcane_' + key)), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z(label)),
+        sub('EDID', z('COA_Arcane_' + key)), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z(label)),
         sub('MDOB', tsub('spel_firebolt', 'MDOB')), sub('ETYP', tsub('spel_firebolt', 'ETYP')), sub('DESC', z(text)),
         sub('SPIT', bytes(sp)), sub('EFID', struct.pack('<I', fid('MGEF', 'arcane_' + key))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 
@@ -169,7 +169,7 @@ for e, label, text in FLASKS:
     enit = bytearray(tsub('alch', 'ENIT'))
     struct.pack_into('<iIIfI', enit, 0, 0, 0x1, 0, 0.0, 0)   # value 0, no auto-calc, no addiction, no drinking sound
     recs['ALCH'].append(record('ALCH', fid('ALCH', 'flaskitem_' + e), [
-        sub('EDID', z('UN_FlaskItem_' + e)), sub('OBND', tsub('alch', 'OBND')), sub('FULL', z(label)),
+        sub('EDID', z('COA_FlaskItem_' + e)), sub('OBND', tsub('alch', 'OBND')), sub('FULL', z(label)),
         sub('KSIZ', tsub('alch', 'KSIZ')), sub('KWDA', tsub('alch', 'KWDA')), sub('MODL', z('CurseOfAlduin\\alchemist\\flask_' + e + '.nif')),
         sub('YNAM', tsub('alch', 'YNAM')), sub('ZNAM', tsub('alch', 'ZNAM')), sub('DATA', struct.pack('<f', 0.0)),
         sub('ENIT', bytes(enit)), sub('EFID', struct.pack('<I', fid('MGEF', 'flaskcast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
@@ -180,7 +180,7 @@ for e, label, text in FLASKS:
 # launched natively), a staff's, free - only so Skyrim plays its staff cast while the attack is held; the beam is ours
 cast_mgef('mutagencast', 'Mutagen Beam', 2)
 recs['ENCH'].append(record('ENCH', fid('ENCH', 'mutagenstaff'), [
-    sub('EDID', z('UN_MutagenStaffEnch')), sub('OBND', bytes(12)), sub('FULL', z('Mutagen Beam')),
+    sub('EDID', z('COA_MutagenStaffEnch')), sub('OBND', bytes(12)), sub('FULL', z('Mutagen Beam')),
     sub('ENIT', struct.pack('<iIIiIIfII', 0, 0x1, 2, 3000, 0, 0x0C, 0.0, 0, 0)),
     sub('EFID', struct.pack('<I', fid('MGEF', 'mutagencast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 for e, label, text in FLASKS:
@@ -188,7 +188,7 @@ for e, label, text in FLASKS:
     if e == 'philosopher':   # the staff: Skyrim's staff record, our model and enchantment (the same form: old saves keep it)
         for name, hx in T['weap_staff']['subs']:
             b = bytes.fromhex(hx)
-            if name == 'EDID': b = z('UN_Flask_' + e)
+            if name == 'EDID': b = z('COA_Flask_' + e)
             elif name == 'FULL': b = z('Mutagen Staff')
             elif name == 'MODL': b = z('CurseOfAlduin\\alchemist\\mutagen_staff_qs.nif')   # (Noah, 2026-11-20: our model, held as a quarterstaff - tools/modelconv/qsfit.cpp)
             elif name == 'EITM': b = struct.pack('<I', fid('ENCH', 'mutagenstaff'))
@@ -202,7 +202,7 @@ for e, label, text in FLASKS:
         continue
     for name, hx in T['weap_daedricdagger']['subs']:
         b = bytes.fromhex(hx)
-        if name == 'EDID': b = z('UN_Flask_' + e)
+        if name == 'EDID': b = z('COA_Flask_' + e)
         elif name == 'FULL': b = z(label)
         elif name == 'MODL': b = z('CurseOfAlduin\\alchemist\\gauntlet_hold.nif' if e == 'philosopher' else 'CurseOfAlduin\\alchemist\\flask_' + e + '_held.nif')   # (Noah: the Mutagen Gauntlet - "Glowing hand only")
         elif name in ('MODT', 'EITM', 'EAMT'): continue
@@ -233,13 +233,13 @@ PW_KIND = {   # template, animation type, speed, reach, weight, its keywords (We
     # moveset's DAR folders ask for it (tools/install_scythes), so other battleaxes and warhammers keep their own swings
     'scythe': ('weap_draugr_gs', 6, 0.75, 1.4, 22.0, (0x06D932, 0x08F958, fid('KYWD', 'scythe'))),
 }
-recs['KYWD'] = [record('KYWD', fid('KYWD', 'scythe'), [sub('EDID', z('UN_WeapTypeScythe')), sub('CNAM', struct.pack('<I', 0x00B0A0C0))])]
+recs['KYWD'] = [record('KYWD', fid('KYWD', 'scythe'), [sub('EDID', z('COA_WeapTypeScythe')), sub('CNAM', struct.pack('<I', 0x00B0A0C0))])]
 for _town, (pk, plabel, pmodel, pkind, pdmg, ptext) in PRIEST_WEAPONS.items():
     tmpl, anim, spd, reach, wt, kws = PW_KIND[pkind]
     subs = []
     for name, hx in T[tmpl]['subs']:
         b = bytearray(bytes.fromhex(hx))
-        if name == 'EDID': b = z('UN_Priest_' + pk)
+        if name == 'EDID': b = z('COA_Priest_' + pk)
         elif name == 'FULL': b = z(plabel)
         elif name == 'MODL': b = z(pmodel if '\\' in pmodel else 'CurseOfAlduin\\priests\\' + pmodel + '.nif')
         elif name in ('MODT', 'EITM', 'EAMT'): continue
@@ -261,17 +261,17 @@ TB_KIND = dict(PW_KIND, mace=('weap_daedricmace', 4, 0.9, 1.0, 14.0, (0x01E714, 
 # plays its staff cast; what it casts is ours (src/Tablet.cpp: the Lanternwick's orb, the Wandering Star)
 cast_mgef('tabstaffcast', 'Donated Staff', 1)
 recs['ENCH'].append(record('ENCH', fid('ENCH', 'tabstaff'), [
-    sub('EDID', z('UN_TabletStaffEnch')), sub('OBND', bytes(12)), sub('FULL', z('Donated Staff')),
+    sub('EDID', z('COA_TabletStaffEnch')), sub('OBND', bytes(12)), sub('FULL', z('Donated Staff')),
     sub('ENIT', struct.pack('<iIIiIIfII', 0, 0x1, 1, 3000, 0, 0x0C, 0.0, 0, 0)),
     sub('EFID', struct.pack('<I', fid('MGEF', 'tabstaffcast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 # (Noah: "Destruction - Carian Wands, one per hand") the wands' enchantment: fire and forget on yourself, free - only so Skyrim
 # plays the cast; its Carian bolt is ours (src/Classes.cpp WandCast)
 recs['ENCH'].append(record('ENCH', fid('ENCH', 'soulcaller'), [
-    sub('EDID', z('UN_SoulcallerEnch')), sub('OBND', bytes(12)), sub('FULL', z('Soul Call')),
+    sub('EDID', z('COA_SoulcallerEnch')), sub('OBND', bytes(12)), sub('FULL', z('Soul Call')),
     sub('ENIT', struct.pack('<iIIiIIfII', 0, 0x1, 2, 3000, 2, 0x0C, 0.0, 0, 0)),
     sub('EFID', struct.pack('<I', fid('MGEF', 'soulcall'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 recs['ENCH'].append(record('ENCH', fid('ENCH', 'carianwand'), [
-    sub('EDID', z('UN_CarianWandEnch')), sub('OBND', bytes(12)), sub('FULL', z('Carian Bolt')),
+    sub('EDID', z('COA_CarianWandEnch')), sub('OBND', bytes(12)), sub('FULL', z('Carian Bolt')),
     sub('ENIT', struct.pack('<iIIiIIfII', 0, 0x1, 2, 3000, 2, 0x0C, 0.0, 0, 0)),
     sub('EFID', struct.pack('<I', fid('MGEF', 'wandhold'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 # (Noah: "change the summoner class wonder to a staff from the weapons mod and the same casting animation as the staff of magnus" -
@@ -279,7 +279,7 @@ recs['ENCH'].append(record('ENCH', fid('ENCH', 'carianwand'), [
 _sc = []
 for name, hx in T['weap_staff']['subs']:
     b = bytes.fromhex(hx)
-    if name == 'EDID': b = z('UN_SoulcallerStaff')
+    if name == 'EDID': b = z('COA_SoulcallerStaff')
     elif name == 'FULL': b = z("Soulcaller's Staff")
     elif name in ('MODT', 'EAMT'): continue
     elif name == 'EITM': b = struct.pack('<I', fid('ENCH', 'soulcaller'))
@@ -295,7 +295,7 @@ for w in S['tablet']['rows']:
     subs = []
     for name, hx in T[tmpl]['subs']:
         b = bytearray(bytes.fromhex(hx))
-        if name == 'EDID': b = z('UN_Tablet_' + w['id'])
+        if name == 'EDID': b = z('COA_Tablet_' + w['id'])
         elif name == 'FULL': b = z(w['label'])
         elif name == 'MODL':
             if not w['model']: continue
@@ -321,21 +321,21 @@ LANTERN_RACES = '40370100 3a880800 41370100 3c880800 3d7a0900 42370100 3d880800 
 for w in S['tablet']['rows']:
     if not w.get('gloves'): continue
     third, first = w['gloves']
-    recs['ARMA'].append(record('ARMA', fid('ARMA', 'tabglove_' + w['id']), [sub('EDID', z('UN_TabletGlovesAA_' + w['id'])), sub('BOD2', struct.pack('<II', 1 << 3, 2)),
+    recs['ARMA'].append(record('ARMA', fid('ARMA', 'tabglove_' + w['id']), [sub('EDID', z('COA_TabletGlovesAA_' + w['id'])), sub('BOD2', struct.pack('<II', 1 << 3, 2)),
         sub('RNAM', struct.pack('<I', 0x19)), sub('DNAM', bytes.fromhex('0a0a00000000000000000000')),
         sub('MOD2', z(third)), sub('MOD3', z(third)), sub('MOD4', z(first)), sub('MOD5', z(first))] +
         [sub('MODL', bytes.fromhex(h)) for h in LANTERN_RACES.split()]))
-    recs['ARMO'].append(record('ARMO', fid('ARMO', 'tabglove_' + w['id']), [sub('EDID', z('UN_TabletGloves_' + w['id'])), sub('OBND', struct.pack('<6h', -6, -6, 0, 6, 6, 6)),
+    recs['ARMO'].append(record('ARMO', fid('ARMO', 'tabglove_' + w['id']), [sub('EDID', z('COA_TabletGloves_' + w['id'])), sub('OBND', struct.pack('<6h', -6, -6, 0, 6, 6, 6)),
         sub('FULL', z(w['label'])), sub('MOD2', z(w['show'])), sub('BOD2', struct.pack('<II', 1 << 3, 2)), sub('RNAM', struct.pack('<I', 0x19)),
         sub('KSIZ', struct.pack('<I', 1)), sub('KWDA', struct.pack('<I', 0x08F95B)),   # (ArmorClothing)
         sub('DESC', z(w['power'] + ' Wears with use; lost if you fall.')),   # (Noah, 2026-11-12: "short and to the point")
         sub('MODL', struct.pack('<I', fid('ARMA', 'tabglove_' + w['id']))), sub('DATA', struct.pack('<If', 0, 0.5)), sub('DNAM', struct.pack('<I', 0))]))
 pd = bytearray(tsub('proj_arrow', 'DATA'))
 recs['PROJ'].append(record('PROJ', fid('PROJ', 'tab_arrow'), [
-    sub('EDID', z('UN_TabletArrowProj')), sub('OBND', tsub('proj_arrow', 'OBND')), sub('FULL', z('Donated Arrow')),
+    sub('EDID', z('COA_TabletArrowProj')), sub('OBND', tsub('proj_arrow', 'OBND')), sub('FULL', z('Donated Arrow')),
     sub('MODL', z('Weapons\\Iron\\IronArrowProjectile.nif')), sub('DATA', bytes(pd)), sub('NAM1', b'\0'), sub('VNAM', tsub('proj_arrow', 'VNAM'))]))
 recs['AMMO'].append(record('AMMO', fid('AMMO', 'tab_arrow'), [
-    sub('EDID', z('UN_TabletArrow')), sub('OBND', tsub('ammo_iron', 'OBND')), sub('FULL', z('Donated Arrow')),
+    sub('EDID', z('COA_TabletArrow')), sub('OBND', tsub('ammo_iron', 'OBND')), sub('FULL', z('Donated Arrow')),
     sub('MODL', z('Weapons\\Iron\\IronArrow.nif')), sub('YNAM', tsub('ammo_iron', 'YNAM')), sub('ZNAM', tsub('ammo_iron', 'ZNAM')),
     sub('KSIZ', tsub('ammo_iron', 'KSIZ')), sub('KWDA', tsub('ammo_iron', 'KWDA')), sub('DATA', struct.pack('<IIfIf', fid('PROJ', 'tab_arrow'), 0x4, 12.0, 0, 0.0))]))
 for w in S['tablet']['rows']:
@@ -345,13 +345,13 @@ for w in S['tablet']['rows']:
     # fire in the hand or on the struck
     for off, val in ((72, 0), (76, 0), (80, 1), (84, 0), (92, 0), (96, 0), (100, 0)): struct.pack_into('<I', md, off, val)
     recs['MGEF'].append(record('MGEF', fid('MGEF', 'tab_' + w['id']), [
-        sub('EDID', z('UN_TabletMgef_' + w['id'])), sub('FULL', z(w['label'])), sub('MDOB', tsub('mgef_firebolt', 'MDOB')), sub('DATA', bytes(md)),
+        sub('EDID', z('COA_TabletMgef_' + w['id'])), sub('FULL', z(w['label'])), sub('MDOB', tsub('mgef_firebolt', 'MDOB')), sub('DATA', bytes(md)),
         sub('DNAM', z(''))]))
     sp = bytearray(tsub('spel_firebolt', 'SPIT'))
     struct.pack_into('<I', sp, 0, 0)   # (no magicka: its pages are its cost)
     struct.pack_into('<II', sp, 16, 1, 0)   # (fire and forget, on yourself: the chapter goes where you aim, src/Tablet.cpp)
     recs['SPEL'].append(record('SPEL', fid('SPEL', 'tab_' + w['id']), [
-        sub('EDID', z('UN_Tablet_' + w['id'])), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z(w['label'])),
+        sub('EDID', z('COA_Tablet_' + w['id'])), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z(w['label'])),
         sub('MDOB', tsub('spel_firebolt', 'MDOB')), sub('ETYP', tsub('spel_firebolt', 'ETYP')),
         sub('DESC', z(w['power'] + ' Wears with use; lost if you fall.')),   # (Noah, 2026-11-12: "short and to the point")
         sub('SPIT', bytes(sp)), sub('EFID', struct.pack('<I', fid('MGEF', 'tab_' + w['id']))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
@@ -360,14 +360,14 @@ for w in S['tablet']['rows']:
 sp = bytearray(tsub('spel_firebolt', 'SPIT'))
 struct.pack_into('<IIIfIIffI', sp, 0, 100, 0x1, 0, 0.25, 1, 0, 0.0, 0.0, 0)
 recs['SPEL'].append(record('SPEL', fid('SPEL', 'bonehorn'), [
-    sub('EDID', z('UN_BoneThroneHorn')), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z('Call of the Violet Wyrm')),
+    sub('EDID', z('COA_BoneThroneHorn')), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z('Call of the Violet Wyrm')),
     sub('MDOB', tsub('spel_firebolt', 'MDOB')), sub('ETYP', tsub('spel_firebolt', 'ETYP')),
     sub('DESC', z('')),   # (retired: the Soulcaller's Staff is the Summoner's wonder now)
     sub('SPIT', bytes(sp)), sub('EFID', struct.pack('<I', fid('MGEF', 'wyrmcall'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 sp = bytearray(tsub('spel_firebolt', 'SPIT'))
 struct.pack_into('<IIIfIIffI', sp, 0, 0, 0x1, 0, 0.0, 1, 0, 0.0, 0.0, 0)   # no magicka (a throw spends stamina), no charge, fire-and-forget, self
 recs['SPEL'].append(record('SPEL', fid('SPEL', 'throwdaggers'), [
-    sub('EDID', z('UN_ThrowingDaggers')), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z('Throwing Daggers')),
+    sub('EDID', z('COA_ThrowingDaggers')), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z('Throwing Daggers')),
     sub('MDOB', tsub('spel_firebolt', 'MDOB')), sub('ETYP', tsub('spel_firebolt', 'ETYP')),
     sub('DESC', z('')),   # (retired with the Ranger)
     sub('SPIT', bytes(sp)), sub('EFID', struct.pack('<I', fid('MGEF', 'throwdaggers'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
@@ -383,9 +383,9 @@ struct.pack_into('<I', md, 64, 1); struct.pack_into('<i', md, 68, -1)  # script 
 struct.pack_into('<I', md, 80, 1); struct.pack_into('<I', md, 84, 2)    # fire-and-forget, aimed
 for off in (88, 92, 96): struct.pack_into('<I', md, off, 0)             # no second value, casting art or hit art
 recs['MGEF'].append(record('MGEF', fid('MGEF', 'altarbeam'), [
-    sub('EDID', z('UN_AltarBeam')), sub('FULL', z('Altar Beam')), sub('MDOB', bytes.fromhex('a5350400')), sub('DATA', bytes(md)), sub('DNAM', z(''))]))
+    sub('EDID', z('COA_AltarBeam')), sub('FULL', z('Altar Beam')), sub('MDOB', bytes.fromhex('a5350400')), sub('DATA', bytes(md)), sub('DNAM', z(''))]))
 recs['SPEL'].append(record('SPEL', fid('SPEL', 'altarbeam'), [
-    sub('EDID', z('UN_AltarBeamSpell')), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z('Altar Beam')),
+    sub('EDID', z('COA_AltarBeamSpell')), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z('Altar Beam')),
     sub('MDOB', bytes.fromhex('a5350400')), sub('ETYP', tsub('spel_firebolt', 'ETYP')), sub('DESC', z('')),
     sub('SPIT', struct.pack('<IIIfIIffI', 0, 0x1, 0, 0.0, 1, 2, 0.0, 0.0, 0)), sub('EFID', struct.pack('<I', fid('MGEF', 'altarbeam'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 
@@ -393,7 +393,7 @@ recs['SPEL'].append(record('SPEL', fid('SPEL', 'altarbeam'), [
 # Classes::OnCast looses the six element ladders' top spells when it is cast
 cast_mgef('tomecast', 'Six Fires', 1)   # (Noah: 100 magicka, no cooldown)
 recs['SPEL'].append(record('SPEL', fid('SPEL', 'wonder_tome'), [
-    sub('EDID', z('UN_WonderTomeSixFires')), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z('Tome of the Six Fires')),
+    sub('EDID', z('COA_WonderTomeSixFires')), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z('Tome of the Six Fires')),
     sub('MDOB', tsub('spel_firebolt', 'MDOB')), sub('ETYP', tsub('spel_firebolt', 'ETYP')),
     sub('DESC', z('')),   # (retired: the Staff of Magnus is the Battle-mage's wonder now)
     sub('SPIT', struct.pack('<IIIfIIffI', 100, 0x1, 0, 0.25, 1, 0, 0.0, 0.0, 0)), sub('EFID', struct.pack('<I', fid('MGEF', 'tomecast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
@@ -404,26 +404,26 @@ cast_mgef('shoutcast', 'Thu\'um', 1)
 for h in S['shouts']['rows']:
     for n in range(3):
         recs['WOOP'].append(record('WOOP', fid('WOOP', f"shout_{h['id']}_{n}"), [
-            sub('EDID', z(f"UN_Word_{h['id']}_{n}")), sub('FULL', z(h['words'][n])), sub('TNAM', z(h['translations'][n]))]))
+            sub('EDID', z(f"COA_Word_{h['id']}_{n}")), sub('FULL', z(h['words'][n])), sub('TNAM', z(h['translations'][n]))]))
         sp = struct.pack('<IIIfIIffI', 0, 0x1, 11, 0.0, 1, 0, 0.0, 0.0, 0)   # free, voice, fire-and-forget, self
         recs['SPEL'].append(record('SPEL', fid('SPEL', f"shout_{h['id']}_{n}"), [
-            sub('EDID', z(f"UN_ShoutSpell_{h['id']}_{n}")), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z(h['label'])),
+            sub('EDID', z(f"COA_ShoutSpell_{h['id']}_{n}")), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z(h['label'])),
             sub('ETYP', struct.pack('<I', 0x025BEE)), sub('DESC', z('')), sub('SPIT', sp),
             sub('EFID', struct.pack('<I', fid('MGEF', 'shoutcast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
     snam = [sub('SNAM', struct.pack('<IIf', fid('WOOP', f"shout_{h['id']}_{n}"), fid('SPEL', f"shout_{h['id']}_{n}"), float(h['recovery'][n]))) for n in range(3)]
-    recs['SHOU'].append(record('SHOU', fid('SHOU', h['id']), [sub('EDID', z('UN_Shout_' + h['id'])), sub('FULL', z(h['label'])), sub('DESC', z(h['text'] + '.'))] + snam))
+    recs['SHOU'].append(record('SHOU', fid('SHOU', h['id']), [sub('EDID', z('COA_Shout_' + h['id'])), sub('FULL', z(h['label'])), sub('DESC', z(h['text'] + '.'))] + snam))
 
 # ---- Bond II's shout (src/Movement.cpp Updraft): a whirlwind lifts you high, then you open the glider. Every word
 # count does the same; taught whole when the bond is bought
 UPDRAFT_WORDS = [('VEN', 'Wind'), ('GAAR', 'Unleash'), ('NOS', 'Strike')]
 for n, (w, tr) in enumerate(UPDRAFT_WORDS):
-    recs['WOOP'].append(record('WOOP', fid('WOOP', f'updraft_{n}'), [sub('EDID', z(f'UN_Word_updraft_{n}')), sub('FULL', z(w)), sub('TNAM', z(tr))]))
+    recs['WOOP'].append(record('WOOP', fid('WOOP', f'updraft_{n}'), [sub('EDID', z(f'COA_Word_updraft_{n}')), sub('FULL', z(w)), sub('TNAM', z(tr))]))
     sp = struct.pack('<IIIfIIffI', 0, 0x1, 11, 0.0, 1, 0, 0.0, 0.0, 0)
     recs['SPEL'].append(record('SPEL', fid('SPEL', f'updraft_{n}'), [
-        sub('EDID', z(f'UN_ShoutSpell_updraft_{n}')), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z("Dragon's Updraft")),
+        sub('EDID', z(f'COA_ShoutSpell_updraft_{n}')), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z("Dragon's Updraft")),
         sub('ETYP', struct.pack('<I', 0x025BEE)), sub('DESC', z('')), sub('SPIT', sp),
         sub('EFID', struct.pack('<I', fid('MGEF', 'shoutcast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
-recs['SHOU'].append(record('SHOU', fid('SHOU', 'updraft'), [sub('EDID', z('UN_Shout_updraft')), sub('FULL', z("Dragon's Updraft")),
+recs['SHOU'].append(record('SHOU', fid('SHOU', 'updraft'), [sub('EDID', z('COA_Shout_updraft')), sub('FULL', z("Dragon's Updraft")),
     sub('DESC', z('A whirlwind lifts you high into the air. Open your glider and your dragon carries you.'))] +
     [sub('SNAM', struct.pack('<IIf', fid('WOOP', f'updraft_{n}'), fid('SPEL', f'updraft_{n}'), 5.0)) for n in range(3)]))
 
@@ -432,30 +432,30 @@ recs['SHOU'].append(record('SHOU', fid('SHOU', 'updraft'), [sub('EDID', z('UN_Sh
 # wave; learned when Solitude's altar wakes (the Bards' city)
 DANCE_WORDS = [('MAL', 'Small'), ('DIIL', 'Dead'), ('KROH', 'Weak')]
 for n, (w, tr) in enumerate(DANCE_WORDS):
-    recs['WOOP'].append(record('WOOP', fid('WOOP', f'dance_{n}'), [sub('EDID', z(f'UN_Word_dance_{n}')), sub('FULL', z(w)), sub('TNAM', z(tr))]))
+    recs['WOOP'].append(record('WOOP', fid('WOOP', f'dance_{n}'), [sub('EDID', z(f'COA_Word_dance_{n}')), sub('FULL', z(w)), sub('TNAM', z(tr))]))
     sp = struct.pack('<IIIfIIffI', 0, 0x1, 11, 0.0, 1, 0, 0.0, 0.0, 0)
     recs['SPEL'].append(record('SPEL', fid('SPEL', f'dance_{n}'), [
-        sub('EDID', z(f'UN_ShoutSpell_dance_{n}')), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z('Tiny Terrors')),
+        sub('EDID', z(f'COA_ShoutSpell_dance_{n}')), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z('Tiny Terrors')),
         sub('ETYP', struct.pack('<I', 0x025BEE)), sub('DESC', z('')), sub('SPIT', sp),
         sub('EFID', struct.pack('<I', fid('MGEF', 'shoutcast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
-recs['SHOU'].append(record('SHOU', fid('SHOU', 'dance'), [sub('EDID', z('UN_Shout_dance')), sub('FULL', z('Tiny Terrors')),
+recs['SHOU'].append(record('SHOU', fid('SHOU', 'dance'), [sub('EDID', z('COA_Shout_dance')), sub('FULL', z('Tiny Terrors')),
     sub('DESC', z("The common dead within 60 m shrink to knee height for 20 s, hit like toddlers and fall to a single blow. Dragons, elites and bosses are untouched. Once a wave."))] +
     [sub('SNAM', struct.pack('<IIf', fid('WOOP', f'dance_{n}'), fid('SPEL', f'dance_{n}'), 5.0)) for n in range(3)]))
 
 SCRAFT = {r['id']: r for r in S['spellcraft']['rows']}
 def arto(key, model, kind):
-    recs['ARTO'].append(record('ARTO', fid('ARTO', key), [sub('EDID', z('UN_Art_' + key)), sub('OBND', struct.pack('<6h', -20, -20, -20, 20, 20, 20)),
+    recs['ARTO'].append(record('ARTO', fid('ARTO', key), [sub('EDID', z('COA_Art_' + key)), sub('OBND', struct.pack('<6h', -20, -20, -20, 20, 20, 20)),
         sub('MODL', z(model)), sub('DNAM', struct.pack('<I', kind))]))
 # (Noah: "The Aura needs to look like a super Saiyan around the player but not blinding thats fully animated" - "Flame Cloak")
 # Skyrim's Flame Cloak hung on you as a hit effect's art (src/Classes.cpp TickArmour paints it in the class's colour)
 arto('armaura', 'dlc01\\magic\\dlc01_sunaurabodyfx.nif', 1)   # (then: "too overwhelming" - "Dawnguard Sun Aura")
 for r in SCRAFT.values():
     arto('fx_' + r['id'] + '_hand', 'CurseOfAlduin\\fx\\' + r['id'] + '_hand.nif', 0)          # magic casting art
-    recs['STAT'].append(record('STAT', fid('STAT', 'fx_' + r['id'] + '_orb'), [sub('EDID', z('UN_Orb_' + r['id'])), sub('OBND', struct.pack('<6h', -30, -30, -30, 30, 30, 30)),
+    recs['STAT'].append(record('STAT', fid('STAT', 'fx_' + r['id'] + '_orb'), [sub('EDID', z('COA_Orb_' + r['id'])), sub('OBND', struct.pack('<6h', -30, -30, -30, 30, 30, 30)),
         sub('MODL', z('CurseOfAlduin\\fx\\' + r['id'] + '_icon.nif')), sub('DNAM', struct.pack('<fI', 90.0, 0))]))  # the Magic menu shows the spell's logo
     data = bytearray(tsub('ligh', 'DATA')); c = int(r['color'], 16)
     struct.pack_into('<I', data, 4, 160); struct.pack_into('<BBBB', data, 8, c >> 16, (c >> 8) & 255, c & 255, 0)
-    recs['LIGH'].append(record('LIGH', fid('LIGH', 'fx_' + r['id'] + '_light'), [sub('EDID', z('UN_SpellLight_' + r['id'])), sub('OBND', tsub('ligh', 'OBND')), sub('DATA', bytes(data)), sub('FNAM', struct.pack('<f', 1.0))]))
+    recs['LIGH'].append(record('LIGH', fid('LIGH', 'fx_' + r['id'] + '_light'), [sub('EDID', z('COA_SpellLight_' + r['id'])), sub('OBND', tsub('ligh', 'OBND')), sub('DATA', bytes(data)), sub('FNAM', struct.pack('<f', 1.0))]))
 for n in ('iceshell', 'roots', 'burn', 'poison'):
     arto('fx_' + n, 'CurseOfAlduin\\fx\\status_' + n + '.nif', 1)                             # magic hit effect art
 arto('fx_portal', 'CurseOfAlduin\\fx\\portal_red.nif', 1)        # (the night's dead come through a conjuring portal: KittyVFX - Portals' summon mesh, in the Curse's red -
@@ -470,7 +470,7 @@ struct.pack_into('<I', md, 72, 0x0004600A)            # MAGSpiderSpitProjectile:
 struct.pack_into('<I', md, 76, 0)                     # no explosion (ours is the splash)
 for off in (92, 96, 100): struct.pack_into('<I', md, off, 0)   # no fire in the hand, no fire on the target
 recs['MGEF'].append(record('MGEF', fid('MGEF', 'conjurerbolt'), [
-    sub('EDID', z('UN_ConjurerBolt')), sub('FULL', z("Conjurer's Bolt")), sub('MDOB', tsub('mgef_firebolt', 'MDOB')), sub('DATA', bytes(md)), sub('DNAM', z(''))]))
+    sub('EDID', z('COA_ConjurerBolt')), sub('FULL', z("Conjurer's Bolt")), sub('MDOB', tsub('mgef_firebolt', 'MDOB')), sub('DATA', bytes(md)), sub('DNAM', z(''))]))
 for w in S['weapons']['rows']:
     kind = w.get('kind', 'wand')
     if kind == 'wand':
@@ -485,16 +485,16 @@ for w in S['weapons']['rows']:
                 mgid = fid('MGEF', mg[5:]) if mg.startswith('ours:') else int(mg, 16)
                 effs += [sub('EFID', struct.pack('<I', mgid)), sub('EFIT', struct.pack('<fII', float(mag), area, dur))]
             recs['ENCH'].append(record('ENCH', fid('ENCH', w['id']), [
-                sub('EDID', z('UN_WandEnch_' + w['id'])), sub('OBND', bytes(12)), sub('FULL', z(w['label'])), sub('ENIT', enit)] + effs))
+                sub('EDID', z('COA_WandEnch_' + w['id'])), sub('OBND', bytes(12)), sub('FULL', z(w['label'])), sub('ENIT', enit)] + effs))
         else:
             enit = struct.pack('<iIIiIIfII', 0, 0x1, 1, 3000, 0, 0x0C, 0.0, 0, 0)  # fire-and-forget, self (nothing launched natively), staff enchantment, free
             recs['ENCH'].append(record('ENCH', fid('ENCH', w['id']), [
-                sub('EDID', z('UN_WandEnch_' + w['id'])), sub('OBND', bytes(12)), sub('FULL', z(w['label'])), sub('ENIT', enit),
+                sub('EDID', z('COA_WandEnch_' + w['id'])), sub('OBND', bytes(12)), sub('FULL', z(w['label'])), sub('ENIT', enit),
                 sub('EFID', struct.pack('<I', fid('MGEF', 'wandcast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))  # staff cast look only: the bolt is ours (one per click)
         subs = []
         for name, hx in T['weap_staff']['subs']:
             b = bytes.fromhex(hx)
-            if name == 'EDID': b = z('BO3Z_Wand_' + w['id'])
+            if name == 'EDID': b = z('COA_Wand_' + w['id'])
             elif name == 'FULL': b = z(w['label'])
             elif name == 'MODL': b = z(w['standinModel'])
             elif name == 'EITM': b = struct.pack('<I', fid('ENCH', w['id']))
@@ -514,17 +514,17 @@ for w in S['weapons']['rows']:
         struct.pack_into('<f', pd, 8, 5200.0)              # speed
         struct.pack_into('<I', pd, 16, int(w['arrowLight'], 16))   # glows in flight
         recs['PROJ'].append(record('PROJ', fid('PROJ', 'arrow_' + w['id']), [
-            sub('EDID', z('UN_ArrowProj_' + w['id'])), sub('OBND', tsub('proj_arrow', 'OBND')), sub('FULL', z(w['label'] + ' Arrow')),
+            sub('EDID', z('COA_ArrowProj_' + w['id'])), sub('OBND', tsub('proj_arrow', 'OBND')), sub('FULL', z(w['label'] + ' Arrow')),
             sub('MODL', z(w['arrowFlight'])), sub('DATA', bytes(pd)), sub('NAM1', b'\0'), sub('VNAM', tsub('proj_arrow', 'VNAM'))]))
         ad = struct.pack('<IIfIf', fid('PROJ', 'arrow_' + w['id']), 0x4, 0.0, 0, 0.0)   # projectile, flags (arrow, not bolt), damage, value, weight
         recs['AMMO'].append(record('AMMO', fid('AMMO', 'arrow_' + w['id']), [
-            sub('EDID', z('UN_Arrow_' + w['id'])), sub('OBND', tsub('ammo_iron', 'OBND')), sub('FULL', z(w['label'] + ' Arrow')),
+            sub('EDID', z('COA_Arrow_' + w['id'])), sub('OBND', tsub('ammo_iron', 'OBND')), sub('FULL', z(w['label'] + ' Arrow')),
             sub('MODL', z(w['arrowModel'])), sub('YNAM', tsub('ammo_iron', 'YNAM')), sub('ZNAM', tsub('ammo_iron', 'ZNAM')),
             sub('KSIZ', tsub('ammo_iron', 'KSIZ')), sub('KWDA', tsub('ammo_iron', 'KWDA')), sub('DATA', ad)]))
         subs = []
         for name, hx in T['weap_longbow']['subs']:
             b = bytes.fromhex(hx)
-            if name == 'EDID': b = z('BO3Z_Bow_' + w['id'])
+            if name == 'EDID': b = z('COA_Bow_' + w['id'])
             elif name == 'FULL': b = z(w['label'])
             elif name == 'MODL': b = z(w['standinModel'])
             elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_' + w['id']))
@@ -552,14 +552,14 @@ for w in S['weapons']['rows']:
         sp = bytearray(tsub('spel_firebolt', 'SPIT'))
         struct.pack_into('<IIIfIIffI', sp, 0, int(round(w.get('mana', 0) or 0)), 0x1, 0, 0.0, 1, 0, 0.0, 0.0, 0)  # its real magicka cost shown in the Magic menu (the code spends it; the engine's own charge is handed back), fire-and-forget (one push per click), self
         recs['SPEL'].append(record('SPEL', fid('SPEL', 'hand_' + w['id']), [
-            sub('EDID', z('UN_Hand_' + w['id'])), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z(w['label'])),
+            sub('EDID', z('COA_Hand_' + w['id'])), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z(w['label'])),
             sub('MDOB', struct.pack('<I', fid('STAT', 'fx_' + w['id'] + '_orb')) if w['id'] in SCRAFT else tsub('spel_firebolt', 'MDOB')), sub('ETYP', tsub('spel_firebolt', 'ETYP')), sub('DESC', z('')),
             sub('SPIT', bytes(sp)), sub('EFID', struct.pack('<I', fid('MGEF', 'hand_' + w['id']))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
         # a WEAP still exists (kept form id, box/wall display); never handed out
         subs = []
         for name, hx in T['weap_staff']['subs']:
             b = bytes.fromhex(hx)
-            if name == 'EDID': b = z('BO3Z_Tome_' + w['id'])
+            if name == 'EDID': b = z('COA_Tome_' + w['id'])
             elif name == 'FULL': b = z(w['label'])
             elif name == 'MODL': b = z(w['standinModel'])
             elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_' + w['id']))
@@ -588,17 +588,17 @@ for bw in S['bows']['rows']:
     struct.pack_into('<f', pd, 12, 9000.0)             # range
     struct.pack_into('<I', pd, 16, 0)                  # no light
     recs['PROJ'].append(record('PROJ', fid('PROJ', 'bowarrow_' + bw['id']), [
-        sub('EDID', z('UN_BowArrowProj_' + bw['id'])), sub('OBND', tsub('proj_arrow', 'OBND')), sub('FULL', z(bw['label'] + ' Arrow')),
+        sub('EDID', z('COA_BowArrowProj_' + bw['id'])), sub('OBND', tsub('proj_arrow', 'OBND')), sub('FULL', z(bw['label'] + ' Arrow')),
         sub('MODL', z('CurseOfAlduin\\arrows\\arrow' + NOCK[bw['element']] + 'flight.nif')), sub('DATA', bytes(pd)), sub('NAM1', b'\0'), sub('VNAM', tsub('proj_arrow', 'VNAM'))]))
     ad = struct.pack('<IIfIf', fid('PROJ', 'bowarrow_' + bw['id']), 0x4, 0.0, 0, 0.0)   # projectile, flags (an arrow, not a bolt), damage 0
     recs['AMMO'].append(record('AMMO', fid('AMMO', 'bowarrow_' + bw['id']), [
-        sub('EDID', z('UN_BowArrow_' + bw['id'])), sub('OBND', tsub('ammo_iron', 'OBND')), sub('FULL', z(bw['label'] + ' Arrow')),
+        sub('EDID', z('COA_BowArrow_' + bw['id'])), sub('OBND', tsub('ammo_iron', 'OBND')), sub('FULL', z(bw['label'] + ' Arrow')),
         sub('MODL', z('CurseOfAlduin\\arrows\\arrow' + NOCK[bw['element']] + 'quiver.nif')), sub('YNAM', tsub('ammo_iron', 'YNAM')), sub('ZNAM', tsub('ammo_iron', 'ZNAM')),
         sub('KSIZ', tsub('ammo_iron', 'KSIZ')), sub('KWDA', tsub('ammo_iron', 'KWDA')), sub('DATA', ad)]))
     subs = []
     for name, hx in T['weap_longbow']['subs']:
         b = bytes.fromhex(hx)
-        if name == 'EDID': b = z('UN_Bow_' + bw['id'])
+        if name == 'EDID': b = z('COA_Bow_' + bw['id'])
         elif name == 'FULL': b = z(bw['label'])
         elif name == 'MODL': b = z('CurseOfAlduin\\bow\\' + bw['id'] + '.nif')
         elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_bow_' + bw['id']))
@@ -656,14 +656,14 @@ LGS = {'radiant': 'silver', 'carian': 'stahlrim', 'shadowflame': 'daedric', 'spe
 def lgs(k): return f'Light Greatswords\\{LGS[k]}\\LightGreatsword.nif'
 # (Noah: "hang them at the hip") the four class swords: our copies sheathed at the hip (src/ArmorForge.cpp BuildHipBlades)
 def hip(k): return f'CurseOfAlduin\\hipblades\\{LGS[k]}.nif'
-crystal_weapon('riftblade', 'UN_Riftblade', 'Radiant Quarterstaff', hip('radiant'), '1st_riftblade',
+crystal_weapon('riftblade', 'COA_Riftblade', 'Radiant Quarterstaff', hip('radiant'), '1st_riftblade',
     SWORD_DESC['radiant'],
     (900, 10.0, 10))
-crystal_weapon('carianblade', 'UN_CarianBlade', 'Carian Wand', hip('carian'), '1st_kvblue',
+crystal_weapon('carianblade', 'COA_CarianBlade', 'Carian Wand', hip('carian'), '1st_kvblue',
     SWORD_DESC['carian'],
     (900, 10.0, 10))
 
-crystal_weapon('alchknife', 'UN_AlchemistKnife', 'Shadowflame Scythe', hip('shadowflame'), '1st_mace',
+crystal_weapon('alchknife', 'COA_AlchemistKnife', 'Shadowflame Scythe', hip('shadowflame'), '1st_mace',
     SWORD_DESC['alch'],
     (900, 10.0, 10))
 
@@ -690,16 +690,16 @@ for n, t in enumerate(RIFT_TIERS, start=1):
         if 'life' in t: struct.pack_into('<f', d, 0x84, t['life'])
     if 'edge' in t:
         d[0x38:0x3B] = bytes(t['edge'])
-    subs = [sub('EDID', z(f'UN_RiftShader{n}'))]
+    subs = [sub('EDID', z(f'COA_RiftShader{n}'))]
     for name, hx in T['efsh_enchfire']['subs']:
         if name == 'EDID': continue
         subs.append(sub(name, bytes(d) if name == 'DATA' else bytes.fromhex(hx)))
     recs['EFSH'].append(record('EFSH', fid('EFSH', f'riftshader{n}'), subs))
     md = bytearray(tsub('mgef_enchfire', 'DATA'))
     struct.pack_into('<I', md, 36, fid('EFSH', f'riftshader{n}'))   # its enchantment shader: ours
-    recs['MGEF'].append(record('MGEF', fid('MGEF', f'riftfire{n}'), [sub('EDID', z(f'UN_RiftFire{n}')), sub('FULL', z('Fire Damage')), sub('MDOB', tsub('mgef_enchfire', 'MDOB')),
+    recs['MGEF'].append(record('MGEF', fid('MGEF', f'riftfire{n}'), [sub('EDID', z(f'COA_RiftFire{n}')), sub('FULL', z('Fire Damage')), sub('MDOB', tsub('mgef_enchfire', 'MDOB')),
         sub('KSIZ', tsub('mgef_enchfire', 'KSIZ')), sub('KWDA', tsub('mgef_enchfire', 'KWDA')), sub('DATA', bytes(md)), sub('DNAM', z('Burns the target for <mag> points.'))]))
-    recs['ENCH'].append(record('ENCH', fid('ENCH', f'riftfire{n}'), [sub('EDID', z(f'UN_RiftEnch{n}')), sub('OBND', bytes(12)), sub('FULL', z('Fire Damage')),
+    recs['ENCH'].append(record('ENCH', fid('ENCH', f'riftfire{n}'), [sub('EDID', z(f'COA_RiftEnch{n}')), sub('OBND', bytes(12)), sub('FULL', z('Fire Damage')),
         sub('ENIT', tsub('ench_fire05', 'ENIT')), sub('EFID', struct.pack('<I', fid('MGEF', f'riftfire{n}'))), sub('EFIT', tsub('ench_fire05', 'EFIT'))]))
 
 # (Noah: "use the Madness Sword for the Spellsword's weapon") Saints & Seducers' Madness Sword as a record of our own: its
@@ -712,7 +712,7 @@ MAD_GLOW = [  # its tiers: the blade's own fire, brighter each tier (src/Kit.cpp
     dict(persist=1.3, pulse=0.3, particles=True, birth=140.0, alpha=(0.12, 0.65, 0.12), scale2=11.0, life=0.8, fill=(215, 35, 18), keys=((255, 170, 90), (230, 45, 20), (120, 0, 0)), edge=(240, 40, 15)),
 ]
 # (the audit: the Madness Sword's first-person static pointed at Saints & Seducers' model - Creation Club content, never required: gone)
-crystal_weapon('madness', 'UN_MadnessSword', 'Spellbound Rapier', hip('spellbound'), '1st_kvred',
+crystal_weapon('madness', 'COA_MadnessSword', 'Spellbound Rapier', hip('spellbound'), '1st_kvred',
     SWORD_DESC['ss_none'],
     (900, 10.0, 10))
 
@@ -722,13 +722,13 @@ crystal_weapon('madness', 'UN_MadnessSword', 'Spellbound Rapier', hip('spellboun
 # (Noah, 2026-11-20: approved "our own Dragon Slayer" - tools/dragonslayer.py) our dragonbone sword; (2026-11-21) two-handed, its own
 # greatsword record as it is (src/Classes.cpp SlayerLook no longer gives it a katana's look)
 SLAYER_NIF = 'CurseOfAlduin\\slayer\\dragonslayer.nif'
-crystal_weapon('slayer', 'UN_DragonSlayer', 'Dragon Slayer', SLAYER_NIF, '1st_slayer',
+crystal_weapon('slayer', 'COA_DragonSlayer', 'Dragon Slayer', SLAYER_NIF, '1st_slayer',
     SWORD_DESC['slayer'],
     (6000, 16.0, 26), 'weap_draugr_gs', 0.75 * 1.5)   # (Noah: "make 2hand attacks faster by 50% only while holding those 2 weapons")
 # (Noah, 2026-11-21: Destruction's wonder, "Wyrmspine Javelin" - in place of the Staff of Magnus, which Skyrim gives anyone) a
 # one-handed record held as a spear and carried on the back (tools/wyrmspine.py); its throw, charge, blast and ricochet are
 # src/Classes.cpp's (TickJavelin) - its attack is never swung
-crystal_weapon('javelin', 'UN_WyrmspineJavelin', 'Wyrmspine Javelin', 'CurseOfAlduin\\wyrmspine\\wyrmspine.nif', '1st_javelin',
+crystal_weapon('javelin', 'COA_WyrmspineJavelin', 'Wyrmspine Javelin', 'CurseOfAlduin\\wyrmspine\\wyrmspine.nif', '1st_javelin',
     "Destruction's wonder, a javelin carved from a dragon's spine. Light attack: a quick jab. Hold attack to charge, let go to throw: it bursts in the element of the spell in your other hand, bigger the longer you held. A kill sends it on to the next enemy, then it flies back to your hand.",
     (6000, 8.0, 30))
 
@@ -759,7 +759,7 @@ for c, (fill, edge) in enumerate(ARM_COL):
             struct.pack_into('<2f', d, 0xAC, 1.5 + 0.3 * t, 5.0 + 1.2 * t)  # (their size: born small, swelling)
             for k, rgb in enumerate((edge, fill, tuple(x // 3 for x in fill))): d[0xBC + 4 * k:0xBC + 4 * k + 3] = bytes(rgb)
             struct.pack_into('<3f', d, 0xC8, 0.0, min(1.0, 0.35 + 0.12 * t), 0.0)   # (they fade in and out)
-        subs = [sub('EDID', z(f'UN_ArmGlow_{c}_{t}'))]
+        subs = [sub('EDID', z(f'COA_ArmGlow_{c}_{t}'))]
         for name, hx in T['efsh_enchpurple']['subs']:
             if name == 'EDID': continue
             subs.append(sub(name, bytes(d) if name == 'DATA' else bytes.fromhex(hx)))
@@ -777,7 +777,7 @@ for n, t in enumerate(MAD_GLOW, start=1):
         for k, rgb in enumerate(t['keys']): d[0xBC + 4 * k:0xBC + 4 * k + 3] = bytes(rgb)
         if 'life' in t: struct.pack_into('<f', d, 0x84, t['life'])
     d[0x38:0x3B] = bytes(t.get('edge', t['fill']))       # its edge glow
-    subs = [sub('EDID', z(f'UN_MadShader{n}'))]
+    subs = [sub('EDID', z(f'COA_MadShader{n}'))]
     for name, hx in T['efsh_enchpurple']['subs']:
         if name == 'EDID': continue
         subs.append(sub(name, bytes(d) if name == 'DATA' else bytes.fromhex(hx)))
@@ -788,11 +788,11 @@ for n, t in enumerate(MAD_GLOW, start=1):
     struct.pack_into('<I', md, 36, fid('EFSH', f'madshader{n}'))
     struct.pack_into('<I', md, 96, 0)
     struct.pack_into('<I', md, 0, struct.unpack_from('<I', md, 0)[0] | 0x8000)   # hidden in the effects list
-    recs['MGEF'].append(record('MGEF', fid('MGEF', f'madglow{n}'), [sub('EDID', z(f'UN_MadGlow{n}')), sub('FULL', z('Madfire')), sub('MDOB', tsub('mgef_enchfire', 'MDOB')),
+    recs['MGEF'].append(record('MGEF', fid('MGEF', f'madglow{n}'), [sub('EDID', z(f'COA_MadGlow{n}')), sub('FULL', z('Madfire')), sub('MDOB', tsub('mgef_enchfire', 'MDOB')),
         sub('DATA', bytes(md)), sub('DNAM', z(''))]))
     en = bytearray(tsub('ench_fire05', 'ENIT'))
     struct.pack_into('<I', en, 0, 0); struct.pack_into('<I', en, 4, struct.unpack_from('<I', en, 4)[0] | 0x1)   # costs no charge
-    recs['ENCH'].append(record('ENCH', fid('ENCH', f'madglow{n}'), [sub('EDID', z(f'UN_MadGlowEnch{n}')), sub('OBND', bytes(12)), sub('FULL', z('Madfire')),
+    recs['ENCH'].append(record('ENCH', fid('ENCH', f'madglow{n}'), [sub('EDID', z(f'COA_MadGlowEnch{n}')), sub('OBND', bytes(12)), sub('FULL', z('Madfire')),
         sub('ENIT', bytes(en)), sub('EFID', struct.pack('<I', fid('MGEF', f'madglow{n}'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 
 
@@ -827,7 +827,7 @@ for bkey, (fill, edge, keys) in BV_COL.items():
             struct.pack_into('<f', d, 0xB0, (0, 8.0, 11.0)[n - 1])
             struct.pack_into('<f', d, 0x84, 0.8)
             for k, rgb in enumerate(keys): d[0xBC + 4 * k:0xBC + 4 * k + 3] = bytes(rgb)
-        subs = [sub('EDID', z(f'UN_BladeLook_{bkey}{n}'))]
+        subs = [sub('EDID', z(f'COA_BladeLook_{bkey}{n}'))]
         for name, hx in T['efsh_enchpurple']['subs']:
             if name == 'EDID': continue
             subs.append(sub(name, bytes(d) if name == 'DATA' else bytes.fromhex(hx)))
@@ -842,11 +842,11 @@ for bkey, (fill, edge, keys) in BV_COL.items():
         # this tier adds (no magnitude, duration or area to print)
         tk = 'ss' if bkey.startswith('ss_') else bkey
         struct.pack_into('<I', md, 0, (struct.unpack_from('<I', md, 0)[0] & ~0x8000) | 0x200 | 0x400 | 0x800)
-        recs['MGEF'].append(record('MGEF', fid('MGEF', f'bv_{bkey}_{n}'), [sub('EDID', z(f'UN_BladeLookFx_{bkey}{n}')), sub('FULL', z(TIER_NAME[tk] + ' ' + 'I' * n)), sub('MDOB', tsub('mgef_enchfire', 'MDOB')),
+        recs['MGEF'].append(record('MGEF', fid('MGEF', f'bv_{bkey}_{n}'), [sub('EDID', z(f'COA_BladeLookFx_{bkey}{n}')), sub('FULL', z(TIER_NAME[tk] + ' ' + 'I' * n)), sub('MDOB', tsub('mgef_enchfire', 'MDOB')),
             sub('DATA', bytes(md)), sub('DNAM', z(TIER_TEXT[tk][n - 1]))]))
         en = bytearray(tsub('ench_fire05', 'ENIT'))
         struct.pack_into('<I', en, 0, 0); struct.pack_into('<I', en, 4, struct.unpack_from('<I', en, 4)[0] | 0x1)
-        recs['ENCH'].append(record('ENCH', fid('ENCH', f'bv_{bkey}_{n}'), [sub('EDID', z(f'UN_BladeLookEnch_{bkey}{n}')), sub('OBND', bytes(12)), sub('FULL', z(TIER_NAME[tk] + ' ' + 'I' * n)),
+        recs['ENCH'].append(record('ENCH', fid('ENCH', f'bv_{bkey}_{n}'), [sub('EDID', z(f'COA_BladeLookEnch_{bkey}{n}')), sub('OBND', bytes(12)), sub('FULL', z(TIER_NAME[tk] + ' ' + 'I' * n)),
             sub('ENIT', bytes(en)), sub('EFID', struct.pack('<I', fid('MGEF', f'bv_{bkey}_{n}'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 
 # (Noah: Visual Animated Enchants on every melee weapon) a look-only enchantment per colour: a script effect with no script, nothing
@@ -857,18 +857,18 @@ for c in VAE_COL:
     for off in (24, 32, 36, 96, 100): struct.pack_into('<I', md, off, 0)
     struct.pack_into('<I', md, 64, 1); struct.pack_into('<I', md, 68, 0xFFFFFFFF)
     struct.pack_into('<I', md, 0, struct.unpack_from('<I', md, 0)[0] | 0x8000)
-    recs['MGEF'].append(record('MGEF', fid('MGEF', 'vae_' + c), [sub('EDID', z('UN_VaeLookFx_' + c)), sub('FULL', z('')), sub('MDOB', tsub('mgef_enchfire', 'MDOB')),
+    recs['MGEF'].append(record('MGEF', fid('MGEF', 'vae_' + c), [sub('EDID', z('COA_VaeLookFx_' + c)), sub('FULL', z('')), sub('MDOB', tsub('mgef_enchfire', 'MDOB')),
         sub('DATA', bytes(md)), sub('DNAM', z(''))]))
     en = bytearray(tsub('ench_fire05', 'ENIT'))
     struct.pack_into('<I', en, 0, 0); struct.pack_into('<I', en, 4, struct.unpack_from('<I', en, 4)[0] | 0x1)
-    recs['ENCH'].append(record('ENCH', fid('ENCH', 'vae_' + c), [sub('EDID', z('UN_VaeLook_' + c)), sub('OBND', bytes(12)), sub('FULL', z('')),
+    recs['ENCH'].append(record('ENCH', fid('ENCH', 'vae_' + c), [sub('EDID', z('COA_VaeLook_' + c)), sub('OBND', bytes(12)), sub('FULL', z('')),
         sub('ENIT', bytes(en)), sub('EFID', struct.pack('<I', fid('MGEF', 'vae_' + c))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 for combo in sorted(set(v for v in VAE_WEAP.values() if '+' in v)):   # (Noah: the Eclipse Edge "gold and light blue") two looks at once
     en = bytearray(tsub('ench_fire05', 'ENIT'))
     struct.pack_into('<I', en, 0, 0); struct.pack_into('<I', en, 4, struct.unpack_from('<I', en, 4)[0] | 0x1)
     efs = []
     for c in combo.split('+'): efs += [sub('EFID', struct.pack('<I', fid('MGEF', 'vae_' + c))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]
-    recs['ENCH'].append(record('ENCH', fid('ENCH', 'vae_' + combo.replace('+', '_')), [sub('EDID', z('UN_VaeLook_' + combo.replace('+', '_'))), sub('OBND', bytes(12)), sub('FULL', z('')),
+    recs['ENCH'].append(record('ENCH', fid('ENCH', 'vae_' + combo.replace('+', '_')), [sub('EDID', z('COA_VaeLook_' + combo.replace('+', '_'))), sub('OBND', bytes(12)), sub('FULL', z('')),
         sub('ENIT', bytes(en))] + efs))
 
 # (Noah: "make them required") Vibrant Weapons' own art (its files, read from the mod): the one-handed swords its sword art, the
@@ -883,7 +883,7 @@ VW_ART = {k: 'CurseOfAlduin\\fx\\blade_' + v + '.nif' for k, v in {'alch': 'shoc
 for bkey, (fill, edge, keys) in BV_COL.items():
     data = bytearray(tsub('ligh', 'DATA'))
     struct.pack_into('<I', data, 4, 180); struct.pack_into('<BBBB', data, 8, *edge, 0)
-    recs['LIGH'].append(record('LIGH', fid('LIGH', f'vw_{bkey}'), [sub('EDID', z(f'UN_SwordLight_{bkey}')), sub('OBND', tsub('ligh', 'OBND')), sub('DATA', bytes(data)), sub('FNAM', struct.pack('<f', 0.6))]))
+    recs['LIGH'].append(record('LIGH', fid('LIGH', f'vw_{bkey}'), [sub('EDID', z(f'COA_SwordLight_{bkey}')), sub('OBND', tsub('ligh', 'OBND')), sub('DATA', bytes(data)), sub('FNAM', struct.pack('<f', 0.6))]))
     arto(f'vw_{bkey}', VW_ART[bkey], 1)   # (a hit-effect art, as theirs)
     md = bytearray(bytes.fromhex('001040000000003f58fa030012000000ffffffff00000000091f040000000000000000000000000000000000000000000000003f0000000000000000000000000c000000ffffffff00000000000000000100000000000000ffffffff081f0400061f0400000000008fc2f53d000000000000803f000000000000000000000000000000000000000000000000000000000000000000000000'))
     struct.pack_into('<I', md, 0, struct.unpack_from('<I', md, 0)[0] | 0x8000)   # hidden
@@ -893,9 +893,9 @@ for bkey, (fill, edge, keys) in BV_COL.items():
     struct.pack_into('<I', md, 84, 0)                                              # on yourself
     struct.pack_into('<I', md, 92, 0)
     struct.pack_into('<I', md, 96, fid('ARTO', f'vw_{bkey}'))                      # the art on you (Vibrant's: hung on the WEAPON node)
-    recs['MGEF'].append(record('MGEF', fid('MGEF', f'vw_{bkey}'), [sub('EDID', z(f'UN_SwordArtFx_{bkey}')), sub('FULL', z('Blade')), sub('MDOB', struct.pack('<I', 0)),
+    recs['MGEF'].append(record('MGEF', fid('MGEF', f'vw_{bkey}'), [sub('EDID', z(f'COA_SwordArtFx_{bkey}')), sub('FULL', z('Blade')), sub('MDOB', struct.pack('<I', 0)),
         sub('DATA', bytes(md)), sub('DNAM', z(''))]))
-    recs['SPEL'].append(record('SPEL', fid('SPEL', f'vw_{bkey}'), [sub('EDID', z(f'UN_SwordArt_{bkey}')), sub('OBND', bytes(12)), sub('FULL', z('Blade')),
+    recs['SPEL'].append(record('SPEL', fid('SPEL', f'vw_{bkey}'), [sub('EDID', z(f'COA_SwordArt_{bkey}')), sub('OBND', bytes(12)), sub('FULL', z('Blade')),
         sub('DESC', z('')), sub('SPIT', struct.pack('<IIIfIIffI', 0, 0, 4, 0.0, 0, 0, 0.0, 0.0, 0)),   # an ability, constant, on yourself
         sub('EFID', struct.pack('<I', fid('MGEF', f'vw_{bkey}'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 
@@ -907,7 +907,7 @@ struct.pack_into('<f', d, 0x20, 1.6)             # a full, steady fill
 struct.pack_into('<f', d, 0x24, 0.0)
 d[0x10:0x13] = bytes((150, 155, 165))
 d[0x38:0x3B] = bytes((210, 215, 225))
-subs = [sub('EDID', z('UN_HallGhostShader'))]
+subs = [sub('EDID', z('COA_HallGhostShader'))]
 for name, hx in T['efsh_enchpurple']['subs']:
     if name == 'EDID': continue
     subs.append(sub(name, bytes(d) if name == 'DATA' else bytes.fromhex(hx)))
@@ -920,7 +920,7 @@ struct.pack_into('<f', d, 0x20, 2.4)
 struct.pack_into('<f', d, 0x24, 0.0)
 d[0x10:0x13] = bytes((90, 190, 255))
 d[0x38:0x3B] = bytes((170, 235, 255))
-subs = [sub('EDID', z('UN_SpectralWolfShader'))]
+subs = [sub('EDID', z('COA_SpectralWolfShader'))]
 for name, hx in T['efsh_enchpurple']['subs']:
     if name == 'EDID': continue
     subs.append(sub(name, bytes(d) if name == 'DATA' else bytes.fromhex(hx)))
@@ -932,7 +932,7 @@ recs['EFSH'].append(record('EFSH', fid('EFSH', 'spectral'), subs))
 # blue") the glow made blue: the cats, and the dead its beam holds (the record keeps its old key, so its form id stays)
 d = bytearray(tsub('efsh_ghostwolf', 'DATA'))
 d[0x38:0x3B] = bytes((60, 140, 255))
-subs = [sub('EDID', z('UN_SoulPurpleShader'))]
+subs = [sub('EDID', z('COA_SoulPurpleShader'))]
 for name, hx in T['efsh_ghostwolf']['subs']:
     if name == 'EDID': continue
     # (Noah: "the spectral wolves kind of change colors. Can you just make it a solid one color, purple?") our one violet ramp,
@@ -949,7 +949,7 @@ for key, fill, edge in (('tabletgreen', (40, 200, 70), (130, 255, 150)), ('table
     struct.pack_into('<f', d, 0x24, 0.15)
     d[0x10:0x13] = bytes(fill)
     d[0x38:0x3B] = bytes(edge)
-    subs = [sub('EDID', z('UN_Tablet_' + key))]
+    subs = [sub('EDID', z('COA_Tablet_' + key))]
     for name, hx in T['efsh_enchpurple']['subs']:
         if name == 'EDID': continue
         subs.append(sub(name, bytes(d) if name == 'DATA' else bytes.fromhex(hx)))
@@ -969,7 +969,7 @@ struct.pack_into('<fff', d, 0xC8, 0.2, 0.9, 0.2)
 struct.pack_into('<f', d, 0xB0, 14.0)
 struct.pack_into('<f', d, 0x84, 0.9)
 for k, rgb in enumerate(((245, 215, 255), (170, 70, 255), (80, 0, 170))): d[0xBC + 4 * k:0xBC + 4 * k + 3] = bytes(rgb)
-subs = [sub('EDID', z('UN_ShadowburnShader'))]
+subs = [sub('EDID', z('COA_ShadowburnShader'))]
 for name, hx in T['efsh_enchfire']['subs']:
     if name == 'EDID': continue
     subs.append(sub(name, bytes(d) if name == 'DATA' else bytes.fromhex(hx)))
@@ -999,16 +999,16 @@ for el, t in ((k, v) for k, v in BOW_SKIN.items() if k == 'void'):   # (only the
     struct.pack_into('<f', d, 0x84, 0.7)
     for k, rgb in enumerate(t['keys']): d[0xBC + 4 * k:0xBC + 4 * k + 3] = bytes(rgb)
     d[0x38:0x3B] = bytes(t['edge'])
-    subs = [sub('EDID', z(f'UN_BowSkin_{el}'))]
+    subs = [sub('EDID', z(f'COA_BowSkin_{el}'))]
     for name, hx in T['efsh_enchpurple']['subs']:
         if name == 'EDID': continue
         subs.append(sub(name, bytes(d) if name == 'DATA' else bytes.fromhex(hx)))
     recs['EFSH'].append(record('EFSH', fid('EFSH', f'bowskin_{el}'), subs))
 
-recs['ACTI'].append(record('ACTI', fid('ACTI', 'purplefire'), [sub('EDID', z('UN_PurpleFire')), sub('OBND', struct.pack('<6h', -120, -120, -40, 120, 120, 140)),   # (the Horn's dragon's violet breath)
+recs['ACTI'].append(record('ACTI', fid('ACTI', 'purplefire'), [sub('EDID', z('COA_PurpleFire')), sub('OBND', struct.pack('<6h', -120, -120, -40, 120, 120, 140)),   # (the Horn's dragon's violet breath)
     sub('MODL', z('CurseOfAlduin\\fx\\purplefire.nif')), sub('FNAM', b'\0\0')]))
 for e in ('fire', 'frost', 'shock', 'wind', 'sun', 'blood', 'void', 'poison', 'gold'):  # (Noah: the arrows land as impact grenades, in the bow's own colour - tools/elemburst.py)
-    recs['ACTI'].append(record('ACTI', fid('ACTI', 'burst_' + e), [sub('EDID', z('UN_Burst_' + e)), sub('OBND', struct.pack('<6h', -130, -130, -20, 130, 130, 140)),
+    recs['ACTI'].append(record('ACTI', fid('ACTI', 'burst_' + e), [sub('EDID', z('COA_Burst_' + e)), sub('OBND', struct.pack('<6h', -130, -130, -20, 130, 130, 140)),
         sub('MODL', z('CurseOfAlduin\\fx\\burst_' + e + '.nif')), sub('FNAM', b'\0\0')]))
 
 # (the classes overhaul) the Summoner's command: hidden perks that set how many summons you may hold (2, 3, 4) -
@@ -1016,16 +1016,16 @@ for e in ('fire', 'frost', 'shock', 'wind', 'sun', 'blood', 'void', 'poison', 'g
 # (Noah: 2 to start, one more for every 2 freed altars, up to 7; 8 with the Conjurer's Command Mead)
 for n in (2, 3, 4, 5, 6, 7, 8):
     recs['PERK'].append(record('PERK', fid('PERK', f'summon_cap_{n}'), [
-        sub('EDID', z(f'UN_SummonCap{n}')), sub('FULL', z(f'Command of {n}')), sub('DESC', z(f'You can hold {n} summons at once.')),
+        sub('EDID', z(f'COA_SummonCap{n}')), sub('FULL', z(f'Command of {n}')), sub('DESC', z(f'You can hold {n} summons at once.')),
         sub('DATA', bytes([0, 0, 1, 0, 1])), sub('PRKE', bytes([2, 0, 10 + n])), sub('DATA', bytes([68, 1, 2])),
         sub('EPFT', bytes([1])), sub('EPFD', struct.pack('<f', float(n))), sub('PRKF', b'')]))
 
 # (Noah: "I don't want stagger and lurch - it's annoying to get spammed with movement blocking attacks") the night's
 # dead never stagger you: Mod Incoming Stagger (entry point 33), Multiply Value x0, when the attacker is in the undead
 # faction (tab 1: the attacker). Given to the player at load (src/Director.cpp)
-_ctda = struct.pack('<B3xfHHIIIIi', 0, 1.0, 71, 0, fid('FACT', 'undead'), 0, 0, 0, -1)  # GetInFaction(UN_UndeadFaction) == 1, run on the subject (the attacker)
+_ctda = struct.pack('<B3xfHHIIIIi', 0, 1.0, 71, 0, fid('FACT', 'undead'), 0, 0, 0, -1)  # GetInFaction(COA_UndeadFaction) == 1, run on the subject (the attacker)
 recs['PERK'].append(record('PERK', fid('PERK', 'steady'), [
-    sub('EDID', z('UN_SteadyAgainstTheDead')), sub('FULL', z('Steady')), sub('DESC', z("The night's dead never stagger you.")),
+    sub('EDID', z('COA_SteadyAgainstTheDead')), sub('FULL', z('Steady')), sub('DESC', z("The night's dead never stagger you.")),
     sub('DATA', bytes([0, 0, 1, 0, 1])), sub('PRKE', bytes([2, 0, 0])), sub('DATA', bytes([33, 3, 2])),
     sub('PRKC', bytes([1])), sub('CTDA', _ctda),
     sub('EPFT', bytes([1])), sub('EPFD', struct.pack('<f', 0.0)), sub('PRKF', b'')]))
@@ -1034,7 +1034,7 @@ for p in S['perks']['rows']:
     enit = bytearray(tsub('alch', 'ENIT'))
     struct.pack_into('<iIIf', enit, 0, 0, 0x1, 0, 0.0)       # value 0, no auto-calc, no addiction
     recs['ALCH'].append(record('ALCH', fid('ALCH', p['id']), [
-        sub('EDID', z('BO3Z_PerkCola_' + p['id'])), sub('OBND', tsub('alch', 'OBND')), sub('FULL', z(p['label'])),
+        sub('EDID', z('COA_PerkCola_' + p['id'])), sub('OBND', tsub('alch', 'OBND')), sub('FULL', z(p['label'])),
         sub('KSIZ', tsub('alch', 'KSIZ')), sub('KWDA', tsub('alch', 'KWDA')), sub('MODL', z(p['potionModel'])),
         sub('YNAM', tsub('alch', 'YNAM')), sub('ZNAM', tsub('alch', 'ZNAM')), sub('DATA', struct.pack('<f', 0.5)),
         sub('ENIT', bytes(enit)), sub('EFID', struct.pack('<I', fid('MGEF', p['id']))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
@@ -1057,22 +1057,22 @@ for s in S['sounds']['rows']:
 # (Noah) the Dance Of Death's song: 20 s cut from a track Noah supplied - not shipped with the mod (his own copy is
 # installed beside it: Data\Sound\fx\CurseOfAlduin\dance\dance_of_death.wav); the record plays nothing when it's absent
 recs['SNDR'].append(record('SNDR', fid('SNDR', 'dance_song'), [
-    sub('EDID', z('UN_dance_song')), sub('CNAM', tsub('sndr_ui', 'CNAM')), sub('GNAM', struct.pack('<I', 0x000172A1)),
+    sub('EDID', z('COA_dance_song')), sub('CNAM', tsub('sndr_ui', 'CNAM')), sub('GNAM', struct.pack('<I', 0x000172A1)),
     sub('ANAM', z('fx\\CurseOfAlduin\\dance\\dance_of_death.wav')), sub('ONAM', tsub('sndr_ui', 'ONAM')), sub('LNAM', tsub('sndr_ui', 'LNAM')),
     sub('BNAM', struct.pack('<bBBBH', 0, 3, 128, 0, 0))]))
 
 # music: Grimmvar's fight and a city freed play through Skyrim's own music system (music slider, ducking, no clash
 # with the combat music: higher priority), from tracks cut out of the supplied library
-for key, edid, track, flags, prio, fade in (('boss', 'UN_MUSBoss', 'Data\\Music\\CurseOfAlduin\\mus_boss.wav', 0x24, 1, 3.0),
-                                           ('freed', 'UN_MUSFreed', 'Data\\Music\\CurseOfAlduin\\mus_freed.wav', 0x01, 1, 1.5),
-                                           ('intro', 'UN_MUSIntro', 'Data\\Music\\CurseOfAlduin\\mus_intro.wav', 0x21, 1, 2.0),
-                                           ('night', 'UN_MUSNight', 'Data\\Music\\CurseOfAlduin\\mus_night.wav', 0x04, 5, 6.0)):  # (Noah: the night's own song, low under it all; the file is his, deployed only)
+for key, edid, track, flags, prio, fade in (('boss', 'COA_MUSBoss', 'Data\\Music\\CurseOfAlduin\\mus_boss.wav', 0x24, 1, 3.0),
+                                           ('freed', 'COA_MUSFreed', 'Data\\Music\\CurseOfAlduin\\mus_freed.wav', 0x01, 1, 1.5),
+                                           ('intro', 'COA_MUSIntro', 'Data\\Music\\CurseOfAlduin\\mus_intro.wav', 0x21, 1, 2.0),
+                                           ('night', 'COA_MUSNight', 'Data\\Music\\CurseOfAlduin\\mus_night.wav', 0x04, 5, 6.0)):  # (Noah: the night's own song, low under it all; the file is his, deployed only)
     recs['MUST'].append(record('MUST', fid('MUST', key), [sub('EDID', z(edid + 'Track')), sub('CNAM', struct.pack('<I', 0x6ED7E048)), sub('ANAM', z(track))]))
     recs['MUSC'].append(record('MUSC', fid('MUSC', key), [sub('EDID', z(edid)), sub('FNAM', struct.pack('<I', flags)),
         sub('PNAM', struct.pack('<HH', prio, 10000)), sub('WNAM', struct.pack('<f', fade)), sub('TNAM', struct.pack('<I', fid('MUST', key)))]))
 # the undead step only with the mod's own footsteps (Audio.cpp plays them on each footfall): their skins carry an empty
 # footstep set, so the race's own (vanilla) steps stay quiet
-recs['FSTS'].append(record('FSTS', fid('FSTS', 'silent'), [sub('EDID', z('UN_SilentFootsteps')), sub('XCNT', struct.pack('<5I', 0, 0, 0, 0, 0)), sub('DATA', b'')]))
+recs['FSTS'].append(record('FSTS', fid('FSTS', 'silent'), [sub('EDID', z('COA_SilentFootsteps')), sub('XCNT', struct.pack('<5I', 0, 0, 0, 0, 0)), sub('DATA', b'')]))
 # loading screens of our own among Skyrim's: the shrine or the lore book turning, and a hint
 LOADING_TIPS = [
     "As Alduin flew from burning Helgen he shouted three words into the earth - SLEN TIID VO, Flesh, Time, Undo - and every barrow answered.",
@@ -1093,22 +1093,22 @@ LOADING_TIPS = [
     "Win Whiterun's altar and a dragon will answer your call: jump, then Activate in mid-air.",
 ]
 for key, model in (('ls_shrine', 'CurseOfAlduin\\shrine\\shrine.nif'), ('ls_book', 'Clutter\\Books\\Book02LowPoly02.nif')):
-    recs['STAT'].append(record('STAT', fid('STAT', key), [sub('EDID', z('UN_LoadScreen_' + key)), sub('OBND', struct.pack('<6h', -60, -60, 0, 60, 60, 200)),
+    recs['STAT'].append(record('STAT', fid('STAT', key), [sub('EDID', z('COA_LoadScreen_' + key)), sub('OBND', struct.pack('<6h', -60, -60, 0, 60, 60, 200)),
         sub('MODL', z(model)), sub('DNAM', struct.pack('<fI', 90.0, 0))]))
 for i, tip in enumerate(LOADING_TIPS):
     shrine = i % 2 == 0
-    recs['LSCR'].append(record('LSCR', fid('LSCR', f'ls_{i}'), [sub('EDID', z(f'UN_LoadScreen{i:02d}')), sub('DESC', z(tip)),
+    recs['LSCR'].append(record('LSCR', fid('LSCR', f'ls_{i}'), [sub('EDID', z(f'COA_LoadScreen{i:02d}')), sub('DESC', z(tip)),
         sub('NNAM', struct.pack('<I', fid('STAT', 'ls_shrine' if shrine else 'ls_book'))), sub('SNAM', struct.pack('<f', 0.55 if shrine else 2.2)),
         sub('RNAM', struct.pack('<3h', -10 if shrine else 20, 0, 0)), sub('ONAM', struct.pack('<2h', -180, 180)),
         sub('XNAM', struct.pack('<3f', 0.0, 0.0, -40.0 if shrine else 0.0))]))
 # the undead speak only with the mod's own voice: a voice type no dialogue uses (Skyrim's draugr groans stay out)
-recs['VTYP'].append(record('VTYP', fid('VTYP', 'silent'), [sub('EDID', z('UN_SilentVoice')), sub('DNAM', b'\0')]))
+recs['VTYP'].append(record('VTYP', fid('VTYP', 'silent'), [sub('EDID', z('COA_SilentVoice')), sub('DNAM', b'\0')]))
 
 DREC, _ = dressing(S)
 for (kind, key), r in DREC.items():
     if kind == 'STAT':
         recs['STAT'].append(record('STAT', fid('STAT', key), [
-            sub('EDID', z('UN_' + key)), sub('OBND', struct.pack('<6h', -30, -30, 0, 30, 30, 60)),
+            sub('EDID', z('COA_' + key)), sub('OBND', struct.pack('<6h', -30, -30, 0, 30, 30, 60)),
             sub('MODL', z(r['model'])), sub('DNAM', struct.pack('<fI', 90.0, 0))]))
     else:
         data = bytearray(tsub('ligh', 'DATA'))
@@ -1116,7 +1116,7 @@ for (kind, key), r in DREC.items():
         struct.pack_into('<I', data, 4, int(r['radius']))
         struct.pack_into('<BBBB', data, 8, c >> 16, (c >> 8) & 255, c & 255, 0)
         recs['LIGH'].append(record('LIGH', fid('LIGH', key), [
-            sub('EDID', z('UN_' + key)), sub('OBND', tsub('ligh', 'OBND')), sub('DATA', bytes(data)), sub('FNAM', struct.pack('<f', 1.0))]))
+            sub('EDID', z('COA_' + key)), sub('OBND', tsub('ligh', 'OBND')), sub('DATA', bytes(data)), sub('FNAM', struct.pack('<f', 1.0))]))
 
 # bullet tracers: fast missiles that do nothing themselves (hitscan does the damage)
 for p in S['projectiles']['rows']:
@@ -1129,7 +1129,7 @@ for p in S['projectiles']['rows']:
     struct.pack_into('<I', pd, 40, 0)                 # no flight sound
     struct.pack_into('<I', pd, 56, 0); struct.pack_into('<I', pd, 60, 0)   # no countdown / disable sounds
     recs['PROJ'].append(record('PROJ', fid('PROJ', key), [
-        sub('EDID', z('UN_' + key)), sub('OBND', tsub('proj_bullet', 'OBND')), sub('MODL', z(p['model'])),
+        sub('EDID', z('COA_' + key)), sub('OBND', tsub('proj_bullet', 'OBND')), sub('MODL', z(p['model'])),
         sub('DATA', bytes(pd)), sub('NAM1', b'\0'), sub('VNAM', struct.pack('<I', 0))]))
     md = bytearray(tsub('mgef_firebolt', 'DATA'))
     struct.pack_into('<I', md, 0, 0x200 | 0x400 | 0x800)  # not hostile: a stray bolt is no crime
@@ -1143,24 +1143,24 @@ for p in S['projectiles']['rows']:
     struct.pack_into('<I', md, 96, 0)                 # no hit art
     struct.pack_into('<I', md, 100, 0)                # no impact data
     recs['MGEF'].append(record('MGEF', fid('MGEF', key), [
-        sub('EDID', z('UN_' + key + 'Effect')), sub('MDOB', tsub('mgef_firebolt', 'MDOB')), sub('DATA', bytes(md)), sub('DNAM', z(''))]))
+        sub('EDID', z('COA_' + key + 'Effect')), sub('MDOB', tsub('mgef_firebolt', 'MDOB')), sub('DATA', bytes(md)), sub('DNAM', z(''))]))
     sp = bytearray(tsub('spel_firebolt', 'SPIT'))
     struct.pack_into('<I', sp, 0, 0)                  # cost 0
     struct.pack_into('<I', sp, 4, 0x1)                # manual cost, no auto-calc
     recs['SPEL'].append(record('SPEL', fid('SPEL', key), [
-        sub('EDID', z('UN_' + key + 'Spell')), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('ETYP', tsub('spel_firebolt', 'ETYP')),
+        sub('EDID', z('COA_' + key + 'Spell')), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('ETYP', tsub('spel_firebolt', 'ETYP')),
         sub('SPIT', bytes(sp)), sub('EFID', struct.pack('<I', fid('MGEF', key))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 # muzzle flash light
 ld = bytearray(tsub('ligh', 'DATA'))
 struct.pack_into('<I', ld, 4, 320); struct.pack_into('<BBBB', ld, 8, 255, 170, 70, 0)
-recs['LIGH'].append(record('LIGH', fid('LIGH', 'muzzle'), [sub('EDID', z('UN_MuzzleFlash')), sub('OBND', tsub('ligh', 'OBND')), sub('DATA', bytes(ld)), sub('FNAM', struct.pack('<f', 1.0))]))
+recs['LIGH'].append(record('LIGH', fid('LIGH', 'muzzle'), [sub('EDID', z('COA_MuzzleFlash')), sub('OBND', tsub('ligh', 'OBND')), sub('DATA', bytes(ld)), sub('FNAM', struct.pack('<f', 1.0))]))
 
 RACES = {'draugr': 0x000D53, 'breton': 0x013741}
 # the Iron Reaper's weapon: a draugr greatsword's two-handed swings, no visible blade (the scythe is part of its body)
 ws = []
 for name, hx in T['weap_draugr_gs']['subs']:
     b = bytes.fromhex(hx)
-    if name == 'EDID': b = z('UN_ReaperScythe')
+    if name == 'EDID': b = z('COA_ReaperScythe')
     elif name == 'FULL': b = z('Reaper Scythe')
     elif name == 'MODL': b = z('CurseOfAlduin\\reaper\\scythe_hidden.nif')
     elif name in ('MODT', 'DESC'): continue
@@ -1168,9 +1168,9 @@ for name, hx in T['weap_draugr_gs']['subs']:
 recs['WEAP'].append(record('WEAP', fid('WEAP', 'reaper_scythe'), ws))
 # Grimmvar's claws (one-handed rakes: a draugr's one-hand swings with nothing in the hand read as claw swipes) and the Gloomstalker's (quick dagger slashes): hidden weapons
 # that give each its own native swing set; the scripted moves are in Director.cpp
-for key, edid, label, anim, speed, reach, dmg in (('wyrm_claws', 'UN_WyrmClaws', 'Wyrm Claws', 1, 0.9, 1.6, 20),
-                                                  ('shadow_claws', 'UN_ShadowClaws', 'Shadow Claws', 2, 1.45, 1.1, 14),
-                                                  ('zombie_claws', 'UN_ZombieClaws', 'Grave Hands', 1, 1.15, 0.85, 6)):
+for key, edid, label, anim, speed, reach, dmg in (('wyrm_claws', 'COA_WyrmClaws', 'Wyrm Claws', 1, 0.9, 1.6, 20),
+                                                  ('shadow_claws', 'COA_ShadowClaws', 'Shadow Claws', 2, 1.45, 1.1, 14),
+                                                  ('zombie_claws', 'COA_ZombieClaws', 'Grave Hands', 1, 1.15, 0.85, 6)):
     ws = []
     for name, hx in T['weap_draugr_gs']['subs']:
         b = bytearray(bytes.fromhex(hx))
@@ -1197,17 +1197,17 @@ for c in S['creatures']['rows']:
     if human:  # the whole figure is the skin: head, hair, body, hands, feet (the race's own parts stay hidden)
         struct.pack_into('<I', bodt, 0, 0x1 | 0x2 | 0x4 | 0x8 | 0x80)
     recs['ARMA'].append(record('ARMA', fid('ARMA', c['id']), [
-        sub('EDID', z('UN_' + c['id'] + 'AA')), sub('BODT', bytes(bodt)), sub('RNAM', struct.pack('<I', race)),
+        sub('EDID', z('COA_' + c['id'] + 'AA')), sub('BODT', bytes(bodt)), sub('RNAM', struct.pack('<I', race)),
         sub('DNAM', tsub('arma_skin', 'DNAM')), sub('MOD2', model), sub('MOD3', model), sub('SNDD', struct.pack('<I', fid('FSTS', 'silent')))]))
     # glowing eyes (tools/eyes.py): a second addon in slot FX01, skinned to the head
     eyes = z(f"CurseOfAlduin\\eyes\\{c['id']}_eyes.nif")
     ebodt = bytearray(tsub('arma_skin', 'BODT')); struct.pack_into('<I', ebodt, 0, 1 << 31)
     recs['ARMA'].append(record('ARMA', fid('ARMA', 'eyes_' + c['id']), [
-        sub('EDID', z('UN_' + c['id'] + 'EyesAA')), sub('BODT', bytes(ebodt)), sub('RNAM', struct.pack('<I', race)),
+        sub('EDID', z('COA_' + c['id'] + 'EyesAA')), sub('BODT', bytes(ebodt)), sub('RNAM', struct.pack('<I', race)),
         sub('DNAM', tsub('arma_skin', 'DNAM')), sub('MOD2', eyes), sub('MOD3', eyes)]))
     abodt = bytearray(bodt); struct.pack_into('<I', abodt, 0, struct.unpack_from('<I', abodt, 0)[0] | (1 << 31))
     recs['ARMO'].append(record('ARMO', fid('ARMO', c['id']), [
-        sub('EDID', z('UN_Skin_' + c['id'])), sub('OBND', tsub('armo_skin', 'OBND')), sub('BODT', bytes(abodt)),
+        sub('EDID', z('COA_Skin_' + c['id'])), sub('OBND', tsub('armo_skin', 'OBND')), sub('BODT', bytes(abodt)),
         sub('RNAM', struct.pack('<I', race)), sub('MODL', struct.pack('<I', fid('ARMA', c['id']))), sub('MODL', struct.pack('<I', fid('ARMA', 'eyes_' + c['id']))),
         sub('DATA', tsub('armo_skin', 'DATA')), sub('DNAM', tsub('armo_skin', 'DNAM'))]))
     src = 'npc_necro_tmpl' if human else 'npc_draugr'
@@ -1216,7 +1216,7 @@ for c in S['creatures']['rows']:
     struct.pack_into('<H', acbs, 18, 0)                # no template: everything comes from this record
     struct.pack_into('<I', acbs, 0, struct.unpack_from('<I', acbs, 0)[0] & ~0x1)  # male (DraugrRace has no female body)
     aidt = bytearray(tsub(src, 'AIDT')); aidt[0] = 2; aidt[1] = 4   # very aggressive, foolhardy
-    subs = [sub('EDID', z('UN_' + c['id'])), sub('OBND', tsub(src, 'OBND')), sub('ACBS', bytes(acbs)),
+    subs = [sub('EDID', z('COA_' + c['id'])), sub('OBND', tsub(src, 'OBND')), sub('ACBS', bytes(acbs)),
             sub('VTCK', struct.pack('<I', fid('VTYP', 'silent'))), sub('RNAM', struct.pack('<I', race)), sub('WNAM', struct.pack('<I', fid('ARMO', c['id'])))]
     if False:  # (no Skyrim spells on our undead: their sounds are Skyrim's; the Voidbound cast our Void Hex instead) (frost, conjuration) and caster combat style
         spl = tmpl_sub(src, 'SPLO')
@@ -1255,7 +1255,7 @@ def unnumbered(t):  # the journal can't know the difficulty: "{n} of the risen" 
             .replace('before {s} seconds pass', 'before the altar\'s time runs out').replace('Hold the circle for {s} seconds.', 'Hold the circle until the runes blaze.')
 for c in CU['cities']:
     boss = CU['bosses'][c['town']]
-    subs = [sub('EDID', z('UN_Rites_' + c['town'])), sub('FULL', z('The Echo Altar: ' + c['town'])),
+    subs = [sub('EDID', z('COA_Rites_' + c['town'])), sub('FULL', z('The Echo Altar: ' + c['town'])),
             sub('DNAM', struct.pack('<HBBII', 0x0000, 60, 0xFF, 0, 10)), sub('NEXT', b'')]
     # (Noah: "update the Echo Altar's quest description") the journal shows the latest entry only: each one opens with what
     # the altar asks as a whole, then the trial in hand
@@ -1281,13 +1281,13 @@ for c in CU['cities']:
 
 # the night's undead: one faction, allies to each other (no infighting), enemies of the player
 recs['FACT'].append(record('FACT', fid('FACT', 'undead'), [
-    sub('EDID', z('UN_UndeadFaction')), sub('FULL', z('Undying')),
+    sub('EDID', z('COA_UndeadFaction')), sub('FULL', z('Undying')),
     sub('XNAM', struct.pack('<IiI', fid('FACT', 'undead'), 0, 2)),     # self: ally
     sub('XNAM', struct.pack('<IiI', 0x00000DB1, -100, 1)),             # PlayerFaction: enemy
     sub('DATA', struct.pack('<I', 0))]))
 
 # the Curse of Alduin: each city's progress (step*1000 + progress) and whether the prologue was read; saved with the game
-for key, edid in [('curse_' + c['town'], 'UN_Curse_' + c['town']) for c in S['curse']['cities']] + [('curse_intro', 'UN_CurseIntro'), ('stand_layout', 'UN_StandLayout')]:
+for key, edid in [('curse_' + c['town'], 'COA_Curse_' + c['town']) for c in S['curse']['cities']] + [('curse_intro', 'COA_CurseIntro'), ('stand_layout', 'COA_StandLayout')]:
     recs['GLOB'].append(record('GLOB', fid('GLOB', key), [sub('EDID', z(edid)), sub('FNAM', b'f'), sub('FLTV', struct.pack('<f', 0.0))]))
 
 # The Curse of Alduin: the lore book, and A Survivor's Guide (both in the pack when a character is made)
@@ -1428,8 +1428,8 @@ def guide_text():
            p("Good luck. Stay out of the barrows after dark."), "</font>"]
     return '\n'.join(out)
 
-for key, edid, name, text, model in (('dirge', 'UN_UndyingDirgeBook', 'The Curse of Alduin', __import__('re').sub(r'\{freed>=\d+\}', '', lore_text()), 'Clutter\\Books\\Book02LowPoly02.nif'),
-                                     ('guide', 'UN_SurvivorsGuide', "A Survivor's Guide to the Long Night", guide_text(), 'Clutter\\Books\\Book02LowPoly02.nif')):
+for key, edid, name, text, model in (('dirge', 'COA_UndyingDirgeBook', 'The Curse of Alduin', __import__('re').sub(r'\{freed>=\d+\}', '', lore_text()), 'Clutter\\Books\\Book02LowPoly02.nif'),
+                                     ('guide', 'COA_SurvivorsGuide', "A Survivor's Guide to the Long Night", guide_text(), 'Clutter\\Books\\Book02LowPoly02.nif')):
     recs.setdefault('BOOK', []).append(record('BOOK', fid('BOOK', key), [
         sub('EDID', z(edid)), sub('OBND', bytes.fromhex('f5fff1fffdff0b000f000300')), sub('FULL', z(name)),
         sub('MODL', z(model)), sub('DESC', z(text)),
@@ -1461,21 +1461,21 @@ def class_book_text(cls, extra):
 E = S['echo']
 WON = {w['id']: w for w in E['wonders']}
 for key in ['echo_pages', 'echo_parts', 'echo_forged', 'echo_held', 'echo_words'] + ['echo_kill_' + q['id'] for q in E['parts'] if q['how'] == 'kill']:
-    recs['GLOB'].append(record('GLOB', fid('GLOB', key), [sub('EDID', z('UN_' + ''.join(w.capitalize() for w in key.split('_')))), sub('FNAM', b'f'), sub('FLTV', struct.pack('<f', 0.0))]))
+    recs['GLOB'].append(record('GLOB', fid('GLOB', key), [sub('EDID', z('COA_' + ''.join(w.capitalize() for w in key.split('_')))), sub('FNAM', b'f'), sub('FLTV', struct.pack('<f', 0.0))]))
 
 # ---- (Noah) the hidden quests (sheet: eggs, src/Eggs.cpp): a global per quest (its step and progress), one for the gifts
 # won, and a lesser power for each summon (and Winterhold's beam) - the power does nothing itself: Eggs::OnSpellCast does
 for e in S['eggs']['rows']:
-    for k, ed in (('egg_' + e['id'], 'UN_Egg_' + e['id']), ('egg_' + e['id'] + '_town', 'UN_Egg_' + e['id'] + '_Town')):
+    for k, ed in (('egg_' + e['id'], 'COA_Egg_' + e['id']), ('egg_' + e['id'] + '_town', 'COA_Egg_' + e['id'] + '_Town')):
         recs['GLOB'].append(record('GLOB', fid('GLOB', k), [sub('EDID', z(ed)), sub('FNAM', b'f'), sub('FLTV', struct.pack('<f', 0.0))]))
-recs['GLOB'].append(record('GLOB', fid('GLOB', 'egg_gifts'), [sub('EDID', z('UN_EggGifts')), sub('FNAM', b'f'), sub('FLTV', struct.pack('<f', 0.0))]))
+recs['GLOB'].append(record('GLOB', fid('GLOB', 'egg_gifts'), [sub('EDID', z('COA_EggGifts')), sub('FNAM', b'f'), sub('FLTV', struct.pack('<f', 0.0))]))
 # (Noah, 2026-11-19: "give the echo altar an entrance when first discovering it") the altars risen so far, a bit a city
-recs['GLOB'].append(record('GLOB', fid('GLOB', 'altar_seen'), [sub('EDID', z('UN_AltarSeen')), sub('FNAM', b'f'), sub('FLTV', struct.pack('<f', 0.0))]))
+recs['GLOB'].append(record('GLOB', fid('GLOB', 'altar_seen'), [sub('EDID', z('COA_AltarSeen')), sub('FNAM', b'f'), sub('FLTV', struct.pack('<f', 0.0))]))
 for _i in range(6):   # (Noah, 2026-11-24: the altar's Talk) the prompts already asked, 24 to a global (kept in the save)
-    recs['GLOB'].append(record('GLOB', fid('GLOB', f'talk_heard_{_i}'), [sub('EDID', z(f'UN_TalkHeard{_i}')), sub('FNAM', b'f'), sub('FLTV', struct.pack('<f', 0.0))]))
-for k, e in (('ritual_souls', 'UN_RitualSouls'), ('ritual_stand', 'UN_RitualStand')):   # (the staffs' last step: souls fed to each, the one on its stand)
+    recs['GLOB'].append(record('GLOB', fid('GLOB', f'talk_heard_{_i}'), [sub('EDID', z(f'COA_TalkHeard{_i}')), sub('FNAM', b'f'), sub('FLTV', struct.pack('<f', 0.0))]))
+for k, e in (('ritual_souls', 'COA_RitualSouls'), ('ritual_stand', 'COA_RitualStand')):   # (the staffs' last step: souls fed to each, the one on its stand)
     recs['GLOB'].append(record('GLOB', fid('GLOB', k), [sub('EDID', z(e)), sub('FNAM', b'f'), sub('FLTV', struct.pack('<f', 0.0))]))
-recs['GLOB'].append(record('GLOB', fid('GLOB', 'test_kit'), [sub('EDID', z('UN_TestKit')), sub('FNAM', b'f'), sub('FLTV', struct.pack('<f', 0.0))]))  # (Noah's test characters)
+recs['GLOB'].append(record('GLOB', fid('GLOB', 'test_kit'), [sub('EDID', z('COA_TestKit')), sub('FNAM', b'f'), sub('FLTV', struct.pack('<f', 0.0))]))  # (Noah's test characters)
 
 def how_text(q):
     w = WON[q['wonder']]['label']
@@ -1508,25 +1508,25 @@ for c in S['curse']['cities']:
     recs.setdefault('BOOK', []).append(record('BOOK', fid('BOOK', 'page_' + t), [
         # (Noah: the game crashed opening a page) a two-page note crashes the note menu: the pages are small books now,
         # read like the guide (book type, its inventory art)
-        sub('EDID', z('UN_EchoPage_' + t)), sub('OBND', bytes.fromhex('f5fff1fffdff0b000f000300')), sub('FULL', z('The Broken Words: ' + t)),
+        sub('EDID', z('COA_EchoPage_' + t)), sub('OBND', bytes.fromhex('f5fff1fffdff0b000f000300')), sub('FULL', z('The Broken Words: ' + t)),
         sub('MODL', z('Clutter\\Books\\Book02LowPoly02.nif')), sub('DESC', z(page_text(t))),
         sub('KSIZ', struct.pack('<I', 1)), sub('KWDA', struct.pack('<I', 0x000937A2)),
         sub('DATA', struct.pack('<BBHIIf', 0, 0, 0, 0, 0, 0.5)), sub('INAM', struct.pack('<I', 0x0008ADAE)), sub('CNAM', struct.pack('<I', 0))]))
 
 RQ = 'CurseOfAlduin\\reliquary\\'
 def rel_acti(key, name, verb, model, r):
-    recs['ACTI'].append(record('ACTI', fid('ACTI', key), [sub('EDID', z('UN_' + key)), sub('OBND', struct.pack('<6h', -r, -r // 3, 0, r, r // 3, int(r * 1.4))),
+    recs['ACTI'].append(record('ACTI', fid('ACTI', key), [sub('EDID', z('COA_' + key)), sub('OBND', struct.pack('<6h', -r, -r // 3, 0, r, r // 3, int(r * 1.4))),
         sub('FULL', z(name)), sub('MODL', z(RQ + model)), sub('RNAM', z(verb)), sub('FNAM', b'\0\0')]))
 rel_acti('rel_door_in', 'Sealed Door of the Tongues', 'Enter', 'door.nif', 190)
 rel_acti('rel_door_out', 'Sealed Door of the Tongues', 'Leave', 'door.nif', 190)
 for w in E['wonders']:
     rel_acti('rel_ped_' + w['id'], w['label'], 'Take', 'pedestal.nif', 60)   # (Act II: each class's wonder waits here once its secret is won)
 for key, model, r in [('rel_room', 'room.nif', 640), ('rel_relic', 'relic.nif', 80), ('rel_brazier', 'tonguefire.nif', 60), ('rel_banner', 'banner.nif', 120)] + [('rel_gem_' + w['id'], f"gem_{w['id']}.nif", 8) for w in E['wonders']]:
-    recs['STAT'].append(record('STAT', fid('STAT', key), [sub('EDID', z('UN_' + key)), sub('OBND', struct.pack('<6h', -r, -r, 0, r, r, r)),
+    recs['STAT'].append(record('STAT', fid('STAT', key), [sub('EDID', z('COA_' + key)), sub('OBND', struct.pack('<6h', -r, -r, 0, r, r, r)),
         sub('MODL', z(RQ + model)), sub('DNAM', struct.pack('<fI', 90.0, 0))]))
 # (Noah: "I'm still not seeing the portal") the Reliquary's portal: an activator with no name (nothing to press - you walk in), so it
 # draws the way the flask bursts do
-recs['ACTI'].append(record('ACTI', fid('ACTI', 'rel_portal'), [sub('EDID', z('UN_rel_portal')), sub('OBND', struct.pack('<6h', -130, -20, 0, 130, 20, 360)),
+recs['ACTI'].append(record('ACTI', fid('ACTI', 'rel_portal'), [sub('EDID', z('COA_rel_portal')), sub('OBND', struct.pack('<6h', -130, -20, 0, 130, 20, 360)),
     sub('MODL', z(RQ + 'portal.nif')), sub('FNAM', b'\0\0')]))
 # (Noah: "just use High Hrothgar's building") the wonders and Alduin's Bane float in the great hall to be taken up, each in a soft
 # glow, and a fiery pillar holds the Hall's rewards: nameless activators (no prompt of Skyrim's - src/Echo.cpp aims and takes them)
@@ -1536,10 +1536,10 @@ for key, model, r in (('hf_gravecaller', 'SSS\\GlassStaff.nif', 80), ('hf_frostb
                       ('hf_wolfcrown', 'CurseOfAlduin\\alchemist\\mutagen_staff.nif', 80), ('hf_barrowhorn', 'CurseOfAlduin\\slayer\\dragonslayer.nif', 60),
                       ('hf_bane', lgs('bane'), 90), ('hf_glow', 'CurseOfAlduin\\fx\\hall_glow.nif', 60),
                       ('hf_glowtall', 'CurseOfAlduin\\fx\\hall_glow_tall.nif', 120), ('hf_pillar', 'CurseOfAlduin\\reliquary\\pillar_runes.nif', 170)):
-    recs['ACTI'].append(record('ACTI', fid('ACTI', key), [sub('EDID', z('UN_' + key)), sub('OBND', struct.pack('<6h', -r, -r, -r, r, r, r * 2)),
+    recs['ACTI'].append(record('ACTI', fid('ACTI', key), [sub('EDID', z('COA_' + key)), sub('OBND', struct.pack('<6h', -r, -r, -r, r, r, r * 2)),
         sub('MODL', z(model)), sub('FNAM', b'\0\0')]))
 for k in ('gravecaller', 'frostbinder', 'wolfcrown', 'barrowhorn', 'bane'):  # (greyed out, until it's yours: tools/modelconv/ghostnif.cpp; the Staff of Magnus's made on the machine from the game's own)
-    recs['ACTI'].append(record('ACTI', fid('ACTI', 'hg_' + k), [sub('EDID', z('UN_hg_' + k)), sub('OBND', struct.pack('<6h', -80, -80, -80, 80, 80, 160)),
+    recs['ACTI'].append(record('ACTI', fid('ACTI', 'hg_' + k), [sub('EDID', z('COA_hg_' + k)), sub('OBND', struct.pack('<6h', -80, -80, -80, 80, 80, 160)),
         sub('MODL', z({'bane': lgs('bane'), 'frostbinder': 'CurseOfAlduin\\wyrmspine\\wyrmspine.nif', 'barrowhorn': 'CurseOfAlduin\\slayer\\dragonslayer.nif', 'gravecaller': 'SSS\\GlassStaff.nif', 'wolfcrown': 'CurseOfAlduin\\wonder\\ghost_mutagen.nif'}.get(k, 'CurseOfAlduin\\wonder\\ghost_' + k + '.nif'))), sub('FNAM', b'\0\0')]))   # (the Bane and the Slayer: Light Greatswords' models)
 # Stage 5 (src/Echo.cpp Hall): the Hall of the Awakened's stations, and Alduin's Fang
 for key, name, verb in (('hall_fang', "Alduin's Bane", 'Take'), ('hall_robes', "The First Dragonborn's Regalia", 'Take'),
@@ -1547,19 +1547,19 @@ for key, name, verb in (('hall_fang', "Alduin's Bane", 'Take'), ('hall_robes', "
                         ('hall_throne', 'Seat of the Awakened', 'Begin again')):
     rel_acti(key, name, verb, 'pedestal.nif', 60)
 for key, model, r in (('hall_fang_show', lgs('bane'), 70), ('1st_fang', lgs('bane'), 70)):
-    recs['STAT'].append(record('STAT', fid('STAT', key), [sub('EDID', z('UN_' + key)), sub('OBND', struct.pack('<6h', -r, -r, 0, r, r, r)),
+    recs['STAT'].append(record('STAT', fid('STAT', key), [sub('EDID', z('COA_' + key)), sub('OBND', struct.pack('<6h', -r, -r, 0, r, r, r)),
         sub('MODL', z(model)), sub('DNAM', struct.pack('<fI', 90.0, 0))]))
 for key, model in (('summon', 'emptysummonfx_instant.nif'), ('crystal', 'diamondwallspawnexp.nif'), ('orb', 'lightningrail_orb.nif'),
                    ('storm', 'elementalmasterystormhazard.nif'), ('tornado', 'unused\\tornado.nif')):
-    recs['ACTI'].append(record('ACTI', fid('ACTI', 'emm_' + key), [sub('EDID', z('UN_emm_' + key)), sub('OBND', struct.pack('<6h', -120, -120, 0, 120, 120, 300)),
+    recs['ACTI'].append(record('ACTI', fid('ACTI', 'emm_' + key), [sub('EDID', z('COA_emm_' + key)), sub('OBND', struct.pack('<6h', -120, -120, 0, 120, 120, 300)),
         sub('MODL', z('kittyspellpack02\\' + model)), sub('FNAM', b'\0\0')]))
 for key in ('frost', 'shock', 'wind', 'sun', 'blood'):   # the bows' tornadoes: Elemental Mastery Magic's, recoloured (tools/modelconv/fxrepal)
-    recs['ACTI'].append(record('ACTI', fid('ACTI', 'tornado_' + key), [sub('EDID', z('UN_tornado_' + key)), sub('OBND', struct.pack('<6h', -120, -120, 0, 120, 120, 300)),
+    recs['ACTI'].append(record('ACTI', fid('ACTI', 'tornado_' + key), [sub('EDID', z('COA_tornado_' + key)), sub('OBND', struct.pack('<6h', -120, -120, 0, 120, 120, 300)),
         sub('MODL', z('CurseOfAlduin\\fx\\tornado_' + key + '.nif')), sub('FNAM', b'\0\0')]))
 ws = []
 for name, hx in T['weap_draugr_gs']['subs']:
     b = bytearray(bytes.fromhex(hx))
-    if name == 'EDID': b = z('UN_AlduinsFang')
+    if name == 'EDID': b = z('COA_AlduinsFang')
     elif name == 'FULL': b = z("Alduin's Bane")
     elif name == 'MODL': b = z(lgs('bane'))   # (Noah: Light Greatswords' Dragonbone - the mod's own model)
     elif name == 'MODT': continue
@@ -1575,7 +1575,7 @@ for key, col, radius in (('rel_blue', '5AA8FF', 620), ('rel_warm', 'FFD9A0', 110
     # (the Light Orb: a steady light, no flicker. Its omnidirectional shadows (0x1000, added with the orb) went with the crash
     # that came after a while in a lamp-heavy interior (Dragonsreach, three times): a plain dynamic light, as the belt lantern's was)
     if key in ('lantern', 'tablet_lamp'): struct.pack_into('<I', data, 12, 0x1)
-    recs['LIGH'].append(record('LIGH', fid('LIGH', key), [sub('EDID', z('UN_' + key)), sub('OBND', tsub('ligh', 'OBND')), sub('DATA', bytes(data)), sub('FNAM', struct.pack('<f', 1.2 if key == 'lantern' else 0.65 if key == 'tablet_lamp' else 1.0))]))  # (soft: a warm fill, not a glare)
+    recs['LIGH'].append(record('LIGH', fid('LIGH', key), [sub('EDID', z('COA_' + key)), sub('OBND', tsub('ligh', 'OBND')), sub('DATA', bytes(data)), sub('FNAM', struct.pack('<f', 1.2 if key == 'lantern' else 0.65 if key == 'tablet_lamp' else 1.0))]))  # (soft: a warm fill, not a glare)
 
 # (Noah: "the belt lantern should be an equipable item like the book for battle mage classes - when unequipped it shouldn't
 # give illumination, when equipped it should"; "a Skyrim-looking smaller lantern attached by a chain from your body at your
@@ -1587,17 +1587,17 @@ struct.pack_into('<I', md, 0, struct.unpack_from('<I', md, 0)[0] | 0x8000)   # h
 struct.pack_into('<I', md, 8, fid('LIGH', 'lantern'))                         # its light: the lantern's
 struct.pack_into('<I', md, 24, 0)                                              # no casting light
 for off in (92, 96): struct.pack_into('<I', md, off, 0)                        # no orb, no hand art
-recs['MGEF'].append(record('MGEF', fid('MGEF', 'lanternlight'), [sub('EDID', z('UN_LanternLightFX')), sub('FULL', z('Belt Lantern')), sub('MDOB', struct.pack('<I', 0)),
+recs['MGEF'].append(record('MGEF', fid('MGEF', 'lanternlight'), [sub('EDID', z('COA_LanternLightFX')), sub('FULL', z('Belt Lantern')), sub('MDOB', struct.pack('<I', 0)),
     sub('KSIZ', struct.pack('<I', 1)), sub('KWDA', struct.pack('<I', 0x0A9B1E)), sub('DATA', bytes(md)), sub('DNAM', z(''))]))
-recs['SPEL'].append(record('SPEL', fid('SPEL', 'lanternlight'), [sub('EDID', z('UN_LanternLight')), sub('OBND', bytes(12)), sub('FULL', z('Belt Lantern')),
+recs['SPEL'].append(record('SPEL', fid('SPEL', 'lanternlight'), [sub('EDID', z('COA_LanternLight')), sub('OBND', bytes(12)), sub('FULL', z('Belt Lantern')),
     sub('ETYP', struct.pack('<I', 0x013F44)), sub('DESC', z('')),
     sub('SPIT', struct.pack('<IIIfIIffI', 0, 0x1 | 0x200000, 0, 0.0, 1, 0, 0.0, 0.0, 0)),   # (no cost, no charge time: fire and forget, on yourself)
     sub('EFID', struct.pack('<I', fid('MGEF', 'lanternlight'))), sub('EFIT', struct.pack('<fII', 5.0, 0, 3600))]))
 LANTERN_NIF = 'CurseOfAlduin\\lantern\\beltlantern.nif'
-recs['ARMA'].append(record('ARMA', fid('ARMA', 'lantern'), [sub('EDID', z('UN_BeltLanternAA')), sub('BOD2', struct.pack('<II', 1 << 30, 2)), sub('RNAM', struct.pack('<I', 0x19)),
+recs['ARMA'].append(record('ARMA', fid('ARMA', 'lantern'), [sub('EDID', z('COA_BeltLanternAA')), sub('BOD2', struct.pack('<II', 1 << 30, 2)), sub('RNAM', struct.pack('<I', 0x19)),
     sub('DNAM', bytes.fromhex('0a0a00000000000000000000'))] +   # (Noah: the Light Orb - nothing worn on the body: the orb floats over your head, src/Gun.cpp)
     [sub('MODL', bytes.fromhex(h)) for h in '40370100 3a880800 41370100 3c880800 3d7a0900 42370100 3d880800 d87c0600 ba820a00 43370100 40880800 44370100 44880800 45370100 45880800 0a761000 46370100 94870800 47370100 b9820a00 48370100 46880800 49370100 84880800'.split()]))
-recs['ARMO'].append(record('ARMO', fid('ARMO', 'lantern'), [sub('EDID', z('UN_BeltLantern')), sub('OBND', struct.pack('<6h', -6, -6, 0, 6, 6, 18)), sub('FULL', z('Light Orb')),
+recs['ARMO'].append(record('ARMO', fid('ARMO', 'lantern'), [sub('EDID', z('COA_BeltLantern')), sub('OBND', struct.pack('<6h', -6, -6, 0, 6, 6, 18)), sub('FULL', z('Light Orb')),
     sub('MOD2', z('CurseOfAlduin\\fx\\lightorb_inv.nif')), sub('BOD2', struct.pack('<II', 1 << 30, 2)), sub('RNAM', struct.pack('<I', 0x19)),
     sub('KSIZ', struct.pack('<I', 1)), sub('KWDA', struct.pack('<I', 0x08F95B)),   # (ArmorClothing)
     sub('DESC', z('A small orb of golden light. Worn, it floats above your head and lights everything within 15 m; taken off, it goes dark.')),
@@ -1615,14 +1615,14 @@ THRICEBORN = [('mangled', 'Thriceborn Mangled Zombie', 'zombie01.nif'), ('foul',
               ('putrid', 'Thriceborn Putrid Zombie', 'zombie03putrid.nif'), ('malignant', 'Thriceborn Malignant Zombie', 'zombie02dread.nif'),
               ('relentless', 'Thriceborn Relentless Zombie', 'zombie03.nif'), ('dread_putrid', 'Thriceborn Dread Putrid Zombie', 'zombie01putrid.nif')]
 for key, label, nif in THRICEBORN:
-    recs['ARMA'].append(record('ARMA', fid('ARMA', 'tb_' + key), [sub('EDID', z('UN_tb_' + key + 'AA')), sub('BOD2', struct.pack('<II', 4, 2)), sub('RNAM', struct.pack('<I', MZ | 0x800)),
+    recs['ARMA'].append(record('ARMA', fid('ARMA', 'tb_' + key), [sub('EDID', z('COA_tb_' + key + 'AA')), sub('BOD2', struct.pack('<II', 4, 2)), sub('RNAM', struct.pack('<I', MZ | 0x800)),
         sub('DNAM', bytes.fromhex('000000000000001100000000')), sub('MOD2', z(CCZ + nif)), sub('MOD3', z(CCZ + nif)), sub('SNDD', struct.pack('<I', 0x0C0D36))]))
-    recs['ARMO'].append(record('ARMO', fid('ARMO', 'tb_' + key), [sub('EDID', z('UN_tb_' + key + 'Skin')), sub('OBND', bytes(12)), sub('BOD2', struct.pack('<II', 4, 2)),
+    recs['ARMO'].append(record('ARMO', fid('ARMO', 'tb_' + key), [sub('EDID', z('COA_tb_' + key + 'Skin')), sub('OBND', bytes(12)), sub('BOD2', struct.pack('<II', 4, 2)),
         sub('RNAM', struct.pack('<I', MZ | 0x800)), sub('MODL', struct.pack('<I', fid('ARMA', 'tb_' + key))), sub('DATA', bytes(8)), sub('DNAM', bytes(4))]))
     subs = []
     for name, hx in T['npc_mihailzombie']['subs']:
         b = bytearray(bytes.fromhex(hx))
-        if name == 'EDID': b = z('UN_tb_' + key)
+        if name == 'EDID': b = z('COA_tb_' + key)
         elif name == 'FULL': b = z(label)
         elif name == 'WNAM': b = struct.pack('<I', fid('ARMO', 'tb_' + key))
         elif name in ('SNAM', 'CNTO') or (name in ('VTCK', 'RNAM', 'ATKR', 'CNAM', 'ZNAM', 'CSCR', 'DPLT') and len(b) == 4):
@@ -1640,7 +1640,7 @@ for key, spell, label, tmpl, cost in CONJURE:
     acbs = bytearray(tsub('npc_draugr', 'ACBS'))
     struct.pack_into('<I', acbs, 0, 0x4010)    # summonable, its stats worked out by level
     struct.pack_into('<H', acbs, 18, 0x1F3F)   # its template's everything but its name (base data) and the unused model flag
-    nsubs = [sub('EDID', z('UN_Conj_' + key)), sub('OBND', tsub('npc_draugr', 'OBND')), sub('ACBS', bytes(acbs)),
+    nsubs = [sub('EDID', z('COA_Conj_' + key)), sub('OBND', tsub('npc_draugr', 'OBND')), sub('ACBS', bytes(acbs)),
              sub('TPLT', struct.pack('<I', tmpl)), sub('RNAM', tsub('npc_draugr', 'RNAM')), sub('AIDT', tsub('npc_draugr', 'AIDT')),
              sub('CNAM', tsub('npc_draugr', 'CNAM')), sub('FULL', z(label)), sub('DATA', b''), sub('DNAM', tsub('npc_draugr', 'DNAM')),
              sub('NAM5', tsub('npc_draugr', 'NAM5')), sub('NAM6', struct.pack('<f', 1.0)), sub('NAM7', tsub('npc_draugr', 'NAM7')),
@@ -1649,13 +1649,13 @@ for key, spell, label, tmpl, cost in CONJURE:
     md = bytearray(tsub('mgef_summon', 'DATA'))
     struct.pack_into('<I', md, 8, fid('NPC_', 'conj_' + key))   # what it calls
     recs['MGEF'].append(record('MGEF', fid('MGEF', 'conj_' + key), [
-        sub('EDID', z('UN_ConjEffect_' + key)), sub('FULL', z(spell)), sub('KSIZ', tsub('mgef_summon', 'KSIZ')), sub('KWDA', tsub('mgef_summon', 'KWDA')),
+        sub('EDID', z('COA_ConjEffect_' + key)), sub('FULL', z(spell)), sub('KSIZ', tsub('mgef_summon', 'KSIZ')), sub('KWDA', tsub('mgef_summon', 'KWDA')),
         sub('DATA', bytes(md)), sub('SNDD', tsub('mgef_summon', 'SNDD')),
         sub('DNAM', z(f"Summons a {label} for <dur> seconds wherever the caster is pointing."))]))
     spit = bytearray(tsub('spel_conjure', 'SPIT'))
     struct.pack_into('<I', spit, 0, cost)
     recs['SPEL'].append(record('SPEL', fid('SPEL', 'conj_' + key), [
-        sub('EDID', z('UN_Conj_' + key + 'Spell')), sub('OBND', tsub('spel_conjure', 'OBND')), sub('FULL', z(spell)),
+        sub('EDID', z('COA_Conj_' + key + 'Spell')), sub('OBND', tsub('spel_conjure', 'OBND')), sub('FULL', z(spell)),
         sub('MDOB', tsub('spel_conjure', 'MDOB')), sub('ETYP', tsub('spel_conjure', 'ETYP')), sub('DESC', z('')), sub('SPIT', bytes(spit)),
         sub('EFID', struct.pack('<I', fid('MGEF', 'conj_' + key))), sub('EFIT', struct.pack('<fII', 0.0, 0, 3600))]))
 
@@ -1668,10 +1668,10 @@ UW_RACES = [0x013740, 0x013741, 0x013742, 0x013743, 0x013744, 0x013745, 0x013746
             0x067CD8, 0x088794, 0x08883A, 0x08883C, 0x08883D, 0x088840, 0x088844, 0x088845, 0x088846, 0x088884, 0x0A82B9, 0x0A82BA, 0x10760A]
 uw = z('CurseOfAlduin\\underwear\\female_underwear_1.nif')
 recs['ARMA'].append(record('ARMA', fid('ARMA', 'underwear'), [
-    sub('EDID', z('UN_UnderwearAA')), sub('BOD2', struct.pack('<II', UW_SLOT, 2)), sub('RNAM', struct.pack('<I', 0x19)),
+    sub('EDID', z('COA_UnderwearAA')), sub('BOD2', struct.pack('<II', UW_SLOT, 2)), sub('RNAM', struct.pack('<I', 0x19)),
     sub('DNAM', bytes.fromhex('050502020000001700000000')), sub('MOD3', uw)] + [sub('MODL', struct.pack('<I', r)) for r in UW_RACES]))
 recs['ARMO'].append(record('ARMO', fid('ARMO', 'underwear'), [
-    sub('EDID', z('UN_Underwear')), sub('OBND', bytes(12)), sub('FULL', z('Underwear')), sub('BOD2', struct.pack('<II', UW_SLOT, 2)),
+    sub('EDID', z('COA_Underwear')), sub('OBND', bytes(12)), sub('FULL', z('Underwear')), sub('BOD2', struct.pack('<II', UW_SLOT, 2)),
     sub('RNAM', struct.pack('<I', 0x19)), sub('MODL', struct.pack('<I', fid('ARMA', 'underwear'))),
     sub('DATA', struct.pack('<If', 0, 0.1)), sub('DNAM', struct.pack('<I', 0))], flags=0x4))
 
@@ -1699,12 +1699,12 @@ for _c, _ps in CLASS_SET.items():
             # first-person piece in the tier's look (tools/armoursets.py first_person); the rest keep their own model
             fp = (lambda sx: z(f'CurseOfAlduin\\armour\\{_c}\\{_p}_{sx}_1p_t{_t}_1.nif')) if CS_SLOT[_p] == 1 << 2 else m
             recs['ARMA'].append(record('ARMA', fid('ARMA', f'ca_{_c}_{_p}_t{_t}'), [
-                sub('EDID', z(f'UN_CS_{_c}_{_p}_T{_t}AA')), sub('BOD2', struct.pack('<II', CS_AA_SLOT.get(_p, CS_SLOT[_p]), 0)), sub('RNAM', struct.pack('<I', 0x19)),
+                sub('EDID', z(f'COA_CS_{_c}_{_p}_T{_t}AA')), sub('BOD2', struct.pack('<II', CS_AA_SLOT.get(_p, CS_SLOT[_p]), 0)), sub('RNAM', struct.pack('<I', 0x19)),
                 sub('DNAM', bytes.fromhex('000002020000001700000000')),
                 sub('MOD2', m('m')), sub('MOD3', m('f')), sub('MOD4', fp('m')), sub('MOD5', fp('f'))] + [sub('MODL', struct.pack('<I', r)) for r in UW_RACES]))
         addons = [fid('ARMA', f'ca_{_c}_{_p}_t0')] + ([NAKED_TORSO] if CS_SLOT[_p] == 1 << 2 else [])
         recs['ARMO'].append(record('ARMO', fid('ARMO', f'ca_{_c}_{_p}'), [
-            sub('EDID', z(f'UN_CS_{_c}_{_p}')), sub('OBND', bytes(12)), sub('FULL', z(f'{CS_NAME[_c]} Set {_p.title()}')),
+            sub('EDID', z(f'COA_CS_{_c}_{_p}')), sub('OBND', bytes(12)), sub('FULL', z(f'{CS_NAME[_c]} Set {_p.title()}')),
             sub('BOD2', struct.pack('<II', CS_SLOT[_p], 0)), sub('RNAM', struct.pack('<I', 0x19)),
             sub('KSIZ', struct.pack('<I', 2)), sub('KWDA', struct.pack('<II', CS_KW[_p], 0x06BBD3))] +
             [sub('MODL', struct.pack('<I', a)) for a in addons] +
@@ -1719,9 +1719,9 @@ struct.pack_into('<I', md, 64, 0)        # value modifier
 struct.pack_into('<i', md, 68, 30)       # SpeedMult
 struct.pack_into('<I', md, 80, 0)        # constant
 struct.pack_into('<I', md, 84, 0)        # self
-recs['MGEF'].append(record('MGEF', fid('MGEF', 'set_swift'), [sub('EDID', z('UN_SetSwiftFX')), sub('FULL', z('Ranger\'s Stride')), sub('MDOB', tsub('mgef', 'MDOB')),
+recs['MGEF'].append(record('MGEF', fid('MGEF', 'set_swift'), [sub('EDID', z('COA_SetSwiftFX')), sub('FULL', z('Ranger\'s Stride')), sub('MDOB', tsub('mgef', 'MDOB')),
     sub('DATA', bytes(md)), sub('DNAM', z('You move 10% faster.'))]))
-recs['SPEL'].append(record('SPEL', fid('SPEL', 'set_swift'), [sub('EDID', z('UN_SetSwift')), sub('OBND', bytes(12)), sub('FULL', z('Ranger\'s Stride')),
+recs['SPEL'].append(record('SPEL', fid('SPEL', 'set_swift'), [sub('EDID', z('COA_SetSwift')), sub('OBND', bytes(12)), sub('FULL', z('Ranger\'s Stride')),
     sub('ETYP', struct.pack('<I', 0x013F44)), sub('DESC', z('')), sub('SPIT', struct.pack('<IIIfIIffI', 0, 0x1, 4, 0.0, 0, 0, 0.0, 0.0, 0)),
     sub('EFID', struct.pack('<I', fid('MGEF', 'set_swift'))), sub('EFIT', struct.pack('<fII', 10.0, 0, 0))]))
 
@@ -1757,7 +1757,7 @@ GUIDE_EXTRA = []  # (Noah: "make the guide book simpler - way too much informati
 _unused_extra = [_GUIDE_OLD[t] for t in GUIDE_KEEP if t in _GUIDE_OLD]
 for cls in G['rows']:
     recs['BOOK'].append(record('BOOK', fid('BOOK', 'guide_' + cls['id']), [
-        sub('EDID', z('UN_ClassGuide_' + cls['id'])), sub('OBND', bytes.fromhex('f5fff1fffdff0b000f000300')), sub('FULL', z(cls['book'])),
+        sub('EDID', z('COA_ClassGuide_' + cls['id'])), sub('OBND', bytes.fromhex('f5fff1fffdff0b000f000300')), sub('FULL', z(cls['book'])),
         sub('MODL', z('Clutter\\Books\\Book02LowPoly02.nif')), sub('DESC', z(class_book_text(cls, GUIDE_EXTRA))),
         sub('KSIZ', struct.pack('<I', 1)), sub('KWDA', struct.pack('<I', 0x000937A2)),
         sub('DATA', struct.pack('<BBHIIf', 0, 0, 0, 0, 25, 1.0)), sub('INAM', struct.pack('<I', 0x0008ADAE)), sub('CNAM', struct.pack('<I', 0))]))
@@ -1780,7 +1780,7 @@ for _c in CLASS_ARMOUR:
             subs = []
             for name, hx in _a['subs']:
                 b = bytes.fromhex(hx)
-                if name == 'EDID': b = z(f'UN_CA_{_c}_{_a["id"]}')
+                if name == 'EDID': b = z(f'COA_CA_{_c}_{_a["id"]}')
                 elif name in ('MOD2', 'MOD3', 'MOD4', 'MOD5'):
                     base = b.rstrip(b'\0').decode('latin1').split('\\')[-1]
                     b = z('CurseOfAlduin\\classarmor\\' + _c + '\\' + base)
@@ -1790,7 +1790,7 @@ for _c in CLASS_ARMOUR:
         subs = []
         for name, hx in _p['subs']:
             b = bytes.fromhex(hx)
-            if name == 'EDID': b = z(f'UN_CA_{_c}_{_pc}')
+            if name == 'EDID': b = z(f'COA_CA_{_c}_{_pc}')
             elif name == 'FULL': b = z(CLASS_ARMOUR_NAMES[_c] + ' ' + {'robes': 'Robes', 'hood': 'Hood', 'wraps': 'Handwraps', 'boots': 'Boots'}[_pc])
             elif name == 'MODL' and len(b) == 4:
                 aid = '%06X' % (struct.unpack('<I', b)[0] & 0xFFFFFF)
@@ -1804,7 +1804,7 @@ out = record('TES4', 0, hdr, flags=0x200)  # ESL flag
 # (Noah: "switching classes - an inventory swap, saveable") the hidden chest each class's gear waits in while another
 # class is played (src/Classes.cpp places one per class, persistent and disabled, and keeps its id in the co-save)
 recs['CONT'] = [record('CONT', fid('CONT', 'classchest'), [
-    sub('EDID', z('UN_ClassChest')), sub('OBND', bytes(12)), sub('FULL', z('Class Chest')), sub('MODL', z('Clutter\\Containers\\Chest01.nif')),
+    sub('EDID', z('COA_ClassChest')), sub('OBND', bytes(12)), sub('FULL', z('Class Chest')), sub('MODL', z('Clutter\\Containers\\Chest01.nif')),
     sub('DATA', struct.pack('<Bf', 0, 0.0))])]
 # (the effect shaders were made but never written into the plugin - every one of them looked up as nothing in game) those
 # Noah has asked to see are written now: the Soulcaller's violet glow and the Tablet reel's green and gold. The rest (the
@@ -1848,7 +1848,7 @@ def _page_paras(town):
 def _cs(s):
     return '"' + s.replace('\\', '\\\\').replace('"', '\\"').replace('\n', ' ') + '"'
 _cx = ['// generated by tools/gen_esp.py from the lore book and the guide - do not edit', '#pragma once', '#include <array>', '#include <string_view>', '#include <vector>',
-       'namespace bo3z::codex', '{', '\tstruct Chapter { int book; std::string_view title, image; std::vector<std::string_view> paras; };',
+       'namespace coa::codex', '{', '\tstruct Chapter { int book; std::string_view title, image; std::vector<std::string_view> paras; };',
        '\tinline constexpr std::array<std::string_view, %d> kBooks{ "The Curse of Alduin", ' % (5 + len(_page_towns)) + ', '.join(_cs(c['book']) for c in G['rows']) + ''.join(', ' + _cs('The Broken Words: ' + t) for t in _page_towns) + ' };  // 0 the lore, 1-4 the class guides (Summoner, Destruction, Ranger, Spellsword), 5+ a freed city\'s page (kTowns order)',
        '\tinline const std::vector<Chapter> kChapters{']
 for title, image, paras in codex_chapters(lore_text(), 'The Greybeard\'s Account', 'Epilogue'):

@@ -1,6 +1,6 @@
 """The Subsuming Vortex's black hole (the Ranger's wonder) - (Noah: "make the impact look like a real black hole: a dark
 core with a bright purple accretion ring/disc swirling around it, lensing-like glow, particles being drawn inward").
-Replaces tools/vortex.py's model at the same path, CurseOfAlduin\\fx\\vortex.nif (ACTI UN_VortexFx). src/Gun.cpp
+Replaces tools/vortex.py's model at the same path, CurseOfAlduin\\fx\\vortex.nif (ACTI COA_VortexFx). src/Gun.cpp
 TickWells swells it from ~0.05 to burst/420 (about 1.0 - 1.5), spins it about Z at 2.4 rad/s for 2.2 - 3 s, then shrinks
 it to a point as it bursts - so everything here is round Z, the disc flat in XY, the lensing on camera-facing cards.
 

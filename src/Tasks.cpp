@@ -1,10 +1,10 @@
-#include "BO3Z.h"
+#include "CurseOfAlduin.h"
 #include <condition_variable>
 
 // Work handed to the game's main thread. Loaded through SKSE, SKSE's task queue carries it; loaded as the .asi (no
 // SKSE: its task interface is null - the audit's crash) it waits here and runs from the Present hook, which is on the
 // main thread, menus open or not.
-namespace bo3z
+namespace coa
 {
 	namespace Tasks
 	{

@@ -1,9 +1,9 @@
-#include "BO3Z.h"
+#include "CurseOfAlduin.h"
 
 // The compass of The Curse of Alduin (drawn by the HUD, src/Hud.cpp DrawCompass, over Skyrim's own, which is hidden):
 // which way you face, and what lies around you - the rite you are on, the cities' shrines, the places of the
 // map (discovered ones from afar, the rest once you are near), your friends, and at night the dead closing in.
-namespace bo3z::Compass
+namespace coa::Compass
 {
 	namespace
 	{

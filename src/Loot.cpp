@@ -1,4 +1,4 @@
-#include "BO3Z.h"
+#include "CurseOfAlduin.h"
 
 // Quick loot, The Curse of Alduin's own (QuickLoot RE does not run on Skyrim 1.7.104): look at a container or a body and its
 // things are listed beside the crosshair in the game's style (src/Hud.cpp DrawLoot) - no menu, the dead keep coming.
@@ -6,7 +6,7 @@
 //   container menu. Gamepad: A take, X take all, D-pad up / down choose.
 // Owned things are taken here too (as stealing); locked chests say so and Activate picks the lock. Skyrim's own loot menu
 // never opens (Noah: only our quick loot).
-namespace bo3z::Loot
+namespace coa::Loot
 {
 	namespace
 	{

@@ -1,11 +1,11 @@
-#include "BO3Z.h"
+#include "CurseOfAlduin.h"
 
 // (Noah) the night's score and the player's records: kills, headshots, the best streak (kills without being hit),
 // septims earned, style points, revives, waves and mini-bosses - tonight's as it goes, last night's when it ends, and a
 // character's lifetime records (kept beside the log: CurseOfAlduin-records.txt, a line per character). Shown in the
 // Party tab of the System menu with each friend's own (they send theirs: Net kStats). Style: small bonuses for playing
 // well, a tag beside the septims as each is earned.
-namespace bo3z::Stats
+namespace coa::Stats
 {
 	namespace
 	{

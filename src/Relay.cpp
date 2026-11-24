@@ -17,7 +17,7 @@
 
 #pragma comment(lib, "ws2_32.lib")
 
-namespace bo3z::Relay
+namespace coa::Relay
 {
 	namespace
 	{

@@ -1,8 +1,8 @@
-#include "BO3Z.h"
+#include "CurseOfAlduin.h"
 #include "CofferSpells.h"
 #include "Perf.h"
 
-namespace bo3z
+namespace coa
 {
 	namespace
 	{

@@ -1,4 +1,4 @@
-#include "BO3Z.h"
+#include "CurseOfAlduin.h"
 
 // The player's own settings for The Curse of Alduin. They live where Skyrim's Mod Configuration menu (SkyUI + MCM Helper)
 // keeps them: Data/MCM/Settings/CurseOfAlduin.ini over the defaults in Data/MCM/Config/CurseOfAlduin/settings.ini
@@ -8,7 +8,7 @@
 //   [General]    fFovFirst, fFovThird (degrees), bShelter (townsfolk go indoors at night), fCorpseSeconds
 //   [Difficulty] bFollowSkyrim (Skyrim's difficulty slider applies to the night too), fUndeadHealth, fUndeadDamage
 //   [Keys]       iShrineRoll, iShrineReforge, iShrineBless, iShrineShout, iShrineLeave (DirectInput scancodes)
-namespace bo3z::Settings
+namespace coa::Settings
 {
 	namespace
 	{
@@ -310,7 +310,7 @@ namespace bo3z::Settings
 	float UndeadHealthMult()
 	{
 		Ensure();
-		return g_hp * (g_follow ? kUndeadHp[GameDifficulty()] : 1.0f) * (1.0f + 0.3f * static_cast<float>(std::min(bo3z::Difficulty::Freed(), 10)));
+		return g_hp * (g_follow ? kUndeadHp[GameDifficulty()] : 1.0f) * (1.0f + 0.3f * static_cast<float>(std::min(coa::Difficulty::Freed(), 10)));
 	}
 	float UndeadDamageMult()
 	{

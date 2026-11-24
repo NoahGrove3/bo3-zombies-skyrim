@@ -1,4 +1,4 @@
-#include "BO3Z.h"
+#include "CurseOfAlduin.h"
 
 // (Noah: the High Fantasy Pack's creatures dispersed through the game, full and fun without being overwhelming)
 // Skyrim's own wilderness and bandit encounters pick one creature at random from a leveled list of everything that
@@ -6,7 +6,7 @@
 // each from a level where it is a fair fight - so out in the world now and then a goblin band, an ogre or a harpy
 // turns up among the wolves, bears and bandits (the vanilla creatures still make up most of every list). The nights'
 // share of them is in sheets/enemies.json (hf_* rows). Nothing changes if the pack is not installed.
-namespace bo3z
+namespace coa
 {
 	namespace Fantasy
 	{

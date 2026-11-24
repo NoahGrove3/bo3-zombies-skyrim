@@ -1,4 +1,4 @@
-#include "BO3Z.h"
+#include "CurseOfAlduin.h"
 
 // Co-op life and death (only while in a party with friends; alone, Skyrim's own death and reload stand):
 //   down     at zero health you fall (Skyrim's bleedout) instead of dying, for 30 seconds
@@ -8,7 +8,7 @@
 //   wiped    if every player in the party is dead at once, everyone's game loads its most recent save
 // Every player tells the others where they stand four times a second (Net carries it, kPlayer); a revive is a
 // message to the fallen (kRevive). The game thread runs this; Net (the render thread) moves the messages.
-namespace bo3z::Party
+namespace coa::Party
 {
 	// (the audit: the roll's and the fall's "ghost" fought - one's end undid the other's) one count of reasons; the console
 	// is told only when the first reason comes and the last one goes, and a load starts it again from none

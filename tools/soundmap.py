@@ -202,7 +202,7 @@ for _sid in ['ember', 'gale', 'wail', 'rime', 'quake', 'shroud', 'toll', 'mire',
         S(f'shoutvoc_{_sid}_{_n}', f'shoutvoc_{_sid}_{_n}', 0, use=f'{_sid} shout spoken with {_n} word(s)')
 for id, (clips, shift, space, cat, loop, atten, use) in M.items():
     r = dict(old.get(id, {}))
-    r.update(id=id, plugin='CurseOfAlduin.esp', localId='auto', editorId='UN_' + id, verify=[], space=space, cat=cat,
+    r.update(id=id, plugin='CurseOfAlduin.esp', localId='auto', editorId='COA_' + id, verify=[], space=space, cat=cat,
              file='fx\\CurseOfAlduin\\un\\' + clips[0] + '.wav', files=['fx\\CurseOfAlduin\\un\\' + c + '.wav' for c in clips],
              shift=shift, layer='none', atten=atten, loop=loop, use=use)
     rows.append(r)

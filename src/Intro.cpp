@@ -1,9 +1,9 @@
-#include "BO3Z.h"
+#include "CurseOfAlduin.h"
 
 // New games: Bethesda's own quick start (MQQuickstart = 3 makes MQ101 stage 0 run its skip fragment:
 // character creation, choose Hadvar or Ralof, start MQ102, complete MQ101). Then we land outside
 // Riverwood with the starting staff (no crew picker: you play your own character).
-namespace bo3z
+namespace coa
 {
 	namespace
 	{

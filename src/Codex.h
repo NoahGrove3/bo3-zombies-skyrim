@@ -3,7 +3,7 @@
 #include <array>
 #include <string_view>
 #include <vector>
-namespace bo3z::codex
+namespace coa::codex
 {
 	struct Chapter { int book; std::string_view title, image; std::vector<std::string_view> paras; };
 	inline constexpr std::array<std::string_view, 15> kBooks{ "The Curse of Alduin", "The Summoner's Path", "The Battle-mage's Path", "The Alchemist's Path", "The Spellsword's Path", "The Broken Words: Riverwood", "The Broken Words: Whiterun", "The Broken Words: Solitude", "The Broken Words: Windhelm", "The Broken Words: Markarth", "The Broken Words: Riften", "The Broken Words: Falkreath", "The Broken Words: Morthal", "The Broken Words: Dawnstar", "The Broken Words: Winterhold" };  // 0 the lore, 1-4 the class guides (Summoner, Destruction, Ranger, Spellsword), 5+ a freed city's page (kTowns order)

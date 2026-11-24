@@ -1,9 +1,9 @@
-#include "BO3Z.h"
+#include "CurseOfAlduin.h"
 
 // Mystery Box, perk machines and wall-buys (sheets: objects, locations). Each is placed at runtime next to
 // its town's map marker, snapped to the nearest walkable navmesh point, and re-used if it is already there.
 // Activating one (E) spends points.
-namespace bo3z
+namespace coa
 {
 	namespace
 	{
@@ -241,7 +241,7 @@ namespace bo3z
 	{
 
 		// ---- the roll's beams, in the world (Noah: hyper-realistic): Skyrim's own lightning bolt beam from each column's
-		// rune stone into the heart stone (UN_AltarBeamSpell: ShockBoltAim and its MAGShock02 impacts, harmless), cast
+		// rune stone into the heart stone (COA_AltarBeamSpell: ShockBoltAim and its MAGShock02 impacts, harmless), cast
 		// between markers set at the stones' moving 3D; each beam strikes with the bolt's crack and then keeps crackling
 		// (re-cast) until the roll lands
 		struct AltarParts
@@ -367,7 +367,7 @@ namespace bo3z
 		std::optional<float> GroundTop(RE::TESObjectREFR* a_anchor, const TownPlan& a_plan, float* a_low = nullptr);
 		RE::ObjectRefHandle                       g_probe;
 
-		// Stands placed under the outskirts layout (v2): one bit per town in UN_StandLayout (saved with the game).
+		// Stands placed under the outskirts layout (v2): one bit per town in COA_StandLayout (saved with the game).
 		void MarkLayout(int a_town)
 		{
 			if (auto* g = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESGlobal>(gen::kStandLayoutGlobal, gen::kPlugin)) {
@@ -2631,7 +2631,7 @@ namespace bo3z
 	}
 }
 
-namespace bo3z::Shops
+namespace coa::Shops
 {
 	// (Noah: every load in a running game crashed) the station icons' ExtraMapMarker records were made by hand (a game
 	// marker's data copied), and Skyrim tearing the world down for a load choked on them. Before any load they are
