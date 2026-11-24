@@ -617,18 +617,12 @@ namespace bo3z::Kit
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		const int c = Cls();
 		if (!p || c < 0 || !p->Is3DLoaded() || ItemMenusOpen()) return;
+		// (Noah, 2026-11-24: "I automatically get the armor in my inventory instead of collecting it with the rest of my kit in the
+		// echo altar") the class's set is never handed over by itself: it is owned with the kit and waits in the altar's Your Kit
+		// to be claimed like the rest (Claim, or Claim All) - an older save's renewal ("made anew") no longer puts it on you either
 		if (const int i = ArmourIndex(c); i >= 0 && Classes::KitGiven(c) && !(g_cls[c].owned >> i & 1)) {
 			g_cls[c].owned |= 1u << i;
-			Classes::GiveArmourSet(c, 0, true);
-			Hud::Banner(Classes::ArmourSetName(c, 0) + " - your class's armor, upgradable at the Echo Altar", 5.0f);
-		} else if (static std::array<bool, 4> renewed{}; i >= 0 && (g_cls[c].owned >> i & 1) && !renewed[c]) {
-			// (the class sets made anew on Skyrim's own armour: a character who owned the old one gets the new, once, worn - the
-			// old pieces taken back)
-			renewed[c] = true;
-			if (!Classes::ArmourCarried(c, std::max(0, ArmourTier(c)))) {
-				Classes::GiveArmourSet(c, std::max(0, ArmourTier(c)), true);
-				Hud::Banner(Classes::ArmourSetName(c, std::max(0, ArmourTier(c))) + " - your class's armor, made anew", 5.0f);
-			}
+			Hud::Banner(Classes::ArmourSetName(c, 0) + " - your class's armor waits in Your Kit at the Echo Altar", 5.0f);
 		}
 		auto* av = p->AsActorValueOwner();
 		if (c == 3 && ArmourTier(3) >= 1 && p->IsInCombat()) av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.006f);  // (Tier I: mending in a fight)

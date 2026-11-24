@@ -1684,6 +1684,10 @@ CS_SLOT = {'robes': 1 << 2, 'cuirass': 1 << 2, 'hood': 1 << 1, 'gauntlets': 1 <<
 CS_KW = {'robes': 0x06C0EC, 'cuirass': 0x06C0EC, 'hood': 0x06C0EE, 'gauntlets': 0x06C0EF, 'boots': 0x06C0ED}   # ArmorCuirass, Helmet, Gauntlets, Boots
 CS_NAME = {'summoner': 'Summoner', 'destruction': 'Destruction', 'alchemist': 'Alchemist', 'spellsword': 'Spellsword'}
 NAKED_TORSO = 0x000D67
+# (2026-11-24, Noah's first-person shot: the hands floating, the sleeves stopping short) a robe's or cuirass's sleeve below the
+# elbow is its mesh's forearm partition (34), its legs below the knee the calves (38): Skyrim draws a partition only where the
+# addon claims that slot, as its own robes' addons do (body, forearms, calves - 0x114); the armour itself still takes the body slot
+CS_AA_SLOT = {'robes': 0x114, 'cuirass': 0x114}
 for _c, _ps in CLASS_SET.items():
     for _p in _ps:
         for _t in range(4):
@@ -1692,7 +1696,7 @@ for _c, _ps in CLASS_SET.items():
             # first-person piece in the tier's look (tools/armoursets.py first_person); the rest keep their own model
             fp = (lambda sx: z(f'CurseOfAlduin\\armour\\{_c}\\{_p}_{sx}_1p_t{_t}_1.nif')) if CS_SLOT[_p] == 1 << 2 else m
             recs['ARMA'].append(record('ARMA', fid('ARMA', f'ca_{_c}_{_p}_t{_t}'), [
-                sub('EDID', z(f'UN_CS_{_c}_{_p}_T{_t}AA')), sub('BOD2', struct.pack('<II', CS_SLOT[_p], 0)), sub('RNAM', struct.pack('<I', 0x19)),
+                sub('EDID', z(f'UN_CS_{_c}_{_p}_T{_t}AA')), sub('BOD2', struct.pack('<II', CS_AA_SLOT.get(_p, CS_SLOT[_p]), 0)), sub('RNAM', struct.pack('<I', 0x19)),
                 sub('DNAM', bytes.fromhex('000002020000001700000000')),
                 sub('MOD2', m('m')), sub('MOD3', m('f')), sub('MOD4', fp('m')), sub('MOD5', fp('f'))] + [sub('MODL', struct.pack('<I', r)) for r in UW_RACES]))
         addons = [fid('ARMA', f'ca_{_c}_{_p}_t0')] + ([NAKED_TORSO] if CS_SLOT[_p] == 1 << 2 else [])
