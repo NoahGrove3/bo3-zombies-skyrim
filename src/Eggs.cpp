@@ -396,7 +396,33 @@ namespace bo3z::Eggs
 
 		// ---- (Noah, 2026-11-19: the Wonder Easter Eggs design) Felldir the Old whispers through the altars: lines queued and
 		// spoken one after another, each with its words under the compass while it plays ----
-		struct Said { gen::Sound snd; std::string text; float secs; int card = -1; };
+		struct Said { gen::Sound snd; std::string text; float secs; int card = -1; std::string file{}; };   // (file: a Talk line, played by its file)
+		// (Noah, 2026-11-24: the altar's Talk) Felldir's answers are files of their own (Sound\fx\CurseOfAlduin\altarvo\<key>.wav),
+		// played as the whispers are: one voice at a time, through Skyrim's UI output (the whispers' own, 0xB75FB)
+		RE::BSSoundHandle g_talkH;
+		void StopTalk()
+		{
+			if (g_talkH.IsValid()) g_talkH.FadeOutAndRelease(200);
+			g_talkH = RE::BSSoundHandle{};
+		}
+		void PlayTalk(const std::string& a_key, float a_vol)
+		{
+			StopTalk();
+			auto* am = RE::BSAudioManager::GetSingleton();
+			if (!am || a_vol <= 0.001f) return;
+			static int how = -1;   // which spelling of the path the game takes (found once, then kept)
+			static constexpr const char* kRoot[3] = { "Sound\\fx\\CurseOfAlduin\\altarvo\\", "Data\\Sound\\fx\\CurseOfAlduin\\altarvo\\", "fx\\CurseOfAlduin\\altarvo\\" };
+			for (int k = how < 0 ? 0 : how; k < 3 && !g_talkH.IsValid(); k = how < 0 ? k + 1 : 3) {
+				RE::BSResource::ID id;
+				id.GenerateFromPath((std::string(kRoot[k]) + a_key + ".wav").c_str());
+				am->GetSoundHandleByFile(g_talkH, id, 0x1A, 128);
+				if (g_talkH.IsValid() && how < 0) how = k, logger::info("talk: the altar's lines play from '{}'", kRoot[k]);
+			}
+			if (!g_talkH.IsValid()) return logger::warn("talk: {}.wav could not be played", a_key);
+			if (auto* som = RE::TESForm::LookupByID<RE::BGSSoundOutput>(0x000B75FB)) g_talkH.SetOutputModel(som);
+			g_talkH.SetVolume(a_vol);
+			g_talkH.Play();
+		}
 		std::deque<Said> g_say;
 		float            g_sayT = 0, g_whCd = 0;
 		int              g_sayCard = -1;   // (the altar's Whispers) the card whose line is being said
@@ -476,7 +502,9 @@ namespace bo3z::Eggs
 			} else if (!g_say.empty()) {
 				auto l = g_say.front();
 				g_say.pop_front();
-				Audio::Voice(l.snd, Settings::AltarVoiceVolume());   // (MCM: its volume)  (one voice at a time: a card clicked cuts off the line before it)
+				StopTalk();
+				if (!l.file.empty()) PlayTalk(l.file, Settings::AltarVoiceVolume());
+				else Audio::Voice(l.snd, Settings::AltarVoiceVolume());   // (MCM: its volume)  (one voice at a time: a card clicked cuts off the line before it)
 				g_sayCard = l.card;
 				logger::info("eggs: the altar says \"{}\"", l.text);   // (Noah: "remove the subtitle cards when the altar is speaking so it's more cryptic")
 				Hud::Subtitle(l.text, l.secs + 0.4f);   // (Noah, 2026-11-23: its words in Edge UI's subtitle line - never a card)
@@ -1357,6 +1385,7 @@ namespace bo3z::Eggs
 			last = f;
 			if (g_resetReveal) g_resetReveal = false, last = -1;
 		}
+		NoteFreed();
 		TickSign(p, a_delta);
 		TickWhispers(p, e, a_delta);
 		if (e < 0) {
@@ -1661,10 +1690,185 @@ namespace bo3z::Eggs
 		}
 		for (auto i = at; i < g_say.size(); ++i) g_say[i].card = a_id;
 		if (g_say.empty()) return;
+		StopTalk();
 		Audio::Voice(std::nullopt);   // (the line being said stops for the one asked for)
 	}
 
 	int Speaking() { return g_sayCard >= 0 || !g_say.empty() ? (g_say.empty() ? g_sayCard : g_say.front().card) : -1; }
+
+	// ---- (Noah, 2026-11-24: "give the echo alter a lot more voice lines that players can interact with like talking with npcs,
+	// having a list of things to say that changes as the mod's story progresses") the altar's Talk: four topics, each a list of
+	// what you can ask - the list changing with the story (each prompt's gate, tools/altarvo_script.py) - and Felldir's answers,
+	// said one after another with their words in the subtitle line. What you have asked is kept in the save (UN_TalkHeard0-5).
+	namespace
+	{
+		constexpr int kTalkCard = 5000;   // (a Talk answer's card: 5000 + its prompt - the row lit while it's said)
+		float g_newFreedAt[10]{};          // when each city was seen to wake (this session): its priest just fell
+		bool  g_freedSeen[10]{}, g_freedInit = false;
+		int   g_talkVisit = -1;            // the altar talked at this visit (-1 none): its goodbye when you leave
+		int   TalkPrompt(std::string_view a_id)
+		{
+			for (int i = 0; i < static_cast<int>(gen::kTalkPrompts.size()); ++i) if (gen::kTalkPrompts[i].id == a_id) return i;
+			return -1;
+		}
+		bool Heard(int a_p)
+		{
+			auto* g = a_p >= 0 && a_p < 144 ? Glob(gen::kTalkHeard[a_p / 24]) : nullptr;
+			return g && ((static_cast<int>(g->value) >> (a_p % 24)) & 1);
+		}
+		void SetHeard(int a_p)
+		{
+			if (auto* g = a_p >= 0 && a_p < 144 ? Glob(gen::kTalkHeard[a_p / 24]) : nullptr) g->value = static_cast<float>(static_cast<int>(g->value) | (1 << (a_p % 24)));
+		}
+		void NoteFreed()   // (every tick) a city seen to wake now: its priest just fell
+		{
+			const float now = static_cast<float>(RE::GetDurationOfApplicationRunTime()) / 1000.0f;
+			for (int t = 0; t < 10; ++t) {
+				const bool f = Curse::Freed(t);
+				if (g_freedInit && f && !g_freedSeen[t]) g_newFreedAt[t] = now;
+				g_freedSeen[t] = f;
+			}
+			g_freedInit = true;
+		}
+		bool Gate1(std::string_view c, int a_town)
+		{
+			const auto num = [&](std::size_t at) { return std::atoi(std::string(c.substr(at)).c_str()); };
+			const int  freed = FreedTowns(), cls = Classes::Get();
+			const bool here = a_town >= 0 && a_town < 10;
+			if (c == "always") return true;
+			if (c.starts_with("freed>=")) return freed >= num(7);
+			if (c.starts_with("freed<")) return freed < num(6);
+			if (c == "here_dark") return here && !Curse::Freed(a_town);
+			if (c == "here_free") return here && Curse::Freed(a_town);
+			if (c.starts_with("here=")) {
+				if (!here) return false;
+				std::string t(gen::kTowns[a_town]);
+				std::transform(t.begin(), t.end(), t.begin(), [](unsigned char x) { return static_cast<char>(std::tolower(x)); });
+				return c.substr(5) == t;
+			}
+			if (c == "noclass") return cls < 0;
+			if (c == "class=any") return cls >= 0;
+			if (c.starts_with("class=")) {
+				constexpr std::string_view kCls[4] = { "sum", "des", "alc", "ssw" };
+				return cls >= 0 && cls < 4 && c.substr(6) == kCls[cls];
+			}
+			if (c == "night") return Director::NightNow();
+			if (c == "day") return !Director::NightNow();
+			if (c == "party") return Party::FriendCount() > 0;
+			if (c.starts_with("trial=")) {
+				if (!here || Curse::Freed(a_town)) return false;
+				constexpr std::string_view kTr[4] = { "restless", "whisper", "echo", "seals" };
+				const int n = Curse::Altar(a_town).next;
+				return n >= 0 && n < 4 && c.substr(6) == kTr[n];
+			}
+			if (c == "wonder_sleeps" || c == "wonder_open" || c == "wonder_won") {
+				if (cls < 0) return false;
+				const int st = Classes::WonderState(cls);
+				if (c == "wonder_won") return st >= 4;
+				if (c == "wonder_open") return st >= 1 && st <= 3;
+				return st == 0 && freed < 6;
+			}
+			if (c == "wonders_all") return Echo::WondersAll();
+			if (c == "slain_slen") return Echo::WordSilenced(0);
+			if (c == "slain_tiid") return Echo::WordSilenced(1);
+			if (c == "slain_vo") return Echo::WordSilenced(2);
+			if (c == "echo_awake") return Echo::DragonsSlain() && !Echo::CurseBroken();
+			if (c == "echo_slain") return Echo::CurseBroken();
+			if (c == "priest_new") {
+				const float now = static_cast<float>(RE::GetDurationOfApplicationRunTime()) / 1000.0f;
+				return here && g_newFreedAt[a_town] > 0 && now - g_newFreedAt[a_town] < 900.0f;
+			}
+			logger::warn("talk: unknown gate '{}'", c);
+			return false;
+		}
+		bool Gate(std::string_view g, int a_town)
+		{
+			while (!g.empty()) {
+				const auto amp = g.find('&');
+				std::string_view c = g.substr(0, amp);
+				const bool neg = c.ends_with("=0") && !c.starts_with("freed");
+				if (neg) c.remove_suffix(2);
+				if (Gate1(c, a_town) == neg) return false;
+				if (amp == std::string_view::npos) break;
+				g.remove_prefix(amp + 1);
+			}
+			return true;
+		}
+		void SayTalk(int a_p, bool a_all)   // its lines, one after another (a greeting or goodbye: one of them)
+		{
+			const auto& p = gen::kTalkPrompts[a_p];
+			if (!p.count) return;
+			const int one = a_all ? -1 : p.first + std::rand() % p.count;
+			for (int i = p.first; i < p.first + p.count; ++i) {
+				if (one >= 0 && i != one) continue;
+				const auto& l = gen::kTalkLines[i];
+				g_say.push_back({ gen::Sound{}, std::string(l.text), l.secs, kTalkCard + a_p, std::string(l.key) });
+			}
+		}
+		void Interrupt()
+		{
+			g_say.clear(), g_sayT = 0, g_sayCard = -1;
+			StopTalk();
+			Audio::Voice(std::nullopt);
+		}
+	}
+
+	std::vector<TalkRow> TalkRows(int a_town, int a_topic)
+	{
+		std::vector<TalkRow> out;
+		for (int i = 0; i < static_cast<int>(gen::kTalkPrompts.size()); ++i) {
+			const auto& p = gen::kTalkPrompts[i];
+			if (p.topic != a_topic || !Gate(p.gate, a_town)) continue;
+			out.push_back({ i, std::string(p.ask), Heard(i) });
+		}
+		return out;
+	}
+	int TalkNew(int a_town, int a_topic)
+	{
+		int n = 0;
+		for (const auto& r : TalkRows(a_town, a_topic)) n += r.heard ? 0 : 1;
+		return n;
+	}
+	void TalkOpen(int a_town)
+	{
+		// the greeting that fits best: a priest just fallen, then the hour at a dark altar, a freed one, then the story's stage
+		Interrupt();
+		g_talkVisit = a_town;
+		for (const char* id : { "greet_priest", "greet_night", "greet_dawn", "greet_end", "greet_freed", "greet_named", "greet_early", "greet_faint" }) {
+			const int p = TalkPrompt(id);
+			if (p >= 0 && Gate(gen::kTalkPrompts[p].gate, a_town)) {
+				SayTalk(p, false);
+				logger::info("talk: the altar greets you ({})", id);
+				return;
+			}
+		}
+	}
+	void TalkTopic(int a_town, int a_topic)
+	{
+		if (TalkRows(a_town, a_topic).empty() || TalkNew(a_town, a_topic) > 0) return;
+		if (const int p = TalkPrompt("nothing_new"); p >= 0) Interrupt(), SayTalk(p, false);   // (all of it heard: "nothing more... not yet")
+	}
+	void TalkAsk(int a_town, int a_prompt)
+	{
+		if (a_prompt < 0 || a_prompt >= static_cast<int>(gen::kTalkPrompts.size())) return;
+		Interrupt();
+		g_talkVisit = a_town;
+		SetHeard(a_prompt);
+		SayTalk(a_prompt, true);
+		logger::info("talk: asked \"{}\"", gen::kTalkPrompts[a_prompt].ask);
+	}
+	void TalkBye(int a_town)
+	{
+		if (g_talkVisit < 0 || g_talkVisit != a_town) return;
+		g_talkVisit = -1;
+		Interrupt();
+		if (const int p = TalkPrompt("bye"); p >= 0) SayTalk(p, false);
+	}
+	int TalkSaying()
+	{
+		const int c = Speaking();
+		return c >= kTalkCard ? c - kTalkCard : -1;
+	}
 
 	// (the test: "spirit cats 2 of 3" went to the log only - banners are off) the step under way, under the compass while you're in
 	// its city: the quest, the step's name and its count (never what it wants - that's the whispers' to say)

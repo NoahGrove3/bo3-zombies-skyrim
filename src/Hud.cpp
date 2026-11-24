@@ -3131,12 +3131,12 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				// (Noah: "make the tabs have a drop down animation when you expand the tab, so it's not instant") each section eases
 				// open over a quarter second: its rows slide down from under the header and fade in, the ones below it pushed down
 				// as it grows; shutting runs the same in reverse. The rows' height comes from the last frame they were drawn.
-				static float openT[7] = { 1, 0, 0, 0, 0, 0, 0 }, bodyH[7] = {};
+				static float openT[8] = { 1, 0, 0, 0, 0, 0, 0, 0 }, bodyH[8] = {};
 				struct Body { int i = -1; float y0 = 0, top = 0, e = 1; int vtx = 0; } body;
 				const auto ease = [](float t) { t = std::clamp(t, 0.0f, 1.0f); return 1.0f - (1.0f - t) * (1.0f - t) * (1.0f - t); };  // (out-cubic)
 				const auto section = [&](int id, const std::string& title, const std::string& summary, bool hot) {
 					const bool open = s.altarOpen == id;
-					const int  i = std::clamp(id - 210, 0, 6);
+					const int  i = std::clamp(id - 210, 0, 7);
 					openT[i] = std::clamp(openT[i] + (open ? 1.0f : -1.0f) * std::min(dt, 0.05f) / 0.26f, 0.0f, 1.0f);
 					const float e = ease(openT[i]);
 					focusRow(id, y - 6 * k, y + 38 * k);
@@ -3396,6 +3396,61 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					TxtWrap(dl, g_body, 16 * k, { TL, ty + 30 * k }, IM_COL32(196, 182, 160, 235), s.trialBossLine, TR - TL, 2);
 					y = ty + 88 * k;
 					endSection();
+				}
+				// [5b] (Noah, 2026-11-24: "talking with npcs, having a list of things to say that changes as the mod's story progresses")
+				// speak with the voice: four topics, each opening to what you can ask now - a dot by the ones not yet asked, the one being
+				// answered lit with a speaker
+				if (s.talkOn) {
+					int newAll = 0;
+					for (int g = 1; g <= 4; ++g) newAll += s.talkNew[g];
+					if (section(217, s.whisperNamed ? "SPEAK WITH FELLDIR" : "SPEAK WITH THE VOICE", newAll ? fmt::format("{} new", newAll) : std::string("nothing new"), newAll > 0)) {
+						static constexpr const char* kTopic[5] = { "", "THE STORY SO FAR", "THIS CITY", "YOUR PATH AND WONDER", "WHO THE VOICE IS" };
+						for (int g = 1; g <= 4; ++g) {
+							const int  grow = 500 + g;
+							const bool any = s.talkAny[g], open = s.talkTopic == g && any;
+							focusRow(grow, y - 6 * k, y + 34 * k);
+							{  // a small chevron: right shut, down open
+								const ImVec2 c{ L + 13 * k, y + 13 * k };
+								const ImU32  cc = !any ? kLockedCol : s.altarFocus == grow ? kGold : IM_COL32(190, 180, 160, 230);
+								if (open) dl->AddTriangleFilled({ c.x - 6 * k, c.y - 3 * k }, { c.x + 6 * k, c.y - 3 * k }, { c.x, c.y + 5 * k }, cc);
+								else dl->AddTriangleFilled({ c.x - 3 * k, c.y - 6 * k }, { c.x - 3 * k, c.y + 6 * k }, { c.x + 5 * k, c.y }, cc);
+							}
+							const std::string tname = g == 4 && s.whisperNamed ? std::string("WHO FELLDIR IS") : std::string(kTopic[g]);
+							Txt(dl, g_title, 18 * k, { L + 36 * k, y + 3 * k }, !any ? kLockedCol : open ? kParch : IM_COL32(222, 210, 186, 245), tname);
+							const std::string sum = !any ? std::string("nothing to ask yet") : s.talkNew[g] ? fmt::format("{} new", s.talkNew[g]) : std::string("all asked");
+							Txt(dl, g_body, 15 * k, { Rr - Measure(g_body, 15 * k, sum).x, y + 6 * k }, s.talkNew[g] ? Fade(tint, 0.95f) : IM_COL32(170, 156, 132, 220), sum);
+							y += 40 * k;
+							if (!open) continue;
+							for (int q = 0; q < static_cast<int>(s.talkRows.size()); ++q) {
+								const auto& tr = s.talkRows[q];
+								const int   row = 600 + q;
+								const float X = L + 24 * k;
+								const bool  saying = s.talkSaying == tr.prompt;
+								const ImU32 wc = IM_COL32(170, 200, 245, 255);
+								focusRow(row, y - 6 * k, y + 30 * k);
+								bullet({ X, y - 1 * k }, row, true);
+								const float tw = Rr - (X + 36 * k) - 40 * k;
+								const bool two = TxtWrap(dl, g_body, 17 * k, { X + 36 * k, y + 1 * k }, saying ? wc : tr.heard ? IM_COL32(176, 164, 144, 225) : kParch, "\"" + tr.ask + "\"", tw, 2) > 1;
+								if (saying) {  // a small speaker at the right, its waves pulsing, while Felldir answers
+									const ImVec2 c{ Rr - 22 * k, y + 11 * k };
+									dl->AddRectFilled({ c.x - 9 * k, c.y - 4 * k }, { c.x - 4 * k, c.y + 4 * k }, wc);
+									dl->AddTriangleFilled({ c.x - 4 * k, c.y - 4 * k }, { c.x + 3 * k, c.y - 10 * k }, { c.x + 3 * k, c.y + 10 * k }, wc);
+									dl->AddTriangleFilled({ c.x - 4 * k, c.y - 4 * k }, { c.x + 3 * k, c.y + 10 * k }, { c.x - 4 * k, c.y + 4 * k }, wc);
+									const float pulse = 0.5f + 0.5f * std::sin(now * 6.0f);
+									for (int w2 = 1; w2 <= 2; ++w2) {
+										dl->PathArcTo({ c.x + 3 * k, c.y }, (4.0f + 5.0f * w2) * k, -0.7f, 0.7f, 10);
+										dl->PathStroke(Fade(wc, w2 == 2 ? pulse : 1.0f), 0, 1.6f * k);
+									}
+								} else if (!tr.heard) {  // not yet asked: a small gold dot
+									dl->AddCircleFilled({ Rr - 18 * k, y + 11 * k }, 4 * k, kGold, 12);
+								}
+								y += (two ? 52 : 32) * k;
+							}
+							y += 4 * k;
+						}
+						y += 6 * k;
+						endSection();
+					}
 				}
 				// [5c] (Noah) the hidden quest's whispers: never told outright - a line more for each step found
 				// (Noah: "cards like the armory with the title of each whisper ... clicked it plays the whisper") a card a whisper: its

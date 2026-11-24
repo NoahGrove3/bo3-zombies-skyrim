@@ -1471,6 +1471,8 @@ for e in S['eggs']['rows']:
 recs['GLOB'].append(record('GLOB', fid('GLOB', 'egg_gifts'), [sub('EDID', z('UN_EggGifts')), sub('FNAM', b'f'), sub('FLTV', struct.pack('<f', 0.0))]))
 # (Noah, 2026-11-19: "give the echo altar an entrance when first discovering it") the altars risen so far, a bit a city
 recs['GLOB'].append(record('GLOB', fid('GLOB', 'altar_seen'), [sub('EDID', z('UN_AltarSeen')), sub('FNAM', b'f'), sub('FLTV', struct.pack('<f', 0.0))]))
+for _i in range(6):   # (Noah, 2026-11-24: the altar's Talk) the prompts already asked, 24 to a global (kept in the save)
+    recs['GLOB'].append(record('GLOB', fid('GLOB', f'talk_heard_{_i}'), [sub('EDID', z(f'UN_TalkHeard{_i}')), sub('FNAM', b'f'), sub('FLTV', struct.pack('<f', 0.0))]))
 for k, e in (('ritual_souls', 'UN_RitualSouls'), ('ritual_stand', 'UN_RitualStand')):   # (the staffs' last step: souls fed to each, the one on its stand)
     recs['GLOB'].append(record('GLOB', fid('GLOB', k), [sub('EDID', z(e)), sub('FNAM', b'f'), sub('FLTV', struct.pack('<f', 0.0))]))
 recs['GLOB'].append(record('GLOB', fid('GLOB', 'test_kit'), [sub('EDID', z('UN_TestKit')), sub('FNAM', b'f'), sub('FLTV', struct.pack('<f', 0.0))]))  # (Noah's test characters)

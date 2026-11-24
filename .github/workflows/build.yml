@@ -75,6 +75,8 @@ jobs:
           Copy-Item assets\sound\un\*.wav "$stage\Data\Sound\fx\CurseOfAlduin\un\"   # the Curse of Alduin SFX library, cut by tools/sfx.py
           New-Item -ItemType Directory -Force "$stage\Data\Sound\fx\CurseOfAlduin\whisper" | Out-Null
           Copy-Item assets\sound\whisper\*.wav "$stage\Data\Sound\fx\CurseOfAlduin\whisper\"   # Felldir the Old's whispers at the Echo Altars
+          New-Item -ItemType Directory -Force "$stage\Data\Sound\fx\CurseOfAlduin\altarvo" | Out-Null
+          if (Test-Path assets\sound\altarvo) { Copy-Item assets\sound\altarvo\*.wav "$stage\Data\Sound\fx\CurseOfAlduin\altarvo\" -ErrorAction SilentlyContinue }   # (Noah, 2026-11-24) Felldir's answers at the altar's Talk
           New-Item -ItemType Directory -Force "$stage\Data\Sound\fx\CurseOfAlduin\classvo" | Out-Null
           if (Test-Path assets\sound\classvo) { Copy-Item assets\sound\classvo\*.wav "$stage\Data\Sound\fx\CurseOfAlduin\classvo\" -ErrorAction SilentlyContinue }   # (Noah) the class voice lines
           Copy-Item assets\music\*.wav "$stage\Data\Music\CurseOfAlduin\"

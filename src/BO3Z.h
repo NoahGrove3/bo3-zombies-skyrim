@@ -1039,6 +1039,15 @@ namespace bo3z
 		void  Replay(int a_id);                  // a whisper card clicked: Felldir says it again
 		bool  Strip(std::string& a_title, std::string& a_goal, float& a_frac, float& a_timer);  // the step under way in this city (under the compass)
 		int   Speaking();                        // the card whose whisper is being said (-1 none)
+		// (Noah, 2026-11-24) the altar's Talk: the topics 1-4 (0 is the greetings), what you can ask now, and Felldir's answers
+		struct TalkRow { int prompt; std::string ask; bool heard; };
+		std::vector<TalkRow> TalkRows(int a_town, int a_topic);  // what you can ask now, in this topic
+		int   TalkNew(int a_town, int a_topic);   // how many of them not yet asked
+		void  TalkOpen(int a_town);               // the Talk section opened: a greeting
+		void  TalkTopic(int a_town, int a_topic); // a topic opened (all of it heard: "nothing more... not yet")
+		void  TalkAsk(int a_town, int a_prompt);  // asked: its lines, one after another
+		void  TalkBye(int a_town);                // leaving an altar you talked at: a goodbye
+		int   TalkSaying();                       // the prompt whose answer is being said (-1 none)
 		std::string Line();                      // your class's quest, for the guide
 		float DamageMult();                      // (retired: 1)
 		bool  ShadowStep();                      // (retired: false)
@@ -1141,6 +1150,13 @@ namespace bo3z
 			int         whisperSpeaking{ -1 };         // the card being said now
 			int         whisperGroup{ -1 };            // the Whispers sub-tab open (-1 none)
 			bool        whisperNamed{ false };         // the voice has said who it is
+			// (Noah, 2026-11-24) the altar's Talk: its four topics (each with how many not yet asked), the one open, what it lists
+			bool        talkOn{ false };
+			std::array<int, 5> talkNew{};              // topics 1-4: not yet asked (0 unused)
+			std::array<bool, 5> talkAny{};             // topics 1-4: anything to ask at all
+			int         talkTopic{ 0 };                // the topic open (1-4; 0 none)
+			std::vector<Eggs::TalkRow> talkRows;       // the open topic's prompts
+			int         talkSaying{ -1 };              // the prompt being answered now
 			float       nightProgress{ -1 };              // 0..1 through the night's waves (-1: not fighting)
 			std::string styleTag;         // a style bonus ("+40 MULTI-KILL") by the septims
 			float       styleTime{ 0 };
@@ -1157,7 +1173,7 @@ namespace bo3z
 			bool        bossEnraged{ false };
 			int         perkSel{ 0 };
 			int         altarFocus{ 0 };   // the altar's focused row (Shops Row)
-			int         altarOpen{ 210 };  // the Echo Altar's open section (210 kit, 211 Armory, 212 perks, 213 Thu'um and dragon, 214 trials, 215 whispers; 0 none)
+			int         altarOpen{ 210 };  // the Echo Altar's open section (210 kit, 211 Armory, 212 perks, 213 Thu'um and dragon, 214 trials, 215 whispers, 217 talk; 0 none)
 			int         shrineShout{ -1 };   // a Thu'um to learn at the altar
 			// (the altar rework) your kit and the Armory (Kit.cpp)
 			struct KitLine { int id{ 0 }; std::string name, info; int tier{ 0 }, asc{ 0 }, cost{ -1 }; bool can{ false }, carried{ true }; std::uint32_t color{ 0xC8B48C }; };

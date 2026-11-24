@@ -2197,6 +2197,12 @@
   "SNDR:echo_tone_5": "0xddb",
   "SNDR:echo_wrong": "0xdde",
   "SNDR:echo_sing": "0xde1",
-  "SNDR:wisp_rise": "0xde4"
+  "SNDR:wisp_rise": "0xde4",
+  "GLOB:talk_heard_0": "0xde7",
+  "GLOB:talk_heard_1": "0xdea",
+  "GLOB:talk_heard_2": "0xded",
+  "GLOB:talk_heard_3": "0xdf0",
+  "GLOB:talk_heard_4": "0xdf3",
+  "GLOB:talk_heard_5": "0xdf6"
  }
 }

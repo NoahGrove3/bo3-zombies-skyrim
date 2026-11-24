@@ -1675,12 +1675,13 @@ namespace bo3z
 		int                 g_sel = 0;
 		int                 g_trialSel = 0;  // the controller's pick among the altar's trials
 		// (Noah: one way to drive the altar) a focus moved up and down its rows - D-pad or W/S - and A / Enter to take it
-		enum Row { kRowSpell = 0, kRowBow, kRowForge, kRowPerk, kRowShout, kRowBond, kRowTrial = 10, kRowLeave = 20, kRowClass = 30, kRowWhisper = 300, kRowWhGroup = 400 };  // (the altar rework: Kit rows are 40.. your kit, 100.. the Armory)
+		enum Row { kRowSpell = 0, kRowBow, kRowForge, kRowPerk, kRowShout, kRowBond, kRowTrial = 10, kRowLeave = 20, kRowClass = 30, kRowWhisper = 300, kRowWhGroup = 400, kRowTalkTopic = 500, kRowTalk = 600 };  // (the altar rework: Kit rows are 40.. your kit, 100.. the Armory)
 		int g_focus = kRowClass;
 		// (Noah: "different sections that show a drop down of what's in that section") the one section open (0: none)
-		enum Sec { kSecKit = 210, kSecArmory = 211, kSecPerks = 212, kSecVoice = 213, kSecTrials = 214, kSecWhispers = 215, kSecGlider = 216 };
+		enum Sec { kSecKit = 210, kSecArmory = 211, kSecPerks = 212, kSecVoice = 213, kSecTrials = 214, kSecWhispers = 215, kSecGlider = 216, kSecTalk = 217 };
 		int g_open = kSecKit;
 		int g_whOpen = -1;   // (the Whispers) the sub-tab open: 0 the voice, 1-4 a wonder
+		int g_talkOpen = 0;  // (Noah, 2026-11-24: the altar's Talk) the topic open: 1-4 (0 none)
 		RE::ObjectRefHandle g_pickAltar;  // the altar whose class picker is up (no class yet): it opens when one is chosen
 
 		void BuyPerk(int perk, RE::TESObjectREFR* a_ref)
@@ -1888,6 +1889,7 @@ namespace bo3z
 					if (id >= kRowTrial && id < kRowTrial + 5) return static_cast<int>(kSecTrials);
 					if (id >= kRowWhisper && id < kRowWhisper + 100) return static_cast<int>(kSecWhispers);
 					if (id >= kRowWhGroup && id < kRowWhGroup + 5) return static_cast<int>(kSecWhispers);
+					if (id >= kRowTalkTopic && id < kRowTalk + 200) return static_cast<int>(kSecTalk);
 					return 0;
 				};
 				if (Classes::Get() >= 0) {
@@ -1914,6 +1916,15 @@ namespace bo3z
 					rows.push_back(kSecTrials);
 					if (g_open == kSecTrials) for (int q : { 0, 1, 2, 3 }) rows.push_back(kRowTrial + q);  // (the four trials, in order)
 				}
+				// (Noah, 2026-11-24: "a Talk row in the altar menu") speak with the voice: its four topics, each opening to what you can ask
+				const auto talk = g_talkOpen > 0 ? Eggs::TalkRows(t, g_talkOpen) : std::vector<Eggs::TalkRow>{};
+				rows.push_back(kSecTalk);
+				if (g_open == kSecTalk) {
+					for (int g = 1; g <= 4; ++g) {
+						rows.push_back(kRowTalkTopic + g);
+						if (g_talkOpen == g) for (int q = 0; q < static_cast<int>(talk.size()) && q < 200; ++q) rows.push_back(kRowTalk + q);
+					}
+				}
 				const auto whispers = r ? Eggs::Whispers(TownOf(r)) : std::vector<Eggs::Whisper>{};
 				if (!whispers.empty()) {
 					rows.push_back(kSecWhispers);
@@ -1938,9 +1949,10 @@ namespace bo3z
 					g_focus = rows[i];
 					if (g_focus >= kRowTrial && g_focus < kRowTrial + 5) g_trialSel = g_focus - kRowTrial;
 					PlayUi(UiSnd::kMove, 0.7f);  // (a soft stone tick)
-				} else if (side && g_focus >= kSecKit && g_focus <= kSecGlider) {
+				} else if (side && g_focus >= kSecKit && g_focus <= kSecTalk) {
 					// right opens the section in focus, left shuts it
 					g_open = side > 0 ? g_focus : (g_open == g_focus ? 0 : g_open);
+					if (side > 0 && g_focus == kSecTalk) Eggs::TalkOpen(t);   // (the voice greets you)
 					PlayUi(UiSnd::kMove, 0.7f);
 				} else if (side) {
 					if (g_focus == kRowPerk) {
@@ -1956,9 +1968,26 @@ namespace bo3z
 					const bool menu0 = g_menu;
 					const int  trial0 = g_trialSel;
 					bool       kitOk = false;
-					if (g_focus >= kSecKit && g_focus <= kSecGlider) {  // a header: open it (shutting the one open), or shut it
+					if (g_focus >= kSecKit && g_focus <= kSecTalk) {  // a header: open it (shutting the one open), or shut it
 						g_open = g_open == g_focus ? 0 : g_focus;
+						if (g_open == kSecTalk) Eggs::TalkOpen(t);   // (the voice greets you)
 						PlayUi(UiSnd::kChoose);
+						return true;
+					}
+					if (g_focus >= kRowTalkTopic && g_focus < kRowTalkTopic + 5) {   // (a Talk topic: opened, or shut)
+						const int g = g_focus - kRowTalkTopic;
+						if (Eggs::TalkRows(t, g).empty()) {
+							PlayUi(UiSnd::kFail);
+							return true;
+						}
+						g_talkOpen = g_talkOpen == g ? 0 : g;
+						if (g_talkOpen) Eggs::TalkTopic(t, g);
+						PlayUi(UiSnd::kChoose);
+						return true;
+					}
+					if (g_focus >= kRowTalk && g_focus < kRowTalk + static_cast<int>(talk.size())) {   // (asked: Felldir answers)
+						Eggs::TalkAsk(t, talk[g_focus - kRowTalk].prompt);
+						PlayUi(UiSnd::kChoose, 0.5f);
 						return true;
 					}
 					if (g_focus >= kRowWhGroup && g_focus < kRowWhGroup + 5) {   // (a wonder's sub-tab: opened, or shut)
@@ -2279,6 +2308,16 @@ namespace bo3z
 				h.trialLock.clear();
 				h.altarFreed = false;
 				h.whispers.clear();
+				h.talkOn = false, h.talkRows.clear();
+				{   // (the altar's Talk) leaving an altar you talked at: Felldir's goodbye
+					static int talkTown = -99;   // (-99: no altar open)
+					if (g_menu) {
+						if (auto r = g_menuRef.get()) talkTown = TownOf(r.get());
+					} else if (talkTown != -99) {
+						Eggs::TalkBye(talkTown);
+						talkTown = -99, g_talkOpen = 0;
+					}
+				}
 				h.freedAltars.clear();
 				h.tabletOn = false;
 				if (auto* tb = Tablet::Town() >= 0 ? Placed(Tablet::Town(), 7) : nullptr) {
@@ -2300,6 +2339,11 @@ namespace bo3z
 						h.whisperSpeaking = Eggs::Speaking();
 						h.whisperGroup = g_whOpen;
 						h.whisperNamed = Eggs::Named();
+						h.talkOn = true;
+						for (int g = 1; g <= 4; ++g) h.talkAny[g] = !Eggs::TalkRows(t, g).empty(), h.talkNew[g] = Eggs::TalkNew(t, g);
+						h.talkTopic = g_talkOpen;
+						h.talkRows = g_talkOpen > 0 ? Eggs::TalkRows(t, g_talkOpen) : std::vector<Eggs::TalkRow>{};
+						h.talkSaying = Eggs::TalkSaying();
 						h.altarFreed = Curse::Freed(t);
 						if (const auto v = Curse::Altar(t); v.on) {  // the city still held: its trials
 							h.trialsOn = true;

@@ -396,6 +396,32 @@ def _secs(w):
     except Exception: return 4.0
 o.append(f'\tstruct WhisperSound {{ std::string_view key; Sound sound; float secs; }};')
 o.append(f'\tinline constexpr std::array<WhisperSound, {len(_wh)}> kWhispers{{ {{ ' + ', '.join(f'WhisperSound{{ "echo_{w[3:]}", Sound::{w}, {_secs(w):.2f}f }}' for w in _wh) + ' } };')
+# (Noah, 2026-11-24: "give the echo alter a lot more voice lines that players can interact with like talking with npcs") the
+# altar's Talk: topics, the prompts you can ask (gate: when it shows, see tools/altarvo_script.py), the lines Felldir answers with
+# (played by file from Sound\\fx\\CurseOfAlduin\\altarvo\\<key>.wav; secs: its length, for the subtitle)
+import json as _json
+_av = _json.load(open(root / 'docs' / 'altarvo.json'))
+_tl, _tp = [], []
+_topics = [t['id'] for t in _av['topics']]
+def _avsecs(key, text):
+    try:
+        with _wave.open(str(root / 'assets' / 'sound' / 'altarvo' / f'{key}.wav')) as f: return f.getnframes() / f.getframerate()
+    except Exception: return 1.0 + len(text) / 14.0
+for t in _av['topics']:
+    for p in t['prompts']:
+        first = len(_tl)
+        for i, l in enumerate(p['lines']):
+            key = f"av_{p['id']}_{i + 1}"
+            import re as _re
+            sub = _re.sub(r'\[[^\]]*\]\s*', '', l).strip()   # (the subtitle: the delivery tags left out)
+            _tl.append((key, sub, _avsecs(key, l)))
+        _tp.append((p['id'], p['gate'], p['ask'], _topics.index(t['id']), first, len(p['lines'])))
+o.append('\tstruct TalkLine { std::string_view key, text; float secs; };')
+o.append('\tinline constexpr std::array<std::uint32_t, 6> kTalkHeard{ { ' + ', '.join(f'0x{IDS[("GLOB", f"talk_heard_{i}")]:03X}' for i in range(6)) + ' } };')
+o.append('\tstruct TalkPrompt { std::string_view id, gate, ask; std::uint8_t topic; std::uint16_t first, count; };')
+o.append('\tinline constexpr std::array<std::string_view, ' + str(len(_topics)) + '> kTalkTopics{ { ' + ', '.join(_json.dumps(t['title']) for t in _av['topics']) + ' } };')
+o.append(f'\tinline constexpr std::array<TalkLine, {len(_tl)}> kTalkLines{{ {{ ' + ', '.join(f'TalkLine{{ "{k}", {_json.dumps(x)}, {sc:.2f}f }}' for k, x, sc in _tl) + ' } };')
+o.append(f'\tinline constexpr std::array<TalkPrompt, {len(_tp)}> kTalkPrompts{{ {{ ' + ', '.join(f'TalkPrompt{{ "{i}", "{g}", {_json.dumps(a)}, {tp}, {f}, {n} }}' for i, g, a, tp, f, n in _tp) + ' } };')
 # (Noah, 2026-11-21) the class voice lines: per line its class (0 Summoner .. 3 Spellsword), its trigger, its male and female sound
 import json as _json
 _cv = _json.load(open(root / 'sheets' / 'classvo.json'))
