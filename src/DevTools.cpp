@@ -901,6 +901,33 @@ namespace bo3z
 				in >> pw;
 				Gun::DevSwing(pw);
 				logger::info("dev: swing {}", pw ? "heavy" : "light");
+			} else if (cmd == "armour" && player) {
+				// armour: (Noah, 2026-11-24: "my forearms are invisible with all the class armor sets") what you wear - each piece's
+				// slots and its addons - and every shape of your body in first and third person: hidden or drawn, under which piece
+				{
+					for (auto& [obj, data] : player->GetInventory([](RE::TESBoundObject& o) { return o.IsArmor(); })) {
+						if (!data.second || !data.second->IsWorn()) continue;
+						auto* ar = obj->As<RE::TESObjectARMO>();
+						std::string addons;
+						for (auto* aa : ar->armorAddons) {
+							if (!aa) continue;
+							addons += fmt::format("{:08X} slots {:08X} m1 '{}' f1 '{}' | ", aa->GetFormID(), static_cast<std::uint32_t>(aa->GetSlotMask().underlying()),
+								aa->bipedModel1stPersons[0].GetModel(), aa->bipedModel1stPersons[1].GetModel());
+						}
+						logger::info("dev: armour worn {:08X} '{}' slots {:08X} addons: {}", ar->GetFormID(), ar->GetName(), static_cast<std::uint32_t>(ar->GetSlotMask().underlying()), addons);
+					}
+				}
+				for (const bool first : { false, true }) {
+					auto* rt = player->Get3D(first);
+					if (!rt) continue;
+					RE::BSVisit::TraverseScenegraphGeometries(rt, [&](RE::BSGeometry* g) {
+						std::string chain;
+						for (auto* q = g->parent; q && q != rt; q = q->parent) chain += std::string(q->name.c_str()) + (q->GetAppCulled() ? "(culled)" : "") + "<";
+						const auto& b = g->worldBound;
+						logger::info("dev: armour {} shape '{}'{} r {:.0f} under {}", first ? "1st" : "3rd", g->name.c_str(), g->GetAppCulled() ? " (culled)" : "", b.radius, chain);
+						return RE::BSVisit::BSVisitControl::kContinue;
+					});
+				}
 			} else if (cmd == "nodes") {
 				Gun::DevNodes();
 			} else if (cmd == "quit") {  // the game closed to the desktop (so a new build can go in)
