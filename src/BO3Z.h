@@ -73,6 +73,12 @@ namespace bo3z
 		inline constexpr int kFlagInit = 0, kFlagReserveV2 = 4, kFlagStarted = 5, kFlagMoved = 11, kPerkShift = 14, kFlagPerksV2 = 23, kOldPerkBits = 9;  // bits: init | (the old crew 1-3) | (old perks 4-10) | moved 11 | (the old weapon slot 12-13) | perks 14-22 | v2 23
 	}
 
+	namespace Ground   // (src/Ground.cpp) trees, plants and rocks hanging over nothing set down onto what's under them
+	{
+		void Tick(float a_delta);
+		void Reset();
+	}
+
 	namespace Points
 	{
 		void Add(int a_points);

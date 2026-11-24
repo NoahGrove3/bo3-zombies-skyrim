@@ -4015,6 +4015,7 @@ namespace bo3z
 			g_sunrise = {}, g_sunriseOn = false;   // (a load mid-sunrise: the clock it ran on is gone)
 			Story::Reset();
 			Eggs::Reset();
+			Ground::Reset();   // (a save loaded: its trees and plants looked at again)
 			Audio::BossMusic(false);
 			g_phase = Phase::Day;
 			EndRisers();

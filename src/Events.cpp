@@ -409,6 +409,8 @@ namespace bo3z
 					{ Scope q(Perf::kMovement); Movement::Tick(a_delta); }
 					T("audio");
 					{ Scope q(Perf::kAudio); Audio::Tick(a_delta); }
+					T("ground");
+					Ground::Tick(a_delta);   // (Noah: "anything that is floating should be fixed for the whole map")
 					T("done");
 				} catch (const std::exception& e) {
 					logger::error("tick: {}", e.what());
