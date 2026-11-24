@@ -2902,7 +2902,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// behind each; where the stone takes one, a soft glow swells and fades
 			if (!s.perkMenu) {
 				const ImU32 blue = IM_COL32(150, 212, 255, 255), core = IM_COL32(235, 248, 255, 255);
-				for (const auto& tr : s.souls) {
+				for (const auto& tr : s.wisps) {
 					const float sz = std::clamp(tr[0][3], 0.4f, 4.0f) * k;
 					for (int q = static_cast<int>(tr.size()) - 1; q >= 0; --q) {   // (the tail first, the head over it)
 						const ImVec2 c{ tr[q][0] * size.x, tr[q][1] * size.y };
@@ -2917,7 +2917,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					dl->AddCircleFilled(h, 4.5f * sz, Fade(blue, 0.55f), 20);
 					dl->AddCircleFilled(h, 2.2f * sz, Fade(core, 0.95f), 16);
 				}
-				for (const auto& tk : s.soulsTaken) {
+				for (const auto& tk : s.wispsTaken) {
 					const ImVec2 c{ tk[0] * size.x, tk[1] * size.y };
 					const float  u = std::clamp(tk[2] / 0.9f, 0.0f, 1.0f), sz = std::clamp(tk[3], 0.4f, 4.0f) * k;
 					const float  a = (1.0f - u) * (u < 0.15f ? u / 0.15f : 1.0f);

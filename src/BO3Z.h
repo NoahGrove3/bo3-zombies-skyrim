@@ -1241,8 +1241,8 @@ namespace bo3z
 			int         ringSeconds{ 0 }, ringInside{ 0 };
 			std::string ringHead, ringSub;    // (the trials remade) its words, when a trial counts the dead rather than seconds
 			bool        ringRunes{ true };    // (2026-11-24) the ring of runes drawn (false: Lay the Restless to Rest - its words only)
-			std::vector<std::vector<std::array<float, 4>>> souls;   // (Noah: the restless' souls) each wisp's head and tail: x, y (0-1), depth, size
-			std::vector<std::array<float, 4>> soulsTaken;           // the stone taking one: x, y, age (s), size
+			std::vector<std::vector<std::array<float, 4>>> wisps;   // (Noah: the restless' souls) each wisp's head and tail: x, y (0-1), depth, size
+			std::vector<std::array<float, 4>> wispsTaken;           // the stone taking one: x, y, age (s), size
 			bool        objOn{ false }, objFront{ false };
 			float       objX{ 0 }, objY{ 0 }, objDist{ 0 };
 			std::string objLabel;

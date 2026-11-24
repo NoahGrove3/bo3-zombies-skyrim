@@ -3,78 +3,6 @@
  "model": "eleven_v3",
  "lines": [
   {
-   "id": "av_greet_faint_1",
-   "group": "Greeting and farewell",
-   "ask": "(opening the Talk row)",
-   "text": "[whispers] ...you... can you hear...? The stone is... too far from the other stones..."
-  },
-  {
-   "id": "av_greet_faint_2",
-   "group": "Greeting and farewell",
-   "ask": "(opening the Talk row)",
-   "text": "[whispers] ...closer... wake another... and I will be clearer..."
-  },
-  {
-   "id": "av_greet_early_1",
-   "group": "Greeting and farewell",
-   "ask": "(opening the Talk row)",
-   "text": "[softly] You came back to the stone. Good. Ask, and I will answer what I can."
-  },
-  {
-   "id": "av_greet_early_2",
-   "group": "Greeting and farewell",
-   "ask": "(opening the Talk row)",
-   "text": "[softly] Dragonborn. The night is long... and I have had a long time to think. Ask."
-  },
-  {
-   "id": "av_greet_named_1",
-   "group": "Greeting and farewell",
-   "ask": "(opening the Talk row)",
-   "text": "[softly] Dragonborn. Felldir hears you. What would you know?"
-  },
-  {
-   "id": "av_greet_named_2",
-   "group": "Greeting and farewell",
-   "ask": "(opening the Talk row)",
-   "text": "You have done more than I hoped. Speak, and I will listen."
-  },
-  {
-   "id": "av_greet_end_1",
-   "group": "Greeting and farewell",
-   "ask": "(opening the Talk row)",
-   "text": "[softly] Dragonborn. The echo is gone... but he is not. Ask, while the stones still carry me."
-  },
-  {
-   "id": "av_greet_night_1",
-   "group": "Greeting and farewell",
-   "ask": "(opening the Talk row at night, the city still dark)",
-   "text": "[urgent whisper] The dead are walking. Be quick... they do not wait for talk."
-  },
-  {
-   "id": "av_greet_dawn_1",
-   "group": "Greeting and farewell",
-   "ask": "(opening the Talk row by day, the city still dark)",
-   "text": "The sun holds them for now. Use the light. Rest, ready yourself... the night will not be kind."
-  },
-  {
-   "id": "av_greet_freed_1",
-   "group": "Greeting and farewell",
-   "ask": "(opening the Talk row at a freed altar)",
-   "text": "[softly] This stone is awake, and its city sleeps. It is good to speak from a quiet place."
-  },
-  {
-   "id": "av_greet_freed_2",
-   "group": "Greeting and farewell",
-   "ask": "(opening the Talk row at a freed altar)",
-   "text": "Look up... no red light falling here. Only stars. Ask, Dragonborn."
-  },
-  {
-   "id": "av_greet_priest_1",
-   "group": "Greeting and farewell",
-   "ask": "(opening the Talk row just after this city's priest fell)",
-   "text": "[relieved] He is gone. I felt his oath break from across Skyrim. The stone is singing."
-  },
-  {
    "id": "av_bye_1",
    "group": "Greeting and farewell",
    "ask": "(leaving the Talk row)",
@@ -489,102 +417,6 @@
    "text": "It is yours now. Go and see it."
   },
   {
-   "id": "av_c_trials_1",
-   "group": "This city",
-   "ask": "How do I wake this altar?",
-   "text": "Four trials, in order, and only at night. Lay its restless dead to rest. Follow the whisper. Repeat the echo. Break the seals."
-  },
-  {
-   "id": "av_c_trials_2",
-   "group": "This city",
-   "ask": "How do I wake this altar?",
-   "text": "You need not finish them in one night. The stone remembers what you have done."
-  },
-  {
-   "id": "av_c_day_1",
-   "group": "This city",
-   "ask": "Why wait for nightfall?",
-   "text": "The dead sleep in the day, and the trials are for the dead. Come back when the sun goes down."
-  },
-  {
-   "id": "av_c_restless_1",
-   "group": "This city",
-   "ask": "What is Lay the Restless to Rest?",
-   "text": "The first of this city's dead are already up and wandering. Put them down near the stone... while its light is on you."
-  },
-  {
-   "id": "av_c_restless_2",
-   "group": "This city",
-   "ask": "What is Lay the Restless to Rest?",
-   "text": "Stay close to the altar. The further you stray from its light, the less it counts."
-  },
-  {
-   "id": "av_c_whisper_1",
-   "group": "This city",
-   "ask": "Where does the whisper lead?",
-   "text": "I will give you a riddle. It names a place in this city where the dead are gathering. Go there, and kill them where they gather."
-  },
-  {
-   "id": "av_c_whisper_2",
-   "group": "This city",
-   "ask": "Where does the whisper lead?",
-   "text": "Listen to the riddle twice if you need it. The stone will say it again."
-  },
-  {
-   "id": "av_c_echo_1",
-   "group": "This city",
-   "ask": "How do I repeat the echo?",
-   "text": "A ring of six stones stands around the altar. They will sing, one after another. Strike them in the order they sang."
-  },
-  {
-   "id": "av_c_echo_2",
-   "group": "This city",
-   "ask": "How do I repeat the echo?",
-   "text": "[softly] Miss a note, and they go quiet until the next hour. Listen first. Then answer."
-  },
-  {
-   "id": "av_c_seals_1",
-   "group": "This city",
-   "ask": "Where are the priest's seals?",
-   "text": "Three seals bind this altar, each guarded by one of his dead. They are marked on your map."
-  },
-  {
-   "id": "av_c_seals_2",
-   "group": "This city",
-   "ask": "Where are the priest's seals?",
-   "text": "Kill the guard first. Only then will the seal break under your blow. And when the last one breaks... he comes. At once."
-  },
-  {
-   "id": "av_c_coop_1",
-   "group": "This city",
-   "ask": "Do my companions share the trials?",
-   "text": "Every blade near the stone counts. What one of you does, the stone remembers for all of you."
-  },
-  {
-   "id": "av_c_riverwood_what_1",
-   "group": "This city",
-   "ask": "What happened to Riverwood?",
-   "text": "Helgen is just over the hill, where the dragon first broke the sky over you. This valley's dead were the first to hear his shout."
-  },
-  {
-   "id": "av_c_riverwood_what_2",
-   "group": "This city",
-   "ask": "What happened to Riverwood?",
-   "text": "The barrow above the town, Bleak Falls... its dead are restless. They come down the hill every night."
-  },
-  {
-   "id": "av_c_riverwood_priest_1",
-   "group": "This city",
-   "ask": "Who keeps Riverwood's altar dark?",
-   "text": "Vahlok the Jailor. In the old days he kept the cult's prisoners. His oath to the World-Eater was the last he ever swore."
-  },
-  {
-   "id": "av_c_riverwood_priest_2",
-   "group": "This city",
-   "ask": "Who keeps Riverwood's altar dark?",
-   "text": "He has crossed the sea to keep this valley dark. A jailor keeps his doors locked. Break them."
-  },
-  {
    "id": "av_c_riverwood_free_1",
    "group": "This city",
    "ask": "Is Riverwood safe now?",
@@ -601,30 +433,6 @@
    "group": "This city",
    "ask": "What was Riverwood like in your time?",
    "text": "When we raised this stone, there was no town here. Only the river, and a dragon's nest on the mountain above it."
-  },
-  {
-   "id": "av_c_whiterun_what_1",
-   "group": "This city",
-   "ask": "What happened to Whiterun?",
-   "text": "Whiterun was built around a dragon's cage. Its Hall of the Dead lies under the Jarl's, and its beds are empty."
-  },
-  {
-   "id": "av_c_whiterun_what_2",
-   "group": "This city",
-   "ask": "What happened to Whiterun?",
-   "text": "The Gildergreen remembers the dead who sat beneath it. They come back to it now, looking for shade they cannot feel."
-  },
-  {
-   "id": "av_c_whiterun_priest_1",
-   "group": "This city",
-   "ask": "Who keeps Whiterun's altar dark?",
-   "text": "Nahkriin. He guarded Skuldafn for the World-Eater, the gate to Sovngarde itself."
-  },
-  {
-   "id": "av_c_whiterun_priest_2",
-   "group": "This city",
-   "ask": "Who keeps Whiterun's altar dark?",
-   "text": "[bitter] The mist that bars Sovngarde's door is his to keep. He has come down to the plains so that Whiterun's dead never find the way."
   },
   {
    "id": "av_c_whiterun_free_1",
@@ -645,30 +453,6 @@
    "text": "The dragon in Dragonsreach was not the first caged on that hill. The first was there in our time. We heard it screaming for a year."
   },
   {
-   "id": "av_c_solitude_what_1",
-   "group": "This city",
-   "ask": "What happened to Solitude?",
-   "text": "The capital. Its crypts are older than its walls, and the Blue Palace stands over them."
-  },
-  {
-   "id": "av_c_solitude_what_2",
-   "group": "This city",
-   "ask": "What happened to Solitude?",
-   "text": "The bards here teach the young to sing of the dead. Tonight the dead have come to listen."
-  },
-  {
-   "id": "av_c_solitude_priest_1",
-   "group": "This city",
-   "ask": "Who keeps Solitude's altar dark?",
-   "text": "Volsung of Volskygge. His mask let him breathe where no man could, high on the peaks above Haafingar."
-  },
-  {
-   "id": "av_c_solitude_priest_2",
-   "group": "This city",
-   "ask": "Who keeps Solitude's altar dark?",
-   "text": "He climbs down to Solitude now, and the red light falls over the palace at his word."
-  },
-  {
    "id": "av_c_solitude_free_1",
    "group": "This city",
    "ask": "Is Solitude safe now?",
@@ -685,30 +469,6 @@
    "group": "This city",
    "ask": "What was Solitude like in your time?",
    "text": "There were Tongues who lived on these cliffs, and taught their students to shout across the water. The sea still remembers the sound."
-  },
-  {
-   "id": "av_c_windhelm_what_1",
-   "group": "This city",
-   "ask": "What happened to Windhelm?",
-   "text": "The oldest city of men. Ysgramor's stone, and the snow that never leaves the palace of kings."
-  },
-  {
-   "id": "av_c_windhelm_what_2",
-   "group": "This city",
-   "ask": "What happened to Windhelm?",
-   "text": "There is a candle in this city that has never gone out. The dead are drawn to it, like moths."
-  },
-  {
-   "id": "av_c_windhelm_priest_1",
-   "group": "This city",
-   "ask": "Who keeps Windhelm's altar dark?",
-   "text": "Zahkriisos, the Frost-Priest. He slept on Solstheim until the shout crossed the Sea of Ghosts."
-  },
-  {
-   "id": "av_c_windhelm_priest_2",
-   "group": "This city",
-   "ask": "Who keeps Windhelm's altar dark?",
-   "text": "He walked over the ice to the docks. The cold he carries stops a heart. Keep moving, and keep warm."
   },
   {
    "id": "av_c_windhelm_free_1",
@@ -729,30 +489,6 @@
    "text": "Ysgramor's people built over the stone without knowing it was here. It has listened to every king of Windhelm since."
   },
   {
-   "id": "av_c_markarth_what_1",
-   "group": "This city",
-   "ask": "What happened to Markarth?",
-   "text": "The deep elves carved this city out of the cliff, and the cliffs bleed silver. The dead here are older than the Nords."
-  },
-  {
-   "id": "av_c_markarth_what_2",
-   "group": "This city",
-   "ask": "What happened to Markarth?",
-   "text": "Its Hall of the Dead goes deeper than its priests have ever been. Something down there heard the shout."
-  },
-  {
-   "id": "av_c_markarth_priest_1",
-   "group": "This city",
-   "ask": "Who keeps Markarth's altar dark?",
-   "text": "Otar the Mad. He was so cruel that his own cult sealed him alive in Ragnvald."
-  },
-  {
-   "id": "av_c_markarth_priest_2",
-   "group": "This city",
-   "ask": "Who keeps Markarth's altar dark?",
-   "text": "[fearful] His oath outlived his reason. He comes down in red lightning, with nothing left of himself but the oath."
-  },
-  {
    "id": "av_c_markarth_free_1",
    "group": "This city",
    "ask": "Is Markarth safe now?",
@@ -769,30 +505,6 @@
    "group": "This city",
    "ask": "What was Markarth like in your time?",
    "text": "The deep elves had a stone of their own, under the cliff. Ours answered it once. [softly] Nothing answers from down there now."
-  },
-  {
-   "id": "av_c_riften_what_1",
-   "group": "This city",
-   "ask": "What happened to Riften?",
-   "text": "A city of thieves and green water. Red light falls into the canal now, and the drowned come down in it. Nobody sees them coming."
-  },
-  {
-   "id": "av_c_riften_what_2",
-   "group": "This city",
-   "ask": "What happened to Riften?",
-   "text": "Mara's temple stands here. Love is a strong thing... but not stronger than the World-Eater's voice."
-  },
-  {
-   "id": "av_c_riften_priest_1",
-   "group": "This city",
-   "ask": "Who keeps Riften's altar dark?",
-   "text": "Rahgot of Forelhost. When King Harald's army came for him, his followers poisoned themselves rather than give him up."
-  },
-  {
-   "id": "av_c_riften_priest_2",
-   "group": "This city",
-   "ask": "Who keeps Riften's altar dark?",
-   "text": "They rise with him now. The Rift's dead follow them down to the city."
   },
   {
    "id": "av_c_riften_free_1",
@@ -813,30 +525,6 @@
    "text": "The lake here was a holy place to Mara before there was a city. We raised the stone where her pilgrims rested."
   },
   {
-   "id": "av_c_falkreath_what_1",
-   "group": "This city",
-   "ask": "What happened to Falkreath?",
-   "text": "More dead than living lie in this town's earth. Tonight they are restless in their rows."
-  },
-  {
-   "id": "av_c_falkreath_what_2",
-   "group": "This city",
-   "ask": "What happened to Falkreath?",
-   "text": "The graveyard is the oldest thing here. Older than the town that grew around it."
-  },
-  {
-   "id": "av_c_falkreath_priest_1",
-   "group": "This city",
-   "ask": "Who keeps Falkreath's altar dark?",
-   "text": "Krosis of Shearpoint. He guarded his word on the mountain, mourning, for a thousand years."
-  },
-  {
-   "id": "av_c_falkreath_priest_2",
-   "group": "This city",
-   "ask": "Who keeps Falkreath's altar dark?",
-   "text": "[sad] The shout gave him something to do with his sorrow. He comes to keep this town's children out of the ground."
-  },
-  {
    "id": "av_c_falkreath_free_1",
    "group": "This city",
    "ask": "Is Falkreath safe now?",
@@ -853,30 +541,6 @@
    "group": "This city",
    "ask": "What was Falkreath like in your time?",
    "text": "Even in our time, people came here to bury their dead. Some places are made for grief."
-  },
-  {
-   "id": "av_c_morthal_what_1",
-   "group": "This city",
-   "ask": "What happened to Morthal?",
-   "text": "The marsh hides its dead well. Fog, roots, black water... and red light falling into all of it."
-  },
-  {
-   "id": "av_c_morthal_what_2",
-   "group": "This city",
-   "ask": "What happened to Morthal?",
-   "text": "There is a brewer's hut at the marsh's edge. The swamp's dead come to drink, as if they remember thirst."
-  },
-  {
-   "id": "av_c_morthal_priest_1",
-   "group": "This city",
-   "ask": "Who keeps Morthal's altar dark?",
-   "text": "Hevnoraak of Valthume. His own servants sealed him in his tomb to stop him rising."
-  },
-  {
-   "id": "av_c_morthal_priest_2",
-   "group": "This city",
-   "ask": "Who keeps Morthal's altar dark?",
-   "text": "The seal could not hold against SLEN TIID VO. He walks out of the fog, and the drowned walk behind him."
   },
   {
    "id": "av_c_morthal_free_1",
@@ -897,30 +561,6 @@
    "text": "The marsh swallowed the first stone we raised here. This is the second. We were careful where we put it."
   },
   {
-   "id": "av_c_dawnstar_what_1",
-   "group": "This city",
-   "ask": "What happened to Dawnstar?",
-   "text": "A cold harbour under a cold sky. The people here have been dreaming badly for a long time."
-  },
-  {
-   "id": "av_c_dawnstar_what_2",
-   "group": "This city",
-   "ask": "What happened to Dawnstar?",
-   "text": "The miners cut quicksilver out of the hill. Tonight the red light falls on the mouth of the mine."
-  },
-  {
-   "id": "av_c_dawnstar_priest_1",
-   "group": "This city",
-   "ask": "Who keeps Dawnstar's altar dark?",
-   "text": "Vokun of High Gate. A priest of shadows. Dawnstar's dreamers dreamed his return a thousand years before it came."
-  },
-  {
-   "id": "av_c_dawnstar_priest_2",
-   "group": "This city",
-   "ask": "Who keeps Dawnstar's altar dark?",
-   "text": "Kill him, and the nightmares end. He knows that. He will not make it easy."
-  },
-  {
    "id": "av_c_dawnstar_free_1",
    "group": "This city",
    "ask": "Is Dawnstar safe now?",
@@ -937,30 +577,6 @@
    "group": "This city",
    "ask": "What was Dawnstar like in your time?",
    "text": "There was a shrine in the hills here to a god of dreams. We built the stone well away from it. We were right to."
-  },
-  {
-   "id": "av_c_winterhold_what_1",
-   "group": "This city",
-   "ask": "What happened to Winterhold?",
-   "text": "What is left of a city the sea took. The College stands across the bridge, and the town does not trust it."
-  },
-  {
-   "id": "av_c_winterhold_what_2",
-   "group": "This city",
-   "ask": "What happened to Winterhold?",
-   "text": "One hearth still welcomes the College's mages. Tonight the dead have found it too."
-  },
-  {
-   "id": "av_c_winterhold_priest_1",
-   "group": "This city",
-   "ask": "Who keeps Winterhold's altar dark?",
-   "text": "Morokei of Labyrinthian. He once held the Staff of Magnus, and the College has feared him ever since."
-  },
-  {
-   "id": "av_c_winterhold_priest_2",
-   "group": "This city",
-   "ask": "Who keeps Winterhold's altar dark?",
-   "text": "He waits on the cliffs above the town. The storm he calls has not finished yet."
   },
   {
    "id": "av_c_winterhold_free_1",
@@ -1415,13 +1031,13 @@
   {
    "id": "av_v_greybeards_1",
    "group": "Who the voice is",
-   "ask": "Do you know the Greybeards?",
+   "ask": "Who are the Greybeards to you?",
    "text": "They came after us. They took the Voice and made it quiet, and climbed the mountain to keep it safe."
   },
   {
    "id": "av_v_greybeards_2",
    "group": "Who the voice is",
-   "ask": "Do you know the Greybeards?",
+   "ask": "Who are the Greybeards to you?",
    "text": "We used it to fight. They use it to listen. [softly] Perhaps they are wiser than we were."
   },
   {

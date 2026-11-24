@@ -592,7 +592,7 @@ namespace bo3z
 			h.ringLabelOn = labelOn, h.ringLabelX = lx, h.ringLabelY = ly;
 			h.ringOn = g_ring.on && (!pts.empty() || !g_ring.runes);
 			h.ringRunes = g_ring.runes;
-			h.souls = std::move(souls), h.soulsTaken = std::move(taken);
+			h.wisps = std::move(souls), h.wispsTaken = std::move(taken);
 			h.ringPts = std::move(pts);
 			h.ringFrac = g_ring.frac;
 			h.ringFlash = g_ring.flash;

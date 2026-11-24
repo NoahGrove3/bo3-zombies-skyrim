@@ -32,26 +32,6 @@ def ask(pid, gate, question, *lines):
 
 # --------------------------------------------------------------------------------------------------------------------------
 topic('greet', 'Greeting and farewell', "Said as the Talk row opens (one picked for the story's stage) and as you leave it.")
-ask('greet_faint', 'freed<2', '(opening the Talk row)',
-    '[whispers] ...you... can you hear...? The stone is... too far from the other stones...',
-    '[whispers] ...closer... wake another... and I will be clearer...')
-ask('greet_early', 'freed>=2&freed<6', '(opening the Talk row)',
-    '[softly] You came back to the stone. Good. Ask, and I will answer what I can.',
-    '[softly] Dragonborn. The night is long... and I have had a long time to think. Ask.')
-ask('greet_named', 'freed>=6&echo_slain=0', '(opening the Talk row)',
-    '[softly] Dragonborn. Felldir hears you. What would you know?',
-    'You have done more than I hoped. Speak, and I will listen.')
-ask('greet_end', 'echo_slain', '(opening the Talk row)',
-    '[softly] Dragonborn. The echo is gone... but he is not. Ask, while the stones still carry me.')
-ask('greet_night', 'night&here_dark', '(opening the Talk row at night, the city still dark)',
-    '[urgent whisper] The dead are walking. Be quick... they do not wait for talk.')
-ask('greet_dawn', 'day&here_dark', '(opening the Talk row by day, the city still dark)',
-    'The sun holds them for now. Use the light. Rest, ready yourself... the night will not be kind.')
-ask('greet_freed', 'here_free&echo_slain=0', '(opening the Talk row at a freed altar)',
-    '[softly] This stone is awake, and its city sleeps. It is good to speak from a quiet place.',
-    'Look up... no red light falling here. Only stars. Ask, Dragonborn.')
-ask('greet_priest', 'here_free&priest_new', '(opening the Talk row just after this city\'s priest fell)',
-    '[relieved] He is gone. I felt his oath break from across Skyrim. The stone is singing.')
 ask('bye', 'always', '(leaving the Talk row)',
     '[softly] Go. I will be in the stone.',
     'Walk carefully. The dead remember the living.',
@@ -158,25 +138,6 @@ ask('s_hall', 'echo_slain', 'What is the Hall of the Awakened?',
 
 # --------------------------------------------------------------------------------------------------------------------------
 topic('city', 'This city', "About the city the altar stands in: its dead, its Dragon Priest, its trials - and once it's free, what is left.")
-ask('c_trials', 'here_dark', 'How do I wake this altar?',
-    'Four trials, in order, and only at night. Lay its restless dead to rest. Follow the whisper. Repeat the echo. Break the seals.',
-    'You need not finish them in one night. The stone remembers what you have done.')
-ask('c_day', 'here_dark&day&night>=2', 'Why wait for nightfall?',
-    'The dead sleep in the day, and the trials are for the dead. Come back when the sun goes down.')
-ask('c_restless', 'here_dark&trial=restless', 'What is Lay the Restless to Rest?',
-    'The first of this city\'s dead are already up and wandering. Put them down near the stone... while its light is on you.',
-    'Stay close to the altar. The further you stray from its light, the less it counts.')
-ask('c_whisper', 'here_dark&trial=whisper', 'Where does the whisper lead?',
-    'I will give you a riddle. It names a place in this city where the dead are gathering. Go there, and kill them where they gather.',
-    'Listen to the riddle twice if you need it. The stone will say it again.')
-ask('c_echo', 'here_dark&trial=echo', 'How do I repeat the echo?',
-    'A ring of six stones stands around the altar. They will sing, one after another. Strike them in the order they sang.',
-    '[softly] Miss a note, and they go quiet until the next hour. Listen first. Then answer.')
-ask('c_seals', 'here_dark&trial=seals', 'Where are the priest\'s seals?',
-    'Three seals bind this altar, each guarded by one of his dead. They are marked on your map.',
-    'Kill the guard first. Only then will the seal break under your blow. And when the last one breaks... he comes. At once.')
-ask('c_coop', 'here_dark&party', 'Do my companions share the trials?',
-    'Every blade near the stone counts. What one of you does, the stone remembers for all of you.')
 
 CITY = {
     'Riverwood': (
@@ -264,10 +225,9 @@ LORE = {
 }
 for city, (what, priest, free) in CITY.items():
     k = city.lower()
-    ask(f'c_{k}_what', f'here={k}&here_dark&night>=2', f'What happened to {city}?', *what)
-    ask(f'c_{k}_priest', f'here={k}&here_dark&freed>=2', f'Who keeps {city}\'s altar dark?', *priest)
+    # (Noah, 2026-11-24: only a freed altar talks) the dark city's lines - what befell it, its priest - are said no more
     ask(f'c_{k}_free', f'here={k}&here_free', f'Is {city} safe now?', *free)
-    ask(f'c_{k}_old', f'here={k}&freed>=4', f'What was {city} like in your time?', LORE[city])
+    ask(f'c_{k}_old', f'here={k}&here_free', f'What was {city} like in your time?', LORE[city])
 
 # --------------------------------------------------------------------------------------------------------------------------
 topic('class', 'Your class and wonder', 'Before a class is chosen, the four paths; after, what the voice sees in you, your craft, and your wonder.')
@@ -374,7 +334,7 @@ ask('v_alduin', 'freed>=6', 'What was Alduin like?',
 ask('v_dragonborn', 'freed>=6', 'Did you know there would be a Dragonborn?',
     'We hoped. The Scroll told us he would come back. It did not tell us who would be waiting when he did.',
     '[softly] I am glad it was you.')
-ask('v_greybeards', 'freed>=6', 'Do you know the Greybeards?',
+ask('v_greybeards', 'freed>=6', 'Who are the Greybeards to you?',
     'They came after us. They took the Voice and made it quiet, and climbed the mountain to keep it safe.',
     'We used it to fight. They use it to listen. [softly] Perhaps they are wiser than we were.')
 ask('v_dragons', 'freed>=6', 'Do you hate the dragons?',
