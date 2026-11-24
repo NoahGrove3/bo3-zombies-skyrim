@@ -118,7 +118,7 @@
      "gate": "always",
      "ask": "Why do the dead come back?",
      "lines": [
-      "His shout hangs like a mist across the road to Sovngarde. The dead cannot pass it to Shor's hall.",
+      "His shout hangs like a mist over every road the dead walk. Shor's hall, Arkay's mercy, whatever waits for them... none of them can pass it.",
       "[sad] They try, every night. The mist turns them back... and his voice throws them down to Skyrim again, as red light out of the sky."
      ]
     },
@@ -248,6 +248,16 @@
      "lines": [
       "High Hrothgar sits on the Throat of the World. Where the Tongues cast the World-Eater out of time.",
       "Beneath it is a room the Greybeards guard and do not speak of. The wonders are kept there, until they are won."
+     ]
+    },
+    {
+     "id": "s_echo_what",
+     "gate": "freed>=10",
+     "ask": "What is the echo on the summit?",
+     "lines": [
+      "When we cast him out of time, his voice did not all go with him. Part of it stayed behind, caught on the summit where we broke him.",
+      "It has circled there since, waiting. Now that he is back in the world, it answers him... and it is louder than ever.",
+      "He flies where he likes. The echo cannot leave the mountain. That is why you can reach it... and why breaking it breaks his hold on the dead."
      ]
     },
     {
@@ -432,7 +442,7 @@
      "gate": "here=riverwood&here_dark",
      "ask": "What happened to Riverwood?",
      "lines": [
-      "This is where the dragon first broke the sky over you. The valley's dead were the first to hear his shout.",
+      "Helgen is just over the hill, where the dragon first broke the sky over you. This valley's dead were the first to hear his shout.",
       "The barrow above the town, Bleak Falls... its dead are restless. They come down the hill every night."
      ]
     },
@@ -616,7 +626,7 @@
      "gate": "here=riften&here_dark&freed>=2",
      "ask": "Who keeps Riften's altar dark?",
      "lines": [
-      "Rahgot of Forelhost. When the Tongues came for him, his followers poisoned themselves rather than give him up.",
+      "Rahgot of Forelhost. When King Harald's army came for him, his followers poisoned themselves rather than give him up.",
       "They rise with him now. The Rift's dead follow them down to the city."
      ]
     },

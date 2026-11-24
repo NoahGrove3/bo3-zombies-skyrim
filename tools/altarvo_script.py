@@ -68,7 +68,7 @@ ask('s_what', 'always', 'What has happened to Skyrim?',
     'Three words. SLEN... TIID... VO. Flesh. Time. Undo. The shout he raises his dragons with.',
     'But this time it fell on every grave in Skyrim. And every grave heard it.')
 ask('s_dead', 'always', 'Why do the dead come back?',
-    'His shout hangs like a mist across the road to Sovngarde. The dead cannot pass it to Shor\'s hall.',
+    'His shout hangs like a mist over every road the dead walk. Shor\'s hall, Arkay\'s mercy, whatever waits for them... none of them can pass it.',
     '[sad] They try, every night. The mist turns them back... and his voice throws them down to Skyrim again, as red light out of the sky.')
 ask('s_beams', 'always', 'What are the red beams in the sky?',
     'The dead, falling. Turned back from Sovngarde, and thrown down wherever his voice is strongest.',
@@ -114,6 +114,10 @@ ask('s_wonders', 'freed>=6&wonders_all=0', 'What stirs at six altars?',
 ask('s_greybeards', 'freed>=6&wonders_all=0', 'What do the Greybeards have to do with this?',
     'High Hrothgar sits on the Throat of the World. Where the Tongues cast the World-Eater out of time.',
     'Beneath it is a room the Greybeards guard and do not speak of. The wonders are kept there, until they are won.')
+ask('s_echo_what', 'freed>=10', 'What is the echo on the summit?',
+    'When we cast him out of time, his voice did not all go with him. Part of it stayed behind, caught on the summit where we broke him.',
+    'It has circled there since, waiting. Now that he is back in the world, it answers him... and it is louder than ever.',
+    'He flies where he likes. The echo cannot leave the mountain. That is why you can reach it... and why breaking it breaks his hold on the dead.')
 ask('s_ten', 'freed>=10&echo_slain=0', 'Every altar is awake. Is it over?',
     '[softly] Every stone sings again. Listen... all of Skyrim answering at once. I have not heard that in a very long time.',
     'But the World-Eater\'s voice is not gone. It lingers in the wild places... and in the echo he left on the summit.',
@@ -176,7 +180,7 @@ ask('c_coop', 'here_dark&party', 'Do my companions share the trials?',
 
 CITY = {
     'Riverwood': (
-        ['This is where the dragon first broke the sky over you. The valley\'s dead were the first to hear his shout.',
+        ['Helgen is just over the hill, where the dragon first broke the sky over you. This valley\'s dead were the first to hear his shout.',
          'The barrow above the town, Bleak Falls... its dead are restless. They come down the hill every night.'],
         ['Vahlok the Jailor. In the old days he kept the cult\'s prisoners. His oath to the World-Eater was the last he ever swore.',
          'He has crossed the sea to keep this valley dark. A jailor keeps his doors locked. Break them.'],
@@ -213,7 +217,7 @@ CITY = {
     'Riften': (
         ['A city of thieves and green water. Red light falls into the canal now, and the drowned come down in it. Nobody sees them coming.',
          'Mara\'s temple stands here. Love is a strong thing... but not stronger than the World-Eater\'s voice.'],
-        ['Rahgot of Forelhost. When the Tongues came for him, his followers poisoned themselves rather than give him up.',
+        ['Rahgot of Forelhost. When King Harald\'s army came for him, his followers poisoned themselves rather than give him up.',
          'They rise with him now. The Rift\'s dead follow them down to the city.'],
         ['The canal is only water again. The thieves can go back to stealing from the living.',
          'Rahgot\'s followers died for him twice. [softly] Let them stay dead this time.']),
