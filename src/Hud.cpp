@@ -6431,6 +6431,13 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 			}
 			const bool coverOn = coverPhase != 0;
+			{   // (Noah, 2026-11-24: "no in game audio until it fully loads then fades the audio in") the game's sound follows the black:
+				// none under the new game's loading screen, back up as it fades off the creator; down with the veil after the name
+				const auto sm = [](float x) { x = std::clamp(x, 0.0f, 1.0f); return x * x * (3.0f - 2.0f * x); };
+				float black = coverPhase == 1 ? 1.0f : coverPhase == 2 ? 1.0f - sm((secs(tCover - coverFade) - 0.6f) / 1.0f) : 0.0f;
+				black = std::max(black, g_filmOn ? 0.0f : sm(g_veil));
+				Audio::GameMute(onMainMenu ? 1.0f : 1.0f - black);
+			}
 			// (a menu with a pointer - the world map, the inventory - still draws: our cursor is the only one there)
 			// (Noah: "only hide my gameplay HUD - keep my inventory HUDs available ... also keep the Echo Altar UI") filming
 			// mode hides the bars, the feed, the compass and Skyrim's own HUD - never a screen you work in: the Echo Altar, the

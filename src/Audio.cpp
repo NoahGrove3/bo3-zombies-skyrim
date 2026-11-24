@@ -446,6 +446,7 @@ namespace bo3z::Audio
 	namespace
 	{
 		float g_duck = 0, g_duckNow = 0;
+		float g_muteDb = 0;   // (Noah, 2026-11-24) the whole game's sound held down under a black screen (dB)
 		RE::BGSSoundCategory* MusicCategory()
 		{
 			static RE::BGSSoundCategory* cat = [] {
@@ -468,11 +469,33 @@ namespace bo3z::Audio
 			g_duck = std::max(0.0f, g_duck - a_delta);
 			const float want = g_duck > 0 ? 1.0f : 0.0f;
 			g_duckNow += (want - g_duckNow) * std::min(1.0f, a_delta * (want > g_duckNow ? 6.0f : 1.2f));
-			const auto att = static_cast<std::uint16_t>(base + 900.0f * g_duckNow);
+			const auto att = static_cast<std::uint16_t>(std::min(65000.0f, base + 900.0f * g_duckNow + 100.0f * g_muteDb));
 			if (att != cat->GetCategoryAttenuation()) cat->SetCategoryAttenuation(att);
 		}
 	}
 	void Duck(float a_seconds) { g_duck = std::max(g_duck, a_seconds); }
+
+	// (Noah, 2026-11-24: "during the curse of alduin loading screen when creating a new character there should be no in game
+	// audio until it fully loads then fades the audio in" / "fade quickly into a black screen then fade out when everything is
+	// loaded in, same with the audio") every sound category held down by the black over the screen: a_level 1 as made, 0 silent
+	void GameMute(float a_level)
+	{
+		const float level = std::clamp(a_level, 0.0005f, 1.0f);
+		const float db = level >= 0.999f ? 0.0f : -20.0f * std::log10(level);
+		if (std::abs(db - g_muteDb) < 0.05f) return;
+		g_muteDb = db;
+		static std::vector<std::pair<RE::BGSSoundCategory*, std::uint16_t>> cats;   // each with its own attenuation, as Skyrim set it
+		if (cats.empty()) {
+			if (auto* dh = RE::TESDataHandler::GetSingleton()) {
+				for (auto* c : dh->GetFormArray<RE::BGSSoundCategory>()) {
+					if (c && c != MusicCategory()) cats.emplace_back(c, c->GetCategoryAttenuation());
+				}
+				logger::info("audio: {} sound categories under the black screen's hush", cats.size());
+			}
+		}
+		for (auto& [c, base] : cats) c->SetCategoryAttenuation(static_cast<std::uint16_t>(std::min(65000.0f, base + 100.0f * db)));
+		TickDuck(0.0f);   // (the music, with its duck)
+	}
 
 	void Tick(float a_delta)
 	{

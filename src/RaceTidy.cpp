@@ -291,15 +291,62 @@ namespace bo3z::RaceTidy
 		if (!open) { open = true, was = name; return; }
 		if (name != was) {
 			was = name;
-			Hud::IntroVeil(8.0f, true);
-			logger::info("race menu: named '{}' - black at once", name);
+			Hud::IntroVeil(8.0f, false);   // (Noah, 2026-11-24: "fade quickly into a black screen") a quarter second to black, its sound with it
+			logger::info("race menu: named '{}' - fading to black", name);
 		}
+	}
+
+	// (Noah, 2026-11-24: "make it not rain when creating a new character - the rain audio keeps replaying ... it's not moving in the
+	// race menu view") a clear sky held over Riverwood while the creator is up, the sky let go again as it closes
+	void Weather()
+	{
+		static bool held = false;
+		auto* ui = RE::UI::GetSingleton();
+		auto* sky = RE::Sky::GetSingleton();
+		const bool open = ui && ui->IsMenuOpen(RE::RaceSexMenu::MENU_NAME);
+		if (!sky || open == held) return;
+		held = open;
+		if (open) {
+			if (auto* w = RE::TESForm::LookupByID<RE::TESWeather>(0x0000081A)) {   // SkyrimClear
+				sky->ForceWeather(w, true);
+				logger::info("race menu: a clear sky while you make your character (was {})", sky->IsRaining() ? "raining" : "dry");
+			}
+		} else {
+			sky->ReleaseWeatherOverride();
+		}
+	}
+
+	// (Noah, 2026-11-24, the laptop: "the Race Menu UI ... is not on my laptop screen's window borders") RaceMenu shows its
+	// 16:9 picture whole (showAll) and stretches its panels to the screen's edges, but its bottom bar stays where a 16:9 screen
+	// ends (BOTTOMBAR_SHOWN_Y 645 of 720): on a taller screen it floats above the bottom with the panels running past it. The
+	// bar moved down by the screen's extra height (shown and hidden places both, so its own slide keeps them)
+	void BottomBar(RE::GFxMovieView* a_mv)
+	{
+		RE::GFxValue rm, bar, vr, vy, vh, y;
+		if (!a_mv->GetVariable(&rm, "_root.RaceSexMenuBaseInstance.RaceSexPanelsInstance") || !rm.IsObject()) return;
+		if (!rm.GetMember("bottomBar", &bar) || !bar.IsDisplayObject()) return;
+		if (!a_mv->GetVariable(&vr, "Stage.visibleRect") || !vr.IsObject() || !vr.GetMember("y", &vy) || !vr.GetMember("height", &vh) || !vy.IsNumber() || !vh.IsNumber()) return;
+		const double extra = vy.GetNumber() + vh.GetNumber() - 720.0;   // (the movie's units below its own bottom: 0 on 16:9)
+		const double shown = 645.0 + extra, hidden = 745.0 + extra;
+		RE::GFxValue cur;
+		const bool   have = rm.GetMember("BOTTOMBAR_SHOWN_Y", &cur) && cur.IsNumber();
+		if (have && std::abs(cur.GetNumber() - shown) < 0.5) return;   // (done already)
+		rm.SetMember("BOTTOMBAR_SHOWN_Y", RE::GFxValue(shown));
+		rm.SetMember("BOTTOMBAR_HIDDEN_Y", RE::GFxValue(hidden));
+		if (bar.GetMember("_y", &y) && y.IsNumber()) {
+			const double was = y.GetNumber();
+			const double now = std::abs(was - 645.0) < 3.0 ? shown : std::abs(was - 745.0) < 3.0 ? hidden : was + extra;
+			bar.SetMember("_y", RE::GFxValue(now));
+		}
+		static int told = 0;
+		if (told++ < 3) logger::info("race menu: its bottom bar moved {:.0f} down to the screen's bottom (visible {:.0f}+{:.0f})", extra, vy.GetNumber(), vh.GetNumber());
 	}
 
 	void Tick()
 	{
 		Look();
 		Named();
+		Weather();
 		static auto last = std::chrono::steady_clock::now();
 		const auto  now = std::chrono::steady_clock::now();
 		if (now - last < std::chrono::milliseconds(150)) return;
@@ -309,6 +356,7 @@ namespace bo3z::RaceTidy
 		auto menu = ui->GetMenu(RE::RaceSexMenu::MENU_NAME);
 		auto* mv = menu ? menu->uiMovie.get() : nullptr;
 		if (!mv) return;
+		BottomBar(mv);
 		static constexpr const char* kPanel = "_root.RaceSexMenuBaseInstance.RaceSexPanelsInstance.racePanel";
 		RE::GFxValue items;
 		const bool haveItems = mv->GetVariable(&items, (std::string(kPanel) + ".itemList").c_str()) && items.IsObject();
