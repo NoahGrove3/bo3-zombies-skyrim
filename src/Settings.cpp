@@ -210,7 +210,7 @@ namespace bo3z::Settings
 			g_softFlash = Read(L"Effects", L"bReduceFlashes", 0.0f) != 0.0f;
 			g_subs = Read(L"Subtitles", L"bSubtitles", 1.0f) != 0.0f;
 			g_subSize = std::clamp(Read(L"Subtitles", L"fSubtitleSize", 1.0f), 0.5f, 2.0f);
-			g_classVo = Read(L"Voices", L"bCharacterVoice", 1.0f) != 0.0f;
+			g_classVo = Read(L"Voices", L"bCharacterVoice", 0.0f) != 0.0f;  // (2026-11-23: class lines out of the release - off unless an INI turns them back on)
 			g_classVoVol = std::clamp(Read(L"Voices", L"fCharacterVoiceVolume", 100.0f), 0.0f, 100.0f) / 100.0f;
 			g_altarVoVol = std::clamp(Read(L"Voices", L"fAltarVoiceVolume", 100.0f), 0.0f, 100.0f) / 100.0f;
 			g_combatVo = static_cast<int>(std::clamp(std::round(Read(L"Voices", L"iCombatVoice", 2.0f)), 0.0f, 3.0f));
