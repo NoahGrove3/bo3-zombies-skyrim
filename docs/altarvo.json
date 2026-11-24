@@ -1,0 +1,1177 @@
+{
+ "about": "(Noah, 2026-11-23: \"give the echo alter a lot more voice lines that players can interact with like talking with npcs, having a\nlist of things to say that changes as the mod's story progresses\") the Echo Altar's conversation: a Talk row in the altar's menu\nopens four topics - the story so far, this city, your class and wonder, who the voice is - and each topic lists what you can ask,\nthe list changing as the story moves on. You never speak (the Dragonborn is silent, as in Skyrim); the voice answers.",
+ "voice": "DEvo8EiWSBnG10CIVHVv",
+ "model": "eleven_v3",
+ "topics": [
+  {
+   "id": "greet",
+   "title": "Greeting and farewell",
+   "about": "Said as the Talk row opens (one picked for the story's stage) and as you leave it.",
+   "prompts": [
+    {
+     "id": "greet_faint",
+     "gate": "freed<2",
+     "ask": "(opening the Talk row)",
+     "lines": [
+      "[whispers] ...you... can you hear...? The stone is... too far from the other stones...",
+      "[whispers] ...closer... wake another... and I will be clearer..."
+     ]
+    },
+    {
+     "id": "greet_early",
+     "gate": "freed>=2&freed<6",
+     "ask": "(opening the Talk row)",
+     "lines": [
+      "[softly] You came back to the stone. Good. Ask, and I will answer what I can.",
+      "[softly] Dragonborn. The night is long... and I have had a long time to think. Ask."
+     ]
+    },
+    {
+     "id": "greet_named",
+     "gate": "freed>=6&echo_slain=0",
+     "ask": "(opening the Talk row)",
+     "lines": [
+      "[softly] Dragonborn. Felldir hears you. What would you know?",
+      "You have done more than I hoped. Speak, and I will listen."
+     ]
+    },
+    {
+     "id": "greet_end",
+     "gate": "echo_slain",
+     "ask": "(opening the Talk row)",
+     "lines": [
+      "[softly] ...still here, Dragonborn. Not for long, I think. Ask, while the stone still holds me."
+     ]
+    },
+    {
+     "id": "greet_night",
+     "gate": "night&here_dark",
+     "ask": "(opening the Talk row at night, the city still dark)",
+     "lines": [
+      "[urgent whisper] The dead are walking. Be quick... they do not wait for talk."
+     ]
+    },
+    {
+     "id": "greet_dawn",
+     "gate": "day&here_dark",
+     "ask": "(opening the Talk row by day, the city still dark)",
+     "lines": [
+      "The sun holds them for now. Use the light. Rest, ready yourself... the night will not be kind."
+     ]
+    },
+    {
+     "id": "greet_freed",
+     "gate": "here_free&echo_slain=0",
+     "ask": "(opening the Talk row at a freed altar)",
+     "lines": [
+      "[softly] This stone is awake, and its city sleeps. It is good to speak from a quiet place.",
+      "Listen... no scratching under the ground here. Only wind. Ask, Dragonborn."
+     ]
+    },
+    {
+     "id": "greet_priest",
+     "gate": "here_free&priest_new",
+     "ask": "(opening the Talk row just after this city's priest fell)",
+     "lines": [
+      "[relieved] He is gone. I felt his oath break from across Skyrim. The stone is singing."
+     ]
+    },
+    {
+     "id": "bye",
+     "gate": "always",
+     "ask": "(leaving the Talk row)",
+     "lines": [
+      "[softly] Go. I will be in the stone.",
+      "Walk carefully. The dead remember the living.",
+      "[sighs] Until the next stone.",
+      "The night will come again. Be ready for it."
+     ]
+    },
+    {
+     "id": "nothing_new",
+     "gate": "always",
+     "ask": "(every prompt in a topic already heard)",
+     "lines": [
+      "[softly] I have told you all I know of that. For now.",
+      "Nothing more... not yet. Free another stone, and I may remember more."
+     ]
+    }
+   ]
+  },
+  {
+   "id": "story",
+   "title": "The story so far",
+   "about": "What has happened, and what comes next - the list grows with each act.",
+   "prompts": [
+    {
+     "id": "s_what",
+     "gate": "always",
+     "ask": "What has happened to Skyrim?",
+     "lines": [
+      "[softly] Helgen burned. The World-Eater flew north over the smoke... and as he flew, he shouted into the earth.",
+      "Three words. SLEN... TIID... VO. Flesh. Time. Undo. The shout he raises his dragons with.",
+      "But this time it fell on every grave in Skyrim. And every grave heard it."
+     ]
+    },
+    {
+     "id": "s_dead",
+     "gate": "always",
+     "ask": "Why do the dead rise?",
+     "lines": [
+      "His shout hangs like a mist across the road to Sovngarde. The dead cannot pass it to Shor's hall.",
+      "[sad] So they lie in the ground, restless... and when the sun goes down, they climb out looking for the way."
+     ]
+    },
+    {
+     "id": "s_altars",
+     "gate": "always",
+     "ask": "What are these altars?",
+     "lines": [
+      "Echo Altars. The old Tongues raised one in every hold, long before your Empire, to answer a dragon's voice with their own.",
+      "When the World-Eater shouted, they went dark. Wake one, and its city's dead will sleep again."
+     ]
+    },
+    {
+     "id": "s_how",
+     "gate": "freed<2",
+     "ask": "How do I wake an altar?",
+     "lines": [
+      "[whispers] ...four trials... at night... the dead... the stone will show you...",
+      "...one city at a time... and then I will be clearer..."
+     ]
+    },
+    {
+     "id": "s_me",
+     "gate": "always",
+     "ask": "Why can I do this?",
+     "lines": [
+      "You have a dragon's soul in a mortal's body. When you kill one of the dead, the stone hears it the way it hears a shout.",
+      "The Tongues would have given anything to be what you are. [softly] Do not waste it."
+     ]
+    },
+    {
+     "id": "s_essence",
+     "gate": "always",
+     "ask": "What is the Cursed Essence?",
+     "lines": [
+      "What is left of his shout in the dead. When they fall, it comes out of them... and it comes to you.",
+      "The stone can make it into steel, and spells, and brews. Spend it. It does no good in your pocket."
+     ]
+    },
+    {
+     "id": "s_fall",
+     "gate": "always",
+     "ask": "What happens if I fall?",
+     "lines": [
+      "The dead will drag you down. If anyone stands with you, they can lift you again. If no one does... [pause] the night ends without you.",
+      "Do not let it. I have lost enough people to the dark."
+     ]
+    },
+    {
+     "id": "s_tablet",
+     "gate": "freed>=1",
+     "ask": "What is the Tablet of Mysteries?",
+     "lines": [
+      "An old thing, and a strange one. The Tongues left weapons with it that they did not want to keep.",
+      "Feed it the essence, and it will give you one. It does not tell you which. [softly] Neither will I."
+     ]
+    },
+    {
+     "id": "s_shouts",
+     "gate": "freed>=2",
+     "ask": "Why do the cities teach me shouts?",
+     "lines": [
+      "Every freed city remembers a little of the Voice. They teach it to the one who freed them.",
+      "Use them. A shout is a weapon the dead cannot answer."
+     ]
+    },
+    {
+     "id": "s_two",
+     "gate": "freed>=2&freed<4",
+     "ask": "What has changed?",
+     "lines": [
+      "Two stones awake, and their voices carry to each other. That is how you hear me now.",
+      "Every stone you wake makes the mist thinner. Not gone... but thinner."
+     ]
+    },
+    {
+     "id": "s_cities",
+     "gate": "freed>=2&freed<6",
+     "ask": "Why one city at a time?",
+     "lines": [
+      "Each altar answers for its own hold. The dead of Whiterun do not care that Riverwood sleeps.",
+      "And each city has its keeper. A priest who swore an oath to the World-Eater... and remembers it."
+     ]
+    },
+    {
+     "id": "s_priests",
+     "gate": "freed>=2",
+     "ask": "Who are the Dragon Priests?",
+     "lines": [
+      "Men who served the dragons when the dragons ruled. They wore masks of the dragons' faces, and took the dragons' power.",
+      "[bitter] When the shout came, every one of them woke with his oath still in his mouth. They keep the altars dark for their master.",
+      "Break a city's seals, and its priest must come out to face you."
+     ]
+    },
+    {
+     "id": "s_four",
+     "gate": "freed>=4&freed<6",
+     "ask": "Are we close?",
+     "lines": [
+      "Four stones. Five. The mist trembles when the sixth wakes... I can feel it already.",
+      "At six... I will be able to tell you who I am. And something old will begin to stir."
+     ]
+    },
+    {
+     "id": "s_wonders",
+     "gate": "freed>=6&wonders_all=0",
+     "ask": "What stirs at six altars?",
+     "lines": [
+      "The wonders. Four weapons, one for each path, hidden when the Tongues still walked. They sleep no longer.",
+      "Each waits for the one who walks its path. But none of them will simply be found. Each must be earned.",
+      "When yours is won, the Greybeards will call you to the mountain. The wonder waits beneath their hall."
+     ]
+    },
+    {
+     "id": "s_greybeards",
+     "gate": "freed>=6&wonders_all=0",
+     "ask": "What do the Greybeards have to do with this?",
+     "lines": [
+      "High Hrothgar sits on the Throat of the World. Where the Tongues cast the World-Eater out of time.",
+      "Beneath it is a room the Greybeards guard and do not speak of. The wonders are kept there, until they are won."
+     ]
+    },
+    {
+     "id": "s_ten",
+     "gate": "freed>=10&echo_slain=0",
+     "ask": "Every altar is awake. Is it over?",
+     "lines": [
+      "[softly] Every stone sings again. Listen... all of Skyrim answering at once. I have not heard that in a very long time.",
+      "But the World-Eater's voice is not gone. It lingers in the wild places... and in the echo he left on the summit.",
+      "The cities are safe. The rest of Skyrim is not. Not yet."
+     ]
+    },
+    {
+     "id": "s_dragons",
+     "gate": "wonders_all&echo_awake=0",
+     "ask": "The wonders are won. What now?",
+     "lines": [
+      "[tense] Now the words wake. Each of the three words of his shout was carried by a dragon. They are flying again.",
+      "SLEN in the Reach. TIID under Labyrinthian. VO on the peak of Mount Anthor. Silence all three.",
+      "Each will come at night, with a siege of the dead before it. And each one gives back what it stole."
+     ]
+    },
+    {
+     "id": "s_slen",
+     "gate": "wonders_all&slain_slen=0",
+     "ask": "Tell me of SLEN.",
+     "lines": [
+      "Slenvahrin. The Flesh-Wyrm. It circles the cult's old shrine in the Reach, and the barrow-dead around it grow new flesh.",
+      "Kill it, and the strength the World-Eater poured into the dead will run in you instead."
+     ]
+    },
+    {
+     "id": "s_tiid",
+     "gate": "wonders_all&slain_tiid=0",
+     "ask": "Tell me of TIID.",
+     "lines": [
+      "Tiidrah. The Time-Wyrm. It sleeps under Labyrinthian, where the cult laid its dead by the thousand.",
+      "It gives the dead back the years the grave took. Take them from it... and the time is yours."
+     ]
+    },
+    {
+     "id": "s_vo",
+     "gate": "wonders_all&slain_vo=0",
+     "ask": "Tell me of VO.",
+     "lines": [
+      "[fearful] Vonahlok. The Undoing. It keeps the last word, on the frozen peak of Mount Anthor.",
+      "Where it flies, death itself comes undone. It is the oldest of the three... and the angriest."
+     ]
+    },
+    {
+     "id": "s_slen_done",
+     "gate": "slain_slen",
+     "ask": "Slenvahrin is dead.",
+     "lines": [
+      "I felt it fall. SLEN is silent... the dead in the Reach are only bones again. You are stronger for it."
+     ]
+    },
+    {
+     "id": "s_tiid_done",
+     "gate": "slain_tiid",
+     "ask": "Tiidrah is dead.",
+     "lines": [
+      "TIID is silent. The time the dead stole is yours now. [softly] Spend it better than they did."
+     ]
+    },
+    {
+     "id": "s_vo_done",
+     "gate": "slain_vo",
+     "ask": "Vonahlok is dead.",
+     "lines": [
+      "[relieved] The Undoing has undone its last. I never thought I would hear VO go quiet."
+     ]
+    },
+    {
+     "id": "s_echo",
+     "gate": "echo_awake",
+     "ask": "What is left?",
+     "lines": [
+      "Only their maker. On the summit of the Throat of the World, where we cast him out of time, his echo still circles.",
+      "It is not the World-Eater himself. Only the shape his voice left in the sky. [pause] It is enough to kill you.",
+      "Break it... and the curse breaks with it. Every grave in Skyrim will be quiet."
+     ]
+    },
+    {
+     "id": "s_echo_how",
+     "gate": "echo_awake",
+     "ask": "How do I beat the Echo?",
+     "lines": [
+      "Bring everything you have earned. The wonder. The words you took from the three. And anyone who will stand with you.",
+      "It will call the dead of all Skyrim to the summit. Do not let them pull you away from it."
+     ]
+    },
+    {
+     "id": "s_after",
+     "gate": "echo_slain",
+     "ask": "Is it over?",
+     "lines": [
+      "[softly] The echo is gone from the sky. The mist is lifting... I can see the road to Sovngarde from here.",
+      "The dead of Skyrim are walking it. All of them. They are going home.",
+      "The nights are only nights again, Dragonborn. You did that."
+     ]
+    },
+    {
+     "id": "s_hall",
+     "gate": "echo_slain",
+     "ask": "What is the Hall of the Awakened?",
+     "lines": [
+      "A room beneath High Hrothgar that opened when the echo broke. The Tongues built it for whoever ended this.",
+      "It is yours now. Go and see it."
+     ]
+    }
+   ]
+  },
+  {
+   "id": "city",
+   "title": "This city",
+   "about": "About the city the altar stands in: its dead, its Dragon Priest, its trials - and once it's free, what is left.",
+   "prompts": [
+    {
+     "id": "c_trials",
+     "gate": "here_dark",
+     "ask": "How do I wake this altar?",
+     "lines": [
+      "Four trials, in order, and only at night. Lay its restless dead to rest. Follow the whisper. Repeat the echo. Break the seals.",
+      "You need not finish them in one night. The stone remembers what you have done."
+     ]
+    },
+    {
+     "id": "c_day",
+     "gate": "here_dark&day",
+     "ask": "Why wait for nightfall?",
+     "lines": [
+      "The dead sleep in the day, and the trials are for the dead. Come back when the sun goes down."
+     ]
+    },
+    {
+     "id": "c_restless",
+     "gate": "here_dark&trial=restless",
+     "ask": "What is Lay the Restless to Rest?",
+     "lines": [
+      "The first of this city's dead are already up and wandering. Put them down near the stone... while its light is on you.",
+      "Stay close to the altar. The further you stray from its light, the less it counts."
+     ]
+    },
+    {
+     "id": "c_whisper",
+     "gate": "here_dark&trial=whisper",
+     "ask": "Where does the whisper lead?",
+     "lines": [
+      "I will give you a riddle. It names a place in this city where the dead are gathering. Go there, and kill them where they gather.",
+      "Listen to the riddle twice if you need it. The stone will say it again."
+     ]
+    },
+    {
+     "id": "c_echo",
+     "gate": "here_dark&trial=echo",
+     "ask": "How do I repeat the echo?",
+     "lines": [
+      "A ring of six stones stands around the altar. They will sing, one after another. Strike them in the order they sang.",
+      "[softly] Miss a note, and they go quiet until the next hour. Listen first. Then answer."
+     ]
+    },
+    {
+     "id": "c_seals",
+     "gate": "here_dark&trial=seals",
+     "ask": "Where are the priest's seals?",
+     "lines": [
+      "Three seals bind this altar, each guarded by one of his dead. They are marked on your map.",
+      "Kill the guard first. Only then will the seal break under your blow. And when the last one breaks... he comes. At once."
+     ]
+    },
+    {
+     "id": "c_coop",
+     "gate": "here_dark&party",
+     "ask": "Do my companions share the trials?",
+     "lines": [
+      "Every blade near the stone counts. What one of you does, the stone remembers for all of you."
+     ]
+    },
+    {
+     "id": "c_riverwood_what",
+     "gate": "here=riverwood&here_dark",
+     "ask": "What happened to Riverwood?",
+     "lines": [
+      "This is where the dragon first broke the sky over you. The valley's dead were the first to hear his shout.",
+      "The barrow above the town, Bleak Falls... its dead are restless. They come down the hill every night."
+     ]
+    },
+    {
+     "id": "c_riverwood_priest",
+     "gate": "here=riverwood&here_dark&freed>=2",
+     "ask": "Who keeps Riverwood's altar dark?",
+     "lines": [
+      "Vahlok the Jailor. In the old days he kept the cult's prisoners. His oath to the World-Eater was the last he ever swore.",
+      "He has crossed the sea to keep this valley dark. A jailor keeps his doors locked. Break them."
+     ]
+    },
+    {
+     "id": "c_riverwood_free",
+     "gate": "here=riverwood&here_free",
+     "ask": "Is Riverwood safe now?",
+     "lines": [
+      "[softly] The mill wheel turns, and no one climbs out of the barrow. Listen... it is a quiet valley again.",
+      "This was the first stone you woke. I will remember that."
+     ]
+    },
+    {
+     "id": "c_riverwood_old",
+     "gate": "here=riverwood&freed>=4",
+     "ask": "What was Riverwood like in your time?",
+     "lines": [
+      "When we raised this stone, there was no town here. Only the river, and a dragon's nest on the mountain above it."
+     ]
+    },
+    {
+     "id": "c_whiterun_what",
+     "gate": "here=whiterun&here_dark",
+     "ask": "What happened to Whiterun?",
+     "lines": [
+      "Whiterun was built around a dragon's cage. Its Hall of the Dead lies under the Jarl's, and its beds are empty.",
+      "The Gildergreen remembers the dead who sat beneath it. They come back to it now, looking for shade they cannot feel."
+     ]
+    },
+    {
+     "id": "c_whiterun_priest",
+     "gate": "here=whiterun&here_dark&freed>=2",
+     "ask": "Who keeps Whiterun's altar dark?",
+     "lines": [
+      "Nahkriin. He guarded Skuldafn for the World-Eater, the gate to Sovngarde itself.",
+      "[bitter] The mist that bars Sovngarde's door is his to keep. He has come down to the plains so that Whiterun's dead never find the way."
+     ]
+    },
+    {
+     "id": "c_whiterun_free",
+     "gate": "here=whiterun&here_free",
+     "ask": "Is Whiterun safe now?",
+     "lines": [
+      "The Gildergreen is quiet. The plains are only grass again.",
+      "Nahkriin's gate has one less keeper. The road to Sovngarde is a little clearer for it."
+     ]
+    },
+    {
+     "id": "c_whiterun_old",
+     "gate": "here=whiterun&freed>=4",
+     "ask": "What was Whiterun like in your time?",
+     "lines": [
+      "The dragon in Dragonsreach was not the first caged on that hill. The first was there in our time. We heard it screaming for a year."
+     ]
+    },
+    {
+     "id": "c_solitude_what",
+     "gate": "here=solitude&here_dark",
+     "ask": "What happened to Solitude?",
+     "lines": [
+      "The capital. Its crypts are older than its walls, and the Blue Palace stands over them.",
+      "The bards here teach the young to sing of the dead. Tonight the dead have come to listen."
+     ]
+    },
+    {
+     "id": "c_solitude_priest",
+     "gate": "here=solitude&here_dark&freed>=2",
+     "ask": "Who keeps Solitude's altar dark?",
+     "lines": [
+      "Volsung of Volskygge. His mask let him breathe where no man could, high on the peaks above Haafingar.",
+      "He climbs down to Solitude now, and the dead of the palace crypts rise at his word."
+     ]
+    },
+    {
+     "id": "c_solitude_free",
+     "gate": "here=solitude&here_free",
+     "ask": "Is Solitude safe now?",
+     "lines": [
+      "The arch over the sea is quiet. The bards can sing of the dead again, instead of to them.",
+      "[softly] Solitude will tell this story for a hundred years. They will get it wrong. Let them."
+     ]
+    },
+    {
+     "id": "c_solitude_old",
+     "gate": "here=solitude&freed>=4",
+     "ask": "What was Solitude like in your time?",
+     "lines": [
+      "There were Tongues who lived on these cliffs, and taught their students to shout across the water. The sea still remembers the sound."
+     ]
+    },
+    {
+     "id": "c_windhelm_what",
+     "gate": "here=windhelm&here_dark",
+     "ask": "What happened to Windhelm?",
+     "lines": [
+      "The oldest city of men. Ysgramor's stone, and the snow that never leaves the palace of kings.",
+      "There is a candle in this city that has never gone out. The dead are drawn to it, like moths."
+     ]
+    },
+    {
+     "id": "c_windhelm_priest",
+     "gate": "here=windhelm&here_dark&freed>=2",
+     "ask": "Who keeps Windhelm's altar dark?",
+     "lines": [
+      "Zahkriisos, the Frost-Priest. He slept on Solstheim until the shout crossed the Sea of Ghosts.",
+      "He walked over the ice to the docks. The cold he carries stops a heart. Keep moving, and keep warm."
+     ]
+    },
+    {
+     "id": "c_windhelm_free",
+     "gate": "here=windhelm&here_free",
+     "ask": "Is Windhelm safe now?",
+     "lines": [
+      "The candle still burns, and nothing comes to it but the living.",
+      "Windhelm has buried enough of its own. It can rest now."
+     ]
+    },
+    {
+     "id": "c_windhelm_old",
+     "gate": "here=windhelm&freed>=4",
+     "ask": "What was Windhelm like in your time?",
+     "lines": [
+      "Ysgramor's people built over the stone without knowing it was here. It has listened to every king of Windhelm since."
+     ]
+    },
+    {
+     "id": "c_markarth_what",
+     "gate": "here=markarth&here_dark",
+     "ask": "What happened to Markarth?",
+     "lines": [
+      "The deep elves carved this city out of the cliff, and the cliffs bleed silver. The dead here are older than the Nords.",
+      "Its Hall of the Dead goes deeper than its priests have ever been. Something down there heard the shout."
+     ]
+    },
+    {
+     "id": "c_markarth_priest",
+     "gate": "here=markarth&here_dark&freed>=2",
+     "ask": "Who keeps Markarth's altar dark?",
+     "lines": [
+      "Otar the Mad. He was so cruel that his own cult sealed him alive in Ragnvald.",
+      "[fearful] His oath outlived his reason. He climbs out of the Reach's stone with nothing left of himself but the oath."
+     ]
+    },
+    {
+     "id": "c_markarth_free",
+     "gate": "here=markarth&here_free",
+     "ask": "Is Markarth safe now?",
+     "lines": [
+      "The stone city is still. Even the Reach's oldest dead have gone back to sleep.",
+      "Otar is gone. I will not mourn him. Neither did his cult."
+     ]
+    },
+    {
+     "id": "c_markarth_old",
+     "gate": "here=markarth&freed>=4",
+     "ask": "What was Markarth like in your time?",
+     "lines": [
+      "The deep elves had a stone of their own, under the cliff. Ours answered it once. [softly] Nothing answers from down there now."
+     ]
+    },
+    {
+     "id": "c_riften_what",
+     "gate": "here=riften&here_dark",
+     "ask": "What happened to Riften?",
+     "lines": [
+      "A city of thieves and green water. The drowned climb out of the canal now, and nobody sees them coming.",
+      "Mara's temple stands here. Love is a strong thing... but not stronger than the World-Eater's voice."
+     ]
+    },
+    {
+     "id": "c_riften_priest",
+     "gate": "here=riften&here_dark&freed>=2",
+     "ask": "Who keeps Riften's altar dark?",
+     "lines": [
+      "Rahgot of Forelhost. When the Tongues came for him, his followers poisoned themselves rather than give him up.",
+      "They rise with him now. The Rift's dead follow them down to the city."
+     ]
+    },
+    {
+     "id": "c_riften_free",
+     "gate": "here=riften&here_free",
+     "ask": "Is Riften safe now?",
+     "lines": [
+      "The canal is only water again. The thieves can go back to stealing from the living.",
+      "Rahgot's followers died for him twice. [softly] Let them stay dead this time."
+     ]
+    },
+    {
+     "id": "c_riften_old",
+     "gate": "here=riften&freed>=4",
+     "ask": "What was Riften like in your time?",
+     "lines": [
+      "The lake here was a holy place to Mara before there was a city. We raised the stone where her pilgrims rested."
+     ]
+    },
+    {
+     "id": "c_falkreath_what",
+     "gate": "here=falkreath&here_dark",
+     "ask": "What happened to Falkreath?",
+     "lines": [
+      "More dead than living lie in this town's earth. Tonight they are restless in their rows.",
+      "The graveyard is the oldest thing here. Older than the town that grew around it."
+     ]
+    },
+    {
+     "id": "c_falkreath_priest",
+     "gate": "here=falkreath&here_dark&freed>=2",
+     "ask": "Who keeps Falkreath's altar dark?",
+     "lines": [
+      "Krosis of Shearpoint. He guarded his word on the mountain, mourning, for a thousand years.",
+      "[sad] The shout gave him something to do with his sorrow. He comes to keep this town's children out of the ground."
+     ]
+    },
+    {
+     "id": "c_falkreath_free",
+     "gate": "here=falkreath&here_free",
+     "ask": "Is Falkreath safe now?",
+     "lines": [
+      "The rows are quiet. Falkreath can bury its dead and leave them buried.",
+      "Krosis grieved for a thousand years. I hope he has stopped."
+     ]
+    },
+    {
+     "id": "c_falkreath_old",
+     "gate": "here=falkreath&freed>=4",
+     "ask": "What was Falkreath like in your time?",
+     "lines": [
+      "Even in our time, people came here to bury their dead. Some places are made for grief."
+     ]
+    },
+    {
+     "id": "c_morthal_what",
+     "gate": "here=morthal&here_dark",
+     "ask": "What happened to Morthal?",
+     "lines": [
+      "The marsh hides its dead well. Fog, roots, black water... and the drowned walking out of all of it.",
+      "There is a brewer's hut at the marsh's edge. The swamp's dead come to drink, as if they remember thirst."
+     ]
+    },
+    {
+     "id": "c_morthal_priest",
+     "gate": "here=morthal&here_dark&freed>=2",
+     "ask": "Who keeps Morthal's altar dark?",
+     "lines": [
+      "Hevnoraak of Valthume. His own servants sealed him in his tomb to stop him rising.",
+      "The seal could not hold against SLEN TIID VO. He walks out of the fog, and the drowned walk behind him."
+     ]
+    },
+    {
+     "id": "c_morthal_free",
+     "gate": "here=morthal&here_free",
+     "ask": "Is Morthal safe now?",
+     "lines": [
+      "The fog is only fog again. Morthal can sleep with its doors unbarred.",
+      "Hevnoraak's servants were right to seal him. You finished what they started."
+     ]
+    },
+    {
+     "id": "c_morthal_old",
+     "gate": "here=morthal&freed>=4",
+     "ask": "What was Morthal like in your time?",
+     "lines": [
+      "The marsh swallowed the first stone we raised here. This is the second. We were careful where we put it."
+     ]
+    },
+    {
+     "id": "c_dawnstar_what",
+     "gate": "here=dawnstar&here_dark",
+     "ask": "What happened to Dawnstar?",
+     "lines": [
+      "A cold harbour under a cold sky. The people here have been dreaming badly for a long time.",
+      "The miners cut quicksilver out of the hill. Tonight the dead have dug their own way up."
+     ]
+    },
+    {
+     "id": "c_dawnstar_priest",
+     "gate": "here=dawnstar&here_dark&freed>=2",
+     "ask": "Who keeps Dawnstar's altar dark?",
+     "lines": [
+      "Vokun of High Gate. A priest of shadows. Dawnstar's dreamers dreamed his return a thousand years before it came.",
+      "Kill him, and the nightmares end. He knows that. He will not make it easy."
+     ]
+    },
+    {
+     "id": "c_dawnstar_free",
+     "gate": "here=dawnstar&here_free",
+     "ask": "Is Dawnstar safe now?",
+     "lines": [
+      "The harbour is frozen and still. Tonight, Dawnstar will sleep without dreaming.",
+      "[softly] The nightmares are over here. For once, the dreamers will wake rested."
+     ]
+    },
+    {
+     "id": "c_dawnstar_old",
+     "gate": "here=dawnstar&freed>=4",
+     "ask": "What was Dawnstar like in your time?",
+     "lines": [
+      "There was a shrine in the hills here to a god of dreams. We built the stone well away from it. We were right to."
+     ]
+    },
+    {
+     "id": "c_winterhold_what",
+     "gate": "here=winterhold&here_dark",
+     "ask": "What happened to Winterhold?",
+     "lines": [
+      "What is left of a city the sea took. The College stands across the bridge, and the town does not trust it.",
+      "One hearth still welcomes the College's mages. Tonight the dead have found it too."
+     ]
+    },
+    {
+     "id": "c_winterhold_priest",
+     "gate": "here=winterhold&here_dark&freed>=2",
+     "ask": "Who keeps Winterhold's altar dark?",
+     "lines": [
+      "Morokei of Labyrinthian. He once held the Staff of Magnus, and the College has feared him ever since.",
+      "He waits on the cliffs above the town. The storm he calls has not finished yet."
+     ]
+    },
+    {
+     "id": "c_winterhold_free",
+     "gate": "here=winterhold&here_free",
+     "ask": "Is Winterhold safe now?",
+     "lines": [
+      "The storm has passed. The bridge to the College is only a bridge again.",
+      "Morokei is gone, and the College will claim the credit. Let it."
+     ]
+    },
+    {
+     "id": "c_winterhold_old",
+     "gate": "here=winterhold&freed>=4",
+     "ask": "What was Winterhold like in your time?",
+     "lines": [
+      "This stone once stood in a great city. The sea took the city. The stone held on. [softly] So did the College."
+     ]
+    }
+   ]
+  },
+  {
+   "id": "class",
+   "title": "Your class and wonder",
+   "about": "Before a class is chosen, the four paths; after, what the voice sees in you, your craft, and your wonder.",
+   "prompts": [
+    {
+     "id": "k_paths",
+     "gate": "noclass",
+     "ask": "What are the four paths?",
+     "lines": [
+      "The stone offers four ways to fight the dead. The Tongues walked all of them, once.",
+      "The Summoner, who calls the dead's own kind to fight them. The Destruction mage, who burns them where they stand.",
+      "The Alchemist, who bottles every element and pours it out. The Spellsword, steel in one hand and a spell in the other.",
+      "Choose at the stone. Choosing again later costs dearly, so choose well."
+     ]
+    },
+    {
+     "id": "k_change",
+     "gate": "freed>=1&class=any",
+     "ask": "Can I change my path?",
+     "lines": [
+      "The stone will let you. It will cost you fifty thousand of the essence the dead leave behind.",
+      "Your kit stays your own. But your path's powers stay with the path."
+     ]
+    },
+    {
+     "id": "k_sum_seen",
+     "gate": "class=sum",
+     "ask": "What do you see in me?",
+     "lines": [
+      "You call things to fight for you, and they come. The Tongues had a word for people like you. It was not a kind word.",
+      "[softly] But it was a useful one. The dead fear what does not fear them."
+     ]
+    },
+    {
+     "id": "k_sum_craft",
+     "gate": "class=sum",
+     "ask": "Teach me of the Summoner's craft.",
+     "lines": [
+      "Let your servants hold the line. You are the one who must not fall. Without you, they go back where they came from.",
+      "The more you call, the thinner you are spread. Be wise about it."
+     ]
+    },
+    {
+     "id": "k_sum_sleep",
+     "gate": "class=sum&wonder_sleeps",
+     "ask": "Is there a wonder for my path?",
+     "lines": [
+      "There is. The Soulcaller's Staff. But it sleeps, and it will not wake until six stones are free."
+     ]
+    },
+    {
+     "id": "k_sum_quest",
+     "gate": "class=sum&wonder_open",
+     "ask": "Where does my path lead?",
+     "lines": [
+      "Listen... the ghost-cats that guarded the Tongues still prowl. Their souls are scattered. Gather them.",
+      "Follow them quietly at night, near a freed stone. They fear the hunter. They will come to a patient one."
+     ]
+    },
+    {
+     "id": "k_sum_won",
+     "gate": "class=sum&wonder_won",
+     "ask": "My wonder is won.",
+     "lines": [
+      "The Soulcaller's Staff. Every soul it takes is one the dead will never get back.",
+      "At twenty souls the pride answers. [softly] They remember who freed them."
+     ]
+    },
+    {
+     "id": "k_sum_old",
+     "gate": "class=sum&freed>=4",
+     "ask": "Did the Tongues fight like me?",
+     "lines": [
+      "One of us could call the wolves down from the mountain with a word. They followed her to the summit. None of them came back."
+     ]
+    },
+    {
+     "id": "k_des_seen",
+     "gate": "class=des",
+     "ask": "What do you see in me?",
+     "lines": [
+      "Fire. Frost. Storm. You do not ask the dead to sleep. You make them.",
+      "[softly] The Tongues had mages like you. The dragons learned to fear them... for a while."
+     ]
+    },
+    {
+     "id": "k_des_craft",
+     "gate": "class=des",
+     "ask": "Teach me of the Destruction mage's craft.",
+     "lines": [
+      "Your power is in your magicka, and your magicka runs out. Never let the dead catch you empty.",
+      "Each element has its use. Fire for the crowd. Frost to slow them. Storm for whatever is still standing."
+     ]
+    },
+    {
+     "id": "k_des_sleep",
+     "gate": "class=des&wonder_sleeps",
+     "ask": "Is there a wonder for my path?",
+     "lines": [
+      "There is. The Wyrmspine Javelin. But it sleeps, and it will not wake until six stones are free."
+     ]
+    },
+    {
+     "id": "k_des_quest",
+     "gate": "class=des&wonder_open",
+     "ask": "Where does my path lead?",
+     "lines": [
+      "A god's eye fell to Nirn, and the curse buried its light. The Eye of Magnus... its pieces are falling again.",
+      "When a star crosses the sky above you at night, strike it down. That is where the path begins."
+     ]
+    },
+    {
+     "id": "k_des_won",
+     "gate": "class=des&wonder_won",
+     "ask": "My wonder is won.",
+     "lines": [
+      "The Wyrmspine Javelin. Carved from a dragon's spine, and it remembers the sky.",
+      "Throw it hard. It wants to fly again."
+     ]
+    },
+    {
+     "id": "k_des_old",
+     "gate": "class=des&freed>=4",
+     "ask": "Did the Tongues fight like me?",
+     "lines": [
+      "Our fire-callers burned the dragons' priests out of their towers. The dragons answered in kind. Fire was cheap in those days."
+     ]
+    },
+    {
+     "id": "k_alc_seen",
+     "gate": "class=alc",
+     "ask": "What do you see in me?",
+     "lines": [
+      "You bottle what the rest of us fear. Fire in glass, frost in glass... [softly] even, one day, the curse itself.",
+      "The Tongues never trusted alchemists. They trusted their potions well enough."
+     ]
+    },
+    {
+     "id": "k_alc_craft",
+     "gate": "class=alc",
+     "ask": "Teach me of the Alchemist's craft.",
+     "lines": [
+      "Your flasks are your strength. Know which element the dead fear, and give them that one.",
+      "Never stand still to brew. The dead do not wait for anything to cool."
+     ]
+    },
+    {
+     "id": "k_alc_sleep",
+     "gate": "class=alc&wonder_sleeps",
+     "ask": "Is there a wonder for my path?",
+     "lines": [
+      "There is. The Mutagen Staff. But it sleeps, and it will not wake until six stones are free."
+     ]
+    },
+    {
+     "id": "k_alc_quest",
+     "gate": "class=alc&wonder_open",
+     "ask": "Where does my path lead?",
+     "lines": [
+      "Every element can be bottled. Brew the Philosopher's Stone... and the Mutagen Staff will answer you.",
+      "One of the dead burns brighter than the rest. Break it with glass... and catch what falls."
+     ]
+    },
+    {
+     "id": "k_alc_won",
+     "gate": "class=alc&wonder_won",
+     "ask": "My wonder is won.",
+     "lines": [
+      "The Mutagen Staff. Six vials of the world's elements, poured through one orb.",
+      "The Philosopher's Stone was only ever a story. You made it true."
+     ]
+    },
+    {
+     "id": "k_alc_old",
+     "gate": "class=alc&freed>=4",
+     "ask": "Did the Tongues fight like me?",
+     "lines": [
+      "We had a healer who brewed in a skull, because it was the only bowl she had. She kept more of us alive than the Voice did."
+     ]
+    },
+    {
+     "id": "k_ssw_seen",
+     "gate": "class=ssw",
+     "ask": "What do you see in me?",
+     "lines": [
+      "Steel in one hand, a spell in the other. You fight the way the first Tongues fought, before they had the Voice.",
+      "[softly] You get closer to the dead than anyone should. They feel it."
+     ]
+    },
+    {
+     "id": "k_ssw_craft",
+     "gate": "class=ssw",
+     "ask": "Teach me of the Spellsword's craft.",
+     "lines": [
+      "Your blade carries your spell. Choose the spell before you choose the fight.",
+      "Get close, and stay close. A Spellsword at the edge of a fight is only half of one."
+     ]
+    },
+    {
+     "id": "k_ssw_sleep",
+     "gate": "class=ssw&wonder_sleeps",
+     "ask": "Is there a wonder for my path?",
+     "lines": [
+      "There is. The Dragon Slayer. But it sleeps, and it will not wake until six stones are free."
+     ]
+    },
+    {
+     "id": "k_ssw_quest",
+     "gate": "class=ssw&wonder_open",
+     "ask": "Where does my path lead?",
+     "lines": [
+      "A slayer once swore an oath and broke his blade on the World-Eater's scales. The pieces are scattered.",
+      "Take up his oath. Where the World-Eater first returned, a broken blade waits for a hand. Begin there."
+     ]
+    },
+    {
+     "id": "k_ssw_won",
+     "gate": "class=ssw&wonder_won",
+     "ask": "My wonder is won.",
+     "lines": [
+      "The Dragon Slayer. Every blow carries the spell in your other hand.",
+      "The slayer's oath is kept. [softly] He would have been glad of you."
+     ]
+    },
+    {
+     "id": "k_ssw_old",
+     "gate": "class=ssw&freed>=4",
+     "ask": "Did the Tongues fight like me?",
+     "lines": [
+      "Before the Voice, we had steel and a little magic, and we fought dragons with that. Most of us died. The ones who lived taught the rest."
+     ]
+    },
+    {
+     "id": "k_party",
+     "gate": "party&freed>=1",
+     "ask": "What of my companions?",
+     "lines": [
+      "Each of you walks a path of your own. Together, you are what the Tongues were. [softly] Stay together.",
+      "If one of you falls, the rest of you lift them. The dead do not take prisoners."
+     ]
+    }
+   ]
+  },
+  {
+   "id": "voice",
+   "title": "Who the voice is",
+   "about": "The voice tells you more of itself with each stage - its name only once six altars are free.",
+   "prompts": [
+    {
+     "id": "v_who0",
+     "gate": "freed<2",
+     "ask": "Who are you?",
+     "lines": [
+      "[whispers] ...someone who has waited... too long... wake another stone..."
+     ]
+    },
+    {
+     "id": "v_who2",
+     "gate": "freed>=2&freed<6",
+     "ask": "Who are you?",
+     "lines": [
+      "Someone who was here when these stones were raised. That is all I can give you... for now.",
+      "[softly] My name is in the mist with everything else. Wake more stones, and it will come back to me."
+     ]
+    },
+    {
+     "id": "v_where2",
+     "gate": "freed>=2&freed<6",
+     "ask": "Where are you?",
+     "lines": [
+      "Far. Behind the mist he left across the road to Sovngarde. I speak through the stones because I cannot speak any other way."
+     ]
+    },
+    {
+     "id": "v_old",
+     "gate": "freed>=2",
+     "ask": "How old are these stones?",
+     "lines": [
+      "Older than your Empire. Older than the first Nord kings. They were raised while dragons still ruled the sky.",
+      "We raised them in secret, in the dark, where the dragons' priests would not see."
+     ]
+    },
+    {
+     "id": "v_three",
+     "gate": "freed>=4",
+     "ask": "Who raised the stones?",
+     "lines": [
+      "The three of us. The first who learned the Voice... and turned it on our masters.",
+      "One fell at the summit, before the end. One I have not seen since. And I... I am still here."
+     ]
+    },
+    {
+     "id": "v_fell",
+     "gate": "freed>=4",
+     "ask": "Who fell at the summit?",
+     "lines": [
+      "[sad] A warrior with a golden hilt. She was the bravest of us. She went at him first, and he took her first.",
+      "I watched her fall. I did not stop. [softly] That is what she would have wanted."
+     ]
+    },
+    {
+     "id": "v_lost",
+     "gate": "freed>=4",
+     "ask": "And the other one?",
+     "lines": [
+      "A warrior with one eye, who saw more than most with two. After the summit... I lost him in the mist.",
+      "Perhaps he is in Sovngarde, waiting for the road to open. I hope so."
+     ]
+    },
+    {
+     "id": "v_name",
+     "gate": "freed>=6",
+     "ask": "What is your name?",
+     "lines": [
+      "Six stones are free... and I remember. I am Felldir. Felldir the Old.",
+      "[softly] It has been a very long time since anyone asked me that."
+     ]
+    },
+    {
+     "id": "v_scroll",
+     "gate": "freed>=6",
+     "ask": "What did you do at the summit?",
+     "lines": [
+      "I read the Elder Scroll. The others held him in the sky, and I read it... and the World-Eater was cast out of time.",
+      "We thought it was the end. We were young. We did not know that time has a way of giving things back."
+     ]
+    },
+    {
+     "id": "v_wait",
+     "gate": "freed>=6",
+     "ask": "Why are you still here?",
+     "lines": [
+      "I lived a long life after the summit, and died old, and took the road to Sovngarde. When he shouted at Helgen, the mist fell over it... with me still on it.",
+      "I cannot go forward, and I will not go back. So I wait... and I speak through the stones we raised."
+     ]
+    },
+    {
+     "id": "v_alone",
+     "gate": "freed>=6",
+     "ask": "Have you been alone all this time?",
+     "lines": [
+      "[sad] The dead pass me in the mist. They cannot see the way. Neither can I. We are all lost together.",
+      "Then you came. [softly] The first living voice I have heard in a very long time."
+     ]
+    },
+    {
+     "id": "v_alduin",
+     "gate": "freed>=6",
+     "ask": "What was Alduin like?",
+     "lines": [
+      "Proud. Patient. He did not hate us. You do not hate the grass you walk on.",
+      "That is what frightened me most. Not his anger... his certainty."
+     ]
+    },
+    {
+     "id": "v_dragonborn",
+     "gate": "freed>=6",
+     "ask": "Did you know there would be a Dragonborn?",
+     "lines": [
+      "We hoped. The Scroll told us he would come back. It did not tell us who would be waiting when he did.",
+      "[softly] I am glad it was you."
+     ]
+    },
+    {
+     "id": "v_greybeards",
+     "gate": "freed>=6",
+     "ask": "Do you know the Greybeards?",
+     "lines": [
+      "They came after us. They took the Voice and made it quiet, and climbed the mountain to keep it safe.",
+      "We used it to fight. They use it to listen. [softly] Perhaps they are wiser than we were."
+     ]
+    },
+    {
+     "id": "v_dragons",
+     "gate": "freed>=6",
+     "ask": "Do you hate the dragons?",
+     "lines": [
+      "I did. For a long time. Then I was dead for longer than I was ever alive, and hate is hard to carry that far.",
+      "Now I only want them to stop. That is not the same thing."
+     ]
+    },
+    {
+     "id": "v_deadwant",
+     "gate": "freed>=2",
+     "ask": "What do the dead want?",
+     "lines": [
+      "To go home. Nothing more. They are not cruel... they are lost, and the World-Eater's voice is all they can hear.",
+      "[sad] When you put them down, you are not killing them. You are showing them the way."
+     ]
+    },
+    {
+     "id": "v_after",
+     "gate": "echo_slain",
+     "ask": "What will happen to you now?",
+     "lines": [
+      "[softly] The road is open. I can see Sovngarde's light from here... and someone with a golden hilt, waiting.",
+      "I will walk it soon. The stones will stay. Their voice will be quieter without me.",
+      "[softly] Thank you, Dragonborn. Go well."
+     ]
+    }
+   ]
+  }
+ ]
+}
