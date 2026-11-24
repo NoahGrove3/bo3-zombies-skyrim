@@ -17,7 +17,7 @@ joined with '&'; 'city' prompts are written once per city ({city} rows) plus the
 import json, pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-VOICE = 'DEvo8EiWSBnG10CIVHVv'   # Noah's "Echo Alter" (ElevenLabs, collection The Curse Of Alduin)
+VOICE = 'aNZSbepNRDH1yUk4Q4Of'   # (2026-11-24) Noah's "Feldir Echo Alter": Felldir the Old, an old man (was the female "Echo Alter")
 
 T = []   # topics
 
@@ -393,5 +393,35 @@ if __name__ == '__main__':
     chars = sum(len(l) for t in T for p in t['prompts'] for l in p['lines'])
     out = {'about': __doc__.split('\n\n')[0], 'voice': VOICE, 'model': 'eleven_v3', 'topics': T}
     (ROOT / 'docs' / 'altarvo.json').write_text(json.dumps(out, indent=1, ensure_ascii=False) + '\n')
+    # (2026-11-24: "Re-record them") every line Felldir says, for tools/altarvo.py: the talk lines (av_<prompt>_<n>) and the
+    # altar's existing whispers (echo_<key>, the names of assets/sound/whisper's files) - eggs.json, Eggs.cpp's signs and reveals
+    import re
+    L = [{'id': f"av_{p['id']}_{i + 1}", 'group': t['title'], 'ask': p['ask'], 'text': l}
+         for t in T for p in t['prompts'] for i, l in enumerate(p['lines'])]
+    E = json.loads((ROOT / 'sheets' / 'eggs.json').read_text())
+    for e in E['rows']:
+        v = e['voice']
+        L.append({'id': f'echo_{v}_open', 'group': 'Whispers: ' + e['title'], 'ask': 'the quest opens', 'text': e['open']})
+        for k, st in enumerate(e['steps'], 1):
+            L.append({'id': f'echo_{v}_s{k}', 'group': 'Whispers: ' + e['title'], 'ask': f'step {k}', 'text': st['hint']})
+            if st.get('done'): L.append({'id': f'echo_{v}_s{k}_done', 'group': 'Whispers: ' + e['title'], 'ask': f'step {k} done', 'text': st['done']})
+        L.append({'id': f'echo_{v}_final', 'group': 'Whispers: ' + e['title'], 'ask': 'the quest done', 'text': e['final']})
+    W = E['whisper']
+    L.append({'id': 'echo_asleep', 'group': 'Whispers', 'ask': 'the wonders sleep', 'text': W['asleep']})
+    L.append({'id': 'echo_next', 'group': 'Whispers', 'ask': 'before a city riddle', 'text': W['next']})
+    for c, txt in W['cities'].items(): L.append({'id': f'echo_city_{c.lower()}', 'group': 'Whispers: cities', 'ask': c, 'text': txt})
+    src = (ROOT / 'src' / 'Eggs.cpp').read_text()
+    def arr(name):
+        m = re.search(name + r'\[\d\] = \{(.*?)\};', src, re.S)
+        return [x.encode().decode('unicode_escape') for x in re.findall(r'"((?:[^"\\]|\\.)*)"', m.group(1))]
+    for v, txt in zip(['pride', 'eye', 'stone', 'oath'], arr('kSignLine')):
+        L.append({'id': f'echo_{v}_sign', 'group': 'Whispers: signs', 'ask': v, 'text': txt})
+    for k6, txt in zip([2, 4, 6], arr('kRevealLine')):
+        L.append({'id': f'echo_voice_{k6}', 'group': 'Whispers: reveals', 'ask': f'{k6} altars freed', 'text': txt})
+    whs = sorted(f.stem for f in (ROOT / 'assets' / 'sound' / 'whisper').glob('echo_*.wav'))
+    missing = [w for w in whs if w not in {l['id'] for l in L}]
+    if missing: raise SystemExit(f'whispers with no text found: {missing}')
+    (ROOT / 'docs' / 'altarvo_lines.json').write_text(json.dumps({'voice': VOICE, 'model': 'eleven_v3', 'lines': L}, indent=1, ensure_ascii=False) + '\n')
+    print(f"altarvo_lines.json: {len(L)} lines, {sum(len(l['text']) for l in L):,} characters")
     print(f'{sum(len(t["prompts"]) for t in T)} prompts, {n} lines, {chars} characters')
     for t in T: print(' ', t['id'], len(t['prompts']), 'prompts', sum(len(p['lines']) for p in t['prompts']), 'lines')
