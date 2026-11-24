@@ -405,6 +405,7 @@ namespace bo3z::Eggs
 			if (g_talkH.IsValid()) g_talkH.FadeOutAndRelease(200);
 			g_talkH = RE::BSSoundHandle{};
 		}
+		void NoteFreed();   // (the altar's Talk, below) a city seen to wake now
 		void PlayTalk(const std::string& a_key, float a_vol)
 		{
 			StopTalk();
@@ -418,7 +419,10 @@ namespace bo3z::Eggs
 				am->GetSoundHandleByFile(g_talkH, id, 0x1A, 128);
 				if (g_talkH.IsValid() && how < 0) how = k, logger::info("talk: the altar's lines play from '{}'", kRoot[k]);
 			}
-			if (!g_talkH.IsValid()) return logger::warn("talk: {}.wav could not be played", a_key);
+			if (!g_talkH.IsValid()) {
+				logger::warn("talk: {}.wav could not be played", a_key);
+				return;
+			}
 			if (auto* som = RE::TESForm::LookupByID<RE::BGSSoundOutput>(0x000B75FB)) g_talkH.SetOutputModel(som);
 			g_talkH.SetVolume(a_vol);
 			g_talkH.Play();
@@ -1711,12 +1715,12 @@ namespace bo3z::Eggs
 			for (int i = 0; i < static_cast<int>(gen::kTalkPrompts.size()); ++i) if (gen::kTalkPrompts[i].id == a_id) return i;
 			return -1;
 		}
-		bool Heard(int a_p)
+		bool TalkHeard(int a_p)
 		{
 			auto* g = a_p >= 0 && a_p < 144 ? Glob(gen::kTalkHeard[a_p / 24]) : nullptr;
 			return g && ((static_cast<int>(g->value) >> (a_p % 24)) & 1);
 		}
-		void SetHeard(int a_p)
+		void SetTalkHeard(int a_p)
 		{
 			if (auto* g = a_p >= 0 && a_p < 144 ? Glob(gen::kTalkHeard[a_p / 24]) : nullptr) g->value = static_cast<float>(static_cast<int>(g->value) | (1 << (a_p % 24)));
 		}
@@ -1819,7 +1823,7 @@ namespace bo3z::Eggs
 		for (int i = 0; i < static_cast<int>(gen::kTalkPrompts.size()); ++i) {
 			const auto& p = gen::kTalkPrompts[i];
 			if (p.topic != a_topic || !Gate(p.gate, a_town)) continue;
-			out.push_back({ i, std::string(p.ask), Heard(i) });
+			out.push_back({ i, std::string(p.ask), TalkHeard(i) });
 		}
 		return out;
 	}
@@ -1853,7 +1857,7 @@ namespace bo3z::Eggs
 		if (a_prompt < 0 || a_prompt >= static_cast<int>(gen::kTalkPrompts.size())) return;
 		Interrupt();
 		g_talkVisit = a_town;
-		SetHeard(a_prompt);
+		SetTalkHeard(a_prompt);
 		SayTalk(a_prompt, true);
 		logger::info("talk: asked \"{}\"", gen::kTalkPrompts[a_prompt].ask);
 	}
