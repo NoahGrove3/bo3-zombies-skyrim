@@ -2898,7 +2898,36 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// The ritual circle: a ring of glowing runes on the ground round the shrine - pale blue light, every rune
 			// its own glyph, lying flat along the ring. The runes the rite has reached burn white-blue (the fill runs
 			// smoothly round, not a step a second); the rest glimmer faintly. Red when the dead break it.
-			if (s.ringOn && s.ringPts.size() > 8 && !s.perkMenu) {
+			// (Noah, 2026-11-24) the restless' souls: pale blue wisps arcing from the bodies into the altar's centre stone, a fading tail
+			// behind each; where the stone takes one, a soft glow swells and fades
+			if (!s.perkMenu) {
+				const ImU32 blue = IM_COL32(150, 212, 255, 255), core = IM_COL32(235, 248, 255, 255);
+				for (const auto& tr : s.souls) {
+					const float sz = std::clamp(tr[0][3], 0.4f, 4.0f) * k;
+					for (int q = static_cast<int>(tr.size()) - 1; q >= 0; --q) {   // (the tail first, the head over it)
+						const ImVec2 c{ tr[q][0] * size.x, tr[q][1] * size.y };
+						const float  f = 1.0f - static_cast<float>(q) / std::max<std::size_t>(tr.size(), 1);
+						dl->AddCircleFilled(c, (5.0f + 9.0f * f) * sz, Fade(blue, 0.05f * f), 20);
+						dl->AddCircleFilled(c, (2.0f + 4.0f * f) * sz, Fade(blue, 0.22f * f), 16);
+					}
+					const ImVec2 h{ tr[0][0] * size.x, tr[0][1] * size.y };
+					const float  flick = 0.85f + 0.15f * std::sin(now * 23.0f + h.x * 0.01f);
+					dl->AddCircleFilled(h, 16.0f * sz, Fade(blue, 0.07f * flick), 28);
+					dl->AddCircleFilled(h, 9.0f * sz, Fade(blue, 0.18f * flick), 24);
+					dl->AddCircleFilled(h, 4.5f * sz, Fade(blue, 0.55f), 20);
+					dl->AddCircleFilled(h, 2.2f * sz, Fade(core, 0.95f), 16);
+				}
+				for (const auto& tk : s.soulsTaken) {
+					const ImVec2 c{ tk[0] * size.x, tk[1] * size.y };
+					const float  u = std::clamp(tk[2] / 0.9f, 0.0f, 1.0f), sz = std::clamp(tk[3], 0.4f, 4.0f) * k;
+					const float  a = (1.0f - u) * (u < 0.15f ? u / 0.15f : 1.0f);
+					dl->AddCircleFilled(c, (14.0f + 30.0f * u) * sz, Fade(blue, 0.10f * a), 32);
+					dl->AddCircleFilled(c, (6.0f + 10.0f * u) * sz, Fade(blue, 0.30f * a), 24);
+					dl->AddCircle(c, (10.0f + 46.0f * u) * sz, Fade(core, 0.45f * a), 40, 1.5f * k);
+				}
+			}
+
+			if (s.ringOn && (s.ringPts.size() > 8 || !s.ringRunes) && !s.perkMenu) {
 				const float fl = std::clamp(s.ringFlash, 0.0f, 1.0f);
 				static float shown = 0;
 				{
@@ -2934,7 +2963,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					{ -1, -2, 1, -2, -1, 2, 1, 2, -1, -2, 1, 2, 9 }, { 0, -2, 0, 2, -1, -1, 1, -1, -1, 1, 1, 1, 9 }, { -1, 2, 0, -2, 0, -2, 1, 2, 9 }, { 1, -2, -1, 0, -1, 0, 1, 2, 0, -1, 0, 2, 9 },
 				} };
 				constexpr int kRunes = 60;
-				for (int r = 0; r < kRunes; ++r) {
+				for (int r = 0; r < (n > 8 ? kRunes : 0); ++r) {
 					const float f = (r + 0.5f) / kRunes;
 					const int   i = std::clamp(static_cast<int>(f * (n - 1)), 1, n - 2);
 					if (!visible(i - 1) || !visible(i + 1)) continue;
@@ -6919,6 +6948,24 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				RE::GFxValue arg(t.c_str());
 				mv->Invoke("_root.HUDMovieBaseInstance.ShowSubtitle", nullptr, &arg, 1);
 				g_subShown = t;
+				// (Noah, 2026-11-24: "the subtitles from the echo altar need to be centered with the screen") the line's own box set
+				// over the middle of what the screen shows (Edge UI's place for it sat off centre on the 16:10 screen, and the
+				// scaling moved it further)
+				{
+					RE::GFxValue holder, root, b, vr, vx, vw, x0, x1;
+					if (mv->GetVariable(&holder, kSubHolder) && holder.IsDisplayObject() && mv->GetVariable(&root, "_root") && mv->GetVariable(&vr, "Stage.visibleRect") && vr.IsObject() &&
+						vr.GetMember("x", &vx) && vr.GetMember("width", &vw) && vx.IsNumber() && vw.IsNumber()) {
+						RE::GFxValue tf;
+						RE::GFxValue target = holder.GetMember("textField", &tf) && tf.IsDisplayObject() ? tf : holder;
+						if (target.Invoke("getBounds", &b, &root, 1) && b.IsObject() && b.GetMember("xMin", &x0) && b.GetMember("xMax", &x1) && x0.IsNumber() && x1.IsNumber()) {
+							const double mid = (x0.GetNumber() + x1.GetNumber()) * 0.5, want = vx.GetNumber() + vw.GetNumber() * 0.5;
+							const double hx = SubNum(mv, h + "._x", g_subBase.x);
+							mv->SetVariable((h + "._x").c_str(), RE::GFxValue(hx + (want - mid)));
+							static int told = 0;
+							if (told++ < 2) logger::info("subtitle: centred ({:.0f} -> {:.0f} of the screen's {:.0f}+{:.0f})", mid, want, vx.GetNumber(), vw.GetNumber());
+						}
+					}
+				}
 			});
 			Tasks::Later(std::max(1.5f, a_seconds), [my] {
 				if (g_subGen.load() != my) return;   // (a newer line of ours is up)

@@ -406,25 +406,51 @@ namespace bo3z::Eggs
 			g_talkH = RE::BSSoundHandle{};
 		}
 		void NoteFreed();   // (the altar's Talk, below) a city seen to wake now
-		void PlayTalk(const std::string& a_key, float a_vol)
+		// (Noah, 2026-11-24: "the echo altar voice should be coming from the echo altar's center stone, heard within 30 m - normal volume
+		// within 5 m, gradually quieter the farther away") every line of the altar's - its answers and its whispers alike - played from
+		// its file at the centre stone, through Skyrim's own distant mono voice output (SOMMono10000_verb: the place's own echo on it),
+		// and its loudness set by the distance each moment: whole within 5 m (350 units), fading smoothly to nothing at 30 m (2100)
+		RE::NiPoint3 g_talkAt{};
+		bool         g_talkPlaced = false;
+		float        g_talkVol = 1.0f;
+		float Falloff(float a_d)
+		{
+			if (a_d <= 350.0f) return 1.0f;
+			if (a_d >= 2100.0f) return 0.0f;
+			const float x = (a_d - 350.0f) / 1750.0f;
+			return (1.0f - x) * (1.0f - x) * (1.0f + 2.0f * x * 0.35f);   // (a soft shoulder, then a long tail)
+		}
+		void TalkVolume()
+		{
+			if (!g_talkH.IsValid()) return;
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			const float f = g_talkPlaced && p ? Falloff(p->GetPosition().GetDistance(g_talkAt)) : 1.0f;
+			g_talkH.SetVolume(std::clamp(g_talkVol * f, 0.0f, 1.0f));
+		}
+		void PlayTalk(const std::string& a_rel, float a_vol)   // (a_rel: under Data\Sound, e.g. fx\CurseOfAlduin\altarvo\av_bye_1.wav)
 		{
 			StopTalk();
 			auto* am = RE::BSAudioManager::GetSingleton();
 			if (!am || a_vol <= 0.001f) return;
-			static int how = -1;   // which spelling of the path the game takes (found once, then kept)
-			static constexpr const char* kRoot[3] = { "Sound\\fx\\CurseOfAlduin\\altarvo\\", "Data\\Sound\\fx\\CurseOfAlduin\\altarvo\\", "fx\\CurseOfAlduin\\altarvo\\" };
-			for (int k = how < 0 ? 0 : how; k < 3 && !g_talkH.IsValid(); k = how < 0 ? k + 1 : 3) {
-				RE::BSResource::ID id;
-				id.GenerateFromPath((std::string(kRoot[k]) + a_key + ".wav").c_str());
-				am->GetSoundHandleByFile(g_talkH, id, 0x1A, 128);
-				if (g_talkH.IsValid() && how < 0) how = k, logger::info("talk: the altar's lines play from '{}'", kRoot[k]);
-			}
+			RE::BSResource::ID id;
+			id.GenerateFromPath(("Sound\\" + a_rel).c_str());
+			am->GetSoundHandleByFile(g_talkH, id, 0x1A, 128);
 			if (!g_talkH.IsValid()) {
-				logger::warn("talk: {}.wav could not be played", a_key);
+				logger::warn("talk: {} could not be played", a_rel);
 				return;
 			}
-			if (auto* som = RE::TESForm::LookupByID<RE::BGSSoundOutput>(0x000B75FB)) g_talkH.SetOutputModel(som);
-			g_talkH.SetVolume(a_vol);
+			g_talkPlaced = false;
+			const int town = Curse::ZoneTown();
+			if (auto* altar = town >= 0 ? Shops::Placed(town, 0) : nullptr) {
+				g_talkAt = altar->GetPosition() + RE::NiPoint3{ 0, 0, 150.0f };   // (the centre stone, about its middle)
+				g_talkPlaced = true;
+				if (auto* som = RE::TESForm::LookupByID<RE::BGSSoundOutput>(0x00104D56)) g_talkH.SetOutputModel(som);   // SOMMono10000_verb
+				g_talkH.SetPosition(g_talkAt);
+			} else if (auto* som = RE::TESForm::LookupByID<RE::BGSSoundOutput>(0x000B75FB)) {
+				g_talkH.SetOutputModel(som);   // (no altar near: as the interface's own sound)
+			}
+			g_talkVol = a_vol;
+			TalkVolume();
 			g_talkH.Play();
 		}
 		std::deque<Said> g_say;
@@ -501,14 +527,17 @@ namespace bo3z::Eggs
 		void TickWhispers(RE::PlayerCharacter* a_p, int e, float a_dt)
 		{
 			g_whCd = std::max(0.0f, g_whCd - a_dt);
+			TalkVolume();   // (the voice from the stone: louder as you come near, gone past 30 m)
 			if (g_sayT > 0) {
 				if ((g_sayT -= a_dt) <= 0 && g_say.empty()) g_sayCard = -1;
 			} else if (!g_say.empty()) {
 				auto l = g_say.front();
 				g_say.pop_front();
 				StopTalk();
-				if (!l.file.empty()) PlayTalk(l.file, Settings::AltarVoiceVolume());
-				else Audio::Voice(l.snd, Settings::AltarVoiceVolume());   // (MCM: its volume)  (one voice at a time: a card clicked cuts off the line before it)
+				Audio::Voice(std::nullopt);
+				const std::string rel = !l.file.empty() ? "fx\\CurseOfAlduin\\altarvo\\" + l.file + ".wav" : std::string(gen::kSoundFile[static_cast<int>(l.snd)]);
+				if (!rel.empty()) PlayTalk(rel, Settings::AltarVoiceVolume());   // (MCM: its volume)  (one voice at a time: a card clicked cuts off the line before it)
+				else Audio::Voice(l.snd, Settings::AltarVoiceVolume());
 				g_sayCard = l.card;
 				logger::info("eggs: the altar says \"{}\"", l.text);   // (Noah: "remove the subtitle cards when the altar is speaking so it's more cryptic")
 				Hud::Subtitle(l.text, l.secs + 0.4f);   // (Noah, 2026-11-23: its words in Edge UI's subtitle line - never a card)
@@ -1838,19 +1867,9 @@ namespace bo3z::Eggs
 	}
 	void TalkOpen(int a_town)
 	{
-		// the greeting that fits best: a priest just fallen, then the hour at a dark altar, a freed one, then the story's stage
-		if (g_greeted == a_town) return;   // (once a visit: opening and shutting the section again says nothing)
+		// (Noah, 2026-11-24: "the voice shouldn't speak when clicking the dropdown menu speak with the voice") opening the section
+		// says nothing: Felldir speaks when he is asked
 		g_greeted = a_town;
-		Interrupt();
-		g_talkVisit = a_town;
-		for (const char* id : { "greet_priest", "greet_night", "greet_dawn", "greet_end", "greet_freed", "greet_named", "greet_early", "greet_faint" }) {
-			const int p = TalkPrompt(id);
-			if (p >= 0 && Gate(gen::kTalkPrompts[p].gate, a_town)) {
-				SayTalk(p, false);
-				logger::info("talk: the altar greets you ({})", id);
-				return;
-			}
-		}
 	}
 	void TalkTopic(int a_town, int a_topic)
 	{

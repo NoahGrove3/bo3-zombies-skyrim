@@ -493,13 +493,83 @@ namespace bo3z
 			int          seconds{ 0 }, inside{ 0 };
 			bool         hold{ false };
 			std::string  head, sub;  // (the trials remade) its words: what it asks, and the count
+			bool         runes{ true };  // (Noah, 2026-11-24: Lay the Restless to Rest not the old ward's ring of runes) the words only, when false
 		} g_ring;
+		// (Noah, 2026-11-24: "the souls that come from the enemies for killing trials should be light blue wisps that go into the echo
+		// altar's center stone, not a magic effect or a little burst") each of the restless put down sends its soul up out of the body
+		// and across to the altar's centre stone on a soft arc - a pale blue wisp with a fading tail - where the stone takes it with a
+		// small glow and a chime
+		struct Soul { RE::NiPoint3 a, c, b; float t = 0, dur = 1.5f; };
+		struct Taken { RE::NiPoint3 at; float t = 0; };
+		std::vector<Soul>  g_souls;
+		std::vector<Taken> g_taken;
+		RE::NiPoint3 SoulAt(const Soul& a_s, float a_t)
+		{
+			float u = std::clamp(a_t / a_s.dur, 0.0f, 1.0f);
+			u = u * u * (3.0f - 2.0f * u);   // (eases away from the body and into the stone)
+			const float v = 1.0f - u;
+			return a_s.a * (v * v) + a_s.c * (2.0f * v * u) + a_s.b * (u * u);
+		}
+		void SendSoul(const RE::NiPoint3& a_from, const RE::NiPoint3& a_stone)
+		{
+			if (g_souls.size() >= 24) return;
+			Soul so;
+			so.a = a_from + RE::NiPoint3{ 0, 0, 70.0f };
+			so.b = a_stone;
+			const float dist = so.a.GetDistance(so.b);
+			const float side = (static_cast<float>(std::rand() % 200) - 100.0f) * 1.2f;
+			RE::NiPoint3 dir = so.b - so.a;
+			const RE::NiPoint3 across{ -dir.y, dir.x, 0 };
+			const float al = std::max(1.0f, std::hypot(across.x, across.y));
+			so.c = (so.a + so.b) * 0.5f + RE::NiPoint3{ across.x / al * side, across.y / al * side, 220.0f + dist * 0.18f };
+			so.dur = std::clamp(dist / 650.0f, 1.2f, 3.2f);
+			g_souls.push_back(so);
+		}
 		void PublishRing(float a_delta)
 		{
 			g_ring.flash = std::max(0.0f, g_ring.flash - a_delta);
 			std::vector<std::array<float, 3>> pts;
 			auto* cam = RE::Main::WorldRootCamera();
-			if (g_ring.on && cam) {
+			// the souls on their way, and the stone taking them
+			std::vector<std::vector<std::array<float, 4>>> souls;
+			std::vector<std::array<float, 4>>              taken;
+			{
+				auto* pl = RE::PlayerCharacter::GetSingleton();
+				const RE::NiPoint3 eye = cam ? cam->world.translate : (pl ? pl->GetPosition() : RE::NiPoint3{});
+				for (auto it = g_souls.begin(); it != g_souls.end();) {
+					it->t += a_delta;
+					if (it->t >= it->dur) {
+						g_taken.push_back({ it->b, 0 });
+						Audio::AtPoint(static_cast<gen::Sound>(static_cast<int>(gen::Sound::echo_tone_0) + std::rand() % 6), it->b, 0.0f, 0.3f);
+						it = g_souls.erase(it);
+						continue;
+					}
+					if (cam) {
+						std::vector<std::array<float, 4>> tr;
+						for (int k = 0; k < 10; ++k) {   // (its head now, and where it was a moment before: the tail)
+							const float tt = it->t - k * 0.035f;
+							if (tt < 0) break;
+							const auto w = SoulAt(*it, tt);
+							float x = 0, y = 0, zc = 0;
+							cam->WorldPtToScreenPt3(w, x, y, zc, 1e-5f);
+							if (zc <= 0) break;
+							tr.push_back({ x, 1.0f - y, zc, 900.0f / std::max(120.0f, w.GetDistance(eye)) });
+						}
+						if (!tr.empty()) souls.push_back(std::move(tr));
+					}
+					++it;
+				}
+				for (auto it = g_taken.begin(); it != g_taken.end();) {
+					if ((it->t += a_delta) > 0.9f) { it = g_taken.erase(it); continue; }
+					if (cam) {
+						float x = 0, y = 0, zc = 0;
+						cam->WorldPtToScreenPt3(it->at, x, y, zc, 1e-5f);
+						if (zc > 0) taken.push_back({ x, 1.0f - y, it->t, 900.0f / std::max(120.0f, it->at.GetDistance(eye)) });
+					}
+					++it;
+				}
+			}
+			if (g_ring.on && g_ring.runes && cam) {
 				constexpr int N = 180;  // (fine enough for the runes riding it to sit smoothly)
 				for (int i = 0; i <= N; ++i) {
 					const float a = i * 2.0f * RE::NI_PI / N;
@@ -520,7 +590,9 @@ namespace bo3z
 			std::scoped_lock l(Hud::Lock());
 			auto& h = Hud::Edit();
 			h.ringLabelOn = labelOn, h.ringLabelX = lx, h.ringLabelY = ly;
-			h.ringOn = g_ring.on && !pts.empty();
+			h.ringOn = g_ring.on && (!pts.empty() || !g_ring.runes);
+			h.ringRunes = g_ring.runes;
+			h.souls = std::move(souls), h.soulsTaken = std::move(taken);
 			h.ringPts = std::move(pts);
 			h.ringFrac = g_ring.frac;
 			h.ringFlash = g_ring.flash;
@@ -690,6 +762,7 @@ namespace bo3z
 			const float d = std::hypot(a_p->GetPosition().x - a_c.x, a_p->GetPosition().y - a_c.y);
 			g_ring = { true, a_c, gen::kCurseLight, static_cast<float>(a_s.prog) / std::max(1, n), g_ring.flash, 0, 1, false,
 				d < gen::kCurseLight ? "LAY THE RESTLESS TO REST" : "BACK INTO THE ALTAR'S LIGHT", fmt::format("{} / {}", a_s.prog, n) };
+			g_ring.runes = false;   // (no ring of runes: the old ward's - Noah: "it should not be recycled from the older trials")
 			(void)a_z;
 		}
 
@@ -1012,11 +1085,11 @@ namespace bo3z
 				RE::TESWorldSpace* ws = nullptr;
 				auto* p = RE::PlayerCharacter::GetSingleton();
 				if (!p || !Shops::StandFrame(z, c, yaw, ws) || ws != p->GetWorldspace() || std::hypot(at.x - c.x, at.y - c.y) > gen::kCurseLight) return;
-				// the soul goes up: three soft flares climbing out of the body, and a breath of air
-				Gun::FxBlast("light", at + RE::NiPoint3{ 0, 0, 60.0f });
-				Gun::FxBlast("light", at + RE::NiPoint3{ 0, 0, 260.0f }, 0.35f);
-				Gun::FxBlast("light", at + RE::NiPoint3{ 0, 0, 480.0f }, 0.7f);
-				if (g_wispT <= 0) Forms::Play(gen::Sound::wisp_rise), g_wispT = 0.7f;
+				// the soul goes home: a pale blue wisp out of the body and across into the altar's centre stone
+				RE::NiPoint3 stone = c + RE::NiPoint3{ 0, 0, 170.0f };
+				if (auto* alt = Shops::Placed(z, 0)) stone = alt->GetPosition() + RE::NiPoint3{ 0, 0, 170.0f };
+				SendSoul(at, stone);
+				if (g_wispT <= 0) Audio::AtPoint(gen::Sound::wisp_rise, at, 0.0f, 0.6f), g_wispT = 0.7f;
 				g_ring.flash = 0;
 				if (++s.prog >= N(tr)) {
 					CompleteTrial(z);

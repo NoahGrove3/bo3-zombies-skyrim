@@ -1917,9 +1917,11 @@ namespace bo3z
 					if (g_open == kSecTrials) for (int q : { 0, 1, 2, 3 }) rows.push_back(kRowTrial + q);  // (the four trials, in order)
 				}
 				// (Noah, 2026-11-24: "a Talk row in the altar menu") speak with the voice: its four topics, each opening to what you can ask
-				const auto talk = g_talkOpen > 0 ? Eggs::TalkRows(t, g_talkOpen) : std::vector<Eggs::TalkRow>{};
-				rows.push_back(kSecTalk);
-				if (g_open == kSecTalk) {
+				// (Noah, 2026-11-24: "the echo altar should be freed first to really converse with the echo altar") only a freed altar talks
+				const bool talkHere = t >= 0 && Curse::Freed(t);
+				const auto talk = talkHere && g_talkOpen > 0 ? Eggs::TalkRows(t, g_talkOpen) : std::vector<Eggs::TalkRow>{};
+				if (talkHere) rows.push_back(kSecTalk);
+				if (talkHere && g_open == kSecTalk) {
 					for (int g = 1; g <= 4; ++g) {
 						rows.push_back(kRowTalkTopic + g);
 						if (g_talkOpen == g) for (int q = 0; q < static_cast<int>(talk.size()) && q < 200; ++q) rows.push_back(kRowTalk + q);
@@ -2339,7 +2341,7 @@ namespace bo3z
 						h.whisperSpeaking = Eggs::Speaking();
 						h.whisperGroup = g_whOpen;
 						h.whisperNamed = Eggs::Named();
-						h.talkOn = true;
+						h.talkOn = t >= 0 && Curse::Freed(t);
 						for (int g = 1; g <= 4; ++g) h.talkAny[g] = !Eggs::TalkRows(t, g).empty(), h.talkNew[g] = Eggs::TalkNew(t, g);
 						h.talkTopic = g_talkOpen;
 						h.talkRows = g_talkOpen > 0 ? Eggs::TalkRows(t, g_talkOpen) : std::vector<Eggs::TalkRow>{};

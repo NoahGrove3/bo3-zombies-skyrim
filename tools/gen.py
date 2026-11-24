@@ -32,6 +32,8 @@ out.append('\tenum class Sound : int {')
 snd = S['sounds']['rows']
 for i, s in enumerate(snd): out.append(f'\t\t{s["id"]} = {i},')
 out.append('\t};')
+# (2026-11-24) each sound's own file under Data\Sound (empty: none) - the altar's voice plays its lines by file, from its stone
+out.append(f'\tinline constexpr std::array<std::string_view, {len(snd)}> kSoundFile{{ {{ ' + ', '.join(cs(x.get('file', '') or '') for x in snd) + ' } };')
 out.append(f'\tinline constexpr std::array<FormRef, {len(snd)}> kSounds{{ {{')
 sys.path.insert(0, str(root / 'tools')); import esp_ids as _ids; _SIDS, _ = _ids.assign(S)
 for s in snd: out.append(f'\t\tFormRef{{ {cs(s["plugin"])}, 0x{(_SIDS[("SNDR", s["id"])] if s["localId"] == "auto" else hexid(s["localId"])):06X}, {cs(s["editorId"])} }},')

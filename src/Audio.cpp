@@ -446,16 +446,11 @@ namespace bo3z::Audio
 	namespace
 	{
 		float g_duck = 0, g_duckNow = 0;
-		float g_muteDb = 0;   // (Noah, 2026-11-24) the whole game's sound held down under a black screen (dB)
 		RE::BGSSoundCategory* MusicCategory()
 		{
 			static RE::BGSSoundCategory* cat = [] {
-				RE::BGSSoundCategory* found = nullptr;
-				if (auto* dh = RE::TESDataHandler::GetSingleton()) {
-					for (auto* c : dh->GetFormArray<RE::BGSSoundCategory>()) {
-						if (c && std::string_view(c->GetName()) == "Music") { found = c; break; }
-					}
-				}
+				// (Skyrim.esm's AudioCategoryMUS; the name lookup found nothing - categories keep no names in game)
+				RE::BGSSoundCategory* found = RE::TESForm::LookupByID<RE::BGSSoundCategory>(0x00071E64);
 				logger::info("audio: the music category {}", found ? "found (ducking on)" : "not found (no ducking)");
 				return found;
 			}();
@@ -469,7 +464,7 @@ namespace bo3z::Audio
 			g_duck = std::max(0.0f, g_duck - a_delta);
 			const float want = g_duck > 0 ? 1.0f : 0.0f;
 			g_duckNow += (want - g_duckNow) * std::min(1.0f, a_delta * (want > g_duckNow ? 6.0f : 1.2f));
-			const auto att = static_cast<std::uint16_t>(std::min(65000.0f, base + 900.0f * g_duckNow + 100.0f * g_muteDb));
+			const auto att = static_cast<std::uint16_t>(base + 900.0f * g_duckNow);
 			if (att != cat->GetCategoryAttenuation()) cat->SetCategoryAttenuation(att);
 		}
 	}
@@ -477,24 +472,30 @@ namespace bo3z::Audio
 
 	// (Noah, 2026-11-24: "during the curse of alduin loading screen when creating a new character there should be no in game
 	// audio until it fully loads then fades the audio in" / "fade quickly into a black screen then fade out when everything is
-	// loaded in, same with the audio") every sound category held down by the black over the screen: a_level 1 as made, 0 silent
+	// loaded in, same with the audio") the whole game's sound held down under the black: Skyrim's master volume (_AudioCategoryMaster,
+	// the slider's own) taken down and given back exactly as it was. (2026-11-24, Noah: "I can't hear my character's attack grunts or
+	// the altar's sounds" - the first try set every category's attenuation back to what it read at the main menu, and Skyrim itself
+	// holds its "paused during menu" categories down there: they stayed down. Only the master is touched now, and only while black)
 	void GameMute(float a_level)
 	{
-		const float level = std::clamp(a_level, 0.0005f, 1.0f);
-		const float db = level >= 0.999f ? 0.0f : -20.0f * std::log10(level);
-		if (std::abs(db - g_muteDb) < 0.05f) return;
-		g_muteDb = db;
-		static std::vector<std::pair<RE::BGSSoundCategory*, std::uint16_t>> cats;   // each with its own attenuation, as Skyrim set it
-		if (cats.empty()) {
-			if (auto* dh = RE::TESDataHandler::GetSingleton()) {
-				for (auto* c : dh->GetFormArray<RE::BGSSoundCategory>()) {
-					if (c && c != MusicCategory()) cats.emplace_back(c, c->GetCategoryAttenuation());
-				}
-				logger::info("audio: {} sound categories under the black screen's hush", cats.size());
+		static RE::BGSSoundCategory* master = RE::TESForm::LookupByID<RE::BGSSoundCategory>(0x000EB803);
+		static float base = -1.0f;   // (the master's own volume while we hold it: -1 not holding)
+		if (!master) return;
+		const float level = std::clamp(a_level, 0.0f, 1.0f);
+		if (level >= 0.999f) {
+			if (base >= 0.0f) {
+				master->SetCategoryVolume(base);
+				logger::info("audio: the game's sound back up ({:.2f})", base);
+				base = -1.0f;
 			}
+			return;
 		}
-		for (auto& [c, base] : cats) c->SetCategoryAttenuation(static_cast<std::uint16_t>(std::min(65000.0f, base + 100.0f * db)));
-		TickDuck(0.0f);   // (the music, with its duck)
+		if (base < 0.0f) {
+			base = master->GetCategoryVolume();
+			logger::info("audio: the game's sound held down under the black (master {:.2f})", base);
+		}
+		const float want = base * level;
+		if (std::abs(master->GetCategoryVolume() - want) > 0.002f) master->SetCategoryVolume(want);
 	}
 
 	void Tick(float a_delta)
