@@ -1353,7 +1353,7 @@ def guide_text():
            "<p align='center'>Notes left at the Sleeping Giant Inn by one who made it this far. Read them before dusk.</p>",
            "[pagebreak]", h("Day and Night"),
            p("A day lasts about twenty minutes. By day the dead sleep: rest, explore, spend what you earned. "
-             "At dusk they rise in <b>waves</b>, clawing up out of the ground at the same places every night. Each wave brings a few more than the last, and each night a few more again: "
+             "At dusk they fall out of the sky in <b>waves</b>, in beams of red light at the same places every night (the strongest in red lightning). Each wave brings a few more than the last, and each night a few more again: "
              "the first night is three small waves, and a wave is added every second night, up to eight. The night does not end until the last wave is down - then dawn breaks."),
            p("You cannot rest while the dead walk - but once they have risen, the wait menu can skip the whole night (it does not count)."),
            "[pagebreak]", h("Cursed Essence"),

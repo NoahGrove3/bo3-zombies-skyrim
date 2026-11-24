@@ -65,7 +65,7 @@
      "ask": "(opening the Talk row at a freed altar)",
      "lines": [
       "[softly] This stone is awake, and its city sleeps. It is good to speak from a quiet place.",
-      "Listen... no scratching under the ground here. Only wind. Ask, Dragonborn."
+      "Look up... no red light falling here. Only stars. Ask, Dragonborn."
      ]
     },
     {
@@ -116,10 +116,19 @@
     {
      "id": "s_dead",
      "gate": "always",
-     "ask": "Why do the dead rise?",
+     "ask": "Why do the dead come back?",
      "lines": [
       "His shout hangs like a mist across the road to Sovngarde. The dead cannot pass it to Shor's hall.",
-      "[sad] So they lie in the ground, restless... and when the sun goes down, they climb out looking for the way."
+      "[sad] They try, every night. The mist turns them back... and his voice throws them down to Skyrim again, as red light out of the sky."
+     ]
+    },
+    {
+     "id": "s_beams",
+     "gate": "always",
+     "ask": "What are the red beams in the sky?",
+     "lines": [
+      "The dead, falling. Turned back from Sovngarde, and thrown down wherever his voice is strongest.",
+      "[tense] The red lightning is worse. That is how the strong ones come... the ones his voice holds tightest."
      ]
     },
     {
@@ -441,7 +450,7 @@
      "gate": "here=riverwood&here_free",
      "ask": "Is Riverwood safe now?",
      "lines": [
-      "[softly] The mill wheel turns, and no one climbs out of the barrow. Listen... it is a quiet valley again.",
+      "[softly] The mill wheel turns, and no red light falls over the barrow. Listen... it is a quiet valley again.",
       "This was the first stone you woke. I will remember that."
      ]
     },
@@ -503,7 +512,7 @@
      "ask": "Who keeps Solitude's altar dark?",
      "lines": [
       "Volsung of Volskygge. His mask let him breathe where no man could, high on the peaks above Haafingar.",
-      "He climbs down to Solitude now, and the dead of the palace crypts rise at his word."
+      "He climbs down to Solitude now, and the red light falls over the palace at his word."
      ]
     },
     {
@@ -573,7 +582,7 @@
      "ask": "Who keeps Markarth's altar dark?",
      "lines": [
       "Otar the Mad. He was so cruel that his own cult sealed him alive in Ragnvald.",
-      "[fearful] His oath outlived his reason. He climbs out of the Reach's stone with nothing left of himself but the oath."
+      "[fearful] His oath outlived his reason. He comes down in red lightning, with nothing left of himself but the oath."
      ]
     },
     {
@@ -598,7 +607,7 @@
      "gate": "here=riften&here_dark",
      "ask": "What happened to Riften?",
      "lines": [
-      "A city of thieves and green water. The drowned climb out of the canal now, and nobody sees them coming.",
+      "A city of thieves and green water. Red light falls into the canal now, and the drowned come down in it. Nobody sees them coming.",
       "Mara's temple stands here. Love is a strong thing... but not stronger than the World-Eater's voice."
      ]
     },
@@ -668,7 +677,7 @@
      "gate": "here=morthal&here_dark",
      "ask": "What happened to Morthal?",
      "lines": [
-      "The marsh hides its dead well. Fog, roots, black water... and the drowned walking out of all of it.",
+      "The marsh hides its dead well. Fog, roots, black water... and red light falling into all of it.",
       "There is a brewer's hut at the marsh's edge. The swamp's dead come to drink, as if they remember thirst."
      ]
     },
@@ -704,7 +713,7 @@
      "ask": "What happened to Dawnstar?",
      "lines": [
       "A cold harbour under a cold sky. The people here have been dreaming badly for a long time.",
-      "The miners cut quicksilver out of the hill. Tonight the dead have dug their own way up."
+      "The miners cut quicksilver out of the hill. Tonight the red light falls on the mouth of the mine."
      ]
     },
     {

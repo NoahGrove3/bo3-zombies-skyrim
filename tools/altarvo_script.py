@@ -49,7 +49,7 @@ ask('greet_dawn', 'day&here_dark', '(opening the Talk row by day, the city still
     'The sun holds them for now. Use the light. Rest, ready yourself... the night will not be kind.')
 ask('greet_freed', 'here_free&echo_slain=0', '(opening the Talk row at a freed altar)',
     '[softly] This stone is awake, and its city sleeps. It is good to speak from a quiet place.',
-    'Listen... no scratching under the ground here. Only wind. Ask, Dragonborn.')
+    'Look up... no red light falling here. Only stars. Ask, Dragonborn.')
 ask('greet_priest', 'here_free&priest_new', '(opening the Talk row just after this city\'s priest fell)',
     '[relieved] He is gone. I felt his oath break from across Skyrim. The stone is singing.')
 ask('bye', 'always', '(leaving the Talk row)',
@@ -67,9 +67,12 @@ ask('s_what', 'always', 'What has happened to Skyrim?',
     '[softly] Helgen burned. The World-Eater flew north over the smoke... and as he flew, he shouted into the earth.',
     'Three words. SLEN... TIID... VO. Flesh. Time. Undo. The shout he raises his dragons with.',
     'But this time it fell on every grave in Skyrim. And every grave heard it.')
-ask('s_dead', 'always', 'Why do the dead rise?',
+ask('s_dead', 'always', 'Why do the dead come back?',
     'His shout hangs like a mist across the road to Sovngarde. The dead cannot pass it to Shor\'s hall.',
-    '[sad] So they lie in the ground, restless... and when the sun goes down, they climb out looking for the way.')
+    '[sad] They try, every night. The mist turns them back... and his voice throws them down to Skyrim again, as red light out of the sky.')
+ask('s_beams', 'always', 'What are the red beams in the sky?',
+    'The dead, falling. Turned back from Sovngarde, and thrown down wherever his voice is strongest.',
+    '[tense] The red lightning is worse. That is how the strong ones come... the ones his voice holds tightest.')
 ask('s_altars', 'always', 'What are these altars?',
     'Echo Altars. The old Tongues raised one in every hold, long before your Empire, to answer a dragon\'s voice with their own.',
     'When the World-Eater shouted, they went dark. Wake one, and its city\'s dead will sleep again.')
@@ -177,7 +180,7 @@ CITY = {
          'The barrow above the town, Bleak Falls... its dead are restless. They come down the hill every night.'],
         ['Vahlok the Jailor. In the old days he kept the cult\'s prisoners. His oath to the World-Eater was the last he ever swore.',
          'He has crossed the sea to keep this valley dark. A jailor keeps his doors locked. Break them.'],
-        ['[softly] The mill wheel turns, and no one climbs out of the barrow. Listen... it is a quiet valley again.',
+        ['[softly] The mill wheel turns, and no red light falls over the barrow. Listen... it is a quiet valley again.',
          'This was the first stone you woke. I will remember that.']),
     'Whiterun': (
         ['Whiterun was built around a dragon\'s cage. Its Hall of the Dead lies under the Jarl\'s, and its beds are empty.',
@@ -190,7 +193,7 @@ CITY = {
         ['The capital. Its crypts are older than its walls, and the Blue Palace stands over them.',
          'The bards here teach the young to sing of the dead. Tonight the dead have come to listen.'],
         ['Volsung of Volskygge. His mask let him breathe where no man could, high on the peaks above Haafingar.',
-         'He climbs down to Solitude now, and the dead of the palace crypts rise at his word.'],
+         'He climbs down to Solitude now, and the red light falls over the palace at his word.'],
         ['The arch over the sea is quiet. The bards can sing of the dead again, instead of to them.',
          '[softly] Solitude will tell this story for a hundred years. They will get it wrong. Let them.']),
     'Windhelm': (
@@ -204,11 +207,11 @@ CITY = {
         ['The deep elves carved this city out of the cliff, and the cliffs bleed silver. The dead here are older than the Nords.',
          'Its Hall of the Dead goes deeper than its priests have ever been. Something down there heard the shout.'],
         ['Otar the Mad. He was so cruel that his own cult sealed him alive in Ragnvald.',
-         '[fearful] His oath outlived his reason. He climbs out of the Reach\'s stone with nothing left of himself but the oath.'],
+         '[fearful] His oath outlived his reason. He comes down in red lightning, with nothing left of himself but the oath.'],
         ['The stone city is still. Even the Reach\'s oldest dead have gone back to sleep.',
          'Otar is gone. I will not mourn him. Neither did his cult.']),
     'Riften': (
-        ['A city of thieves and green water. The drowned climb out of the canal now, and nobody sees them coming.',
+        ['A city of thieves and green water. Red light falls into the canal now, and the drowned come down in it. Nobody sees them coming.',
          'Mara\'s temple stands here. Love is a strong thing... but not stronger than the World-Eater\'s voice.'],
         ['Rahgot of Forelhost. When the Tongues came for him, his followers poisoned themselves rather than give him up.',
          'They rise with him now. The Rift\'s dead follow them down to the city.'],
@@ -222,7 +225,7 @@ CITY = {
         ['The rows are quiet. Falkreath can bury its dead and leave them buried.',
          'Krosis grieved for a thousand years. I hope he has stopped.']),
     'Morthal': (
-        ['The marsh hides its dead well. Fog, roots, black water... and the drowned walking out of all of it.',
+        ['The marsh hides its dead well. Fog, roots, black water... and red light falling into all of it.',
          'There is a brewer\'s hut at the marsh\'s edge. The swamp\'s dead come to drink, as if they remember thirst.'],
         ['Hevnoraak of Valthume. His own servants sealed him in his tomb to stop him rising.',
          'The seal could not hold against SLEN TIID VO. He walks out of the fog, and the drowned walk behind him.'],
@@ -230,7 +233,7 @@ CITY = {
          'Hevnoraak\'s servants were right to seal him. You finished what they started.']),
     'Dawnstar': (
         ['A cold harbour under a cold sky. The people here have been dreaming badly for a long time.',
-         'The miners cut quicksilver out of the hill. Tonight the dead have dug their own way up.'],
+         'The miners cut quicksilver out of the hill. Tonight the red light falls on the mouth of the mine.'],
         ['Vokun of High Gate. A priest of shadows. Dawnstar\'s dreamers dreamed his return a thousand years before it came.',
          'Kill him, and the nightmares end. He knows that. He will not make it easy.'],
         ['The harbour is frozen and still. Tonight, Dawnstar will sleep without dreaming.',
