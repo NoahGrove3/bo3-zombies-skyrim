@@ -245,6 +245,13 @@ def first_person(cls):
         print(cls, sx, 'first person:', stems)
 
 
+def zero_bounds():
+    """(2026-11-24: the sleeves culled in first person) every skinned shape's bounding sphere left empty, as Skyrim's own armour
+    keeps it (nifly works one out round the bind pose on save) - tools/modelconv/zerobounds.cpp"""
+    for f in list(OUT.glob('*/*.nif')):
+        subprocess.run([str(A.TOOLS / 'zerobounds'), str(f)], capture_output=True)
+
+
 if __name__ == '__main__':
     classes = [a for a in sys.argv[1:] if a in SETS] or list(SETS)
     if '--tiers-only' not in sys.argv:
@@ -252,7 +259,9 @@ if __name__ == '__main__':
             for o in ex.map(one, list(jobs(classes))): pass
     if '--first-person' in sys.argv:
         for cls in classes: first_person(cls)
+        zero_bounds()
         raise SystemExit
     made = {}
     for cls in classes: tiers(cls, made)
     for cls in classes: first_person(cls)
+    zero_bounds()
