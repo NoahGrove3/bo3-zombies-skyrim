@@ -1694,7 +1694,7 @@ namespace bo3z::Classes
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			const int cls = Get();
-			if (!p || cls < 0 || p->IsDead() || g_vo.since < 8.0f) return;
+			if (!p || cls < 0 || p->IsDead() || g_vo.since < 8.0f || !Settings::CharacterVoice()) return;  // (MCM: your voice lines off)
 			auto* base = p->GetActorBase();
 			const bool female = base && base->GetSex() == RE::SEX::kFemale;
 			std::vector<int> pick;
@@ -1708,7 +1708,7 @@ namespace bo3z::Classes
 			const int i = pick[static_cast<std::size_t>(std::rand()) % pick.size()];
 			last = i;
 			const auto& l = gen::kClassVo[i];
-			Audio::Ui(female ? l.female : l.male, 1.0f);
+			if (const float vol = Settings::CharacterVoiceVolume(); vol > 0.001f) Audio::Ui(female ? l.female : l.male, vol);  // (MCM: their volume)
 			{   // (Noah, 2026-11-23) its words in Edge UI's subtitle line, for as long as it is said (the wav: mono 44.1 kHz 16-bit)
 				std::error_code ec;
 				const auto bytes = std::filesystem::file_size("Data/Sound/fx/CurseOfAlduin/classvo/" + std::string(l.id) + (female ? "_female" : "_male") + ".wav", ec);

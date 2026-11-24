@@ -476,7 +476,7 @@ namespace bo3z::Eggs
 			} else if (!g_say.empty()) {
 				auto l = g_say.front();
 				g_say.pop_front();
-				Audio::Voice(l.snd);   // (one voice at a time: a card clicked cuts off the line before it)
+				Audio::Voice(l.snd, Settings::AltarVoiceVolume());   // (MCM: its volume)  (one voice at a time: a card clicked cuts off the line before it)
 				g_sayCard = l.card;
 				logger::info("eggs: the altar says \"{}\"", l.text);   // (Noah: "remove the subtitle cards when the altar is speaking so it's more cryptic")
 				Hud::Subtitle(l.text, l.secs + 0.4f);   // (Noah, 2026-11-23: its words in Edge UI's subtitle line - never a card)

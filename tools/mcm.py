@@ -95,6 +95,10 @@ PAGES = [
         header('Subtitles'),
         toggle('bSubtitles:Subtitles', 'Subtitles', 'The Echo Altar\'s voice and your character\'s lines written along the bottom of the screen, in Edge UI\'s subtitle line.'),
         slider('fSubtitleSize:Subtitles', 'Subtitle size', 'How big the subtitles are (1.00 = Edge UI\'s own size).', 0.5, 2.0, 0.05, '{2}x'),
+        header('Voices'),
+        toggle('bCharacterVoice:Voices', 'Character voice lines', 'Your character speaks at the night\'s big moments, in your class\'s own voice.'),
+        slider('fCharacterVoiceVolume:Voices', 'Character voice volume', 'How loud your character\'s voice lines are.', 0, 100, 5, '{0}%'),
+        slider('fAltarVoiceVolume:Voices', 'Echo Altar voice volume', 'How loud the voice that speaks from the Echo Altars is.', 0, 100, 5, '{0}%'),
     ]},
     {'pageDisplayName': '4. Controls', 'cursorFillMode': 'topToBottom', 'content': [
         header('Controller'),
@@ -132,6 +136,7 @@ DEFAULTS = {
     'Scout': {'bScout': 0},
     'Effects': {'bBlood': 1, 'fFogStrength': 1.0, 'bScreenShake': 1, 'bReduceFlashes': 0},
     'Subtitles': {'bSubtitles': 1, 'fSubtitleSize': 1.0},
+    'Voices': {'bCharacterVoice': 1, 'fCharacterVoiceVolume': 100.0, 'fAltarVoiceVolume': 100.0},
     'Difficulty': {'bFollowSkyrim': 1, 'fUndeadHealth': 1.0, 'fUndeadDamage': 1.0},
     'Keys': {'iShrineRoll': 2, 'iShrineReforge': 3, 'iShrineBless': 4, 'iShrineShout': 5, 'iShrineLeave': 14, 'iShrineBond': 6, 'iShrineBow': 48},
     'QuickLoot': {'bCloseInCombat': 0, 'bCloseOnEmpty': 1, 'fScale': 100.0, 'fHorizontal': 20.0, 'fVertical': 0.0},

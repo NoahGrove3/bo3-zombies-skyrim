@@ -245,7 +245,7 @@ namespace bo3z
 	{
 		enum class VoiceEvent { kIdle, kAttack, kHurt, kDeath };
 		void Ui(gen::Sound a_s, float a_vol = 1.0f);                                   // 2D (menus, your own casts)
-		void Voice(std::optional<gen::Sound> a_s);                                     // the intro narrator (one line at a time; nullopt stops it)
+		void Voice(std::optional<gen::Sound> a_s, float a_vol = 1.0f);                                     // the intro narrator (one line at a time; nullopt stops it)
 		void At(gen::Sound a_s, RE::TESObjectREFR* a_ref, float a_vol = 1.0f);         // 3D, follows the reference
 		void AtPoint(gen::Sound a_s, const RE::NiPoint3& a_at, float a_delay = 0.0f, float a_vol = 1.0f);
 		void Mine(gen::Sound a_s, const RE::NiPoint3& a_at, float a_vol = 1.0f);         // your own sound at a point (never held back by the horde's budget)
@@ -562,6 +562,9 @@ namespace bo3z
 		bool        ReduceFlashes();              // softer lightning, fewer white flashes
 		bool        Subtitles();                  // (MCM: View & Effects) the Echo Altar's voice and your character's lines subtitled
 		float       SubtitleSize();               // their size, 0.5 .. 2 (1 = Edge UI's own)
+		bool        CharacterVoice();             // (MCM: View & Effects, Voices) your character's voice lines on or off
+		float       CharacterVoiceVolume();       // their volume, 0 .. 1
+		float       AltarVoiceVolume();           // the Echo Altar's voice's volume, 0 .. 1
 		bool        PlayStationIcons();           // controller prompts drawn as PlayStation buttons (a PS5 pad looks like an Xbox one to Skyrim)
 		bool        DragonBankReverse();          // the dragon leans out of its turns instead of into them (Noah's choice)
 		bool        DragonInvertDive();           // forward pulls up, back dives
