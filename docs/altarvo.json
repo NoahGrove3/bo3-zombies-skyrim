@@ -949,7 +949,7 @@
      "gate": "class=alc&wonder_open",
      "ask": "Where does my path lead?",
      "lines": [
-      "Every element can be bottled. Brew the Philosopher's Stone... and the Mutagen Staff will answer you.",
+      "Every element can be bottled. Brew the Elixir of Aetherius... and the Mutagen Staff will answer you.",
       "One of the dead burns brighter than the rest. Break it with glass... and catch what falls."
      ]
     },
@@ -959,7 +959,7 @@
      "ask": "My wonder is won.",
      "lines": [
       "The Mutagen Staff. Six vials of the world's elements, poured through one orb.",
-      "The Philosopher's Stone was only ever a story. You made it true."
+      "The Elixir of Aetherius was only ever a story. You made it true."
      ]
     },
     {

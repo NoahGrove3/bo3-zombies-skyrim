@@ -498,7 +498,7 @@ namespace bo3z::Eggs
 		// open after 6 echo altars are free") each secret's sign, seen only by its own path once six altars are free:
 		//   the Ghost Pride      a lone spirit cat at night near a freed altar - follow it softly and it leads to a sabre cat's fang
 		//   the Eye of Magnus    once a night a star streaks over the freed city you're in - strike it with a spell; a shard falls
-		//   the Philosopher's Stone   once a night one of the dead burns gold - kill it with a flask and catch its essence
+		//   the Elixir of Aetherius   once a night one of the dead burns gold - kill it with a flask and catch its essence
 		//   the Slayer's Oath    a rusted blade in Helgen's ruins - lift it
 		// the thing found on the ground (fang, shard, essence) touched: the secret begins ----
 		struct Sign
@@ -1045,7 +1045,7 @@ namespace bo3z::Eggs
 						}
 						break;
 					}
-					// (The Philosopher's Stone) six of the dead, each wrapped in an element: only a flask of its own element frees its essence
+					// (The Elixir of Aetherius) six of the dead, each wrapped in an element: only a flask of its own element frees its essence
 					if (mech == "wrapped") {
 						if (!night) {
 							for (auto& m : g_live.marks) Gone(m.guard);
@@ -1382,7 +1382,7 @@ namespace bo3z::Eggs
 				logger::info("eggs: {} step {} waits in {}", gen::kEggs[e].id, Step(e) + 1, gen::kTowns[t]);
 			}
 		}
-		// (The Philosopher's Stone) the essences were taken by night: should dawn come before they reach the altar, they're spoilt
+		// (The Elixir of Aetherius) the essences were taken by night: should dawn come before they reach the altar, they're spoilt
 		if (Step(e) < gen::kEggs[e].nSteps && Mech(e, Step(e)) == "dawn") {
 			if (Director::NightNow()) {
 				g_dawnArmed = true;
@@ -1542,7 +1542,7 @@ namespace bo3z::Eggs
 			for (auto& m : g_live.marks) {
 				if (auto a = m.guard.get(); a && a->GetPosition().GetDistance(a_at) < 320.0f) g_flaskHit[a->GetFormID()] = a_element;
 			}
-		} else if (mech == "matriarch") {   // (The Philosopher's Stone) she drinks the same element twice
+		} else if (mech == "matriarch") {   // (The Elixir of Aetherius) she drinks the same element twice
 			auto b = g_live.boss.get();
 			if (!b || b->IsDead() || b->GetPosition().GetDistance(a_at) > 350.0f) return;
 			if (a_element == g_live.lastEl) {

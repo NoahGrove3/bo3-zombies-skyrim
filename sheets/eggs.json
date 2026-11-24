@@ -209,7 +209,7 @@
   {
    "id": "vortex",
    "cls": "ranger",
-   "title": "The Philosopher's Stone",
+   "title": "The Elixir of Aetherius",
    "reward": "wonder",
    "rewardText": "The Greybeards call you to High Hrothgar: the Mutagen Staff waits in the great hall.",
    "steps": [
@@ -281,7 +281,7 @@
      "row": "none",
      "dark": false,
      "hint": "The brew must not be shaken. Hold this altar against the dead, and do not bleed.",
-     "done": "The Stone is setting.",
+     "done": "The Elixir is settling.",
      "mech": "",
      "title": "The Steady Hand"
     },
@@ -305,8 +305,8 @@
     }
    ],
    "voice": "stone",
-   "open": "Every element can be bottled... even the curse. Brew the Philosopher's Stone, and the Mutagen Staff will be yours.",
-   "final": "The Stone is made. The Greybeards are calling. The Mutagen Staff waits at High Hrothgar."
+   "open": "Every element can be bottled... even the curse. Brew the Elixir of Aetherius, and the Mutagen Staff will be yours.",
+   "final": "The Elixir is brewed. The Greybeards are calling. The Mutagen Staff waits at High Hrothgar."
   },
   {
    "id": "slayer",
