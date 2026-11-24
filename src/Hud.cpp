@@ -6666,9 +6666,13 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// to use) Skyrim's crosshair kept hidden every frame, whether our HUD is up or off
 			// (2026-11-24: "this white dot that seems to stay there permanently" - Edge UI names its reticle plain "Crosshair",
 			// two small ticks left off the screen's middle by the over-the-shoulder camera: hidden with the rest)
+			// (2026-11-24, again: "the weird gold marks are back" - two small gold ticks hanging in the air: Skyrim's floating quest
+			// marker, Edge UI's look, over the quest's target - here Before the Storm's Jarl in Whiterun, shown once Riverwood's
+			// part was done) the floating markers hidden every frame; the compass still shows where a quest points
 			if (InGame()) {
 				if (auto hud = uiM ? uiM->GetMenu(RE::HUDMenu::MENU_NAME) : nullptr; hud && hud->uiMovie) {
-					for (const char* v : { "_root.HUDMovieBaseInstance.CrosshairInstance", "_root.HUDMovieBaseInstance.CrosshairAlert", "_root.HUDMovieBaseInstance.Crosshair" }) {
+					for (const char* v : { "_root.HUDMovieBaseInstance.CrosshairInstance", "_root.HUDMovieBaseInstance.CrosshairAlert", "_root.HUDMovieBaseInstance.Crosshair",
+						     "_root.HUDMovieBaseInstance.FloatingQuestMarkerInstance", "_root.HUDMovieBaseInstance.FloatingQuestMarker_mc" }) {
 						hud->uiMovie->SetVariable((std::string(v) + "._alpha").c_str(), RE::GFxValue(0.0));
 						hud->uiMovie->SetVariable((std::string(v) + "._visible").c_str(), RE::GFxValue(false));
 					}

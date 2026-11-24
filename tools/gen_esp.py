@@ -1687,7 +1687,10 @@ NAKED_TORSO = 0x000D67
 # (2026-11-24, Noah's first-person shot: the hands floating, the sleeves stopping short) a robe's or cuirass's sleeve below the
 # elbow is its mesh's forearm partition (34), its legs below the knee the calves (38): Skyrim draws a partition only where the
 # addon claims that slot, as its own robes' addons do (body, forearms, calves - 0x114); the armour itself still takes the body slot
-CS_AA_SLOT = {'robes': 0x114, 'cuirass': 0x114}
+# (Noah: "my legs are invisible too" - the robe's calves and the boots' own calf wraps) every piece's addon claims what
+# Skyrim's own addon for that mesh does: body+forearms+calves, the hood's hair, long hair and ears, the gauntlets' hands and
+# forearms, the boots' feet and calves
+CS_AA_SLOT = {'robes': 0x114, 'cuirass': 0x114, 'hood': 0x2802, 'gauntlets': 0x18, 'boots': 0x180}
 for _c, _ps in CLASS_SET.items():
     for _p in _ps:
         for _t in range(4):
