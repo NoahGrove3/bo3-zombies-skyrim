@@ -1884,23 +1884,21 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const bool   waveOn = s.nightActive && s.waves > 0 && s.sanctuary.empty();
 				const bool   ev = s.nightActive && s.nightEvent >= 0 && s.nightEvent < static_cast<int>(gen::kEvents.size());
 				const float  flash = std::clamp(roundFlash, 0.0f, 1.0f);
-				const ImU32  kBlood = IM_COL32(235, 70, 55, 240), kBloodSoft = IM_COL32(255, 140, 120, 235);
+				const ImU32  kBlood = IM_COL32(235, 70, 55, 240);
 				const float  cr = 15 * k, hh = cr * (flash > 0 ? 2.2f + 0.3f * flash : 2.2f);
 				const ImVec2 moon{ 24 * k + cr * 2.2f, 22 * k + cr * 2.2f };
 				const std::string num = std::to_string(s.round);
-				const std::string label = s.nightActive ? "NIGHT" : "NIGHTS SURVIVED";
 				const std::string wave = waveOn ? fmt::format("WAVE {} / {}", s.wave, s.waves) : std::string();
 				const std::string sub = !waveOn ? std::string() : s.waveRest > 0 ? fmt::format("Next wave in {:.0f}", std::ceil(s.waveRest)) : fmt::format("{} left to fall", std::max(0, s.waveLeft));
 				const std::string evLab = ev ? Upper(std::string(gen::kEvents[s.nightEvent].label)) : std::string();
-				const float tx = moon.x + cr + 22 * k;
-				// (Noah: tally marks for the night, "Tallies to 10, then numbers") nights 1-10 cut in blood, from 11 the numeral
-				const bool  tallies = s.round <= 10;
-				const float tH = 27 * k, tStep = 9.5f * k, tGap = 15 * k, tW = 2.7f * k;
-				const float numW = tallies ? BloodTallies(dl, {}, tH, tStep, tGap, tW, s.round, 1.0f, false, k, now, false) : Measure(g_num, 26 * k, num).x;
-				float w = tx + std::max({ numW + (waveOn ? 18 * k + Measure(g_title, 15 * k, wave).x : 0.0f), Measure(g_body, 11 * k, label).x + (ev ? 14 * k + Measure(g_body, 11 * k, evLab).x : 0.0f),
-				                          waveOn ? numW + 18 * k + Measure(g_body, 13 * k, sub).x : 0.0f });
+				// (Noah, 2026-11-24: "make the night survived engraved in the red moon instead of the tally marks next to the moon.
+				// Keep the wave and enemies left next to the red moon when a night is happening" - "Glowing ember", "Only during a
+				// night") the number burns in the moon's face; beside it only the night's wave and its dead still to fall
+				const float wx = moon.x + hh + 16 * k;
+				const float w = wx + (waveOn ? std::max({ Measure(g_title, 15 * k, wave).x, Measure(g_body, 13 * k, sub).x, ev ? Measure(g_body, 11 * k, evLab).x : 0.0f }) : 0.0f);
 				const float foot = moon.y + hh + (s.waveTheme.empty() || !waveOn ? 10 : 30) * k;
-				dl->AddRectFilledMultiColor({ 0, 0 }, { w + 70 * k, foot }, IM_COL32(0, 0, 0, 90), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 60));
+				if (waveOn) dl->AddRectFilledMultiColor({ 0, 0 }, { w + 70 * k, foot }, IM_COL32(0, 0, 0, 90), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 60));
+				else dl->AddCircleFilled(moon, hh * 1.6f, IM_COL32(0, 0, 0, 45), 40);
 				// the moon
 				if (g_moon) {
 					const int   fr = static_cast<int>(now * 24.0f) % 48;
@@ -1929,20 +1927,39 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						dl->PathStroke(Fade(done || cur ? IM_COL32(255, 80, 60, 255) : IM_COL32(140, 60, 55, 255), al), 0, (cur ? 3.5f : 2.5f) * k);
 					}
 				}
-				// the label (and the night's kind) over the number
-				Txt(dl, g_body, 11 * k, { tx + 1 * k, moon.y - 23 * k }, kBloodSoft, label, 1 * k, IM_COL32(0, 0, 0, 200));
-				if (ev) {
-					const auto  t = gen::kEvents[s.nightEvent].tint;
-					const ImU32 c = IM_COL32(std::min(255, static_cast<int>(((t >> 24) & 0xFF) * 1.6f) + 60), std::min(255, static_cast<int>(((t >> 16) & 0xFF) * 1.6f) + 60), std::min(255, static_cast<int>(((t >> 8) & 0xFF) * 1.6f) + 60), 255);
-					Txt(dl, g_body, 11 * k, { tx + 1 * k + Measure(g_body, 11 * k, label).x + 14 * k, moon.y - 23 * k }, c, evLab, 1 * k, IM_COL32(0, 0, 0, 200));
+				// the night's number, burning in the moon: an ember's halo breathing round it, its face molten - white-hot for a
+				// moment as a new night begins
+				{
+					const float px = hh * (num.size() <= 2 ? 1.12f : 0.82f);
+					const ImVec2 m = Measure(g_num, px, num);
+					const ImVec2 at{ moon.x - m.x * 0.5f, moon.y - m.y * 0.5f + px * 0.02f };
+					const float breathe = 0.78f + 0.22f * std::sin(now * 2.2f);
+					dl->AddCircleFilled(moon, hh * 0.62f, IM_COL32(255, 90, 20, static_cast<int>((26 + 40 * flash) * breathe)), 32);   // (the heat under it)
+					for (int ring = 0; ring < 2; ++ring) {
+						const float r = px * (ring ? 0.10f : 0.055f);
+						const ImU32 c = ring ? IM_COL32(255, 70, 15, 255) : IM_COL32(255, 120, 35, 255);
+						for (int i = 0; i < 12; ++i) {
+							const float an = i * 0.5236f;
+							dl->AddText(g_num, px, { at.x + std::cos(an) * r, at.y + std::sin(an) * r }, Fade(c, (ring ? 0.16f : 0.30f) * (breathe + flash)), num.c_str());
+						}
+					}
+					dl->AddText(g_num, px, { at.x + px * 0.035f, at.y + px * 0.045f }, IM_COL32(40, 6, 2, 210), num.c_str());   // (the cut: dark under the fire)
+					const ImU32 core = flash > 0 ? IM_COL32(255, static_cast<int>(175 + 70 * flash), static_cast<int>(80 + 130 * flash), 255) : IM_COL32(255, static_cast<int>(150 + 30 * breathe), 60, 255);
+					dl->AddText(g_num, px, at, core, num.c_str());
+					dl->PushClipRect({ at.x, at.y }, { at.x + m.x, at.y + m.y * 0.42f }, true);   // (its top hotter)
+					dl->AddText(g_num, px, at, Fade(IM_COL32(255, 225, 160, 255), 0.45f * breathe), num.c_str());
+					dl->PopClipRect();
 				}
-				if (tallies) BloodTallies(dl, { tx + tW, moon.y - 8 * k }, tH, tStep, tGap, tW, s.round, std::clamp(1.0f - (roundFlash - 1.5f), 0.0f, 1.0f), roundFlash > 0, k, now);
-				else Txt(dl, g_num, 26 * k, { tx, moon.y - 9 * k }, flash > 0 ? IM_COL32(255, 200, 185, 255) : kParch, num, flash > 0 ? 2 * k * flash + 1.2f * k : 1.2f * k, flash > 0 ? IM_COL32(220, 40, 25, 255) : IM_COL32(0, 0, 0, 220));
+				// beside it, only through a night: the night's kind, its wave, the dead still to fall
 				if (waveOn) {
-					const float wx = tx + numW + 18 * k;
-					Txt(dl, g_title, 15 * k, { wx, moon.y - 10 * k }, kParch, wave, 1 * k, IM_COL32(0, 0, 0, 200));
-					Txt(dl, g_body, 13 * k, { wx, moon.y + 7 * k }, kBlood, sub, 1 * k, IM_COL32(0, 0, 0, 200));
-					if (!s.waveTheme.empty()) Txt(dl, g_title, 13 * k, { tx, moon.y + hh + 4 * k }, s.waveThemeColor ? s.waveThemeColor : IM_COL32(255, 90, 60, 255), Upper(s.waveTheme), 1 * k, IM_COL32(0, 0, 0, 200));
+					if (ev) {
+						const auto  t = gen::kEvents[s.nightEvent].tint;
+						const ImU32 c = IM_COL32(std::min(255, static_cast<int>(((t >> 24) & 0xFF) * 1.6f) + 60), std::min(255, static_cast<int>(((t >> 16) & 0xFF) * 1.6f) + 60), std::min(255, static_cast<int>(((t >> 8) & 0xFF) * 1.6f) + 60), 255);
+						Txt(dl, g_body, 11 * k, { wx + 1 * k, moon.y - 27 * k }, c, evLab, 1 * k, IM_COL32(0, 0, 0, 200));
+					}
+					Txt(dl, g_title, 15 * k, { wx, moon.y - 12 * k }, kParch, wave, 1 * k, IM_COL32(0, 0, 0, 200));
+					Txt(dl, g_body, 13 * k, { wx, moon.y + 6 * k }, kBlood, sub, 1 * k, IM_COL32(0, 0, 0, 200));
+					if (!s.waveTheme.empty()) Txt(dl, g_title, 13 * k, { moon.x - hh, moon.y + hh + 4 * k }, s.waveThemeColor ? s.waveThemeColor : IM_COL32(255, 90, 60, 255), Upper(s.waveTheme), 1 * k, IM_COL32(0, 0, 0, 200));
 				}
 			}
 			if (!Hud::kEdgeHud && s.round > 0) {
@@ -2738,10 +2755,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					TxtC(dl, g_title, 24 * k, size.x * 0.5f, cy + 122 * k, Fade(kGold, a), "THU'UM LEARNED: " + s.revealName, 2 * k, Fade(col, 0.6f * a));
 				}
 			}
-			if (!s.sanctuary.empty()) {
-				TxtC(dl, g_title, 24 * k, size.x * 0.5f, 104 * k, Fade(kGold, 0.9f), "SANCTUARY OF " + s.sanctuary, 2 * k, IM_COL32(255, 220, 120, 255));
-				TxtC(dl, g_body, 16 * k, size.x * 0.5f, 134 * k, IM_COL32(220, 215, 200, 220), "The Echo Altar is awake here. The dead cannot rise.");
-			}
+			// (Noah, 2026-11-24: "the pop up where it says Sanctuary of X city on the top of my screen should be removed since it
+			// overlaps with my compass") no longer drawn: the compass's own "Curse Lifted" says it
 			// Kindling a ward-fire: a glowing gold ring round the crosshair that fills smoothly (the game sends the
 			// progress a few times a second; the ring runs on between, at the kindling's own pace)
 			{
@@ -6639,7 +6654,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						// and its crosshair to our dot
 						// (Noah: "remove the crosshair dot from the gameplay UI" - then "I can see the base Skyrim crosshair icon") gone in
 						// the Edge UI too: SkyHUD's dot is off (skyhud.txt bDotCrosshair=0) and Skyrim's own reticle hidden here
-						for (const char* v : { "_root.HUDMovieBaseInstance.CrosshairInstance", "_root.HUDMovieBaseInstance.CrosshairAlert" }) {
+						for (const char* v : { "_root.HUDMovieBaseInstance.CrosshairInstance", "_root.HUDMovieBaseInstance.CrosshairAlert", "_root.HUDMovieBaseInstance.Crosshair" }) {
 							hud->uiMovie->SetVariable((std::string(v) + "._alpha").c_str(), RE::GFxValue(0.0));
 							hud->uiMovie->SetVariable((std::string(v) + "._visible").c_str(), RE::GFxValue(false));
 						}
@@ -6649,9 +6664,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// (Noah: "I can see the old Skyrim cursor crosshair icon when I look at a certain angle on the altar" - with the HUD
 			// hidden for filming, the hiding above never ran, and Skyrim shows its reticle again each time it finds something
 			// to use) Skyrim's crosshair kept hidden every frame, whether our HUD is up or off
+			// (2026-11-24: "this white dot that seems to stay there permanently" - Edge UI names its reticle plain "Crosshair",
+			// two small ticks left off the screen's middle by the over-the-shoulder camera: hidden with the rest)
 			if (InGame()) {
 				if (auto hud = uiM ? uiM->GetMenu(RE::HUDMenu::MENU_NAME) : nullptr; hud && hud->uiMovie) {
-					for (const char* v : { "_root.HUDMovieBaseInstance.CrosshairInstance", "_root.HUDMovieBaseInstance.CrosshairAlert" }) {
+					for (const char* v : { "_root.HUDMovieBaseInstance.CrosshairInstance", "_root.HUDMovieBaseInstance.CrosshairAlert", "_root.HUDMovieBaseInstance.Crosshair" }) {
 						hud->uiMovie->SetVariable((std::string(v) + "._alpha").c_str(), RE::GFxValue(0.0));
 						hud->uiMovie->SetVariable((std::string(v) + "._visible").c_str(), RE::GFxValue(false));
 					}
@@ -6951,19 +6968,32 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				// (Noah, 2026-11-24: "the subtitles from the echo altar need to be centered with the screen") the line's own box set
 				// over the middle of what the screen shows (Edge UI's place for it sat off centre on the 16:10 screen, and the
 				// scaling moved it further)
+				// (2026-11-24, again: "the subtitles aren't centered with my screen" - Stage.visibleRect is not set in the HUD's
+				// movie, so the centring above never ran) the screen's middle in the movie's own units from the movie itself
 				{
-					RE::GFxValue holder, root, b, vr, vx, vw, x0, x1;
-					if (mv->GetVariable(&holder, kSubHolder) && holder.IsDisplayObject() && mv->GetVariable(&root, "_root") && mv->GetVariable(&vr, "Stage.visibleRect") && vr.IsObject() &&
-						vr.GetMember("x", &vx) && vr.GetMember("width", &vw) && vx.IsNumber() && vw.IsNumber()) {
-						RE::GFxValue tf;
+					const RE::GRectF vr = mv->GetVisibleFrameRect();
+					const double want = (static_cast<double>(vr.left) + vr.right) * 0.5;
+					RE::GFxValue holder, root, tf, b, x0, x1;
+					double mid = 0;
+					bool have = false;
+					if (mv->GetVariable(&holder, kSubHolder) && holder.IsDisplayObject() && mv->GetVariable(&root, "_root")) {
 						RE::GFxValue target = holder.GetMember("textField", &tf) && tf.IsDisplayObject() ? tf : holder;
-						if (target.Invoke("getBounds", &b, &root, 1) && b.IsObject() && b.GetMember("xMin", &x0) && b.GetMember("xMax", &x1) && x0.IsNumber() && x1.IsNumber()) {
-							const double mid = (x0.GetNumber() + x1.GetNumber()) * 0.5, want = vx.GetNumber() + vw.GetNumber() * 0.5;
-							const double hx = SubNum(mv, h + "._x", g_subBase.x);
-							mv->SetVariable((h + "._x").c_str(), RE::GFxValue(hx + (want - mid)));
-							static int told = 0;
-							if (told++ < 2) logger::info("subtitle: centred ({:.0f} -> {:.0f} of the screen's {:.0f}+{:.0f})", mid, want, vx.GetNumber(), vw.GetNumber());
+						if (target.Invoke("getBounds", &b, &root, 1) && b.IsObject() && b.GetMember("xMin", &x0) && b.GetMember("xMax", &x1) && x0.IsNumber() && x1.IsNumber() &&
+							x1.GetNumber() > x0.GetNumber()) {
+							mid = (x0.GetNumber() + x1.GetNumber()) * 0.5, have = true;
+						} else {   // (no bounds: the box by its own place and width, the HUD's own clip at the movie's origin)
+							const double hs = SubNum(mv, h + "._xscale", 100) / 100.0, fx = SubNum(mv, h + ".textField._x", 0), fw = SubNum(mv, h + ".textField._width", 0);
+							const double bx = SubNum(mv, "_root.HUDMovieBaseInstance._x", 0);
+							if (fw > 0) mid = bx + SubNum(mv, h + "._x", g_subBase.x) + (fx + fw * 0.5) * hs, have = true;
 						}
+					}
+					static int told = 0;
+					if (have && vr.right > vr.left) {
+						const double hx = SubNum(mv, h + "._x", g_subBase.x);
+						mv->SetVariable((h + "._x").c_str(), RE::GFxValue(hx + (want - mid)));
+						if (told++ < 3) logger::info("subtitle: centred ({:.0f} -> {:.0f}, the screen {:.0f}..{:.0f} in the movie)", mid, want, vr.left, vr.right);
+					} else if (told++ < 3) {
+						logger::warn("subtitle: could not centre (box found {}, screen {:.0f}..{:.0f})", have, vr.left, vr.right);
 					}
 				}
 			});

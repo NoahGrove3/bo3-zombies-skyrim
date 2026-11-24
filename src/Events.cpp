@@ -1039,6 +1039,12 @@ namespace bo3z
 						Gun::FangHit(t, a_event->flags.any(RE::TESHitEvent::Flag::kPowerAttack) || Gun::PlayerPowerAttack());
 					}
 				}
+				// (Tiny Terrors) a shrunk one falls to a single blow of yours, your summons' or your party's
+				if (a_event && a_event->target && a_event->cause) {
+					if (auto* t = a_event->target->As<RE::Actor>(); t && t != player) {
+						if (auto* by = a_event->cause->As<RE::Actor>()) Director::TinyStruck(t, by);
+					}
+				}
 				// (Noah: "my summons start to kill me if I am damaging them") your blow on your own summon: it doesn't hold it
 				// against you (just after the hit, when the fight it picked would begin)
 				if (a_event && player && a_event->cause.get() == player && a_event->target) {

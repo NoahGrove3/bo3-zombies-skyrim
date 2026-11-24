@@ -439,7 +439,7 @@ for n, (w, tr) in enumerate(DANCE_WORDS):
         sub('ETYP', struct.pack('<I', 0x025BEE)), sub('DESC', z('')), sub('SPIT', sp),
         sub('EFID', struct.pack('<I', fid('MGEF', 'shoutcast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 recs['SHOU'].append(record('SHOU', fid('SHOU', 'dance'), [sub('EDID', z('UN_Shout_dance')), sub('FULL', z('Tiny Terrors')),
-    sub('DESC', z("The dead within 60 m shrink to knee height for 20 s and hit like toddlers. Once a wave."))] +
+    sub('DESC', z("The common dead within 60 m shrink to knee height for 20 s, hit like toddlers and fall to a single blow. Dragons, elites and bosses are untouched. Once a wave."))] +
     [sub('SNAM', struct.pack('<IIf', fid('WOOP', f'dance_{n}'), fid('SPEL', f'dance_{n}'), 5.0)) for n in range(3)]))
 
 SCRAFT = {r['id']: r for r in S['spellcraft']['rows']}
@@ -1341,7 +1341,7 @@ def lore_text():
            "<b>VO</b> on Mount Anthor. Slay all three, wake every altar, and only his <b>Echo</b> is left, on the summit of the Throat of the World. End it, and the Curse is broken.</p>",
            "[pagebreak]", "<p align='center'><font size='24'>VI. The Voices of the Holds</font></p>",
            "<p><b>Whiterun</b>: <i>Dragon's Updraft</i>. A whirlwind lifts you high - and a dragon to carry you.</p>",
-           "<p><b>Solitude</b>: <i>Tiny Terrors</i>. The dead near you shrink to knee height for twenty seconds and hit like toddlers. Once a wave.</p>"]
+           "<p><b>Solitude</b>: <i>Tiny Terrors</i>. The common dead near you shrink to knee height for twenty seconds, hit like toddlers and fall to a single blow - dragons, elites and bosses are untouched. Once a wave.</p>"]
     out += [
             "[pagebreak]", f"<p>{S['curse']['freedAll']}</p>", "<p align='right'><i>- written in the silence of High Hrothgar</i></p>", "</font>"]
     return '\n'.join(out)

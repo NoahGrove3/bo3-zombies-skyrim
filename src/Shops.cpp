@@ -35,6 +35,10 @@ namespace bo3z
 		// (dev freeloop on a city not yet freed - Noah: "it's still missing the golden rune ... and the blue particles ... those should
 		// stay at the end of the echo altar's animation") the freed look shown there all the same, while the loop runs
 		std::array<bool, gen::kTowns.size()> g_devFreed{};
+		// (Noah, 2026-11-24: "make sure every echo alter is freed plays the freeing echo alter animation") a city freed while you
+		// were away from its altar (or freed at once by the dev command): its waking is owed, and plays the first time you come
+		// within 25 m of that altar
+		std::uint32_t g_pulseOwed = 0;
 		bool FreedLook(int a_town) { return Curse::Freed(a_town) || (a_town >= 0 && a_town < static_cast<int>(g_devFreed.size()) && g_devFreed[a_town]); }
 		std::vector<Spinner>                     g_spinners;
 		RE::ObjectRefHandle                      g_orbAim;  // the shrine whose orb is in the crosshair (Activate opens it)
@@ -2156,6 +2160,15 @@ namespace bo3z
 				h.pulseOn = false;
 				// (Noah: "the Echo Altar did not have the city being free animation" - its Dragon Priest fell 60 m away, as the clock
 				// leapt to dawn) the altar waits for you: its awakening plays once you're back within 25 m of it
+				if (!g_pulse && g_pulseOwed) {   // (a waking owed: the altar you have come to)
+					auto* pl = RE::PlayerCharacter::GetSingleton();
+					for (int t = 0; pl && t < static_cast<int>(gen::kTowns.size()) && !g_pulse; ++t) {
+						if (!(g_pulseOwed >> t & 1)) continue;
+						if (!Curse::Freed(t)) { g_pulseOwed &= ~(1u << t); continue; }
+						auto* r = Placed(t, 0);
+						if (r && r->Is3DLoaded() && pl->GetPosition().GetDistance(r->GetPosition()) < 2500.0f) FreedPulse(t);
+					}
+				}
 				if (g_pulse && !g_pulse->started) {
 					auto r = g_pulse->shrine.get();
 					auto* pl = RE::PlayerCharacter::GetSingleton();
@@ -2548,11 +2561,18 @@ namespace bo3z
 		void FreedPulse(int a_town)
 		{
 			auto* shrine = Placed(a_town, 0);
-			if (!shrine) {
-				for (std::size_t i = 0; i < gen::kLocations.size(); ++i)
-					if (gen::kLocations[i].town == a_town) g_dressed[i] = false;
+			if (!shrine || g_pulse) {   // (its altar not here, or another altar's waking playing: it waits for you)
+				if (a_town >= 0 && a_town < 32) g_pulseOwed |= 1u << a_town;
+				if (!shrine) {
+					for (std::size_t i = 0; i < gen::kLocations.size(); ++i)
+						if (gen::kLocations[i].town == a_town) g_dressed[i] = false;
+				}
+				logger::info("shops: {}'s altar will wake when you come to it", gen::kTowns[a_town]);
 				return;
 			}
+			if (a_town >= 0 && a_town < 32) g_pulseOwed &= ~(1u << a_town);
+			for (std::size_t i = 0; i < gen::kLocations.size(); ++i)   // (dressed again under the charge: the cursed look first, the freed one at the burst)
+				if (gen::kLocations[i].town == a_town) g_dressed[i] = false;
 			// the charge first (the burst and the freed look follow it: Tick) - once you are at the altar
 			EndBeams();
 			g_pulse = Pulse{ shrine->CreateRefHandle(), kPulseSeconds, a_town, false, false };

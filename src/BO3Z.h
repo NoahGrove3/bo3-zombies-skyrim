@@ -150,6 +150,7 @@ namespace bo3z
 	namespace Director
 	{
 		void LearnDance(bool a_announce);  // Tiny Terrors taught (Solitude freed, or the test kit)
+		bool  TinyStruck(RE::Actor* a_target, RE::Actor* a_by);  // (Tiny Terrors) a shrunk one struck by your side: dead in one blow (true: it was)
 		float TinyHitMult(RE::Actor* a_actor);  // (Tiny Terrors) a shrunk one's blow: a sixth; anyone else's: 1
 		void QuietWind();                   // (data loaded) the ambient wind 12 dB down
 		void ShoutLooks();                  // (data loaded) our shouts shown in the Magic menu as Skyrim's are

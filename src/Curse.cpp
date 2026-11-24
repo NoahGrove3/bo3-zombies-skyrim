@@ -540,7 +540,7 @@ namespace bo3z
 					it->t += a_delta;
 					if (it->t >= it->dur) {
 						g_taken.push_back({ it->b, 0 });
-						Audio::AtPoint(static_cast<gen::Sound>(static_cast<int>(gen::Sound::echo_tone_0) + std::rand() % 6), it->b, 0.0f, 0.3f);
+						Audio::Mine(static_cast<gen::Sound>(static_cast<int>(gen::Sound::echo_tone_0) + std::rand() % 6), it->b, 0.3f);   // (a bare point plays to no one: carried on you, as near as the stone is)
 						it = g_souls.erase(it);
 						continue;
 					}
@@ -1089,7 +1089,7 @@ namespace bo3z
 				RE::NiPoint3 stone = c + RE::NiPoint3{ 0, 0, 170.0f };
 				if (auto* alt = Shops::Placed(z, 0)) stone = alt->GetPosition() + RE::NiPoint3{ 0, 0, 170.0f };
 				SendSoul(at, stone);
-				if (g_wispT <= 0) Audio::AtPoint(gen::Sound::wisp_rise, at, 0.0f, 0.6f), g_wispT = 0.7f;
+				if (g_wispT <= 0) Audio::Mine(gen::Sound::wisp_rise, at, 0.6f), g_wispT = 0.7f;
 				g_ring.flash = 0;
 				if (++s.prog >= N(tr)) {
 					CompleteTrial(z);
@@ -1229,7 +1229,9 @@ namespace bo3z
 		void DevSet(int a_town, int a_value)
 		{
 			if (a_town < 0 || a_town >= static_cast<int>(gen::kCurseCities.size())) return;
+			const bool was = Get(a_town).freed;
 			SetValue(a_town, a_value);
+			if (!was && Get(a_town).freed) Shops::FreedPulse(a_town);   // (its waking still plays - at once if you are there, else when you come)
 			logger::info("dev: curse {} set to {}", gen::kTowns[a_town], a_value);
 		}
 		bool Freed(int a_town) { return a_town >= 0 && a_town < static_cast<int>(gen::kCurseCities.size()) && Get(a_town).freed; }

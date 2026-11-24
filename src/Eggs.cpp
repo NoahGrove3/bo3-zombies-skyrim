@@ -441,17 +441,25 @@ namespace bo3z::Eggs
 			}
 			g_talkPlaced = false;
 			const int town = Curse::ZoneTown();
-			if (auto* altar = town >= 0 ? Shops::Placed(town, 0) : nullptr) {
-				g_talkAt = altar->GetPosition() + RE::NiPoint3{ 0, 0, 150.0f };   // (the centre stone, about its middle)
+			// (Noah, 2026-11-24: "I can't hear the echo alters lines") a sound set at a bare point in the world plays to no one
+			// (the flasks' lesson, src/Audio.cpp Mine): it is carried on the altar itself - its centre stone - and follows it
+			auto* altar = town >= 0 ? Shops::Placed(town, 0) : nullptr;
+			auto* node = altar && altar->Is3DLoaded() ? altar->Get3D() : nullptr;
+			if (node) {
+				g_talkAt = altar->GetPosition() + RE::NiPoint3{ 0, 0, 150.0f };   // (the centre stone, about its middle: the distance read from here)
 				g_talkPlaced = true;
 				if (auto* som = RE::TESForm::LookupByID<RE::BGSSoundOutput>(0x00104D56)) g_talkH.SetOutputModel(som);   // SOMMono10000_verb
-				g_talkH.SetPosition(g_talkAt);
-			} else if (auto* som = RE::TESForm::LookupByID<RE::BGSSoundOutput>(0x000B75FB)) {
-				g_talkH.SetOutputModel(som);   // (no altar near: as the interface's own sound)
+				g_talkH.SetPosition(altar->GetPosition());
+				g_talkH.SetObjectToFollow(node);
+			} else if (auto* p = RE::PlayerCharacter::GetSingleton(); p && p->Get3D()) {
+				if (auto* som = RE::TESForm::LookupByID<RE::BGSSoundOutput>(0x000B75FB)) g_talkH.SetOutputModel(som);   // (no altar near: on you, as the interface's own sound)
+				g_talkH.SetPosition(p->GetPosition());
+				g_talkH.SetObjectToFollow(p->Get3D());
 			}
 			g_talkVol = a_vol;
 			TalkVolume();
-			g_talkH.Play();
+			if (!g_talkH.Play()) logger::warn("talk: {} would not start", a_rel);
+			else logger::info("talk: playing {} ({})", a_rel, node ? "from the altar's stone" : "on you");
 		}
 		std::deque<Said> g_say;
 		float            g_sayT = 0, g_whCd = 0;

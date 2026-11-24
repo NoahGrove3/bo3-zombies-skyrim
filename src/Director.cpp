@@ -4355,7 +4355,9 @@ namespace bo3z
 			for (auto& s : g_alive) {
 				auto a = s.handle.get();
 				if (!a || a->IsDead() || a->IsDisabled() || a->GetPosition().GetDistance(p->GetPosition()) > 4200.0f) continue;
-				if (IsBoss(a.get())) continue;   // (the Dragon Priests and the night's bosses stand their full height)
+				// (Noah, 2026-11-24: "only work for normal enemies not dragons elites or bosses") the Dragon Priests, the night's
+				// bosses and champions, every dragon and the elites stand their full height
+				if (IsBoss(a.get()) || IsGreat(a.get()) || IsElite(a.get()) || a->HasKeywordString("ActorTypeDragon")) continue;
 				const auto it = std::find_if(g_tiny.begin(), g_tiny.end(), [&](const Tiny& t) { return t.h.get().get() == a.get(); });
 				if (it != g_tiny.end()) { it->t = kTinySecs; ++n; continue; }
 				const float was = a->GetScale();
@@ -4373,6 +4375,21 @@ namespace bo3z
 				if (auto a = t.h.get(); a && !a->IsDisabled()) a->SetScale(t.scale);   // (grown back: dead or alive)
 			}
 			std::erase_if(g_tiny, [](const Tiny& t) { return t.t <= 0; });
+		}
+		// (Noah, 2026-11-24: "the small enemies die in one hit") a shrunk one struck by you or your side falls at once
+		bool TinyStruck(RE::Actor* a_target, RE::Actor* a_by)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!a_target || !p || a_target->IsDead() || !a_by || (a_by != p && !PlayerSide(a_by, p))) return false;
+			const bool tiny = std::any_of(g_tiny.begin(), g_tiny.end(), [&](const Tiny& t) { return t.t > 0 && t.h.get().get() == a_target; });
+			if (!tiny) return false;
+			auto* av = a_target->AsActorValueOwner();
+			const float hp = std::max(1.0f, av->GetActorValue(RE::ActorValue::kHealth));
+			av->DamageActorValue(RE::ActorValue::kHealth, hp + 1.0f);
+			if (!a_target->IsDead()) a_target->KillImpl(p, hp + 1.0f, true, false);
+			static int told = 0;
+			if (told++ < 5) logger::info("tiny terrors: a shrunk one struck down in one blow");
+			return true;
 		}
 		float TinyHitMult(RE::Actor* a_actor)
 		{
