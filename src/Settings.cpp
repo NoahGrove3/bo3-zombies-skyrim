@@ -19,6 +19,7 @@ namespace bo3z::Settings
 		float g_subSize = 1.0f;   // their size, against Edge UI's own
 		bool  g_classVo = true;   // (Noah, 2026-11-23) your character's voice lines
 		float g_classVoVol = 1.0f, g_altarVoVol = 1.0f;  // their volume, and the Echo Altar's voice's (0..1)
+		int   g_combatVo = 2;     // combat lines: 0 off, 1 rare, 2 normal, 3 often
 		float g_fog = 1.0f;
 		float g_adsSens = 1.0f;  // (Noah) the look's speed while aiming down sights, against Skyrim's own sensitivity
 		int   g_keys[kKeys] = { 0x02, 0x03, 0x04, 0x05, 0x0E, 0x06, 0x30 };
@@ -212,6 +213,7 @@ namespace bo3z::Settings
 			g_classVo = Read(L"Voices", L"bCharacterVoice", 1.0f) != 0.0f;
 			g_classVoVol = std::clamp(Read(L"Voices", L"fCharacterVoiceVolume", 100.0f), 0.0f, 100.0f) / 100.0f;
 			g_altarVoVol = std::clamp(Read(L"Voices", L"fAltarVoiceVolume", 100.0f), 0.0f, 100.0f) / 100.0f;
+			g_combatVo = static_cast<int>(std::clamp(std::round(Read(L"Voices", L"iCombatVoice", 2.0f)), 0.0f, 3.0f));
 			g_padPS = Read(L"Controls", L"bPlayStationIcons", 0.0f) != 0.0f;
 			g_bankRev = Read(L"Dragon", L"bBankReverse", 0.0f) != 0.0f;
 			g_diveInv = Read(L"Dragon", L"bInvertDive", 0.0f) != 0.0f;
@@ -292,6 +294,7 @@ namespace bo3z::Settings
 	bool  CharacterVoice() { Ensure(); return g_classVo; }
 	float CharacterVoiceVolume() { Ensure(); return g_classVoVol; }
 	float AltarVoiceVolume() { Ensure(); return g_altarVoVol; }
+	int   CombatVoice() { Ensure(); return g_combatVo; }
 	bool  PlayStationIcons() { Ensure(); return g_padPS; }
 	bool  DragonBankReverse() { Ensure(); return g_bankRev; }
 	bool  DragonInvertDive() { Ensure(); return g_diveInv; }

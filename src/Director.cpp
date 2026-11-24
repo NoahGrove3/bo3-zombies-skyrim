@@ -1331,6 +1331,7 @@ namespace bo3z
 				const float want = HealthFor(g_current) * gen::elite::healthMult * Settings::UndeadHealthMult();
 				av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kHealth, want - av->GetPermanentActorValue(RE::ActorValue::kHealth));
 				g_elites[actor->GetFormID()] = { actor->GetHandle(), 3.0f, 5.0f, false };
+				if (a_player && actor->GetPosition().GetDistance(a_player->GetPosition()) < 3500.0f) Classes::CombatSay(gen::VoTrigger::kElite, 1.2f);  // (an elite near you: your character's word on it)
 			}
 			g_ours[actor->GetFormID()] = *pick;
 			// (the audit: a combat style is shared - a vanilla human style edited here made followers and townsfolk fight

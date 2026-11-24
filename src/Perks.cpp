@@ -134,6 +134,7 @@ namespace bo3z
 			Forms::Play(gen::Sound::drink);
 			Hud::Banner(std::string(p.label), 3.0f);
 			logger::info("perk: {} granted", p.id);
+			Classes::VoiceSay(gen::VoTrigger::kPerk, 0.6f);
 			return true;
 		}
 		// (Noah: "the option to refund perks at 50% return") a brew given back at the altar: off you, half its price back
@@ -342,6 +343,7 @@ namespace bo3z
 			Forms::Play(gen::Sound::drink);
 			Hud::Banner("QUICK REVIVE  -  back on your feet (the draught is spent: its slot is open)", 4.0f);
 			logger::info("perk: quickrevive spent - a fall caught");
+			Classes::VoiceSay(gen::VoTrigger::kRevived, 0.8f);
 			return true;
 		}
 		float ReviveSecondsMult() { return Live(gen::kPerk_quickrevive) ? 1.0f - gen::kPerks[gen::kPerk_quickrevive].value : 1.0f; }

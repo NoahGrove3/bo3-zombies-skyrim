@@ -1054,7 +1054,7 @@ namespace bo3z
 					g_siege.stage = 2, g_siege.flying = w;
 					if (Settings::ScreenShake()) RE::ShakeCamera(0.6f, a_p->GetPosition(), 1.5f);
 					logger::info("words: {} - {} comes", W.word, W.bearerName);
-					Classes::VoiceSay(gen::VoTrigger::kDragon, 2.0f);
+					Classes::VoiceSay(w == kEchoRow ? gen::VoTrigger::kEchoAlduin : gen::VoTrigger::kDragon, 2.0f);  // (the Echo of Alduin has its own word)
 				} else {
 					g_siege.retry = 2.0f;
 				}
@@ -1094,6 +1094,7 @@ namespace bo3z
 				16.0f);
 			Hud::Banner(std::string(W.word) + " IS SILENCED - " + std::string(W.power), 8.0f);
 			logger::info("words: {} silenced ({} dragons left)", W.word, left);
+			Classes::VoiceSay(gen::VoTrigger::kWordSlain, 2.5f);
 		}
 
 		float g_slow = 0;

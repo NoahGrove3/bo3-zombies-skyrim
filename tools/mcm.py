@@ -98,6 +98,7 @@ PAGES = [
         header('Voices'),
         toggle('bCharacterVoice:Voices', 'Character voice lines', 'Your character speaks at the night\'s big moments, in your class\'s own voice.'),
         slider('fCharacterVoiceVolume:Voices', 'Character voice volume', 'How loud your character\'s voice lines are.', 0, 100, 5, '{0}%'),
+        stepper('iCombatVoice:Voices', 'Combat lines', 'How often your character speaks in the fight: a multi-kill, low health, an elite, out of magicka.', ['Off', 'Rare', 'Normal', 'Often']),
         slider('fAltarVoiceVolume:Voices', 'Echo Altar voice volume', 'How loud the voice that speaks from the Echo Altars is.', 0, 100, 5, '{0}%'),
     ]},
     {'pageDisplayName': '4. Controls', 'cursorFillMode': 'topToBottom', 'content': [
@@ -136,7 +137,7 @@ DEFAULTS = {
     'Scout': {'bScout': 0},
     'Effects': {'bBlood': 1, 'fFogStrength': 1.0, 'bScreenShake': 1, 'bReduceFlashes': 0},
     'Subtitles': {'bSubtitles': 1, 'fSubtitleSize': 1.0},
-    'Voices': {'bCharacterVoice': 1, 'fCharacterVoiceVolume': 100.0, 'fAltarVoiceVolume': 100.0},
+    'Voices': {'bCharacterVoice': 1, 'fCharacterVoiceVolume': 100.0, 'fAltarVoiceVolume': 100.0, 'iCombatVoice': 2},
     'Difficulty': {'bFollowSkyrim': 1, 'fUndeadHealth': 1.0, 'fUndeadDamage': 1.0},
     'Keys': {'iShrineRoll': 2, 'iShrineReforge': 3, 'iShrineBless': 4, 'iShrineShout': 5, 'iShrineLeave': 14, 'iShrineBond': 6, 'iShrineBow': 48},
     'QuickLoot': {'bCloseInCombat': 0, 'bCloseOnEmpty': 1, 'fScale': 100.0, 'fHorizontal': 20.0, 'fVertical': 0.0},

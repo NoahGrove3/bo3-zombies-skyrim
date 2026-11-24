@@ -139,6 +139,7 @@ namespace bo3z::Party
 
 		void Rise(float a_share, const char* a_why)
 		{
+			Classes::VoiceSay(gen::VoTrigger::kRevived, 1.0f);  // (your character, back on their feet)
 			auto* p = P();
 			auto& f = p->GetActorRuntimeData().boolFlags;
 			f.reset(RE::Actor::BOOL_FLAGS::kNoBleedoutRecovery);
@@ -275,10 +276,12 @@ namespace bo3z::Party
 			}
 			Stats::OnHurt();
 			logger::info("fallen: you fell (night {}, {} kills tonight) - no save is loaded, the wave begins again", line.night, line.kills);
+			Classes::VoiceSay(gen::VoTrigger::kDowned, 0.3f);
 			(void)p;
 		}
 		void SoloRise(RE::PlayerCharacter* p)
 		{
+			Classes::VoiceSay(gen::VoTrigger::kRevived, 1.2f);
 			Director::RestartWave();
 			Director::NormalTime();
 			auto& f = p->GetActorRuntimeData().boolFlags;
@@ -513,6 +516,7 @@ namespace bo3z::Party
 			Tablet::OnFell();   // (Noah: the donated weapon is lost if you fall)
 			// ("YOU ARE DOWN" is on the screen itself)
 			logger::info("party: down");
+			Classes::VoiceSay(gen::VoTrigger::kDowned, 0.3f);
 		}
 		if (g_life == Life::Down) {
 			HoldDown();
@@ -801,6 +805,11 @@ namespace bo3z::Party
 	}
 
 	// one of the other players (Skyrim Together's figure of them: near where they say they stand)
+	RE::Actor* FriendFigure(std::uint64_t a_steamId)
+	{
+		auto it = g_remote.find(a_steamId);
+		return it == g_remote.end() ? nullptr : Puppet(it->second);
+	}
 	bool IsFriend(RE::Actor* a_actor)
 	{
 		if (!a_actor || a_actor == RE::PlayerCharacter::GetSingleton()) {

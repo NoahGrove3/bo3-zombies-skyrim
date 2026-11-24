@@ -1241,6 +1241,7 @@ namespace bo3z::Classes
 		if (a_cls < 0 || a_cls >= 4 || g_wStep[a_cls] >= kWonderTaken) return;
 		g_wStep[a_cls] = kWonderWaiting;
 		GreybeardsCall();
+		VoiceSay(gen::VoTrigger::kWonder, 3.0f);
 		Stats::Note(Stats::kWonder);
 		Points::Add(3000);
 		Tasks::Later(2.5f, [a_cls] {
@@ -1678,7 +1679,7 @@ namespace bo3z::Classes
 	// 8 s; a line whose file isn't there yet is passed over (sheets/classvo.json, assets/sound/classvo) ----
 	namespace
 	{
-		struct VoiceState { float since = 999.0f, idle = 120.0f; int lastTown = -1; std::array<int, 16> last{}; std::unordered_map<int, float> entered; };
+		struct VoiceState { float since = 999.0f, idle = 120.0f, combat = 999.0f, lowArm = 0, emptyArm = 0; int lastTown = -1; std::array<int, 64> last{}; std::unordered_map<int, float> entered; RE::BSSoundHandle h; };
 		VoiceState g_vo;
 		bool VoFile(std::string_view a_id, bool a_female)
 		{
@@ -1689,6 +1690,40 @@ namespace bo3z::Classes
 			std::error_code ec;
 			const bool ok = std::filesystem::exists("Data/Sound/fx/CurseOfAlduin/classvo/" + key + ".wav", ec);
 			return known.emplace(key, ok).first->second;
+		}
+		// (Noah, 2026-11-23: the full set, 640 files) a class line played straight from its wav (640 sound records would not fit the light
+		// plugin), from the speaker's head: your own through Skyrim's own player-voice output, a friend's through a 3D voice heard to
+		// 20 m (SOMMono01400_verb: quiet at the edge, louder as you come closer)
+		RE::BSSoundHandle PlayLine(std::string_view a_id, bool a_female, RE::Actor* a_who, float a_vol, bool a_friend)
+		{
+			RE::BSSoundHandle h;
+			auto* am = RE::BSAudioManager::GetSingleton();
+			if (!am) return h;
+			const std::string file = std::string(a_id) + (a_female ? "_female" : "_male") + ".wav";
+			static int how = -1;  // which spelling of the path the game takes (found once, then kept)
+			static constexpr const char* kRoot[3] = { "Sound\\fx\\CurseOfAlduin\\classvo\\", "Data\\Sound\\fx\\CurseOfAlduin\\classvo\\", "fx\\CurseOfAlduin\\classvo\\" };
+			for (int k = how < 0 ? 0 : how; k < 3 && !h.IsValid(); k = how < 0 ? k + 1 : 3) {
+				RE::BSResource::ID id;
+				id.GenerateFromPath((std::string(kRoot[k]) + file).c_str());
+				am->GetSoundHandleByFile(h, id, 0x1A, 128);
+				if (h.IsValid() && how < 0) how = k, logger::info("voice: class lines play from '{}'", kRoot[k]);
+			}
+			if (!h.IsValid()) {
+				logger::warn("voice: {} could not be played", file);
+				return h;
+			}
+			const bool first = !a_friend && RE::PlayerCamera::GetSingleton() && RE::PlayerCamera::GetSingleton()->IsInFirstPerson();
+			// SOMMono01400_verb (a friend), SOMMono01400Player1st / Player3rd (you)
+			if (auto* som = RE::TESForm::LookupByID<RE::BGSSoundOutput>(a_friend ? 0x000D78B4 : first ? 0x000B4058 : 0x000428B6)) h.SetOutputModel(som);
+			if (a_who) {
+				auto* root = a_who->Get3D(false);
+				auto* head = root ? root->GetObjectByName("NPC Head [Head]") : nullptr;
+				if (head || root) h.SetObjectToFollow(head ? head : root);
+				else h.SetPosition(a_who->GetPosition() + RE::NiPoint3{ 0, 0, 110.0f });
+			}
+			h.SetVolume(a_vol);
+			h.Play();
+			return h;
 		}
 		void VoicePlay(gen::VoTrigger a_t)
 		{
@@ -1703,12 +1738,17 @@ namespace bo3z::Classes
 				if (l.cls == cls && l.trigger == a_t && VoFile(l.id, female)) pick.push_back(i);
 			}
 			if (pick.empty()) return;
-			int& last = g_vo.last[static_cast<int>(a_t) & 15];
+			int& last = g_vo.last[static_cast<int>(a_t) & 63];
 			if (pick.size() > 1) std::erase(pick, last);
 			const int i = pick[static_cast<std::size_t>(std::rand()) % pick.size()];
 			last = i;
 			const auto& l = gen::kClassVo[i];
-			if (const float vol = Settings::CharacterVoiceVolume(); vol > 0.001f) Audio::Ui(female ? l.female : l.male, vol);  // (MCM: their volume)
+			// (Noah, 2026-11-23: "spatial sound ... coming from my player's mouth") from your own head, and told to the party
+			if (const float vol = Settings::CharacterVoiceVolume(); vol > 0.001f) {
+				if (g_vo.h.IsValid()) g_vo.h.FadeOutAndRelease(150);
+				g_vo.h = PlayLine(l.id, female, p, vol, false);
+			}
+			Net::TellVoice(i, female);
 			{   // (Noah, 2026-11-23) its words in Edge UI's subtitle line, for as long as it is said (the wav: mono 44.1 kHz 16-bit)
 				std::error_code ec;
 				const auto bytes = std::filesystem::file_size("Data/Sound/fx/CurseOfAlduin/classvo/" + std::string(l.id) + (female ? "_female" : "_male") + ".wav", ec);
@@ -1719,6 +1759,32 @@ namespace bo3z::Classes
 			logger::info("voice: {} ({})", l.id, female ? "female" : "male");
 		}
 	}
+	// (Noah, 2026-11-23: "Combat lines get their own MCM slider, from Off to Often") a multi-kill, low health, an elite, out of
+	// magicka: said only so often, and only some of the time
+	void CombatSay(gen::VoTrigger a_trigger, float a_delay)
+	{
+		const int mode = Settings::CombatVoice();  // 0 off, 1 rare, 2 normal, 3 often
+		static constexpr float kGap[4] = { 0.0f, 45.0f, 25.0f, 12.0f };
+		static constexpr int   kChance[4] = { 0, 40, 70, 100 };
+		if (mode <= 0 || g_vo.combat < kGap[std::min(mode, 3)] || std::rand() % 100 >= kChance[std::min(mode, 3)]) return;
+		g_vo.combat = 0;
+		VoiceSay(a_trigger, a_delay);
+	}
+	// (Noah: "with other players they can hear me within 20 m, quiet, and gradually louder the closer the player is") a friend's line,
+	// from their figure's head
+	void HeardVoice(std::uint64_t a_from, int a_line, bool a_female)
+	{
+		if (!Settings::CharacterVoice() || a_line < 0 || a_line >= static_cast<int>(gen::kClassVo.size())) return;
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* who = Party::FriendFigure(a_from);
+		if (!p || !who || who->GetPosition().GetDistance(p->GetPosition()) > 1400.0f) return;
+		const auto& l = gen::kClassVo[a_line];
+		static std::unordered_map<std::uint64_t, RE::BSSoundHandle> playing;  // (one line a friend at a time)
+		auto& h = playing[a_from];
+		if (h.IsValid()) h.FadeOutAndRelease(150);
+		h = PlayLine(l.id, a_female, who, Settings::CharacterVoiceVolume(), true);
+		logger::info("voice: a friend's {} ({})", l.id, a_female ? "female" : "male");
+	}
 	void VoiceSay(gen::VoTrigger a_trigger, float a_delay)
 	{
 		if (a_delay <= 0.0f) { VoicePlay(a_trigger); return; }
@@ -1727,6 +1793,7 @@ namespace bo3z::Classes
 	void TickVoice(float a_delta)
 	{
 		g_vo.since += a_delta;
+		g_vo.combat += a_delta;
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		auto* ui = RE::UI::GetSingleton();
 		if (!p || (ui && ui->GameIsPaused())) return;
@@ -1740,6 +1807,16 @@ namespace bo3z::Classes
 			}
 		}
 		for (auto& [k, v] : g_vo.entered) v -= a_delta;
+		// in the night's fight: health below a quarter, or the last of your magicka spent (each said again only once it has come back)
+		if (Director::Fighting() && !p->IsDead()) {
+			auto*       av = p->AsActorValueOwner();
+			const float hp = av->GetActorValue(RE::ActorValue::kHealth) / std::max(1.0f, av->GetPermanentActorValue(RE::ActorValue::kHealth));
+			const float mp = av->GetActorValue(RE::ActorValue::kMagicka) / std::max(1.0f, av->GetPermanentActorValue(RE::ActorValue::kMagicka));
+			if (hp > 0.5f) g_vo.lowArm = 1;
+			else if (hp < 0.25f && hp > 0.0f && g_vo.lowArm > 0) g_vo.lowArm = 0, CombatSay(gen::VoTrigger::kLowhealth, 0.0f);
+			if (mp > 0.6f) g_vo.emptyArm = 1;
+			else if (mp < 0.05f && g_vo.emptyArm > 0) g_vo.emptyArm = 0, CombatSay(gen::VoTrigger::kEmpty, 0.0f);
+		}
 		// by day, with nothing going on for a minute and a half or more: an idle line
 		if (!Director::Fighting() && !p->IsInCombat()) {
 			if ((g_vo.idle -= a_delta) <= 0.0f) { g_vo.idle = 90.0f; VoicePlay(gen::VoTrigger::kIdle); }
