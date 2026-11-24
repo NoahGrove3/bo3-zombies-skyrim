@@ -630,8 +630,72 @@ namespace bo3z::Kit
 		if (c == 1 && ArmourTier(1) >= 2) av->RestoreActorValue(RE::ActorValue::kMagicka, av->GetPermanentActorValue(RE::ActorValue::kMagicka) * 0.012f);          // (Tier II: magicka comes back faster)
 	}
 	void TickMadGlow(float a_delta);
+	// (Noah, 2026-11-24: "The tier 3 armor set needs some animation special effects" - "Both") a Tier III set worn: its glowing
+	// trim and runes breathe (a slow swell and ebb, a flare as you cast or strike), and a light trail of wisps in the set's
+	// colour rises off you with a soft edge glow (Skyrim's enchantment shader: tools/gen_esp.py armglow, its second step)
+	void TickTierFx(float a_delta)
+	{
+		static float clock = 0, flare = 0, check = 0;
+		static int   wispCls = -1;
+		clock += a_delta;
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (!p || !p->Is3DLoaded()) return;
+		bool act = p->AsActorState()->GetAttackState() != RE::ATTACK_STATE_ENUM::kNone;
+		for (auto src : { RE::MagicSystem::CastingSource::kLeftHand, RE::MagicSystem::CastingSource::kRightHand }) {
+			if (auto* mc = p->GetMagicCaster(src); mc && (mc->state.get() == RE::MagicCaster::State::kCasting || mc->state.get() == RE::MagicCaster::State::kCharging)) act = true;
+		}
+		flare = act ? std::min(1.0f, flare + a_delta * 6.0f) : std::max(0.0f, flare - a_delta * 1.4f);
+		const float breath = 0.5f + 0.5f * std::sin(clock * 2.1f);   // (one breath every three seconds)
+		const float k = 0.5f + 0.7f * breath + 1.4f * flare;
+		int worn = -1;
+		static constexpr const char* kCls[4] = { "\\summoner\\", "\\destruction\\", "\\alchemist\\", "\\spellsword\\" };
+		for (const bool first : { false, true }) {
+			auto* root = p->Get3D(first);
+			if (!root) continue;
+			RE::BSVisit::TraverseScenegraphGeometries(root, [&](RE::BSGeometry* g) {
+				auto* lp = netimmerse_cast<RE::BSLightingShaderProperty*>(g->GetGeometryRuntimeData().shaderProperty.get());
+				auto* m = lp ? static_cast<RE::BSLightingShaderMaterialBase*>(lp->material) : nullptr;
+				auto* ts = m ? m->textureSet.get() : nullptr;
+				const char* d = ts ? ts->GetTexturePath(RE::BSTextureSet::Texture::kDiffuse) : nullptr;
+				if (!d) return RE::BSVisit::BSVisitControl::kContinue;
+				std::string path(d);
+				std::transform(path.begin(), path.end(), path.begin(), [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+				if (path.find("curseofalduin\\armour\\") == std::string::npos || !path.ends_with("_t3.dds")) return RE::BSVisit::BSVisitControl::kContinue;
+				for (int c = 0; c < 4; ++c) if (path.find(kCls[c]) != std::string::npos) worn = c;
+				lp->emissiveMult = 1.6f * k;   // (its own glow, 1.6, as tools/armoursets.py made it)
+				return RE::BSVisit::BSVisitControl::kContinue;
+			});
+		}
+		if ((check -= a_delta) > 0) return;
+		check = 1.0f;
+		auto* pl = RE::ProcessLists::GetSingleton();
+		auto shader = [](int c) -> RE::TESEffectShader* {
+			if (c < 0 || c > 3) return nullptr;
+			return RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kArmGlow[c * 6 + 1], gen::kPlugin);
+		};
+		if (wispCls != worn && wispCls >= 0 && pl) {   // (taken off, or another set put on: the old wisps end)
+			auto* old = shader(wispCls);
+			pl->ForEachShaderEffect([&](RE::ShaderReferenceEffect* e) {
+				if (e && e->effectData == old && e->target.get().get() == p) e->finished = true;
+				return RE::BSContainer::ForEachResult::kContinue;
+			});
+		}
+		wispCls = worn;
+		if (auto* fx = shader(worn); fx && pl) {
+			bool on = false;
+			pl->ForEachShaderEffect([&](RE::ShaderReferenceEffect* e) {
+				if (e && !e->finished && e->effectData == fx && e->target.get().get() == p) on = true;
+				return RE::BSContainer::ForEachResult::kContinue;
+			});
+			if (!on) {
+				p->ApplyEffectShader(fx, -1.0f);
+				logger::info("kit: the Tier III set's wisps rise ({})", Classes::Name(worn));
+			}
+		}
+	}
 	void Tick(float a_delta)
 	{
+		TickTierFx(a_delta);
 		// (co-op) your class, told to the party now and then; a party aura that came or went sets the spells' costs again
 		static float tell = 0;
 		if ((tell -= a_delta) <= 0) {
