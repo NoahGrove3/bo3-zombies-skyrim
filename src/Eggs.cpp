@@ -1710,6 +1710,8 @@ namespace bo3z::Eggs
 		float g_newFreedAt[10]{};          // when each city was seen to wake (this session): its priest just fell
 		bool  g_freedSeen[10]{}, g_freedInit = false;
 		int   g_talkVisit = -1;            // the altar talked at this visit (-1 none): its goodbye when you leave
+		int   g_greeted = -1;              // (Noah: "the Speak to the voice tab talks every time I click the drop down") greeted once a visit
+		int   g_nothingSaid = 0;           // the topics whose "nothing more" was said this visit (bits)
 		int   TalkPrompt(std::string_view a_id)
 		{
 			for (int i = 0; i < static_cast<int>(gen::kTalkPrompts.size()); ++i) if (gen::kTalkPrompts[i].id == a_id) return i;
@@ -1742,6 +1744,7 @@ namespace bo3z::Eggs
 			if (c == "always") return true;
 			if (c.starts_with("freed>=")) return freed >= num(7);
 			if (c.starts_with("freed<")) return freed < num(6);
+			if (c.starts_with("night>=")) return Save::Get(gen::kAV_round) >= num(7);   // (Noah: "it should follow the mod's progression")
 			if (c == "here_dark") return here && !Curse::Freed(a_town);
 			if (c == "here_free") return here && Curse::Freed(a_town);
 			if (c.starts_with("here=")) {
@@ -1836,6 +1839,8 @@ namespace bo3z::Eggs
 	void TalkOpen(int a_town)
 	{
 		// the greeting that fits best: a priest just fallen, then the hour at a dark altar, a freed one, then the story's stage
+		if (g_greeted == a_town) return;   // (once a visit: opening and shutting the section again says nothing)
+		g_greeted = a_town;
 		Interrupt();
 		g_talkVisit = a_town;
 		for (const char* id : { "greet_priest", "greet_night", "greet_dawn", "greet_end", "greet_freed", "greet_named", "greet_early", "greet_faint" }) {
@@ -1849,7 +1854,8 @@ namespace bo3z::Eggs
 	}
 	void TalkTopic(int a_town, int a_topic)
 	{
-		if (TalkRows(a_town, a_topic).empty() || TalkNew(a_town, a_topic) > 0) return;
+		if (TalkRows(a_town, a_topic).empty() || TalkNew(a_town, a_topic) > 0 || ((g_nothingSaid >> a_topic) & 1)) return;
+		g_nothingSaid |= 1 << a_topic;   // (once a visit)
 		if (const int p = TalkPrompt("nothing_new"); p >= 0) Interrupt(), SayTalk(p, false);   // (all of it heard: "nothing more... not yet")
 	}
 	void TalkAsk(int a_town, int a_prompt)
@@ -1863,9 +1869,12 @@ namespace bo3z::Eggs
 	}
 	void TalkBye(int a_town)
 	{
+		g_greeted = -1, g_nothingSaid = 0;
 		if (g_talkVisit < 0 || g_talkVisit != a_town) return;
 		g_talkVisit = -1;
-		Interrupt();
+		// (Noah: "when I exit the echo altar it cuts off whatever it was saying and plays the goodbye line") an answer still being
+		// said is let finish, with no goodbye after it; a goodbye only when he had fallen quiet
+		if (Speaking() >= 0) return;
 		if (const int p = TalkPrompt("bye"); p >= 0) SayTalk(p, false);
 	}
 	int TalkSaying()

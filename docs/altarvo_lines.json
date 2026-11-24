@@ -42,7 +42,7 @@
    "id": "av_greet_end_1",
    "group": "Greeting and farewell",
    "ask": "(opening the Talk row)",
-   "text": "[softly] ...still here, Dragonborn. Not for long, I think. Ask, while the stone still holds me."
+   "text": "[softly] Dragonborn. The echo is gone... but he is not. Ask, while the stones still carry me."
   },
   {
    "id": "av_greet_night_1",
@@ -462,19 +462,19 @@
    "id": "av_s_after_1",
    "group": "The story so far",
    "ask": "Is it over?",
-   "text": "[softly] The echo is gone from the sky. The mist is lifting... I can see the road to Sovngarde from here."
+   "text": "[softly] Here, it is. The echo is broken, and Skyrim's dead are sleeping again. The nights are only nights."
   },
   {
    "id": "av_s_after_2",
    "group": "The story so far",
    "ask": "Is it over?",
-   "text": "The dead of Skyrim are walking it. All of them. They are going home."
+   "text": "But the World-Eater himself still lives. Without his echo, he has nowhere left to hide... but Sovngarde."
   },
   {
    "id": "av_s_after_3",
    "group": "The story so far",
    "ask": "Is it over?",
-   "text": "The nights are only nights again, Dragonborn. You did that."
+   "text": "[tense] He will go there to feed on the souls of the dead. That is where the last fight waits for you."
   },
   {
    "id": "av_s_hall_1",
@@ -1452,19 +1452,19 @@
    "id": "av_v_after_1",
    "group": "Who the voice is",
    "ask": "What will happen to you now?",
-   "text": "[softly] The road is open. I can see Sovngarde's light from here... and someone with a golden hilt, waiting."
+   "text": "[softly] I go back into the mist, to wait with the others. A golden hilt... and one eye. They are there. I can feel them."
   },
   {
    "id": "av_v_after_2",
    "group": "Who the voice is",
    "ask": "What will happen to you now?",
-   "text": "I will walk it soon. The stones will stay. Their voice will be quieter without me."
+   "text": "When you come to Sovngarde, we will be waiting. Three old voices, ready to shout beside you one more time."
   },
   {
    "id": "av_v_after_3",
    "group": "Who the voice is",
    "ask": "What will happen to you now?",
-   "text": "[softly] Thank you, Dragonborn. Go well."
+   "text": "[softly] Thank you, Dragonborn. Until Sovngarde."
   },
   {
    "id": "echo_pride_open",

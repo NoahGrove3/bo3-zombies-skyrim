@@ -40,7 +40,7 @@
      "gate": "echo_slain",
      "ask": "(opening the Talk row)",
      "lines": [
-      "[softly] ...still here, Dragonborn. Not for long, I think. Ask, while the stone still holds me."
+      "[softly] Dragonborn. The echo is gone... but he is not. Ask, while the stones still carry me."
      ]
     },
     {
@@ -115,7 +115,7 @@
     },
     {
      "id": "s_dead",
-     "gate": "always",
+     "gate": "night>=2",
      "ask": "Why do the dead come back?",
      "lines": [
       "His shout hangs like a mist over every road the dead walk. Shor's hall, Arkay's mercy, whatever waits for them... none of them can pass it.",
@@ -124,7 +124,7 @@
     },
     {
      "id": "s_beams",
-     "gate": "always",
+     "gate": "night>=2",
      "ask": "What are the red beams in the sky?",
      "lines": [
       "The dead, falling. Turned back from Sovngarde, and thrown down wherever his voice is strongest.",
@@ -151,7 +151,7 @@
     },
     {
      "id": "s_me",
-     "gate": "always",
+     "gate": "night>=4",
      "ask": "Why can I do this?",
      "lines": [
       "You have a dragon's soul in a mortal's body. When you kill one of the dead, the stone hears it the way it hears a shout.",
@@ -160,7 +160,7 @@
     },
     {
      "id": "s_essence",
-     "gate": "always",
+     "gate": "night>=3",
      "ask": "What is the Cursed Essence?",
      "lines": [
       "What is left of his shout in the dead. When they fall, it comes out of them... and it comes to you.",
@@ -169,7 +169,7 @@
     },
     {
      "id": "s_fall",
-     "gate": "always",
+     "gate": "night>=3",
      "ask": "What happens if I fall?",
      "lines": [
       "The dead will drag you down. If anyone stands with you, they can lift you again. If no one does... [pause] the night ends without you.",
@@ -178,7 +178,7 @@
     },
     {
      "id": "s_tablet",
-     "gate": "freed>=1",
+     "gate": "freed>=1&night>=3",
      "ask": "What is the Tablet of Mysteries?",
      "lines": [
       "An old thing, and a strange one. The Tongues left weapons with it that they did not want to keep.",
@@ -187,7 +187,7 @@
     },
     {
      "id": "s_shouts",
-     "gate": "freed>=2",
+     "gate": "freed>=2&night>=4",
      "ask": "Why do the cities teach me shouts?",
      "lines": [
       "Every freed city remembers a little of the Voice. They teach it to the one who freed them.",
@@ -214,7 +214,7 @@
     },
     {
      "id": "s_priests",
-     "gate": "freed>=2",
+     "gate": "freed>=3",
      "ask": "Who are the Dragon Priests?",
      "lines": [
       "Men who served the dragons when the dragons ruled. They wore masks of the dragons' faces, and took the dragons' power.",
@@ -355,9 +355,9 @@
      "gate": "echo_slain",
      "ask": "Is it over?",
      "lines": [
-      "[softly] The echo is gone from the sky. The mist is lifting... I can see the road to Sovngarde from here.",
-      "The dead of Skyrim are walking it. All of them. They are going home.",
-      "The nights are only nights again, Dragonborn. You did that."
+      "[softly] Here, it is. The echo is broken, and Skyrim's dead are sleeping again. The nights are only nights.",
+      "But the World-Eater himself still lives. Without his echo, he has nowhere left to hide... but Sovngarde.",
+      "[tense] He will go there to feed on the souls of the dead. That is where the last fight waits for you."
      ]
     },
     {
@@ -387,7 +387,7 @@
     },
     {
      "id": "c_day",
-     "gate": "here_dark&day",
+     "gate": "here_dark&day&night>=2",
      "ask": "Why wait for nightfall?",
      "lines": [
       "The dead sleep in the day, and the trials are for the dead. Come back when the sun goes down."
@@ -439,7 +439,7 @@
     },
     {
      "id": "c_riverwood_what",
-     "gate": "here=riverwood&here_dark",
+     "gate": "here=riverwood&here_dark&night>=2",
      "ask": "What happened to Riverwood?",
      "lines": [
       "Helgen is just over the hill, where the dragon first broke the sky over you. This valley's dead were the first to hear his shout.",
@@ -474,7 +474,7 @@
     },
     {
      "id": "c_whiterun_what",
-     "gate": "here=whiterun&here_dark",
+     "gate": "here=whiterun&here_dark&night>=2",
      "ask": "What happened to Whiterun?",
      "lines": [
       "Whiterun was built around a dragon's cage. Its Hall of the Dead lies under the Jarl's, and its beds are empty.",
@@ -509,7 +509,7 @@
     },
     {
      "id": "c_solitude_what",
-     "gate": "here=solitude&here_dark",
+     "gate": "here=solitude&here_dark&night>=2",
      "ask": "What happened to Solitude?",
      "lines": [
       "The capital. Its crypts are older than its walls, and the Blue Palace stands over them.",
@@ -544,7 +544,7 @@
     },
     {
      "id": "c_windhelm_what",
-     "gate": "here=windhelm&here_dark",
+     "gate": "here=windhelm&here_dark&night>=2",
      "ask": "What happened to Windhelm?",
      "lines": [
       "The oldest city of men. Ysgramor's stone, and the snow that never leaves the palace of kings.",
@@ -579,7 +579,7 @@
     },
     {
      "id": "c_markarth_what",
-     "gate": "here=markarth&here_dark",
+     "gate": "here=markarth&here_dark&night>=2",
      "ask": "What happened to Markarth?",
      "lines": [
       "The deep elves carved this city out of the cliff, and the cliffs bleed silver. The dead here are older than the Nords.",
@@ -614,7 +614,7 @@
     },
     {
      "id": "c_riften_what",
-     "gate": "here=riften&here_dark",
+     "gate": "here=riften&here_dark&night>=2",
      "ask": "What happened to Riften?",
      "lines": [
       "A city of thieves and green water. Red light falls into the canal now, and the drowned come down in it. Nobody sees them coming.",
@@ -649,7 +649,7 @@
     },
     {
      "id": "c_falkreath_what",
-     "gate": "here=falkreath&here_dark",
+     "gate": "here=falkreath&here_dark&night>=2",
      "ask": "What happened to Falkreath?",
      "lines": [
       "More dead than living lie in this town's earth. Tonight they are restless in their rows.",
@@ -684,7 +684,7 @@
     },
     {
      "id": "c_morthal_what",
-     "gate": "here=morthal&here_dark",
+     "gate": "here=morthal&here_dark&night>=2",
      "ask": "What happened to Morthal?",
      "lines": [
       "The marsh hides its dead well. Fog, roots, black water... and red light falling into all of it.",
@@ -719,7 +719,7 @@
     },
     {
      "id": "c_dawnstar_what",
-     "gate": "here=dawnstar&here_dark",
+     "gate": "here=dawnstar&here_dark&night>=2",
      "ask": "What happened to Dawnstar?",
      "lines": [
       "A cold harbour under a cold sky. The people here have been dreaming badly for a long time.",
@@ -754,7 +754,7 @@
     },
     {
      "id": "c_winterhold_what",
-     "gate": "here=winterhold&here_dark",
+     "gate": "here=winterhold&here_dark&night>=2",
      "ask": "What happened to Winterhold?",
      "lines": [
       "What is left of a city the sea took. The College stands across the bridge, and the town does not trust it.",
@@ -807,7 +807,7 @@
     },
     {
      "id": "k_change",
-     "gate": "freed>=1&class=any",
+     "gate": "freed>=2&class=any",
      "ask": "Can I change my path?",
      "lines": [
       "The stone will let you. It will cost you fifty thousand of the essence the dead leave behind.",
@@ -816,7 +816,7 @@
     },
     {
      "id": "k_sum_seen",
-     "gate": "class=sum",
+     "gate": "class=sum&night>=2",
      "ask": "What do you see in me?",
      "lines": [
       "You call things to fight for you, and they come. The Tongues had a word for people like you. It was not a kind word.",
@@ -825,7 +825,7 @@
     },
     {
      "id": "k_sum_craft",
-     "gate": "class=sum",
+     "gate": "class=sum&night>=3",
      "ask": "Teach me of the Summoner's craft.",
      "lines": [
       "Let your servants hold the line. You are the one who must not fall. Without you, they go back where they came from.",
@@ -834,7 +834,7 @@
     },
     {
      "id": "k_sum_sleep",
-     "gate": "class=sum&wonder_sleeps",
+     "gate": "class=sum&wonder_sleeps&freed>=1",
      "ask": "Is there a wonder for my path?",
      "lines": [
       "There is. The Soulcaller's Staff. But it sleeps, and it will not wake until six stones are free."
@@ -868,7 +868,7 @@
     },
     {
      "id": "k_des_seen",
-     "gate": "class=des",
+     "gate": "class=des&night>=2",
      "ask": "What do you see in me?",
      "lines": [
       "Fire. Frost. Storm. You do not ask the dead to sleep. You make them.",
@@ -877,7 +877,7 @@
     },
     {
      "id": "k_des_craft",
-     "gate": "class=des",
+     "gate": "class=des&night>=3",
      "ask": "Teach me of the Destruction mage's craft.",
      "lines": [
       "Your power is in your magicka, and your magicka runs out. Never let the dead catch you empty.",
@@ -886,7 +886,7 @@
     },
     {
      "id": "k_des_sleep",
-     "gate": "class=des&wonder_sleeps",
+     "gate": "class=des&wonder_sleeps&freed>=1",
      "ask": "Is there a wonder for my path?",
      "lines": [
       "There is. The Wyrmspine Javelin. But it sleeps, and it will not wake until six stones are free."
@@ -920,7 +920,7 @@
     },
     {
      "id": "k_alc_seen",
-     "gate": "class=alc",
+     "gate": "class=alc&night>=2",
      "ask": "What do you see in me?",
      "lines": [
       "You bottle what the rest of us fear. Fire in glass, frost in glass... [softly] even, one day, the curse itself.",
@@ -929,7 +929,7 @@
     },
     {
      "id": "k_alc_craft",
-     "gate": "class=alc",
+     "gate": "class=alc&night>=3",
      "ask": "Teach me of the Alchemist's craft.",
      "lines": [
       "Your flasks are your strength. Know which element the dead fear, and give them that one.",
@@ -938,7 +938,7 @@
     },
     {
      "id": "k_alc_sleep",
-     "gate": "class=alc&wonder_sleeps",
+     "gate": "class=alc&wonder_sleeps&freed>=1",
      "ask": "Is there a wonder for my path?",
      "lines": [
       "There is. The Mutagen Staff. But it sleeps, and it will not wake until six stones are free."
@@ -972,7 +972,7 @@
     },
     {
      "id": "k_ssw_seen",
-     "gate": "class=ssw",
+     "gate": "class=ssw&night>=2",
      "ask": "What do you see in me?",
      "lines": [
       "Steel in one hand, a spell in the other. You fight the way the first Tongues fought, before they had the Voice.",
@@ -981,7 +981,7 @@
     },
     {
      "id": "k_ssw_craft",
-     "gate": "class=ssw",
+     "gate": "class=ssw&night>=3",
      "ask": "Teach me of the Spellsword's craft.",
      "lines": [
       "Your blade carries your spell. Choose the spell before you choose the fight.",
@@ -990,7 +990,7 @@
     },
     {
      "id": "k_ssw_sleep",
-     "gate": "class=ssw&wonder_sleeps",
+     "gate": "class=ssw&wonder_sleeps&freed>=1",
      "ask": "Is there a wonder for my path?",
      "lines": [
       "There is. The Dragon Slayer. But it sleeps, and it will not wake until six stones are free."
@@ -1065,7 +1065,7 @@
     },
     {
      "id": "v_old",
-     "gate": "freed>=2",
+     "gate": "freed>=3",
      "ask": "How old are these stones?",
      "lines": [
       "Older than your Empire. Older than the first Nord kings. They were raised while dragons still ruled the sky.",
@@ -1173,7 +1173,7 @@
     },
     {
      "id": "v_deadwant",
-     "gate": "freed>=2",
+     "gate": "freed>=2&night>=5",
      "ask": "What do the dead want?",
      "lines": [
       "To go home. Nothing more. They are not cruel... they are lost, and the World-Eater's voice is all they can hear.",
@@ -1185,9 +1185,9 @@
      "gate": "echo_slain",
      "ask": "What will happen to you now?",
      "lines": [
-      "[softly] The road is open. I can see Sovngarde's light from here... and someone with a golden hilt, waiting.",
-      "I will walk it soon. The stones will stay. Their voice will be quieter without me.",
-      "[softly] Thank you, Dragonborn. Go well."
+      "[softly] I go back into the mist, to wait with the others. A golden hilt... and one eye. They are there. I can feel them.",
+      "When you come to Sovngarde, we will be waiting. Three old voices, ready to shout beside you one more time.",
+      "[softly] Thank you, Dragonborn. Until Sovngarde."
      ]
     }
    ]

@@ -10,7 +10,7 @@ Every prompt has a gate (when it is in the list) and one or more voiced lines (s
     wonder_sleeps / wonder_open / wonder_won   your class's wonder: before six cities, its quest under way, in your hands
     wonders_all          all four wonders won (the dragons wake)          slain_slen / slain_tiid / slain_vo   a word dragon dead
     echo_awake           the three dragons dead, the Echo not yet          echo_slain   the curse broken
-    party                more than one player in the party
+    party                more than one player in the party            night>=N   the night you're on (Noah: questions follow the story)
 joined with '&'; 'city' prompts are written once per city ({city} rows) plus the shared trial rows.
 
     python3 tools/altarvo_script.py  ->  docs/altarvo.json  (+ a count of lines and characters to send to ElevenLabs)"""
@@ -42,7 +42,7 @@ ask('greet_named', 'freed>=6&echo_slain=0', '(opening the Talk row)',
     '[softly] Dragonborn. Felldir hears you. What would you know?',
     'You have done more than I hoped. Speak, and I will listen.')
 ask('greet_end', 'echo_slain', '(opening the Talk row)',
-    '[softly] ...still here, Dragonborn. Not for long, I think. Ask, while the stone still holds me.')
+    '[softly] Dragonborn. The echo is gone... but he is not. Ask, while the stones still carry me.')
 ask('greet_night', 'night&here_dark', '(opening the Talk row at night, the city still dark)',
     '[urgent whisper] The dead are walking. Be quick... they do not wait for talk.')
 ask('greet_dawn', 'day&here_dark', '(opening the Talk row by day, the city still dark)',
@@ -67,10 +67,10 @@ ask('s_what', 'always', 'What has happened to Skyrim?',
     '[softly] Helgen burned. The World-Eater flew north over the smoke... and as he flew, he shouted into the earth.',
     'Three words. SLEN... TIID... VO. Flesh. Time. Undo. The shout he raises his dragons with.',
     'But this time it fell on every grave in Skyrim. And every grave heard it.')
-ask('s_dead', 'always', 'Why do the dead come back?',
+ask('s_dead', 'night>=2', 'Why do the dead come back?',
     'His shout hangs like a mist over every road the dead walk. Shor\'s hall, Arkay\'s mercy, whatever waits for them... none of them can pass it.',
     '[sad] They try, every night. The mist turns them back... and his voice throws them down to Skyrim again, as red light out of the sky.')
-ask('s_beams', 'always', 'What are the red beams in the sky?',
+ask('s_beams', 'night>=2', 'What are the red beams in the sky?',
     'The dead, falling. Turned back from Sovngarde, and thrown down wherever his voice is strongest.',
     '[tense] The red lightning is worse. That is how the strong ones come... the ones his voice holds tightest.')
 ask('s_altars', 'always', 'What are these altars?',
@@ -79,19 +79,19 @@ ask('s_altars', 'always', 'What are these altars?',
 ask('s_how', 'freed<2', 'How do I wake an altar?',
     '[whispers] ...four trials... at night... the dead... the stone will show you...',
     '...one city at a time... and then I will be clearer...')
-ask('s_me', 'always', 'Why can I do this?',
+ask('s_me', 'night>=4', 'Why can I do this?',
     'You have a dragon\'s soul in a mortal\'s body. When you kill one of the dead, the stone hears it the way it hears a shout.',
     'The Tongues would have given anything to be what you are. [softly] Do not waste it.')
-ask('s_essence', 'always', 'What is the Cursed Essence?',
+ask('s_essence', 'night>=3', 'What is the Cursed Essence?',
     'What is left of his shout in the dead. When they fall, it comes out of them... and it comes to you.',
     'The stone can make it into steel, and spells, and brews. Spend it. It does no good in your pocket.')
-ask('s_fall', 'always', 'What happens if I fall?',
+ask('s_fall', 'night>=3', 'What happens if I fall?',
     'The dead will drag you down. If anyone stands with you, they can lift you again. If no one does... [pause] the night ends without you.',
     'Do not let it. I have lost enough people to the dark.')
-ask('s_tablet', 'freed>=1', 'What is the Tablet of Mysteries?',
+ask('s_tablet', 'freed>=1&night>=3', 'What is the Tablet of Mysteries?',
     'An old thing, and a strange one. The Tongues left weapons with it that they did not want to keep.',
     'Feed it the essence, and it will give you one. It does not tell you which. [softly] Neither will I.')
-ask('s_shouts', 'freed>=2', 'Why do the cities teach me shouts?',
+ask('s_shouts', 'freed>=2&night>=4', 'Why do the cities teach me shouts?',
     'Every freed city remembers a little of the Voice. They teach it to the one who freed them.',
     'Use them. A shout is a weapon the dead cannot answer.')
 ask('s_two', 'freed>=2&freed<4', 'What has changed?',
@@ -100,7 +100,7 @@ ask('s_two', 'freed>=2&freed<4', 'What has changed?',
 ask('s_cities', 'freed>=2&freed<6', 'Why one city at a time?',
     'Each altar answers for its own hold. The dead of Whiterun do not care that Riverwood sleeps.',
     'And each city has its keeper. A priest who swore an oath to the World-Eater... and remembers it.')
-ask('s_priests', 'freed>=2', 'Who are the Dragon Priests?',
+ask('s_priests', 'freed>=3', 'Who are the Dragon Priests?',
     'Men who served the dragons when the dragons ruled. They wore masks of the dragons\' faces, and took the dragons\' power.',
     '[bitter] When the shout came, every one of them woke with his oath still in his mouth. They keep the altars dark for their master.',
     'Break a city\'s seals, and its priest must come out to face you.')
@@ -149,9 +149,9 @@ ask('s_echo_how', 'echo_awake', 'How do I beat the Echo?',
     'Bring everything you have earned. The wonder. The words you took from the three. And anyone who will stand with you.',
     'It will call the dead of all Skyrim to the summit. Do not let them pull you away from it.')
 ask('s_after', 'echo_slain', 'Is it over?',
-    '[softly] The echo is gone from the sky. The mist is lifting... I can see the road to Sovngarde from here.',
-    'The dead of Skyrim are walking it. All of them. They are going home.',
-    'The nights are only nights again, Dragonborn. You did that.')
+    '[softly] Here, it is. The echo is broken, and Skyrim\'s dead are sleeping again. The nights are only nights.',
+    'But the World-Eater himself still lives. Without his echo, he has nowhere left to hide... but Sovngarde.',
+    '[tense] He will go there to feed on the souls of the dead. That is where the last fight waits for you.')
 ask('s_hall', 'echo_slain', 'What is the Hall of the Awakened?',
     'A room beneath High Hrothgar that opened when the echo broke. The Tongues built it for whoever ended this.',
     'It is yours now. Go and see it.')
@@ -161,7 +161,7 @@ topic('city', 'This city', "About the city the altar stands in: its dead, its Dr
 ask('c_trials', 'here_dark', 'How do I wake this altar?',
     'Four trials, in order, and only at night. Lay its restless dead to rest. Follow the whisper. Repeat the echo. Break the seals.',
     'You need not finish them in one night. The stone remembers what you have done.')
-ask('c_day', 'here_dark&day', 'Why wait for nightfall?',
+ask('c_day', 'here_dark&day&night>=2', 'Why wait for nightfall?',
     'The dead sleep in the day, and the trials are for the dead. Come back when the sun goes down.')
 ask('c_restless', 'here_dark&trial=restless', 'What is Lay the Restless to Rest?',
     'The first of this city\'s dead are already up and wandering. Put them down near the stone... while its light is on you.',
@@ -264,7 +264,7 @@ LORE = {
 }
 for city, (what, priest, free) in CITY.items():
     k = city.lower()
-    ask(f'c_{k}_what', f'here={k}&here_dark', f'What happened to {city}?', *what)
+    ask(f'c_{k}_what', f'here={k}&here_dark&night>=2', f'What happened to {city}?', *what)
     ask(f'c_{k}_priest', f'here={k}&here_dark&freed>=2', f'Who keeps {city}\'s altar dark?', *priest)
     ask(f'c_{k}_free', f'here={k}&here_free', f'Is {city} safe now?', *free)
     ask(f'c_{k}_old', f'here={k}&freed>=4', f'What was {city} like in your time?', LORE[city])
@@ -276,7 +276,7 @@ ask('k_paths', 'noclass', 'What are the four paths?',
     'The Summoner, who calls the dead\'s own kind to fight them. The Destruction mage, who burns them where they stand.',
     'The Alchemist, who bottles every element and pours it out. The Spellsword, steel in one hand and a spell in the other.',
     'Choose at the stone. Choosing again later costs dearly, so choose well.')
-ask('k_change', 'freed>=1&class=any', 'Can I change my path?',
+ask('k_change', 'freed>=2&class=any', 'Can I change my path?',
     'The stone will let you. It will cost you fifty thousand of the essence the dead leave behind.',
     'Your kit stays your own. But your path\'s powers stay with the path.')
 CLS = {
@@ -324,9 +324,9 @@ OLD = {
     'ssw': 'Before the Voice, we had steel and a little magic, and we fought dragons with that. Most of us died. The ones who lived taught the rest.',
 }
 for c, (name, wonder, seen, craft, quest, won) in CLS.items():
-    ask(f'k_{c}_seen', f'class={c}', 'What do you see in me?', *seen)
-    ask(f'k_{c}_craft', f'class={c}', f'Teach me of the {name}\'s craft.', *craft)
-    ask(f'k_{c}_sleep', f'class={c}&wonder_sleeps', 'Is there a wonder for my path?',
+    ask(f'k_{c}_seen', f'class={c}&night>=2', 'What do you see in me?', *seen)
+    ask(f'k_{c}_craft', f'class={c}&night>=3', f'Teach me of the {name}\'s craft.', *craft)
+    ask(f'k_{c}_sleep', f'class={c}&wonder_sleeps&freed>=1', 'Is there a wonder for my path?',
         f'There is. {wonder[0].upper() + wonder[1:]}. But it sleeps, and it will not wake until six stones are free.')
     ask(f'k_{c}_quest', f'class={c}&wonder_open', 'Where does my path lead?', *quest)
     ask(f'k_{c}_won', f'class={c}&wonder_won', 'My wonder is won.', *won)
@@ -344,7 +344,7 @@ ask('v_who2', 'freed>=2&freed<6', 'Who are you?',
     '[softly] My name is in the mist with everything else. Wake more stones, and it will come back to me.')
 ask('v_where2', 'freed>=2&freed<6', 'Where are you?',
     'Far. Behind the mist he left across the road to Sovngarde. I speak through the stones because I cannot speak any other way.')
-ask('v_old', 'freed>=2', 'How old are these stones?',
+ask('v_old', 'freed>=3', 'How old are these stones?',
     'Older than your Empire. Older than the first Nord kings. They were raised while dragons still ruled the sky.',
     'We raised them in secret, in the dark, where the dragons\' priests would not see.')
 ask('v_three', 'freed>=4', 'Who raised the stones?',
@@ -380,13 +380,13 @@ ask('v_greybeards', 'freed>=6', 'Do you know the Greybeards?',
 ask('v_dragons', 'freed>=6', 'Do you hate the dragons?',
     'I did. For a long time. Then I was dead for longer than I was ever alive, and hate is hard to carry that far.',
     'Now I only want them to stop. That is not the same thing.')
-ask('v_deadwant', 'freed>=2', 'What do the dead want?',
+ask('v_deadwant', 'freed>=2&night>=5', 'What do the dead want?',
     'To go home. Nothing more. They are not cruel... they are lost, and the World-Eater\'s voice is all they can hear.',
     '[sad] When you put them down, you are not killing them. You are showing them the way.')
 ask('v_after', 'echo_slain', 'What will happen to you now?',
-    '[softly] The road is open. I can see Sovngarde\'s light from here... and someone with a golden hilt, waiting.',
-    'I will walk it soon. The stones will stay. Their voice will be quieter without me.',
-    '[softly] Thank you, Dragonborn. Go well.')
+    '[softly] I go back into the mist, to wait with the others. A golden hilt... and one eye. They are there. I can feel them.',
+    'When you come to Sovngarde, we will be waiting. Three old voices, ready to shout beside you one more time.',
+    '[softly] Thank you, Dragonborn. Until Sovngarde.')
 
 if __name__ == '__main__':
     n = sum(len(p['lines']) for t in T for p in t['prompts'])
