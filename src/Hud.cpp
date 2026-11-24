@@ -6708,6 +6708,21 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		HRESULT WINAPI PresentHook(IDXGISwapChain* a_swap, UINT a_sync, UINT a_flags)
 		{
 			Watchdog::Beat();
+			{   // (Noah, 2026-11-24) the menu music: from the launch's loading screen through the main menu, faded when a game starts
+				static bool menuSeen = false;
+				bool        want = !g_dataReady.load();
+				if (!want) {
+					auto* mu = RE::UI::GetSingleton();
+					const bool menu = mu && mu->IsMenuOpen(RE::MainMenu::MENU_NAME);
+					if (menu) menuSeen = true;
+					want = menu || !menuSeen;   // (between the data loaded and the main menu up: still the launch)
+					if (menu && mu->IsMenuOpen(RE::LoadingMenu::MENU_NAME)) want = false;   // (a save chosen: the load has begun)
+				}
+				try {
+					Audio::MenuMusic(want);
+				} catch (...) {
+				}
+			}
 			if (!g_dataReady.load()) {   // (the launch: Skyrim still reading its data - our loading screen alone)
 				try {
 					BootFrame(a_swap);

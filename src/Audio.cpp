@@ -700,15 +700,55 @@ namespace bo3z::Audio
 
 	// The main menu plays our track instead of Skyrim's theme: the game reads this setting each time the menu
 	// opens, so it is set as early as the settings exist (and again whenever we see the menu).
+	// (Noah, 2026-11-24: "make the menu music start playing as soon as the curse of alduin loading screen launch to the main
+	// menu then fades away when a game starts") the track is ours to play now (MenuMusic, below), from the launch's loading
+	// screen on: Skyrim's own menu music is half a second of silence, so the two never play over each other
 	void SetMenuMusic()
 	{
-		static const char kPath[] = "\\Data\\Music\\CurseOfAlduin\\mus_menu.wav";
+		static const char kPath[] = "\\Data\\Music\\CurseOfAlduin\\mus_silence.wav";
 		auto* ini = RE::INISettingCollection::GetSingleton();
 		auto* s = ini ? ini->GetSetting("sMainMenuMusic:General") : nullptr;
 		if (s && s->GetType() == RE::Setting::Type::kString && (!s->data.s || std::strcmp(s->data.s, kPath) != 0)) {
 			s->data.s = const_cast<char*>(kPath);
 			logger::info("audio: main menu music set to {}", kPath);
 		}
+	}
+
+	// the menu track by its file (the launch has no forms yet): faded in as the launch's loading screen comes up, played again
+	// each time it ends while it's wanted, faded out over three seconds when a game starts (and again from the main menu later)
+	void MenuMusic(bool a_want)
+	{
+		static RE::BSSoundHandle h;
+		static auto startedAt = std::chrono::steady_clock::now() - std::chrono::hours(1), triedAt = startedAt;
+		const auto now = std::chrono::steady_clock::now();
+		if (!a_want) {
+			if (h.IsValid()) {
+				h.FadeOutAndRelease(3000);
+				h = RE::BSSoundHandle{};
+				logger::info("audio: menu music fading - a game is starting");
+			}
+			return;
+		}
+		auto* am = RE::BSAudioManager::GetSingleton();
+		if (!am || !am->flags.all(RE::BSAudioManager::Flags::ManagerInitialized)) return;
+		if (h.IsValid() && (now - startedAt < std::chrono::seconds(3) || h.IsPlaying())) return;   // (playing: a breath after Play before it reads as playing)
+		if (now - triedAt < std::chrono::milliseconds(500)) return;
+		triedAt = now;
+		static int how = -1;   // which spelling of the path the game takes (found once, then kept)
+		static constexpr const char* kRoot[3] = { "Music\\CurseOfAlduin\\", "Data\\Music\\CurseOfAlduin\\", "\\Data\\Music\\CurseOfAlduin\\" };
+		const bool again = h.IsValid();
+		h = RE::BSSoundHandle{};
+		for (int k = how < 0 ? 0 : how; k < 3 && !h.IsValid(); k = how < 0 ? k + 1 : 3) {
+			RE::BSResource::ID id;
+			id.GenerateFromPath((std::string(kRoot[k]) + "mus_menu.wav").c_str());
+			am->GetSoundHandleByFile(h, id, 0x1A, 128);
+			if (h.IsValid() && how < 0) how = k, logger::info("audio: menu music plays from '{}'", kRoot[k]);
+		}
+		if (!h.IsValid()) return;
+		h.SetVolume(0.8f);
+		if (again) h.Play();
+		else h.FadeInPlay(2500);
+		startedAt = now;
 	}
 
 	// While the main menu is up its own interface sounds (focus, accept, back, start) are ours: Skyrim's menu

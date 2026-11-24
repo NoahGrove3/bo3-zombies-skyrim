@@ -270,6 +270,7 @@ namespace bo3z
 		void IntroMusic(bool a_on);  // the intro's music (our MUSC: the music slider applies, the hold's music waits)
 		void FilmQuiet(bool a_on);   // Skyrim's own sound (world, voices, its music) silent while the intro film plays
 		void SetMenuMusic();
+		void MenuMusic(bool a_want);  // (every frame, from the launch on) the menu track: playing while wanted, faded out when a game starts
 		void MenuUiSounds(bool a_on);  // the main menu's own focus/accept/back sounds play ours while it is up
 		inline constexpr std::uint64_t kLoopCharge = 1, kLoopRite = 2, kLoopNight = 3, kLoopMenu = 4, kLoopShrine = 5, kLoopSpell = 6;  // (kLoopSpell: Spellcraft's own hum - the gun pose stopped kLoopCharge every frame under it)
 	}
