@@ -147,6 +147,11 @@ namespace coa
 		return a_upgrades <= 0 ? 1.0f : a_upgrades <= 3 ? kCurve[a_upgrades] : 2.2f + 0.3f * static_cast<float>(a_upgrades - 3);
 	}
 
+	namespace WeaponFx
+	{
+		void Tick();   // (Noah, 2026-11-24) the weapon in your hand wears its own effect art (src/WeaponFx.cpp)
+	}
+
 	namespace Director
 	{
 		void LearnDance(bool a_announce);  // Tiny Terrors taught (Solitude freed, or the test kit)

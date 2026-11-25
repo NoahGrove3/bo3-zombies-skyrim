@@ -3819,28 +3819,19 @@ namespace coa::Classes
 		// Enchants' own (the plugin needs no master of theirs; without the mod the weapons are plain)
 		void VaeWeapons()
 		{
+			// (Noah, 2026-11-24: "so we don't have to use that nexus mod") every weapon's look is our own now: its art fitted to its
+			// model, hung on it in the hand (src/WeaponFx.cpp, tools/weaponfx.py) - no enchantment of Visual Animated Enchants' laid
+			// on any weapon (one an older build gave is taken back)
 			static bool done = false;
 			if (done) return;
 			done = true;
 			auto* dh = RE::TESDataHandler::GetSingleton();
-			if (!dh->LookupModByName("VisualAnimatedEnchants.esp")) { logger::info("weapons: Visual Animated Enchants is not installed - no weapon looks"); return; }
-			for (const auto& l : gen::kVaeLooks) {
-				auto* m = dh->LookupForm<RE::EffectSetting>(l.fx, gen::kPlugin);
-				auto* from = dh->LookupForm<RE::EffectSetting>(l.src, "VisualAnimatedEnchants.esp");
-				if (!m || !from) { logger::warn("weapons: Visual Animated Enchants' effect {:06X} not found", l.src); continue; }
-				m->data.enchantShader = from->data.enchantShader;
-				m->data.enchantEffectArt = from->data.enchantEffectArt;
-			}
-			int n = 0;
 			for (const auto& [id, en] : gen::kVaeWeapons) {
 				auto* w = dh->LookupForm<RE::TESObjectWEAP>(id, gen::kPlugin);
 				auto* e = dh->LookupForm<RE::EnchantmentItem>(en, gen::kPlugin);
-				if (!w || !e) continue;
-				if (w->formEnchanting && w->formEnchanting != e) { logger::info("weapons: {} keeps its own enchantment", w->GetName()); continue; }
-				w->formEnchanting = e, w->amountofEnchantment = 0;
-				++n;
+				if (w && e && w->formEnchanting == e) w->formEnchanting = nullptr, w->amountofEnchantment = 0;
 			}
-			logger::info("weapons: {} weapons wear Visual Animated Enchants' looks", n);
+			logger::info("weapons: their looks are our own (no Visual Animated Enchants)");
 		}
 		void PatchLookArt()
 		{

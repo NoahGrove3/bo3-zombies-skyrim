@@ -136,6 +136,8 @@ o.append('\tstruct VaeLook { std::uint32_t fx, ench, src; };  // a Visual Animat
 o.append(f'\tinline constexpr std::array<VaeLook, {len(_VC)}> kVaeLooks{{ {{ ' + ', '.join(f'VaeLook{{ 0x{IDS[("MGEF", "vae_" + c)]:03X}, 0x{IDS[("ENCH", "vae_" + c)]:03X}, 0x{v:06X} }}' for c, v in _VC.items()) + ' } };')
 _vcl = list(_VC)
 o.append(f'\tinline constexpr std::array<std::pair<std::uint32_t, std::uint32_t>, {len(_VW)}> kVaeWeapons{{ {{ ' + ', '.join(f'{{ 0x{IDS[("WEAP", k)]:03X}, 0x{IDS[("ENCH", "vae_" + c.replace("+", "_"))]:03X} }}' for k, c in _VW.items()) + ' } };  // each melee weapon of ours: its look\'s enchantment')
+o.append(f'\tstruct WeaponFxArt {{ std::uint32_t weap; std::string_view model; }};  // (Noah, 2026-11-24) each weapon of ours and its own effect art (tools/weaponfx.py)')
+o.append(f'\tinline constexpr std::array<WeaponFxArt, {len(_VW)}> kWeaponFx{{ {{ ' + ', '.join(f'WeaponFxArt{{ 0x{IDS[("WEAP", k)]:03X}, "CurseOfAlduin\\\\wfx\\\\{k}.nif" }}' for k in _VW) + ' } };')
 o.append(f'\tinline constexpr std::uint32_t kSoulcaller = 0x{IDS[("WEAP", "soulcaller")]:03X};  // (the Summoner\'s wonder: the Soulcaller\'s Staff)')
 o.append(f'\tinline constexpr std::uint32_t kScytheKeyword = 0x{IDS[("KYWD", "scythe")]:03X};  // (the scythes: the MCO scythe moveset asks for it)')
 o.append(f'\tinline constexpr std::uint32_t kDanceShout = 0x{IDS[("SHOU", "dance")]:03X}, kDanceSong = 0x{IDS[("SNDR", "dance_song")]:03X};  // (Noah) the Dance Of Death')

@@ -377,7 +377,7 @@ namespace coa
 					T("gun");
 					{ Scope q(Perf::kGun); Gun::Tick(a_delta); }
 					T("shops");
-					{ Scope q(Perf::kShops); Shops::Tick(a_delta); Kit::Tick(a_delta); Tablet::Tick(a_delta); }
+					{ Scope q(Perf::kShops); Shops::Tick(a_delta); Kit::Tick(a_delta); Tablet::Tick(a_delta); WeaponFx::Tick(); }
 					{ Scope q(Perf::kClasses); Classes::Tick(); Classes::TickFast(a_delta); }
 					{  // (your summons' health this frame: a blow of yours on one is given back - HitWatch)
 						g_summonHp.clear();
