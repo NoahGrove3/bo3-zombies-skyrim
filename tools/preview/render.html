@@ -1,0 +1,115 @@
+<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:#000}canvas{display:block}</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script></head><body><canvas id="c"></canvas>
+<script>
+const W = 880, H = 440;
+const cv = document.getElementById('c');
+const R = new THREE.WebGLRenderer({ canvas: cv, antialias: true, preserveDrawingBuffer: true });
+R.setSize(W, H); R.setPixelRatio(1); R.outputEncoding = THREE.sRGBEncoding;
+R.toneMapping = THREE.ACESFilmicToneMapping; R.toneMappingExposure = 1.05;
+let scene, cam, fx = [], bbs = [], models = [], bgTex = null;
+const VS = `attribute float va; varying vec2 vUv; varying float vA; uniform vec2 off; uniform vec2 cell; uniform vec2 cellAt;
+void main(){ vUv = uv; vA = va; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.); }`;
+const FS = `uniform sampler2D tex, pal; uniform float gain; uniform vec2 off; uniform vec2 cell; uniform vec2 cellAt; uniform float clampU;
+varying vec2 vUv; varying float vA;
+void main(){
+  vec2 uv = vUv + off;
+  if (cell.x < 1.0) uv = (clamp(vUv, 0.002, 0.998) + cellAt) * cell;
+  if (clampU > 0.5) uv.x = clamp(uv.x, 0.002, 0.998);
+  vec4 t = texture2D(tex, uv);
+  vec4 p = texture2D(pal, vec2(clamp(t.r,0.004,0.996), clamp(vA,0.01,0.99)));
+  float a = t.a * vA;
+  gl_FragColor = vec4(p.rgb * gain, a);
+}`;
+function loadTex(src, repeat) { const t = new THREE.TextureLoader().load(src); t.wrapS = repeat ? THREE.RepeatWrapping : THREE.ClampToEdgeWrapping; t.wrapT = THREE.RepeatWrapping; t.minFilter = THREE.LinearMipmapLinearFilter; t.anisotropy = 4; return t; }
+let TEX = {}, PAL = {};
+window.setup = async function (d, shared) {
+  scene = new THREE.Scene(); fx = []; bbs = []; models = [];
+  for (const k in shared.tex) TEX[k] = TEX[k] || loadTex(shared.tex[k], true);
+  for (const k in shared.pal) { if (!PAL[k]) { const t = new THREE.TextureLoader().load(shared.pal[k]); t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; t.minFilter = THREE.LinearFilter; PAL[k] = t; } }
+  const root = new THREE.Group(); scene.add(root);
+  const all = [];
+  for (const s of d.model) {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(s.v, 3));
+    if (s.uv && s.uv.length === s.v.length / 3 * 2) g.setAttribute('uv', new THREE.Float32BufferAttribute(s.uv.map((x, i) => i % 2 ? x : x), 2));
+    g.setIndex(s.t); g.computeVertexNormals();
+    let m;
+    if (s.map) { const t = new THREE.TextureLoader().load(s.map); t.encoding = THREE.sRGBEncoding; t.flipY = false; t.wrapS = t.wrapT = THREE.RepeatWrapping; m = new THREE.MeshStandardMaterial({ map: t, metalness: 0.55, roughness: 0.45, side: THREE.DoubleSide }); }
+    else m = new THREE.MeshStandardMaterial({ color: new THREE.Color(s.color).convertSRGBToLinear(), metalness: 0.65, roughness: 0.4, side: THREE.DoubleSide });
+    const mm = new THREE.Mesh(g, m); root.add(mm); models.push(mm);
+    for (let i = 0; i < s.v.length; i += 3) all.push([s.v[i], s.v[i + 1], s.v[i + 2]]);
+  }
+  const fxc = [];
+  for (const s of d.fx) {
+    const pal = PAL[s.pal] || PAL.white;
+    const u = { tex: { value: TEX[s.tex] }, pal: { value: pal }, gain: { value: s.scale }, off: { value: new THREE.Vector2() }, cell: { value: new THREE.Vector2(1, 1) }, cellAt: { value: new THREE.Vector2() }, clampU: { value: s.vscroll && !s.flip ? 1 : 0 } };
+    if (s.flip) u.cell.value.set(1 / s.flip[0], 1 / s.flip[1]);
+    const m = new THREE.ShaderMaterial({ uniforms: u, vertexShader: VS, fragmentShader: FS, transparent: true, depthWrite: false, blending: THREE.CustomBlending, blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneFactor, side: THREE.DoubleSide });
+    const g = new THREE.BufferGeometry();
+    const n = s.v.length / 6, P = new Float32Array(n * 3), U = new Float32Array(n * 2), A = new Float32Array(n);
+    for (let i = 0; i < n; i++) { P[i * 3] = s.v[i * 6]; P[i * 3 + 1] = s.v[i * 6 + 1]; P[i * 3 + 2] = s.v[i * 6 + 2]; U[i * 2] = s.v[i * 6 + 3]; U[i * 2 + 1] = s.v[i * 6 + 4]; A[i] = s.v[i * 6 + 5]; }
+    g.setAttribute('position', new THREE.BufferAttribute(P, 3)); g.setAttribute('uv', new THREE.BufferAttribute(U, 2)); g.setAttribute('va', new THREE.BufferAttribute(A, 1));
+    g.setIndex(s.t);
+    const mesh = new THREE.Mesh(g, m); mesh.renderOrder = 2;
+    if (s.bb) { const holder = new THREE.Group(); holder.position.set(...s.at); holder.add(mesh); root.add(holder); bbs.push(holder); fxc.push(s.at); }
+    else { root.add(mesh); for (let i = 0; i < n; i++) fxc.push([P[i * 3], P[i * 3 + 1], P[i * 3 + 2]]); }
+    fx.push({ s, u });
+  }
+  // frame it: the long axis across the screen, the flat of the blade toward us, the effect's end to the right
+  const C = all.reduce((a, p) => [a[0] + p[0], a[1] + p[1], a[2] + p[2]], [0, 0, 0]).map(x => x / all.length);
+  const cov = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+  for (const p of all) { const q = [p[0] - C[0], p[1] - C[1], p[2] - C[2]]; for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) cov[i][j] += q[i] * q[j]; }
+  const ev = eig3(cov);   // columns sorted by eigenvalue desc
+  let ax = ev[0], ay = ev[1], az = ev[2];
+  const fc = fxc.length ? fxc.reduce((a, p) => [a[0] + p[0], a[1] + p[1], a[2] + p[2]], [0, 0, 0]).map(x => x / fxc.length) : C;
+  if ((fc[0] - C[0]) * ax[0] + (fc[1] - C[1]) * ax[1] + (fc[2] - C[2]) * ax[2] < 0) ax = ax.map(x => -x);
+  az = [ax[1] * ay[2] - ax[2] * ay[1], ax[2] * ay[0] - ax[0] * ay[2], ax[0] * ay[1] - ax[1] * ay[0]];
+  const M = new THREE.Matrix4().set(ax[0], ax[1], ax[2], 0, ay[0], ay[1], ay[2], 0, az[0], az[1], az[2], 0, 0, 0, 0, 1);
+  const T = new THREE.Matrix4().makeTranslation(-C[0], -C[1], -C[2]);
+  root.applyMatrix4(new THREE.Matrix4().multiplyMatrices(M, T));
+  const tilt = new THREE.Group(); scene.remove(root); tilt.add(root); scene.add(tilt);
+  tilt.rotation.set(0.32, -0.22, 0.18);
+  tilt.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(root);
+  const sz = box.getSize(new THREE.Vector3()), mid = box.getCenter(new THREE.Vector3());
+  cam = new THREE.PerspectiveCamera(22, W / H, 1, 5000);
+  const fitW = sz.x * 1.04 / (2 * Math.tan(THREE.MathUtils.degToRad(11)) * (W / H)), fitH = sz.y * 1.12 / (2 * Math.tan(THREE.MathUtils.degToRad(11)));
+  const dist = Math.max(fitW, fitH) + sz.z;
+  cam.position.set(mid.x, mid.y, mid.z + dist); cam.lookAt(mid);
+  // a dim night scene: cool sky light, a warm key, a rim from behind
+  scene.add(new THREE.HemisphereLight(0x8090b0, 0x1a1410, 0.55));
+  const key = new THREE.DirectionalLight(0xffe2c0, 1.6); key.position.set(mid.x - 60, mid.y + 120, mid.z + 140); scene.add(key);
+  const rim = new THREE.DirectionalLight(0x9fc0ff, 1.1); rim.position.set(mid.x + 80, mid.y + 40, mid.z - 160); scene.add(rim);
+  const bgc = document.createElement('canvas'); bgc.width = 512; bgc.height = 256; const x = bgc.getContext('2d');
+  const gr = x.createRadialGradient(256, 128, 10, 256, 128, 300); gr.addColorStop(0, '#1b2130'); gr.addColorStop(1, '#06080c'); x.fillStyle = gr; x.fillRect(0, 0, 512, 256);
+  const bt = new THREE.CanvasTexture(bgc); bt.encoding = THREE.sRGBEncoding; scene.background = bt; bgTex = bt;
+  await new Promise(r => setTimeout(r, 400));
+  return true;
+};
+window.frame = function (t, fxOnly) {
+  for (const m of models) m.visible = !fxOnly; scene.background = fxOnly ? new THREE.Color(0) : bgTex;
+  for (const { s, u } of fx) {
+    if (s.vscroll && !s.flip) u.off.value.set(0, -(t / s.vscroll) % 1);
+    if (s.flip) { const n = s.flip[0] * s.flip[1], c = Math.floor((t + (s.phase || 0)) * s.fps) % n; u.cellAt.value.set(c % s.flip[0], s.flip[1] - 1 - Math.floor(c / s.flip[0])); }
+    let g = s.scale;
+    if (s.pulse) { const [per, lo, hi] = s.pulse; g *= lo + (hi - lo) * (0.5 - 0.5 * Math.cos(2 * Math.PI * ((t + (s.phase || 0)) / per))); }
+    u.gain.value = g;
+  }
+  for (const b of bbs) { b.quaternion.copy(cam.quaternion); const pq = new THREE.Quaternion(); b.parent.getWorldQuaternion(pq); b.quaternion.premultiply(pq.invert()); }
+  R.render(scene, cam);
+};
+function eig3(A) {   // Jacobi: eigenvectors (rows), by eigenvalue, largest first
+  let a = A.map(r => r.slice()), v = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+  for (let it = 0; it < 50; it++) {
+    let p = 0, q = 1; if (Math.abs(a[0][2]) > Math.abs(a[p][q])) p = 0, q = 2; if (Math.abs(a[1][2]) > Math.abs(a[p][q])) p = 1, q = 2;
+    if (Math.abs(a[p][q]) < 1e-9) break;
+    const th = 0.5 * Math.atan2(2 * a[p][q], a[q][q] - a[p][p]), c = Math.cos(th), s = Math.sin(th);
+    const J = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]; J[p][p] = c; J[q][q] = c; J[p][q] = s; J[q][p] = -s;
+    const mul = (X, Y) => X.map((r, i) => Y[0].map((_, j) => r.reduce((acc, _, k) => acc + X[i][k] * Y[k][j], 0)));
+    const Jt = J[0].map((_, i) => J.map(r => r[i]));
+    a = mul(mul(Jt, a), J); v = mul(v, J);
+  }
+  const vals = [0, 1, 2].map(i => [a[i][i], [v[0][i], v[1][i], v[2][i]]]).sort((x, y) => y[0] - x[0]);
+  return vals.map(x => x[1]);
+}
+</script></body></html>

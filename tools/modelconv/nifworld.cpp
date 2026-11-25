@@ -2,7 +2,7 @@
 // not the root node's own - the game hangs our effect art under that root, which carries its own turn), skinned shapes posed by
 // their bones (the claws are skinned to a turned node of their own) - with its name, its diffuse texture and whether it is a lit
 // shape or an effect - for fitting effects to a weapon's steel (tools/weaponfx.py).
-// Prints: "shape <name>\t<tex0>\t<lit|effect>\t<alpha 0|1>" then "v x y z" lines then "t a b c" lines.
+// Prints: "shape <name>\t<tex0>\t<lit|effect>\t<alpha 0|1>" then "v x y z u v" lines then "t a b c" lines.
 #include "NifFile.hpp"
 #include <cstdio>
 #include <unordered_map>
@@ -41,6 +41,8 @@ int main(int argc, char** argv)
 		const bool effect = sh && sh->HasType<BSEffectShaderProperty>();
 		printf("shape %s\t%s\t%s\t%d\n", s->name.get().c_str(), tex.c_str(), effect ? "effect" : "lit", nif.GetAlphaProperty(s) ? 1 : 0);
 		const auto* vs = nif.GetVertsForShape(s);
+		const auto* uvs = nif.GetUvsForShape(s);
+		auto UV = [&](size_t i) { return uvs && i < uvs->size() ? (*uvs)[i] : Vector2{}; };
 		std::vector<int> bones;
 		if (s->IsSkinned()) nif.GetShapeBoneIDList(s, bones);
 		if (vs && !bones.empty()) {
@@ -60,11 +62,11 @@ int main(int argc, char** argv)
 			const MatTransform g = toRoot(nif, s);
 			for (size_t i = 0; i < out.size(); ++i) {
 				const auto w = wsum[i] > 0 ? out[i] / wsum[i] : apply(g, (*vs)[i]);
-				printf("v %.4f %.4f %.4f\n", w.x, w.y, w.z);
+				printf("v %.4f %.4f %.4f %.4f %.4f\n", w.x, w.y, w.z, UV(i).u, UV(i).v);
 			}
 		} else if (vs) {
 			const MatTransform g = toRoot(nif, s);
-			for (auto& v : *vs) { auto w = apply(g, v); printf("v %.4f %.4f %.4f\n", w.x, w.y, w.z); }
+			for (size_t i = 0; i < vs->size(); ++i) { auto w = apply(g, (*vs)[i]); printf("v %.4f %.4f %.4f %.4f %.4f\n", w.x, w.y, w.z, UV(i).u, UV(i).v); }
 		}
 		std::vector<Triangle> tris; s->GetTriangles(tris);
 		for (auto& t : tris) printf("t %d %d %d\n", t.p1, t.p2, t.p3);

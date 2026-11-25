@@ -1,0 +1,106 @@
+<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:#000}canvas{display:block}</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script></head><body><canvas id="c"></canvas>
+<script>
+const W = 1280, H = 720;
+const R = new THREE.WebGLRenderer({ canvas: document.getElementById('c'), antialias: true, preserveDrawingBuffer: true });
+R.setSize(W, H); R.setPixelRatio(1); R.outputEncoding = THREE.sRGBEncoding; R.toneMapping = THREE.ACESFilmicToneMapping; R.toneMappingExposure = 1.0;
+const VS = `attribute float va; varying vec2 vUv; varying float vA; void main(){ vUv = uv; vA = va; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.); }`;
+const FS = `uniform sampler2D tex, pal; uniform float gain; uniform vec2 off; uniform vec2 cell; uniform vec2 cellAt; uniform float clampU;
+varying vec2 vUv; varying float vA;
+void main(){ vec2 uv = vUv + off; if (cell.x < 1.0) uv = (clamp(vUv, 0.002, 0.998) + cellAt) * cell; if (clampU > 0.5) uv.x = clamp(uv.x, 0.002, 0.998);
+  vec4 t = texture2D(tex, uv); vec4 p = texture2D(pal, vec2(clamp(t.r,0.004,0.996), clamp(vA,0.01,0.99))); gl_FragColor = vec4(p.rgb * gain, t.a * vA); }`;
+let D, scene, cam, TEX = {}, PAL = {}, mats = [], bbs = [], segs = [], souls = [], takes = [], solid = [], bgTex;
+function tex(src, rep) { const t = new THREE.TextureLoader().load(src); t.wrapS = rep ? THREE.RepeatWrapping : THREE.ClampToEdgeWrapping; t.wrapT = THREE.RepeatWrapping; t.minFilter = THREE.LinearMipmapLinearFilter; return t; }
+function build(job, parentOf) {   // a job's shapes; parentOf(name) -> the Object3D a shape hangs under
+  const list = [];
+  for (const s of job.fx) {
+    const u = { tex: { value: TEX[s.tex] }, pal: { value: PAL[s.pal] }, gain: { value: s.scale }, off: { value: new THREE.Vector2() }, cell: { value: new THREE.Vector2(1, 1) }, cellAt: { value: new THREE.Vector2() }, clampU: { value: s.clamp ? 1 : 0 } };
+    if (s.flip) u.cell.value.set(1 / s.flip[0], 1 / s.flip[1]);
+    const m = new THREE.ShaderMaterial({ uniforms: u, vertexShader: VS, fragmentShader: FS, transparent: true, depthWrite: false, blending: THREE.CustomBlending, blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneFactor, side: THREE.DoubleSide });
+    const n = s.v.length / 6, P = new Float32Array(n * 3), U = new Float32Array(n * 2), A = new Float32Array(n);
+    for (let i = 0; i < n; i++) { P.set([s.v[i * 6], s.v[i * 6 + 1], s.v[i * 6 + 2]], i * 3); U.set([s.v[i * 6 + 3], s.v[i * 6 + 4]], i * 2); A[i] = s.v[i * 6 + 5]; }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(P, 3)); g.setAttribute('uv', new THREE.BufferAttribute(U, 2)); g.setAttribute('va', new THREE.BufferAttribute(A, 1)); g.setIndex(s.t);
+    const mesh = new THREE.Mesh(g, m); mesh.renderOrder = 2; mesh.frustumCulled = false;
+    const par = parentOf(s.parent);
+    if (s.bb) { const h = new THREE.Group(); h.position.set(...s.at); h.add(mesh); par.add(h); bbs.push(h); } else par.add(mesh);
+    const rec = { s, u, base: s.scale, k: 1 }; mats.push(rec); list.push(rec);
+  }
+  return list;
+}
+window.setup = async function (d) {
+  D = d; scene = new THREE.Scene();
+  for (const k in d.tex) TEX[k] = tex(d.tex[k], true);
+  for (const k in d.pal) { const t = new THREE.TextureLoader().load(d.pal[k]); t.minFilter = THREE.LinearFilter; PAL[k] = t; }
+  // the ground: dark earth and stone flags round the altar
+  const gc = document.createElement('canvas'); gc.width = gc.height = 1024; const x = gc.getContext('2d');
+  x.fillStyle = '#1a1b18'; x.fillRect(0, 0, 1024, 1024);
+  for (let i = 0; i < 9000; i++) { const v = 30 + Math.random() * 40 | 0; x.fillStyle = `rgba(${v},${v},${v - 6},0.25)`; x.fillRect(Math.random() * 1024, Math.random() * 1024, 2 + Math.random() * 10, 2 + Math.random() * 10); }
+  for (let i = 0; i < 1600; i++) { x.fillStyle = `rgba(40,58,30,${0.15 + Math.random() * 0.2})`; x.fillRect(Math.random() * 1024, Math.random() * 1024, 1 + Math.random() * 3, 4 + Math.random() * 9); }
+  const gt = new THREE.CanvasTexture(gc); gt.wrapS = gt.wrapT = THREE.RepeatWrapping; gt.repeat.set(8, 8); gt.encoding = THREE.sRGBEncoding;
+  const ground = new THREE.Mesh(new THREE.CircleGeometry(30000, 64), new THREE.MeshStandardMaterial({ map: gt, roughness: 0.95 })); scene.add(ground); solid.push(ground);
+  // the altar: a weathered standing stone on a low plinth
+  const stoneM = new THREE.MeshStandardMaterial({ color: 0x6a6a68, roughness: 0.85, metalness: 0.05 });
+  const plinth = new THREE.Mesh(new THREE.CylinderGeometry(150, 170, 30, 8), stoneM); plinth.rotation.x = Math.PI / 2; plinth.position.z = 15; scene.add(plinth); solid.push(plinth);
+  const pillar = new THREE.Mesh(new THREE.CylinderGeometry(44, 62, 280, 7), stoneM); pillar.rotation.x = Math.PI / 2; pillar.position.z = 160; scene.add(pillar); solid.push(pillar);
+  for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2 + 0.4; const r = new THREE.Mesh(new THREE.DodecahedronGeometry(40 + i * 6, 0), stoneM); r.position.set(Math.cos(a) * 330, Math.sin(a) * 330, 20); r.scale.z = 1.6; scene.add(r); solid.push(r); }
+  // the ring: each arc's node, its dark and lit halves
+  const nodes = {};
+  for (const [nm, nd] of Object.entries(d.ring.nodes)) { const g = new THREE.Group(); g.position.set(...nd.at); nodes[nm] = g; }
+  for (const [nm, nd] of Object.entries(d.ring.nodes)) (nodes[nd.parent] || scene).add(nodes[nm]);
+  const ringMats = build(d.ring, p => nodes[p] || scene);
+  for (let i = 0; i < 48; i++) { const S = 'S' + String(i).padStart(2, '0'); segs.push({ Dn: nodes[S + 'D'], Ln: nodes[S + 'L'], L: ringMats.filter(r => r.s.parent === S + 'L') }); }
+  // the souls and the stone's flashes (each its own copy)
+  for (let i = 0; i < 6; i++) { const g = new THREE.Group(); g.visible = false; scene.add(g); build(d.soul, () => g); souls.push(g); }
+  for (let i = 0; i < 6; i++) { const g = new THREE.Group(); g.visible = false; scene.add(g); const l = build(d.take, () => g); takes.push({ g, l }); }
+  scene.add(new THREE.HemisphereLight(0x6f84b8, 0x14110c, 0.55));
+  const moon = new THREE.DirectionalLight(0xbcd0ff, 0.9); moon.position.set(-2000, 1500, 3000); scene.add(moon);
+  cam = new THREE.PerspectiveCamera(42, W / H, 10, 20000); cam.up.set(0, 0, 1);
+  cam.position.set(240, -2550, 1150); cam.lookAt(0, 220, 40); scene.fog = new THREE.FogExp2(0x070a12, 0.00022);
+  const bgc = document.createElement('canvas'); bgc.width = 512; bgc.height = 256; const b = bgc.getContext('2d');
+  const gr = b.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, '#0b1222'); gr.addColorStop(1, '#03050a'); b.fillStyle = gr; b.fillRect(0, 0, 512, 256);
+  bgTex = new THREE.CanvasTexture(bgc); bgTex.encoding = THREE.sRGBEncoding; scene.background = bgTex;
+  await new Promise(r => setTimeout(r, 500)); return true;
+};
+// the timeline: five of the restless put down, each soul flown to the stone; eight fill the ring
+const STONE = new THREE.Vector3(0, 0, 300), N = 8;
+const PLAN = [[0.2, 2.3, 820], [1.0, 3.6, 1000], [2.3, 0.9, 700], [3.0, 5.0, 900], [4.4, 1.7, 1100]].map(([t0, ang, r]) => {
+  const a = new THREE.Vector3(Math.cos(ang) * r, Math.sin(ang) * r, 70);
+  const dist = a.distanceTo(STONE), dir = STONE.clone().sub(a), across = new THREE.Vector3(-dir.y, dir.x, 0).normalize(), side = ((t0 * 37) % 2 - 1) * 120;
+  const c = a.clone().add(STONE).multiplyScalar(0.5).add(across.multiplyScalar(side)).add(new THREE.Vector3(0, 0, 220 + dist * 0.18));
+  return { t0, a, b: STONE, c, dur: Math.min(3.6, Math.max(1.5, dist / 520)) };
+});
+function bez(p, u) { u = u * u * (3 - 2 * u); const v = 1 - u; return p.a.clone().multiplyScalar(v * v).add(p.c.clone().multiplyScalar(2 * v * u)).add(p.b.clone().multiplyScalar(u * u)); }
+function anim(list, t) {
+  for (const r of list) { const s = r.s;
+    if (s.vscroll && !s.flip) r.u.off.value.set(0, -(t / s.vscroll) % 1);
+    if (s.flip) { const n = s.flip[0] * s.flip[1], c = Math.floor((t + (s.phase || 0)) * s.fps) % n; r.u.cellAt.value.set(c % s.flip[0], s.flip[1] - 1 - Math.floor(c / s.flip[0])); }
+    let g = r.base * r.k; if (s.pulse) { const [per, lo, hi] = s.pulse; g *= lo + (hi - lo) * (0.5 - 0.5 * Math.cos(2 * Math.PI * t / per)); }
+    r.u.gain.value = g; }
+}
+window.frame = function (t, fxOnly) {
+  if (window.CLOSE) { const p = PLAN[1], u = Math.min(0.999, Math.max(0, (t - p.t0) / p.dur)), at = bez(p, u), ah = bez(p, Math.min(1, u + 0.01)); const Y = ah.clone().sub(at).normalize(); const side = new THREE.Vector3(-Y.y, Y.x, 0).normalize();
+    cam.position.copy(at).add(side.multiplyScalar(-340)).add(new THREE.Vector3(0, 0, 30)).add(Y.clone().multiplyScalar(-50)); cam.lookAt(at.clone().add(Y.clone().multiplyScalar(-45))); cam.fov = 40; cam.updateProjectionMatrix(); }
+  for (const o of solid) o.visible = !fxOnly; scene.background = fxOnly ? new THREE.Color(0) : bgTex;
+  // the ring's fill: what is shown eases after the count, as src/Curse.cpp RingWorld does (2.2 a second)
+  let shown = 0; for (let tt = 0; tt < t; tt += 1 / 60) { const n = PLAN.filter(p => tt >= p.t0 + p.dur).length; const want = n / N; shown += (want - shown) * Math.min(1, 2.2 / 60); }
+  const f = shown * 48, lit = Math.min(48, Math.floor(f)), k = f - lit;
+  segs.forEach((sg, i) => { sg.Ln.visible = i < lit || (i === lit && lit < 48); sg.Dn.visible = !(i < lit); for (const r of sg.L) r.k = i < lit ? 1 : k; });
+  // the souls in flight, nose first, turned to face the eye; the stone's flash as each arrives
+  let si = 0, ti = 0;
+  souls.forEach(g => g.visible = false); takes.forEach(x => x.g.visible = false);
+  for (const p of PLAN) {
+    const u = (t - p.t0) / p.dur;
+    if (u >= 0 && u < 1) {
+      const g = souls[si++], at = bez(p, u), ahead = bez(p, Math.min(1, u + 0.03 / p.dur));
+      const Y = ahead.clone().sub(at); if (Y.lengthSq() < 1e-4) Y.copy(p.b).sub(at); Y.normalize();
+      let Z = cam.position.clone().sub(at); Z.sub(Y.clone().multiplyScalar(Z.dot(Y))).normalize(); const X = new THREE.Vector3().crossVectors(Y, Z);
+      g.matrixAutoUpdate = false; g.matrix.makeBasis(X, Y, Z).setPosition(at); g.visible = true;
+    }
+    const e = t - (p.t0 + p.dur);
+    if (e >= 0 && e < 0.8) { const x = takes[ti++]; x.g.position.copy(p.b); x.g.visible = true; anim(x.l, e); }
+  }
+  for (const b of bbs) { b.parent.updateMatrixWorld(true); const pq = new THREE.Quaternion(); b.parent.getWorldQuaternion(pq); b.quaternion.copy(pq.invert().multiply(cam.quaternion)); }
+  anim(mats.filter(r => !takes.some(x => x.l.includes(r))), t);
+  R.render(scene, cam);
+};
+</script></body></html>
