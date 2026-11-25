@@ -79,25 +79,31 @@
      "looks",
      "Weapon looks (replacing Visual Animated Enchants)",
      "done",
-     "Eight looks; Noah's picks in."
+     "Eight looks; Noah's Nov 25 picks in; effects come to a point; staffs on their heads only."
     ],
     [
      "lookbase",
      "Weapon looks on Skyrim's own elemental effects, enhanced (2K, 30 FPS)",
-     "todo",
-     "The same for the looks: Skyrim's fire, frost and shock as the base."
+     "doing",
+     "Skyrim's own enchantment effects read from Noah's install (fire, frost, shock, and the coloured enchant glows): the base for each look, next build."
     ],
     [
      "abil",
      "Ability effects: Skyrim's own effects as the base, enhanced (2K textures, 30 FPS)",
      "doing",
-     "Your direction (Nov 24): built on Skyrim's spell, impact and elemental effects, made more realistic. Needs your PC linked to read Skyrim's effect files."
+     "Your direction (Nov 24-25): built on Skyrim's spell, impact and elemental effects, made more realistic, fully 3D, no hard cut-offs."
     ],
     [
      "ring",
      "The shockwave (remake of the Labyrinthian ring)",
      "doing",
      "First to go in."
+    ],
+    [
+     "scythes",
+     "Our own scythe models (dropping Battle Scythe)",
+     "todo",
+     "Your decision (Nov 25). Design questions in the workshop."
     ],
     [
      "bane",
