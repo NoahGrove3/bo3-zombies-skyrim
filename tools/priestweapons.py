@@ -613,9 +613,11 @@ def zahkriisos(texonly=False):
             M.add('Guard', 'icesolid', P, N, UV * [0.3, 0.3] + [0.35, 0.5], F)
     # the grip: dark leather, iron rings, an iron collar under the guard
     grip_wrap(M, 'leather', -11.0, 3.6, 1.12, 1.2)
-    for z in (-11.4, -4.0, 3.9):
+    # (Noah, 2026-11-24: "the handle trim piece is cutting through the blade guard piece") the top ring and the collar sit
+    # wholly under the guard's block (its underside at 4.15), the collar no wider than the block is deep
+    for z in (-11.4, -4.0, 2.7):
         M.add('Iron', 'iron', *lathe([(z - 0.4, 1.16), (z - 0.3, 1.36), (z + 0.3, 1.36), (z + 0.4, 1.16)], 24))
-    M.add('Iron', 'iron', *lathe([(3.9, 1.25), (4.2, 1.7), (4.4, 1.8), (4.4, 0.0)], 24))
+    M.add('Iron', 'iron', *lathe([(3.35, 1.2), (3.6, 1.24), (3.95, 1.26), (4.1, 1.22), (4.1, 0.0)], 24))
     # the pommel: a cluster of ice crystals in an iron cup
     M.add('Iron', 'iron', *lathe([(-11.4, 0.0), (-11.4, 1.2), (-12.4, 1.55), (-12.9, 1.4), (-12.9, 0.0)], 24))
     for k in range(5):

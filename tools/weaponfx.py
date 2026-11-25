@@ -57,18 +57,26 @@ WEAPONS = {
     'tab_stormtalons':   ('weapons\\NewArmoury\\Fists\\glassClaw.nif', ['GlassClawGlass1'], None, 'storm', 'blue'),
     'tab_gravebell':     ('CurseOfAlduin\\tablet\\gravebell.nif', ['Bronze:3'], None, 'mist', 'white'),
     'tab_talons':        ('weapons\\NewArmoury\\Fists\\DBClaw.nif', ['DBClaw_MTL_B'], None, 'flame', 'red'),
-    'tab_riverstone':    ('CurseOfAlduin\\tablet\\riverstone.nif', ['Stone:2'], None, 'flame', 'green'),
+    'tab_riverstone':    ('weapons\\NewArmoury\\Halberds\\NordicHalberd.nif', ['NordicPikeShaft', 'NordicPikeTip'], (70, 999), 'flame', 'green'),
     'tab_wyrmspine':     ('weapons\\NewArmoury\\Pikes\\DragonbonePike.nif', ['DragonbonePikeTip'], None, 'flame', 'fear'),
-    'tab_lanternwick':   ('CurseOfAlduin\\tablet\\lanternwick.nif', ['Iron:1', 'Carved:3', 'Glass:4'], (24, 99), 'mist', 'iceblue'),
+    'tab_lanternwick':   ('weapons\\NewArmoury\\QuarterStaffs\\StalhrimStaff.nif', ['StahlrimStaffBlade'], [(42, 999), (-999, -30)], 'mist', 'iceblue'),
     'tab_cinderclaws':   ('weapons\\NewArmoury\\Fists\\DaedricClaw.nif', ['DaedricClaws_MTL_B'], None, 'flame', 'orange'),
-    'tab_eclipse':       ('CurseOfAlduin\\tablet\\eclipse.nif', ['Blade:0'], None, 'flame', 'gold+iceblue'),
+    'tab_eclipse':       ('weapons\\NewArmoury\\Pikes\\GlassPike.nif', ['GlassPikeTip'], None, 'flame', 'gold+iceblue'),
     'tab_frostmourn':    ('weapons\\NewArmoury\\Rapier\\StahlrimRapier.nif', ['StahlrimRapier:18'], (9.5, 999), 'mist', 'iceblue'),
     'tab_silverscythe':  ('CurseOfAlduin\\scythes\\silver.nif', ['SilverGreatSword:0_2'], None, 'runic', 'moon'),
     'tab_bonereaper':    ('CurseOfAlduin\\scythes\\Skeleton.nif', ['IronLongSword01:0_3'], None, 'mist', 'white'),
     'tab_wyrmtooth':     ('CurseOfAlduin\\scythes\\dragonTeeth.nif', ['DragonBone01'], (26, 999), 'flame', 'orange'),
     'tab_bloodmoon':     ('CurseOfAlduin\\scythes\\vampire.nif', ['blade'], None, 'flame', 'red'),
     'fang':              ('Light Greatswords\\dragonbone\\LightGreatsword.nif', ['DragonboneGreatsword:0'], None, 'flame', 'orange'),
+    # (Noah, 2026-11-24: "both left and right claws ... carry the same effect") the claws' left-hand twins
+    'tab_stormtalons_l': ('weapons\\NewArmoury\\Fists\\GlassClawLft.nif', ['GlassClawGlass1'], None, 'storm', 'blue'),
+    'tab_talons_l':      ('weapons\\NewArmoury\\Fists\\DBClawLft.nif', ['DBClaw_MTL_B'], None, 'flame', 'red'),
+    'tab_cinderclaws_l': ('weapons\\NewArmoury\\Fists\\DaedricClawLft.nif', ['DaedricClaws_MTL_B'], None, 'flame', 'orange'),
 }
+# (the claws: several blades fanned out - each its own outline in its own plane)
+SPLIT = {'tab_stormtalons', 'tab_talons', 'tab_cinderclaws', 'tab_stormtalons_l', 'tab_talons_l', 'tab_cinderclaws_l'}
+# the left-hand twins' models (src/WeaponFx.cpp finds them by the model in the left hand)
+LEFT = {'tab_stormtalons_l', 'tab_talons_l', 'tab_cinderclaws_l'}
 
 
 # the class weapons: each takes another model at each tier (src/Classes.cpp AdoptTierLook), so each tier's model has its own
@@ -306,6 +314,7 @@ def read_model(path):
 
 
 def fit(key):
+    """the weapon's steel outline(s): one fit for a blade, one for each of a claw's blades"""
     rel, names, band, look, col = ALL[key]
     shapes = read_model(model_path(rel))
     V, T = [], []
@@ -322,6 +331,29 @@ def fit(key):
         ok = np.zeros(len(T), bool)
         for b0, b1 in bands: ok |= (y >= b0) & (y <= b1)
         T = T[ok]
+    parts = [T]
+    if key in SPLIT:
+        # the claw's blades: triangles joined by shared (welded) corners, each blade one piece
+        from scipy.sparse import coo_matrix
+        from scipy.sparse.csgraph import connected_components
+        _, inv = np.unique(np.round(V, 2), axis=0, return_inverse=True)
+        TT = inv.reshape(-1)[T]
+        n = TT.max() + 1
+        rows = np.r_[TT[:, 0], TT[:, 1], TT[:, 2]]; cols = np.r_[TT[:, 1], TT[:, 2], TT[:, 0]]
+        nc, lab = connected_components(coo_matrix((np.ones(len(rows)), (rows, cols)), shape=(n, n)), directed=False)
+        tl = lab[TT[:, 0]]
+        parts = []
+        for c in range(nc):
+            Tc = T[tl == c]
+            if len(Tc) < 8: continue
+            P = V[np.unique(Tc)]
+            if np.ptp(P, axis=0).max() < 9.0: continue   # (knuckle plates and rivets: not a blade)
+            parts.append(Tc)
+        parts.sort(key=lambda t: -len(t))
+    return [fit_part(key, V, Tp, band, look, col) for Tp in parts]
+
+
+def fit_part(key, V, T, band, look, col):
     used = np.unique(T)
     P = V[used]
     c = P.mean(0)
@@ -332,7 +364,8 @@ def fit(key):
     e2 = np.cross(e3, e1); e2 /= np.linalg.norm(e2)
     q = lambda X: np.stack([(X - c) @ e1, (X - c) @ e2], -1)
     Q = q(V); D = (V - c) @ e3
-    res = 0.3
+    span0 = np.ptp(Q[used], axis=0).max()
+    res = 0.3 if span0 > 30 else 0.15
     lo = Q[used].min(0) - 3; hi = Q[used].max(0) + 3
     gw, gh = int(math.ceil((hi[0] - lo[0]) / res)), int(math.ceil((hi[1] - lo[1]) / res))
     mask = np.zeros((gh, gw), bool); depth = np.zeros((gh, gw))
@@ -356,17 +389,21 @@ def fit(key):
     grip = q(np.zeros((1, 3)))[0]
     contours = [cc[:, ::-1] * res + lo for cc in measure.find_contours(mask.astype(float), 0.5) if len(cc) > 12]
     if not contours: raise SystemExit(f'{key}: no outline found')
-    # the point of the steel nearest the hand, and how far round it the edge is left bare
     allc = np.concatenate(contours)
     A = allc[np.argmin(np.linalg.norm(allc - grip, axis=1))]
     span = (Q[used].max(0) - Q[used].min(0))
-    rA = 0.0 if isinstance(band, list) else max(2.5, 0.14 * span.max())   # (a staff's two ends: the band already leaves the grip out)
+    # (Noah, 2026-11-24: "it needs to affect their entire blade length") only the steel's own end at the hand is left bare - the
+    # stretch of outline that faces the grip across the blade's root (the guard), never the edges running up to it
+    xbase = allc[:, 0].min()
+    two_ends = isinstance(band, list)
+    rA = 0.0
     edges = []
     for cc in contours:
-        # resample every ~1.2 units, smoothed a little
+        # resample every ~1.2 units (0.6 on small steel), smoothed a little
         seg = np.linalg.norm(np.diff(cc, axis=0), axis=1); s = np.concatenate([[0], np.cumsum(seg)])
         if s[-1] < 6: continue
-        ss = np.arange(0, s[-1], 1.2)
+        stepv = 1.2 if span0 > 30 else 0.6
+        ss = np.arange(0, s[-1], stepv)
         pts = np.stack([np.interp(ss, s, cc[:, 0]), np.interp(ss, s, cc[:, 1])], 1)
         k = 3
         pts = np.stack([np.convolve(np.r_[pts[-k:, i], pts[:, i], pts[:k, i]], np.ones(2 * k + 1) / (2 * k + 1), 'valid') for i in range(2)], 1)
@@ -376,8 +413,10 @@ def fit(key):
         probe = ((pts + nor * 0.9 - lo) / res).astype(int)
         inside = mask[np.clip(probe[:, 1], 0, gh - 1), np.clip(probe[:, 0], 0, gw - 1)]
         if inside.mean() > 0.5: nor = -nor
-        keepm = np.linalg.norm(pts - A, axis=1) > rA
-        # runs of kept points (the contour is a loop: join the ends)
+        if two_ends:   # (a staff's two blades: the band already leaves the shaft out)
+            keepm = np.ones(len(pts), bool)
+        else:
+            keepm = ~((pts[:, 0] < xbase + 2.0) & (nor[:, 0] < -0.55))
         idx = np.where(keepm)[0]
         if not len(idx): continue
         if keepm.all():
@@ -402,7 +441,7 @@ def fit(key):
     # the edge it lies
     dist = ndimage.distance_transform_edt(mask) * res
     return dict(key=key, look=look, col=col, c=c, e1=e1, e2=e2, e3=e3, lo=lo, res=res, mask=mask, depth=depth, dist=dist,
-                edges=edges, grip=grip, A=A, rA=rA, span=span)
+                edges=edges, grip=grip, A=A, rA=rA, span=span, small=span0 <= 30)
 
 
 def to3(F, p2, d=0.0):
@@ -422,19 +461,32 @@ LOOK = {   # strips: (texture, width, cross width, scroll seconds per turn, v re
 
 
 def art(key):
-    F = fit(key)
-    look, cols = F['look'], F['col'].split('+')
-    L = LOOK[look]
+    Fs = fit(key)
     rows = []
     WORK.mkdir(parents=True, exist_ok=True); MESH.mkdir(parents=True, exist_ok=True)
     rows.append(f'out {MESH / (key + ".nif")}')
     rng = np.random.default_rng(abs(hash(key)) % 2 ** 31)
+    stats = [art_part(F, rows, rng, f'p{pi}_' if len(Fs) > 1 else '') for pi, F in enumerate(Fs)]
+    jf = WORK / f'{key}.job'
+    jf.write_text('\n'.join(rows) + '\n')
+    r = subprocess.run([str(TOOLS / 'fxwrite'), str(jf)], capture_output=True, text=True)
+    if r.returncode: raise SystemExit(f'{key}: fxwrite failed: {r.stderr[-400:]}')
+    print(f'{key}: {Fs[0]["look"]} {Fs[0]["col"]} - {len(Fs)} part(s), {sum(x[0] for x in stats)} edges, shell {"yes" if all(x[1] for x in stats) else "no"}, {sum(x[2] for x in stats)} motes')
+    return Fs
 
-    def emit(name, tex, pal, scale, verts, uvs, tris, cols_=None, flip=None, fps=None, vscroll=0.0, pulse=None):
-        head = f'shape {name} tex={GT}{tex}.dds color=1,1,1,1 scale={scale:.2f} blend=add palette={GT}pal_{pal}.dds'
+
+def art_part(F, rows, rng, pre):
+    look, cols = F['look'], F['col'].split('+')
+    L = LOOK[look]
+    small = F['small']
+    wsc = 0.45 if small else 1.0   # (a claw's blade: the flames and mist in its own small measure)
+
+    def emit(name, tex, pal, scale, verts, uvs, tris, cols_=None, flip=None, fps=None, vscroll=0.0, pulse=None, clamp=None):
+        head = f'shape {pre}{name} tex={GT}{tex}.dds color=1,1,1,1 scale={scale:.2f} blend=add palette={GT}pal_{pal}.dds'
         if flip: head += f' flip={flip[0]}x{flip[1]} fps={fps} phase={rng.random() * 2:.2f}'
         if vscroll: head += f' vscroll={vscroll:.2f}'
         if pulse: head += f' pulse={pulse[0]},{pulse[1]},{pulse[2]}'
+        if clamp is not None: head += f' clamp={clamp}'
         rows.append(head)
         for i, (p, t) in enumerate(zip(verts, uvs)):
             a = 1.0 if cols_ is None else cols_[i]
@@ -446,34 +498,44 @@ def art(key):
         pal = cols[ei % len(cols)] if len(cols) > 1 else cols[0]
         L2 = np.linalg.norm(np.diff(pts, axis=0), axis=1); s = np.r_[0, np.cumsum(L2)]
         n = len(pts)
-        fade = np.clip(np.minimum(s, s[-1] - s) / 4.0, 0, 1)   # (soft at both ends)
+        # (Noah: "the entire blade length") soft only over the last unit or so at each end of a run
+        fl = 0.6 if small else 1.4
+        fade = np.clip(np.minimum(s, s[-1] - s) / fl, 0, 1) if s[-1] < 1e9 else np.ones(n)
+        closed = np.linalg.norm(pts[0] - pts[-1]) < 1e-3
+        if closed: fade = np.ones(n)
         for li, (tex, w, wc, per, rep, gain) in enumerate(L['strips']):
             flipbook = tex == 'storm_edge'
             for mode in ('out', 'cross'):
-                ww = w if mode == 'out' else wc
-                vv = [(s[i] % 16.0) / 16.0 if flipbook else s[i] / 40.0 * rep for i in range(n)]
+                ww = (w if mode == 'out' else wc) * wsc
+                vv = [(s[i] % 16.0) / 16.0 if flipbook else s[i] / 40.0 * rep / wsc for i in range(n)]
                 verts, uvs, al, tris = [], [], [], []
-                rows_ = ((-0.5, 0.0), (ww, 1.0)) if mode == 'out' else ((-ww, 1.0), (0.0, 0.0), (ww, 1.0))
+                # (the sheet's far border always clear - its last quarter fades to nothing: no line traced round the effect)
+                rows_ = (((-0.5 * wsc, 0.0, 1.0), (ww * 0.72, 0.72, 1.0), (ww, 1.0, 0.0)) if mode == 'out' else
+                         ((-ww, 1.0, 0.0), (-ww * 0.72, 0.72, 1.0), (0.0, 0.0, 1.0), (ww * 0.72, 0.72, 1.0), (ww, 1.0, 0.0)))
                 k_ = len(rows_)
                 for i in range(n):
-                    for off, uu in rows_:
+                    for off, uu, aa in rows_:
                         if mode == 'out': P = to3(F, pts[i] + nor[i] * off, 0.0)[0]
                         else: P = to3(F, pts[i], off)[0]
-                        verts.append(P); uvs.append((uu, vv[i])); al.append(fade[i])
+                        verts.append(P); uvs.append((uu, vv[i]))
+                        al.append(fade[i] * aa)
                 for i in range(n - 1):
                     if flipbook and vv[i + 1] < vv[i]: continue   # (a new cell starts: no quad across the seam)
                     for r in range(k_ - 1):
                         a, b = i * k_ + r, i * k_ + r + 1; c2, d = a + k_, b + k_
                         tris += [(a, b, d), (a, d, c2)]
                 emit(f'e{ei}_{li}_{mode}', tex, pal, gain * (1.0 if mode == 'out' else 0.8), verts, uvs, tris, al,
-                     flip=(4, 4) if flipbook else None, fps=14 if flipbook else None, vscroll=0 if flipbook else per)
+                     flip=(4, 4) if flipbook else None, fps=14 if flipbook else None, vscroll=0 if flipbook else per,
+                     clamp=None if flipbook else 1)
     # the shell over both faces
     tex, how, tile, gain = L['shell']
+    if small: tile *= 0.5
     mask, depth, dist, res, lo = F['mask'], F['depth'], F['dist'], F['res'], F['lo']
     step = 4                                     # (a quad every 1.2 units)
     gh, gw = mask.shape
     maxd = max(0.5, dist.max())
     flipbook = tex == 'storm_shell'
+    tris = []
     for side in (-1, 1):
         verts, uvs, al, tris = [], [], [], []
         for yi in range(0, gh - step, step):
@@ -492,7 +554,10 @@ def art(key):
                     uvs.append((tu, tv))
                     e = 1.0 - min(1.0, dist[a, b] / maxd)    # (0 the spine, 1 the edge)
                     w_ = {'edge': e ** 2.5, 'band': max(0.0, 1.0 - e * 1.6) if maxd > 1.2 else 0.0, 'all': 1.0}[how]
-                    al.append(w_)
+                    # (Noah, 2026-11-24: "remove the lines ... it almost looks like a sketch") the shell melts away before the
+                    # steel's own edge - no stepped border of light laid round the blade
+                    w_ *= smooth(0.0, 1.0, (dist[a, b] - res * step * 0.5) / (1.0 if small else 1.8))
+                    al.append(float(w_))
                 if flipbook and (max(u for u, _ in uvs[base:]) - min(u for u, _ in uvs[base:]) > 0.5 or max(v for _, v in uvs[base:]) - min(v for _, v in uvs[base:]) > 0.5):
                     del verts[base:], uvs[base:], al[base:]; continue
                 tris += [(base, base + 1, base + 2), (base, base + 2, base + 3)]
@@ -501,41 +566,39 @@ def art(key):
                  vscroll=0 if flipbook else (6.0 if how == 'edge' else 0), pulse=(2.6, 0.45, 1.15) if look in ('runic', 'core') else None)
     # motes: a few billboard sparks along the edges (fxwrite cards)
     kind, dens = L['motes']
+    if not F['edges']: return (0, bool(tris), 0)
     total = sum(np.sum(np.linalg.norm(np.diff(p, axis=0), axis=1)) for p, _ in F['edges'])
-    nm = int(min(14, max(3, total * dens / 6)))
+    nm = int(min(14, max(2 if small else 3, total * dens / 6)))
     allp = np.concatenate([p for p, _ in F['edges']]); alln = np.concatenate([n for _, n in F['edges']])
     for m in range(nm):
         i = rng.integers(len(allp))
-        off = {'rise': 1.5, 'spark': 1.2, 'drift': 3.0, 'fall': 0.8}[kind]
+        off = {'rise': 1.5, 'spark': 1.2, 'drift': 3.0, 'fall': 0.8}[kind] * wsc
         p3 = to3(F, allp[i] + alln[i] * off, 0.0)[0]
-        sz = {'rise': 0.7, 'spark': 0.5, 'drift': 1.1, 'fall': 0.6}[kind]
-        rows.append(f'shape m{m} tex={GT}mote.dds color=1,1,1,1 scale=1.6 blend=add billboard=1 palette={GT}pal_{cols[0]}.dds '
+        sz = {'rise': 0.7, 'spark': 0.5, 'drift': 1.1, 'fall': 0.6}[kind] * (0.6 if small else 1.0)
+        rows.append(f'shape {pre}m{m} tex={GT}mote.dds color=1,1,1,1 scale=1.6 blend=add billboard=1 palette={GT}pal_{cols[0]}.dds '
                     f'pulse={0.6 + rng.random() * 1.4:.2f},0.0,1.0 at={p3[0]:.2f},{p3[1]:.2f},{p3[2]:.2f}')
         for (x, y, u, v) in ((-sz, -sz, 0, 1), (sz, -sz, 1, 1), (sz, sz, 1, 0), (-sz, sz, 0, 0)):
             rows.append(f'v {x:.3f} {y:.3f} 0 {u} {v} 1 1 1 1')
         rows += ['t 0 1 2', 't 0 2 3']
-    jf = WORK / f'{key}.job'
-    jf.write_text('\n'.join(rows) + '\n')
-    r = subprocess.run([str(TOOLS / 'fxwrite'), str(jf)], capture_output=True, text=True)
-    if r.returncode: raise SystemExit(f'{key}: fxwrite failed: {r.stderr[-400:]}')
-    print(f'{key}: {look} {F["col"]} - {len(F["edges"])} edges, shell {"yes" if tris else "no"}, {nm} motes')
-    return F
+    return (len(F['edges']), bool(tris), nm)
 
 
 def preview(key):
-    F = fit(key)
-    mask = F['mask']
-    im = np.dstack([mask * 0.35] * 3)
-    im = (im * 255).astype(np.uint8).copy()
     import cv2
-    res, lo = F['res'], F['lo']
-    for pts, nor in F['edges']:
-        P = ((pts - lo) / res).astype(int)
-        for a, b in zip(P[:-1], P[1:]): cv2.line(im, tuple(map(int, a)), tuple(map(int, b)), (255, 140, 40), 1)
-        for p, n in zip(P[::4], nor[::4]): cv2.line(im, tuple(map(int, p)), tuple(map(int, p + n * 8)), (80, 200, 255), 1)
-    A = ((F['A'] - lo) / res).astype(int); cv2.circle(im, tuple(map(int, A)), int(F['rA'] / res), (255, 60, 60), 1)
+    ims = []
+    for F in fit(key):
+        mask = F['mask']
+        im = (np.dstack([mask * 0.35] * 3) * 255).astype(np.uint8).copy()
+        res, lo = F['res'], F['lo']
+        for pts, nor in F['edges']:
+            P = ((pts - lo) / res).astype(int)
+            for a, b in zip(P[:-1], P[1:]): cv2.line(im, tuple(map(int, a)), tuple(map(int, b)), (255, 140, 40), 1)
+            for p, n in zip(P[::4], nor[::4]): cv2.line(im, tuple(map(int, p)), tuple(map(int, p + n * 8)), (80, 200, 255), 1)
+        ims.append(im[::-1])
+    h = max(i.shape[0] for i in ims)
+    im = np.hstack([np.pad(i, ((0, h - i.shape[0]), (0, 6), (0, 0))) for i in ims])
     out = WORK / f'{key}_fit.png'; WORK.mkdir(parents=True, exist_ok=True)
-    Image.fromarray(im[::-1]).save(out)
+    Image.fromarray(im).save(out)
     print(out)
 
 
@@ -546,6 +609,8 @@ if __name__ == '__main__':
         for k in (sys.argv[2:] or list(ALL)): art(k)
         if not sys.argv[2:]:   # (the class weapons' arts by model and look key, for src/WeaponFx.cpp: tools/gen.py reads it)
             rows = [{'model': v[0].lower(), 'key': BV_KEYS.index(v[5]), 'art': 'CurseOfAlduin\\wfx\\' + k + '.nif'} for k, v in CLASS.items()]
+            # (the claws' left-hand twins: found by the model in the left hand, key -2)
+            rows += [{'model': WEAPONS[k][0].lower(), 'key': -2, 'art': 'CurseOfAlduin\\wfx\\' + k + '.nif'} for k in sorted(LEFT)]
             (ROOT / 'data' / 'weaponfx_class.json').write_text(json.dumps(rows, indent=1) + '\n')
     elif cmd == 'preview':
         for k in sys.argv[2:]: preview(k)

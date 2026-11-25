@@ -20,11 +20,20 @@ namespace coa::WeaponFx
 				if (obj && obj->parent) obj->parent->DetachChild2(obj.get());
 			}
 		};
-		Hung g_hung[2];   // [0] third person, [1] first person
+		Hung g_hung[2][2];   // [hand: 0 right, 1 left][0 third person, 1 first person]
 		std::unordered_map<RE::FormID, std::string_view> g_arts;
 		bool g_built = false;
 
-		std::string_view ArtFor(const RE::TESForm* a_w)
+		std::string ModelOf(const RE::TESForm* a_w)
+		{
+			auto* md = a_w ? a_w->As<RE::TESModel>() : nullptr;
+			if (!md || !md->GetModel()) return {};
+			std::string m = md->GetModel();
+			for (auto& c : m) c = c == '/' ? '\\' : static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+			if (m.starts_with("meshes\\")) m.erase(0, 7);
+			return m;
+		}
+		std::string_view ArtFor(const RE::TESForm* a_w, bool a_left)
 		{
 			if (!a_w) return {};
 			if (!g_built) {
@@ -35,37 +44,38 @@ namespace coa::WeaponFx
 				}
 				logger::info("weaponfx: {} weapons have their own effect art", g_arts.size());
 			}
-			if (const auto it = g_arts.find(a_w->GetFormID()); it != g_arts.end()) return it->second;
+			if (const auto it = g_arts.find(a_w->GetFormID()); it != g_arts.end()) return it->second;   // (in either hand: a one-handed weapon of ours in the left wears its look there too)
 			// a class weapon: its model changes at every tier, and its look with the tier (and the Spellbound Rapier's with the
 			// spell in the other hand) - the art fitted to the model it has now, in the look it wears now
-			const int key = Classes::HandLookKey();
-			auto* md = key >= 0 ? a_w->As<RE::TESModel>() : nullptr;
-			if (!md || !md->GetModel()) return {};
-			std::string m = md->GetModel();
-			for (auto& c : m) c = c == '/' ? '\\' : static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-			if (m.starts_with("meshes\\")) m.erase(0, 7);
+			// (Noah, 2026-11-24: "both left and right claws ... carry the same effect") in the left hand, the claws' left twins:
+			// by the model alone (key -2)
+			const int key = a_left ? -2 : Classes::HandLookKey();
+			if (key == -1) return {};
+			const std::string m = ModelOf(a_w);
+			if (m.empty()) return {};
 			for (const auto& e : gen::kWeaponFxClass) {
 				if (e.key == key && e.model == m) return e.art;
 			}
 			static std::string missed;
-			if (missed != m + std::to_string(key)) {
+			if (!a_left && missed != m + std::to_string(key)) {
 				missed = m + std::to_string(key);
 				logger::info("weaponfx: no fitted art for {} in look {}", m, key);
 			}
 			return {};
 		}
 
-		RE::NiNode* Host(RE::NiAVObject* a_root, const RE::NiAVObject* a_ours)
+		RE::NiNode* Host(RE::NiAVObject* a_root, const RE::NiAVObject* a_ours, bool a_left)
 		{
-			auto* wn = a_root ? a_root->GetObjectByName("WEAPON") : nullptr;
+			auto* wn = a_root ? a_root->GetObjectByName(a_left ? "SHIELD" : "WEAPON") : nullptr;
 			auto* node = wn ? wn->AsNode() : nullptr;
 			if (!node) return nullptr;
-			// (the weapon's own model hangs under the hand's WEAPON node: ours goes beside its geometry, under it)
+			// (the weapon's own model hangs under the hand's node: ours goes under the model's own root, beside its geometry - the
+			// art is built in that root's space, so a root turned in its file (the scythes') turns ours with it)
 			for (auto& ch : node->GetChildren()) {
 				if (!ch || ch.get() == a_ours) continue;
 				if (auto* n = ch->AsNode()) return n;
 			}
-			return node;
+			return a_left ? nullptr : node;
 		}
 	}
 
@@ -73,29 +83,32 @@ namespace coa::WeaponFx
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		const bool ok = p && p->Is3DLoaded() && p->AsActorState()->IsWeaponDrawn();
-		const auto art = ok ? ArtFor(p->GetEquippedObject(false)) : std::string_view{};
-		for (int v = 0; v < 2; ++v) {
-			auto& H = g_hung[v];
-			auto* root = ok && !art.empty() ? p->Get3D(v == 1) : nullptr;
-			auto* host = root ? Host(root, H.obj.get()) : nullptr;
-			if (!host) {
-				H.Detach();
-				continue;
-			}
-			if (H.path != art) {
-				H.Detach();
-				H.obj = Gun::LoadModel(std::string(art));
-				H.path = std::string(art);
-				if (H.obj) logger::info("weaponfx: {} hung on the {} weapon", art, v ? "first-person" : "third-person");
-				else logger::warn("weaponfx: {} could not be loaded", art);
-			}
-			if (!H.obj) continue;
-			if (H.obj->parent != host) {
-				H.Detach();
-				host->AttachChild(H.obj.get(), true);
-				H.obj->local = RE::NiTransform{};
-				RE::NiUpdateData ud;
-				H.obj->Update(ud);
+		for (int hand = 0; hand < 2; ++hand) {
+			auto* held = ok ? p->GetEquippedObject(hand == 1) : nullptr;
+			const auto art = held && held->IsWeapon() ? ArtFor(held, hand == 1) : std::string_view{};
+			for (int v = 0; v < 2; ++v) {
+				auto& H = g_hung[hand][v];
+				auto* root = ok && !art.empty() ? p->Get3D(v == 1) : nullptr;
+				auto* host = root ? Host(root, H.obj.get(), hand == 1) : nullptr;
+				if (!host) {
+					H.Detach();
+					continue;
+				}
+				if (H.path != art) {
+					H.Detach();
+					H.obj = Gun::LoadModel(std::string(art));
+					H.path = std::string(art);
+					if (H.obj) logger::info("weaponfx: {} hung on the {} {}-hand weapon", art, v ? "first-person" : "third-person", hand ? "left" : "right");
+					else logger::warn("weaponfx: {} could not be loaded", art);
+				}
+				if (!H.obj) continue;
+				if (H.obj->parent != host) {
+					H.Detach();
+					host->AttachChild(H.obj.get(), true);
+					H.obj->local = RE::NiTransform{};
+					RE::NiUpdateData ud;
+					H.obj->Update(ud);
+				}
 			}
 		}
 	}

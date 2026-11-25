@@ -36,6 +36,7 @@ struct Shape
 	float                pulse[3]{ 0, 0, 0 };
 	bool                 billboard = false;
 	int                  bbMode = 0;
+	int                  clamp = 3;   // clamp=<n>: the texture's clamp mode (1: clamped across, wrapping along - a sheet's far border never picks up its near one)
 	float                at[3]{ 0, 0, 0 };  // at=x,y,z: where the billboard's node stands (it turns about it)  // billboard=1: always face the camera; billboard=<n>: that NiBillboardNode mode (2 rigid: stays upright on screen)
 	int                  cols = 0, rows = 0;
 	std::string          parent;  // parent=<node>: the shape hangs under that node (its coordinates in the node's space)
@@ -97,6 +98,7 @@ int main(int argc, char** argv)
 				else if (key == "phase") s.phase = std::stof(val);
 				else if (key == "vscroll") s.vscroll = std::stof(val);
 				else if (key == "uscroll") s.uscroll = std::stof(val);
+				else if (key == "clamp") s.clamp = std::stoi(val);
 				else if (key == "pulse") sscanf(val.c_str(), "%f,%f,%f", &s.pulse[0], &s.pulse[1], &s.pulse[2]);
 				else if (key == "parent") s.parent = val;
 				else if (key == "skin") {
@@ -194,7 +196,7 @@ int main(int argc, char** argv)
 		if (s.rim) {
 			fx->falloffStartOpacity = 0.0f, fx->falloffStopOpacity = 1.0f;
 		}
-		fx->textureClampMode = 3;
+		fx->textureClampMode = static_cast<uint32_t>(s.clamp);
 		auto* fxp = fx.get();
 		auto ref = nif.GetHeader().AddBlock(std::move(fx));
 		// texture scrolling: a float controller on the shader's U or V offset, 0 -> 1 over the period, looping

@@ -193,5 +193,20 @@
   "model": "curseofalduin\\slayer\\dragonslayer.nif",
   "key": 9,
   "art": "CurseOfAlduin\\wfx\\cls_dragonslayer_slayer.nif"
+ },
+ {
+  "model": "weapons\\newarmoury\\fists\\daedricclawlft.nif",
+  "key": -2,
+  "art": "CurseOfAlduin\\wfx\\tab_cinderclaws_l.nif"
+ },
+ {
+  "model": "weapons\\newarmoury\\fists\\glassclawlft.nif",
+  "key": -2,
+  "art": "CurseOfAlduin\\wfx\\tab_stormtalons_l.nif"
+ },
+ {
+  "model": "weapons\\newarmoury\\fists\\dbclawlft.nif",
+  "key": -2,
+  "art": "CurseOfAlduin\\wfx\\tab_talons_l.nif"
  }
 ]
