@@ -1557,6 +1557,19 @@ namespace coa
 			auto* hd = a_root->GetObjectByName(L ? "NPC L Hand [LHnd]" : "NPC R Hand [RHnd]");
 			AimBone(uab, fab, ua, w);
 			AimBone(fab, hd, fa, w);
+			// and the wrist: the javelin itself (the hand's weapon node, its +Y the point) laid along your aim while it's cocked and
+			// thrown, pointed down and on through the follow-through - so the point never trails behind the hand
+			if (auto* wn = a_root->GetObjectByName(L ? "SHIELD" : "WEAPON"); wn && hd) {
+				const auto& R = wn->world.rotate;
+				RE::NiPoint3 cur{ R.entry[0][1], R.entry[1][1], R.entry[2][1] };
+				RE::NiPoint3 want = t < kJavRelease ? nrm(aim + up * 0.12f) : nrm(f * 0.9f - up * 0.4f);
+				if (cur.Length() > 1e-3f) {
+					cur.Unitize();
+					RE::NiPoint3 ax = cur.Cross(want);
+					const float sn = ax.Length(), cs = std::clamp(cur.Dot(want), -1.0f, 1.0f);
+					if (sn > 1e-4f) TurnBone(hd, AxisAngle(ax * (1.0f / sn), std::atan2(sn, cs) * w));
+				}
+			}
 			// the javelin in that hand: hidden from the release (it is in the air) until it is back
 			for (const bool p1 : { false, true }) {
 				auto* rt = a_player->Get3D(p1);
