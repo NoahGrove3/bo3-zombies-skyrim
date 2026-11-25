@@ -100,7 +100,7 @@ def export(key):
     path = W.model_path(rel)
     FITS[key] = W.fit(key)
     model = read_model(path)
-    looks = {lk: parse_rows(art_rows(key, lk)) for lk in ('o1', 'o2', 'o3')}   # (Noah, 2026-11-25: each weapon's own three looks)
+    looks = {lk: parse_rows(art_rows(key, lk)) for lk in ('o1', 'o2', 'o3', 'o4', 'o5')}   # (Noah, 2026-11-25: each weapon's own five looks)
     allp = np.concatenate([np.array(s['v']) for s in model] + [np.array([v[:3] for v in sh['v']]) for lk in looks.values() for sh in lk if sh['v']])
     lo, hi = allp.min(0) - 1, allp.max(0) + 1
     span = np.maximum(hi - lo, 1e-3)

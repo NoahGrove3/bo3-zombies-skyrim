@@ -104,7 +104,7 @@ def shows():
             if not parts and e['fx'].startswith('curseofalduin'): raise KeyError(f'{card}: {e["fx"]} not in fxmap.ini')
             jav = any(p.get('own') == 'wyrmspine' for p in parts)
             parts = [dict(model=p['model'], s=round(p['s'] * e['k'], 3), pal=p['pal'], delay=p['delay'], ground=p['ground']) for p in parts if 'own' not in p]
-            rows.append(dict(t=e['t'], at=e['at'], fly=e['fly'], jav=jav, parts=parts))
+            rows.append(dict(t=e['t'], at=e['at'], fly=e['fly'], jav=jav, parts=parts, k=e['k']))
         out[card] = rows
     return out
 

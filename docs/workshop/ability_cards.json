@@ -1,0 +1,686 @@
+{
+ "vahlok_hit": {
+  "item": "Jailor's Keyhammer",
+  "trig": "Every hit",
+  "does": "Shackles the one struck in place for 2 s.",
+  "style": "summon",
+  "col": "green",
+  "size": 100,
+  "where": "hit"
+ },
+ "vahlok_heavy": {
+  "item": "Jailor's Keyhammer",
+  "trig": "Heavy",
+  "does": "Spectral chains shoot out from the one struck, catch the dead within 6 m and haul them in together.",
+  "style": "chain",
+  "col": "green",
+  "size": 100,
+  "where": "area"
+ },
+ "nahkriin_hit": {
+  "item": "Mistblade",
+  "trig": "Every hit",
+  "does": "Blinds the one struck: slower, weaker blows.",
+  "style": "burst",
+  "col": "white",
+  "size": 60,
+  "where": "hit"
+ },
+ "nahkriin_heavy": {
+  "item": "Mistblade",
+  "trig": "Heavy",
+  "does": "A fog where the dead wander lost.",
+  "style": "cloud",
+  "col": "white",
+  "size": 100,
+  "where": "area"
+ },
+ "volsung_light": {
+  "item": "Windcutter",
+  "trig": "Light",
+  "does": "A gust that staggers the dead 8 m ahead.",
+  "style": "slash",
+  "col": "white",
+  "size": 90,
+  "where": "line"
+ },
+ "volsung_heavy": {
+  "item": "Windcutter",
+  "trig": "Heavy",
+  "does": "A 12 m cone that knocks them down.",
+  "style": "toll",
+  "col": "blue",
+  "size": 150,
+  "where": "line"
+ },
+ "zahkriisos_hit": {
+  "item": "Glacier Greatsword",
+  "trig": "Every hit",
+  "does": "Freezes the one struck until it dies.",
+  "style": "freeze",
+  "col": "iceblue",
+  "size": 100,
+  "where": "hit"
+ },
+ "zahkriisos_heavy": {
+  "item": "Glacier Greatsword",
+  "trig": "Heavy",
+  "does": "Shatters every frozen one round you.",
+  "style": "nova",
+  "col": "iceblue",
+  "size": 130,
+  "where": "self"
+ },
+ "otar_hit": {
+  "item": "Storm Blade",
+  "trig": "Every hit",
+  "does": "Lightning leaps to 2 more of the dead.",
+  "style": "chain",
+  "col": "blue",
+  "size": 100,
+  "where": "hit"
+ },
+ "otar_heavy": {
+  "item": "Storm Blade",
+  "trig": "Heavy",
+  "does": "Lightning arcs to all the dead round you.",
+  "style": "strike",
+  "col": "blue",
+  "size": 120,
+  "where": "area"
+ },
+ "rahgot_hit": {
+  "item": "Sacrifice Knife",
+  "trig": "Every hit",
+  "does": "Poisons the one struck; it spreads to the next.",
+  "style": "cloud",
+  "col": "poison",
+  "size": 70,
+  "where": "hit"
+ },
+ "rahgot_heavy": {
+  "item": "Sacrifice Knife",
+  "trig": "Heavy",
+  "does": "Every poisoned one bursts.",
+  "style": "burst",
+  "col": "poison",
+  "size": 120,
+  "where": "area"
+ },
+ "krosis_hit": {
+  "item": "Grief Blade",
+  "trig": "Every hit",
+  "does": "Heals you 1%.",
+  "style": "drain",
+  "col": "red",
+  "size": 80,
+  "where": "hit"
+ },
+ "krosis_heavy": {
+  "item": "Grief Blade",
+  "trig": "Heavy",
+  "does": "A wail that weakens the dead round you.",
+  "style": "toll",
+  "col": "red",
+  "size": 120,
+  "where": "self"
+ },
+ "hevnoraak_hit": {
+  "item": "Sealbreaker",
+  "trig": "Every hit",
+  "does": "Shatters the one struck's armour.",
+  "style": "burst",
+  "col": "green",
+  "size": 90,
+  "where": "hit"
+ },
+ "hevnoraak_heavy": {
+  "item": "Sealbreaker",
+  "trig": "Heavy",
+  "does": "A shockwave that staggers all round you.",
+  "style": "shockwave",
+  "col": "green",
+  "size": 120,
+  "where": "self"
+ },
+ "vokun_hit": {
+  "item": "Nightcaller's Scythe",
+  "trig": "Every hit",
+  "does": "Puts the one struck to sleep.",
+  "style": "bind",
+  "col": "purple",
+  "size": 100,
+  "where": "hit"
+ },
+ "vokun_heavy": {
+  "item": "Nightcaller's Scythe",
+  "trig": "Heavy",
+  "does": "A nightmare fog that slows them.",
+  "style": "cloud",
+  "col": "shadow",
+  "size": 140,
+  "where": "area"
+ },
+ "morokei_hit": {
+  "item": "Arcane Maul",
+  "trig": "Every hit",
+  "does": "Bursts with magic.",
+  "style": "slash",
+  "col": "drain",
+  "size": 100,
+  "where": "hit"
+ },
+ "morokei_heavy": {
+  "item": "Arcane Maul",
+  "trig": "Heavy",
+  "does": "A magicka shockwave that refills your magicka.",
+  "style": "shockwave",
+  "col": "drain",
+  "size": 130,
+  "where": "self"
+ },
+ "stormtalons_third": {
+  "item": "Stormtalons",
+  "trig": "Every 3rd hit",
+  "does": "Chains lightning to 2 more of the dead.",
+  "style": "chain",
+  "col": "blue",
+  "size": 100,
+  "where": "hit"
+ },
+ "stormtalons_heavy": {
+  "item": "Stormtalons",
+  "trig": "Heavy",
+  "does": "Stuns.",
+  "style": "strike",
+  "col": "blue",
+  "size": 100,
+  "where": "hit"
+ },
+ "gravebell_fifth": {
+  "item": "Gravebell Mace",
+  "trig": "Every 5th hit",
+  "does": "Tolls the bell, stunning the dead within 5 m.",
+  "style": "toll",
+  "col": "gold",
+  "size": 120,
+  "where": "self"
+ },
+ "talons_hit": {
+  "item": "Talons of Woe",
+  "trig": "Every hit",
+  "does": "Bleeding twice as deep; kills heal you a little.",
+  "style": "drain",
+  "col": "red",
+  "size": 80,
+  "where": "hit"
+ },
+ "riverstone_hit": {
+  "item": "Riverstone Halberd",
+  "trig": "Every hit",
+  "does": "Knocks the dead back.",
+  "style": "burst",
+  "col": "green",
+  "size": 90,
+  "where": "hit"
+ },
+ "riverstone_heavy": {
+  "item": "Riverstone Halberd",
+  "trig": "Heavy",
+  "does": "Splits the ground in a line ahead.",
+  "style": "wave",
+  "col": "green",
+  "size": 140,
+  "where": "line"
+ },
+ "wyrmspine_pike_hit": {
+  "item": "Wyrmspine Pike",
+  "trig": "Thrust",
+  "does": "Pierces 2 more of the dead in a line.",
+  "style": "slash",
+  "col": "fear",
+  "size": 100,
+  "where": "line"
+ },
+ "wyrmspine_pike_heavy": {
+  "item": "Wyrmspine Pike",
+  "trig": "Heavy",
+  "does": "A shockwave that staggers the dead within 8 m.",
+  "style": "shockwave",
+  "col": "fear",
+  "size": 90,
+  "where": "self"
+ },
+ "lanternwick_light": {
+  "item": "Rimewick Quarterstaff",
+  "trig": "Light",
+  "does": "Freezes the dead for 3 s.",
+  "style": "freeze",
+  "col": "iceblue",
+  "size": 90,
+  "where": "hit"
+ },
+ "lanternwick_heavy": {
+  "item": "Rimewick Quarterstaff",
+  "trig": "Heavy",
+  "does": "A 10 m blizzard for 6 s.",
+  "style": "cyclone",
+  "col": "iceblue",
+  "size": 100,
+  "where": "area"
+ },
+ "cinderclaws_hit": {
+  "item": "Cinderclaws",
+  "trig": "Every swipe",
+  "does": "Sets the dead burning.",
+  "style": "burst",
+  "col": "orange",
+  "size": 80,
+  "where": "hit"
+ },
+ "cinderclaws_heavy": {
+  "item": "Cinderclaws",
+  "trig": "Heavy",
+  "does": "A fan of embers.",
+  "style": "wave",
+  "col": "orange",
+  "size": 120,
+  "where": "line"
+ },
+ "eclipse_hit": {
+  "item": "Eclipse Edge",
+  "trig": "Every hit",
+  "does": "Frost and sun by turns.",
+  "style": "slash",
+  "col": "orange",
+  "size": 100,
+  "where": "hit"
+ },
+ "eclipse_heavy": {
+  "item": "Eclipse Edge",
+  "trig": "Heavy",
+  "does": "An ice shockwave, then a sun shockwave (10 m).",
+  "style": "shockwave",
+  "col": "iceblue",
+  "size": 100,
+  "where": "self"
+ },
+ "wanderstar_cast": {
+  "item": "The Wandering Star",
+  "trig": "Hold to cast",
+  "does": "A gold star every 0.5 s that bounces to up to 4 of the dead.",
+  "style": "bolt",
+  "col": "gold",
+  "size": 70,
+  "where": "hit"
+ },
+ "wanderstar_fifth": {
+  "item": "The Wandering Star",
+  "trig": "Every 5th hit",
+  "does": "Throws them far.",
+  "style": "burst",
+  "col": "gold",
+  "size": 110,
+  "where": "hit"
+ },
+ "frostmourn_hit": {
+  "item": "Frostmourn Rapier",
+  "trig": "Thrust",
+  "does": "Slows the dead.",
+  "style": "slash",
+  "col": "iceblue",
+  "size": 90,
+  "where": "hit"
+ },
+ "frostmourn_heavy": {
+  "item": "Frostmourn Rapier",
+  "trig": "Heavy",
+  "does": "Freezes a ring of the dead round you.",
+  "style": "nova",
+  "col": "iceblue",
+  "size": 140,
+  "where": "self"
+ },
+ "silverscythe_fourth": {
+  "item": "Silver Reaping Scythe",
+  "trig": "Every 4th hit",
+  "does": "A silver flash that briefly slows the dead.",
+  "style": "bind",
+  "col": "moon",
+  "size": 120,
+  "where": "hit"
+ },
+ "bonereaper_kill": {
+  "item": "Bonereaper",
+  "trig": "1 kill in 4",
+  "does": "Rises to fight for you for 20 s.",
+  "style": "summon",
+  "col": "white",
+  "size": 100,
+  "where": "hit"
+ },
+ "wyrmtooth_hit": {
+  "item": "Wyrmtooth Scythe",
+  "trig": "Every hit",
+  "does": "Makes the dead bleed.",
+  "style": "slash",
+  "col": "red",
+  "size": 80,
+  "where": "hit"
+ },
+ "wyrmtooth_heavy": {
+  "item": "Wyrmtooth Scythe",
+  "trig": "Heavy",
+  "does": "A shockwave that staggers the dead within 8 m.",
+  "style": "shockwave",
+  "col": "red",
+  "size": 150,
+  "where": "self"
+ },
+ "bloodmoon_hit": {
+  "item": "Bloodmoon Scythe",
+  "trig": "Every hit",
+  "does": "Drains blood to heal you.",
+  "style": "drain",
+  "col": "red",
+  "size": 90,
+  "where": "hit"
+ },
+ "bloodmoon_heavy": {
+  "item": "Bloodmoon Scythe",
+  "trig": "Heavy",
+  "does": "Drains everything it touches.",
+  "style": "drain",
+  "col": "red",
+  "size": 140,
+  "where": "area"
+ },
+ "javelin_throw": {
+  "item": "Wyrmspine Javelin",
+  "trig": "Hold and let go",
+  "does": "The throw: the javelin streaks out in your other hand's element.",
+  "style": "bolt",
+  "col": "orange",
+  "size": 110,
+  "where": "hit"
+ },
+ "javelin_land": {
+  "item": "Wyrmspine Javelin",
+  "trig": "Where it lands",
+  "does": "A burst and a ring, then it bounces on to the next.",
+  "style": "shockwave",
+  "col": "orange",
+  "size": 110,
+  "where": "hit"
+ },
+ "javelin_bounce": {
+  "item": "Wyrmspine Javelin",
+  "trig": "Its bounce",
+  "does": "The javelin itself arcs on, point first and slow enough to follow, to the next of the dead, your element streaming behind it; a flash and a burst at each it strikes.",
+  "style": "bounce",
+  "col": "orange",
+  "size": 100,
+  "where": "hit"
+ },
+ "soulcaller_beam": {
+  "item": "Soulcaller's Staff",
+  "trig": "Hold",
+  "does": "The soul beam.",
+  "style": "drain",
+  "col": "arcane",
+  "size": 110,
+  "where": "hit"
+ },
+ "soulcaller_wolves": {
+  "item": "Soulcaller's Staff",
+  "trig": "Its summons",
+  "does": "Spectral wolves and a sabre cat come, each out of Skyrim's conjuring portal.",
+  "style": "summon",
+  "col": "arcane",
+  "size": 100,
+  "where": "area"
+ },
+ "mutagen_flasks": {
+  "item": "Mutagen Staff",
+  "trig": "Hold block",
+  "does": "A flask every 0.5 s from the staff: fire, frost, storm, acid, holy water, void in turn (no beam).",
+  "style": "burst",
+  "col": "gold",
+  "size": 100,
+  "where": "hit"
+ },
+ "mutagen_elixir": {
+  "item": "Mutagen Staff",
+  "trig": "The Elixir",
+  "does": "A golden burst and a cloud that turns the dead.",
+  "style": "cloud",
+  "col": "gold",
+  "size": 130,
+  "where": "area"
+ },
+ "slayer_light": {
+  "item": "Dragon Slayer",
+  "trig": "Light",
+  "does": "A golden fireball.",
+  "style": "bolt",
+  "col": "gold",
+  "size": 120,
+  "where": "hit"
+ },
+ "slayer_heavy": {
+  "item": "Dragon Slayer",
+  "trig": "Heavy",
+  "does": "5 s of golden meteors.",
+  "style": "meteor",
+  "col": "gold",
+  "size": 130,
+  "where": "area"
+ },
+ "bane_light": {
+  "item": "Alduin's Bane",
+  "trig": "Light",
+  "does": "Slashes, and a meteor on each one hit.",
+  "style": "meteor",
+  "col": "orange",
+  "size": 140,
+  "where": "hit"
+ },
+ "bane_heavy": {
+  "item": "Alduin's Bane",
+  "trig": "Heavy",
+  "does": "A blast of wind round you (10 m) that hurls the dead far away.",
+  "style": "cyclone",
+  "col": "white",
+  "size": 170,
+  "where": "area"
+ },
+ "scythe_light": {
+  "item": "Shadowflame Scythe",
+  "trig": "Light",
+  "does": "A violet bolt; the dead it strikes burn violet.",
+  "style": "bolt",
+  "col": "shadow",
+  "size": 100,
+  "where": "hit"
+ },
+ "scythe_heavy": {
+  "item": "Shadowflame Scythe",
+  "trig": "Heavy",
+  "does": "The violet fire tornado, leaving the ground burning.",
+  "style": "cyclone",
+  "col": "shadow",
+  "size": 150,
+  "where": "area"
+ },
+ "wand_light": {
+  "item": "Carian Wand",
+  "trig": "Cast",
+  "does": "Bolts cycling fire, lightning and ice.",
+  "style": "bolt",
+  "col": "carian",
+  "size": 90,
+  "where": "hit"
+ },
+ "wand_hit": {
+  "item": "Carian Wand",
+  "trig": "Each one hit",
+  "does": "A burst in the bolt's element.",
+  "style": "burst",
+  "col": "carian",
+  "size": 90,
+  "where": "hit"
+ },
+ "wand_heavy": {
+  "item": "Carian Wand",
+  "trig": "Tier II–III",
+  "does": "Bolts cycling fire, lightning and ice; every 2nd bolt a great one that pierces; at Tier III a volley either side of it.",
+  "style": "bolt",
+  "col": "carian",
+  "size": 150,
+  "where": "hit"
+ },
+ "staff_light": {
+  "item": "Radiant Quarterstaff",
+  "trig": "Light",
+  "does": "A white sun ball.",
+  "style": "bolt",
+  "col": "white",
+  "size": 110,
+  "where": "hit"
+ },
+ "staff_heavy": {
+  "item": "Radiant Quarterstaff",
+  "trig": "Heavy (Tier II–III)",
+  "does": "A white sunbeam strikes out of the sky, with a ring.",
+  "style": "pillar",
+  "col": "white",
+  "size": 140,
+  "where": "hit"
+ },
+ "rapier_light": {
+  "item": "Spellbound Rapier",
+  "trig": "Light",
+  "does": "A bolt in your other hand's element.",
+  "style": "bolt",
+  "col": "orange",
+  "size": 100,
+  "where": "hit"
+ },
+ "rapier_heavy": {
+  "item": "Spellbound Rapier",
+  "trig": "Heavy",
+  "does": "A tornado that casts your spell.",
+  "style": "cyclone",
+  "col": "orange",
+  "size": 140,
+  "where": "area"
+ },
+ "rapier_line": {
+  "item": "Spellbound Rapier",
+  "trig": "Heavy (frost or arcane)",
+  "does": "A shockwave line of ice shards.",
+  "style": "nova",
+  "col": "iceblue",
+  "size": 110,
+  "where": "line"
+ },
+ "ffire_land": {
+  "item": "Alchemist: Fire Flask",
+  "trig": "Where it breaks",
+  "does": "A burst and the ground left burning.",
+  "style": "pool",
+  "col": "orange",
+  "size": 110,
+  "where": "hit"
+ },
+ "ffire_power": {
+  "item": "Alchemist: Fire Flask",
+  "trig": "Tier power",
+  "does": "Firestorm: a ring of fire outward.",
+  "style": "shockwave",
+  "col": "orange",
+  "size": 150,
+  "where": "hit"
+ },
+ "ffrost_land": {
+  "item": "Alchemist: Frost Flask",
+  "trig": "Where it breaks",
+  "does": "Ice on the ground that slows.",
+  "style": "pool",
+  "col": "iceblue",
+  "size": 110,
+  "where": "hit"
+ },
+ "ffrost_power": {
+  "item": "Alchemist: Frost Flask",
+  "trig": "Tier power",
+  "does": "Frost Nova.",
+  "style": "nova",
+  "col": "iceblue",
+  "size": 140,
+  "where": "hit"
+ },
+ "fshock_land": {
+  "item": "Alchemist: Shock Flask",
+  "trig": "Where it breaks",
+  "does": "A storm on the ground.",
+  "style": "pool",
+  "col": "blue",
+  "size": 110,
+  "where": "hit"
+ },
+ "fshock_power": {
+  "item": "Alchemist: Shock Flask",
+  "trig": "Tier power",
+  "does": "Lightning Strike.",
+  "style": "strike",
+  "col": "blue",
+  "size": 130,
+  "where": "hit"
+ },
+ "facid_land": {
+  "item": "Alchemist: Acid Flask",
+  "trig": "Where it breaks",
+  "does": "A pool of acid.",
+  "style": "cloud",
+  "col": "poison",
+  "size": 110,
+  "where": "hit"
+ },
+ "fholy_land": {
+  "item": "Alchemist: Holy Water",
+  "trig": "Where it breaks",
+  "does": "Holy light that lingers; the dead burn in it.",
+  "style": "pillar",
+  "col": "gold",
+  "size": 110,
+  "where": "hit"
+ },
+ "fvoid_land": {
+  "item": "Alchemist: Voidglass Flask",
+  "trig": "Where it breaks",
+  "does": "Mana Void: the dead dragged in; what it drains comes back to you.",
+  "style": "drain",
+  "col": "arcane",
+  "size": 120,
+  "where": "hit"
+ },
+ "fvoid_power": {
+  "item": "Alchemist: Voidglass Flask",
+  "trig": "Then",
+  "does": "Lunar Tide: a ring that throws them back out.",
+  "style": "shockwave",
+  "col": "shadow",
+  "size": 140,
+  "where": "hit"
+ },
+ "summon_arrive": {
+  "item": "Summoner: every conjuration",
+  "trig": "A summon arrives",
+  "does": "The portal your summons step out of.",
+  "style": "summon",
+  "col": "arcane",
+  "size": 110,
+  "where": "area"
+ }
+}

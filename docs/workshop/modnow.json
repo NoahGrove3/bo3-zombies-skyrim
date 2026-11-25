@@ -1,5 +1,5 @@
 {
- "updated": "Nov 25 2026 (evening build)",
+ "updated": "Nov 25 2026 (late evening)",
  "about": "Everything the mod is, as built - kept in the repo (docs/workshop/modnow.json) and updated with every build. The workshop's \"The mod now\" tab is drawn from it.",
  "sections": [
   [
@@ -103,9 +103,10 @@
   [
    "Weapon looks",
    [
-    "Every relic, wonder and class weapon tier wears <b>its own look</b> (Nov 25: \"custom weapon looks ... not changing their model or adding something on top\"): three looks designed for each weapon (tools/weaponlooks.py), all light on its own edges and faces, many in two colours, built from our textures and Skyrim's own enchantment membranes at 2K (4K on the wonders and Alduin's Bane). <b>Noah's picks are in</b> (Nov 25): third looks on the Grief Blade, Storm Blade, Sacrifice Knife, Nightcaller's Scythe, Glacier Greatsword, Rimewick and Radiant Quarterstaff; second looks on the Windcutter, Bloodmoon Scythe and Frostmourn; the Keyhammer's first look in green; the rest their first.",
+    "Every relic, wonder and class weapon tier wears <b>its own look</b> (Nov 25: \"custom weapon looks ... not changing their model or adding something on top\"): five looks designed for each weapon (tools/weaponlooks.py), all light on its own edges and faces, many in two colours, built from our textures and Skyrim's own enchantment membranes at 2K (4K on the wonders and Alduin's Bane). <b>Noah's picks are in</b> (Nov 25): third looks on the Grief Blade, Storm Blade, Sacrifice Knife, Nightcaller's Scythe, Glacier Greatsword, Rimewick and Radiant Quarterstaff; second looks on the Windcutter, Bloodmoon Scythe and Frostmourn; the Keyhammer's first look in green; the rest their first.",
     "No pieces laid over the weapons (the Nov 25 signatures - chains, crystals, seals, rings - retired) and no shared look families.",
-    "Effects come to a point at the tips and ends; quarterstaffs glow on their heads only; the Gravebell doesn't pulse. Scythes 25% larger. <b>Our own scythes</b> (tools/scythes.py): nine, each from Skyrim's own weapons of its make - a battleaxe's pole (a Dragon Priest's staff, a pair of spines) and a sword's blade bent into a crescent, its guard as the collar - in the game now (Nov 25: Noah's OK, with the blade flush where it meets the haft on Wyrmtooth, Silver Reaping and Bloodmoon)."
+    "Effects come to a point at the tips and ends; quarterstaffs glow on their heads only; the Gravebell doesn't pulse. Scythes 25% larger. <b>Our own scythes</b> (tools/scythes.py): nine, each from Skyrim's own weapons of its make - a battleaxe's pole (a Dragon Priest's staff, a pair of spines) and a sword's blade bent into a crescent, its guard as the collar - in the game now (Nov 25: Noah's OK, with the blade flush where it meets the haft on Wyrmtooth, Silver Reaping and Bloodmoon).",
+    "Nov 25 evening: two more looks for every weapon (five each); the scythes' joins fixed - Wyrmtooth, Silver Reaping and Bloodmoon's blades square to the haft, the Dragon Priest's blade lower and clamped round the staff."
    ]
   ],
   [
@@ -118,7 +119,9 @@
     "<b>Alduin's Bane heavy</b>: a wind blast within 10 m that hurls the dead far: Skyrim's Labyrinthian shockwave, Unrelenting Force and waterfall mist, in white (Nov 25: \"Shockwave\").",
     "<b>The Radiant Quarterstaff's sunbeam all in white</b> (Nov 25): its bolt from the sky, burst, turning pillar and motes (fxmap.ini sun_*_white); Holy Water keeps the gold.",
     "<b>Summons come out of Skyrim's own conjuring portal</b> (Nov 25: \"Use skyrims summon portal\"): the Soulcaller's wolves and sabre cat.",
-    "Retired: the Nov 25 flat 'own effect' elements (tools/abilityfx.py) and the borrowed-impact list (tools/fxown.py)."
+    "Retired: the Nov 25 flat 'own effect' elements (tools/abilityfx.py) and the borrowed-impact list (tools/fxown.py).",
+    "<b>Five options of its own per ability</b> (Nov 25: \"different variations of what the weapon is actually doing\"): what it does picks its kind (a chain, a stun round you, a freeze, a fog, a pull...), and each has five ways to show it from real parts, with any colour and sliders for size, brightness, area of effect (also how far it reaches in game), vibrance, speed, linger, density and light cast (tools/abilityopts.py).",
+    "The workshop pictures show the night's own dead (the Thriceborn) reacting as the game makes them, and you as a male Nord in the weapon's class set holding it."
    ]
   ],
   [

@@ -155,6 +155,8 @@ def build():
     models = {p['model'] for t in realfx.PARTS.values() for r, p in t.items() if r != 'native'} | {realfx.RING['model'], 'magic\\summontargetfx.nif'}
     import docshow
     models |= set(docshow.models())   # (the shows': bolts in flight, the sunbeam, the javelin's bounce - tools/docshow.py)
+    import abilityopts
+    models |= set(abilityopts.models())   # (each ability's five options - tools/abilityopts.py)
     data = {}
     for m in sorted(models):
         src = RP / 'meshes' / ('meshes/' + m.replace('\\', '/')) if (RP / 'meshes' / 'meshes').exists() else RP / 'meshes' / m.replace('\\', '/')

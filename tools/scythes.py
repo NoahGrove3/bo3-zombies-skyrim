@@ -31,7 +31,7 @@ SCYTHES = {
  'forsworn':     ('Shadowflame Scythe - Forsworn (Tier I)', ('weapons/forsworn/forswornaxe.nif', 'axe'), 'weapons/forsworn/forswornsword.nif', 1.6, 74, []),
  'falmer':       ('Shadowflame Scythe - Falmer (Tier II)', ('weapons/falmer/falmeraxe.nif', 'axe'), 'weapons/falmer/falmerlongsword.nif', 1.9, 80, []),
  'dwarven':      ('Shadowflame Scythe - Dwarven (Tier III)', ('weapons/dwarven/dwarvenbattleaxe.nif', 'axe'), 'weapons/dwarven/dwarvengreatsword.nif', 1.5, 66, []),
- 'dragonpriest': ('Shadowflame Scythe - Dragon Priest (Tier IV)', ('weapons/dragonpriest/dragonprieststaff.nif', 'staff'), 'weapons/dragonpriest/dragonpriestdagger.nif', 2.1, 84, []),
+ 'dragonpriest': ('Shadowflame Scythe - Dragon Priest (Tier IV)', ('weapons/dragonpriest/dragonprieststaff.nif', 'staff'), 'weapons/dragonpriest/dragonpriestdagger.nif', 2.1, 84, ['low', 'low:46']),
 }
 
 
@@ -165,13 +165,19 @@ def blade(rel, width, bend, top, flush=False):
         y0 = gy + 3.0; L0 = P[:, 1].max() - y0
         s = P[:, 1] - y0
         s = np.where(s > 0, s * (BLADE_LEN / L0), s * 1.2)   # (the guard as it is; the blade drawn to the scythe's length)
-        # the curve: heading -X, a little up, bending down through 'bend' degrees over its length
-        k = math.radians(bend) / BLADE_LEN
-        phi0 = math.radians(180 - 14)
-        phi = phi0 + np.clip(s, 0, None) * k            # (turning counter-clockwise from -X: the tip sweeps down)
-        # centre line: integrate (cos phi, sin phi) ds (closed form for a circular arc)
-        cx = np.where(s > 0, (np.sin(phi) - math.sin(phi0)) / k, s * math.cos(phi0))
-        cy = np.where(s > 0, (-np.cos(phi) + math.cos(phi0)) / k, s * math.sin(phi0))
+        # the curve: out square from the pole (-X; its guard upright along the pole - Noah, 2026-11-25: "the blade looks
+        # crooked where it connects to the handle"), lifting 14 degrees over its first stretch, then bending down through
+        # 'bend' degrees over the rest
+        # (the ones Noah OK'd as they were keep their first curve: lifted from the guard on)
+        ss = np.linspace(0, BLADE_LEN * 1.05, 600)
+        lift = math.radians(14) * (np.clip(ss / 9.0, 0, 1) ** 2 * (3 - 2 * np.clip(ss / 9.0, 0, 1)) if flush else 1.0 + 0 * ss)
+        PHI = math.pi - lift + (math.radians(bend) * np.clip((ss - 4.0) / (BLADE_LEN - 4.0), 0, None) if flush else math.radians(bend) / BLADE_LEN * ss)
+        CX = np.concatenate([[0], np.cumsum(np.cos(PHI[:-1]) * np.diff(ss))]); CY = np.concatenate([[0], np.cumsum(np.sin(PHI[:-1]) * np.diff(ss))])
+        sp = np.clip(s, 0, None)
+        g_phi = math.pi if flush else math.pi - math.radians(14)
+        phi = np.where(s > 0, np.interp(sp, ss, PHI), g_phi)
+        cx = np.where(s > 0, np.interp(sp, ss, CX), s * math.cos(g_phi))
+        cy = np.where(s > 0, np.interp(sp, ss, CY), s * math.sin(g_phi))
         nx, ny = -np.sin(phi), np.cos(phi)               # (across the blade)
         taper = np.where(s > 0, 1.0, 0.85)
         x = P[:, 0] * width * taper
@@ -200,13 +206,20 @@ def build(name):
     title, (hrel, how), brel, width, bend, extra = SCYTHES[name]
     parts = haft(hrel, how, 1.1 if 'tight' in extra else 1.35)
     top = YT - 10
-    if 'flush' in extra:
+    if 'low' in extra:   # (Noah: the Dragon Priest's "lower the blade on the staff handle (pole) so it actually looks like a scythe")
+        top = YT - 10 - next(float(e[4:]) for e in extra if e.startswith('low:'))
+    if 'flush' in extra or 'low' in extra:
         bl, (g0, g1) = blade(brel, width, bend, top, True)
         # (the pole's head brought down inside the collar: its top a little below the collar's)
-        hy = max(p['V'][:, 1].max() for p in parts)
-        want = top + 0.3 * (g1 - top)
-        for p in parts:
-            V = p['V'].copy(); V[:, 1] = YB + (V[:, 1] - YB) * (want - YB) / (hy - YB); p['V'] = V
+        if 'low' not in extra:
+            hy = max(p['V'][:, 1].max() for p in parts)
+            want = top + 0.3 * (g1 - top)
+            for p in parts:
+                V = p['V'].copy(); V[:, 1] = YB + (V[:, 1] - YB) * (want - YB) / (hy - YB); p['V'] = V
+        if 'low' in extra:   # (the guard round the staff's own middle at that height: clamped on it, not beside it)
+            H = np.concatenate([p['V'] for p in parts]); band = H[np.abs(H[:, 1] - (top + 0.5 * (g1 - top))) < 4]
+            cx = (np.percentile(band[:, 0], 10) + np.percentile(band[:, 0], 90)) / 2 if len(band) else 0.0
+            for o in bl: o['V'] = o['V'] + np.array([cx, 0, 0])
         parts += bl
     else:
         parts += blade(brel, width, bend, top)
