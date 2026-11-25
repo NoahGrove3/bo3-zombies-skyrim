@@ -1994,8 +1994,15 @@ namespace coa
 			bool placed = false;
 			for (const auto& fp : parts) {
 				if (fp.none) { placed = true; continue; }
-				const RE::NiPoint3 at = a_at + RE::NiPoint3{ 0, 0, fp.dz * a_scale };
+				RE::NiPoint3 at = a_at + RE::NiPoint3{ 0, 0, fp.dz * a_scale };
 				const float sc = a_scale * fp.scale;
+				// (an ability's real parts: each set off on its own beat, the ground ones laid on the ground)
+				if (fp.ground && !fp.grows) {
+					float land = 0;
+					const bool on = RE::TES::GetSingleton()->GetLandHeight(a_at, land) && std::abs(land - a_at.z) < 260.0f;
+					at.z = (on ? land + 2.0f : a_at.z - 60.0f) + fp.dz;   // (indoors, no land: the feet of the one struck)
+				}
+				const float pd = a_delay + (fp.grows ? 0.0f : fp.delay);
 				if (fp.grows) {   // (one of an ability's own elements: grown and faded where it stands, as the workshop plays it)
 					static std::mt19937 rr{ 1234u };
 					auto* pc = RE::PlayerCharacter::GetSingleton();
@@ -2009,7 +2016,7 @@ namespace coa
 				auto part = std::make_shared<FxPart>(fp);
 				if (fp.blast >= 0) {
 					if (g_blasts.size() < 48) {
-						PendingBlast pb{ at, a_delay, fp.blast, sc };
+						PendingBlast pb{ at, pd, fp.blast, sc };
 						pb.exact = true;
 						pb.part = part;
 						if (!fp.pal.empty() || fp.col.x >= 0) pb.form = TintableBlast(fp.blast);   // (Noah: "make sure all the flames are purple")
@@ -2018,7 +2025,7 @@ namespace coa
 					placed = true;
 				} else if (!a_flat) {
 					if (auto* ex = ModelExplosion(fp.model); ex && g_blasts.size() < 48) {
-						PendingBlast pb{ at, a_delay, -1, sc, ex };
+						PendingBlast pb{ at, pd, -1, sc, ex };
 						pb.exact = true;
 						pb.part = part;
 						g_blasts.push_back(pb);
@@ -2028,7 +2035,7 @@ namespace coa
 					auto place = [hz, at, sc, part]() {
 						if (auto r = PlaceAtPoint(hz, at)) r->GetReferenceRuntimeData().refScale = static_cast<std::uint16_t>(std::clamp(sc, 0.1f, 9.0f) * 100.0f), WatchTint(r.get(), *part, true);
 					};
-					if (a_delay <= 0) place(); else Tasks::Later(a_delay, place);
+					if (pd <= 0) place(); else Tasks::Later(pd, place);
 					placed = true;
 				}
 			}
@@ -2904,6 +2911,50 @@ namespace coa
 			for (auto& r : g_grows) if (r.t > r.life) r.fx.Detach();
 			std::erase_if(g_grows, [](const GrowFx& r) { return r.t > r.life; });
 		}
+		// (Noah, 2026-11-25, the Jailor's Keyhammer's heavy: "Chains actually grabbing nearby enemies and grouping them closer
+		// together") a spectral chain (tools/vahlokchain.py: lengths of four real links) shot out from the one struck to each of
+		// the dead it grabs, kept taut while they are dragged in, then let go
+		struct ChainGrab { RE::ActorHandle from, to; std::vector<Spellcraft::Fx> segs; float t = 0; };
+		std::vector<ChainGrab> g_chains;
+		constexpr float kChainLen = 36.0f, kChainLife = 1.5f;
+		void VahlokChain(RE::Actor* a_grabbed, RE::Actor* a_struck)
+		{
+			if (!a_grabbed || !a_struck || g_chains.size() >= 10) return;
+			g_chains.push_back({ a_grabbed->GetHandle(), a_struck->GetHandle() });
+		}
+		void TickChains(float a_delta)
+		{
+			for (auto& c : g_chains) {
+				c.t += a_delta;
+				auto f = c.from.get();
+				auto t = c.to.get();
+				if (c.t > kChainLife || !f || !t || !Spellcraft::WorldRoot()) { c.t = 1.0e9f; continue; }
+				const RE::NiPoint3 a = f->GetPosition() + RE::NiPoint3{ 0, 0, 75.0f }, b = t->GetPosition() + RE::NiPoint3{ 0, 0, 75.0f };
+				RE::NiPoint3 u = a - b;
+				const float L = u.Length();
+				if (L < 1.0f) continue;
+				u = u * (1.0f / L);
+				const int n = std::clamp(static_cast<int>(std::ceil(L / kChainLen)), 1, 16);
+				while (static_cast<int>(c.segs.size()) < n) {
+					Spellcraft::Fx fx{ Spellcraft::LoadPath("CurseOfAlduin\\fx\\vahlok_chain.nif") };
+					if (!fx.obj) break;
+					fx.Attach(Spellcraft::WorldRoot());
+					c.segs.push_back(std::move(fx));
+				}
+				// (it flies out from the one struck in the first fifth of a second, then holds; the last moment it slackens away)
+				const float reach = std::min(1.0f, c.t / 0.2f) * L;
+				const auto rot = Spellcraft::Facing(u);
+				for (int i = 0; i < static_cast<int>(c.segs.size()); ++i) {
+					const float s0 = kChainLen * static_cast<float>(i);
+					const bool on = i < n && s0 < reach && c.t < kChainLife - 0.1f;
+					c.segs[i].Show(on);
+					if (on) c.segs[i].Place(b + u * s0, rot, 1.0f);
+				}
+			}
+			for (auto& c : g_chains)
+				if (c.t >= 1.0e9f) for (auto& s : c.segs) s.Detach();
+			std::erase_if(g_chains, [](const ChainGrab& c) { return c.t >= 1.0e9f; });
+		}
 		void LightningArc(const RE::NiPoint3& a_from, const RE::NiPoint3& a_to, float a_delay) { g_arcs.push_back({ a_from, a_to, a_delay }); }
 		void RedStrikeImpl(const RE::NiPoint3& a_at);
 		void RedBeamImpl(const RE::NiPoint3& a_at);
@@ -3490,6 +3541,8 @@ namespace coa
 			Spellcraft::Reset();
 			OrbDown();  // (the Light Orb and its light hung again on the new game's body, never carried over a load)
 			// (the audit: a load mid-unleash let the old game's stars fall, wells pull and storms crackle in the new one)
+			for (auto& c : g_chains) for (auto& sg : c.segs) sg.Detach();
+			g_chains.clear();
 			g_arcs.clear(), g_dots.clear(), g_shrink.clear(), g_blasts.clear(), g_wells.clear(), g_vflash.clear(), g_pfire.clear(), (void)std::for_each(g_eb.begin(), g_eb.end(), [](EBurst& b) { b.fx.Detach(); }), g_eb.clear(), (void)std::for_each(g_lobs.begin(), g_lobs.end(), [](Lobbed& l) { l.fx.Detach(); }), g_lobs.clear();
 			for (auto& l : g_slashes) l.fx.Detach();
 			for (auto& r : g_grows) r.fx.Detach();
@@ -3817,15 +3870,17 @@ namespace coa
 			// drawn toward a point over a second (Vahlok's chains)
 			void Drag(RE::Actor* a, RE::NiPoint3 a_to)
 			{
-				for (int k = 1; k <= 10; ++k) {
-					Tasks::Later(0.1f * static_cast<float>(k), [h = a->GetHandle(), a_to]() {
+				// (Noah: "grouping them closer together") once the chain has caught it (a fifth of a second), hauled in hard to
+				// within arm's reach of the one struck
+				for (int k = 1; k <= 12; ++k) {
+					Tasks::Later(0.15f + 0.08f * static_cast<float>(k), [h = a->GetHandle(), a_to]() {
 						auto x = h.get();
 						if (!x || x->IsDead()) return;
 						RE::NiPoint3 at = x->GetPosition(), d = a_to - at;
 						d.z = 0;
 						const float L = d.Length();
-						if (L < 160.0f) return;
-						x->SetPosition(at + d * (std::min(L - 150.0f, 90.0f) / L), true);
+						if (L < 100.0f) return;
+						x->SetPosition(at + d * (std::min(L - 90.0f, 80.0f) / L), true);
 					});
 				}
 			}
@@ -3867,7 +3922,7 @@ namespace coa
 				if (heavy) {
 					for (auto* f : Foes(tp, 420.0f)) {
 						if (f == a_t) continue;
-						LightningArc(Chest(f), Chest(a_t), 0.0f);
+						VahlokChain(f, a_t);   // (the chain thrown round it; Drag pulls it in)
 						Drag(f, tp);
 						Tasks::Later(0.6f, [h = f->GetHandle()] { if (auto x = h.get(); x && !x->IsDead()) Director::Web(x->GetPosition(), 45.0f, 2.0f, 97.0f, false); });
 					}
@@ -4207,6 +4262,7 @@ namespace coa
 				}
 			}
 			TickStorm(a_delta);
+			TickChains(a_delta);
 			TickSoulFalls(a_delta);
 			TickRedColumns(a_delta);
 			Props::TickGauntlet(a_delta);

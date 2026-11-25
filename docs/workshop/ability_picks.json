@@ -1,716 +1,716 @@
 {
-"vahlok_hit": {
-"style": "summon",
-"col": "green",
-"size": 100,
-"where": "hit"
-},
-"vahlok_heavy": {
-"style": "drain",
-"col": "green",
-"size": 100,
-"where": "area"
-},
-"nahkriin_hit": {
-"style": "slash",
-"col": "white",
-"size": 60,
-"where": "hit"
-},
-"nahkriin_heavy": {
-"style": "cloud",
-"col": "white",
-"size": 100,
-"where": "area"
-},
-"volsung_light": {
-"style": "wave",
-"col": "white",
-"size": 90,
-"where": "line"
-},
-"volsung_heavy": {
-"style": "wave",
-"col": "blue",
-"size": 150,
-"where": "line"
-},
-"zahkriisos_hit": {
-"style": "freeze",
-"col": "iceblue",
-"size": 100,
-"where": "hit"
-},
-"zahkriisos_heavy": {
-"style": "nova",
-"col": "iceblue",
-"size": 130,
-"where": "self"
-},
-"otar_hit": {
-"style": "chain",
-"col": "blue",
-"size": 100,
-"where": "hit"
-},
-"otar_heavy": {
-"style": "strike",
-"col": "blue",
-"size": 120,
-"where": "area"
-},
-"rahgot_hit": {
-"style": "cloud",
-"col": "poison",
-"size": 70,
-"where": "hit"
-},
-"rahgot_heavy": {
-"style": "burst",
-"col": "poison",
-"size": 120,
-"where": "area"
-},
-"krosis_hit": {
-"style": "drain",
-"col": "red",
-"size": 80,
-"where": "hit"
-},
-"krosis_heavy": {
-"style": "toll",
-"col": "red",
-"size": 120,
-"where": "self"
-},
-"hevnoraak_hit": {
-"style": "burst",
-"col": "green",
-"size": 90,
-"where": "hit"
-},
-"hevnoraak_heavy": {
-"style": "shockwave",
-"col": "green",
-"size": 120,
-"where": "self"
-},
-"vokun_hit": {
-"style": "bind",
-"col": "purple",
-"size": 100,
-"where": "hit"
-},
-"vokun_heavy": {
-"style": "cloud",
-"col": "shadow",
-"size": 140,
-"where": "area"
-},
-"morokei_hit": {
-"style": "slash",
-"col": "drain",
-"size": 100,
-"where": "hit"
-},
-"morokei_heavy": {
-"style": "shockwave",
-"col": "drain",
-"size": 130,
-"where": "self"
-},
-"stormtalons_third": {
-"style": "chain",
-"col": "blue",
-"size": 100,
-"where": "hit"
-},
-"stormtalons_heavy": {
-"style": "strike",
-"col": "blue",
-"size": 100,
-"where": "hit"
-},
-"gravebell_fifth": {
-"style": "toll",
-"col": "gold",
-"size": 120,
-"where": "self"
-},
-"talons_hit": {
-"style": "drain",
-"col": "red",
-"size": 80,
-"where": "hit"
-},
-"riverstone_hit": {
-"style": "burst",
-"col": "green",
-"size": 90,
-"where": "hit"
-},
-"riverstone_heavy": {
-"style": "wave",
-"col": "green",
-"size": 140,
-"where": "line"
-},
-"wyrmspine_pike_hit": {
-"style": "slash",
-"col": "fear",
-"size": 100,
-"where": "line"
-},
-"wyrmspine_pike_heavy": {
-"style": "shockwave",
-"col": "fear",
-"size": 90,
-"where": "self"
-},
-"lanternwick_light": {
-"style": "freeze",
-"col": "iceblue",
-"size": 90,
-"where": "hit"
-},
-"lanternwick_heavy": {
-"style": "cyclone",
-"col": "iceblue",
-"size": 100,
-"where": "area"
-},
-"cinderclaws_hit": {
-"style": "burst",
-"col": "orange",
-"size": 80,
-"where": "hit"
-},
-"cinderclaws_heavy": {
-"style": "wave",
-"col": "orange",
-"size": 120,
-"where": "line"
-},
-"eclipse_hit": {
-"style": "slash",
-"col": "orange",
-"size": 100,
-"where": "hit"
-},
-"eclipse_heavy": {
-"style": "shockwave",
-"col": "iceblue",
-"size": 100,
-"where": "self"
-},
-"wanderstar_cast": {
-"style": "bolt",
-"col": "gold",
-"size": 70,
-"where": "hit"
-},
-"wanderstar_fifth": {
-"style": "burst",
-"col": "gold",
-"size": 110,
-"where": "hit"
-},
-"frostmourn_hit": {
-"style": "slash",
-"col": "iceblue",
-"size": 90,
-"where": "hit"
-},
-"frostmourn_heavy": {
-"style": "nova",
-"col": "iceblue",
-"size": 140,
-"where": "self"
-},
-"silverscythe_fourth": {
-"style": "bind",
-"col": "moon",
-"size": 120,
-"where": "hit"
-},
-"bonereaper_kill": {
-"style": "summon",
-"col": "white",
-"size": 100,
-"where": "hit"
-},
-"wyrmtooth_hit": {
-"style": "slash",
-"col": "red",
-"size": 80,
-"where": "hit"
-},
-"wyrmtooth_heavy": {
-"style": "shockwave",
-"col": "red",
-"size": 150,
-"where": "self"
-},
-"bloodmoon_hit": {
-"style": "drain",
-"col": "red",
-"size": 90,
-"where": "hit"
-},
-"bloodmoon_heavy": {
-"style": "drain",
-"col": "red",
-"size": 140,
-"where": "area"
-},
-"javelin_throw": {
-"style": "bolt",
-"col": "orange",
-"size": 110,
-"where": "hit"
-},
-"javelin_land": {
-"style": "shockwave",
-"col": "orange",
-"size": 110,
-"where": "hit"
-},
-"javelin_bounce": {
-"style": "chain",
-"col": "orange",
-"size": 100,
-"where": "hit"
-},
-"soulcaller_beam": {
-"style": "drain",
-"col": "arcane",
-"size": 110,
-"where": "hit"
-},
-"soulcaller_wolves": {
-"style": "summon",
-"col": "arcane",
-"size": 100,
-"where": "area"
-},
-"mutagen_flasks": {
-"style": "burst",
-"col": "gold",
-"size": 100,
-"where": "hit"
-},
-"mutagen_elixir": {
-"style": "cloud",
-"col": "gold",
-"size": 130,
-"where": "area"
-},
-"slayer_light": {
-"style": "bolt",
-"col": "gold",
-"size": 120,
-"where": "hit"
-},
-"slayer_heavy": {
-"style": "meteor",
-"col": "gold",
-"size": 130,
-"where": "area"
-},
-"bane_light": {
-"style": "meteor",
-"col": "orange",
-"size": 140,
-"where": "hit"
-},
-"bane_heavy": {
-"style": "cyclone",
-"col": "white",
-"size": 170,
-"where": "area"
-},
-"scythe_light": {
-"style": "bolt",
-"col": "shadow",
-"size": 100,
-"where": "hit"
-},
-"scythe_heavy": {
-"style": "cyclone",
-"col": "shadow",
-"size": 150,
-"where": "area"
-},
-"wand_light": {
-"style": "bolt",
-"col": "carian",
-"size": 90,
-"where": "hit"
-},
-"wand_hit": {
-"style": "burst",
-"col": "carian",
-"size": 90,
-"where": "hit"
-},
-"wand_heavy": {
-"style": "cyclone",
-"col": "carian",
-"size": 150,
-"where": "area"
-},
-"staff_light": {
-"style": "bolt",
-"col": "white",
-"size": 110,
-"where": "hit"
-},
-"staff_heavy": {
-"style": "pillar",
-"col": "gold",
-"size": 140,
-"where": "hit"
-},
-"rapier_light": {
-"style": "bolt",
-"col": "orange",
-"size": 100,
-"where": "hit"
-},
-"rapier_heavy": {
-"style": "cyclone",
-"col": "orange",
-"size": 140,
-"where": "area"
-},
-"rapier_line": {
-"style": "nova",
-"col": "iceblue",
-"size": 110,
-"where": "line"
-},
-"dfire_firebolt": {
-"style": "burst",
-"col": "orange",
-"size": 60,
-"where": "hit"
-},
-"dfire_fireball": {
-"style": "burst",
-"col": "orange",
-"size": 90,
-"where": "hit"
-},
-"dfire_incinerate": {
-"style": "burst",
-"col": "orange",
-"size": 80,
-"where": "hit"
-},
-"dfire_immolate": {
-"style": "pillar",
-"col": "orange",
-"size": 70,
-"where": "hit"
-},
-"dfrost_icespike": {
-"style": "freeze",
-"col": "iceblue",
-"size": 60,
-"where": "hit"
-},
-"dfrost_icestorm": {
-"style": "cloud",
-"col": "iceblue",
-"size": 70,
-"where": "hit"
-},
-"dfrost_icyspear": {
-"style": "nova",
-"col": "iceblue",
-"size": 70,
-"where": "hit"
-},
-"dfrost_throatoftheworld": {
-"style": "nova",
-"col": "iceblue",
-"size": 100,
-"where": "hit"
-},
-"dshock_chainlightning": {
-"style": "chain",
-"col": "blue",
-"size": 70,
-"where": "hit"
-},
-"dshock_shocknova": {
-"style": "shockwave",
-"col": "blue",
-"size": 80,
-"where": "hit"
-},
-"dshock_fingerofthemountain": {
-"style": "strike",
-"col": "blue",
-"size": 80,
-"where": "hit"
-},
-"dsun_solarflare": {
-"style": "burst",
-"col": "gold",
-"size": 70,
-"where": "hit"
-},
-"dsun_sunbeam": {
-"style": "mark",
-"col": "gold",
-"size": 50,
-"where": "hit"
-},
-"dsun_forbiddensun": {
-"style": "pillar",
-"col": "gold",
-"size": 80,
-"where": "hit"
-},
-"dsun_daybreak": {
-"style": "shockwave",
-"col": "gold",
-"size": 90,
-"where": "hit"
-},
-"darcane_arcanebolt": {
-"style": "burst",
-"col": "arcane",
-"size": 60,
-"where": "hit"
-},
-"darcane_manavoid": {
-"style": "drain",
-"col": "arcane",
-"size": 80,
-"where": "hit"
-},
-"darcane_lunartide": {
-"style": "shockwave",
-"col": "moon",
-"size": 80,
-"where": "hit"
-},
-"darcane_apocalypse": {
-"style": "meteor",
-"col": "arcane",
-"size": 100,
-"where": "hit"
-},
-"dwalls_wallofflames": {
-"style": "pool",
-"col": "orange",
-"size": 40,
-"where": "hit"
-},
-"dwalls_walloffrost": {
-"style": "pool",
-"col": "iceblue",
-"size": 40,
-"where": "hit"
-},
-"dwalls_wallofstorms": {
-"style": "pool",
-"col": "blue",
-"size": 40,
-"where": "hit"
-},
-"dwalls_inferno": {
-"style": "pool",
-"col": "orange",
-"size": 50,
-"where": "hit"
-},
-"dstorms_frostnova": {
-"style": "nova",
-"col": "iceblue",
-"size": 60,
-"where": "hit"
-},
-"dstorms_lightningstorm": {
-"style": "chain",
-"col": "blue",
-"size": 50,
-"where": "hit"
-},
-"dstorms_multivortex": {
-"style": "cyclone",
-"col": "arcane",
-"size": 50,
-"where": "hit"
-},
-"dstorms_lightningstrike": {
-"style": "strike",
-"col": "blue",
-"size": 90,
-"where": "hit"
-},
-"dstorms_cinderstorm": {
-"style": "cloud",
-"col": "orange",
-"size": 60,
-"where": "hit"
-},
-"tfire_burningtouch": {
-"style": "slash",
-"col": "orange",
-"size": 50,
-"where": "hit"
-},
-"tfire_flametouch": {
-"style": "slash",
-"col": "orange",
-"size": 60,
-"where": "hit"
-},
-"tfire_fierygrasp": {
-"style": "burst",
-"col": "orange",
-"size": 70,
-"where": "hit"
-},
-"tfrost_chillingtouch": {
-"style": "slash",
-"col": "iceblue",
-"size": 50,
-"where": "hit"
-},
-"tfrost_icytouch": {
-"style": "slash",
-"col": "iceblue",
-"size": 60,
-"where": "hit"
-},
-"tfrost_freezinggrasp": {
-"style": "freeze",
-"col": "iceblue",
-"size": 70,
-"where": "hit"
-},
-"tshock_shockingtouch": {
-"style": "slash",
-"col": "blue",
-"size": 50,
-"where": "hit"
-},
-"tshock_statictouch": {
-"style": "slash",
-"col": "blue",
-"size": 60,
-"where": "hit"
-},
-"tshock_thunderinggrasp": {
-"style": "chain",
-"col": "blue",
-"size": 70,
-"where": "hit"
-},
-"tsun_sunlighttouch": {
-"style": "slash",
-"col": "gold",
-"size": 50,
-"where": "hit"
-},
-"tsun_radianttouch": {
-"style": "slash",
-"col": "gold",
-"size": 60,
-"where": "hit"
-},
-"tsun_searinggrasp": {
-"style": "burst",
-"col": "gold",
-"size": 70,
-"where": "hit"
-},
-"tarcane_arcaneedge": {
-"style": "slash",
-"col": "arcane",
-"size": 50,
-"where": "hit"
-},
-"tarcane_arcanebrand": {
-"style": "mark",
-"col": "arcane",
-"size": 60,
-"where": "hit"
-},
-"tarcane_arcanecascade": {
-"style": "burst",
-"col": "arcane",
-"size": 70,
-"where": "hit"
-},
-"ffire_land": {
-"style": "pool",
-"col": "orange",
-"size": 110,
-"where": "hit"
-},
-"ffire_power": {
-"style": "shockwave",
-"col": "orange",
-"size": 150,
-"where": "hit"
-},
-"ffrost_land": {
-"style": "pool",
-"col": "iceblue",
-"size": 110,
-"where": "hit"
-},
-"ffrost_power": {
-"style": "nova",
-"col": "iceblue",
-"size": 140,
-"where": "hit"
-},
-"fshock_land": {
-"style": "pool",
-"col": "blue",
-"size": 110,
-"where": "hit"
-},
-"fshock_power": {
-"style": "strike",
-"col": "blue",
-"size": 130,
-"where": "hit"
-},
-"facid_land": {
-"style": "cloud",
-"col": "poison",
-"size": 110,
-"where": "hit"
-},
-"fholy_land": {
-"style": "pillar",
-"col": "gold",
-"size": 110,
-"where": "hit"
-},
-"fvoid_land": {
-"style": "drain",
-"col": "arcane",
-"size": 120,
-"where": "hit"
-},
-"fvoid_power": {
-"style": "shockwave",
-"col": "shadow",
-"size": 140,
-"where": "hit"
-},
-"summon_arrive": {
-"style": "summon",
-"col": "arcane",
-"size": 110,
-"where": "area"
-}
+ "vahlok_hit": {
+  "style": "summon",
+  "col": "green",
+  "size": 100,
+  "where": "hit"
+ },
+ "vahlok_heavy": {
+  "style": "chain",
+  "col": "green",
+  "size": 100,
+  "where": "area"
+ },
+ "nahkriin_hit": {
+  "style": "burst",
+  "col": "white",
+  "size": 60,
+  "where": "hit"
+ },
+ "nahkriin_heavy": {
+  "style": "cloud",
+  "col": "white",
+  "size": 100,
+  "where": "area"
+ },
+ "volsung_light": {
+  "style": "slash",
+  "col": "white",
+  "size": 90,
+  "where": "line"
+ },
+ "volsung_heavy": {
+  "style": "toll",
+  "col": "blue",
+  "size": 150,
+  "where": "line"
+ },
+ "zahkriisos_hit": {
+  "style": "freeze",
+  "col": "iceblue",
+  "size": 100,
+  "where": "hit"
+ },
+ "zahkriisos_heavy": {
+  "style": "nova",
+  "col": "iceblue",
+  "size": 130,
+  "where": "self"
+ },
+ "otar_hit": {
+  "style": "chain",
+  "col": "blue",
+  "size": 100,
+  "where": "hit"
+ },
+ "otar_heavy": {
+  "style": "strike",
+  "col": "blue",
+  "size": 120,
+  "where": "area"
+ },
+ "rahgot_hit": {
+  "style": "cloud",
+  "col": "poison",
+  "size": 70,
+  "where": "hit"
+ },
+ "rahgot_heavy": {
+  "style": "burst",
+  "col": "poison",
+  "size": 120,
+  "where": "area"
+ },
+ "krosis_hit": {
+  "style": "drain",
+  "col": "red",
+  "size": 80,
+  "where": "hit"
+ },
+ "krosis_heavy": {
+  "style": "toll",
+  "col": "red",
+  "size": 120,
+  "where": "self"
+ },
+ "hevnoraak_hit": {
+  "style": "burst",
+  "col": "green",
+  "size": 90,
+  "where": "hit"
+ },
+ "hevnoraak_heavy": {
+  "style": "shockwave",
+  "col": "green",
+  "size": 120,
+  "where": "self"
+ },
+ "vokun_hit": {
+  "style": "bind",
+  "col": "purple",
+  "size": 100,
+  "where": "hit"
+ },
+ "vokun_heavy": {
+  "style": "cloud",
+  "col": "shadow",
+  "size": 140,
+  "where": "area"
+ },
+ "morokei_hit": {
+  "style": "slash",
+  "col": "drain",
+  "size": 100,
+  "where": "hit"
+ },
+ "morokei_heavy": {
+  "style": "shockwave",
+  "col": "drain",
+  "size": 130,
+  "where": "self"
+ },
+ "stormtalons_third": {
+  "style": "chain",
+  "col": "blue",
+  "size": 100,
+  "where": "hit"
+ },
+ "stormtalons_heavy": {
+  "style": "strike",
+  "col": "blue",
+  "size": 100,
+  "where": "hit"
+ },
+ "gravebell_fifth": {
+  "style": "toll",
+  "col": "gold",
+  "size": 120,
+  "where": "self"
+ },
+ "talons_hit": {
+  "style": "drain",
+  "col": "red",
+  "size": 80,
+  "where": "hit"
+ },
+ "riverstone_hit": {
+  "style": "burst",
+  "col": "green",
+  "size": 90,
+  "where": "hit"
+ },
+ "riverstone_heavy": {
+  "style": "wave",
+  "col": "green",
+  "size": 140,
+  "where": "line"
+ },
+ "wyrmspine_pike_hit": {
+  "style": "slash",
+  "col": "fear",
+  "size": 100,
+  "where": "line"
+ },
+ "wyrmspine_pike_heavy": {
+  "style": "shockwave",
+  "col": "fear",
+  "size": 90,
+  "where": "self"
+ },
+ "lanternwick_light": {
+  "style": "freeze",
+  "col": "iceblue",
+  "size": 90,
+  "where": "hit"
+ },
+ "lanternwick_heavy": {
+  "style": "cyclone",
+  "col": "iceblue",
+  "size": 100,
+  "where": "area"
+ },
+ "cinderclaws_hit": {
+  "style": "burst",
+  "col": "orange",
+  "size": 80,
+  "where": "hit"
+ },
+ "cinderclaws_heavy": {
+  "style": "wave",
+  "col": "orange",
+  "size": 120,
+  "where": "line"
+ },
+ "eclipse_hit": {
+  "style": "slash",
+  "col": "orange",
+  "size": 100,
+  "where": "hit"
+ },
+ "eclipse_heavy": {
+  "style": "shockwave",
+  "col": "iceblue",
+  "size": 100,
+  "where": "self"
+ },
+ "wanderstar_cast": {
+  "style": "bolt",
+  "col": "gold",
+  "size": 70,
+  "where": "hit"
+ },
+ "wanderstar_fifth": {
+  "style": "burst",
+  "col": "gold",
+  "size": 110,
+  "where": "hit"
+ },
+ "frostmourn_hit": {
+  "style": "slash",
+  "col": "iceblue",
+  "size": 90,
+  "where": "hit"
+ },
+ "frostmourn_heavy": {
+  "style": "nova",
+  "col": "iceblue",
+  "size": 140,
+  "where": "self"
+ },
+ "silverscythe_fourth": {
+  "style": "bind",
+  "col": "moon",
+  "size": 120,
+  "where": "hit"
+ },
+ "bonereaper_kill": {
+  "style": "summon",
+  "col": "white",
+  "size": 100,
+  "where": "hit"
+ },
+ "wyrmtooth_hit": {
+  "style": "slash",
+  "col": "red",
+  "size": 80,
+  "where": "hit"
+ },
+ "wyrmtooth_heavy": {
+  "style": "shockwave",
+  "col": "red",
+  "size": 150,
+  "where": "self"
+ },
+ "bloodmoon_hit": {
+  "style": "drain",
+  "col": "red",
+  "size": 90,
+  "where": "hit"
+ },
+ "bloodmoon_heavy": {
+  "style": "drain",
+  "col": "red",
+  "size": 140,
+  "where": "area"
+ },
+ "javelin_throw": {
+  "style": "bolt",
+  "col": "orange",
+  "size": 110,
+  "where": "hit"
+ },
+ "javelin_land": {
+  "style": "shockwave",
+  "col": "orange",
+  "size": 110,
+  "where": "hit"
+ },
+ "javelin_bounce": {
+  "style": "chain",
+  "col": "orange",
+  "size": 100,
+  "where": "hit"
+ },
+ "soulcaller_beam": {
+  "style": "drain",
+  "col": "arcane",
+  "size": 110,
+  "where": "hit"
+ },
+ "soulcaller_wolves": {
+  "style": "summon",
+  "col": "arcane",
+  "size": 100,
+  "where": "area"
+ },
+ "mutagen_flasks": {
+  "style": "burst",
+  "col": "gold",
+  "size": 100,
+  "where": "hit"
+ },
+ "mutagen_elixir": {
+  "style": "cloud",
+  "col": "gold",
+  "size": 130,
+  "where": "area"
+ },
+ "slayer_light": {
+  "style": "bolt",
+  "col": "gold",
+  "size": 120,
+  "where": "hit"
+ },
+ "slayer_heavy": {
+  "style": "meteor",
+  "col": "gold",
+  "size": 130,
+  "where": "area"
+ },
+ "bane_light": {
+  "style": "meteor",
+  "col": "orange",
+  "size": 140,
+  "where": "hit"
+ },
+ "bane_heavy": {
+  "style": "cyclone",
+  "col": "white",
+  "size": 170,
+  "where": "area"
+ },
+ "scythe_light": {
+  "style": "bolt",
+  "col": "shadow",
+  "size": 100,
+  "where": "hit"
+ },
+ "scythe_heavy": {
+  "style": "cyclone",
+  "col": "shadow",
+  "size": 150,
+  "where": "area"
+ },
+ "wand_light": {
+  "style": "bolt",
+  "col": "carian",
+  "size": 90,
+  "where": "hit"
+ },
+ "wand_hit": {
+  "style": "burst",
+  "col": "carian",
+  "size": 90,
+  "where": "hit"
+ },
+ "wand_heavy": {
+  "style": "cyclone",
+  "col": "carian",
+  "size": 150,
+  "where": "area"
+ },
+ "staff_light": {
+  "style": "bolt",
+  "col": "white",
+  "size": 110,
+  "where": "hit"
+ },
+ "staff_heavy": {
+  "style": "pillar",
+  "col": "gold",
+  "size": 140,
+  "where": "hit"
+ },
+ "rapier_light": {
+  "style": "bolt",
+  "col": "orange",
+  "size": 100,
+  "where": "hit"
+ },
+ "rapier_heavy": {
+  "style": "cyclone",
+  "col": "orange",
+  "size": 140,
+  "where": "area"
+ },
+ "rapier_line": {
+  "style": "nova",
+  "col": "iceblue",
+  "size": 110,
+  "where": "line"
+ },
+ "dfire_firebolt": {
+  "style": "burst",
+  "col": "orange",
+  "size": 60,
+  "where": "hit"
+ },
+ "dfire_fireball": {
+  "style": "burst",
+  "col": "orange",
+  "size": 90,
+  "where": "hit"
+ },
+ "dfire_incinerate": {
+  "style": "burst",
+  "col": "orange",
+  "size": 80,
+  "where": "hit"
+ },
+ "dfire_immolate": {
+  "style": "pillar",
+  "col": "orange",
+  "size": 70,
+  "where": "hit"
+ },
+ "dfrost_icespike": {
+  "style": "freeze",
+  "col": "iceblue",
+  "size": 60,
+  "where": "hit"
+ },
+ "dfrost_icestorm": {
+  "style": "cloud",
+  "col": "iceblue",
+  "size": 70,
+  "where": "hit"
+ },
+ "dfrost_icyspear": {
+  "style": "nova",
+  "col": "iceblue",
+  "size": 70,
+  "where": "hit"
+ },
+ "dfrost_throatoftheworld": {
+  "style": "nova",
+  "col": "iceblue",
+  "size": 100,
+  "where": "hit"
+ },
+ "dshock_chainlightning": {
+  "style": "chain",
+  "col": "blue",
+  "size": 70,
+  "where": "hit"
+ },
+ "dshock_shocknova": {
+  "style": "shockwave",
+  "col": "blue",
+  "size": 80,
+  "where": "hit"
+ },
+ "dshock_fingerofthemountain": {
+  "style": "strike",
+  "col": "blue",
+  "size": 80,
+  "where": "hit"
+ },
+ "dsun_solarflare": {
+  "style": "burst",
+  "col": "gold",
+  "size": 70,
+  "where": "hit"
+ },
+ "dsun_sunbeam": {
+  "style": "mark",
+  "col": "gold",
+  "size": 50,
+  "where": "hit"
+ },
+ "dsun_forbiddensun": {
+  "style": "pillar",
+  "col": "gold",
+  "size": 80,
+  "where": "hit"
+ },
+ "dsun_daybreak": {
+  "style": "shockwave",
+  "col": "gold",
+  "size": 90,
+  "where": "hit"
+ },
+ "darcane_arcanebolt": {
+  "style": "burst",
+  "col": "arcane",
+  "size": 60,
+  "where": "hit"
+ },
+ "darcane_manavoid": {
+  "style": "drain",
+  "col": "arcane",
+  "size": 80,
+  "where": "hit"
+ },
+ "darcane_lunartide": {
+  "style": "shockwave",
+  "col": "moon",
+  "size": 80,
+  "where": "hit"
+ },
+ "darcane_apocalypse": {
+  "style": "meteor",
+  "col": "arcane",
+  "size": 100,
+  "where": "hit"
+ },
+ "dwalls_wallofflames": {
+  "style": "pool",
+  "col": "orange",
+  "size": 40,
+  "where": "hit"
+ },
+ "dwalls_walloffrost": {
+  "style": "pool",
+  "col": "iceblue",
+  "size": 40,
+  "where": "hit"
+ },
+ "dwalls_wallofstorms": {
+  "style": "pool",
+  "col": "blue",
+  "size": 40,
+  "where": "hit"
+ },
+ "dwalls_inferno": {
+  "style": "pool",
+  "col": "orange",
+  "size": 50,
+  "where": "hit"
+ },
+ "dstorms_frostnova": {
+  "style": "nova",
+  "col": "iceblue",
+  "size": 60,
+  "where": "hit"
+ },
+ "dstorms_lightningstorm": {
+  "style": "chain",
+  "col": "blue",
+  "size": 50,
+  "where": "hit"
+ },
+ "dstorms_multivortex": {
+  "style": "cyclone",
+  "col": "arcane",
+  "size": 50,
+  "where": "hit"
+ },
+ "dstorms_lightningstrike": {
+  "style": "strike",
+  "col": "blue",
+  "size": 90,
+  "where": "hit"
+ },
+ "dstorms_cinderstorm": {
+  "style": "cloud",
+  "col": "orange",
+  "size": 60,
+  "where": "hit"
+ },
+ "tfire_burningtouch": {
+  "style": "slash",
+  "col": "orange",
+  "size": 50,
+  "where": "hit"
+ },
+ "tfire_flametouch": {
+  "style": "slash",
+  "col": "orange",
+  "size": 60,
+  "where": "hit"
+ },
+ "tfire_fierygrasp": {
+  "style": "burst",
+  "col": "orange",
+  "size": 70,
+  "where": "hit"
+ },
+ "tfrost_chillingtouch": {
+  "style": "slash",
+  "col": "iceblue",
+  "size": 50,
+  "where": "hit"
+ },
+ "tfrost_icytouch": {
+  "style": "slash",
+  "col": "iceblue",
+  "size": 60,
+  "where": "hit"
+ },
+ "tfrost_freezinggrasp": {
+  "style": "freeze",
+  "col": "iceblue",
+  "size": 70,
+  "where": "hit"
+ },
+ "tshock_shockingtouch": {
+  "style": "slash",
+  "col": "blue",
+  "size": 50,
+  "where": "hit"
+ },
+ "tshock_statictouch": {
+  "style": "slash",
+  "col": "blue",
+  "size": 60,
+  "where": "hit"
+ },
+ "tshock_thunderinggrasp": {
+  "style": "chain",
+  "col": "blue",
+  "size": 70,
+  "where": "hit"
+ },
+ "tsun_sunlighttouch": {
+  "style": "slash",
+  "col": "gold",
+  "size": 50,
+  "where": "hit"
+ },
+ "tsun_radianttouch": {
+  "style": "slash",
+  "col": "gold",
+  "size": 60,
+  "where": "hit"
+ },
+ "tsun_searinggrasp": {
+  "style": "burst",
+  "col": "gold",
+  "size": 70,
+  "where": "hit"
+ },
+ "tarcane_arcaneedge": {
+  "style": "slash",
+  "col": "arcane",
+  "size": 50,
+  "where": "hit"
+ },
+ "tarcane_arcanebrand": {
+  "style": "mark",
+  "col": "arcane",
+  "size": 60,
+  "where": "hit"
+ },
+ "tarcane_arcanecascade": {
+  "style": "burst",
+  "col": "arcane",
+  "size": 70,
+  "where": "hit"
+ },
+ "ffire_land": {
+  "style": "pool",
+  "col": "orange",
+  "size": 110,
+  "where": "hit"
+ },
+ "ffire_power": {
+  "style": "shockwave",
+  "col": "orange",
+  "size": 150,
+  "where": "hit"
+ },
+ "ffrost_land": {
+  "style": "pool",
+  "col": "iceblue",
+  "size": 110,
+  "where": "hit"
+ },
+ "ffrost_power": {
+  "style": "nova",
+  "col": "iceblue",
+  "size": 140,
+  "where": "hit"
+ },
+ "fshock_land": {
+  "style": "pool",
+  "col": "blue",
+  "size": 110,
+  "where": "hit"
+ },
+ "fshock_power": {
+  "style": "strike",
+  "col": "blue",
+  "size": 130,
+  "where": "hit"
+ },
+ "facid_land": {
+  "style": "cloud",
+  "col": "poison",
+  "size": 110,
+  "where": "hit"
+ },
+ "fholy_land": {
+  "style": "pillar",
+  "col": "gold",
+  "size": 110,
+  "where": "hit"
+ },
+ "fvoid_land": {
+  "style": "drain",
+  "col": "arcane",
+  "size": 120,
+  "where": "hit"
+ },
+ "fvoid_power": {
+  "style": "shockwave",
+  "col": "shadow",
+  "size": 140,
+  "where": "hit"
+ },
+ "summon_arrive": {
+  "style": "summon",
+  "col": "arcane",
+  "size": 110,
+  "where": "area"
+ }
 }

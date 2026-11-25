@@ -43,29 +43,29 @@ COL = {
 # each weapon: its model, its steel (shape names; '*' any lit shape), the height band that is steel (y from, to), its look and
 # colour (Noah's picks, the workshop 2026-11-25)
 WEAPONS = {
-    'priest_vahlok':     ('CurseOfAlduin\\priests\\vahlok_keyhammer.nif', ['Nordic:0', 'Iron:1'], (27, 99), 'o1', 'white'),
+    'priest_vahlok':     ('CurseOfAlduin\\priests\\vahlok_keyhammer.nif', ['Nordic:0', 'Iron:1'], (27, 99), 'o1', 'green'),
     'priest_nahkriin':   ('CurseOfAlduin\\priests\\nahkriin_mistblade.nif', ['BladeBody'], None, 'o1', 'white'),
-    'priest_volsung':    ('CurseOfAlduin\\priests\\volsung_windcutter.nif', ['Blade:1'], None, 'o1', 'white'),
-    'priest_zahkriisos': ('CurseOfAlduin\\priests\\zahkriisos_greatsword.nif', ['Ice:1'], None, 'o1', 'iceblue'),
-    'priest_otar':       ('CurseOfAlduin\\priests\\otar_stormblade.nif', ['Blade:2'], None, 'o1', 'blue'),
-    'priest_rahgot':     ('CurseOfAlduin\\priests\\rahgot_dagger.nif', ['Obsidian:1'], None, 'o1', 'poison'),
-    'priest_krosis':     ('CurseOfAlduin\\priests\\krosis_griefblade.nif', ['Blade:0'], None, 'o1', 'red'),
+    'priest_volsung':    ('CurseOfAlduin\\priests\\volsung_windcutter.nif', ['Blade:1'], None, 'o2', 'white'),
+    'priest_zahkriisos': ('CurseOfAlduin\\priests\\zahkriisos_greatsword.nif', ['Ice:1'], None, 'o3', 'iceblue'),
+    'priest_otar':       ('CurseOfAlduin\\priests\\otar_stormblade.nif', ['Blade:2'], None, 'o3', 'blue'),
+    'priest_rahgot':     ('CurseOfAlduin\\priests\\rahgot_dagger.nif', ['Obsidian:1'], None, 'o3', 'poison'),
+    'priest_krosis':     ('CurseOfAlduin\\priests\\krosis_griefblade.nif', ['Blade:0'], None, 'o3', 'red'),
     'priest_hevnoraak':  ('CurseOfAlduin\\priests\\hevnoraak_sealbreaker.nif', ['Stone:3'], None, 'o1', 'green'),
-    'priest_vokun':      ('CurseOfAlduin\\scythes\\daedric.nif', ['daedricsword01'], None, 'o1', 'purple'),
+    'priest_vokun':      ('CurseOfAlduin\\scythes\\daedric.nif', ['daedricsword01'], None, 'o3', 'purple'),
     'priest_morokei':    ('CurseOfAlduin\\priests\\morokei_maul.nif', ['Steel:0', 'Crystal:2'], (40, 99), 'o1', 'drain'),
     'tab_stormtalons':   ('weapons\\NewArmoury\\Fists\\glassClaw.nif', ['GlassClawGlass1'], None, 'o1', 'blue'),
     'tab_gravebell':     ('CurseOfAlduin\\tablet\\gravebell.nif', ['Bronze:3'], None, 'o1', 'white'),
     'tab_talons':        ('weapons\\NewArmoury\\Fists\\DBClaw.nif', ['DBClaw_MTL_B'], None, 'o1', 'red'),
     'tab_riverstone':    ('weapons\\NewArmoury\\Halberds\\NordicHalberd.nif', ['NordicPikeShaft', 'NordicPikeTip'], (70, 999), 'o1', 'green'),
     'tab_wyrmspine':     ('weapons\\NewArmoury\\Pikes\\DragonbonePike.nif', ['DragonbonePikeTip'], None, 'o1', 'fear'),
-    'tab_lanternwick':   ('weapons\\NewArmoury\\QuarterStaffs\\StalhrimStaff.nif', ['StahlrimStaffBlade'], [(42, 999), (-999, -30)], 'o1', 'iceblue'),
+    'tab_lanternwick':   ('weapons\\NewArmoury\\QuarterStaffs\\StalhrimStaff.nif', ['StahlrimStaffBlade'], [(42, 999), (-999, -30)], 'o3', 'iceblue'),
     'tab_cinderclaws':   ('weapons\\NewArmoury\\Fists\\DaedricClaw.nif', ['DaedricClaws_MTL_B'], None, 'o1', 'orange'),
     'tab_eclipse':       ('weapons\\NewArmoury\\Pikes\\GlassPike.nif', ['GlassPikeTip'], None, 'o1', 'moon'),
-    'tab_frostmourn':    ('weapons\\NewArmoury\\Rapier\\StahlrimRapier.nif', ['StahlrimRapier:18'], (9.5, 999), 'o1', 'iceblue'),
+    'tab_frostmourn':    ('weapons\\NewArmoury\\Rapier\\StahlrimRapier.nif', ['StahlrimRapier:18'], (9.5, 999), 'o2', 'iceblue'),
     'tab_silverscythe':  ('CurseOfAlduin\\scythes\\silver.nif', ['SilverGreatSword:0_2'], None, 'o1', 'moon'),
     'tab_bonereaper':    ('CurseOfAlduin\\scythes\\Skeleton.nif', ['IronLongSword01:0_3'], None, 'o1', 'green'),
     'tab_wyrmtooth':     ('CurseOfAlduin\\scythes\\dragonTeeth.nif', ['DragonBone01'], (26, 999), 'o1', 'green'),
-    'tab_bloodmoon':     ('CurseOfAlduin\\scythes\\vampire.nif', ['blade'], None, 'o1', 'red'),
+    'tab_bloodmoon':     ('CurseOfAlduin\\scythes\\vampire.nif', ['blade'], None, 'o2', 'red'),
     'fang':              ('Light Greatswords\\dragonbone\\LightGreatsword.nif', ['DragonboneGreatsword:0'], None, 'o1', 'orange'),
     # (Noah, 2026-11-24: "both left and right claws ... carry the same effect") the claws' left-hand twins
     'tab_stormtalons_l': ('weapons\\NewArmoury\\Fists\\GlassClawLft.nif', ['GlassClawGlass1'], None, 'o1', 'blue'),
@@ -81,7 +81,7 @@ LEFT = {'tab_stormtalons_l', 'tab_talons_l', 'tab_cinderclaws_l'}
 # the class weapons: each takes another model at each tier (src/Classes.cpp AdoptTierLook), so each tier's model has its own
 # art; the Spellbound Rapier's look follows the element in your other hand (its BLADE_VIZ key: src/Classes.cpp LookKey)
 BV_KEYS = ['alch', 'carian', 'radiant', 'ss_none', 'ss_fire', 'ss_frost', 'ss_shock', 'ss_sun', 'ss_blood', 'slayer']
-BV_PICK = {'alch': ('o1', 'shadow'), 'carian': ('o1', 'purple'), 'radiant': ('o1', 'gold'), 'ss_none': ('o1', 'white'), 'ss_fire': ('o1', 'ss_none'), 'ss_frost': ('o1', 'iceblue'), 'ss_shock': ('o1', 'iceblue'), 'ss_sun': ('o1', 'orange'), 'ss_blood': ('o1', 'blue'), 'slayer': ('o1', 'gold')}   # (Noah, 2026-11-25: each weapon's own looks - option 1 until he picks)
+BV_PICK = {'alch': ('o1', 'shadow'), 'carian': ('o1', 'purple'), 'radiant': ('o3', 'gold'), 'ss_none': ('o1', 'white'), 'ss_fire': ('o1', 'ss_none'), 'ss_frost': ('o1', 'iceblue'), 'ss_shock': ('o1', 'iceblue'), 'ss_sun': ('o1', 'orange'), 'ss_blood': ('o1', 'blue'), 'slayer': ('o1', 'gold')}   # (Noah's picks, the workshop 2026-11-25, doc 8cd53a1)
 CLASS_MODELS = {   # the look key(s), each model: its steel shapes and band
     # (Noah, 2026-11-25: "the weapon effects are at the ends of each side of the staff ... the weapon heads, not the handles") each
     # staff's two capped heads - where its detail is - and none of the plain shaft between
