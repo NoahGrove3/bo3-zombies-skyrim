@@ -650,8 +650,8 @@ LOOK = {
     # forks reaching out, a steady charge along the steel; branching strikes over the faces
     'storm': dict(strips=[S('bolt_edge', 4.6, 2.6, 0, 1, 1.35, flip=(8, 4), fps=26), S('stream_strip', 1.6, 1.0, 0.7, 2.0, 0.55)],
                   shell=Sh('bolt_shell', 'all', 24.0, 1.1, flip=(8, 4), fps=22), motes=('spark', 0.35)),
-    'mist': dict(strips=[S('mist_strip0', 6.5, 3.6, 6.0, 0.8, 0.5), S('mist_strip1', 5.0, 3.0, 4.2, 1.2, 0.38)],
-                 shell=Sh('haze', 'edge', 24.0, 0.45, scroll=6.0), motes=('drift', 0.06)),
+    'mist': dict(strips=[S('mist_strip0', 5.5, 3.0, 6.0, 0.8, 0.34), S('mist_strip1', 4.2, 2.6, 4.2, 1.2, 0.26)],
+                 shell=Sh('haze', 'edge', 24.0, 0.3, scroll=6.0), motes=('drift', 0.06)),
     'core': dict(strips=[S('molten_strip', 2.6, 1.4, 3.0, 1.0, 1.1)], shell=Sh('cracks', 'all', 22.0, 1.6, pulse=(2.6, 0.45, 1.15)), motes=('fall', 0.18)),
     'frost': dict(strips=[S('rime_strip', 3.8, 2.0, 24.0, 1.4, 1.4), S('vapour_strip', 6.0, 3.6, 5.0, 0.9, 0.45, 'axisdown')],
                   shell=Sh('frost_shell', 'edge', 18.0, 1.5, pulse=(3.4, 0.75, 1.1)), motes=('fall', 0.22)),

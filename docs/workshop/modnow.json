@@ -1,0 +1,132 @@
+{
+ "updated": "build c34b333, Nov 24 2026",
+ "about": "Everything the mod is, as built - kept in the repo (docs/workshop/modnow.json) and updated with every build. The workshop's \"The mod now\" tab is drawn from it.",
+ "sections": [
+  [
+   "The game",
+   [
+    "Skyrim played as Black Ops 3 Zombies: <b>nights of the dead</b> in each of Skyrim's <b>10 Dragon Priest cities</b> (Riverwood, Whiterun, Solitude, Windhelm, Markarth, Riften, Falkreath, Morthal, Dawnstar, Winterhold), rounds that climb, <b>Cursed Essence</b> earned on every kill.",
+    "The dead come down <b>red beams of light</b> from the sky. No XP from them; no casters, archers or shouting enemies at night (Dragon Priests and dragons keep their powers).",
+    "Free every city at its <b>Echo Altar</b>; the questline ends right before Skyrim's own Alduin fight. The last three dragons and the Echo of Alduin are the hardest fights.",
+    "Solo first; co-op for <b>1 to 4 players</b> (Skyrim Together, optional). Releasing free on Nexus.",
+    "Special nights: <b>The Pack, Daedric Incursion, Armored Champions, Blood Fog</b>.",
+    "After night 10: kill essence tapers, and Tablet, upgrade and Armory prices rise 3% a night (brews stay fixed)."
+   ]
+  ],
+  [
+   "New character",
+   [
+    "One loading screen from NEW to the character creator (sliders only, by body area); our own launch screen (the Alduin painting) and menu music.",
+    "At Riverwood you choose your Helgen companion (<b>Ralof or Hadvar</b>) and <b>Survival Mode</b> on or off. No starting weapons. Skyrim's own underwear on both bodies (3BA, HIMBO).",
+    "The class is chosen later, at the Echo Altar (changing it costs 50,000 Cursed Essence; one shared inventory)."
+   ]
+  ],
+  [
+   "Each city: the Echo Altar",
+   [
+    "Four trials, in order, at night, shared by the party: <b>Lay the Restless to Rest</b> (souls fly to the stone as white fireballs, the ring of light fills smoothly), <b>The Stone's Whisper</b> (Felldir's Whisper once six are free), <b>Hold the Light</b>, <b>Break the Priest's Seals</b>.",
+    "The last seal calls the city's <b>Dragon Priest</b> at once; his fall frees the city and drops his relic to every player.",
+    "<b>Felldir the Old</b> speaks from each freed altar's centre stone (his own ElevenLabs voice, a short stone echo, centred subtitles). <b>Talk</b>: four topics, 244 lines and 67 whispers, opening as the story goes.",
+    "The altar menu: choose your class, <b>Your Kit</b> (claim your weapon, armour set and spells), the <b>Armory</b>, the <b>Tablet of Mysteries</b>, brews."
+   ]
+  ],
+  [
+   "The four classes",
+   [
+    "<b>Summoner</b>: the Radiant Quarterstaff (Steel, Ebony, Daedric, Dragonbone by tier), conjurations of our own; wonder: the Soulcaller's Staff; Necromancer robes.",
+    "<b>Battle-mage (Destruction)</b>: the Carian Wand (Steel, Stalhrim, Glass, Daedric by tier), Destruction spells; wonder: the Wyrmspine Javelin (tap jabs, hold throws); Arch-Mage's robes.",
+    "<b>Alchemist</b>: the Shadowflame Scythe (Forsworn, Falmer, Dwarven, Dragon Priest by tier; sheathe it for your flasks), six flasks; wonder: the Mutagen Staff; Morag Tong set.",
+    "<b>Spellsword</b>: the Spellbound Rapier (Steel, Ebony, Daedric, Dragonbone by tier; its look follows the spell in your other hand), touch spells; wonder: the Dragon Slayer; Ahzidal's set.",
+    "Every item climbs Base, Tier I, II, III and Ascended. <b>Ascended adds damage only; it keeps Tier III's model.</b> Class weapons wear their look from Tier I. Class sets: hoods only, a class-colour aura that grows; Tier III sets breathe and trail wisps."
+   ]
+  ],
+  [
+   "Class spells",
+   [
+    "<b>Destruction</b>: Fire: Firebolt → Fireball → Incinerate → Immolate; Frost: Ice Spike → Ice Storm → Icy Spear → Throat of the World; Shock: Chain Lightning → Shock Nova → Finger of the Mountain → Lightning Strike; Sun: Solar Flare → Sunbeam → Forbidden Sun → Daybreak; Arcane: Arcane Bolt → Mana Void → Lunar Tide → Apocalypse; Walls: Wall of Flames → Wall of Frost → Wall of Storms → Inferno; Storms: Frost Nova → Lightning Storm → Multivortex → Cinder Storm",
+    "<b>Summoner</b>: Beasts: Conjure Wolf → Conjure Ice Wolf → Conjure Alpha Wolf → Conjure Werebear; The Dead: Conjure Skeleton → Conjure Draugr Wight → Conjure Draugr Deathlord Warrior → Conjure Draugr Death Overlord; Daedra: Conjure Dremora → Conjure Dremora Archer → Conjure Dremora Mage → Conjure Dremora Warlock; Dwemer: Conjure Dwarven Spider → Conjure Dwarven Sphere → Conjure Dwarven Centurion → Conjure Dwarven Ballista Master; The Wild: Conjure Spriggan → Conjure Spriggan Matron → Conjure Burnt Spriggan → Conjure Spriggan Earth Mother; Atronachs: Conjure Flame Atronach → Conjure Frost Atronach → Conjure Storm Atronach → Conjure Storm Monarch; Ash: Conjure Ash Spawn → Conjure Ash Husk → Conjure Ash Spawn Immolator → Conjure Ash Guardian; The Night: Conjure Death Hound → Conjure Volkihar Hound → Conjure Gargoyle → Conjure Gargoyle Brute; The Wrath: Conjure Mistman → Conjure Wrathman → Conjure Wrathman Marksman → Conjure Wrathman Warlock",
+    "<b>Spellsword</b>: Fire: Burning Touch → Flame Touch → Fiery Grasp; Frost: Chilling Touch → Icy Touch → Freezing Grasp; Shock: Shocking Touch → Static Touch → Thundering Grasp; Sun: Sunlight Touch → Radiant Touch → Searing Grasp; Arcane: Arcane Edge → Arcane Brand → Arcane Cascade"
+   ]
+  ],
+  [
+   "Flasks (Alchemist)",
+   [
+    "Fire Flask, Frost Flask (2 cities freed), Shock Flask (4), Acid Flask (6), Holy Water (8), Voidglass Flask (9). Each bursts, leaves its ground, and has a tier power (Firestorm, Frost Nova, Lightning Strike, Mana Void then Lunar Tide)."
+   ]
+  ],
+  [
+   "Dragon Priest relics",
+   [
+    "<b>Jailor's Keyhammer</b> (Vahlok, Riverwood): Hits shackle the dead in place. Heavy: chains yank the nearby dead together.",
+    "<b>Mistblade</b> (Nahkriin, Whiterun): Hits blind the dead: they slow and hit weaker. Heavy: a fog where they wander lost.",
+    "<b>Windcutter</b> (Volsung, Solitude): Light: a gust that staggers the dead 8 m ahead. Heavy: a 12 m cone that knocks them down.",
+    "<b>Glacier Greatsword</b> (Zahkriisos, Windhelm): Hits freeze the dead until they die. Heavy: shatters every frozen one around you.",
+    "<b>Storm Blade</b> (Otar, Markarth): Hits chain lightning to 2 more of the dead. Heavy: lightning arcs to all around you.",
+    "<b>Sacrifice Knife</b> (Rahgot, Riften): Hits poison, spreading to the next of the dead. Heavy: every poisoned one bursts.",
+    "<b>Grief Blade</b> (Krosis, Falkreath): Hits heal you 1%. Heavy: a wail that weakens the dead around you.",
+    "<b>Sealbreaker</b> (Hevnoraak, Morthal): Hits shatter armour. Heavy: a shockwave that staggers all around you.",
+    "<b>Nightcaller's Scythe</b> (Vokun, Dawnstar): Hits put the dead to sleep. Heavy: a nightmare fog that slows them.",
+    "<b>Arcane Maul</b> (Morokei, Winterhold): Hits burst with magic. Heavy: a magicka shockwave that refills your magicka."
+   ]
+  ],
+  [
+   "Tablet of Mysteries",
+   [
+    "The only gamble: a donated weapon, worn or battered, with a number of uses; lost if you fall.",
+    "<b>Stormtalons</b>: Glass claws. Every 3rd hit chains lightning to 2 more of the dead. Heavy: stuns.",
+    "<b>Gravebell Mace</b>: A mace. Every 5th hit tolls the bell, stunning the dead within 5 m.",
+    "<b>Talons of Woe</b>: Dragonbone claws. Their bleeding runs twice as deep, and kills heal you a little.",
+    "<b>Riverstone Halberd</b>: A halberd. Hits knock the dead back. Heavy: splits the ground in a line ahead.",
+    "<b>Wyrmspine Pike</b>: A pike. Thrusts pierce 2 more of the dead in a line. Heavy: a shockwave that staggers the dead within 8 m.",
+    "<b>Rimewick Quarterstaff</b>: A quarterstaff. Light: freezes the dead for 3 s. Heavy: a 10 m blizzard for 6 s.",
+    "<b>Cinderclaws</b>: Ember claws. Every swipe sets the dead burning. Heavy: a fan of embers.",
+    "<b>Eclipse Edge</b>: A greatsword. Hits alternate frost and sun. Heavy: an ice shockwave, then a sun shockwave (10 m).",
+    "<b>The Wandering Star</b>: A wand. Hold to cast a gold star every 0.5 s that bounces to up to 4 of the dead. Every 5th hit throws them far.",
+    "<b>Frostmourn Rapier</b>: A rapier. Thrusts slow the dead. Heavy: freezes a ring of the dead around you.",
+    "<b>Silver Reaping Scythe</b>: A scythe. Every 4th hit: a silver flash that briefly slows the dead.",
+    "<b>Bonereaper</b>: A scythe. 1 kill in 4 rises to fight for you for 20 s.",
+    "<b>Wyrmtooth Scythe</b>: A scythe. Hits make the dead bleed. Heavy: a shockwave that staggers the dead within 8 m.",
+    "<b>Bloodmoon Scythe</b>: A scythe. Hits drain blood to heal you. Heavy: drains everything it touches."
+   ]
+  ],
+  [
+   "Wonders, secrets and the last weapon",
+   [
+    "Wonders: <b>Soulcaller's Staff</b>, <b>Wyrmspine Javelin</b>, <b>Mutagen Staff</b>, <b>Dragon Slayer</b>.",
+    "Hidden quests: <b>wyrm, sixfires, vortex, slayer</b>.",
+    "<b>Alduin's Bane</b>, from the Hall of the Awakened: a meteor on each light hit, a white tornado on heavy."
+   ]
+  ],
+  [
+   "Weapon looks",
+   [
+    "Every relic, wonder and class weapon tier wears <b>our own</b> effect fitted to its model (no Visual Animated Enchants). Eight looks: Flame (rising), Storm (real lightning), Mist, Core, Frost, Shadow, Radiance, Spirit.",
+    "The looks in game are Noah's picks from the workshop (Nov 24): mostly Core, with Mist on the Mistblade, Frostmourn, Eclipse Edge (purple), Wyrmspine Pike, Dragon Slayer, Alduin's Bane and the Carian Wand (whole wand, softer); Flame on the Shadowflame Scythe.",
+    "Effects run from the guard to the tip. The scythes are 25% larger."
+   ]
+  ],
+  [
+   "Brews, shouts and perks",
+   [
+    "<b>Brews</b> (Nordic): Troll's Hide Mead, Wellspring Draught, Stormrunner Brew, Bounty Hunter's Ale, Last Stand Ale, Gilded Tongue Tonic, Dragonsblood Cider, Pack Leader Mead, Grave Fury Wine, Bone Burst Brew, Overflow Tea, Ember Echo Ale, Mana Font Draught, Volatile Tincture, Quickhand Elixir, Catalyst Philter, Bladesong Mead, Spellbinder's Draught, Spellguard Ale, Quick Revive Draught. Kept through death, up to 9 held, about 3,000 each, refundable at half.",
+    "<b>Shouts</b>: each freed altar teaches one; Solitude's is <b>Tiny Terrors</b> (normal dead shrink to knee height for 20 s and die in one hit). Whiterun gives Dragon's Updraft."
+   ]
+  ],
+  [
+   "The screen",
+   [
+    "Edge UI throughout; the night counter is a glowing ember number inside the red moon; beside it the wave and the dead left.",
+    "Only these pop-ups: the Carian Wand and Mutagen Staff hints, the Dragon Priest slain card, and the small callouts (essence, style tags, round tally, hit marker). No crosshair marks.",
+    "The MCM: subtitles on/off and size, Echo Altar voice volume, screen shake and the rest."
+   ]
+  ],
+  [
+   "Taken out (so they never come back as suggestions)",
+   [
+    "Class voice lines (kept in Noah's Downloads only). Runic look. Repeat the Echo (now Hold the Light). The screen-drawn ring, runes and wisps. Dance of Death.",
+    "Old kit: guns, altar bows and crossbows, staves, power-ups (until Nordic boons), crew picker, Atronach Reforge, Bone-Throne, Runes, Cloaks, breath spells, relic infusions, the Summoner's heroes and armies, the old wonders (Frostbinder Gauntlets, Wolf Queen's Crown, Horn), the Ranger class.",
+    "Mods no longer read: Visual Animated Enchants, Vibrant Weapons Lite, Black Mage Armor SE, Calling of the Conjurer, Summonable Spriggans, Gondorian Ranger Armor. Traps were declined."
+   ]
+  ]
+ ]
+}

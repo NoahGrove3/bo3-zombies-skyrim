@@ -1,0 +1,199 @@
+{
+ "updated": "Nov 24 2026",
+ "groups": [
+  [
+   "Gameplay",
+   [
+    [
+     "loop",
+     "Nights, rounds, enemies, essence",
+     "done",
+     ""
+    ],
+    [
+     "classes",
+     "Four classes, kits and tiers",
+     "doing",
+     "Refining class by class (Summoner first); tier models settled Nov 24."
+    ],
+    [
+     "trials",
+     "Echo Altar trials and freeing",
+     "testing",
+     "Hold the Light and the white souls are new."
+    ],
+    [
+     "relics",
+     "Dragon Priest relics and their abilities",
+     "doing",
+     "Effects being remade in the workshop."
+    ],
+    [
+     "tablet",
+     "Tablet of Mysteries",
+     "done",
+     ""
+    ],
+    [
+     "wonders",
+     "Wonders and hidden quests",
+     "doing",
+     "The Summoner's wonder and the Mutagen Staff still need work."
+    ],
+    [
+     "felldir",
+     "Felldir's voice and Talk",
+     "done",
+     ""
+    ],
+    [
+     "civil",
+     "The civil-war line (line A)",
+     "todo",
+     "Approved at about 450 credits; made and wired in with the civil-war check."
+    ],
+    [
+     "boons",
+     "Nordic boons",
+     "todo",
+     "After the second plugin."
+    ],
+    [
+     "sting",
+     "Round-change sting",
+     "todo",
+     ""
+    ],
+    [
+     "coop",
+     "Co-op for 1-4 (Skyrim Together)",
+     "todo",
+     "Solo first."
+    ]
+   ]
+  ],
+  [
+   "Our own content",
+   [
+    [
+     "looks",
+     "Weapon looks (replacing Visual Animated Enchants)",
+     "done",
+     "Eight looks; Noah's picks in."
+    ],
+    [
+     "lookbase",
+     "Weapon looks on Skyrim's own elemental effects, enhanced (2K, 30 FPS)",
+     "todo",
+     "The same for the looks: Skyrim's fire, frost and shock as the base."
+    ],
+    [
+     "abil",
+     "Ability effects: Skyrim's own effects as the base, enhanced (2K textures, 30 FPS)",
+     "doing",
+     "Your direction (Nov 24): built on Skyrim's spell, impact and elemental effects, made more realistic. Needs your PC linked to read Skyrim's effect files."
+    ],
+    [
+     "ring",
+     "The shockwave (remake of the Labyrinthian ring)",
+     "doing",
+     "First to go in."
+    ],
+    [
+     "bane",
+     "Our own Alduin's Bane model",
+     "todo",
+     "Drops Light Greatswords."
+    ],
+    [
+     "sets",
+     "Class armour sets",
+     "done",
+     ""
+    ],
+    [
+     "under",
+     "Underwear",
+     "done",
+     ""
+    ],
+    [
+     "launch",
+     "Launch screen and menu music",
+     "done",
+     ""
+    ]
+   ]
+  ],
+  [
+   "Technical",
+   [
+    [
+     "plugin2",
+     "A second plugin for new records",
+     "todo",
+     "CurseOfAlduin.esp is full."
+    ],
+    [
+     "sheath",
+     "Build check: weapons drawn from the right sheath",
+     "todo",
+     ""
+    ],
+    [
+     "dead",
+     "Dead code cleaned out",
+     "done",
+     "Class voices, screen ring, old echo stones, cut mods."
+    ],
+    [
+     "ground",
+     "Floating trees and rocks set down",
+     "done",
+     ""
+    ],
+    [
+     "perf",
+     "Performance pass",
+     "todo",
+     ""
+    ]
+   ]
+  ],
+  [
+   "Release",
+   [
+    [
+     "reqs",
+     "Final requirements list and permissions audit",
+     "doing",
+     "Six mods dropped so far."
+    ],
+    [
+     "page",
+     "Nexus page: text, images, trailer",
+     "todo",
+     "Noah is cutting the trailer in CapCut."
+    ],
+    [
+     "collection",
+     "Nexus Collection install",
+     "todo",
+     ""
+    ],
+    [
+     "party",
+     "Party Pack for friends",
+     "done",
+     ""
+    ],
+    [
+     "playthrough",
+     "A full solo playthrough, start to Sovngarde",
+     "todo",
+     ""
+    ]
+   ]
+  ]
+ ]
+}

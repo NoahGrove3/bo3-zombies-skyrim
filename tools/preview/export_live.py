@@ -54,7 +54,8 @@ def read_model(path):
         elif l.startswith('v '):
             q = l.split(); cur['v'].append([float(x) for x in q[1:4]]); cur['uv'].append([float(q[4]), float(q[5])] if len(q) >= 6 else [0, 0])
         elif l.startswith('t '): cur['t'].append([int(x) for x in l.split()[1:4]])
-    return [s for s in shapes if s['kind'] == 'lit' and s['t']]
+    import re
+    return [s for s in shapes if s['t'] and (s['kind'] == 'lit' or not re.search(r'haze|glow|bead|aura|mote|spark|mist(?!blade)', s['name'], re.I))]   # (the steel, and a ghostly blade - not the soft glows, which the game softens itself)
 
 
 def art_rows(key, look):
@@ -111,11 +112,16 @@ def export(key):
         V = np.array(s['v']); U = np.array(s['uv']); T = np.array(s['t'])
         tp = find_tex(s['tex']) if s['tex'] else None
         m = {'k': 'm', 'n': len(V), 'nt': len(T), 'i32': len(V) >= 65536}
+        if s['kind'] == 'effect': m['glow'] = 1
         if tp:
             if tp not in texcache:
                 try:
-                    im = Image.open(tp).convert('RGB'); im.thumbnail((384, 384)); b = io.BytesIO(); im.save(b, 'JPEG', quality=78)
-                    texcache[tp] = 'data:image/jpeg;base64,' + base64.b64encode(b.getvalue()).decode()
+                    if s['kind'] == 'effect':   # (a glow keeps its alpha)
+                        im = Image.open(tp).convert('RGBA'); im.thumbnail((256, 256)); b = io.BytesIO(); im.save(b, 'PNG', optimize=True)
+                        texcache[tp] = 'data:image/png;base64,' + base64.b64encode(b.getvalue()).decode()
+                    else:
+                        im = Image.open(tp).convert('RGB'); im.thumbnail((384, 384)); b = io.BytesIO(); im.save(b, 'JPEG', quality=78)
+                        texcache[tp] = 'data:image/jpeg;base64,' + base64.b64encode(b.getvalue()).decode()
                 except Exception: texcache[tp] = None
             if texcache[tp]: m['map'] = texcache[tp]
         if 'map' not in m: m['color'] = guess(s['tex'] + ' ' + s['name'])
