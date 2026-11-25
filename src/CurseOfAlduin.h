@@ -844,7 +844,7 @@ namespace coa
 		bool                  StaffBeam(int a_el, float a_width, const RE::NiPoint3& a_from, RE::NiPoint3& a_to);   // a beam drawn from a point to where you aim
 		void                  GauntletBeamOff();
 		std::vector<RE::Actor*> LineHurt(const RE::NiPoint3& a_from, const RE::NiPoint3& a_to, float a_radius, float a_share);   // every one of the dead along a line struck (share of one's health); those struck
-		bool                  SkyBeam(const RE::NiPoint3& a_at, float a_secs);   // Mysticism's Sunbeam down out of the sky onto a point (false: not installed - the sunlit pillar instead)
+		bool                  SkyBeam(const RE::NiPoint3& a_at, float a_secs, bool a_white = false);   // Mysticism's Sunbeam down out of the sky onto a point (false: not installed - the sunlit pillar instead)
 		void                  FxBlastSized(std::string_view a_name, const RE::NiPoint3& a_at, float a_scale);   // one of Skyrim's explosions at a size
 		void                  QueueFx(std::string a_path, const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life, bool a_flat);   // one of our effect models (or its effects-map stand-ins) set off at a point   // a cyclone of an element carried along the ground (FireCyclone's, any look)
 		void                  FireCyclone(const RE::NiPoint3& a_from, const RE::NiPoint3& a_fwd, float a_dist, float a_life, float a_share, std::function<void(RE::Actor*)> a_touch, std::function<void(const RE::NiPoint3&)> a_burst);  // a tornado of violet fire carried along the ground

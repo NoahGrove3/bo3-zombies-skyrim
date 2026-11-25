@@ -163,9 +163,38 @@ def shared():
         Image.open(TR / f'{n}.png').save(T / f't_{n}.png', optimize=True)
 
 
+def export_model(key, rel):
+    """a model alone, no art of ours on it (the Wyrmspine Javelin in flight, for its bounce's preview)"""
+    path = ROOT / 'assets' / 'fx' / 'Meshes' / rel.replace('\\', '/')
+    model = read_model(path)
+    allp = np.concatenate([np.array(s['v']) for s in model])
+    lo, hi = allp.min(0) - 1, allp.max(0) + 1
+    span = np.maximum(hi - lo, 1e-3)
+    buf, head, cache = io.BytesIO(), [], {}
+    for s in model:
+        V = np.array(s['v']); U = np.array(s['uv']); T = np.array(s['t'])
+        m = {'k': 'm', 'n': len(V), 'nt': len(T), 'i32': len(V) >= 65536}
+        if s['kind'] == 'effect': m['glow'] = 1
+        tp = find_tex(s['tex']) if s['tex'] else None
+        if tp and tp not in cache:
+            im = Image.open(tp).convert('RGB'); im.thumbnail((384, 384)); b = io.BytesIO(); im.save(b, 'JPEG', quality=78)
+            cache[tp] = 'data:image/jpeg;base64,' + base64.b64encode(b.getvalue()).decode()
+        if tp: m['map'] = cache[tp]
+        else: m['color'] = guess(s['tex'] + ' ' + s['name'])
+        head.append(m)
+        buf.write(np.round((V - lo) / span * 65535 - 32768).clip(-32768, 32767).astype('<i2').tobytes())
+        buf.write(np.round(U * 2048).clip(-32768, 32767).astype('<i2').tobytes())
+        buf.write(np.asarray(T, dtype='<u2' if len(V) < 65536 else '<u4').tobytes())
+    rec = {'key': key, 'scale': root_scale(path), 'lo': lo.round(4).tolist(), 'span': span.round(4).tolist(), 'shapes': head, 'looks': {},
+           'gz': base64.b64encode(gzip.compress(buf.getvalue(), 9)).decode()}
+    (OUT / f'{key}.json').write_text(json.dumps(rec, separators=(',', ':')))
+    return (OUT / f'{key}.json').stat().st_size
+
+
 if __name__ == '__main__':
     args = sys.argv[1:]
     if args == ['shared']: shared(); sys.exit()
+    if args[:1] == ['model']: print(args[1], export_model(args[1], args[2]) // 1024, 'KB'); sys.exit()
     for k in args:
         n = export(k)
         print(k, n // 1024, 'KB')

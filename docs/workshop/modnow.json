@@ -1,5 +1,5 @@
 {
- "updated": "Nov 25 2026 (morning build, 9b0de93)",
+ "updated": "Nov 25 2026 (evening build)",
  "about": "Everything the mod is, as built - kept in the repo (docs/workshop/modnow.json) and updated with every build. The workshop's \"The mod now\" tab is drawn from it.",
  "sections": [
   [
@@ -105,16 +105,19 @@
    [
     "Every relic, wonder and class weapon tier wears <b>its own look</b> (Nov 25: \"custom weapon looks ... not changing their model or adding something on top\"): three looks designed for each weapon (tools/weaponlooks.py), all light on its own edges and faces, many in two colours, built from our textures and Skyrim's own enchantment membranes at 2K (4K on the wonders and Alduin's Bane). <b>Noah's picks are in</b> (Nov 25): third looks on the Grief Blade, Storm Blade, Sacrifice Knife, Nightcaller's Scythe, Glacier Greatsword, Rimewick and Radiant Quarterstaff; second looks on the Windcutter, Bloodmoon Scythe and Frostmourn; the Keyhammer's first look in green; the rest their first.",
     "No pieces laid over the weapons (the Nov 25 signatures - chains, crystals, seals, rings - retired) and no shared look families.",
-    "Effects come to a point at the tips and ends; quarterstaffs glow on their heads only; the Gravebell doesn't pulse. Scythes 25% larger. <b>Our own scythes</b> (tools/scythes.py): nine, each from Skyrim's own weapons of its make - a battleaxe's pole (a Dragon Priest's staff, a pair of spines) and a sword's blade bent into a crescent, its guard as the collar - in the workshop for Noah's OK; the game still wears Battle Scythe's until then."
+    "Effects come to a point at the tips and ends; quarterstaffs glow on their heads only; the Gravebell doesn't pulse. Scythes 25% larger. <b>Our own scythes</b> (tools/scythes.py): nine, each from Skyrim's own weapons of its make - a battleaxe's pole (a Dragon Priest's staff, a pair of spines) and a sword's blade bent into a crescent, its guard as the collar - in the game now (Nov 25: Noah's OK, with the blade flush where it meets the haft on Wyrmtooth, Silver Reaping and Bloodmoon)."
    ]
   ],
   [
    "Ability effects",
    [
     "<b>Every ability rebuilt from real parts</b> (Nov 25: \"All of the abilities need a complete remake ... hyper realistic and 3D ... as highly polished and visually satisfying as the mods we used\" - \"Rebuild from their real parts\"): the real particle effects of Skyrim, Dawnguard, Dragonborn, Apocalypse and Mysticism (fire, smoke, sparks, shockwaves - 61 of them) put together into one new effect per ability (tools/realfx.py, 84 effects: relics, Tablet weapons, wonders, Alduin's Bane, class weapons' bolts and cyclones, the javelin's landings, the flasks), each in its own colour and size, each part on its own beat, the ground ones laid on the ground. Noah's style, colour and size picks from the workshop drive them.",
-    "The workshop shows a close picture of each and lists its parts; the game plays the real thing.",
+    "The workshop shows a close picture of each <b>built from the real parts themselves</b> (Nov 25: \"Build from real parts\"): their own textures and particle settings, read from your game; bolts, the javelin's bounce, the sunbeam and the meteors on the paths and beats the game gives them. The game plays the real thing.",
     "<b>The class spells play their own</b> (Noah: \"we can use the spells from the actual mods and base Skyrim for those\"): no impact of ours over them.",
     "<b>Vahlok's chains</b>: a heavy hit throws spectral chains (real 3D links, Skyrim's enchantment fire in green) from the one struck to each of the dead within 6 m, keeps them taut while it hauls them in to arm's reach, then lets go.",
+    "<b>Alduin's Bane heavy</b>: a wind blast within 10 m that hurls the dead far: Skyrim's Labyrinthian shockwave, Unrelenting Force and waterfall mist, in white (Nov 25: \"Shockwave\").",
+    "<b>The Radiant Quarterstaff's sunbeam all in white</b> (Nov 25): its bolt from the sky, burst, turning pillar and motes (fxmap.ini sun_*_white); Holy Water keeps the gold.",
+    "<b>Summons come out of Skyrim's own conjuring portal</b> (Nov 25: \"Use skyrims summon portal\"): the Soulcaller's wolves and sabre cat.",
     "Retired: the Nov 25 flat 'own effect' elements (tools/abilityfx.py) and the borrowed-impact list (tools/fxown.py)."
    ]
   ],

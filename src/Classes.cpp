@@ -3945,7 +3945,7 @@ namespace coa::Classes
 			}
 			const float sz = big ? 1.0f : 0.65f, r = big ? 420.0f : 280.0f;
 			// (Noah: "Cast the real Sunbeam") Mysticism's own Sunbeam down out of the sky (Gun::SkyBeam; without Mysticism the sunlit pillar)
-			Gun::SkyBeam(at, big ? 2.0f : 1.4f);
+			Gun::SkyBeam(at, big ? 2.0f : 1.4f, true);   // (Noah, 2026-11-25: white)
 			(void)sz;
 			Gun::BlastSound("lightmassive", at, 0.9f);
 			const float pw = a_pw, whole = Director::RoundHealth() * gen::kRounds.hpScale;
