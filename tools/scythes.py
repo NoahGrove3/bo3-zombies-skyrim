@@ -31,7 +31,7 @@ SCYTHES = {
  'forsworn':     ('Shadowflame Scythe - Forsworn (Tier I)', ('weapons/forsworn/forswornaxe.nif', 'axe'), 'weapons/forsworn/forswornsword.nif', 1.6, 74, []),
  'falmer':       ('Shadowflame Scythe - Falmer (Tier II)', ('weapons/falmer/falmeraxe.nif', 'axe'), 'weapons/falmer/falmerlongsword.nif', 1.9, 80, []),
  'dwarven':      ('Shadowflame Scythe - Dwarven (Tier III)', ('weapons/dwarven/dwarvenbattleaxe.nif', 'axe'), 'weapons/dwarven/dwarvengreatsword.nif', 1.5, 66, []),
- 'dragonpriest': ('Shadowflame Scythe - Dragon Priest (Tier IV)', ('weapons/dragonpriest/dragonprieststaff.nif', 'staff'), 'weapons/dragonpriest/dragonpriestdagger.nif', 2.1, 84, ['low', 'low:46']),
+ 'dragonpriest': ('Shadowflame Scythe - Dragon Priest (Tier IV)', ('weapons/dragonpriest/dragonprieststaff.nif', 'staff'), 'weapons/dragonpriest/dragonpriestdagger.nif', 2.1, 84, ['low', 'low:8']),
 }
 
 
@@ -206,7 +206,7 @@ def build(name):
     title, (hrel, how), brel, width, bend, extra = SCYTHES[name]
     parts = haft(hrel, how, 1.1 if 'tight' in extra else 1.35)
     top = YT - 10
-    if 'low' in extra:   # (Noah: the Dragon Priest's "lower the blade on the staff handle (pole) so it actually looks like a scythe")
+    if 'low' in extra:   # (Noah: the Dragon Priest's blade clamped round the staff, then "the blade should be coming from the head of the staff not near the middle")
         top = YT - 10 - next(float(e[4:]) for e in extra if e.startswith('low:'))
     if 'flush' in extra or 'low' in extra:
         bl, (g0, g1) = blade(brel, width, bend, top, True)

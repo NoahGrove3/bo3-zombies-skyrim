@@ -1,0 +1,144 @@
+<title>Curse Workshop __SHA__</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="artifact-thumbnail" href="thumb.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+__CSS__
+</style>
+<div class="wrap">
+  <header>
+    <div class="meta">THE CURSE OF ALDUIN · BUILD __SHA__ · __DATE__</div>
+    <h1>The Workshop</h1>
+    <p class="lede">Your workshop for this build. Every weapon's look and every ability's effect is drawn live at 30 frames a second, and changes the moment you pick something. Your picks, test results and decisions save here. When you've made your changes, tell me, and I'll build them in and make the next doc.</p>
+  </header>
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Workshop">
+    <button data-t="changed" role="tab">What changed</button>
+    <button data-t="looks" role="tab">Weapon looks<span class="n" data-count="looks"></span></button>
+    <button data-t="abilities" role="tab">Abilities<span class="n" data-count="abil"></span></button>
+    <button data-t="sounds" role="tab">Sounds<span class="n" data-count="snd"></span></button>
+    <button data-t="feel" role="tab">Hit feel</button>
+    <button data-t="enemies" role="tab">The dead</button>
+    <button data-t="trials" role="tab">Echo Altar trials</button>
+    <button data-t="perf" role="tab">Big nights</button>
+    <button data-t="scythes" role="tab">Scythes<span class="n" data-count="scy"></span></button>
+    <button data-t="tests" role="tab">Test list<span class="n" data-count="tests"></span></button>
+    <button data-t="issues" role="tab">Issues<span class="n" data-count="issues"></span></button>
+    <button data-t="decisions" role="tab">Decisions</button>
+    <button data-t="nexus" role="tab">Road to Nexus</button>
+    <button data-t="context" role="tab">The mod now</button>
+  </nav>
+
+  <section class="tab" id="changed">
+    <h2>What changed</h2>
+    <p class="sub">__INSTALL__</p>
+    <div class="grid" id="changes"></div>
+    <h2 style="margin-top:14px">The real parts, from your game</h2>
+    <p class="sub">Every effect the abilities are now made of, by where it comes from. All read from your own install; nothing of ours drawn flat.</p>
+    <div class="skgrid">__SKBASE__</div>
+  </section>
+
+  <section class="tab" id="looks" hidden>
+    <h2>Weapon looks</h2>
+    <p class="sub">Every weapon with five looks of its own, moving at 30 frames a second: all light on its own edges and faces, nothing laid over it. Click a weapon to open it: its 3D preview beside its looks and colours; the preview changes at once and your pick saves. Class weapons: switch tiers under the preview to see each model. Lengths are the weapon's size in game.</p>
+    <div class="looks" id="lookkey"></div>
+    <div class="cats" id="wcats" role="group" aria-label="Weapon categories"></div>
+    <p class="status" id="wstatus">Loading your picks…</p>
+    <div class="wgrid" id="wgrid"></div>
+  </section>
+
+  <section class="tab" id="abilities" hidden>
+    <h2>Abilities</h2>
+    <p class="sub">What each weapon, wonder and flask does when it strikes, and <b>its own effect, rebuilt from real parts</b>: the real particle effects of Skyrim, Dawnguard, Dragonborn, Apocalypse and Mysticism (fire, smoke, sparks, shockwaves) put together into one new effect, in its own colour and size, each part on its own beat. Each card lists the parts. Click a weapon (or one of its abilities) to open it: <b>five options of its own</b> - variations of what that ability actually does - any colour, and sliders for size, brightness, area of effect (which also sets how far it reaches the dead in game), vibrance, speed, linger, density and light cast. Every change shows here at once and saves; the game takes your picks next build. The class spells play their own effects, from their own mods.</p>
+    <div id="styles" hidden></div>
+    <div class="cats" id="acats" role="group" aria-label="Ability categories"></div>
+    <p class="status" id="astatus">Loading your picks…</p>
+    <div class="wgrid" id="agrid"></div>
+  </section>
+
+  <section class="tab" id="sounds" hidden>
+    <h2>Sounds</h2>
+    <p class="sub">Every weapon's own sounds - drawn, swung, swung heavy, and its hit on the dead - and every ability's: its cast, its impact, and what lingers after. Each has <b>five options</b>: the first is what the game plays now, the one marked <b>my pick</b> is my recommendation. All of them are real sounds from your own install (Skyrim, Dawnguard, Dragonborn, Apocalypse, Mysticism) or ours. Press <b>▶</b> to hear any of them; <b>Hear it play</b> runs the weapon in 3D with every sound on its beat. Tune each with volume, pitch, variation (so a hundred hits don't sound the same) and a second sound layered under it. Your picks save here; the game takes them when you call the doc final.</p>
+    <div class="cats" id="sndcats" role="group" aria-label="Sound categories"></div>
+    <p class="status" id="sndstatus">Loading your picks…</p>
+    <div class="wgrid" id="sndgrid"></div>
+  </section>
+
+  <section class="tab" id="feel" hidden>
+    <h2>Hit feel</h2>
+    <p class="sub" id="feelsub"></p>
+    <p class="status" id="feelstatus">Loading your picks…</p>
+    <div class="wgrid" id="feelgrid"></div>
+  </section>
+
+  <section class="tab" id="enemies" hidden>
+    <h2>The dead</h2>
+    <p class="sub" id="ensub"></p>
+    <p class="status" id="enstatus">Loading your picks…</p>
+    <div class="wgrid" id="engrid"></div>
+  </section>
+
+  <section class="tab" id="trials" hidden>
+    <h2>The Echo Altar and its trials</h2>
+    <p class="sub" id="trsub"></p>
+    <p class="status" id="trstatus">Loading your edits…</p>
+    <div class="wgrid" id="trgrid"></div>
+  </section>
+
+  <section class="tab" id="perf" hidden>
+    <h2>Big nights</h2>
+    <p class="sub" id="perfsub"></p>
+    <p class="status" id="perfstatus">Loading your picks…</p>
+    <div id="perfgrid" style="display:grid;gap:12px"></div>
+  </section>
+
+  <section class="tab" id="issues" hidden>
+    <h2>Issues</h2>
+    <p class="sub">Everything known to be wrong or unfinished, mine and yours. Add anything you see in game; mark each as you see fit. I read this before every build.</p>
+    <div class="progress" id="iprog"></div>
+    <p class="status" id="istatus"></p>
+    <div class="card" id="iadd"></div>
+    <div id="ilist" style="display:grid;gap:8px"></div>
+  </section>
+
+  <section class="tab" id="scythes" hidden>
+    <h2>Our own scythes</h2>
+    <p class="sub">Nine scythes of our own, built from Skyrim's own weapons and keeping each one's theme: the pole of one of Skyrim's battleaxes (or a Dragon Priest's staff, or a spine) with the blade of a sword of the same make bent into a reaping crescent, its own guard kept as the collar. 25% larger than Skyrim's. <b>In the game now</b>, as you OK'd them, the blade flush with the haft on Wyrmtooth, Silver Reaping and Bloodmoon. Drag to turn, scroll to zoom.</p>
+    <p class="status" id="sstatus">Loading your marks…</p>
+    <div class="wgrid" id="sgrid"></div>
+  </section>
+
+  <section class="tab" id="tests" hidden>
+    <h2>Test list</h2>
+    <p class="sub">Everything not yet seen in your game. The last build your game ran was 6a0f8a0 (Nov 24, 7 pm, from your CurseOfAlduin.log), so everything since is here, and what comes in when this doc is final. Mark each one, and say what you saw if it's wrong; your marks carry to the next doc.</p>
+    <div class="progress" id="tprog"></div>
+    <p class="status" id="tstatus"></p>
+    <div class="tests" id="tlist"></div>
+  </section>
+
+  <section class="tab" id="decisions" hidden>
+    <h2>Decisions</h2>
+    <p class="status" id="decstatus">Loading your decisions…</p>
+    <div style="display:grid;gap:10px" id="recs"></div>
+  </section>
+
+  <section class="tab" id="nexus" hidden>
+    <h2>Road to Nexus</h2>
+    <p class="sub">Everything between now and a Nexus release, so nothing gets lost. I update it every build; you can mark any line yourself and leave a note, and I'll read them.</p>
+    <div class="progress" id="nprog"></div>
+    <p class="status" id="nstatus"></p>
+    <div id="nlist" style="display:grid;gap:14px"></div>
+  </section>
+
+  <section class="tab" id="context" hidden>
+    <h2>The Curse of Alduin now</h2>
+    <p class="sub" id="modnowabout"></p>
+    <div class="grid" id="modnow"></div>
+    <h2 style="margin-top:10px">The last few days</h2>
+    <div class="timeline" id="recent"></div>
+  </section>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+__JS__
+</script>

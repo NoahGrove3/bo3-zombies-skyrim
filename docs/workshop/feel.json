@@ -1,0 +1,320 @@
+{
+ "classes": [
+  {
+   "id": "light",
+   "name": "Daggers, claws and rapiers",
+   "who": "Sacrifice Knife, the three claws, Frostmourn Rapier, the Spellbound Rapier",
+   "item": "cinderclaws",
+   "key": "cinderclaws_hit",
+   "opts": [
+    [
+     "a1",
+     "As it is now",
+     "No hit-stop, no shake: the blade passes through.",
+     {
+      "stopL": 0,
+      "stopH": 0,
+      "shakeH": 0,
+      "shakeK": 0
+     }
+    ],
+    [
+     "a2",
+     "Quick bite",
+     "A tiny catch on every hit, a little more on a heavy.",
+     {
+      "stopL": 25,
+      "stopH": 60,
+      "shakeH": 20,
+      "shakeK": 10
+     }
+    ],
+    [
+     "a3",
+     "Subtle",
+     "Barely there: felt more than seen.",
+     {
+      "stopL": 12,
+      "stopH": 35,
+      "shakeH": 10,
+      "shakeK": 0
+     }
+    ],
+    [
+     "a4",
+     "Brutal",
+     "Every stab catches hard.",
+     {
+      "stopL": 45,
+      "stopH": 110,
+      "shakeH": 45,
+      "shakeK": 20
+     }
+    ]
+   ],
+   "rec": "a2",
+   "why": "Fast weapons hit often: a catch of 25 ms keeps them quick but lets each hit land."
+  },
+  {
+   "id": "medium",
+   "name": "Swords and maces",
+   "who": "Mistblade, Windcutter, Storm Blade, Grief Blade, Gravebell Mace",
+   "item": "otar",
+   "key": "otar_hit",
+   "opts": [
+    [
+     "a1",
+     "As it is now",
+     "No hit-stop, no shake.",
+     {
+      "stopL": 0,
+      "stopH": 0,
+      "shakeH": 0,
+      "shakeK": 0
+     }
+    ],
+    [
+     "a2",
+     "Solid",
+     "A short catch on each hit; a heavy stops a beat and shakes a little.",
+     {
+      "stopL": 35,
+      "stopH": 85,
+      "shakeH": 30,
+      "shakeK": 10
+     }
+    ],
+    [
+     "a3",
+     "Subtle",
+     "Half of that.",
+     {
+      "stopL": 18,
+      "stopH": 45,
+      "shakeH": 15,
+      "shakeK": 0
+     }
+    ],
+    [
+     "a4",
+     "Brutal",
+     "Big catches and a hard shake on heavies.",
+     {
+      "stopL": 60,
+      "stopH": 140,
+      "shakeH": 60,
+      "shakeK": 20
+     }
+    ]
+   ],
+   "rec": "a2",
+   "why": "The middle weight: you should feel it bite, but never feel slowed down."
+  },
+  {
+   "id": "heavy",
+   "name": "Greatswords, axes, hammers, scythes and halberds",
+   "who": "Keyhammer, Glacier Greatsword, Sealbreaker, Arcane Maul, every scythe, Riverstone Halberd, Wyrmspine Pike, Eclipse Edge, Dragon Slayer, Alduin's Bane",
+   "item": "zahkriisos",
+   "key": "zahkriisos_heavy",
+   "opts": [
+    [
+     "a1",
+     "As it is now",
+     "No hit-stop, no shake.",
+     {
+      "stopL": 0,
+      "stopH": 0,
+      "shakeH": 0,
+      "shakeK": 0
+     }
+    ],
+    [
+     "a2",
+     "Weighty",
+     "Each blow stops a beat; a heavy stops longer and shakes the screen.",
+     {
+      "stopL": 50,
+      "stopH": 110,
+      "shakeH": 45,
+      "shakeK": 15
+     }
+    ],
+    [
+     "a3",
+     "Subtle",
+     "Half of that.",
+     {
+      "stopL": 25,
+      "stopH": 60,
+      "shakeH": 22,
+      "shakeK": 0
+     }
+    ],
+    [
+     "a4",
+     "Brutal",
+     "A crunch on every blow.",
+     {
+      "stopL": 80,
+      "stopH": 180,
+      "shakeH": 75,
+      "shakeK": 25
+     }
+    ]
+   ],
+   "rec": "a2",
+   "why": "Big weapons should feel big: the stop sells the weight, the shake sells the power attack."
+  },
+  {
+   "id": "magic",
+   "name": "Wands, staffs and flasks",
+   "who": "Carian Wand, Radiant Quarterstaff (its bolts), Soulcaller's and Mutagen Staffs, the Wandering Star, the flasks",
+   "item": "wand",
+   "key": "wand_heavy",
+   "opts": [
+    [
+     "a1",
+     "As it is now",
+     "No hit-stop, no shake.",
+     {
+      "stopL": 0,
+      "stopH": 0,
+      "shakeH": 0,
+      "shakeK": 0
+     }
+    ],
+    [
+     "a2",
+     "Impact only",
+     "No stop on casts; a small shake when a great bolt lands.",
+     {
+      "stopL": 0,
+      "stopH": 0,
+      "shakeH": 25,
+      "shakeK": 10
+     }
+    ],
+    [
+     "a3",
+     "Subtle",
+     "A smaller shake.",
+     {
+      "stopL": 0,
+      "stopH": 0,
+      "shakeH": 12,
+      "shakeK": 0
+     }
+    ],
+    [
+     "a4",
+     "Punchy",
+     "A short stop and a shake on each great bolt.",
+     {
+      "stopL": 20,
+      "stopH": 60,
+      "shakeH": 45,
+      "shakeK": 15
+     }
+    ]
+   ],
+   "rec": "a2",
+   "why": "Spells hit far from you: stopping the screen on them feels wrong, but a shake on the big ones lands."
+  }
+ ],
+ "marks": [
+  {
+   "id": "mark",
+   "name": "The hit marker",
+   "now": "A white mark at the crosshair on a hit, gold on a headshot, red and bigger on a kill, with a bright tick.",
+   "opts": [
+    [
+     "keep",
+     "Keep it as it is"
+    ],
+    [
+     "quiet",
+     "Keep the mark, a softer tick"
+    ],
+    [
+     "nosound",
+     "The mark only, no tick"
+    ],
+    [
+     "off",
+     "Off"
+    ]
+   ],
+   "rec": "keep",
+   "snd": "coa:sp_bright_0",
+   "pitch": 140
+  },
+  {
+   "id": "head",
+   "name": "A headshot",
+   "now": "A brighter tick, a white flash at the crosshair; a headshot kill bursts the head.",
+   "opts": [
+    [
+     "keep",
+     "Keep it as it is"
+    ],
+    [
+     "nofx",
+     "Keep the tick, no burst"
+    ],
+    [
+     "off",
+     "Off"
+    ]
+   ],
+   "rec": "keep",
+   "snd": "coa:sp_bright_2",
+   "pitch": 130
+  },
+  {
+   "id": "kill",
+   "name": "A kill",
+   "now": "The body gives way (our sound) where it falls.",
+   "opts": [
+    [
+     "keep",
+     "Keep it as it is"
+    ],
+    [
+     "louder",
+     "Louder, so you hear it in a crowd"
+    ],
+    [
+     "element",
+     "Its death's own sound (The dead tab)"
+    ],
+    [
+     "off",
+     "Off"
+    ]
+   ],
+   "rec": "element",
+   "snd": "coa:flesh_death",
+   "pitch": 100
+  },
+  {
+   "id": "last",
+   "name": "The last of the night",
+   "now": "Nothing special: the night ends when the last one falls.",
+   "opts": [
+    [
+     "keep",
+     "Keep it as it is"
+    ],
+    [
+     "slow",
+     "A moment of slow motion on the last kill"
+    ],
+    [
+     "flash",
+     "A flash and a low boom on the last kill"
+    ]
+   ],
+   "rec": "slow"
+  }
+ ]
+}

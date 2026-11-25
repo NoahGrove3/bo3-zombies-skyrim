@@ -1,0 +1,173 @@
+{
+ "measured": null,
+ "knobs": [
+  {
+   "id": "hitches",
+   "name": "The hitches first",
+   "now": "On your Nov 24 night our own code cost 0.6 ms a frame on average - small - but a few frames took 40-85 ms (Classes, Gun, Director, Shops): a stutter you can feel.",
+   "opts": [
+    [
+     "fix",
+     "Find and fix the hitches before anything else"
+    ],
+    [
+     "later",
+     "Later"
+    ]
+   ],
+   "rec": "fix",
+   "why": "A steady 80 fps with a stutter every minute feels worse than 70 without one."
+  },
+  {
+   "id": "alive",
+   "name": "The dead alive at once",
+   "now": "64 (and up to half again for a moment in a big wave).",
+   "opts": [
+    [
+     "48",
+     "48"
+    ],
+    [
+     "64",
+     "64 (now)"
+    ],
+    [
+     "80",
+     "80"
+    ]
+   ],
+   "rec": "64",
+   "why": "You peaked at 29 bodies near you on Nov 24: the cap isn't what costs."
+  },
+  {
+   "id": "ai",
+   "name": "The dead thinking at full speed",
+   "now": "24 near you, 6 more per player in co-op; the rest move simply.",
+   "opts": [
+    [
+     "18",
+     "18"
+    ],
+    [
+     "24",
+     "24 (now)"
+    ],
+    [
+     "32",
+     "32"
+    ]
+   ],
+   "rec": "24",
+   "why": "Skyrim's AI is its biggest cost; 24 keeps a crowd alive without the frame rate falling."
+  },
+  {
+   "id": "corpses",
+   "name": "Bodies left on the ground",
+   "now": "18, the oldest crumbling as new ones fall.",
+   "opts": [
+    [
+     "8",
+     "8"
+    ],
+    [
+     "12",
+     "12"
+    ],
+    [
+     "18",
+     "18 (now)"
+    ],
+    [
+     "24",
+     "24"
+    ]
+   ],
+   "rec": "12",
+   "why": "Bodies cost physics; with ash, shatter and melt deaths (The dead tab) far fewer are left anyway."
+  },
+  {
+   "id": "fx",
+   "name": "Our effects at once",
+   "now": "32 bursts at a time; any more wait.",
+   "opts": [
+    [
+     "16",
+     "16"
+    ],
+    [
+     "24",
+     "24"
+    ],
+    [
+     "32",
+     "32 (now)"
+    ],
+    [
+     "48",
+     "48"
+    ]
+   ],
+   "rec": "32",
+   "why": "Enough for every heavy in a crowd; more and the glow piles up into white."
+  },
+  {
+   "id": "detail",
+   "name": "Effects on a big night",
+   "now": "Every effect at full detail, however many are going.",
+   "opts": [
+    [
+     "full",
+     "Full detail always (now)"
+    ],
+    [
+     "auto",
+     "Fewer particles past 30 of the dead near you"
+    ],
+    [
+     "light",
+     "Always lighter"
+    ]
+   ],
+   "rec": "auto",
+   "why": "You won't see the difference in a crowd; your frame rate will."
+  },
+  {
+   "id": "lights",
+   "name": "Light cast by effects",
+   "now": "Each effect lights the ground and the dead (Skyrim's own light on its effects).",
+   "opts": [
+    [
+     "all",
+     "Every effect (now)"
+    ],
+    [
+     "big",
+     "Only the big ones (heavies, spells) on a big night"
+    ],
+    [
+     "none",
+     "None"
+    ]
+   ],
+   "rec": "big",
+   "why": "Skyrim draws only a few lights at once; dozens of small ones flicker in and out."
+  },
+  {
+   "id": "voices",
+   "name": "The horde's sounds",
+   "now": "A budget of the dead's sounds at once; your own sounds never wait.",
+   "opts": [
+    [
+     "keep",
+     "Keep (now)"
+    ],
+    [
+     "less",
+     "Fewer of the dead's groans in a crowd"
+    ]
+   ],
+   "rec": "keep",
+   "why": "It already works: your hits are always heard."
+  }
+ ]
+}

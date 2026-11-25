@@ -1,5 +1,5 @@
 {
- "updated": "Nov 25 2026 (evening build)",
+ "updated": "Nov 25, 2026 (night)",
  "groups": [
   [
    "Gameplay",
@@ -128,6 +128,24 @@
      "Launch screen and menu music",
      "done",
      ""
+    ],
+    [
+     "sounds",
+     "Every weapon and ability its own sounds",
+     "doing",
+     "Sounds tab: five options each, waiting on your picks."
+    ],
+    [
+     "feel",
+     "Hit feel: hit-stop and shake by weapon weight",
+     "doing",
+     "Hit feel tab."
+    ],
+    [
+     "deaths",
+     "The dead die by what kills them",
+     "doing",
+     "The dead tab."
     ]
    ]
   ],
@@ -161,8 +179,14 @@
     [
      "perf",
      "Performance pass",
+     "doing",
+     "Big nights tab: your own numbers and the knobs."
+    ],
+    [
+     "hitches",
+     "The 40-85 ms stutters (Classes, Gun, Director, Shops)",
      "todo",
-     ""
+     "Measured on your Nov 24 night; Big nights tab."
     ]
    ]
   ],

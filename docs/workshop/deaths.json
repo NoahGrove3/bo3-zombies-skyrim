@@ -1,0 +1,940 @@
+[
+ {
+  "id": "fire",
+  "name": "Killed by fire",
+  "who": "Cinderclaws, the Wyrmspine Pike and Javelin, the Dragon Slayer, Alduin's Bane, the Spellbound Rapier in fire, the Fire Flask, the Destruction fire spells",
+  "rec": "a2",
+  "why": "Burning to ash leaves no bodies to cost frames on a big night, and you see what did it.",
+  "opts": [
+   {
+    "id": "a1",
+    "name": "As it is now",
+    "desc": "They burn and fall, charred and smoking (the Frozen Electrocuted Combusted mod's burned body).",
+    "rx": [
+     [
+      0.05,
+      "burn"
+     ],
+     [
+      0.45,
+      "die"
+     ]
+    ],
+    "parts": [
+     [
+      "fire",
+      "core",
+      0.05,
+      0.8,
+      0
+     ]
+    ],
+    "snd": [
+     "coa:flesh_death"
+    ],
+    "game": ""
+   },
+   {
+    "id": "a2",
+    "name": "Burn to ash",
+    "desc": "They burn, fall, and crumble into a pile of glowing ash (Skyrim's own ash pile, as its fire perks leave).",
+    "rx": [
+     [
+      0.05,
+      "burn"
+     ],
+     [
+      0.4,
+      "die"
+     ],
+     [
+      1.15,
+      "shrink"
+     ]
+    ],
+    "parts": [
+     [
+      "fire",
+      "core",
+      0.05,
+      0.8,
+      0
+     ],
+     [
+      "fire",
+      "mist",
+      1.1,
+      0.9,
+      1
+     ]
+    ],
+    "snd": [
+     "WB_DestructionFire_Sound_Impact_Immolation",
+     "coa:flesh_death"
+    ],
+    "game": "ash pile + body removed"
+   },
+   {
+    "id": "a3",
+    "name": "Flare out",
+    "desc": "A burst of flame and they're gone.",
+    "rx": [
+     [
+      0.05,
+      "burn"
+     ],
+     [
+      0.35,
+      "shrink"
+     ]
+    ],
+    "parts": [
+     [
+      "fire",
+      "big",
+      0.3,
+      0.9,
+      0
+     ]
+    ],
+    "snd": [
+     "WB_DestructionFire_Sound_Explosion_FlashFireball"
+    ],
+    "game": ""
+   },
+   {
+    "id": "a4",
+    "name": "Embers on the wind",
+    "desc": "They fall and blow away as embers.",
+    "rx": [
+     [
+      0.05,
+      "burn"
+     ],
+     [
+      0.4,
+      "die"
+     ],
+     [
+      1.0,
+      "shrink"
+     ]
+    ],
+    "parts": [
+     [
+      "fire",
+      "core",
+      0.05,
+      0.7,
+      0
+     ],
+     [
+      "fire",
+      "spikes",
+      0.95,
+      0.9,
+      1
+     ]
+    ],
+    "snd": [
+     "WB_DestructionWizardfire_Sound_Explosion_Emberblast"
+    ],
+    "game": ""
+   }
+  ]
+ },
+ {
+  "id": "frost",
+  "name": "Killed by frost",
+  "who": "Glacier Greatsword, Rimewick Quarterstaff, Frostmourn Rapier, Eclipse Edge, the Spellbound Rapier in frost, the Frost Flask, the frost spells",
+  "rec": "a2",
+  "why": "A frozen one shattering is the most satisfying death in the game - and the shards clear the body.",
+  "opts": [
+   {
+    "id": "a1",
+    "name": "As it is now",
+    "desc": "They freeze and fall as a frozen body (Frozen Electrocuted Combusted).",
+    "rx": [
+     [
+      0.05,
+      "freeze"
+     ],
+     [
+      0.6,
+      "die"
+     ]
+    ],
+    "parts": [
+     [
+      "frost",
+      "core",
+      0.05,
+      0.8,
+      0
+     ]
+    ],
+    "snd": [
+     "MAGIcicleImpactBreakSD",
+     "coa:flesh_death"
+    ],
+    "game": ""
+   },
+   {
+    "id": "a2",
+    "name": "Freeze and shatter",
+    "desc": "Frozen solid, then they shatter into ice.",
+    "rx": [
+     [
+      0.05,
+      "freeze"
+     ],
+     [
+      0.6,
+      "shatter"
+     ]
+    ],
+    "parts": [
+     [
+      "frost",
+      "core",
+      0.05,
+      0.8,
+      0
+     ],
+     [
+      "frost",
+      "spikes",
+      0.6,
+      1.0,
+      0
+     ]
+    ],
+    "snd": [
+     "WB_DestructionFrost_Sound_Explosion_Shatter"
+    ],
+    "game": "shards + body removed"
+   },
+   {
+    "id": "a3",
+    "name": "Frozen statue",
+    "desc": "They stay standing, frozen, then topple.",
+    "rx": [
+     [
+      0.05,
+      "freeze"
+     ],
+     [
+      1.1,
+      "knock"
+     ]
+    ],
+    "parts": [
+     [
+      "frost",
+      "core",
+      0.05,
+      0.8,
+      0
+     ]
+    ],
+    "snd": [
+     "WB_DestructionFrost_Sound_Impact_Crystalize"
+    ],
+    "game": ""
+   },
+   {
+    "id": "a4",
+    "name": "Ice burst",
+    "desc": "They burst at once into a cloud of ice.",
+    "rx": [
+     [
+      0.05,
+      "freeze"
+     ],
+     [
+      0.2,
+      "shatter"
+     ]
+    ],
+    "parts": [
+     [
+      "frost",
+      "big",
+      0.2,
+      0.9,
+      0
+     ]
+    ],
+    "snd": [
+     "WB_DestructionFrost_Sound_Explosion_Cryoblast"
+    ],
+    "game": ""
+   }
+  ]
+ },
+ {
+  "id": "shock",
+  "name": "Killed by lightning",
+  "who": "Storm Blade, Stormtalons, the Spellbound Rapier in shock, the Shock Flask, the shock spells",
+  "rec": "a2",
+  "why": "Skyrim's own disintegration: what a lightning death should look like, and no body left.",
+  "opts": [
+   {
+    "id": "a1",
+    "name": "As it is now",
+    "desc": "They jolt and fall, blackened (Frozen Electrocuted Combusted).",
+    "rx": [
+     [
+      0.05,
+      "shock"
+     ],
+     [
+      0.7,
+      "die"
+     ]
+    ],
+    "parts": [
+     [
+      "shock",
+      "core",
+      0.05,
+      0.8,
+      0
+     ]
+    ],
+    "snd": [
+     "MAGShockImpactSD",
+     "coa:flesh_death"
+    ],
+    "game": ""
+   },
+   {
+    "id": "a2",
+    "name": "Disintegrate",
+    "desc": "They jolt, fall, and fall apart into ash with a crackle (Skyrim's own disintegration).",
+    "rx": [
+     [
+      0.05,
+      "shock"
+     ],
+     [
+      0.5,
+      "die"
+     ],
+     [
+      0.95,
+      "shrink"
+     ]
+    ],
+    "parts": [
+     [
+      "shock",
+      "core",
+      0.05,
+      0.8,
+      0
+     ],
+     [
+      "shock",
+      "mist",
+      0.9,
+      0.9,
+      1
+     ]
+    ],
+    "snd": [
+     "WB_DestructionShock_Sound_Explosion_LightningStrike_2C"
+    ],
+    "game": "ash pile + body removed"
+   },
+   {
+    "id": "a3",
+    "name": "Thrown by the jolt",
+    "desc": "The last jolt throws them.",
+    "rx": [
+     [
+      0.05,
+      "shock"
+     ],
+     [
+      0.35,
+      "fling"
+     ]
+    ],
+    "parts": [
+     [
+      "shock",
+      "big",
+      0.35,
+      0.8,
+      0
+     ]
+    ],
+    "snd": [
+     "WB_DestructionShock_Sound_Explosion_Thunderball"
+    ],
+    "game": ""
+   },
+   {
+    "id": "a4",
+    "name": "The last spark leaps on",
+    "desc": "As they fall, a spark leaps to the next one of the dead.",
+    "rx": [
+     [
+      0.05,
+      "shock"
+     ],
+     [
+      0.5,
+      "die"
+     ]
+    ],
+    "parts": [
+     [
+      "shock",
+      "core",
+      0.05,
+      0.8,
+      0
+     ],
+     [
+      "shock",
+      "spark",
+      0.55,
+      0.8,
+      0
+     ]
+    ],
+    "snd": [
+     "WB_DestructionShock_Sound_Explosion_ShockNova"
+    ],
+    "game": "chains 1 more (a little damage)"
+   }
+  ]
+ },
+ {
+  "id": "sun",
+  "name": "Killed by sun and holy light",
+  "who": "Radiant Quarterstaff, Gravebell Mace, the Wandering Star, Eclipse Edge, Holy Water, the sun spells",
+  "rec": "a2",
+  "why": "Undead burned away by holy light: a clean, readable death.",
+  "opts": [
+   {
+    "id": "a1",
+    "name": "As it is now",
+    "desc": "They fall as any death.",
+    "rx": [
+     [
+      0.05,
+      "flinch"
+     ],
+     [
+      0.4,
+      "die"
+     ]
+    ],
+    "parts": [
+     [
+      "sun",
+      "spark",
+      0.05,
+      0.7,
+      0
+     ]
+    ],
+    "snd": [
+     "coa:flesh_death"
+    ],
+    "game": ""
+   },
+   {
+    "id": "a2",
+    "name": "Turned to light",
+    "desc": "They burn white and fade up into light.",
+    "rx": [
+     [
+      0.05,
+      "burn",
+      [
+       1,
+       0.9,
+       0.6
+      ]
+     ],
+     [
+      0.35,
+      "die"
+     ],
+     [
+      0.85,
+      "shrink"
+     ]
+    ],
+    "parts": [
+     [
+      "sun",
+      "core",
+      0.05,
+      0.7,
+      0
+     ],
+     [
+      "sun",
+      "pillar",
+      0.35,
+      0.5,
+      1
+     ]
+    ],
+    "snd": [
+     "MAGRestorationTurnUndeadFire2DSD"
+    ],
+    "game": "body removed"
+   },
+   {
+    "id": "a3",
+    "name": "Smitten",
+    "desc": "A flash of light hurls them.",
+    "rx": [
+     [
+      0.05,
+      "burn",
+      [
+       1,
+       0.9,
+       0.6
+      ]
+     ],
+     [
+      0.1,
+      "fling"
+     ]
+    ],
+    "parts": [
+     [
+      "sun",
+      "big",
+      0.1,
+      0.8,
+      0
+     ]
+    ],
+    "snd": [
+     "FXExplosionAurielsSunNear"
+    ],
+    "game": ""
+   }
+  ]
+ },
+ {
+  "id": "poison",
+  "name": "Killed by poison and acid",
+  "who": "Sacrifice Knife, the Acid Flask",
+  "rec": "a2",
+  "why": "Melting into the ground fits acid, and clears the body.",
+  "opts": [
+   {
+    "id": "a1",
+    "name": "As it is now",
+    "desc": "They fall as any death.",
+    "rx": [
+     [
+      0.05,
+      "poison"
+     ],
+     [
+      0.5,
+      "die"
+     ]
+    ],
+    "parts": [
+     [
+      "poison",
+      "spark",
+      0.05,
+      0.7,
+      0
+     ]
+    ],
+    "snd": [
+     "coa:flesh_death"
+    ],
+    "game": ""
+   },
+   {
+    "id": "a2",
+    "name": "Melt",
+    "desc": "They sag and melt into a hissing pool.",
+    "rx": [
+     [
+      0.05,
+      "poison"
+     ],
+     [
+      0.4,
+      "die"
+     ],
+     [
+      1.1,
+      "shrink"
+     ]
+    ],
+    "parts": [
+     [
+      "poison",
+      "core",
+      0.05,
+      0.7,
+      0
+     ],
+     [
+      "poison",
+      "mist",
+      1.0,
+      0.8,
+      1
+     ]
+    ],
+    "snd": [
+     "MAG_PoisonImpactSFX",
+     "coa:flesh_death"
+    ],
+    "game": "body removed"
+   },
+   {
+    "id": "a3",
+    "name": "Burst into a cloud",
+    "desc": "They pop into a cloud of poison that hurts the dead near them.",
+    "rx": [
+     [
+      0.05,
+      "poison"
+     ],
+     [
+      0.35,
+      "shrink"
+     ]
+    ],
+    "parts": [
+     [
+      "poison",
+      "big",
+      0.3,
+      0.8,
+      0
+     ]
+    ],
+    "snd": [
+     "MAG_PoisonExplosionSFX"
+    ],
+    "game": "a small poison cloud"
+   }
+  ]
+ },
+ {
+  "id": "blood",
+  "name": "Killed by blood magic",
+  "who": "Grief Blade, Talons of Woe, Wyrmtooth and Bloodmoon Scythes",
+  "rec": "a2",
+  "why": "A drained body shrivelling sells the drain; a burst is louder but messier.",
+  "opts": [
+   {
+    "id": "a1",
+    "name": "As it is now",
+    "desc": "They fall as any death.",
+    "rx": [
+     [
+      0.05,
+      "bleed"
+     ],
+     [
+      0.45,
+      "die"
+     ]
+    ],
+    "parts": [
+     [
+      "blood",
+      "spark",
+      0.05,
+      0.7,
+      0
+     ]
+    ],
+    "snd": [
+     "coa:flesh_death"
+    ],
+    "game": ""
+   },
+   {
+    "id": "a2",
+    "name": "Drained husk",
+    "desc": "Their blood pulled out of them, they shrivel and fall.",
+    "rx": [
+     [
+      0.05,
+      "drain"
+     ],
+     [
+      0.25,
+      "lift",
+      [
+       0.9,
+       0.1,
+       0.1
+      ]
+     ],
+     [
+      1.4,
+      "die"
+     ]
+    ],
+    "parts": [
+     [
+      "blood",
+      "drain",
+      0.1,
+      0.8,
+      0
+     ],
+     [
+      "blood",
+      "mist",
+      1.4,
+      0.6,
+      1
+     ]
+    ],
+    "snd": [
+     "MAGAlterationVampireDrainOnHit",
+     "coa:flesh_death"
+    ],
+    "game": ""
+   },
+   {
+    "id": "a3",
+    "name": "Blood burst",
+    "desc": "They burst in a spray of blood.",
+    "rx": [
+     [
+      0.05,
+      "bleed"
+     ],
+     [
+      0.2,
+      "shrink"
+     ]
+    ],
+    "parts": [
+     [
+      "blood",
+      "big",
+      0.2,
+      0.7,
+      0
+     ]
+    ],
+    "snd": [
+     "coa:flesh_hit_1",
+     "WB_RestorationBlood_Sound_Release_Big"
+    ],
+    "game": "body removed"
+   }
+  ]
+ },
+ {
+  "id": "shadow",
+  "name": "Killed by shadow, spirit and arcane",
+  "who": "Keyhammer, Mistblade, Nightcaller's Scythe, Arcane Maul, Silver Reaping Scythe, Bonereaper, Shadowflame Scythe, Carian Wand, Soulcaller's Staff, the Voidglass Flask",
+  "rec": "a3",
+  "why": "The souls Alduin holds going free is the story of the mod: every kill a small soul rising.",
+  "opts": [
+   {
+    "id": "a1",
+    "name": "As it is now",
+    "desc": "They fall as any death.",
+    "rx": [
+     [
+      0.05,
+      "flinch"
+     ],
+     [
+      0.45,
+      "die"
+     ]
+    ],
+    "parts": [
+     [
+      "shadow",
+      "spark",
+      0.05,
+      0.7,
+      0
+     ]
+    ],
+    "snd": [
+     "coa:flesh_death"
+    ],
+    "game": ""
+   },
+   {
+    "id": "a2",
+    "name": "Fade into shadow",
+    "desc": "They fall and fade into dark smoke.",
+    "rx": [
+     [
+      0.05,
+      "flinch"
+     ],
+     [
+      0.35,
+      "die"
+     ],
+     [
+      0.95,
+      "shrink"
+     ]
+    ],
+    "parts": [
+     [
+      "shadow",
+      "mist",
+      0.9,
+      0.8,
+      1
+     ]
+    ],
+    "snd": [
+     "WB_IllusionShadow_Sound_Explosion_Vanish"
+    ],
+    "game": "body removed"
+   },
+   {
+    "id": "a3",
+    "name": "Soul torn out",
+    "desc": "They fall, and their soul rises out of them.",
+    "rx": [
+     [
+      0.05,
+      "flinch"
+     ],
+     [
+      0.35,
+      "die"
+     ]
+    ],
+    "parts": [
+     [
+      "spirit",
+      "pillar",
+      0.45,
+      0.6,
+      1
+     ],
+     [
+      "spirit",
+      "core",
+      0.4,
+      0.8,
+      0
+     ]
+    ],
+    "snd": [
+     "QSTAlduinDeathSoulsASD",
+     "coa:flesh_death"
+    ],
+    "game": ""
+   }
+  ]
+ },
+ {
+  "id": "plain",
+  "name": "Killed by a weapon's edge",
+  "who": "Every melee kill with no element of its own",
+  "rec": "a2",
+  "why": "A heavy that throws the body is the cheapest big feel-good in the game.",
+  "opts": [
+   {
+    "id": "a1",
+    "name": "As it is now",
+    "desc": "They fall where they stand (Skyrim's ragdoll).",
+    "rx": [
+     [
+      0.05,
+      "flinch"
+     ],
+     [
+      0.3,
+      "die"
+     ]
+    ],
+    "parts": [],
+    "snd": [
+     "coa:flesh_death"
+    ],
+    "game": ""
+   },
+   {
+    "id": "a2",
+    "name": "Heavies throw them",
+    "desc": "A power attack's kill throws the body back.",
+    "rx": [
+     [
+      0.05,
+      "knock"
+     ],
+     [
+      0.12,
+      "fling"
+     ]
+    ],
+    "parts": [
+     [
+      "earth",
+      "mist",
+      0.1,
+      0.6,
+      1
+     ]
+    ],
+    "snd": [
+     "coa:flesh_death",
+     "WPNImpactBlunt2HandVsFlesh"
+    ],
+    "game": ""
+   },
+   {
+    "id": "a3",
+    "name": "Crumble to dust",
+    "desc": "The Thriceborn are old dead: they fall and crumble to dust.",
+    "rx": [
+     [
+      0.05,
+      "flinch"
+     ],
+     [
+      0.35,
+      "die"
+     ],
+     [
+      1.0,
+      "shrink"
+     ]
+    ],
+    "parts": [
+     [
+      "earth",
+      "core",
+      0.95,
+      0.9,
+      1
+     ]
+    ],
+    "snd": [
+     "WB_RestorationUndead_Sound_Explosion_DustToDust"
+    ],
+    "game": "body removed"
+   }
+  ]
+ }
+]

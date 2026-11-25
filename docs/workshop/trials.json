@@ -1,0 +1,516 @@
+{
+ "radius": {
+  "light": 1400,
+  "whisper": 750,
+  "echo": 650,
+  "hold": 900
+ },
+ "diffs": [
+  "Novice",
+  "Apprentice",
+  "Adept",
+  "Expert",
+  "Master",
+  "Legendary"
+ ],
+ "common": [
+  {
+   "id": "start",
+   "name": "A trial begins",
+   "now": "Our rite-start swell.",
+   "opts": [
+    {
+     "id": "a1",
+     "name": "As it is now",
+     "snd": [
+      "coa:rite_start"
+     ],
+     "desc": ""
+    },
+    {
+     "id": "a2",
+     "name": "Meridia's beam",
+     "snd": [
+      "QSTBeamMeridiaStatueRelease"
+     ],
+     "desc": "Skyrim: Meridia's statue waking"
+    },
+    {
+     "id": "a3",
+     "name": "Ethereal call",
+     "snd": [
+      "WB_ConjurationCommand_Sound_Explosion_EtherealCall"
+     ],
+     "desc": ""
+    },
+    {
+     "id": "a4",
+     "name": "Holy chord",
+     "snd": [
+      "MAGRestorationTurnUndeadFire2DSD"
+     ],
+     "desc": ""
+    }
+   ],
+   "rec": "a2"
+  },
+  {
+   "id": "step",
+   "name": "A step done",
+   "now": "Our rite-step chime.",
+   "opts": [
+    {
+     "id": "a1",
+     "name": "As it is now",
+     "snd": [
+      "coa:rite_step"
+     ],
+     "desc": ""
+    },
+    {
+     "id": "a2",
+     "name": "Twinkles",
+     "snd": [
+      "WB_RestorationHeal_Sound_Release_MassiveTwinkles"
+     ],
+     "desc": ""
+    },
+    {
+     "id": "a3",
+     "name": "Light flare",
+     "snd": [
+      "WB_AlterationAlt_Sound_Release_IgniteLight"
+     ],
+     "desc": ""
+    }
+   ],
+   "rec": "a1"
+  },
+  {
+   "id": "freed",
+   "name": "The city freed",
+   "now": "The curse lifted: our swell, then the freed-city music.",
+   "opts": [
+    {
+     "id": "a1",
+     "name": "As it is now",
+     "snd": [
+      "coa:shout_learned"
+     ],
+     "desc": ""
+    },
+    {
+     "id": "a2",
+     "name": "Auriel's sun",
+     "snd": [
+      "FXExplosionAurielsSunNear"
+     ],
+     "desc": "and the music after"
+    },
+    {
+     "id": "a3",
+     "name": "Souls set free",
+     "snd": [
+      "QSTAlduinDeathSoulsASD"
+     ],
+     "desc": ""
+    }
+   ],
+   "rec": "a1"
+  }
+ ],
+ "trials": [
+  {
+   "id": "restless",
+   "title": "Lay the Restless to Rest",
+   "goal": "Slay the risen in the light of the Echo Altar of {city}",
+   "text": "Alduin's mist bars the road to Sovngarde, and the dead of {city} have nowhere to go. Put them down within the light of the city's Echo Altar and their souls rise through the mist at last. Lay {n} of the risen to rest in the altar's light.",
+   "n": [
+    15,
+    19,
+    23,
+    27,
+    31,
+    35
+   ],
+   "seconds": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "radius": "light",
+   "look": {
+    "ring": "#9fd0ff",
+    "soul": "#bfe6ff"
+   },
+   "shows": "The altar's light on the ground round it; the dead slain inside it give up their souls, which rise as blue-white spirit flames into the stone.",
+   "events": [
+    {
+     "id": "soul",
+     "name": "A soul taken by the stone",
+     "now": "A whisper and a thunk (ours, six takes).",
+     "opts": [
+      {
+       "id": "a1",
+       "name": "As it is now",
+       "snd": [
+        "coa:echo_tone_0"
+       ],
+       "desc": ""
+      },
+      {
+       "id": "a2",
+       "name": "Souls",
+       "snd": [
+        "QSTAlduinDeathSoulsASD"
+       ],
+       "desc": "and our thunk after"
+      },
+      {
+       "id": "a3",
+       "name": "Ghost wail",
+       "snd": [
+        "WB_ConjurationGhosts_Sound_Impact_Wail"
+       ],
+       "desc": ""
+      },
+      {
+       "id": "a4",
+       "name": "Spirit whoom",
+       "snd": [
+        "WB_ConjurationSpirit_Sound_Explosion_Whoom"
+       ],
+       "desc": ""
+      }
+     ],
+     "rec": "a1"
+    },
+    {
+     "id": "rise",
+     "name": "A soul rising",
+     "now": "A soft rising tone (ours).",
+     "opts": [
+      {
+       "id": "a1",
+       "name": "As it is now",
+       "snd": [
+        "coa:wisp_rise"
+       ],
+       "desc": ""
+      },
+      {
+       "id": "a2",
+       "name": "Ethereal call",
+       "snd": [
+        "WB_ConjurationCommand_Sound_Explosion_EtherealCall"
+       ],
+       "desc": ""
+      },
+      {
+       "id": "a3",
+       "name": "Wisp",
+       "snd": [
+        "NPCWispConsciousLP"
+       ],
+       "desc": ""
+      }
+     ],
+     "rec": "a1"
+    },
+    {
+     "id": "hum",
+     "name": "Near the altar",
+     "now": "The altar's hum (ours) while you stand close.",
+     "opts": [
+      {
+       "id": "a1",
+       "name": "As it is now",
+       "snd": [
+        "coa:shrine_hum"
+       ],
+       "desc": ""
+      },
+      {
+       "id": "a2",
+       "name": "Circle of Protection",
+       "snd": [
+        "MAGRestorationCircleOfProtection2DLPSD"
+       ],
+       "desc": ""
+      },
+      {
+       "id": "a3",
+       "name": "Soul trap",
+       "snd": [
+        "MAGMysticismSoulTrapActiveLPSD"
+       ],
+       "desc": ""
+      }
+     ],
+     "rec": "a1"
+    }
+   ]
+  },
+  {
+   "id": "whisper",
+   "title": "The Stone's Whisper",
+   "goal": "Find the place the altar's voice names in {city}, and slay the risen there",
+   "text": "At night a voice speaks from the Echo Altar of {city}, and it speaks in riddles. Find the place it names, and hold it against the dead: slay {n} of the risen there.",
+   "n": [
+    10,
+    12,
+    14,
+    16,
+    18,
+    20
+   ],
+   "seconds": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "radius": "whisper",
+   "look": {
+    "ring": "#c8a8ff",
+    "soul": "#e0d0ff"
+   },
+   "shows": "Felldir speaks the riddle from the altar; at the place it names, a ring marks where to hold, and the dead come.",
+   "events": [
+    {
+     "id": "found",
+     "name": "The place found",
+     "now": "A step chime (ours).",
+     "opts": [
+      {
+       "id": "a1",
+       "name": "As it is now",
+       "snd": [
+        "coa:rite_step"
+       ],
+       "desc": ""
+      },
+      {
+       "id": "a2",
+       "name": "Ethereal call",
+       "snd": [
+        "WB_ConjurationCommand_Sound_Explosion_EtherealCall"
+       ],
+       "desc": ""
+      },
+      {
+       "id": "a3",
+       "name": "Ghost wail",
+       "snd": [
+        "WB_ConjurationGhosts_Sound_Impact_Wail"
+       ],
+       "desc": ""
+      }
+     ],
+     "rec": "a2"
+    }
+   ]
+  },
+  {
+   "id": "echo",
+   "title": "Hold the Light",
+   "goal": "Stand in the light of the Echo Altar of {city} as it closes round the stone",
+   "text": "When the Tongues first woke their altars, the light had to be held while Alduin's dead came for it. At night, step into the light of the Echo Altar of {city}: it begins to draw in toward the stone, and every one of the risen in the city comes for you. Stay inside the ring until it closes on the stone. Step out and the light falters and slips back.",
+   "n": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "seconds": [
+    45,
+    50,
+    55,
+    60,
+    70,
+    80
+   ],
+   "radius": "hold",
+   "look": {
+    "ring": "#ffd88a",
+    "soul": "#fff0c0"
+   },
+   "shows": "The ring of light closes in on the stone over the trial's seconds while you stand inside it; step out and it slips back.",
+   "events": [
+    {
+     "id": "sing",
+     "name": "The light wakes",
+     "now": "The altar's song (ours): every one of the dead in the city hears it.",
+     "opts": [
+      {
+       "id": "a1",
+       "name": "As it is now",
+       "snd": [
+        "coa:echo_sing"
+       ],
+       "desc": ""
+      },
+      {
+       "id": "a2",
+       "name": "Holy chord",
+       "snd": [
+        "MAGRestorationTurnUndeadFire2DSD"
+       ],
+       "desc": ""
+      },
+      {
+       "id": "a3",
+       "name": "Auriel's shield",
+       "snd": [
+        "MAGAurielShieldBlastA"
+       ],
+       "desc": ""
+      }
+     ],
+     "rec": "a1"
+    },
+    {
+     "id": "inside",
+     "name": "Standing inside",
+     "now": "The rite's hum (ours), looping.",
+     "opts": [
+      {
+       "id": "a1",
+       "name": "As it is now",
+       "snd": [
+        "coa:rite_hum"
+       ],
+       "desc": ""
+      },
+      {
+       "id": "a2",
+       "name": "Stendarr's Aura",
+       "snd": [
+        "MAGDestructionStendarrsAura2DLP"
+       ],
+       "desc": ""
+      },
+      {
+       "id": "a3",
+       "name": "Circle of Protection",
+       "snd": [
+        "MAGRestorationCircleOfProtection2DLPSD"
+       ],
+       "desc": ""
+      }
+     ],
+     "rec": "a1"
+    },
+    {
+     "id": "slip",
+     "name": "Stepped out: it slips back",
+     "now": "Our rite-reset falter.",
+     "opts": [
+      {
+       "id": "a1",
+       "name": "As it is now",
+       "snd": [
+        "coa:rite_reset"
+       ],
+       "desc": ""
+      },
+      {
+       "id": "a2",
+       "name": "Banish hiss",
+       "snd": [
+        "WB_ConjurationBanish_Sound_Release_Hiss"
+       ],
+       "desc": ""
+      },
+      {
+       "id": "a3",
+       "name": "Subsonic",
+       "snd": [
+        "WB_Illusion_Sound_Explosion_Subsonic"
+       ],
+       "desc": ""
+      }
+     ],
+     "rec": "a1"
+    }
+   ]
+  },
+  {
+   "id": "seals",
+   "title": "Break the Priest's Seals",
+   "goal": "Break the Dragon Priest's three seals in {city}",
+   "text": "The Dragon Priest who holds the altar of {city} silent has bound it with three seals of dragon script, set at the city's great places and each kept by one of his chosen. Kill each guard and strike its seal. When the last one breaks, the priest comes out to meet you.",
+   "n": [
+    3,
+    3,
+    3,
+    3,
+    3,
+    3
+   ],
+   "seconds": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "radius": "echo",
+   "look": {
+    "ring": "#ff8a6a",
+    "soul": "#ffc0a0"
+   },
+   "shows": "Three seals of dragon script at the city's great places, each guarded by an elite; strike each once its guard falls. The last calls the Dragon Priest.",
+   "events": [
+    {
+     "id": "break",
+     "name": "A seal broken",
+     "now": "The Shatter shout's sound (ours).",
+     "opts": [
+      {
+       "id": "a1",
+       "name": "As it is now",
+       "snd": [
+        "coa:sp_bones"
+       ],
+       "desc": ""
+      },
+      {
+       "id": "a2",
+       "name": "Shatter",
+       "snd": [
+        "WB_DestructionFrost_Sound_Explosion_Shatter"
+       ],
+       "desc": ""
+      },
+      {
+       "id": "a3",
+       "name": "Glass jaw",
+       "snd": [
+        "WB_AlterationTelekinesis_Sound_Explosion_GlassJaw"
+       ],
+       "desc": ""
+      },
+      {
+       "id": "a4",
+       "name": "Unrelenting Force",
+       "snd": [
+        "VOCShoutImpactPushSD"
+       ],
+       "desc": ""
+      }
+     ],
+     "rec": "a3"
+    }
+   ]
+  }
+ ]
+}

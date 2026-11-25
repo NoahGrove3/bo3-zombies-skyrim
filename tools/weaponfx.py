@@ -45,11 +45,11 @@ COL = {
 WEAPONS = {
     'priest_vahlok':     ('CurseOfAlduin\\priests\\vahlok_keyhammer.nif', ['Nordic:0', 'Iron:1'], (27, 99), 'o1', 'green'),
     'priest_nahkriin':   ('CurseOfAlduin\\priests\\nahkriin_mistblade.nif', ['BladeBody'], None, 'o1', 'white'),
-    'priest_volsung':    ('CurseOfAlduin\\priests\\volsung_windcutter.nif', ['Blade:1'], None, 'o2', 'white'),
+    'priest_volsung':    ('CurseOfAlduin\\priests\\volsung_windcutter.nif', ['Blade:1'], None, 'o1', 'white'),   # (Noah's pick, workshop 2b2b079)
     'priest_zahkriisos': ('CurseOfAlduin\\priests\\zahkriisos_greatsword.nif', ['Ice:1'], None, 'o3', 'iceblue'),
     'priest_otar':       ('CurseOfAlduin\\priests\\otar_stormblade.nif', ['Blade:2'], None, 'o3', 'blue'),
     'priest_rahgot':     ('CurseOfAlduin\\priests\\rahgot_dagger.nif', ['Obsidian:1'], None, 'o3', 'poison'),
-    'priest_krosis':     ('CurseOfAlduin\\priests\\krosis_griefblade.nif', ['Blade:0'], None, 'o3', 'red'),
+    'priest_krosis':     ('CurseOfAlduin\\priests\\krosis_griefblade.nif', ['Blade:0'], None, 'o2', 'red'),   # (Noah's pick, workshop 2b2b079)
     'priest_hevnoraak':  ('CurseOfAlduin\\priests\\hevnoraak_sealbreaker.nif', ['Stone:3'], None, 'o1', 'green'),
     'priest_vokun':      ('CurseOfAlduin\\reapers\\daedric.nif', ['Blade'], None, 'o3', 'purple'),
     'priest_morokei':    ('CurseOfAlduin\\priests\\morokei_maul.nif', ['Steel:0', 'Crystal:2'], (40, 99), 'o1', 'drain'),
@@ -59,10 +59,10 @@ WEAPONS = {
     'tab_riverstone':    ('weapons\\NewArmoury\\Halberds\\NordicHalberd.nif', ['NordicPikeShaft', 'NordicPikeTip'], (70, 999), 'o1', 'green'),
     'tab_wyrmspine':     ('weapons\\NewArmoury\\Pikes\\DragonbonePike.nif', ['DragonbonePikeTip'], None, 'o1', 'fear'),
     'tab_lanternwick':   ('weapons\\NewArmoury\\QuarterStaffs\\StalhrimStaff.nif', ['StahlrimStaffBlade'], [(42, 999), (-999, -30)], 'o3', 'iceblue'),
-    'tab_cinderclaws':   ('weapons\\NewArmoury\\Fists\\DaedricClaw.nif', ['DaedricClaws_MTL_B'], None, 'o1', 'orange'),
+    'tab_cinderclaws':   ('weapons\\NewArmoury\\Fists\\DaedricClaw.nif', ['DaedricClaws_MTL_B'], None, 'o3', 'orange'),   # (Noah's pick, workshop 2b2b079)
     'tab_eclipse':       ('weapons\\NewArmoury\\Pikes\\GlassPike.nif', ['GlassPikeTip'], None, 'o1', 'moon'),
     'tab_frostmourn':    ('weapons\\NewArmoury\\Rapier\\StahlrimRapier.nif', ['StahlrimRapier:18'], (9.5, 999), 'o2', 'iceblue'),
-    'tab_silverscythe':  ('CurseOfAlduin\\reapers\\silver.nif', ['Blade'], None, 'o1', 'moon'),
+    'tab_silverscythe':  ('CurseOfAlduin\\reapers\\silver.nif', ['Blade'], None, 'o2', 'moon'),   # (Noah's pick, workshop 2b2b079)
     'tab_bonereaper':    ('CurseOfAlduin\\reapers\\Skeleton.nif', ['Blade'], None, 'o1', 'green'),
     'tab_wyrmtooth':     ('CurseOfAlduin\\reapers\\dragonTeeth.nif', ['Blade'], None, 'o1', 'green'),
     'tab_bloodmoon':     ('CurseOfAlduin\\reapers\\vampire.nif', ['Blade'], None, 'o2', 'red'),
@@ -70,7 +70,7 @@ WEAPONS = {
     # (Noah, 2026-11-24: "both left and right claws ... carry the same effect") the claws' left-hand twins
     'tab_stormtalons_l': ('weapons\\NewArmoury\\Fists\\GlassClawLft.nif', ['GlassClawGlass1'], None, 'o1', 'blue'),
     'tab_talons_l':      ('weapons\\NewArmoury\\Fists\\DBClawLft.nif', ['DBClaw_MTL_B'], None, 'o1', 'red'),
-    'tab_cinderclaws_l': ('weapons\\NewArmoury\\Fists\\DaedricClawLft.nif', ['DaedricClaws_MTL_B'], None, 'o1', 'orange'),
+    'tab_cinderclaws_l': ('weapons\\NewArmoury\\Fists\\DaedricClawLft.nif', ['DaedricClaws_MTL_B'], None, 'o3', 'orange'),   # (its right hand's pick)
 }
 # (the claws: several blades fanned out - each its own outline in its own plane)
 SPLIT = {'tab_stormtalons', 'tab_talons', 'tab_cinderclaws', 'tab_stormtalons_l', 'tab_talons_l', 'tab_cinderclaws_l'}

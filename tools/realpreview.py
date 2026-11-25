@@ -83,7 +83,9 @@ def tracks_of(ctl, target, seqlinks=None):
 def seq_tracks(seq):
     """the sequence the game plays: SpecialIdle_AreaEffect when there is one"""
     if not seq: return [], None
-    s = next((q for q in seq if q['name'] == 'SpecialIdle_AreaEffect'), None) or next((q for q in seq if 'idle' in q['name'].lower()), seq[0])
+    # (a projectile's own loop while it flies - mLoop - not its mBegin: Noah, 2026-11-25, the bolts in flight looked pale)
+    s = next((q for q in seq if q['name'] == 'SpecialIdle_AreaEffect'), None) or next((q for q in seq if q['name'] == 'mLoop'), None) \
+        or next((q for q in seq if 'idle' in q['name'].lower()), seq[0])
     out = []
     base = dict(start=s['start'], stop=s['stop'], freq=1, cycle=s['cycle'])
     for l in s['links']:

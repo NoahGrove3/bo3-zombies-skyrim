@@ -1,0 +1,65 @@
+[
+ [
+  "bolts",
+  "The bolts in flight look pale in the previews",
+  "The fire bolts (Dragon Slayer, Spellbound Rapier, Shadowflame Scythe) look washed out in the doc while flying; the game draws them as Skyrim does. I tried three fixes; not solved yet.",
+  "open",
+  "doc"
+ ],
+ [
+  "hitch",
+  "Stutters of 40-85 ms on a night",
+  "Your Nov 24 log: Classes 85 ms, Gun 75 ms, Director 59 ms, Shops 42 ms at worst. Rare, but felt.",
+  "open",
+  "game"
+ ],
+ [
+  "mem",
+  "Little memory left late in a night",
+  "At the end of your Nov 24 night Windows had 768 MB free of 32 GB (Skyrim at 12 GB). To watch: the vanishing-dead hunt found this before.",
+  "watch",
+  "game"
+ ],
+ [
+  "generic",
+  "Most abilities use Skyrim's generic blast sounds",
+  "The relics play a few shared blasts (the Firestorm's roar for many); the Tablet weapons' abilities play none of their own. The Sounds tab is the fix.",
+  "doing",
+  "game"
+ ],
+ [
+  "swings",
+  "Light and heavy swings sound the same",
+  "Each weapon plays Skyrim's swing for its type on both. The Sounds tab gives the heavy its own.",
+  "doing",
+  "game"
+ ],
+ [
+  "feel",
+  "No hit-stop or shake on melee hits",
+  "Hits pass through; shakes only on big events. The Hit feel tab is the fix.",
+  "doing",
+  "game"
+ ],
+ [
+  "deaths",
+  "One death for every kill",
+  "Fire, frost and shock kills use the FEC mod's bodies; everything else falls the same. The dead tab is the fix.",
+  "doing",
+  "game"
+ ],
+ [
+  "dpscythe",
+  "The Dragon Priest scythe's blade",
+  "Now coming from the head of the staff, as you asked; needs your OK in the Scythes tab.",
+  "check",
+  "game"
+ ],
+ [
+  "notplayed",
+  "Nothing since Nov 24 evening played yet",
+  "The last build your game ran was 6a0f8a0 (Nov 24, 7 pm). Everything in the Test list is still to see in game.",
+  "open",
+  "test"
+ ]
+]
