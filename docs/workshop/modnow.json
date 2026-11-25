@@ -1,5 +1,5 @@
 {
- "updated": "build d7da111, Nov 25 2026 (night)",
+ "updated": "Nov 25 2026 (early hours build)",
  "about": "Everything the mod is, as built - kept in the repo (docs/workshop/modnow.json) and updated with every build. The workshop's \"The mod now\" tab is drawn from it.",
  "sections": [
   [
@@ -46,7 +46,7 @@
     "<b>Destruction</b>: Fire: Firebolt → Fireball → Incinerate → Immolate; Frost: Ice Spike → Ice Storm → Icy Spear → Throat of the World; Shock: Chain Lightning → Shock Nova → Finger of the Mountain → Lightning Strike; Sun: Solar Flare → Sunbeam → Forbidden Sun → Daybreak; Arcane: Arcane Bolt → Mana Void → Lunar Tide → Apocalypse; Walls: Wall of Flames → Wall of Frost → Wall of Storms → Inferno; Storms: Frost Nova → Lightning Storm → Multivortex → Cinder Storm",
     "<b>Summoner</b>: Beasts: Conjure Wolf → Conjure Ice Wolf → Conjure Alpha Wolf → Conjure Werebear; The Dead: Conjure Skeleton → Conjure Draugr Wight → Conjure Draugr Deathlord Warrior → Conjure Draugr Death Overlord; Daedra: Conjure Dremora → Conjure Dremora Archer → Conjure Dremora Mage → Conjure Dremora Warlock; Dwemer: Conjure Dwarven Spider → Conjure Dwarven Sphere → Conjure Dwarven Centurion → Conjure Dwarven Ballista Master; The Wild: Conjure Spriggan → Conjure Spriggan Matron → Conjure Burnt Spriggan → Conjure Spriggan Earth Mother; Atronachs: Conjure Flame Atronach → Conjure Frost Atronach → Conjure Storm Atronach → Conjure Storm Monarch; Ash: Conjure Ash Spawn → Conjure Ash Husk → Conjure Ash Spawn Immolator → Conjure Ash Guardian; The Night: Conjure Death Hound → Conjure Volkihar Hound → Conjure Gargoyle → Conjure Gargoyle Brute; The Wrath: Conjure Mistman → Conjure Wrathman → Conjure Wrathman Marksman → Conjure Wrathman Warlock",
     "<b>Spellsword</b>: Fire: Burning Touch → Flame Touch → Fiery Grasp; Frost: Chilling Touch → Icy Touch → Freezing Grasp; Shock: Shocking Touch → Static Touch → Thundering Grasp; Sun: Sunlight Touch → Radiant Touch → Searing Grasp; Arcane: Arcane Edge → Arcane Brand → Arcane Cascade",
-    "Every combat spell (Destruction's ladders, walls, storms; the Spellsword's touches) adds <b>its own impact</b> from Skyrim's effects over the spell's own (src/Events.cpp CofferHit, fxmap w\\\\spell_*). The flasks each break in their own (oil fire, frost and shock explosions, poison gas, gold light, red drain). The Mutagen Staff has no beam: holding block throws a flask every 0.5 s, all six in turn."
+    "<b>Every ability one custom effect</b> (Nov 25, tools/abilityfx.py): relics, Tablet weapons, wonders, Alduin's Bane, class weapons, all 43 combat spells and the flasks - the style Noah picked, built from Skyrim's own textures, grown and faded by the game exactly as the workshop draws it, replacing what played before (nothing borrowed round it). Conjurations keep Skyrim's portal; the Soulcaller keeps the Staff of Magnus beam; the Mutagen Staff has no beam (a flask every 0.5 s while blocking)."
    ]
   ],
   [
@@ -103,10 +103,9 @@
   [
    "Weapon looks",
    [
-    "Every relic, wonder and class weapon tier wears <b>our own</b> effect fitted to its model (no Visual Animated Enchants). Eight look families: Flame, Storm, Mist, Core, Frost, Shadow, Radiance, Spirit - each on <b>Skyrim's own enchantment glow</b> (its membrane, brought to 2K) except Core, which stays our own.",
-    "<b>Every weapon its own</b> (Nov 25): Noah's picked look and colour as its ground, and a signature only it wears, from what it does (docs/workshop/effects_design.json): Keyhammer chains, Mistblade glare, Windcutter wind streaks, Glacier ice crystals, Storm Blade arcs, Sacrifice Knife venom, Grief Blade tears, Sealbreaker broken seal, Nightcaller dream rings, Arcane Maul rune ring, Stormtalons claw arcs, Gravebell tolling rings, Talons blood drips, Riverstone stone crust, Wyrmspine Pike dragonfire, Rimewick snow, Cinderclaws embers, Eclipse Edge eclipse, Frostmourn cold breath, Silver Scythe glint, Bonereaper souls, Wyrmtooth lit teeth, Bloodmoon blood, Alduin's Bane embers and smoke (4K), Shadowflame dark embers, Carian Wand glintstone sparkles, Radiant Quarterstaff sun rays, the Spellbound Rapier's per element (sparks, ice needles, tip arcs, solar flare, spirit wisps), Dragon Slayer burning runes (4K).",
-    "Picks (Nov 25): Grief Blade and Mistblade Mist (red, white); Storm Blade and Stormtalons Storm; Sacrifice Knife (poison), Eclipse Edge (moon), Wyrmspine Pike (fear), Talons of Woe Flame; Arcane Maul Radiance (drain); Windcutter Shadow (white); Glacier Greatsword Frost; Carian Wand Mist (purple); Radiant Quarterstaff Core gold; Spellbound Rapier: bare Core white, fire Flame, frost Frost ice-blue, shock Storm ice-blue, sun Radiance orange, arcane Spirit blue; the rest Core.",
-    "Every effect comes to a point at the tips and ends (no flat cut), stands in 3D; no floating motes. Textures 2K; the wonders' and Alduin's Bane's own 4K. Quarterstaffs glow only on their heads. Scythes 25% larger."
+    "Every relic, wonder and class weapon tier wears <b>its own look</b> (Nov 25: \"custom weapon looks ... not changing their model or adding something on top\"): three looks designed for each weapon (tools/weaponlooks.py), all light on its own edges and faces, many in two colours, built from our textures and Skyrim's own enchantment membranes at 2K (4K on the wonders and Alduin's Bane). Noah picks one per weapon in the workshop; until then each wears its first.",
+    "No pieces laid over the weapons (the Nov 25 signatures - chains, crystals, seals, rings - retired) and no shared look families.",
+    "Effects come to a point at the tips and ends; quarterstaffs glow on their heads only; the Gravebell doesn't pulse. Scythes 25% larger (our own scythes from Skyrim's parts are next)."
    ]
   ],
   [

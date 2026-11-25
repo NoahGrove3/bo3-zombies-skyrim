@@ -43,34 +43,34 @@ COL = {
 # each weapon: its model, its steel (shape names; '*' any lit shape), the height band that is steel (y from, to), its look and
 # colour (Noah's picks, the workshop 2026-11-25)
 WEAPONS = {
-    'priest_vahlok':     ('CurseOfAlduin\\priests\\vahlok_keyhammer.nif', ['Nordic:0', 'Iron:1'], (27, 99), 'core', 'white'),
-    'priest_nahkriin':   ('CurseOfAlduin\\priests\\nahkriin_mistblade.nif', ['BladeBody'], None, 'mist', 'white'),
-    'priest_volsung':    ('CurseOfAlduin\\priests\\volsung_windcutter.nif', ['Blade:1'], None, 'shadow', 'white'),
-    'priest_zahkriisos': ('CurseOfAlduin\\priests\\zahkriisos_greatsword.nif', ['Ice:1'], None, 'frost', 'iceblue'),
-    'priest_otar':       ('CurseOfAlduin\\priests\\otar_stormblade.nif', ['Blade:2'], None, 'storm', 'blue'),
-    'priest_rahgot':     ('CurseOfAlduin\\priests\\rahgot_dagger.nif', ['Obsidian:1'], None, 'flame', 'poison'),
-    'priest_krosis':     ('CurseOfAlduin\\priests\\krosis_griefblade.nif', ['Blade:0'], None, 'mist', 'red'),
-    'priest_hevnoraak':  ('CurseOfAlduin\\priests\\hevnoraak_sealbreaker.nif', ['Stone:3'], None, 'core', 'green'),
-    'priest_vokun':      ('CurseOfAlduin\\scythes\\daedric.nif', ['daedricsword01'], None, 'core', 'purple'),
-    'priest_morokei':    ('CurseOfAlduin\\priests\\morokei_maul.nif', ['Steel:0', 'Crystal:2'], (40, 99), 'radiance', 'drain'),
-    'tab_stormtalons':   ('weapons\\NewArmoury\\Fists\\glassClaw.nif', ['GlassClawGlass1'], None, 'storm', 'blue'),
-    'tab_gravebell':     ('CurseOfAlduin\\tablet\\gravebell.nif', ['Bronze:3'], None, 'core', 'white'),
-    'tab_talons':        ('weapons\\NewArmoury\\Fists\\DBClaw.nif', ['DBClaw_MTL_B'], None, 'flame', 'red'),
-    'tab_riverstone':    ('weapons\\NewArmoury\\Halberds\\NordicHalberd.nif', ['NordicPikeShaft', 'NordicPikeTip'], (70, 999), 'core', 'green'),
-    'tab_wyrmspine':     ('weapons\\NewArmoury\\Pikes\\DragonbonePike.nif', ['DragonbonePikeTip'], None, 'flame', 'fear'),
-    'tab_lanternwick':   ('weapons\\NewArmoury\\QuarterStaffs\\StalhrimStaff.nif', ['StahlrimStaffBlade'], [(42, 999), (-999, -30)], 'core', 'iceblue'),
-    'tab_cinderclaws':   ('weapons\\NewArmoury\\Fists\\DaedricClaw.nif', ['DaedricClaws_MTL_B'], None, 'core', 'orange'),
-    'tab_eclipse':       ('weapons\\NewArmoury\\Pikes\\GlassPike.nif', ['GlassPikeTip'], None, 'flame', 'moon'),
-    'tab_frostmourn':    ('weapons\\NewArmoury\\Rapier\\StahlrimRapier.nif', ['StahlrimRapier:18'], (9.5, 999), 'mist', 'iceblue'),
-    'tab_silverscythe':  ('CurseOfAlduin\\scythes\\silver.nif', ['SilverGreatSword:0_2'], None, 'core', 'moon'),
-    'tab_bonereaper':    ('CurseOfAlduin\\scythes\\Skeleton.nif', ['IronLongSword01:0_3'], None, 'core', 'green'),
-    'tab_wyrmtooth':     ('CurseOfAlduin\\scythes\\dragonTeeth.nif', ['DragonBone01'], (26, 999), 'core', 'green'),
-    'tab_bloodmoon':     ('CurseOfAlduin\\scythes\\vampire.nif', ['blade'], None, 'core', 'red'),
-    'fang':              ('Light Greatswords\\dragonbone\\LightGreatsword.nif', ['DragonboneGreatsword:0'], None, 'mist', 'orange'),
+    'priest_vahlok':     ('CurseOfAlduin\\priests\\vahlok_keyhammer.nif', ['Nordic:0', 'Iron:1'], (27, 99), 'o1', 'white'),
+    'priest_nahkriin':   ('CurseOfAlduin\\priests\\nahkriin_mistblade.nif', ['BladeBody'], None, 'o1', 'white'),
+    'priest_volsung':    ('CurseOfAlduin\\priests\\volsung_windcutter.nif', ['Blade:1'], None, 'o1', 'white'),
+    'priest_zahkriisos': ('CurseOfAlduin\\priests\\zahkriisos_greatsword.nif', ['Ice:1'], None, 'o1', 'iceblue'),
+    'priest_otar':       ('CurseOfAlduin\\priests\\otar_stormblade.nif', ['Blade:2'], None, 'o1', 'blue'),
+    'priest_rahgot':     ('CurseOfAlduin\\priests\\rahgot_dagger.nif', ['Obsidian:1'], None, 'o1', 'poison'),
+    'priest_krosis':     ('CurseOfAlduin\\priests\\krosis_griefblade.nif', ['Blade:0'], None, 'o1', 'red'),
+    'priest_hevnoraak':  ('CurseOfAlduin\\priests\\hevnoraak_sealbreaker.nif', ['Stone:3'], None, 'o1', 'green'),
+    'priest_vokun':      ('CurseOfAlduin\\scythes\\daedric.nif', ['daedricsword01'], None, 'o1', 'purple'),
+    'priest_morokei':    ('CurseOfAlduin\\priests\\morokei_maul.nif', ['Steel:0', 'Crystal:2'], (40, 99), 'o1', 'drain'),
+    'tab_stormtalons':   ('weapons\\NewArmoury\\Fists\\glassClaw.nif', ['GlassClawGlass1'], None, 'o1', 'blue'),
+    'tab_gravebell':     ('CurseOfAlduin\\tablet\\gravebell.nif', ['Bronze:3'], None, 'o1', 'white'),
+    'tab_talons':        ('weapons\\NewArmoury\\Fists\\DBClaw.nif', ['DBClaw_MTL_B'], None, 'o1', 'red'),
+    'tab_riverstone':    ('weapons\\NewArmoury\\Halberds\\NordicHalberd.nif', ['NordicPikeShaft', 'NordicPikeTip'], (70, 999), 'o1', 'green'),
+    'tab_wyrmspine':     ('weapons\\NewArmoury\\Pikes\\DragonbonePike.nif', ['DragonbonePikeTip'], None, 'o1', 'fear'),
+    'tab_lanternwick':   ('weapons\\NewArmoury\\QuarterStaffs\\StalhrimStaff.nif', ['StahlrimStaffBlade'], [(42, 999), (-999, -30)], 'o1', 'iceblue'),
+    'tab_cinderclaws':   ('weapons\\NewArmoury\\Fists\\DaedricClaw.nif', ['DaedricClaws_MTL_B'], None, 'o1', 'orange'),
+    'tab_eclipse':       ('weapons\\NewArmoury\\Pikes\\GlassPike.nif', ['GlassPikeTip'], None, 'o1', 'moon'),
+    'tab_frostmourn':    ('weapons\\NewArmoury\\Rapier\\StahlrimRapier.nif', ['StahlrimRapier:18'], (9.5, 999), 'o1', 'iceblue'),
+    'tab_silverscythe':  ('CurseOfAlduin\\scythes\\silver.nif', ['SilverGreatSword:0_2'], None, 'o1', 'moon'),
+    'tab_bonereaper':    ('CurseOfAlduin\\scythes\\Skeleton.nif', ['IronLongSword01:0_3'], None, 'o1', 'green'),
+    'tab_wyrmtooth':     ('CurseOfAlduin\\scythes\\dragonTeeth.nif', ['DragonBone01'], (26, 999), 'o1', 'green'),
+    'tab_bloodmoon':     ('CurseOfAlduin\\scythes\\vampire.nif', ['blade'], None, 'o1', 'red'),
+    'fang':              ('Light Greatswords\\dragonbone\\LightGreatsword.nif', ['DragonboneGreatsword:0'], None, 'o1', 'orange'),
     # (Noah, 2026-11-24: "both left and right claws ... carry the same effect") the claws' left-hand twins
-    'tab_stormtalons_l': ('weapons\\NewArmoury\\Fists\\GlassClawLft.nif', ['GlassClawGlass1'], None, 'storm', 'blue'),
-    'tab_talons_l':      ('weapons\\NewArmoury\\Fists\\DBClawLft.nif', ['DBClaw_MTL_B'], None, 'flame', 'red'),
-    'tab_cinderclaws_l': ('weapons\\NewArmoury\\Fists\\DaedricClawLft.nif', ['DaedricClaws_MTL_B'], None, 'core', 'orange'),
+    'tab_stormtalons_l': ('weapons\\NewArmoury\\Fists\\GlassClawLft.nif', ['GlassClawGlass1'], None, 'o1', 'blue'),
+    'tab_talons_l':      ('weapons\\NewArmoury\\Fists\\DBClawLft.nif', ['DBClaw_MTL_B'], None, 'o1', 'red'),
+    'tab_cinderclaws_l': ('weapons\\NewArmoury\\Fists\\DaedricClawLft.nif', ['DaedricClaws_MTL_B'], None, 'o1', 'orange'),
 }
 # (the claws: several blades fanned out - each its own outline in its own plane)
 SPLIT = {'tab_stormtalons', 'tab_talons', 'tab_cinderclaws', 'tab_stormtalons_l', 'tab_talons_l', 'tab_cinderclaws_l'}
@@ -81,9 +81,7 @@ LEFT = {'tab_stormtalons_l', 'tab_talons_l', 'tab_cinderclaws_l'}
 # the class weapons: each takes another model at each tier (src/Classes.cpp AdoptTierLook), so each tier's model has its own
 # art; the Spellbound Rapier's look follows the element in your other hand (its BLADE_VIZ key: src/Classes.cpp LookKey)
 BV_KEYS = ['alch', 'carian', 'radiant', 'ss_none', 'ss_fire', 'ss_frost', 'ss_shock', 'ss_sun', 'ss_blood', 'slayer']
-BV_PICK = {'alch': ('flame', 'shadow'), 'carian': ('mist', 'purple'), 'radiant': ('core', 'gold'), 'ss_none': ('core', 'white'),
-           'ss_fire': ('flame', 'ss_none'), 'ss_frost': ('frost', 'iceblue'), 'ss_shock': ('storm', 'iceblue'), 'ss_sun': ('radiance', 'orange'),
-           'ss_blood': ('spirit', 'blue'), 'slayer': ('mist', 'gold')}   # (Noah's picks, the workshop 2026-11-25 late)
+BV_PICK = {'alch': ('o1', 'shadow'), 'carian': ('o1', 'purple'), 'radiant': ('o1', 'gold'), 'ss_none': ('o1', 'white'), 'ss_fire': ('o1', 'ss_none'), 'ss_frost': ('o1', 'iceblue'), 'ss_shock': ('o1', 'iceblue'), 'ss_sun': ('o1', 'orange'), 'ss_blood': ('o1', 'blue'), 'slayer': ('o1', 'gold')}   # (Noah, 2026-11-25: each weapon's own looks - option 1 until he picks)
 CLASS_MODELS = {   # the look key(s), each model: its steel shapes and band
     # (Noah, 2026-11-25: "the weapon effects are at the ends of each side of the staff ... the weapon heads, not the handles") each
     # staff's two capped heads - where its detail is - and none of the plain shaft between
@@ -738,9 +736,24 @@ def art(key):
     return Fs
 
 
+def look_of(key, look):
+    """(Noah, 2026-11-25: "Fully new look per weapon") a weapon's look 'o1' / 'o2' / 'o3': its own (tools/weaponlooks.py); the
+    old family names still read, for the workshop's older picks"""
+    import weaponlooks as WL, weaponsig as WS
+    if look in LOOK: return LOOK[look]
+    sk = WS.sig_key(key); n = int(look[1:]) - 1
+    o = WL.LOOKS3[sk][n]
+    # (seen beside the old families, these read dim: the edges a third brighter, the skins over the faces 1.7x)
+    strips = [dict(S(e['tex'], e['w'], e['wc'], e['per'], e['rep'], e['gain'] * (1.0 if e['dark'] else 1.35), e['along'], e['flip'], e['fps'], e['blend'], e['dark']), col=e['col']) for e in o['edges']]
+    shells = [dict(Sh(f['tex'], f['how'], f['tile'], f['gain'] * (1.0 if f['dark'] else 1.7), f['flip'], f['fps'], f['scroll'], f['pulse'], f['blend'], f['dark']), col=f['col']) for f in o['faces']]
+    return dict(strips=strips, shells=shells, motes=('drift', 0.0), c2=WL.COLS2[sk][1])
+
+
 def art_part(F, rows, rng, pre):
     look, cols = F['look'], F['col'].split('+')
-    L = LOOK[look]
+    L = look_of(F['key'], look)
+    def colour(which, base):   # (a layer's own colour: the weapon's first (picked), its second, or one named)
+        return base if which in (None, 'c1') else L.get('c2', base) if which == 'c2' else which
     small = F['small']
     wsc = 0.45 if small else 1.0   # (a claw's blade: the flames and mist in its own small measure)
     G = F.get('gain', 1.0)         # (a weapon's own intensity: the Carian Wand's softer)
@@ -791,7 +804,9 @@ def art_part(F, rows, rng, pre):
                     cpts += [pb, pb]; cnor += [nb, nb]; cfade += [fb, fb]; cv += [1.0, 0.0]; ccut += [False, True]
             cpts.append(pts[i]); cnor.append(nor[i]); cfade.append(fade[i]); cv.append((s[i] % 16.0) / 16.0); ccut.append(False)
         cpts = np.array(cpts); cnor = np.array(cnor)
+        pal0 = pal
         for li, st in enumerate(L['strips']):
+            pal = colour(st.get('col'), pal0)
             flipbook = bool(st['flip'])
             P_, N_, F_ = (cpts, cnor, cfade) if flipbook else (pts, nor, fade)
             m_ = len(P_)
@@ -827,8 +842,10 @@ def art_part(F, rows, rng, pre):
                      flip=st['flip'], fps=st['fps'], vscroll=0 if flipbook else st['per'], clamp=None if flipbook else 1, blend=st['blend'], dark=st['dark'])
     # the shell over both faces, and Skyrim's own enchantment membrane over it (the look's fill)
     any_tris = False
-    for tag, sh in (('shell', L['shell']), ('fill', L.get('fill'))):
+    shells = L['shells'] if 'shells' in L else [L['shell'], L.get('fill')]
+    for si, sh in enumerate(shells):
       if not sh: continue
+      tag = 'shell' if si == 0 else f'fill{si}'
       tile = sh['tile'] * (0.5 if small else 1.0); how = sh['how']
       mask, depth, dist, res, lo = F['mask'], F['depth'], F['dist'], F['res'], F['lo']
       step = 4                                     # (a quad every 1.2 units)
@@ -860,11 +877,10 @@ def art_part(F, rows, rng, pre):
                   tris += [(base, base + 1, base + 2), (base, base + 2, base + 3)]
           if tris:
               any_tris = True
-              emit(f'{tag}{side + 1}', sh['tex'], cols[0], sh['gain'], verts, uvs, tris, al, flip=sh['flip'], fps=sh['fps'],
+              emit(f'{tag}{side + 1}', sh['tex'], colour(sh.get('col'), cols[0]), sh['gain'], verts, uvs, tris, al, flip=sh['flip'], fps=sh['fps'],
                    vscroll=0 if flipbook else sh['scroll'], pulse=sh['pulse'], blend=sh['blend'], dark=sh['dark'])
-    # (Noah, 2026-11-25) the weapon's own signature over its look (tools/weaponsig.py)
-    import weaponsig
-    weaponsig.apply(F, emit, cols, small, rng)
+    # (Noah, 2026-11-25: "not changing their model or adding something on top") no pieces laid over the steel: tools/weaponsig.py's
+    # signatures retired, each weapon's own looks instead (tools/weaponlooks.py)
     # motes: a few billboard sparks along the edges (fxwrite cards)
     kind, dens = L['motes']
     tris = any_tris

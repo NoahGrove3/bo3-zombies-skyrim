@@ -575,7 +575,8 @@ namespace coa
 		// instead; s= its size; r= degrees about x,y,z; z= raised; play: its own animation started; `none`: nothing drawn).
 		// Read at load and again on the dev command `fxreload`, so a look can be tried in the running game.
 		int BlastIndex(std::string_view a_name);
-		struct FxPart { std::string model, pal; RE::NiPoint3 col{ -1, -1, -1 }; float scale = 1.0f, dz = 0.0f; RE::NiMatrix3 rot; bool play = false, none = false, noparticles = false, nomesh = false; std::vector<std::string> hide; int blast = -1; float orbitR = 0, orbitSpeed = 0, phase = 0; };
+		struct FxPart { std::string model, pal; RE::NiPoint3 col{ -1, -1, -1 }; float scale = 1.0f, dz = 0.0f; RE::NiMatrix3 rot; bool play = false, none = false, noparticles = false, nomesh = false; std::vector<std::string> hide; int blast = -1; float orbitR = 0, orbitSpeed = 0, phase = 0;
+			bool grows = false, ground = false, face = false; float g0 = 1, g1 = 1, gGrow = 0.3f, gLife = 1, gFade = 0.5f, delay = 0; };   // (Noah, 2026-11-25: each ability's own elements, grown and faded - tools/abilityfx.py)
 		std::unordered_map<std::string, std::vector<FxPart>> g_fxMap;
 		std::string FxKey(std::string a)
 		{
@@ -634,6 +635,10 @@ namespace coa
 							}   // (only its particles drawn: the red Sky Beam's trail without the glowing ball at its head)
 							else if (k == "orbit") std::sscanf(v.c_str(), "%f,%f,%f", &fp.orbitR, &fp.orbitSpeed, &fp.phase);   // (circling its middle: radius, turns a second, where it starts)   // (its particles hidden: a whirlwind's thrown debris, flickering all round)   // (its controller manager's first sequence started: only where a model stands still without it)
 							else if (k == "col") std::sscanf(v.c_str(), "%f,%f,%f", &fp.col.x, &fp.col.y, &fp.col.z);
+							else if (k == "grow") fp.grows = std::sscanf(v.c_str(), "%f,%f,%f,%f,%f", &fp.g0, &fp.g1, &fp.gGrow, &fp.gLife, &fp.gFade) == 5;
+							else if (k == "delay") fp.delay = std::stof(v);
+							else if (k == "ground") fp.ground = true;
+							else if (k == "face") fp.face = true;
 							else if (k == "r") std::sscanf(v.c_str(), "%f,%f,%f", &rx, &ry, &rz);
 						} catch (...) {}
 					}
@@ -658,7 +663,13 @@ namespace coa
 			const std::string base = "curseofalduin\\fx\\w\\" + g_fxOwner + "_";
 			if (auto it = g_fxMap.find(base + stem + ".nif"); it != g_fxMap.end()) return &it->second;
 			const auto us = stem.find('_');
-			if (auto it = g_fxMap.find(base + stem.substr(0, us) + ".nif"); it != g_fxMap.end()) return &it->second;
+			const std::string kind = stem.substr(0, us);
+			if (auto it = g_fxMap.find(base + kind + ".nif"); it != g_fxMap.end()) return &it->second;
+			// (Noah, 2026-11-25: "One custom effect each" - replacing what played) an owner with its own effect shows nothing else
+			// of the shared kinds round it: no borrowed ring, explosion, ground or motes beside its own
+			static const std::vector<FxPart> kNone = [] { FxPart n; n.none = true; return std::vector<FxPart>{ n }; }();
+			if ((kind == "ring" || kind == "blast" || kind == "ground" || kind == "motes") &&
+				(g_fxMap.count(base + "burst.nif") || g_fxMap.count(base + "spell_hit.nif"))) return &kNone;
 			return nullptr;
 		}
 		// the owner a model speaks for when no scope stands: its own name (arc_purple, flask_fire, cyclone_frost...)
@@ -1985,6 +1996,16 @@ namespace coa
 				if (fp.none) { placed = true; continue; }
 				const RE::NiPoint3 at = a_at + RE::NiPoint3{ 0, 0, fp.dz * a_scale };
 				const float sc = a_scale * fp.scale;
+				if (fp.grows) {   // (one of an ability's own elements: grown and faded where it stands, as the workshop plays it)
+					static std::mt19937 rr{ 1234u };
+					auto* pc = RE::PlayerCharacter::GetSingleton();
+					const float yaw = fp.face && pc ? pc->GetAngleZ() : std::uniform_real_distribution<float>(0.0f, 6.2832f)(rr);
+					const float d = fp.delay + a_delay;
+					auto go = [m = fp.model, at, yaw, g0 = fp.g0 * sc, g1 = fp.g1 * sc, gr = fp.gGrow, lf = fp.gLife, fd = fp.gFade, gnd = fp.ground]() { GrowEx(m, at, yaw, g0, g1, gr, lf, fd, gnd); };
+					if (d > 0.01f) Tasks::Later(d, go); else go();
+					placed = true;
+					continue;
+				}
 				auto part = std::make_shared<FxPart>(fp);
 				if (fp.blast >= 0) {
 					if (g_blasts.size() < 48) {
@@ -2849,9 +2870,13 @@ namespace coa
 		std::vector<GrowFx> g_grows;
 		void Grow(const std::string& a_model, const RE::NiPoint3& a_at, float a_yaw, float a_s0, float a_s1, float a_grow, float a_life, float a_fadeFrom)
 		{
-			if (g_grows.size() > 48) return;
+			GrowEx(a_model, a_at, a_yaw, a_s0, a_s1, a_grow, a_life, a_fadeFrom, true);
+		}
+		void GrowEx(const std::string& a_model, const RE::NiPoint3& a_at, float a_yaw, float a_s0, float a_s1, float a_grow, float a_life, float a_fadeFrom, bool a_ground)
+		{
+			if (g_grows.size() > 160) return;   // (each ability's own effect is a few of these at once)
 			GrowFx r{ WorldFx(a_model), a_at, a_yaw, a_s0, a_s1, std::max(0.01f, a_grow), std::max(0.1f, a_life), std::clamp(a_fadeFrom, 0.0f, a_life) };
-			if (float land = 0; RE::TES::GetSingleton()->GetLandHeight(r.at, land) && std::abs(land - r.at.z) < 200.0f) r.at.z = land + 2.0f;
+			if (float land = 0; a_ground && RE::TES::GetSingleton()->GetLandHeight(r.at, land) && std::abs(land - r.at.z) < 200.0f) r.at.z = land + 2.0f;
 			if (r.fx.ok) g_grows.push_back(std::move(r));
 		}
 		void Ring(const char* a_colour, const RE::NiPoint3& a_at, float a_r0, float a_r1, float a_life)

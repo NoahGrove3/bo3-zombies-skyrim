@@ -824,7 +824,8 @@ namespace coa
 		void                  MeteorAt(RE::Actor* a_target, bool a_gold, float a_scale, std::function<void(const RE::NiPoint3&)> a_land);   // a fireball from the sky chasing one of the dead
 		void                  Grow(const std::string& a_model, const RE::NiPoint3& a_at, float a_yaw, float a_s0, float a_s1, float a_grow, float a_life, float a_fadeFrom);  // a shape of light set on the ground: grown, held, faded
 		void                  MeteorImpact(const RE::NiPoint3& a_at, bool a_gold, float a_size);  // a meteor's landing: flash, shockwave ring, burning scorch (no damage)
-		void                  Ring(const char* a_colour, const RE::NiPoint3& a_at, float a_r0, float a_r1, float a_life);  // a shockwave ring growing across the ground (ring_<colour>.nif)
+		void                  Ring(const char* a_colour, const RE::NiPoint3& a_at, float a_r0, float a_r1, float a_life);
+		void                  GrowEx(const std::string& a_model, const RE::NiPoint3& a_at, float a_yaw, float a_s0, float a_s1, float a_grow, float a_life, float a_fadeFrom, bool a_ground);   // a model grown from one size to another and faded (a_ground: set on the ground beneath)  // a shockwave ring growing across the ground (ring_<colour>.nif)
 		void                  Knock(RE::Actor* a_a, float a_mag);  // a stagger
 		void                  FireDeath(RE::Actor* a_a, int a_elem);  // the element's touch laid on one about to die, so FEC gives it that death (0 fire)
 		int                   FecElem(int a_elem);  // the element the blows struck from now on kill with (FEC's death effects: 0 fire 1 frost 2 shock ...); returns the one before

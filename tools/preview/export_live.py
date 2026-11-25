@@ -98,7 +98,7 @@ def export(key):
     path = W.model_path(rel)
     FITS[key] = W.fit(key)
     model = read_model(path)
-    looks = {lk: parse_rows(art_rows(key, lk)) for lk in W.LOOKS}
+    looks = {lk: parse_rows(art_rows(key, lk)) for lk in ('o1', 'o2', 'o3')}   # (Noah, 2026-11-25: each weapon's own three looks)
     allp = np.concatenate([np.array(s['v']) for s in model] + [np.array([v[:3] for v in sh['v']]) for lk in looks.values() for sh in lk if sh['v']])
     lo, hi = allp.min(0) - 1, allp.max(0) + 1
     span = np.maximum(hi - lo, 1e-3)
@@ -142,7 +142,7 @@ def export(key):
             if sh.get('bb'): d['corner'] = np.round(A[:, :2], 3).ravel().tolist()   # (a card's corners, in its own plane)
         lookhead[lk] = lh
     gz = gzip.compress(buf.getvalue(), 9)
-    rec = {'key': key, 'scale': root_scale(path), 'lo': lo.round(4).tolist(), 'span': span.round(4).tolist(), 'shapes': head, 'looks': lookhead,
+    rec = {'key': key, 'c1': (W.ALL.get(key) or W.CLASS[key])[4], 'scale': root_scale(path), 'lo': lo.round(4).tolist(), 'span': span.round(4).tolist(), 'shapes': head, 'looks': lookhead,
            'gz': base64.b64encode(gz).decode()}
     (OUT / f'{key}.json').write_text(json.dumps(rec, separators=(',', ':')))
     return (OUT / f'{key}.json').stat().st_size
@@ -150,8 +150,8 @@ def export(key):
 
 def shared():
     T = OUT / 'tex'; T.mkdir(exist_ok=True)
-    names = {st['tex'] for L in W.LOOK.values() for st in L['strips']} | {L['shell']['tex'] for L in W.LOOK.values()} | {'mote', 'runes'}
-    names |= {L['fill']['tex'] for L in W.LOOK.values() if L.get('fill')} | {p.stem for p in W.WORK.glob('sig_*.png')}
+    import weaponlooks as WL
+    names = {l['tex'] for opts in WL.LOOKS3.values() for o in opts for l in o['edges'] + o['faces']}
     for n in sorted(names):
         im = Image.open(W.WORK / f'{n}.png')
         im.thumbnail((1024, 1024), Image.LANCZOS)   # (the page's copy: half the game's 2K, to keep it light)

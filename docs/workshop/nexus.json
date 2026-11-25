@@ -78,8 +78,8 @@
     [
      "looks",
      "Weapon looks (replacing Visual Animated Enchants)",
-     "done",
-     "Every weapon its own signature over Noah's pick; on Skyrim's enchantment glow; 2K (4K wonders and Bane)."
+     "testing",
+     "Three own looks per weapon; Noah picking."
     ],
     [
      "lookbase",
@@ -91,7 +91,7 @@
      "abil",
      "Ability effects: Skyrim's own effects as the base, enhanced (2K textures, 30 FPS)",
      "testing",
-     "Every weapon's, bolt's, flask's and class spell's own effect on Skyrim's (102 + 43). Conjurations and the Soulcaller's beam: questions in the workshop."
+     "One custom effect per ability, same in doc and game (127)."
     ],
     [
      "ring",
@@ -102,8 +102,8 @@
     [
      "scythes",
      "Our own scythe models (dropping Battle Scythe)",
-     "todo",
-     "Your decision (Nov 25). Design questions in the workshop."
+     "doing",
+     "From Skyrim's parts, previewed in the doc first."
     ],
     [
      "bane",
