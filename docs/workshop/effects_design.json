@@ -1,7 +1,7 @@
 {
  "about": "Each weapon's own look and ability effects (Noah, 2026-11-25: 'more variety ... to match what the weapons are actually designed to do so we arent just recycling the same effect with a different color ... based on their weapon description and model' - Both, all at once). Every look keeps Noah's picked family and colour as its ground layer and adds the weapon's own signature; every ability stands on one of Skyrim's own effects (the 'sk' models, from his install) with our own layers over it. Textures 2K; 4K for the wonders and Alduin's Bane.",
  "weapons": {
-  "priest_vahlok":     {"sig": "shackles",  "look": "Iron chain links wind round the haft and beak, glowing white from within, the links creeping slowly toward the head."},
+  "priest_vahlok":     {"sig": "shackles",  "look": "Iron chain links wind round the hammer head and its beak, glowing white from within, the links slowly creeping round."},
   "priest_nahkriin":   {"sig": "glare",     "look": "The white mist, and a blinding glare that sweeps up the edge every few seconds, like light caught on the steel."},
   "priest_volsung":    {"sig": "gust",      "look": "The pale smoke torn back off the edge in long wind streaks, as if the blade were always moving fast."},
   "priest_zahkriisos": {"sig": "crystals",  "look": "Frost, with ice crystals standing out of both edges like a glacier's teeth, glinting."},

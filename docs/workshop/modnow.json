@@ -1,5 +1,5 @@
 {
- "updated": "build 13d37a7, Nov 25 2026",
+ "updated": "build d7da111, Nov 25 2026 (night)",
  "about": "Everything the mod is, as built - kept in the repo (docs/workshop/modnow.json) and updated with every build. The workshop's \"The mod now\" tab is drawn from it.",
  "sections": [
   [
@@ -45,7 +45,8 @@
    [
     "<b>Destruction</b>: Fire: Firebolt → Fireball → Incinerate → Immolate; Frost: Ice Spike → Ice Storm → Icy Spear → Throat of the World; Shock: Chain Lightning → Shock Nova → Finger of the Mountain → Lightning Strike; Sun: Solar Flare → Sunbeam → Forbidden Sun → Daybreak; Arcane: Arcane Bolt → Mana Void → Lunar Tide → Apocalypse; Walls: Wall of Flames → Wall of Frost → Wall of Storms → Inferno; Storms: Frost Nova → Lightning Storm → Multivortex → Cinder Storm",
     "<b>Summoner</b>: Beasts: Conjure Wolf → Conjure Ice Wolf → Conjure Alpha Wolf → Conjure Werebear; The Dead: Conjure Skeleton → Conjure Draugr Wight → Conjure Draugr Deathlord Warrior → Conjure Draugr Death Overlord; Daedra: Conjure Dremora → Conjure Dremora Archer → Conjure Dremora Mage → Conjure Dremora Warlock; Dwemer: Conjure Dwarven Spider → Conjure Dwarven Sphere → Conjure Dwarven Centurion → Conjure Dwarven Ballista Master; The Wild: Conjure Spriggan → Conjure Spriggan Matron → Conjure Burnt Spriggan → Conjure Spriggan Earth Mother; Atronachs: Conjure Flame Atronach → Conjure Frost Atronach → Conjure Storm Atronach → Conjure Storm Monarch; Ash: Conjure Ash Spawn → Conjure Ash Husk → Conjure Ash Spawn Immolator → Conjure Ash Guardian; The Night: Conjure Death Hound → Conjure Volkihar Hound → Conjure Gargoyle → Conjure Gargoyle Brute; The Wrath: Conjure Mistman → Conjure Wrathman → Conjure Wrathman Marksman → Conjure Wrathman Warlock",
-    "<b>Spellsword</b>: Fire: Burning Touch → Flame Touch → Fiery Grasp; Frost: Chilling Touch → Icy Touch → Freezing Grasp; Shock: Shocking Touch → Static Touch → Thundering Grasp; Sun: Sunlight Touch → Radiant Touch → Searing Grasp; Arcane: Arcane Edge → Arcane Brand → Arcane Cascade"
+    "<b>Spellsword</b>: Fire: Burning Touch → Flame Touch → Fiery Grasp; Frost: Chilling Touch → Icy Touch → Freezing Grasp; Shock: Shocking Touch → Static Touch → Thundering Grasp; Sun: Sunlight Touch → Radiant Touch → Searing Grasp; Arcane: Arcane Edge → Arcane Brand → Arcane Cascade",
+    "Every combat spell (Destruction's ladders, walls, storms; the Spellsword's touches) adds <b>its own impact</b> from Skyrim's effects over the spell's own (src/Events.cpp CofferHit, fxmap w\\\\spell_*). The flasks each break in their own (oil fire, frost and shock explosions, poison gas, gold light, red drain). The Mutagen Staff has no beam: holding block throws a flask every 0.5 s, all six in turn."
    ]
   ],
   [
@@ -66,7 +67,8 @@
     "<b>Grief Blade</b> (Krosis, Falkreath): Hits heal you 1%. Heavy: a wail that weakens the dead around you.",
     "<b>Sealbreaker</b> (Hevnoraak, Morthal): Hits shatter armour. Heavy: a shockwave that staggers all around you.",
     "<b>Nightcaller's Scythe</b> (Vokun, Dawnstar): Hits put the dead to sleep. Heavy: a nightmare fog that slows them.",
-    "<b>Arcane Maul</b> (Morokei, Winterhold): Hits burst with magic. Heavy: a magicka shockwave that refills your magicka."
+    "<b>Arcane Maul</b> (Morokei, Winterhold): Hits burst with magic. Heavy: a magicka shockwave that refills your magicka.",
+    "Each relic's hits and heavy are <b>its own effect</b> on Skyrim's (tools/fxown.py): Keyhammer green paralyze + metal sparks; Mistblade illusion light, heavy waterfall mist; Windcutter shout bursts; Glacier frost impact + icicles, heavy frost explosion + ice-wraith burst; Storm Blade shock impact, heavy mass shock; Sacrifice Knife poison spray, heavy Dragonborn poison gas; Grief Blade red absorb + vampire drain, heavy dark burst; Sealbreaker metal sparks + green absorb; Nightcaller purple illusion, heavy shadow burst + mist; Arcane Maul drain absorb, heavy Staff of Magnus impact."
    ]
   ],
   [
@@ -86,7 +88,8 @@
     "<b>Silver Reaping Scythe</b>: A scythe. Every 4th hit: a silver flash that briefly slows the dead.",
     "<b>Bonereaper</b>: A scythe. 1 kill in 4 rises to fight for you for 20 s.",
     "<b>Wyrmtooth Scythe</b>: A scythe. Hits make the dead bleed. Heavy: a shockwave that staggers the dead within 8 m.",
-    "<b>Bloodmoon Scythe</b>: A scythe. Hits drain blood to heal you. Heavy: drains everything it touches."
+    "<b>Bloodmoon Scythe</b>: A scythe. Hits drain blood to heal you. Heavy: drains everything it touches.",
+    "Each Tablet weapon's hits its own effect on Skyrim's: Eclipse Edge in Dawnguard's eclipse burst, Bloodmoon heavy in its blood explosion, Bonereaper in the reanimate flash, Riverstone heavy in the giant's slam, Gravebell in gold turn-undead, Wyrmspine Pike dragonfire, Cinderclaws fireball, Frostmourn ice, Silver Scythe moon light, Wyrmtooth blood spray and tail stomp, Wandering Star Auriel's sky bolt, Talons blood mist."
    ]
   ],
   [
@@ -94,17 +97,16 @@
    [
     "Wonders: <b>Soulcaller's Staff</b>, <b>Wyrmspine Javelin</b>, <b>Mutagen Staff</b>, <b>Dragon Slayer</b>.",
     "Hidden quests: <b>wyrm, sixfires, vortex, slayer</b>.",
-    "<b>Alduin's Bane</b>, from the Hall of the Awakened: a meteor on each light hit, a white tornado on heavy."
+    "<b>Alduin's Bane</b>, from the Hall of the Awakened: a meteor on each light hit (landing in Alduin's own explosion), a white tornado on heavy."
    ]
   ],
   [
    "Weapon looks",
    [
-    "Every relic, wonder and class weapon tier wears <b>our own</b> effect fitted to its model (no Visual Animated Enchants). Eight looks: Flame (rising), Storm (real lightning), Mist, Core, Frost, Shadow, Radiance, Spirit.",
-    "The looks in game are Noah's picks from the workshop (Nov 25): Grief Blade and Mistblade in Mist (red, white); Storm Blade and Stormtalons in Storm; Sacrifice Knife (poison), Eclipse Edge (moon), Wyrmspine Pike (fear) and Talons of Woe in Flame; Arcane Maul in Radiance (drain); Windcutter in Shadow (white); Glacier Greatsword in Frost; the Carian Wand in Mist (purple, whole wand, softer); the Radiant Quarterstaff in Core gold; the rest in Core.",
-    "Every effect comes to a point at the weapon's tip and ends, in the weapon's own shape (no flat cut), with slanted sheets for depth. No floating motes.",
-    "Quarterstaffs (Radiant, Rimewick) glow only on their two heads, never the shaft. Effects run from the guard to the tip. The scythes are 25% larger.",
-    "The Dragon Priest relics' old built-in effects (pillars of colour, cones of stars) are gone; only small glows in the steel remain."
+    "Every relic, wonder and class weapon tier wears <b>our own</b> effect fitted to its model (no Visual Animated Enchants). Eight look families: Flame, Storm, Mist, Core, Frost, Shadow, Radiance, Spirit - each on <b>Skyrim's own enchantment glow</b> (its membrane, brought to 2K) except Core, which stays our own.",
+    "<b>Every weapon its own</b> (Nov 25): Noah's picked look and colour as its ground, and a signature only it wears, from what it does (docs/workshop/effects_design.json): Keyhammer chains, Mistblade glare, Windcutter wind streaks, Glacier ice crystals, Storm Blade arcs, Sacrifice Knife venom, Grief Blade tears, Sealbreaker broken seal, Nightcaller dream rings, Arcane Maul rune ring, Stormtalons claw arcs, Gravebell tolling rings, Talons blood drips, Riverstone stone crust, Wyrmspine Pike dragonfire, Rimewick snow, Cinderclaws embers, Eclipse Edge eclipse, Frostmourn cold breath, Silver Scythe glint, Bonereaper souls, Wyrmtooth lit teeth, Bloodmoon blood, Alduin's Bane embers and smoke (4K), Shadowflame dark embers, Carian Wand glintstone sparkles, Radiant Quarterstaff sun rays, the Spellbound Rapier's per element (sparks, ice needles, tip arcs, solar flare, spirit wisps), Dragon Slayer burning runes (4K).",
+    "Picks (Nov 25): Grief Blade and Mistblade Mist (red, white); Storm Blade and Stormtalons Storm; Sacrifice Knife (poison), Eclipse Edge (moon), Wyrmspine Pike (fear), Talons of Woe Flame; Arcane Maul Radiance (drain); Windcutter Shadow (white); Glacier Greatsword Frost; Carian Wand Mist (purple); Radiant Quarterstaff Core gold; Spellbound Rapier: bare Core white, fire Flame, frost Frost ice-blue, shock Storm ice-blue, sun Radiance orange, arcane Spirit blue; the rest Core.",
+    "Every effect comes to a point at the tips and ends (no flat cut), stands in 3D; no floating motes. Textures 2K; the wonders' and Alduin's Bane's own 4K. Quarterstaffs glow only on their heads. Scythes 25% larger."
    ]
   ],
   [
