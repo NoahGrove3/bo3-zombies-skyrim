@@ -35,11 +35,6 @@
   "art": "CurseOfAlduin\\wfx\\cls_glasswand_carian.nif"
  },
  {
-  "model": "sss\\ebonywand.nif",
-  "key": 1,
-  "art": "CurseOfAlduin\\wfx\\cls_ebonywand_carian.nif"
- },
- {
   "model": "sss\\daedricwand.nif",
   "key": 1,
   "art": "CurseOfAlduin\\wfx\\cls_daedricwand_carian.nif"
@@ -58,11 +53,6 @@
   "model": "curseofalduin\\scythes\\dwarven.nif",
   "key": 0,
   "art": "CurseOfAlduin\\wfx\\cls_dwarven_alch.nif"
- },
- {
-  "model": "curseofalduin\\scythes\\glass.nif",
-  "key": 0,
-  "art": "CurseOfAlduin\\wfx\\cls_glass_alch.nif"
  },
  {
   "model": "curseofalduin\\scythes\\dragonpriest.nif",

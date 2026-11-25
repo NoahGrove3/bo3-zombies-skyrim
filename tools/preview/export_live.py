@@ -73,7 +73,10 @@ def parse_rows(rows):
     for l in rows:
         if l.startswith('shape '):
             parts = l.split(); kv = dict(p.split('=', 1) for p in parts[2:] if '=' in p)
-            cur = {'tex': kv['tex'].split('\\')[-1][:-4], 'pal': kv.get('palette', '').split('\\')[-1][4:-4], 'scale': float(kv.get('scale', 1)), 'v': [], 't': []}
+            stem = kv.get('palette', 'x_white.dds').split('\\')[-1][:-4]
+            cur = {'tex': kv['tex'].split('\\')[-1][:-4], 'pal': stem.split('_', 1)[1], 'scale': float(kv.get('scale', 1)), 'v': [], 't': []}
+            if stem.startswith('pald_'): cur['dark'] = 1
+            if kv.get('blend') == 'alpha': cur['alpha'] = 1
             if 'flip' in kv: cur['flip'] = [int(x) for x in kv['flip'].split('x')]; cur['fps'] = float(kv['fps']); cur['phase'] = float(kv.get('phase', 0))
             if 'vscroll' in kv: cur['vscroll'] = float(kv['vscroll'])
             if 'pulse' in kv: cur['pulse'] = [float(x) for x in kv['pulse'].split(',')]
@@ -123,7 +126,7 @@ def export(key):
         lh = []
         for sh in shapes:
             A = np.array(sh['v']); T = np.array(sh['t'])
-            d = {k: sh[k] for k in ('tex', 'pal', 'scale', 'flip', 'fps', 'phase', 'vscroll', 'pulse', 'clamp', 'bb', 'at') if k in sh}
+            d = {k: sh[k] for k in ('tex', 'pal', 'scale', 'flip', 'fps', 'phase', 'vscroll', 'pulse', 'clamp', 'bb', 'at', 'dark', 'alpha') if k in sh}
             d.update(n=len(A), nt=len(T), i32=len(A) >= 65536)
             lh.append(d)
             buf.write(pos(A[:, :3] if not sh.get('bb') else A[:, :3] * 0 + (np.array(sh['at']) if sh.get('bb') else 0)).tobytes())
@@ -141,7 +144,7 @@ def export(key):
 
 def shared():
     T = OUT / 'tex'; T.mkdir(exist_ok=True)
-    for n in ['cracks', 'flame_strip0', 'flame_strip1', 'haze', 'mist_strip0', 'mist_strip1', 'molten_strip', 'mote', 'runes', 'storm_edge', 'storm_shell', 'stream_strip']:
+    for n in sorted({st['tex'] for L in W.LOOK.values() for st in L['strips']} | {L['shell']['tex'] for L in W.LOOK.values()} | {'mote', 'runes'}):
         im = Image.open(W.WORK / f'{n}.png')
         im.save(T / f'{n}.png', optimize=True)
     TR = ROOT / 'build' / 'trialfx'

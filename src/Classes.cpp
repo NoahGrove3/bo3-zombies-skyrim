@@ -3262,7 +3262,9 @@ namespace coa::Classes
 		const int c = SwordClass(a_w);
 		// (Noah: "for the wands make it Steel starting, Stalhrim for tier 1, Glass tier 2, ebony tier 3, and daedric ascend")
 		if (c == 1) {
-			static constexpr std::uint32_t kWand[5] = { 0x000805, 0x000812, 0x000807, 0x00B041, 0x000816 };
+			// (Noah, 2026-11-24: "Ascended just makes it do more damage. It shouldn't change the way the sword looks" - "Tier III gets
+			// the last") Steel, Stalhrim, Glass, then the Daedric wand from Tier III on; the Ebony wand is no longer worn
+			static constexpr std::uint32_t kWand[5] = { 0x000805, 0x000812, 0x000807, 0x000816, 0x000816 };
 			auto* f = Lookup(kWand[std::clamp(a_tier, 0, 4)], "Fulcimentum - More Staves and Wands of Skyrim.esp");
 			auto* s = f ? f->As<RE::TESObjectWEAP>() : nullptr;
 			if (!s) return false;
@@ -3274,8 +3276,10 @@ namespace coa::Classes
 		// from the install, swung with the MCO scythe moveset (its DAR folders ask for our scythe keyword)
 		if (c == 2) {
 			// (Noah: "all scythes should be smaller" - 60%: tools/scythes.sh makes them on your machine from your own Battle Scythe)
+			// (Noah, 2026-11-24: Ascended keeps Tier III's look - "Tier III gets the last") Forsworn, Falmer, Dwarven, then the Dragon
+			// Priest's scythe from Tier III on; the Glass scythe is no longer worn
 			static constexpr const char* kScythe[5] = { "CurseOfAlduin\\scythes\\forsworn.nif", "CurseOfAlduin\\scythes\\falmer.nif", "CurseOfAlduin\\scythes\\dwarven.nif",
-				"CurseOfAlduin\\scythes\\glass.nif", "CurseOfAlduin\\scythes\\dragonpriest.nif" };
+				"CurseOfAlduin\\scythes\\dragonpriest.nif", "CurseOfAlduin\\scythes\\dragonpriest.nif" };
 			const bool changed = ScytheLook(a_w, kScythe[std::clamp(a_tier, 0, 4)]);
 			if (changed) logger::info("classes: the {} takes the look of {}", a_w->GetName(), kScythe[std::clamp(a_tier, 0, 4)]);
 			return changed;
@@ -3283,7 +3287,8 @@ namespace coa::Classes
 		(void)kWhip;
 		const Src* src = c == 0 ? &kQStaff : c == 3 ? &kRapier : nullptr;
 		if (!src) return false;
-		const int i = a_tier <= 1 ? 0 : a_tier == 2 ? 1 : a_tier == 3 ? 2 : 3;
+		// (Noah, 2026-11-24: "One per tier") Base Steel, Tier I Ebony, Tier II Daedric, Tier III Dragonbone - and Ascended keeps it
+		const int i = std::clamp(a_tier, 0, 3);
 		auto* f = Lookup(src->id[i], src->plugin);
 		auto* s = f ? f->As<RE::TESObjectWEAP>() : nullptr;
 		if (!s) return false;

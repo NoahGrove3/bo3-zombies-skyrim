@@ -34,7 +34,6 @@ INSTALL = pathlib.Path('/mnt/user-data/uploads/common--Skyrim Special Edition/Da
 TOOLS = pathlib.Path('/home/claude/tools')
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
-LOOKS = ['flame', 'runic', 'storm', 'mist', 'core']
 # the colours (as the page's): base colour; Eclipse Edge wears two, one edge each
 COL = {
     'white': '#eaf1ff', 'blue': '#4f8bff', 'iceblue': '#8fd8ff', 'orange': '#ff7a1f', 'red': '#e0262b', 'green': '#48d058',
@@ -44,34 +43,34 @@ COL = {
 # each weapon: its model, its steel (shape names; '*' any lit shape), the height band that is steel (y from, to), its look and
 # colour (Noah's picks, the Curse Weapon Effects page, 2026-11-24)
 WEAPONS = {
-    'priest_vahlok':     ('CurseOfAlduin\\priests\\vahlok_keyhammer.nif', ['Nordic:0', 'Iron:1'], (27, 99), 'runic', 'white'),
+    'priest_vahlok':     ('CurseOfAlduin\\priests\\vahlok_keyhammer.nif', ['Nordic:0', 'Iron:1'], (27, 99), 'core', 'white'),
     'priest_nahkriin':   ('CurseOfAlduin\\priests\\nahkriin_mistblade.nif', ['BladeBody'], None, 'mist', 'white'),
-    'priest_volsung':    ('CurseOfAlduin\\priests\\volsung_windcutter.nif', ['Blade:1'], None, 'mist', 'blue'),
+    'priest_volsung':    ('CurseOfAlduin\\priests\\volsung_windcutter.nif', ['Blade:1'], None, 'core', 'white'),
     'priest_zahkriisos': ('CurseOfAlduin\\priests\\zahkriisos_greatsword.nif', ['Ice:1'], None, 'core', 'iceblue'),
-    'priest_otar':       ('CurseOfAlduin\\priests\\otar_stormblade.nif', ['Blade:2'], None, 'storm', 'blue'),
-    'priest_rahgot':     ('CurseOfAlduin\\priests\\rahgot_dagger.nif', ['Obsidian:1'], None, 'runic', 'poison'),
-    'priest_krosis':     ('CurseOfAlduin\\priests\\krosis_griefblade.nif', ['Blade:0'], None, 'flame', 'red'),
+    'priest_otar':       ('CurseOfAlduin\\priests\\otar_stormblade.nif', ['Blade:2'], None, 'core', 'blue'),
+    'priest_rahgot':     ('CurseOfAlduin\\priests\\rahgot_dagger.nif', ['Obsidian:1'], None, 'core', 'poison'),
+    'priest_krosis':     ('CurseOfAlduin\\priests\\krosis_griefblade.nif', ['Blade:0'], None, 'core', 'red'),
     'priest_hevnoraak':  ('CurseOfAlduin\\priests\\hevnoraak_sealbreaker.nif', ['Stone:3'], None, 'core', 'green'),
-    'priest_vokun':      ('CurseOfAlduin\\scythes\\daedric.nif', ['daedricsword01'], None, 'mist', 'purple'),
+    'priest_vokun':      ('CurseOfAlduin\\scythes\\daedric.nif', ['daedricsword01'], None, 'core', 'purple'),
     'priest_morokei':    ('CurseOfAlduin\\priests\\morokei_maul.nif', ['Steel:0', 'Crystal:2'], (40, 99), 'flame', 'drain'),
     'tab_stormtalons':   ('weapons\\NewArmoury\\Fists\\glassClaw.nif', ['GlassClawGlass1'], None, 'storm', 'blue'),
-    'tab_gravebell':     ('CurseOfAlduin\\tablet\\gravebell.nif', ['Bronze:3'], None, 'mist', 'white'),
+    'tab_gravebell':     ('CurseOfAlduin\\tablet\\gravebell.nif', ['Bronze:3'], None, 'core', 'white'),
     'tab_talons':        ('weapons\\NewArmoury\\Fists\\DBClaw.nif', ['DBClaw_MTL_B'], None, 'flame', 'red'),
-    'tab_riverstone':    ('weapons\\NewArmoury\\Halberds\\NordicHalberd.nif', ['NordicPikeShaft', 'NordicPikeTip'], (70, 999), 'flame', 'green'),
-    'tab_wyrmspine':     ('weapons\\NewArmoury\\Pikes\\DragonbonePike.nif', ['DragonbonePikeTip'], None, 'flame', 'fear'),
-    'tab_lanternwick':   ('weapons\\NewArmoury\\QuarterStaffs\\StalhrimStaff.nif', ['StahlrimStaffBlade'], [(42, 999), (-999, -30)], 'mist', 'iceblue'),
-    'tab_cinderclaws':   ('weapons\\NewArmoury\\Fists\\DaedricClaw.nif', ['DaedricClaws_MTL_B'], None, 'flame', 'orange'),
-    'tab_eclipse':       ('weapons\\NewArmoury\\Pikes\\GlassPike.nif', ['GlassPikeTip'], None, 'flame', 'gold+iceblue'),
+    'tab_riverstone':    ('weapons\\NewArmoury\\Halberds\\NordicHalberd.nif', ['NordicPikeShaft', 'NordicPikeTip'], (70, 999), 'core', 'green'),
+    'tab_wyrmspine':     ('weapons\\NewArmoury\\Pikes\\DragonbonePike.nif', ['DragonbonePikeTip'], None, 'mist', 'fear'),
+    'tab_lanternwick':   ('weapons\\NewArmoury\\QuarterStaffs\\StalhrimStaff.nif', ['StahlrimStaffBlade'], [(42, 999), (-999, -30)], 'core', 'iceblue'),
+    'tab_cinderclaws':   ('weapons\\NewArmoury\\Fists\\DaedricClaw.nif', ['DaedricClaws_MTL_B'], None, 'core', 'orange'),
+    'tab_eclipse':       ('weapons\\NewArmoury\\Pikes\\GlassPike.nif', ['GlassPikeTip'], None, 'mist', 'purple'),
     'tab_frostmourn':    ('weapons\\NewArmoury\\Rapier\\StahlrimRapier.nif', ['StahlrimRapier:18'], (9.5, 999), 'mist', 'iceblue'),
-    'tab_silverscythe':  ('CurseOfAlduin\\scythes\\silver.nif', ['SilverGreatSword:0_2'], None, 'runic', 'moon'),
-    'tab_bonereaper':    ('CurseOfAlduin\\scythes\\Skeleton.nif', ['IronLongSword01:0_3'], None, 'mist', 'white'),
-    'tab_wyrmtooth':     ('CurseOfAlduin\\scythes\\dragonTeeth.nif', ['DragonBone01'], (26, 999), 'flame', 'orange'),
-    'tab_bloodmoon':     ('CurseOfAlduin\\scythes\\vampire.nif', ['blade'], None, 'flame', 'red'),
-    'fang':              ('Light Greatswords\\dragonbone\\LightGreatsword.nif', ['DragonboneGreatsword:0'], None, 'flame', 'orange'),
+    'tab_silverscythe':  ('CurseOfAlduin\\scythes\\silver.nif', ['SilverGreatSword:0_2'], None, 'core', 'moon'),
+    'tab_bonereaper':    ('CurseOfAlduin\\scythes\\Skeleton.nif', ['IronLongSword01:0_3'], None, 'core', 'green'),
+    'tab_wyrmtooth':     ('CurseOfAlduin\\scythes\\dragonTeeth.nif', ['DragonBone01'], (26, 999), 'core', 'green'),
+    'tab_bloodmoon':     ('CurseOfAlduin\\scythes\\vampire.nif', ['blade'], None, 'core', 'red'),
+    'fang':              ('Light Greatswords\\dragonbone\\LightGreatsword.nif', ['DragonboneGreatsword:0'], None, 'mist', 'orange'),
     # (Noah, 2026-11-24: "both left and right claws ... carry the same effect") the claws' left-hand twins
     'tab_stormtalons_l': ('weapons\\NewArmoury\\Fists\\GlassClawLft.nif', ['GlassClawGlass1'], None, 'storm', 'blue'),
     'tab_talons_l':      ('weapons\\NewArmoury\\Fists\\DBClawLft.nif', ['DBClaw_MTL_B'], None, 'flame', 'red'),
-    'tab_cinderclaws_l': ('weapons\\NewArmoury\\Fists\\DaedricClawLft.nif', ['DaedricClaws_MTL_B'], None, 'flame', 'orange'),
+    'tab_cinderclaws_l': ('weapons\\NewArmoury\\Fists\\DaedricClawLft.nif', ['DaedricClaws_MTL_B'], None, 'core', 'orange'),
 }
 # (the claws: several blades fanned out - each its own outline in its own plane)
 SPLIT = {'tab_stormtalons', 'tab_talons', 'tab_cinderclaws', 'tab_stormtalons_l', 'tab_talons_l', 'tab_cinderclaws_l'}
@@ -82,23 +81,23 @@ LEFT = {'tab_stormtalons_l', 'tab_talons_l', 'tab_cinderclaws_l'}
 # the class weapons: each takes another model at each tier (src/Classes.cpp AdoptTierLook), so each tier's model has its own
 # art; the Spellbound Rapier's look follows the element in your other hand (its BLADE_VIZ key: src/Classes.cpp LookKey)
 BV_KEYS = ['alch', 'carian', 'radiant', 'ss_none', 'ss_fire', 'ss_frost', 'ss_shock', 'ss_sun', 'ss_blood', 'slayer']
-BV_PICK = {'alch': ('flame', 'shadow'), 'carian': ('mist', 'carian'), 'radiant': ('mist', 'white'), 'ss_none': ('runic', 'ss_none'),
-           'ss_fire': ('flame', 'orange'), 'ss_frost': ('mist', 'iceblue'), 'ss_shock': ('storm', 'shockv'), 'ss_sun': ('flame', 'gold'),
-           'ss_blood': ('runic', 'arcane'), 'slayer': ('flame', 'gold')}
+BV_PICK = {'alch': ('flame', 'shadow'), 'carian': ('mist', 'carian'), 'radiant': ('core', 'shadow'), 'ss_none': ('core', 'white'),
+           'ss_fire': ('core', 'ss_none'), 'ss_frost': ('core', 'blue'), 'ss_shock': ('core', 'blue'), 'ss_sun': ('core', 'gold'),
+           'ss_blood': ('core', 'carian'), 'slayer': ('mist', 'gold')}   # (Noah's picks, the workshop 2026-11-24)
 CLASS_MODELS = {   # the look key(s), each model: its steel shapes and band
     'radiant': [('weapons\\NewArmoury\\QuarterStaffs\\SteelStaff.nif', ['SteelPikeShaft'], [(32, 99), (-99, -26)]),
                 ('weapons\\NewArmoury\\QuarterStaffs\\EbonyStaff.nif', ['EbonyStaffShaft'], [(32, 99), (-99, -26)]),
                 ('weapons\\NewArmoury\\QuarterStaffs\\DaedricStaff.nif', ['DaedricStaffShaft'], [(32, 99), (-99, -26)]),
                 ('weapons\\NewArmoury\\QuarterStaffs\\DragonBoneStaff.nif', ['DragonboneStaffBlade'], [(30, 99), (-99, -26)])],
-    'carian': [('SSS\\SteelWand.nif', ['1stPersonSteelWarhamm', '1stPersonSteelBattleA'], (2, 99)),
-               ('SSS\\StahlrimWand.nif', ['2H_Axe:0'], (12, 99)),
-               ('SSS\\GlassWand.nif', ['1stPersonGlassMace.01', '1stPersonGlassWarH.00', '1stPersonGlassMace:0.00'], (8, 99)),
-               ('SSS\\EbonyWand.nif', ['1stPersonEbonyWarhamm', '1stPersonEbonyMace.00'], (14, 99)),
-               ('SSS\\DaedricWand.nif', ['DaedricWarhammer:0'], (8, 99))],
+    # (Noah, 2026-11-24: "the effects on the wand should be the whole wand but turn the intensity down" - and Tier III takes the
+    # Daedric wand, the Ebony one no longer worn) every lit shape of the wand, softer (GAIN)
+    'carian': [('SSS\\SteelWand.nif', ['*'], None),
+               ('SSS\\StahlrimWand.nif', ['*'], None),
+               ('SSS\\GlassWand.nif', ['*'], None),
+               ('SSS\\DaedricWand.nif', ['*'], None)],
     'alch': [('CurseOfAlduin\\scythes\\forsworn.nif', ['ForswornSword:0'], None),
              ('CurseOfAlduin\\scythes\\falmer.nif', ['BattleAxe:0'], None),
              ('CurseOfAlduin\\scythes\\dwarven.nif', ['DwarvenGreatsword:1_2_2'], None),
-             ('CurseOfAlduin\\scythes\\glass.nif', ['1stPersonGlassGreatSword:1'], None),
              ('CurseOfAlduin\\scythes\\dragonpriest.nif', ['1stPersonEbonyDagger:1'], None)],
     'ss': [('weapons\\NewArmoury\\Rapier\\SteelRapier.nif', ['1stPersonSteelRapier:22'], (13, 99)),
            ('weapons\\NewArmoury\\Rapier\\EbonyRapier.nif', ['1stPersonEbonyRapier:22'], (20, 99)),
@@ -114,6 +113,7 @@ for group, models in CLASS_MODELS.items():
         for k in keys:
             look, col = BV_PICK[k]
             CLASS[f'cls_{stem}_{k}'] = (model, names, band, look, col, k)
+GAIN = {k: 0.6 for k in CLASS if k.endswith('_carian')}   # (a weapon's own intensity)
 ALL = dict(WEAPONS)
 ALL.update({k: v[:5] for k, v in CLASS.items()})
 SSS = pathlib.Path('/tmp/sss/meshes')   # (Fulcimentum's wands, read out of its archive on Noah's install: tools/weaponfx.py notes)
@@ -271,7 +271,167 @@ def textures():
     m = 64; yy, xx = np.mgrid[0:m, 0:m]; r = np.hypot(xx - m / 2 + 0.5, yy - m / 2 + 0.5) / (m / 2)
     save_tex(grey(np.clip(1.1 - r, 0, 1), np.exp(-(r * 2.4) ** 2)), 'mote')
     palettes()
+    textures_v2()
 
+
+# ---------------------------------------------------------------- the looks remade (Noah, 2026-11-24)
+def _poly_field(h, w, lines, wrapv=True):
+    """distance (texels) from every texel to the nearest of the given polylines ((N, 2) arrays of (u, v) in texels)"""
+    from scipy import ndimage
+    from skimage.draw import line
+    m = np.zeros((h, w), bool)
+    for P in lines:
+        P = np.asarray(P)
+        for (x0, y0), (x1, y1) in zip(P[:-1], P[1:]):
+            rr, cc = line(int(round(y0)), int(round(x0)), int(round(y1)), int(round(x1)))
+            if wrapv: rr = rr % h
+            ok = (cc >= 0) & (cc < w) & (rr >= 0) & (rr < h)
+            m[rr[ok], cc[ok]] = True
+    if wrapv:   # (the field tiles along v: three copies stacked, the middle kept)
+        big = np.vstack([m, m, m]); d = ndimage.distance_transform_edt(~big)[h:2 * h]
+    else:
+        d = ndimage.distance_transform_edt(~m)
+    return d
+
+
+def _bolt(rng, a, b, rough, depth=6):
+    """a lightning path from a to b: midpoint displacement, each split pushed sideways"""
+    pts = [np.array(a, float), np.array(b, float)]
+    for lvl in range(depth):
+        out = [pts[0]]
+        for p, q in zip(pts[:-1], pts[1:]):
+            d = q - p; n = np.array([-d[1], d[0]]) / (np.linalg.norm(d) + 1e-9)
+            m = (p + q) / 2 + n * rng.normal() * np.linalg.norm(d) * rough
+            out += [m, q]
+        pts = out
+    return np.array(pts)
+
+
+def textures_v2():
+    """Flame that rises from the hilt to the tip, Storm as real lightning, and the new looks: Frost, Shadow, Radiance, Spirit"""
+    rng = np.random.default_rng(77)
+    H, W = 512, 128
+    u = np.linspace(0, 1, W)[None, :].repeat(H, 0)
+    v = np.linspace(0, 1, H, endpoint=False)[:, None].repeat(W, 1)
+    # FLAME: tongues of fire that stream along the blade (v runs hilt -> tip, the texture slides tipward): long licks drawn
+    # out along v, curling outward, white-hot at the steel; two layers that slide at different speeds read as turbulence
+    for k, seed in ((0, 301), (1, 317)):
+        w1 = fbm(H, W, 3, 2, seed + 1); w2 = fbm(H, W, 7, 3, seed + 2)
+        n = warp_sample(fbm(H, W, 5 + k * 2, 3, seed), (w1 - 0.5) * 26, (w2 - 0.5) * 90)
+        streak = fbm(H, W, 9 + k * 3, 1, seed + 5)          # (tongues: separate licks along the blade)
+        lick = (n * 1.6 + streak * 1.4) * 1.35 - u * (2.9 - 0.6 * k) - 1.3
+        det = fbm(H, W, 22, 7, seed + 9)
+        a = smooth(0.0, 0.14, lick) * (0.55 + 0.45 * det) * smooth(1.0, 0.55, u)
+        heat = np.clip(lick * 1.6 + 0.3 - u * 0.45, 0, 1) * (0.8 + 0.2 * det)
+        save_tex(grey(heat, a), f'fire_rise{k}')
+    # STORM: an 8 x 4 flipbook of whole bolts running the strip's length, their ends pinned to the edge so the pieces join
+    # without gaps; each strike lives three frames, fading, with forks reaching out and a steady glow along the steel
+    FR = 32; fw, fh = 64, 256
+    cells = []
+    life = 3; strikes = FR // life + 1
+    paths = []
+    for sidx in range(strikes):
+        r = np.random.default_rng(900 + sidx)
+        main = _bolt(r, (fw * 0.16, -2), (fw * 0.16, fh + 2), 0.13, 7)
+        du = main[:, 0] - fw * 0.16; mx = max(1e-3, np.abs(du).max())
+        main[:, 0] = fw * 0.16 + du / mx * fw * r.uniform(0.08, 0.2) + np.abs(du / mx) * fw * 0.06
+        forks = []
+        for _ in range(r.integers(2, 5)):
+            i0 = r.integers(len(main) // 8, len(main) * 7 // 8); p = main[i0]
+            end = p + np.array([fw * r.uniform(0.25, 0.7), r.uniform(-40, 40)])
+            forks.append(_bolt(r, p, end, 0.3, 5))
+        paths.append((main, forks))
+    for f in range(FR):
+        sidx, age = divmod(f, life)
+        main, forks = paths[sidx]
+        dm = _poly_field(fh, fw, [main]); dfk = _poly_field(fh, fw, forks, wrapv=False) if forks else np.full((fh, fw), 1e3)
+        uu = np.linspace(0, 1, fw)[None, :].repeat(fh, 0)
+        fadek = [1.0, 0.72, 0.42][age]
+        core = np.exp(-(dm / 1.1) ** 2) + 0.6 * np.exp(-(dfk / 0.9) ** 2) * smooth(0.9, 0.3, uu)
+        glow = np.exp(-dm / 5.0) * 0.45 + np.exp(-dfk / 4.0) * 0.2
+        base = np.exp(-uu * 6) * 0.25   # (the steady charge along the steel: never a gap)
+        a = np.clip((core * 1.2 + glow) * fadek + base, 0, 1)
+        cells.append(grey(np.clip(0.55 + 0.45 * core, 0, 1), a))
+    atlas = np.zeros((fh * 4, fw * 8, 4))
+    for f, c in enumerate(cells): atlas[(f // 8) * fh:(f // 8 + 1) * fh, (f % 8) * fw:(f % 8 + 1) * fw] = c
+    save_tex(atlas, 'bolt_edge')
+    # STORM over the steel: branching bolts crawling across each tile, the same three-frame strikes
+    fs = 128
+    atlas = np.zeros((fs * 4, fs * 8, 4))
+    for f in range(FR):
+        sidx, age = divmod(f, life)
+        r = np.random.default_rng(1500 + sidx)
+        lines = []
+        for _ in range(2):
+            a0 = r.uniform(0, fs, 2); b0 = r.uniform(0, fs, 2)
+            m = _bolt(r, a0, b0, 0.25, 6); lines.append(m)
+            for _ in range(2):
+                p = m[r.integers(len(m))]; lines.append(_bolt(r, p, p + r.uniform(-40, 40, 2), 0.3, 4))
+        d = _poly_field(fs, fs, lines, wrapv=False)
+        fadek = [1.0, 0.7, 0.4][age]
+        core = np.exp(-(d / 0.9) ** 2); glow = np.exp(-d / 4.0) * 0.35
+        atlas[(f // 8) * fs:(f // 8 + 1) * fs, (f % 8) * fs:(f % 8 + 1) * fs] = grey(np.clip(0.55 + 0.45 * core, 0, 1), np.clip((core + glow) * fadek, 0, 1))
+    save_tex(atlas, 'bolt_shell')
+    # FROST: rime - needles of ice growing out from the steel (a column that tiles along the edge), and cold vapour that
+    # sinks back toward the hilt
+    lines = []
+    for i in range(70):
+        y0 = rng.uniform(0, H); L = rng.uniform(5, 22) * (1.0 if rng.random() < 0.75 else 1.6)
+        ang = rng.uniform(-0.9, 0.9)
+        x1 = 2 + L * np.cos(ang) * 1.2; y1 = y0 + L * np.sin(ang)
+        lines.append(np.array([[1, y0], [x1, y1]]))
+        if L > 18:   # (a side spur)
+            t = rng.uniform(0.4, 0.8); p = np.array([1 + (x1 - 1) * t, y0 + (y1 - y0) * t]); a2 = ang + rng.choice([-1, 1]) * 0.8
+            lines.append(np.array([p, p + np.array([np.cos(a2), np.sin(a2)]) * L * 0.35 * 1.4]))
+    d = _poly_field(H, W, lines)
+    needle = np.exp(-(d / 1.0) ** 2) + np.exp(-d / 3.5) * 0.25
+    base = np.exp(-u * 9) * 0.6
+    sparkle = (fbm(H, W, 40, 10, 611) > 0.78) * 0.6
+    save_tex(grey(np.clip(0.5 + 0.5 * needle + sparkle * 0.3, 0, 1), np.clip(needle * smooth(1, 0.5, u) + base, 0, 1)), 'rime_strip')
+    wv = fbm(H, W, 4, 2, 631)
+    nv = warp_sample(fbm(H, W, 6, 2, 633), (wv - 0.5) * 30, (wv - 0.5) * 70)
+    dens = smooth(0.0, 0.45, nv * 1.7 - u * 1.6 - 0.15)
+    save_tex(grey(0.55 + 0.35 * fbm(H, W, 12, 3, 641), dens * 0.6), 'vapour_strip')
+    # the frost over the steel: dendrites spreading over each tile
+    S = 256; lines = []
+    r = np.random.default_rng(653)
+    def grow(p, ang, L, lvl):
+        if lvl > 4 or L < 4: return
+        q = p + np.array([np.cos(ang), np.sin(ang)]) * L
+        lines.append(np.array([p, q]))
+        for k in range(3):
+            t = r.uniform(0.3, 0.9); pp = p + (q - p) * t
+            grow(pp, ang + r.choice([-1, 1]) * r.uniform(0.6, 1.1), L * 0.45, lvl + 1)
+    for _ in range(26): grow(r.uniform(0, S, 2), r.uniform(0, 6.28), r.uniform(24, 60), 0)
+    d = _poly_field(S, S, lines, wrapv=False)
+    fr = np.exp(-(d / 0.9) ** 2) + np.exp(-d / 3.0) * 0.2
+    save_tex(grey(np.clip(0.55 + 0.45 * fr, 0, 1), np.clip(fr, 0, 1)), 'frost_shell')
+    # SHADOW: billowing smoke (drawn over, not added: dark, with the colour only where it thins at its rim)
+    w1 = fbm(H, W, 3, 2, 701)
+    n = warp_sample(fbm(H, W, 5, 3, 703), (w1 - 0.5) * 34, (w1 - 0.5) * 110)
+    dens = smooth(0.05, 0.5, n * 2.0 - u * 1.9 - 0.05) * smooth(0.8, 0.2, u)
+    edge = np.clip(smooth(0.05, 0.25, dens) - smooth(0.25, 0.7, dens), 0, 1)
+    save_tex(grey(0.08 + 0.85 * edge, dens * 0.7), 'shade_strip')
+    # RADIANCE: rays of light standing out from the steel, slowly shifting
+    rays = fbm(H, 1, 60, 1, 721)[:, :1].repeat(W, 1); rays2 = fbm(H, 1, 23, 1, 723)[:, :1].repeat(W, 1)
+    rr = smooth(0.45, 0.9, rays * 0.6 + rays2 * 0.6)
+    save_tex(grey(0.45 + 0.55 * np.exp(-u * 3), rr * np.exp(-u * 2.6) * 0.9 + np.exp(-u * 10) * 0.4), 'ray_strip')
+    hz = fbm(256, 256, 3, 3, 731)
+    save_tex(grey(0.5 + 0.4 * hz, 0.45 + 0.4 * hz), 'halo_shell')
+    # SPIRIT: long ghostly wisps streaming off the blade, drawn out along it
+    w1 = fbm(H, W, 2, 3, 741)
+    n = warp_sample(fbm(H, W, 3, 6, 743), (w1 - 0.5) * 40, (w1 - 0.5) * 140)
+    streak = np.clip(smooth(0.38, 0.55, n) - smooth(0.62, 0.85, n), 0, 1)
+    a = np.clip(streak * 1.2, 0, 1) * smooth(0.78, 0.12, u) * (0.5 + 0.5 * fbm(H, W, 8, 4, 747))
+    save_tex(grey(0.55 + 0.45 * streak, a), 'wisp_strip')
+    # the shadow's palettes: near black where the smoke is thick, the colour at its thin rim
+    x = (np.arange(256) + 0.5) / 256; vv = (np.arange(64) + 0.5) / 64
+    for name, h in COL.items():
+        c = hexrgb(h)
+        rgb = np.zeros((64, 256, 3))
+        for i in range(3): rgb[..., i] = np.interp(x[None, :] * (0.5 + 0.5 * vv[:, None]), [0, 0.35, 0.8, 1.0], [0.01, 0.03 + c[i] * 0.05, c[i] * 0.85, min(1, c[i] * 1.2 + 0.15)])
+        a = np.clip(0.55 + x[None, :] * 0.6, 0, 1) * (0.35 + 0.65 * vv[:, None])
+        Image.fromarray((np.dstack([np.clip(rgb, 0, 1), a]) * 255).astype(np.uint8), 'RGBA').save(TEX / f'pald_{name}.dds')
 
 def hexrgb(h):
     h = h.lstrip('#'); return np.array([int(h[i:i + 2], 16) / 255 for i in (0, 2, 4)])
@@ -329,7 +489,8 @@ def fit(key):
     shapes = read_model(model_path(rel))
     V, T = [], []
     for s in shapes:
-        if not any(s['name'] == n or s['name'].startswith(n + ':') or (n.endswith(':') and s['name'].startswith(n)) for n in names): continue
+        if names == ['*'] and s['kind'] != 'lit': continue
+        if names != ['*'] and not any(s['name'] == n or s['name'].startswith(n + ':') or (n.endswith(':') and s['name'].startswith(n)) for n in names): continue
         if not len(s['t']): continue
         base = sum(len(x) for x in V)
         V.append(s['v']); T.append(s['t'] + base)
@@ -458,7 +619,7 @@ def fit_part(key, V, T, band, look, col):
     # the shell: a coarse grid of quads over both faces, each corner's lift the steel's thickness there, its alpha how near
     # the edge it lies
     dist = ndimage.distance_transform_edt(mask) * res
-    return dict(key=key, look=look, col=col, c=c, e1=e1, e2=e2, e3=e3, lo=lo, res=res, mask=mask, depth=depth, dist=dist,
+    return dict(key=key, look=look, col=col, gain=GAIN.get(key, 1.0), c=c, e1=e1, e2=e2, e3=e3, lo=lo, res=res, mask=mask, depth=depth, dist=dist,
                 edges=edges, grip=grip, A=A, rA=rA, span=span, small=span0 <= 30)
 
 
@@ -469,13 +630,39 @@ def to3(F, p2, d=0.0):
 
 
 # ---------------------------------------------------------------- the art model
-LOOK = {   # strips: (texture, width, cross width, scroll seconds per turn, v repeat per 40 units, gain); shell: (texture, how lit, tile)
-    'flame': dict(strips=[('flame_strip0', 6.5, 3.4, 1.15, 1.0, 1.1), ('flame_strip1', 5.0, 2.6, 0.8, 1.6, 0.8)], shell=('haze', 'edge', 30.0, 1.2), motes=('rise', 0.45)),
-    'runic': dict(strips=[('stream_strip', 2.2, 1.2, 1.4, 1.0, 1.1)], shell=('runes', 'band', 26.0, 1.4), motes=('rise', 0.1)),
-    'storm': dict(strips=[('storm_edge', 4.8, 2.8, 0, 2.5, 1.3)], shell=('storm_shell', 'all', 26.0, 1.2), motes=('spark', 0.3)),
-    'mist':  dict(strips=[('mist_strip0', 8.0, 4.6, 6.0, 0.8, 0.9), ('mist_strip1', 6.0, 3.6, 4.2, 1.2, 0.7)], shell=('haze', 'edge', 24.0, 0.8), motes=('drift', 0.1)),
-    'core':  dict(strips=[('molten_strip', 2.6, 1.4, 3.0, 1.0, 1.1)], shell=('cracks', 'all', 22.0, 1.6), motes=('fall', 0.18)),
+def S(tex, w, wc, per, rep, gain, along='contour', flip=None, fps=None, blend='add', dark=False):
+    return dict(tex=tex, w=w, wc=wc, per=per, rep=rep, gain=gain, along=along, flip=flip, fps=fps, blend=blend, dark=dark)
+
+
+def Sh(tex, how, tile, gain, flip=None, fps=None, scroll=0.0, pulse=None, blend='add', dark=False):
+    return dict(tex=tex, how=how, tile=tile, gain=gain, flip=flip, fps=fps, scroll=scroll, pulse=pulse, blend=blend, dark=dark)
+
+
+# (Noah, 2026-11-24: "remake the Flame, Runic, and Storm looks. Keep Mist and Core. Just make Mist less vibrant", and the new
+# looks Frost, Shadow, Radiance, Spirit) each look: its strips along the edges (width out, width across the face, seconds per
+# scroll, repeats per 40 units, gain; along: 'contour' round the outline, 'axis' hilt -> tip on both edges, 'axisdown' tip ->
+# hilt), the shell over the steel, its motes
+LOOK = {
+    # fire that rises: both edges stream from the hilt to the tip, two layers at different speeds
+    'flame': dict(strips=[S('fire_rise0', 7.0, 3.8, 0.9, 1.1, 0.8, 'axis'), S('fire_rise1', 5.0, 2.8, 0.55, 1.8, 0.55, 'axis')],
+                  shell=Sh('haze', 'edge', 30.0, 0.35, scroll=4.0), motes=('rise', 0.55)),
+    # real lightning: whole bolts the length of each stretch of edge, joined end to end, striking for three frames and gone,
+    # forks reaching out, a steady charge along the steel; branching strikes over the faces
+    'storm': dict(strips=[S('bolt_edge', 4.6, 2.6, 0, 1, 1.35, flip=(8, 4), fps=26), S('stream_strip', 1.6, 1.0, 0.7, 2.0, 0.55)],
+                  shell=Sh('bolt_shell', 'all', 24.0, 1.1, flip=(8, 4), fps=22), motes=('spark', 0.35)),
+    'mist': dict(strips=[S('mist_strip0', 6.5, 3.6, 6.0, 0.8, 0.5), S('mist_strip1', 5.0, 3.0, 4.2, 1.2, 0.38)],
+                 shell=Sh('haze', 'edge', 24.0, 0.45, scroll=6.0), motes=('drift', 0.06)),
+    'core': dict(strips=[S('molten_strip', 2.6, 1.4, 3.0, 1.0, 1.1)], shell=Sh('cracks', 'all', 22.0, 1.6, pulse=(2.6, 0.45, 1.15)), motes=('fall', 0.18)),
+    'frost': dict(strips=[S('rime_strip', 3.8, 2.0, 24.0, 1.4, 1.4), S('vapour_strip', 6.0, 3.6, 5.0, 0.9, 0.45, 'axisdown')],
+                  shell=Sh('frost_shell', 'edge', 18.0, 1.5, pulse=(3.4, 0.75, 1.1)), motes=('fall', 0.22)),
+    'shadow': dict(strips=[S('shade_strip', 6.5, 3.6, 3.2, 0.9, 1.0, 'axis', blend='alpha', dark=True), S('stream_strip', 1.4, 0.9, 1.6, 1.0, 0.6)],
+                   shell=Sh('haze', 'edge', 26.0, 0.8, scroll=5.0, blend='alpha', dark=True), motes=('rise', 0.15)),
+    'radiance': dict(strips=[S('ray_strip', 12.0, 0, 9.0, 0.6, 0.45), S('stream_strip', 1.6, 1.0, 1.2, 1.0, 0.8)],
+                     shell=Sh('halo_shell', 'all', 30.0, 0.35, pulse=(4.0, 0.7, 1.1)), motes=('drift', 0.3)),
+    'spirit': dict(strips=[S('wisp_strip', 7.5, 4.0, 1.8, 0.7, 0.42, 'axis'), S('wisp_strip', 5.5, 3.0, 1.2, 1.1, 0.28, 'axis')],
+                   shell=Sh('haze', 'edge', 26.0, 0.35, scroll=5.0), motes=('drift', 0.2)),
 }
+LOOKS = list(LOOK)
 
 
 def art(key):
@@ -498,9 +685,10 @@ def art_part(F, rows, rng, pre):
     L = LOOK[look]
     small = F['small']
     wsc = 0.45 if small else 1.0   # (a claw's blade: the flames and mist in its own small measure)
+    G = F.get('gain', 1.0)         # (a weapon's own intensity: the Carian Wand's softer)
 
-    def emit(name, tex, pal, scale, verts, uvs, tris, cols_=None, flip=None, fps=None, vscroll=0.0, pulse=None, clamp=None):
-        head = f'shape {pre}{name} tex={GT}{tex}.dds color=1,1,1,1 scale={scale:.2f} blend=add palette={GT}pal_{pal}.dds'
+    def emit(name, tex, pal, scale, verts, uvs, tris, cols_=None, flip=None, fps=None, vscroll=0.0, pulse=None, clamp=None, blend='add', dark=False):
+        head = f'shape {pre}{name} tex={GT}{tex}.dds color=1,1,1,1 scale={scale * G:.2f} blend={blend} palette={GT}{"pald" if dark else "pal"}_{pal}.dds'
         if flip: head += f' flip={flip[0]}x{flip[1]} fps={fps} phase={rng.random() * 2:.2f}'
         if vscroll: head += f' vscroll={vscroll:.2f}'
         if pulse: head += f' pulse={pulse[0]},{pulse[1]},{pulse[2]}'
@@ -516,43 +704,57 @@ def art_part(F, rows, rng, pre):
         pal = cols[ei % len(cols)] if len(cols) > 1 else cols[0]
         L2 = np.linalg.norm(np.diff(pts, axis=0), axis=1); s = np.r_[0, np.cumsum(L2)]
         n = len(pts)
-        # (Noah: "the entire blade length") soft only over the last unit or so at each end of a run
         fl = 0.25 if small else 0.6   # (soft over only a hair at each end: the light runs to the guard and the tip)
-        fade = np.clip(np.minimum(s, s[-1] - s) / fl, 0, 1) if s[-1] < 1e9 else np.ones(n)
-        closed = np.linalg.norm(pts[0] - pts[-1]) < 1e-3
-        if closed: fade = np.ones(n)
-        for li, (tex, w, wc, per, rep, gain) in enumerate(L['strips']):
-            flipbook = tex == 'storm_edge'
+        fade = np.clip(np.minimum(s, s[-1] - s) / fl, 0, 1)
+        if np.linalg.norm(pts[0] - pts[-1]) < 1e-3: fade = np.ones(n)
+        # (a flipbook's cells each cover 16 units of edge: the edge is cut exactly at each cell's end, the point doubled - one
+        # closing the cell at v 1, one opening the next at v 0 - so the bolts run on with no gap between cells)
+        cpts, cnor, cfade, cv, ccut = [], [], [], [], []
+        for i in range(n):
+            if i > 0:
+                c0, c1 = int(s[i - 1] // 16.0), int(s[i] // 16.0)
+                for c in range(c0 + 1, c1 + 1):
+                    sb = c * 16.0; f = (sb - s[i - 1]) / max(1e-6, s[i] - s[i - 1])
+                    pb = pts[i - 1] + (pts[i] - pts[i - 1]) * f; nb = nor[i - 1] + (nor[i] - nor[i - 1]) * f; nb /= np.linalg.norm(nb) + 1e-9
+                    fb = fade[i - 1] + (fade[i] - fade[i - 1]) * f
+                    cpts += [pb, pb]; cnor += [nb, nb]; cfade += [fb, fb]; cv += [1.0, 0.0]; ccut += [False, True]
+            cpts.append(pts[i]); cnor.append(nor[i]); cfade.append(fade[i]); cv.append((s[i] % 16.0) / 16.0); ccut.append(False)
+        cpts = np.array(cpts); cnor = np.array(cnor)
+        for li, st in enumerate(L['strips']):
+            flipbook = bool(st['flip'])
+            P_, N_, F_ = (cpts, cnor, cfade) if flipbook else (pts, nor, fade)
+            m_ = len(P_)
             for mode in ('out', 'cross'):
-                ww = (w if mode == 'out' else wc) * wsc
-                vv = [(s[i] % 16.0) / 16.0 if flipbook else s[i] / 40.0 * rep / wsc for i in range(n)]
+                ww = (st['w'] if mode == 'out' else st['wc']) * wsc
+                if ww <= 0: continue
+                if flipbook: vv = cv
+                elif st['along'] == 'axis': vv = list(pts[:, 0] / 40.0 * st['rep'] / wsc)
+                elif st['along'] == 'axisdown': vv = list(-pts[:, 0] / 40.0 * st['rep'] / wsc)
+                else: vv = [s[i] / 40.0 * st['rep'] / wsc for i in range(n)]
                 verts, uvs, al, tris = [], [], [], []
                 # (the sheet's far border always clear - its last quarter fades to nothing: no line traced round the effect)
                 rows_ = (((-0.5 * wsc, 0.0, 1.0), (ww * 0.72, 0.72, 1.0), (ww, 1.0, 0.0)) if mode == 'out' else
                          ((-ww, 1.0, 0.0), (-ww * 0.72, 0.72, 1.0), (0.0, 0.0, 1.0), (ww * 0.72, 0.72, 1.0), (ww, 1.0, 0.0)))
                 k_ = len(rows_)
-                for i in range(n):
+                for i in range(m_):
                     for off, uu, aa in rows_:
-                        if mode == 'out': P = to3(F, pts[i] + nor[i] * off, 0.0)[0]
-                        else: P = to3(F, pts[i], off)[0]
-                        verts.append(P); uvs.append((uu, vv[i]))
-                        al.append(fade[i] * aa)
-                for i in range(n - 1):
-                    if flipbook and vv[i + 1] < vv[i]: continue   # (a new cell starts: no quad across the seam)
+                        P = to3(F, P_[i] + N_[i] * off, 0.0)[0] if mode == 'out' else to3(F, P_[i], off)[0]
+                        verts.append(P); uvs.append((uu, vv[i])); al.append(F_[i] * aa)
+                for i in range(m_ - 1):
+                    if flipbook and ccut[i + 1]: continue   # (the doubled point: the next cell starts here)
                     for r in range(k_ - 1):
                         a, b = i * k_ + r, i * k_ + r + 1; c2, d = a + k_, b + k_
                         tris += [(a, b, d), (a, d, c2)]
-                emit(f'e{ei}_{li}_{mode}', tex, pal, gain * (1.0 if mode == 'out' else 0.8), verts, uvs, tris, al,
-                     flip=(8, 4) if flipbook else None, fps=28 if flipbook else None, vscroll=0 if flipbook else per,
-                     clamp=None if flipbook else 1)
+                emit(f'e{ei}_{li}_{mode}', st['tex'], pal, st['gain'] * (1.0 if mode == 'out' else 0.8), verts, uvs, tris, al,
+                     flip=st['flip'], fps=st['fps'], vscroll=0 if flipbook else st['per'], clamp=None if flipbook else 1, blend=st['blend'], dark=st['dark'])
     # the shell over both faces
-    tex, how, tile, gain = L['shell']
-    if small: tile *= 0.5
+    sh = L['shell']
+    tile = sh['tile'] * (0.5 if small else 1.0); how = sh['how']
     mask, depth, dist, res, lo = F['mask'], F['depth'], F['dist'], F['res'], F['lo']
     step = 4                                     # (a quad every 1.2 units)
     gh, gw = mask.shape
     maxd = max(0.5, dist.max())
-    flipbook = tex == 'storm_shell'
+    flipbook = bool(sh['flip'])
     tris = []
     for side in (-1, 1):
         verts, uvs, al, tris = [], [], [], []
@@ -565,35 +767,32 @@ def art_part(F, rows, rng, pre):
                     p2 = np.array([lo[0] + b * res, lo[1] + a * res])
                     dz = side * (depth[a, b] + 0.12)
                     verts.append(to3(F, p2, dz)[0])
-                    if flipbook:   # (each quad its own cell's corner: the strike fills the quad's own tile)
-                        tu, tv = (p2[1] % tile) / tile, (p2[0] % tile) / tile
-                    else:
-                        tu, tv = p2[1] / tile, p2[0] / tile
+                    if flipbook: tu, tv = (p2[1] % tile) / tile, (p2[0] % tile) / tile   # (each quad its own cell's corner)
+                    else: tu, tv = p2[1] / tile, p2[0] / tile
                     uvs.append((tu, tv))
                     e = 1.0 - min(1.0, dist[a, b] / maxd)    # (0 the spine, 1 the edge)
                     w_ = {'edge': e ** 2.5, 'band': max(0.0, 1.0 - e * 1.6) if maxd > 1.2 else 0.0, 'all': 1.0}[how]
-                    # (Noah, 2026-11-24: "remove the lines ... it almost looks like a sketch") the shell melts away before the
-                    # steel's own edge - no stepped border of light laid round the blade
+                    # (Noah, 2026-11-24: "remove the lines ... it almost looks like a sketch") the shell melts away before the edge
                     w_ *= smooth(0.0, 1.0, (dist[a, b] - res * step * 0.5) / (1.0 if small else 1.8))
                     al.append(float(w_))
                 if flipbook and (max(u for u, _ in uvs[base:]) - min(u for u, _ in uvs[base:]) > 0.5 or max(v for _, v in uvs[base:]) - min(v for _, v in uvs[base:]) > 0.5):
                     del verts[base:], uvs[base:], al[base:]; continue
                 tris += [(base, base + 1, base + 2), (base, base + 2, base + 3)]
         if tris:
-            emit(f'shell{side + 1}', tex, cols[0], gain, verts, uvs, tris, al, flip=(8, 4) if flipbook else None, fps=24 if flipbook else None,
-                 vscroll=0 if flipbook else (6.0 if how == 'edge' else 0), pulse=(2.6, 0.45, 1.15) if look in ('runic', 'core') else None)
+            emit(f'shell{side + 1}', sh['tex'], cols[0], sh['gain'], verts, uvs, tris, al, flip=sh['flip'], fps=sh['fps'],
+                 vscroll=0 if flipbook else sh['scroll'], pulse=sh['pulse'], blend=sh['blend'], dark=sh['dark'])
     # motes: a few billboard sparks along the edges (fxwrite cards)
     kind, dens = L['motes']
     if not F['edges']: return (0, bool(tris), 0)
     total = sum(np.sum(np.linalg.norm(np.diff(p, axis=0), axis=1)) for p, _ in F['edges'])
-    nm = int(min(14, max(2 if small else 3, total * dens / 6)))
+    nm = int(min(14, max(2 if small else 3, total * dens / 6))) if dens > 0 else 0
     allp = np.concatenate([p for p, _ in F['edges']]); alln = np.concatenate([n for _, n in F['edges']])
     for m in range(nm):
         i = rng.integers(len(allp))
         off = {'rise': 1.5, 'spark': 1.2, 'drift': 3.0, 'fall': 0.8}[kind] * wsc
         p3 = to3(F, allp[i] + alln[i] * off, 0.0)[0]
         sz = {'rise': 0.7, 'spark': 0.5, 'drift': 1.1, 'fall': 0.6}[kind] * (0.6 if small else 1.0)
-        rows.append(f'shape {pre}m{m} tex={GT}mote.dds color=1,1,1,1 scale=1.6 blend=add billboard=1 palette={GT}pal_{cols[0]}.dds '
+        rows.append(f'shape {pre}m{m} tex={GT}mote.dds color=1,1,1,1 scale={1.6 * G:.2f} blend=add billboard=1 palette={GT}pal_{cols[0]}.dds '
                     f'pulse={0.6 + rng.random() * 1.4:.2f},0.0,1.0 at={p3[0]:.2f},{p3[1]:.2f},{p3[2]:.2f}')
         for (x, y, u, v) in ((-sz, -sz, 0, 1), (sz, -sz, 1, 1), (sz, sz, 1, 0), (-sz, sz, 0, 0)):
             rows.append(f'v {x:.3f} {y:.3f} 0 {u} {v} 1 1 1 1')
