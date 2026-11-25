@@ -276,7 +276,7 @@
   "where": "hit"
  },
  "javelin_bounce": {
-  "style": "chain",
+  "style": "bounce",
   "col": "orange",
   "size": 100,
   "where": "hit"
@@ -324,7 +324,7 @@
   "where": "hit"
  },
  "bane_heavy": {
-  "style": "cyclone",
+  "style": "shockwave",
   "col": "white",
   "size": 170,
   "where": "area"
@@ -354,7 +354,7 @@
   "where": "hit"
  },
  "wand_heavy": {
-  "style": "cyclone",
+  "style": "bolt",
   "col": "carian",
   "size": 150,
   "where": "area"
@@ -367,7 +367,7 @@
  },
  "staff_heavy": {
   "style": "pillar",
-  "col": "gold",
+  "col": "white",
   "size": 140,
   "where": "hit"
  },

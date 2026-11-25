@@ -40,22 +40,22 @@
   "art": "CurseOfAlduin\\wfx\\cls_daedricwand_carian.nif"
  },
  {
-  "model": "curseofalduin\\scythes\\forsworn.nif",
+  "model": "curseofalduin\\reapers\\forsworn.nif",
   "key": 0,
   "art": "CurseOfAlduin\\wfx\\cls_forsworn_alch.nif"
  },
  {
-  "model": "curseofalduin\\scythes\\falmer.nif",
+  "model": "curseofalduin\\reapers\\falmer.nif",
   "key": 0,
   "art": "CurseOfAlduin\\wfx\\cls_falmer_alch.nif"
  },
  {
-  "model": "curseofalduin\\scythes\\dwarven.nif",
+  "model": "curseofalduin\\reapers\\dwarven.nif",
   "key": 0,
   "art": "CurseOfAlduin\\wfx\\cls_dwarven_alch.nif"
  },
  {
-  "model": "curseofalduin\\scythes\\dragonpriest.nif",
+  "model": "curseofalduin\\reapers\\dragonpriest.nif",
   "key": 0,
   "art": "CurseOfAlduin\\wfx\\cls_dragonpriest_alch.nif"
  },

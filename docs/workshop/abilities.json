@@ -19,15 +19,6 @@
      "scale": 0.9
     },
     {
-     "role": "pillar",
-     "model": "apocnew\\conjurationsummon_explosion.nif",
-     "label": "Apocalypse: summoning burst",
-     "opts": "pal=green s=0.90 delay=0.10 ground play",
-     "delay": 0.1,
-     "ground": true,
-     "scale": 0.9
-    },
-    {
      "role": "mist",
      "model": "effects\\fxwaterfallmistblastlite.nif",
      "label": "Skyrim: waterfall mist blast",
@@ -140,15 +131,6 @@
      "delay": 0.05,
      "ground": false,
      "scale": 0.96
-    },
-    {
-     "role": "mist",
-     "model": "effects\\fxwaterfallmistblastlite.nif",
-     "label": "Skyrim: waterfall mist blast",
-     "opts": "s=0.84 delay=0.50",
-     "delay": 0.5,
-     "ground": false,
-     "scale": 0.84
     }
    ],
    "note": ""
@@ -234,15 +216,6 @@
      "delay": 0.6,
      "ground": true,
      "scale": 0.81
-    },
-    {
-     "role": "big",
-     "model": "magic\\shoutareaexplosion01.nif",
-     "label": "Skyrim: Unrelenting Force wave",
-     "opts": "pal=blue s=1.05 delay=0.10 ground",
-     "delay": 0.1,
-     "ground": true,
-     "scale": 1.05
     }
    ],
    "note": ""
@@ -442,15 +415,6 @@
      "delay": 0.05,
      "ground": false,
      "scale": 0.56
-    },
-    {
-     "role": "mist",
-     "model": "dlc02\\effects\\poisongasexplosion.nif",
-     "label": "Dragonborn: poison gas cloud",
-     "opts": "s=0.50 delay=0.50",
-     "delay": 0.5,
-     "ground": false,
-     "scale": 0.5
     }
    ],
    "note": ""
@@ -735,15 +699,6 @@
      "delay": 0.05,
      "ground": false,
      "scale": 1.12
-    },
-    {
-     "role": "mist",
-     "model": "apocnew\\illusionshadow_explosion.nif",
-     "label": "Apocalypse: Shadow explosion",
-     "opts": "s=1.51 delay=0.50 play",
-     "delay": 0.5,
-     "ground": false,
-     "scale": 1.51
     },
     {
      "role": "big",
@@ -1768,15 +1723,6 @@
      "scale": 0.9
     },
     {
-     "role": "pillar",
-     "model": "apocnew\\conjurationsummon_explosion.nif",
-     "label": "Apocalypse: summoning burst",
-     "opts": "s=0.90 delay=0.10 ground play",
-     "delay": 0.1,
-     "ground": true,
-     "scale": 0.9
-    },
-    {
      "role": "mist",
      "model": "effects\\fxwaterfallmistblastlite.nif",
      "label": "Skyrim: waterfall mist blast",
@@ -1802,15 +1748,6 @@
      "label": "Apocalypse: summoning burst",
      "opts": "s=0.90 ground play",
      "delay": 0,
-     "ground": true,
-     "scale": 0.9
-    },
-    {
-     "role": "pillar",
-     "model": "apocnew\\conjurationsummon_explosion.nif",
-     "label": "Apocalypse: summoning burst",
-     "opts": "s=0.90 delay=0.10 ground play",
-     "delay": 0.1,
      "ground": true,
      "scale": 0.9
     },
@@ -2048,24 +1985,33 @@
    "card": "bane_heavy",
    "theme": "wind",
    "col": "white",
-   "style": "cyclone",
+   "style": "shockwave",
    "size": 170,
    "parts": [
     {
-     "role": "big",
-     "model": "magic\\shoutareaexplosion01.nif",
-     "label": "Skyrim: Unrelenting Force wave",
-     "opts": "s=1.19 ground",
+     "role": "ring",
+     "model": "effects\\mg07labyrinthianshockwave.nif",
+     "label": "Skyrim: Labyrinthian shockwave",
+     "opts": "pal=white s=0.68 ground",
      "delay": 0,
      "ground": true,
+     "scale": 0.68
+    },
+    {
+     "role": "core",
+     "model": "magic\\shoutareaexplosionsmall01.nif",
+     "label": "Skyrim: Unrelenting Force (small)",
+     "opts": "s=1.19",
+     "delay": 0.0,
+     "ground": false,
      "scale": 1.19
     },
     {
      "role": "wave",
      "model": "magic\\shoutareaexplosion01.nif",
      "label": "Skyrim: Unrelenting Force wave",
-     "opts": "s=1.02 delay=0.10 ground",
-     "delay": 0.1,
+     "opts": "s=1.02 delay=0.08 ground",
+     "delay": 0.08,
      "ground": true,
      "scale": 1.02
     },
@@ -2073,10 +2019,10 @@
      "role": "mist",
      "model": "effects\\fxwaterfallmistblast.nif",
      "label": "Skyrim: waterfall mist",
-     "opts": "s=0.85 delay=0.20",
+     "opts": "s=0.77 delay=0.20 ground",
      "delay": 0.2,
-     "ground": false,
-     "scale": 0.85
+     "ground": true,
+     "scale": 0.77
     }
    ],
    "note": ""
@@ -3219,15 +3165,6 @@
      "delay": 0.05,
      "ground": false,
      "scale": 0.88
-    },
-    {
-     "role": "mist",
-     "model": "dlc02\\effects\\poisongasexplosion.nif",
-     "label": "Dragonborn: poison gas cloud",
-     "opts": "s=0.79 delay=0.50",
-     "delay": 0.5,
-     "ground": false,
-     "scale": 0.79
     }
    ],
    "note": ""
@@ -3342,15 +3279,6 @@
      "delay": 0.05,
      "ground": false,
      "scale": 1.04
-    },
-    {
-     "role": "mist",
-     "model": "magus\\mysticism\\sunlightexplosion01.nif",
-     "label": "Mysticism: sunlight burst",
-     "opts": "s=1.40 delay=0.50 play",
-     "delay": 0.5,
-     "ground": false,
-     "scale": 1.4
     },
     {
      "role": "big",

@@ -189,11 +189,11 @@
       "grade": "worn",
       "type": "scythe",
       "uses": 100,
-      "model": "CurseOfAlduin\\scythes\\silver.nif",
+      "model": "CurseOfAlduin\\reapers\\silver.nif",
       "power": "A scythe. Every 4th hit: a silver flash that briefly slows the dead.",
       "owner": "Left at the Hall of the Vigilant after it burned.",
       "verify": [],
-      "show": "CurseOfAlduin\\scythes\\silver.nif",
+      "show": "CurseOfAlduin\\reapers\\silver.nif",
       "gloves": []
     },
     {
@@ -202,11 +202,11 @@
       "grade": "battered",
       "type": "scythe",
       "uses": 30,
-      "model": "CurseOfAlduin\\scythes\\Skeleton.nif",
+      "model": "CurseOfAlduin\\reapers\\Skeleton.nif",
       "power": "A scythe. 1 kill in 4 rises to fight for you for 20 s.",
       "owner": "Dug out of a necromancer's grave outside Falkreath.",
       "verify": [],
-      "show": "CurseOfAlduin\\scythes\\Skeleton.nif",
+      "show": "CurseOfAlduin\\reapers\\Skeleton.nif",
       "gloves": []
     },
     {
@@ -215,11 +215,11 @@
       "grade": "worn",
       "type": "scythe",
       "uses": 100,
-      "model": "CurseOfAlduin\\scythes\\dragonTeeth.nif",
+      "model": "CurseOfAlduin\\reapers\\dragonTeeth.nif",
       "power": "A scythe. Hits make the dead bleed. Heavy: a shockwave that staggers the dead within 8 m.",
       "owner": "Pulled from a dragon mound's bones.",
       "verify": [],
-      "show": "CurseOfAlduin\\scythes\\dragonTeeth.nif",
+      "show": "CurseOfAlduin\\reapers\\dragonTeeth.nif",
       "gloves": []
     },
     {
@@ -228,11 +228,11 @@
       "grade": "battered",
       "type": "scythe",
       "uses": 30,
-      "model": "CurseOfAlduin\\scythes\\vampire.nif",
+      "model": "CurseOfAlduin\\reapers\\vampire.nif",
       "power": "A scythe. Hits drain blood to heal you. Heavy: drains everything it touches.",
       "owner": "Taken from a vampire lord who hunted the cursed for sport.",
       "verify": [],
-      "show": "CurseOfAlduin\\scythes\\vampire.nif",
+      "show": "CurseOfAlduin\\reapers\\vampire.nif",
       "gloves": []
     }
   ]

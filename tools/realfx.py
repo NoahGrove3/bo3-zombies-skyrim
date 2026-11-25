@@ -292,6 +292,7 @@ def compose(ab):
     parts = []
     for role, delay, rk, ground in roles:
         p = RING if role == 'ring' else th[role]
+        if role != 'ring' and any(q['model'] == p['model'] for q in parts): continue   # (one theme's same part twice: once)
         opts = []
         if not p['nat'] and not native: opts.append(f'pal={ramp}')
         elif role == 'ring': opts.append(f'pal={ramp}')

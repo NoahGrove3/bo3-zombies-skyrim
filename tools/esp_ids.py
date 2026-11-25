@@ -28,7 +28,7 @@ PRIEST_WEAPONS = {
     'Riften': ('rahgot', 'Sacrifice Knife', 'rahgot_dagger', 'dagger', 20, "Rahgot's dagger. Hits poison, spreading to the next of the dead. Heavy: every poisoned one bursts."),
     'Falkreath': ('krosis', 'Grief Blade', 'krosis_griefblade', 'sword', 26, "Krosis's sword. Hits heal you 1%. Heavy: a wail that weakens the dead around you."),
     'Morthal': ('hevnoraak', 'Sealbreaker', 'hevnoraak_sealbreaker', 'battleaxe', 40, "Hevnoraak's battleaxe. Hits shatter armour. Heavy: a shockwave that staggers all around you."),
-    'Dawnstar': ('vokun', "Nightcaller's Scythe", 'CurseOfAlduin\\scythes\\daedric.nif', 'scythe', 40, "Vokun's scythe. Hits put the dead to sleep. Heavy: a nightmare fog that slows them."),
+    'Dawnstar': ('vokun', "Nightcaller's Scythe", 'CurseOfAlduin\\reapers\\daedric.nif', 'scythe', 40, "Vokun's scythe. Hits put the dead to sleep. Heavy: a nightmare fog that slows them."),
     'Winterhold': ('morokei', 'Arcane Maul', 'morokei_maul', 'warhammer', 42, "Morokei's warhammer. Hits burst with magic. Heavy: a magicka shockwave that refills your magicka."),
 }
 # (Noah: "the mod that gives weapons effect animations ... properly assign each one for every weapon in our mod") Visual Animated
@@ -155,6 +155,8 @@ MASTERS = ['Skyrim.esm', 'Update.esm', 'Dawnguard.esm', 'Dragonborn.esm', 'mihai
 
 POWERUPS = [('instakill', 'FF3030'), ('double', 'FFD040'), ('kaboom', 'FF8A20'), ('firesale', 'B060FF'), ('maxammo', '46C8FF'), ('shadow', '8040E0'), ('thuum', 'D0E8FF'), ('mercy', '50E070')]
 
+# (Noah, 2026-11-25: our own scythes, built from Skyrim's own weapons - tools/scythes.py; the glass one is still Battle Scythe's)
+def scythe_model(n): return ('CurseOfAlduin\\scythes\\' if n == 'glass' else 'CurseOfAlduin\\reapers\\') + n + '.nif'
 SCYTHES = ['forsworn', 'falmer', 'dwarven', 'glass', 'dragonpriest', 'silver', 'Skeleton', 'dragonTeeth', 'vampire', 'daedric']
 
 
@@ -205,7 +207,7 @@ def dressing(S):
         if w['type'] != 'book' and w.get('model') and not w.get('look'):
             records[('STAT', '1st_tab_' + w['id'])] = {'model': w['model'], 'color': '', 'radius': 0}
     for n in SCYTHES:
-        records[('STAT', '1st_scythe_' + n.lower())] = {'model': 'CurseOfAlduin\\scythes\\' + n + '.nif', 'color': '', 'radius': 0}
+        records[('STAT', '1st_scythe_' + n.lower())] = {'model': scythe_model(n), 'color': '', 'radius': 0}
     records[('STAT', 'tablet_beacon')] = {'model': 'DLC01\\Effects\\DLC1WayshrineLightBeam01.nif', 'color': '', 'radius': 0}
     records[('STAT', 'tablet_mask')] = {'model': 'Armor\\DragonPriestHelms\\dragonhelm_ultra_go.nif', 'color': '', 'radius': 0}
     records[('STAT', 'whirlwind')] = {'model': 'CurseOfAlduin\\fx\\whirlwind.nif', 'color': '', 'radius': 0}  # Bond II's Updraft shout: the whirlwind round you

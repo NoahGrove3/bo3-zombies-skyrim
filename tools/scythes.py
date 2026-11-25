@@ -24,10 +24,10 @@ BLADE_LEN = 68.0              # (the blade's length along its curve)
 # name: (the game's model it replaces, its title, the haft (model, how), the blade (model), the blade's width, its bend, extras)
 SCYTHES = {
  'daedric':      ("Nightcaller's Scythe (Vokun)", ('weapons/daedric/daedricbattleaxe.nif', 'axe'), 'weapons/daedric/daedricgreatsword.nif', 1.55, 78, []),
- 'silver':       ('Silver Reaping', ('weapons/silver/silvergreatsword.nif', 'grip'), 'weapons/silver/silvergreatsword.nif', 1.6, 70, []),
+ 'silver':       ('Silver Reaping', ('weapons/silver/silvergreatsword.nif', 'grip'), 'weapons/silver/silvergreatsword.nif', 1.6, 70, ['flush']),
  'Skeleton':     ('Bonereaper', ('clutter/bones/humanspine.nif', 'spine'), 'weapons/draugr/draugrgreatsword.nif', 1.55, 82, ['skull']),
- 'dragonTeeth':  ('Wyrmtooth', ('dlc01/weapons/dragonbone/battleaxe.nif', 'axe'), 'dlc01/weapons/dragonbone/greatsword.nif', 1.35, 74, []),
- 'vampire':      ('Bloodmoon Scythe', ('weapons/ebony/ebonybattleaxe.nif', 'axe'), 'dlc01/weapons/vampire/sword.nif', 2.6, 76, []),
+ 'dragonTeeth':  ('Wyrmtooth', ('dlc01/weapons/dragonbone/battleaxe.nif', 'axe'), 'dlc01/weapons/dragonbone/greatsword.nif', 1.35, 74, ['flush', 'tight']),
+ 'vampire':      ('Bloodmoon Scythe', ('weapons/ebony/ebonybattleaxe.nif', 'axe'), 'dlc01/weapons/vampire/sword.nif', 2.6, 76, ['flush']),
  'forsworn':     ('Shadowflame Scythe - Forsworn (Tier I)', ('weapons/forsworn/forswornaxe.nif', 'axe'), 'weapons/forsworn/forswornsword.nif', 1.6, 74, []),
  'falmer':       ('Shadowflame Scythe - Falmer (Tier II)', ('weapons/falmer/falmeraxe.nif', 'axe'), 'weapons/falmer/falmerlongsword.nif', 1.9, 80, []),
  'dwarven':      ('Shadowflame Scythe - Dwarven (Tier III)', ('weapons/dwarven/dwarvenbattleaxe.nif', 'axe'), 'weapons/dwarven/dwarvengreatsword.nif', 1.5, 66, []),
@@ -69,6 +69,30 @@ def subdivide(sh, maxlen=2.5):
     return dict(sh, V=np.array(V, float), UV=np.array(UV, float), T=np.array(T, int))
 
 
+def on_pole(sh, r0):
+    """only the pieces on the pole's own line (what's left of an axe head beside it taken away)"""
+    V, T = sh['V'], sh['T']
+    par = list(range(len(V)))
+    def find(a):
+        while par[a] != a: par[a] = par[par[a]]; a = par[a]
+        return a
+    # (corners at the same place are one: a mesh's seams split its vertices)
+    key = {}
+    for i, v in enumerate(np.round(V, 3)):
+        k = tuple(v)
+        if k in key: par[find(i)] = find(key[k])
+        else: key[k] = i
+    for a, b, c in T:
+        ra, rb, rc = find(a), find(b), find(c); par[rb] = ra; par[find(rc)] = ra
+    root = np.array([find(i) for i in range(len(V))])
+    ok = np.zeros(len(V), bool)
+    for r in np.unique(root):
+        m = root == r
+        cx = (V[m, 0].min() + V[m, 0].max()) / 2
+        if abs(cx) <= r0 * 0.8 + 0.3: ok |= m
+    return keep(sh, ok)
+
+
 def keep(sh, ok):
     """the shape's triangles whose three corners all pass"""
     m = ok[sh['T']].all(1)
@@ -78,7 +102,7 @@ def keep(sh, ok):
     return dict(sh, V=sh['V'][idx], UV=sh['UV'][idx], T=re[T])
 
 
-def haft(rel, how):
+def haft(rel, how, rk=1.35):
     parts = []
     if how == 'spine':   # (two of Skyrim's human spines end to end: the Bonereaper's pole of bone)
         sp = load(rel)[0]
@@ -93,7 +117,9 @@ def haft(rel, how):
         if how in ('axe', 'staff'):
             # (the head taken off: the pole is what stays within its own width all the way up)
             r0 = np.percentile(np.abs(V[V[:, 1] < 0][:, 0]), 96) if (V[:, 1] < 0).any() else 2.0
-            sh = keep(sh, np.abs(V[:, 0]) <= r0 * 1.35 + 0.4) if how == 'axe' else sh
+            sh = keep(sh, np.abs(V[:, 0]) <= r0 * rk + 0.4) if how == 'axe' else sh
+            if sh is None: continue
+            if how == 'axe': sh = on_pole(sh, r0)
             if sh is None: continue
             sh = subdivide(sh, 6.0)
             V = sh['V'].copy()
@@ -112,17 +138,20 @@ def haft(rel, how):
             gy0, gy1 = g['V'][:, 1].min(), g['V'][:, 1].max()
             core = keep(g, g['V'][:, 1] > gy0 + 4.5)   # (the wrap without its pommel)
             pom = keep(g, g['V'][:, 1] <= gy0 + 4.5)
-            seg = gy1 - (gy0 + 4.5)
+            c0, c1 = core['V'][:, 1].min(), core['V'][:, 1].max()
+            seg = (c1 - c0) * 0.98                    # (each binding touching the next: no gaps up the pole)
             V = pom['V'].copy(); V[:, 1] += YB - gy0; parts.append(dict(pom, V=V))
-            y = YB + 4.5; n = int(math.ceil((YT - 4 - y) / seg))
+            y = YB + (pom['V'][:, 1].max() - gy0) - 0.3; n = int(math.ceil((YT - 4 - y) / seg))
             for i in range(n):
-                V = core['V'].copy(); V[:, 1] += y - (gy0 + 4.5); parts.append(dict(core, V=V)); y += seg
+                V = core['V'].copy(); V[:, 1] += y - c0; parts.append(dict(core, V=V)); y += seg
     return parts
 
 
-def blade(rel, width, bend, top):
-    """the sword's blade (and its guard) bent into the scythe's crescent: out along -X from the head, curving down"""
-    out = []
+def blade(rel, width, bend, top, flush=False):
+    """the sword's blade (and its guard) bent into the scythe's crescent: out along -X from the head, curving down
+    (flush: its guard centred on the pole, the pole's head ending inside it - Noah, 2026-11-25: "Make sure where the blade
+    connects to the handle is flush")"""
+    out, guard = [], []
     for sh in load(rel):
         V = sh['V']
         # where the guard ends and the blade begins: the widest slice above the grip
@@ -150,6 +179,12 @@ def blade(rel, width, bend, top):
         Y = top + cy + ny * x
         Z = P[:, 2] * 1.2
         out.append(dict(b, V=np.stack([X, Y, Z], 1)))
+        guard.append(np.stack([X, Y, Z], 1)[s < 0])
+    if flush:
+        G = np.concatenate(guard)
+        gx = (G[:, 0].min() + G[:, 0].max()) / 2
+        for o in out: o['V'] = o['V'] - np.array([gx, 0, 0])
+        return out, (G[:, 1].min(), G[:, 1].max())
     return out
 
 
@@ -163,9 +198,18 @@ def skull(at):
 
 def build(name):
     title, (hrel, how), brel, width, bend, extra = SCYTHES[name]
-    parts = haft(hrel, how)
+    parts = haft(hrel, how, 1.1 if 'tight' in extra else 1.35)
     top = YT - 10
-    parts += blade(brel, width, bend, top)
+    if 'flush' in extra:
+        bl, (g0, g1) = blade(brel, width, bend, top, True)
+        # (the pole's head brought down inside the collar: its top a little below the collar's)
+        hy = max(p['V'][:, 1].max() for p in parts)
+        want = top + 0.3 * (g1 - top)
+        for p in parts:
+            V = p['V'].copy(); V[:, 1] = YB + (V[:, 1] - YB) * (want - YB) / (hy - YB); p['V'] = V
+        parts += bl
+    else:
+        parts += blade(brel, width, bend, top)
     if 'skull' in extra: parts += skull((0.5, top + 2, 0))
     return title, parts
 
@@ -241,6 +285,81 @@ def preview():
     (OUT / 'info.json').write_text(json.dumps(info(), indent=1))
 
 
+def normals(V, T):
+    N = np.zeros_like(V)
+    a, b, c = V[T[:, 0]], V[T[:, 1]], V[T[:, 2]]
+    fn = np.cross(b - a, c - a)
+    for i in range(3): np.add.at(N, T[:, i], fn)
+    # (corners at one place share their normal: smooth across a mesh's UV seams)
+    key = {}
+    for i, v in enumerate(np.round(V, 3)): key.setdefault(tuple(v), []).append(i)
+    for idx in key.values():
+        if len(idx) > 1: N[idx] = N[idx].sum(0)
+    return N / (np.linalg.norm(N, axis=1, keepdims=True) + 1e-12)
+
+
+def game():
+    """each scythe for the game: Meshes/CurseOfAlduin/reapers/<name>.nif - its blade and its pole their own shapes (the looks
+    take the blade: tools/weaponfx.py), Skyrim's own textures by their paths in the game (none of them copied)"""
+    import subprocess
+    sys.path.insert(0, str(ROOT / 'tools'))
+    from throwdagger import Mesh, rename_root
+    TOOLS = pathlib.Path('/home/claude/tools')
+    MESHDIR = ROOT / 'assets' / 'fx' / 'Meshes' / 'CurseOfAlduin' / 'reapers'; MESHDIR.mkdir(parents=True, exist_ok=True)
+    WORK = OUT / 'game'; WORK.mkdir(parents=True, exist_ok=True)
+    for k in SCYTHES:
+        title, parts = build(k)
+        nb = len(blade_parts_of(k))
+        M = Mesh(); mats = {}; spaced = {}
+        for i, p in enumerate(parts):
+            t = p['tex'].replace('/', '\\')
+            t = t[9:] if t.lower().startswith('textures\\') else t
+            role = 'blade' if i >= len(parts) - nb - (1 if 'skull' in SCYTHES[k][5] else 0) and not (p['tex'].lower().endswith('skeleton.dds')) else ('bone' if p['tex'].lower().endswith('skeleton.dds') else 'pole')
+            m = role + '_' + pathlib.Path(t).stem.lower().replace(' ', '')
+            if ' ' in t: spaced[m] = t
+            tt = t.replace(' ', '')
+            mats[m] = f'diffuse={tt} normal={tt[:-4]}_n.dds spec=0.7 gloss=40 alpha=0 doublesided=0'
+            M.add(m, m, p['V'], normals(p['V'], p['T']), p['UV'], p['T'])
+        # (one shape per material; the blade's called Blade for the looks)
+        merged = {}
+        for g_, m, V, N, UV, F in M.groups:
+            e = merged.setdefault(m, [[], [], [], [], 0]); e[0].append(V); e[1].append(N); e[2].append(UV); e[3].append(F + e[4]); e[4] += len(V)
+        M.groups = [(('Blade' if m.startswith('blade') else 'Pole' if m.startswith('pole') else 'Bone') + ('' if j == 0 else str(j)), m,
+                     np.vstack(e[0]), np.vstack(e[1]), np.vstack(e[2]), np.vstack(e[3])) for j, (m, e) in enumerate(merged.items())]
+        # (names unique, the blade's plain)
+        seen = {}; G = []
+        for gname, m, V, N, UV, F in M.groups:
+            base = 'Blade' if m.startswith('blade') else 'Pole' if m.startswith('pole') else 'Bone'
+            n = seen.get(base, 0); seen[base] = n + 1
+            G.append((base if n == 0 else f'{base}{n + 1}', m, V, N, UV, F))
+        M.groups = G
+        obj = WORK / f'{k}.obj'; M.write_obj(obj)
+        nif = MESHDIR / f'{k}.nif'
+        job = [f'in {obj}', f'out {nif}', 'scale 1', 'ground 0', 'origin 1', 'offset 0 0 0'] + [f'mat {a} {b}' for a, b in mats.items()]
+        (WORK / f'{k}.job').write_text('\n'.join(job) + '\n')
+        r = subprocess.run([str(TOOLS / 'modelconv'), str(WORK / f'{k}.job')], capture_output=True, text=True)
+        if r.returncode: print(r.stdout, r.stderr); raise SystemExit('modelconv failed')
+        # (a texture path with a space - Skyrim's 'dragon priest' folder - can't ride a job line: set after, by tools/modelconv/settex.cpp)
+        for gname, m, *_ in M.groups:
+            t = spaced.get(m)
+            if not t: continue
+            exe = WORK / 'settex'
+            if not exe.exists():
+                subprocess.run(['g++', '-std=c++20', '-O1', f'-I{TOOLS}/nifly/include', f'-I{TOOLS}/nifly/external', str(ROOT / 'tools' / 'modelconv' / 'settex.cpp'),
+                                str(TOOLS / 'nifly' / 'build' / 'src' / 'libnifly.a'), '-o', str(exe)], check=True)
+            subprocess.run([str(exe), str(nif), gname, 'textures\\' + t, 'textures\\' + t[:-4] + '_n.dds'], check=True)
+        import throwdagger; throwdagger.WORK.mkdir(parents=True, exist_ok=True)
+        rename_root(nif, 'Scythe' + k[0].upper() + k[1:])
+        subprocess.run([str(TOOLS / 'addprn'), str(nif), str(nif), 'WeaponBack'], check=True)
+        print(nif.name, nif.stat().st_size // 1024, 'KB', [g[0] for g in M.groups])
+
+
+def blade_parts_of(k):
+    title, (hrel, how), brel, width, bend, extra = SCYTHES[k]
+    return [p for p in load(brel)]
+
+
 if __name__ == '__main__':
     if sys.argv[1:] == ['preview']: preview()
+    if sys.argv[1:] == ['game']: game(); raise SystemExit
     sheet()

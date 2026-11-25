@@ -3278,8 +3278,8 @@ namespace coa::Classes
 			// (Noah: "all scythes should be smaller" - 60%: tools/scythes.sh makes them on your machine from your own Battle Scythe)
 			// (Noah, 2026-11-24: Ascended keeps Tier III's look - "Tier III gets the last") Forsworn, Falmer, Dwarven, then the Dragon
 			// Priest's scythe from Tier III on; the Glass scythe is no longer worn
-			static constexpr const char* kScythe[5] = { "CurseOfAlduin\\scythes\\forsworn.nif", "CurseOfAlduin\\scythes\\falmer.nif", "CurseOfAlduin\\scythes\\dwarven.nif",
-				"CurseOfAlduin\\scythes\\dragonpriest.nif", "CurseOfAlduin\\scythes\\dragonpriest.nif" };
+			static constexpr const char* kScythe[5] = { "CurseOfAlduin\\reapers\\forsworn.nif", "CurseOfAlduin\\reapers\\falmer.nif", "CurseOfAlduin\\reapers\\dwarven.nif",
+				"CurseOfAlduin\\reapers\\dragonpriest.nif", "CurseOfAlduin\\reapers\\dragonpriest.nif" };
 			const bool changed = ScytheLook(a_w, kScythe[std::clamp(a_tier, 0, 4)]);
 			if (changed) logger::info("classes: the {} takes the look of {}", a_w->GetName(), kScythe[std::clamp(a_tier, 0, 4)]);
 			return changed;
@@ -4678,7 +4678,8 @@ namespace coa::Classes
 					c->SetScale(kCatScale);
 					c->AsActorValueOwner()->SetActorValue(RE::ActorValue::kAttackDamageMult, dmg);
 					g_soulWolves.push_back({ c->GetHandle(), 0.0f });
-					Gun::Motes(8, at, 0.8f, 1.4f);
+					// (Noah, 2026-11-25: "Use skyrims summon portal") Skyrim's own conjuring portal where it comes (fxmap.ini soul_portal.nif)
+					Gun::QueueFx("CurseOfAlduin\\fx\\soul_portal.nif", at, 1.0f, 0.0f, 0.0f, false);
 					logger::info("summoner: a spectral sabre cat leaps out ({:.0f} health, bite x{:.2f}, {} out)", hp, dmg, g_soulWolves.size());
 				}
 			});

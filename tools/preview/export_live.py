@@ -36,7 +36,9 @@ def find_tex(rel):
         if p.parent.exists():
             for c in p.parent.iterdir():
                 if c.name.lower() == p.name.lower(): return c
-    return None
+    # (Skyrim's own weapon textures the scythes wear: read small from Noah's game - tools/scythes.py)
+    j = W.ROOT / 'build' / 'scythes' / 'tex' / (rel.lower().replace('/', '__').replace(' ', '_')[:-4] + '.jpg')
+    return j if j.exists() else None
 
 
 def root_scale(path):
