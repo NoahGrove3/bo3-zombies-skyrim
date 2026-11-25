@@ -41,26 +41,26 @@ COL = {
     'ss_none': '#ff4a32', 'arcane': '#a8c4ff', 'shockv': '#9f8cff', 'shadow': '#9a3bff', 'carian': '#4682ff',
 }
 # each weapon: its model, its steel (shape names; '*' any lit shape), the height band that is steel (y from, to), its look and
-# colour (Noah's picks, the Curse Weapon Effects page, 2026-11-24)
+# colour (Noah's picks, the workshop 2026-11-25)
 WEAPONS = {
     'priest_vahlok':     ('CurseOfAlduin\\priests\\vahlok_keyhammer.nif', ['Nordic:0', 'Iron:1'], (27, 99), 'core', 'white'),
     'priest_nahkriin':   ('CurseOfAlduin\\priests\\nahkriin_mistblade.nif', ['BladeBody'], None, 'mist', 'white'),
-    'priest_volsung':    ('CurseOfAlduin\\priests\\volsung_windcutter.nif', ['Blade:1'], None, 'core', 'white'),
-    'priest_zahkriisos': ('CurseOfAlduin\\priests\\zahkriisos_greatsword.nif', ['Ice:1'], None, 'core', 'iceblue'),
-    'priest_otar':       ('CurseOfAlduin\\priests\\otar_stormblade.nif', ['Blade:2'], None, 'core', 'blue'),
-    'priest_rahgot':     ('CurseOfAlduin\\priests\\rahgot_dagger.nif', ['Obsidian:1'], None, 'core', 'poison'),
-    'priest_krosis':     ('CurseOfAlduin\\priests\\krosis_griefblade.nif', ['Blade:0'], None, 'core', 'red'),
+    'priest_volsung':    ('CurseOfAlduin\\priests\\volsung_windcutter.nif', ['Blade:1'], None, 'shadow', 'white'),
+    'priest_zahkriisos': ('CurseOfAlduin\\priests\\zahkriisos_greatsword.nif', ['Ice:1'], None, 'frost', 'iceblue'),
+    'priest_otar':       ('CurseOfAlduin\\priests\\otar_stormblade.nif', ['Blade:2'], None, 'storm', 'blue'),
+    'priest_rahgot':     ('CurseOfAlduin\\priests\\rahgot_dagger.nif', ['Obsidian:1'], None, 'flame', 'poison'),
+    'priest_krosis':     ('CurseOfAlduin\\priests\\krosis_griefblade.nif', ['Blade:0'], None, 'mist', 'red'),
     'priest_hevnoraak':  ('CurseOfAlduin\\priests\\hevnoraak_sealbreaker.nif', ['Stone:3'], None, 'core', 'green'),
     'priest_vokun':      ('CurseOfAlduin\\scythes\\daedric.nif', ['daedricsword01'], None, 'core', 'purple'),
-    'priest_morokei':    ('CurseOfAlduin\\priests\\morokei_maul.nif', ['Steel:0', 'Crystal:2'], (40, 99), 'flame', 'drain'),
+    'priest_morokei':    ('CurseOfAlduin\\priests\\morokei_maul.nif', ['Steel:0', 'Crystal:2'], (40, 99), 'radiance', 'drain'),
     'tab_stormtalons':   ('weapons\\NewArmoury\\Fists\\glassClaw.nif', ['GlassClawGlass1'], None, 'storm', 'blue'),
     'tab_gravebell':     ('CurseOfAlduin\\tablet\\gravebell.nif', ['Bronze:3'], None, 'core', 'white'),
     'tab_talons':        ('weapons\\NewArmoury\\Fists\\DBClaw.nif', ['DBClaw_MTL_B'], None, 'flame', 'red'),
     'tab_riverstone':    ('weapons\\NewArmoury\\Halberds\\NordicHalberd.nif', ['NordicPikeShaft', 'NordicPikeTip'], (70, 999), 'core', 'green'),
-    'tab_wyrmspine':     ('weapons\\NewArmoury\\Pikes\\DragonbonePike.nif', ['DragonbonePikeTip'], None, 'mist', 'fear'),
+    'tab_wyrmspine':     ('weapons\\NewArmoury\\Pikes\\DragonbonePike.nif', ['DragonbonePikeTip'], None, 'flame', 'fear'),
     'tab_lanternwick':   ('weapons\\NewArmoury\\QuarterStaffs\\StalhrimStaff.nif', ['StahlrimStaffBlade'], [(42, 999), (-999, -30)], 'core', 'iceblue'),
     'tab_cinderclaws':   ('weapons\\NewArmoury\\Fists\\DaedricClaw.nif', ['DaedricClaws_MTL_B'], None, 'core', 'orange'),
-    'tab_eclipse':       ('weapons\\NewArmoury\\Pikes\\GlassPike.nif', ['GlassPikeTip'], None, 'mist', 'purple'),
+    'tab_eclipse':       ('weapons\\NewArmoury\\Pikes\\GlassPike.nif', ['GlassPikeTip'], None, 'flame', 'moon'),
     'tab_frostmourn':    ('weapons\\NewArmoury\\Rapier\\StahlrimRapier.nif', ['StahlrimRapier:18'], (9.5, 999), 'mist', 'iceblue'),
     'tab_silverscythe':  ('CurseOfAlduin\\scythes\\silver.nif', ['SilverGreatSword:0_2'], None, 'core', 'moon'),
     'tab_bonereaper':    ('CurseOfAlduin\\scythes\\Skeleton.nif', ['IronLongSword01:0_3'], None, 'core', 'green'),
@@ -81,13 +81,15 @@ LEFT = {'tab_stormtalons_l', 'tab_talons_l', 'tab_cinderclaws_l'}
 # the class weapons: each takes another model at each tier (src/Classes.cpp AdoptTierLook), so each tier's model has its own
 # art; the Spellbound Rapier's look follows the element in your other hand (its BLADE_VIZ key: src/Classes.cpp LookKey)
 BV_KEYS = ['alch', 'carian', 'radiant', 'ss_none', 'ss_fire', 'ss_frost', 'ss_shock', 'ss_sun', 'ss_blood', 'slayer']
-BV_PICK = {'alch': ('flame', 'shadow'), 'carian': ('mist', 'carian'), 'radiant': ('core', 'shadow'), 'ss_none': ('core', 'white'),
+BV_PICK = {'alch': ('flame', 'shadow'), 'carian': ('mist', 'purple'), 'radiant': ('core', 'gold'), 'ss_none': ('core', 'white'),
            'ss_fire': ('core', 'ss_none'), 'ss_frost': ('core', 'blue'), 'ss_shock': ('core', 'blue'), 'ss_sun': ('core', 'gold'),
-           'ss_blood': ('core', 'carian'), 'slayer': ('mist', 'gold')}   # (Noah's picks, the workshop 2026-11-24)
+           'ss_blood': ('core', 'carian'), 'slayer': ('mist', 'gold')}   # (Noah's picks, the workshop 2026-11-25)
 CLASS_MODELS = {   # the look key(s), each model: its steel shapes and band
-    'radiant': [('weapons\\NewArmoury\\QuarterStaffs\\SteelStaff.nif', ['SteelPikeShaft'], [(32, 99), (-99, -26)]),
-                ('weapons\\NewArmoury\\QuarterStaffs\\EbonyStaff.nif', ['EbonyStaffShaft'], [(32, 99), (-99, -26)]),
-                ('weapons\\NewArmoury\\QuarterStaffs\\DaedricStaff.nif', ['DaedricStaffShaft'], [(32, 99), (-99, -26)]),
+    # (Noah, 2026-11-25: "the weapon effects are at the ends of each side of the staff ... the weapon heads, not the handles") each
+    # staff's two capped heads - where its detail is - and none of the plain shaft between
+    'radiant': [('weapons\\NewArmoury\\QuarterStaffs\\SteelStaff.nif', ['SteelPikeShaft'], [(66.5, 99), (-99, -29.5)]),
+                ('weapons\\NewArmoury\\QuarterStaffs\\EbonyStaff.nif', ['EbonyStaffShaft'], [(71.5, 99), (-99, -34.5)]),
+                ('weapons\\NewArmoury\\QuarterStaffs\\DaedricStaff.nif', ['DaedricStaffShaft'], [(60.5, 99), (-99, -23.5)]),
                 ('weapons\\NewArmoury\\QuarterStaffs\\DragonBoneStaff.nif', ['DragonboneStaffBlade'], [(30, 99), (-99, -26)])],
     # (Noah, 2026-11-24: "the effects on the wand should be the whole wand but turn the intensity down" - and Tier III takes the
     # Daedric wand, the Ebony one no longer worn) every lit shape of the wand, softer (GAIN)
@@ -500,7 +502,10 @@ def fit(key):
         bands = band if isinstance(band, list) else [band]
         y = V[T][:, :, 1].mean(1)   # (by each triangle's middle: a long thin one is kept if it is mostly in)
         ok = np.zeros(len(T), bool)
-        for b0, b1 in bands: ok |= (y >= b0) & (y <= b1)
+        for b0, b1 in bands:
+            if isinstance(band, list):   # (a staff's two heads: every corner inside - the long faces of the shaft never count)
+                ok |= ((V[T][:, :, 1] >= b0) & (V[T][:, :, 1] <= b1)).all(1)
+            else: ok |= (y >= b0) & (y <= b1)
         T = T[ok]
     parts = [T]
     if key in SPLIT:
@@ -707,6 +712,19 @@ def art_part(F, rows, rng, pre):
         fl = 0.25 if small else 0.6   # (soft over only a hair at each end: the light runs to the guard and the tip)
         fade = np.clip(np.minimum(s, s[-1] - s) / fl, 0, 1)
         if np.linalg.norm(pts[0] - pts[-1]) < 1e-3: fade = np.ones(n)
+        # (Noah, 2026-11-25: "no hard cutoffs ... it needs to point on the ends ... in the shape of the weapon") where the outline
+        # turns sharply - the tip, a point, a hook - a sheet as wide as the effect folds over itself and ends in a flat cut. Each
+        # point's reach is held to the curve's own radius there, eased along the edge, so the light narrows into the point
+        tg = np.gradient(pts, axis=0); tg /= np.linalg.norm(tg, axis=1, keepdims=True) + 1e-9
+        ang = np.arctan2(tg[:, 1], tg[:, 0]); dang = np.abs(np.angle(np.exp(1j * np.gradient(np.unwrap(ang)))))
+        radius = np.minimum((np.gradient(s) + 1e-6) / np.maximum(dang, 1e-4), 200.0)   # (the outline's radius of curvature)
+        if not np.linalg.norm(pts[0] - pts[-1]) < 1e-3: radius[0] = radius[-1] = 0.0      # (an open run's ends are points too)
+        sd = np.abs(s[:, None] - s[None, :])
+        def taper(ww):
+            """each point's share of the full width: a sharp turn holds it to the curve's radius, and away from it the width may
+            grow only as fast as a blade's point widens (0.45 units out per unit along) - the light comes to a point like the steel"""
+            base = np.clip(radius * 1.6 / ww, 0.0, 1.0)
+            return np.clip((base[None, :] + sd * 0.45 / ww).min(1), 0.06, 1.0)
         # (a flipbook's cells each cover 16 units of edge: the edge is cut exactly at each cell's end, the point doubled - one
         # closing the cell at v 1, one opening the next at v 0 - so the bolts run on with no gap between cells)
         cpts, cnor, cfade, cv, ccut = [], [], [], [], []
@@ -724,28 +742,35 @@ def art_part(F, rows, rng, pre):
             flipbook = bool(st['flip'])
             P_, N_, F_ = (cpts, cnor, cfade) if flipbook else (pts, nor, fade)
             m_ = len(P_)
-            for mode in ('out', 'cross'):
-                ww = (st['w'] if mode == 'out' else st['wc']) * wsc
-                if ww <= 0: continue
+            for mode in ('out', 'cross', 'diag+', 'diag-'):
+                ww = (st['w'] if mode in ('out', 'diag+', 'diag-') else st['wc']) * wsc * (0.75 if mode.startswith('diag') else 1.0)
+                if ww <= 0 or (mode.startswith('diag') and st['wc'] <= 0): continue
+                tap = taper(ww)
+                if flipbook: tap = np.interp(np.linspace(0, 1, len(cpts)), np.linspace(0, 1, n), tap)
                 if flipbook: vv = cv
                 elif st['along'] == 'axis': vv = list(pts[:, 0] / 40.0 * st['rep'] / wsc)
                 elif st['along'] == 'axisdown': vv = list(-pts[:, 0] / 40.0 * st['rep'] / wsc)
                 else: vv = [s[i] / 40.0 * st['rep'] / wsc for i in range(n)]
                 verts, uvs, al, tris = [], [], [], []
                 # (the sheet's far border always clear - its last quarter fades to nothing: no line traced round the effect)
-                rows_ = (((-0.5 * wsc, 0.0, 1.0), (ww * 0.72, 0.72, 1.0), (ww, 1.0, 0.0)) if mode == 'out' else
-                         ((-ww, 1.0, 0.0), (-ww * 0.72, 0.72, 1.0), (0.0, 0.0, 1.0), (ww * 0.72, 0.72, 1.0), (ww, 1.0, 0.0)))
+                rows_ = (((-0.5 * wsc, 0.0, 1.0), (0.72, 0.72, 1.0), (1.0, 1.0, 0.0)) if mode != 'cross' else
+                         ((-1.0, 1.0, 0.0), (-0.72, 0.72, 1.0), (0.0, 0.0, 1.0), (0.72, 0.72, 1.0), (1.0, 1.0, 0.0)))
                 k_ = len(rows_)
+                c45 = 0.7071
                 for i in range(m_):
-                    for off, uu, aa in rows_:
-                        P = to3(F, P_[i] + N_[i] * off, 0.0)[0] if mode == 'out' else to3(F, P_[i], off)[0]
-                        verts.append(P); uvs.append((uu, vv[i])); al.append(F_[i] * aa)
+                    wi = ww * tap[i]
+                    for r_, (off, uu, aa) in enumerate(rows_):
+                        o = (0.0 if mode.startswith('diag') else off) if (r_ == 0 and mode != 'cross') else off * wi   # (a slanted sheet starts at the edge itself, never through the steel)
+                        if mode == 'out': P = to3(F, P_[i] + N_[i] * o, 0.0)[0]
+                        elif mode == 'cross': P = to3(F, P_[i], o)[0]
+                        else: P = to3(F, P_[i] + N_[i] * o * c45, o * c45 * (1 if mode == 'diag+' else -1))[0]
+                        verts.append(P); uvs.append((uu, vv[i])); al.append(F_[i] * aa * (0.55 if mode.startswith('diag') else 1.0))
                 for i in range(m_ - 1):
                     if flipbook and ccut[i + 1]: continue   # (the doubled point: the next cell starts here)
                     for r in range(k_ - 1):
                         a, b = i * k_ + r, i * k_ + r + 1; c2, d = a + k_, b + k_
                         tris += [(a, b, d), (a, d, c2)]
-                emit(f'e{ei}_{li}_{mode}', st['tex'], pal, st['gain'] * (1.0 if mode == 'out' else 0.8), verts, uvs, tris, al,
+                emit(f'e{ei}_{li}_{mode.replace("+", "p").replace("-", "m")}', st['tex'], pal, st['gain'] * (1.0 if mode == 'out' else 0.8), verts, uvs, tris, al,
                      flip=st['flip'], fps=st['fps'], vscroll=0 if flipbook else st['per'], clamp=None if flipbook else 1, blend=st['blend'], dark=st['dark'])
     # the shell over both faces
     sh = L['shell']
@@ -785,7 +810,7 @@ def art_part(F, rows, rng, pre):
     kind, dens = L['motes']
     if not F['edges']: return (0, bool(tris), 0)
     total = sum(np.sum(np.linalg.norm(np.diff(p, axis=0), axis=1)) for p, _ in F['edges'])
-    nm = int(min(14, max(2 if small else 3, total * dens / 6))) if dens > 0 else 0
+    nm = 0   # (Noah, 2026-11-25: the motes stood still beside the blade - "a weird cone of stagnant stars": none)
     allp = np.concatenate([p for p, _ in F['edges']]); alln = np.concatenate([n for _, n in F['edges']])
     for m in range(nm):
         i = rng.integers(len(allp))

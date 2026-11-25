@@ -513,6 +513,10 @@ def fit_lines(L, top, sc, root):
     return out
 
 
+DROP_FX = {'MarshFog', 'Tears', 'Grieflight', 'RuneBand0', 'RuneBand1', 'Magicka', 'EdgeBolt0', 'EdgeHaze0', 'EdgeBolt1', 'EdgeHaze1', 'RidgeBolt',
+           'Sparks', 'PoisonHaze', 'Gust', 'GustStreaks', 'FrostMist', 'FrostMotes'}
+
+
 def finish(M, name, mats, fx_lines=None, prn='WeaponSword', root=None):
     """join each material's parts, turn Z up to +Y, write it (modelconv), its effects (fxwrite), its Prn"""
     roughen(M, len(name))
@@ -538,6 +542,16 @@ def finish(M, name, mats, fx_lines=None, prn='WeaponSword', root=None):
     rename_root(static, rootname)
     MESHDIR.mkdir(parents=True, exist_ok=True)
     nif = MESHDIR / f'{name}.nif'
+    # (Noah, 2026-11-25: "that weird stagnant pillar of colors ... fix that", "a weird cone of stagnant stars ... remove it") the
+    # weapons wear their fitted looks now (tools/weaponfx.py): the big built-in effects that stood still beside them are gone -
+    # only the small glows in gems and seals stay (the Mistblade's ghost blade is its steel, and stays whole)
+    if fx_lines:
+        out, skip = [], False
+        for l in fx_lines:
+            if l.startswith('shape '):
+                skip = l.split()[1] in DROP_FX
+            if not skip: out.append(l)
+        fx_lines = out if any(l.startswith('shape ') for l in out) else []
     if fx_lines:
         L = [f'base {static}', f'out {nif}'] + ms.turn_y(fx_lines)
         (WORK / f'{name}_fx.job').write_text('\n'.join(g.fx_fix(L)) + '\n')
