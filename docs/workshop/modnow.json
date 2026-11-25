@@ -1,5 +1,5 @@
 {
- "updated": "Nov 25 2026 (early hours build)",
+ "updated": "Nov 25 2026 (morning build, 9b0de93)",
  "about": "Everything the mod is, as built - kept in the repo (docs/workshop/modnow.json) and updated with every build. The workshop's \"The mod now\" tab is drawn from it.",
  "sections": [
   [
@@ -103,9 +103,19 @@
   [
    "Weapon looks",
    [
-    "Every relic, wonder and class weapon tier wears <b>its own look</b> (Nov 25: \"custom weapon looks ... not changing their model or adding something on top\"): three looks designed for each weapon (tools/weaponlooks.py), all light on its own edges and faces, many in two colours, built from our textures and Skyrim's own enchantment membranes at 2K (4K on the wonders and Alduin's Bane). Noah picks one per weapon in the workshop; until then each wears its first.",
+    "Every relic, wonder and class weapon tier wears <b>its own look</b> (Nov 25: \"custom weapon looks ... not changing their model or adding something on top\"): three looks designed for each weapon (tools/weaponlooks.py), all light on its own edges and faces, many in two colours, built from our textures and Skyrim's own enchantment membranes at 2K (4K on the wonders and Alduin's Bane). <b>Noah's picks are in</b> (Nov 25): third looks on the Grief Blade, Storm Blade, Sacrifice Knife, Nightcaller's Scythe, Glacier Greatsword, Rimewick and Radiant Quarterstaff; second looks on the Windcutter, Bloodmoon Scythe and Frostmourn; the Keyhammer's first look in green; the rest their first.",
     "No pieces laid over the weapons (the Nov 25 signatures - chains, crystals, seals, rings - retired) and no shared look families.",
-    "Effects come to a point at the tips and ends; quarterstaffs glow on their heads only; the Gravebell doesn't pulse. Scythes 25% larger (our own scythes from Skyrim's parts are next)."
+    "Effects come to a point at the tips and ends; quarterstaffs glow on their heads only; the Gravebell doesn't pulse. Scythes 25% larger. <b>Our own scythes</b> (tools/scythes.py): nine, each from Skyrim's own weapons of its make - a battleaxe's pole (a Dragon Priest's staff, a pair of spines) and a sword's blade bent into a crescent, its guard as the collar - in the workshop for Noah's OK; the game still wears Battle Scythe's until then."
+   ]
+  ],
+  [
+   "Ability effects",
+   [
+    "<b>Every ability rebuilt from real parts</b> (Nov 25: \"All of the abilities need a complete remake ... hyper realistic and 3D ... as highly polished and visually satisfying as the mods we used\" - \"Rebuild from their real parts\"): the real particle effects of Skyrim, Dawnguard, Dragonborn, Apocalypse and Mysticism (fire, smoke, sparks, shockwaves - 61 of them) put together into one new effect per ability (tools/realfx.py, 84 effects: relics, Tablet weapons, wonders, Alduin's Bane, class weapons' bolts and cyclones, the javelin's landings, the flasks), each in its own colour and size, each part on its own beat, the ground ones laid on the ground. Noah's style, colour and size picks from the workshop drive them.",
+    "The workshop shows a close picture of each and lists its parts; the game plays the real thing.",
+    "<b>The class spells play their own</b> (Noah: \"we can use the spells from the actual mods and base Skyrim for those\"): no impact of ours over them.",
+    "<b>Vahlok's chains</b>: a heavy hit throws spectral chains (real 3D links, Skyrim's enchantment fire in green) from the one struck to each of the dead within 6 m, keeps them taut while it hauls them in to arm's reach, then lets go.",
+    "Retired: the Nov 25 flat 'own effect' elements (tools/abilityfx.py) and the borrowed-impact list (tools/fxown.py)."
    ]
   ],
   [

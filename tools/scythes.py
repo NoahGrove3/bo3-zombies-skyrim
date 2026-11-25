@@ -27,7 +27,7 @@ SCYTHES = {
  'silver':       ('Silver Reaping', ('weapons/silver/silvergreatsword.nif', 'grip'), 'weapons/silver/silvergreatsword.nif', 1.6, 70, []),
  'Skeleton':     ('Bonereaper', ('clutter/bones/humanspine.nif', 'spine'), 'weapons/draugr/draugrgreatsword.nif', 1.55, 82, ['skull']),
  'dragonTeeth':  ('Wyrmtooth', ('dlc01/weapons/dragonbone/battleaxe.nif', 'axe'), 'dlc01/weapons/dragonbone/greatsword.nif', 1.35, 74, []),
- 'vampire':      ('Bloodmoon Scythe', ('weapons/ebony/ebonybattleaxe.nif', 'axe'), 'dlc01/weapons/vampire/sword.nif', 1.9, 76, []),
+ 'vampire':      ('Bloodmoon Scythe', ('weapons/ebony/ebonybattleaxe.nif', 'axe'), 'dlc01/weapons/vampire/sword.nif', 2.6, 76, []),
  'forsworn':     ('Shadowflame Scythe - Forsworn (Tier I)', ('weapons/forsworn/forswornaxe.nif', 'axe'), 'weapons/forsworn/forswornsword.nif', 1.6, 74, []),
  'falmer':       ('Shadowflame Scythe - Falmer (Tier II)', ('weapons/falmer/falmeraxe.nif', 'axe'), 'weapons/falmer/falmerlongsword.nif', 1.9, 80, []),
  'dwarven':      ('Shadowflame Scythe - Dwarven (Tier III)', ('weapons/dwarven/dwarvenbattleaxe.nif', 'axe'), 'weapons/dwarven/dwarvengreatsword.nif', 1.5, 66, []),
@@ -43,6 +43,30 @@ def load(rel):
         if s['kind'] != 'lit' or 'blood' in t or 'scabbard' in t or not s['t']: continue
         out.append(dict(name=s['name'], tex=s['tex'], V=np.array(s['v'], float), UV=np.array(s['uv'], float), T=np.array(s['t'], int)))
     return out
+
+
+def subdivide(sh, maxlen=2.5):
+    """long triangles split until no edge is longer than maxlen (so a bend bends them, not just their corners)"""
+    V, UV, T = list(sh['V']), list(sh['UV']), [tuple(t) for t in sh['T']]
+    mids = {}
+    def mid(a, b):
+        k = (min(a, b), max(a, b))
+        if k not in mids:
+            V.append((np.asarray(V[a]) + np.asarray(V[b])) / 2); UV.append((np.asarray(UV[a]) + np.asarray(UV[b])) / 2); mids[k] = len(V) - 1
+        return mids[k]
+    for _ in range(8):
+        out, split = [], False
+        for a, b, c in T:
+            L = [np.linalg.norm(np.asarray(V[x]) - np.asarray(V[y])) for x, y in ((a, b), (b, c), (c, a))]
+            i = int(np.argmax(L))
+            if L[i] <= maxlen: out.append((a, b, c)); continue
+            split = True
+            a_, b_, c_ = [(a, b, c), (b, c, a), (c, a, b)][i]
+            m = mid(a_, b_)
+            out += [(a_, m, c_), (m, b_, c_)]
+        T = out
+        if not split: break
+    return dict(sh, V=np.array(V, float), UV=np.array(UV, float), T=np.array(T, int))
 
 
 def keep(sh, ok):
@@ -71,12 +95,15 @@ def haft(rel, how):
             r0 = np.percentile(np.abs(V[V[:, 1] < 0][:, 0]), 96) if (V[:, 1] < 0).any() else 2.0
             sh = keep(sh, np.abs(V[:, 0]) <= r0 * 1.35 + 0.4) if how == 'axe' else sh
             if sh is None: continue
+            sh = subdivide(sh, 6.0)
             V = sh['V'].copy()
             y0, y1 = V[:, 1].min(), V[:, 1].max()
-            # (its foot and grip as Skyrim made them, the pole above the hands drawn up to the scythe's head)
-            kb = float(np.clip(YB / y0, 0.7, 1.35)) if y0 < 0 else 1.0
-            kt = (YT - 6) / max(y1, 1.0)
-            V[:, 1] = np.where(V[:, 1] < 0, V[:, 1] * kb, V[:, 1] * kt)
+            # (its foot and its top as Skyrim made them, a touch larger; the plain pole between drawn out to the scythe's length)
+            k = 1.12
+            a0, a1 = y0 + 0.22 * (y1 - y0), y1 - 0.22 * (y1 - y0)
+            b0, b1 = YB + (a0 - y0) * k, (YT - 6) - (y1 - a1) * k
+            y = V[:, 1]
+            V[:, 1] = np.where(y < a0, b0 + (y - a0) * k, np.where(y > a1, b1 + (y - a1) * k, b0 + (y - a0) * (b1 - b0) / (a1 - a0)))
             V[:, [0, 2]] *= 1.12
             parts.append(dict(sh, V=V))
         elif how == 'grip':   # (the sword's own bound grip, repeated up a pole, its pommel at the foot)
@@ -104,6 +131,7 @@ def blade(rel, width, bend, top):
         gy = ys[int(np.argmax(wid[:30]))]
         b = keep(sh, V[:, 1] > gy - 3.0)
         if b is None: continue
+        b = subdivide(b)
         P = b['V'].copy()
         y0 = gy + 3.0; L0 = P[:, 1].max() - y0
         s = P[:, 1] - y0

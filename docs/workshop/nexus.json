@@ -1,5 +1,5 @@
 {
- "updated": "Nov 24 2026",
+ "updated": "Nov 25 2026 (9b0de93)",
  "groups": [
   [
    "Gameplay",
@@ -26,7 +26,7 @@
      "relics",
      "Dragon Priest relics and their abilities",
      "doing",
-     "Effects being remade in the workshop."
+     "Effects rebuilt from real parts; Vahlok's chains real."
     ],
     [
      "tablet",
@@ -79,7 +79,7 @@
      "looks",
      "Weapon looks (replacing Visual Animated Enchants)",
      "testing",
-     "Three own looks per weapon; Noah picking."
+     "Noah's picks in (9b0de93); check in game."
     ],
     [
      "lookbase",
@@ -89,21 +89,21 @@
     ],
     [
      "abil",
-     "Ability effects: Skyrim's own effects as the base, enhanced (2K textures, 30 FPS)",
+     "Ability effects rebuilt from real parts (Skyrim, Apocalypse, Mysticism particles)",
      "testing",
-     "One custom effect per ability, same in doc and game (127)."
+     "84 effects from 61 real parts; class spells their own (9b0de93)."
     ],
     [
      "ring",
      "The shockwave (remake of the Labyrinthian ring)",
-     "doing",
-     "First to go in."
+     "done",
+     "The real Labyrinthian shockwave, in each ability's colour."
     ],
     [
      "scythes",
      "Our own scythe models (dropping Battle Scythe)",
      "doing",
-     "From Skyrim's parts, previewed in the doc first."
+     "Nine built from Skyrim's weapons; in the workshop for Noah's OK."
     ],
     [
      "bane",
