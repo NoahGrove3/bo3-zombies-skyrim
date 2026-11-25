@@ -3839,6 +3839,15 @@ namespace coa::Classes
 			static bool done = false;
 			if (done) return;
 			done = true;
+			// (Noah, 2026-11-24: his picks on the Curse Weapon Effects page) each class weapon's look is its own fitted art now
+			// (src/WeaponFx.cpp): the look enchantments keep no shader or art of their own - nothing laid over ours
+			if (auto* dh0 = RE::TESDataHandler::GetSingleton()) {
+				for (const auto& row : gen::kBladeVizFx) for (const auto id : row) {
+					if (auto* m = dh0->LookupForm<RE::EffectSetting>(id, gen::kPlugin)) m->data.enchantShader = nullptr, m->data.enchantEffectArt = nullptr;
+				}
+				logger::info("swords: the tier looks are our own fitted arts (no enchantment shader or art)");
+				return;
+			}
 			struct Src { std::uint32_t id; bool vae; const char* what; };
 			// (the vanilla enchantments it remade are remade again by Vibrant Weapons when that loads after it - their own art
 			// lost: so each look takes the mod's own copy of the effect, which no other mod touches)
@@ -3880,6 +3889,18 @@ namespace coa::Classes
 			}
 			logger::info("swords: {} tier looks wear Visual Animated Enchants' shaders and art", n);
 		}
+	}
+	int HandLookKey()
+	{
+		// (Noah, 2026-11-24) which of his picked looks the class weapon in your right hand wears (src/WeaponFx.cpp): its row in
+		// gen::kBladeViz - the Dragon Slayer always, a class weapon from Tier I (the Spellbound Rapier bare-handed too)
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* w = p ? p->GetEquippedObject(false) : nullptr;
+		if (!w) return -1;
+		if (w == Slayer()) return 9;
+		const int cls = SwordClass(w);
+		if (cls < 0 || Kit::TierOfWeapon(w) < 1) return -1;
+		return LookKey(cls);
 	}
 	RE::EnchantmentItem* BladeLook(const RE::TESObjectWEAP* a_w, int a_tier)
 	{
@@ -4293,7 +4314,8 @@ namespace coa::Classes
 				lastSs = key;
 			}
 			auto* dh = RE::TESDataHandler::GetSingleton();
-			auto* want = key >= 0 ? dh->LookupForm<RE::SpellItem>(gen::kBladeVizArt[key], gen::kPlugin) : nullptr;
+			// (Noah, 2026-11-24) the old Vibrant Weapons art round the blade is gone: each look is its own fitted art (src/WeaponFx.cpp)
+			RE::SpellItem* want = nullptr;
 			for (const auto id : gen::kBladeVizArt) {   // (every other look's taken off - a saved game may still wear one)
 				if (auto* sp = dh->LookupForm<RE::SpellItem>(id, gen::kPlugin); sp && sp != want && p->HasSpell(sp)) p->RemoveSpell(sp);
 			}
@@ -4303,9 +4325,9 @@ namespace coa::Classes
 			}
 			// (Noah: "The green animation circling the sword, I want that to be changed to a golden color instead of green, but keep the
 			// same animation") the Dragon Slayer's art round the blade coloured gold, in both bodies
-			if (key == 9) for (const bool fp : { false, true }) if (auto* root = p->Get3D(fp)) Gun::TintGold(root->GetObjectByName("WEAPON"));
+			if (want && key == 9) for (const bool fp : { false, true }) if (auto* root = p->Get3D(fp)) Gun::TintGold(root->GetObjectByName("WEAPON"));
 			// (Noah, clips 8-9: the Radiant Quarterstaff's art showed frost-blue and green - "should be white") the Summoner's in white
-			if (key == 2) for (const bool fp : { false, true }) if (auto* root = p->Get3D(fp)) Gun::TintPal(root->GetObjectByName("WEAPON"), "textures\\CurseOfAlduin\\fx\\pal_white.dds", false);
+			if (want && key == 2) for (const bool fp : { false, true }) if (auto* root = p->Get3D(fp)) Gun::TintPal(root->GetObjectByName("WEAPON"), "textures\\CurseOfAlduin\\fx\\pal_white.dds", false);
 			// (Noah, 2026-11-21: "The swords gold glow effect is only visible in first person it goes away in third person. the weapon
 			// effects are in a teal color") in the third-person body the look's art doesn't hang under the WEAPON node - it stayed its
 			// own teal: the art's own model, wherever it hangs, coloured too

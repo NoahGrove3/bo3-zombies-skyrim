@@ -71,6 +71,46 @@ WEAPONS = {
 }
 
 
+# the class weapons: each takes another model at each tier (src/Classes.cpp AdoptTierLook), so each tier's model has its own
+# art; the Spellbound Rapier's look follows the element in your other hand (its BLADE_VIZ key: src/Classes.cpp LookKey)
+BV_KEYS = ['alch', 'carian', 'radiant', 'ss_none', 'ss_fire', 'ss_frost', 'ss_shock', 'ss_sun', 'ss_blood', 'slayer']
+BV_PICK = {'alch': ('flame', 'shadow'), 'carian': ('storm', 'carian'), 'radiant': ('mist', 'white'), 'ss_none': ('runic', 'ss_none'),
+           'ss_fire': ('flame', 'orange'), 'ss_frost': ('mist', 'iceblue'), 'ss_shock': ('storm', 'shockv'), 'ss_sun': ('flame', 'gold'),
+           'ss_blood': ('runic', 'arcane'), 'slayer': ('flame', 'gold')}
+CLASS_MODELS = {   # the look key(s), each model: its steel shapes and band
+    'radiant': [('weapons\\NewArmoury\\QuarterStaffs\\SteelStaff.nif', ['SteelPikeShaft'], [(32, 99), (-99, -26)]),
+                ('weapons\\NewArmoury\\QuarterStaffs\\EbonyStaff.nif', ['EbonyStaffShaft'], [(32, 99), (-99, -26)]),
+                ('weapons\\NewArmoury\\QuarterStaffs\\DaedricStaff.nif', ['DaedricStaffShaft'], [(32, 99), (-99, -26)]),
+                ('weapons\\NewArmoury\\QuarterStaffs\\DragonBoneStaff.nif', ['DragonboneStaffBlade'], [(30, 99), (-99, -26)])],
+    'carian': [('SSS\\SteelWand.nif', ['1stPersonSteelWarhamm', '1stPersonSteelBattleA'], (2, 99)),
+               ('SSS\\StahlrimWand.nif', ['2H_Axe:0'], (12, 99)),
+               ('SSS\\GlassWand.nif', ['1stPersonGlassMace.01', '1stPersonGlassWarH.00', '1stPersonGlassMace:0.00'], (8, 99)),
+               ('SSS\\EbonyWand.nif', ['1stPersonEbonyWarhamm', '1stPersonEbonyMace.00'], (14, 99)),
+               ('SSS\\DaedricWand.nif', ['DaedricWarhammer:0'], (8, 99))],
+    'alch': [('CurseOfAlduin\\scythes\\forsworn.nif', ['ForswornSword:0'], None),
+             ('CurseOfAlduin\\scythes\\falmer.nif', ['BattleAxe:0'], None),
+             ('CurseOfAlduin\\scythes\\dwarven.nif', ['DwarvenGreatsword:1_2_2'], None),
+             ('CurseOfAlduin\\scythes\\glass.nif', ['1stPersonGlassGreatSword:1'], None),
+             ('CurseOfAlduin\\scythes\\dragonpriest.nif', ['1stPersonEbonyDagger:1'], None)],
+    'ss': [('weapons\\NewArmoury\\Rapier\\SteelRapier.nif', ['1stPersonSteelRapier:22'], (13, 99)),
+           ('weapons\\NewArmoury\\Rapier\\EbonyRapier.nif', ['1stPersonEbonyRapier:22'], (20, 99)),
+           ('weapons\\NewArmoury\\Rapier\\DaedricRapier.nif', ['1stPersonDaedricRapier:29'], (14, 99)),
+           ('weapons\\NewArmoury\\Rapier\\DragonboneRapier.nif', ['1stPersonDragonboneRapier:'], (8.8, 99))],
+    'slayer': [('CurseOfAlduin\\slayer\\dragonslayer.nif', ['Dbone:1'], None)],
+}
+CLASS = {}   # art key -> (model, shapes, band, look, colour, the look key, the model)
+for group, models in CLASS_MODELS.items():
+    keys = [k for k in BV_KEYS if k.startswith('ss_')] if group == 'ss' else [group]
+    for model, names, band in models:
+        stem = model.split('\\')[-1][:-4].lower()
+        for k in keys:
+            look, col = BV_PICK[k]
+            CLASS[f'cls_{stem}_{k}'] = (model, names, band, look, col, k)
+ALL = dict(WEAPONS)
+ALL.update({k: v[:5] for k, v in CLASS.items()})
+SSS = pathlib.Path('/tmp/sss/meshes')   # (Fulcimentum's wands, read out of its archive on Noah's install: tools/weaponfx.py notes)
+
+
 # ---------------------------------------------------------------- noise (tileable)
 def lattice_noise(h, w, py, px, seed):
     """value noise on a py x px lattice that wraps (tileable both ways), sampled on an h x w grid"""
@@ -242,7 +282,7 @@ def palettes():
 
 # ---------------------------------------------------------------- fitting a weapon
 def model_path(rel):
-    for base in (LOCAL, INSTALL):
+    for base in (LOCAL, INSTALL, SSS):
         p = base / rel.replace('\\', '/')
         if p.exists(): return p
         # (case on Noah's install differs from the records')
@@ -266,7 +306,7 @@ def read_model(path):
 
 
 def fit(key):
-    rel, names, band, look, col = WEAPONS[key]
+    rel, names, band, look, col = ALL[key]
     shapes = read_model(model_path(rel))
     V, T = [], []
     for s in shapes:
@@ -277,7 +317,10 @@ def fit(key):
     if not V: raise SystemExit(f'{key}: no steel shapes found among {[s["name"] for s in shapes]}')
     V = np.concatenate(V); T = np.concatenate(T)
     if band:
-        ok = np.all((V[T][:, :, 1] >= band[0]) & (V[T][:, :, 1] <= band[1]), axis=1)
+        bands = band if isinstance(band, list) else [band]
+        y = V[T][:, :, 1].mean(1)   # (by each triangle's middle: a long thin one is kept if it is mostly in)
+        ok = np.zeros(len(T), bool)
+        for b0, b1 in bands: ok |= (y >= b0) & (y <= b1)
         T = T[ok]
     used = np.unique(T)
     P = V[used]
@@ -311,12 +354,13 @@ def fit(key):
     depth = ndimage.grey_dilation(depth, size=3) * mask
     from skimage import measure
     grip = q(np.zeros((1, 3)))[0]
-    contours = [cc[:, ::-1] * res + lo for cc in measure.find_contours(mask.astype(float), 0.5) if len(cc) > 20]
+    contours = [cc[:, ::-1] * res + lo for cc in measure.find_contours(mask.astype(float), 0.5) if len(cc) > 12]
+    if not contours: raise SystemExit(f'{key}: no outline found')
     # the point of the steel nearest the hand, and how far round it the edge is left bare
     allc = np.concatenate(contours)
     A = allc[np.argmin(np.linalg.norm(allc - grip, axis=1))]
     span = (Q[used].max(0) - Q[used].min(0))
-    rA = max(2.5, 0.14 * span.max())
+    rA = 0.0 if isinstance(band, list) else max(2.5, 0.14 * span.max())   # (a staff's two ends: the band already leaves the grip out)
     edges = []
     for cc in contours:
         # resample every ~1.2 units, smoothed a little
@@ -499,7 +543,10 @@ if __name__ == '__main__':
     cmd = sys.argv[1] if len(sys.argv) > 1 else ''
     if cmd == 'textures': textures()
     elif cmd == 'arts':
-        for k in (sys.argv[2:] or list(WEAPONS)): art(k)
+        for k in (sys.argv[2:] or list(ALL)): art(k)
+        if not sys.argv[2:]:   # (the class weapons' arts by model and look key, for src/WeaponFx.cpp: tools/gen.py reads it)
+            rows = [{'model': v[0].lower(), 'key': BV_KEYS.index(v[5]), 'art': 'CurseOfAlduin\\wfx\\' + k + '.nif'} for k, v in CLASS.items()]
+            (ROOT / 'data' / 'weaponfx_class.json').write_text(json.dumps(rows, indent=1) + '\n')
     elif cmd == 'preview':
         for k in sys.argv[2:]: preview(k)
     else: print(__doc__)

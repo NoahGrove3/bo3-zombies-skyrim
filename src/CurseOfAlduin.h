@@ -382,6 +382,7 @@ namespace coa
 
 	namespace Classes
 	{
+		int HandLookKey();     // (Noah, 2026-11-24) the look the class weapon in your right hand wears, or -1 (src/WeaponFx.cpp)
 		void TickItemCard();   // (Noah: the swords' item cards "way too long" - each tier's card tells only what it is and what that tier does; the charge bar hidden)
 		int              Get();            // -1 none chosen yet
 		RE::TESObjectARMO* Underwear();    // (Noah: no bare body) Underwear.esp's bra and underwear

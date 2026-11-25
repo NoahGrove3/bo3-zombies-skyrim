@@ -1,5 +1,7 @@
 #include "CurseOfAlduin.h"
 
+#include <cctype>
+
 // (Noah, 2026-11-24: "give me previews for all the weapon effects we make for my mod so we don't have to use that nexus mod" -
 // the Curse Weapon Effects page, his pick of five looks for each weapon) each weapon of ours wears its own effect: an art model
 // fitted to that weapon's model (tools/weaponfx.py - a living sheet along its real edges and a glow worked into its steel), hung
@@ -33,8 +35,24 @@ namespace coa::WeaponFx
 				}
 				logger::info("weaponfx: {} weapons have their own effect art", g_arts.size());
 			}
-			const auto it = g_arts.find(a_w->GetFormID());
-			return it == g_arts.end() ? std::string_view{} : it->second;
+			if (const auto it = g_arts.find(a_w->GetFormID()); it != g_arts.end()) return it->second;
+			// a class weapon: its model changes at every tier, and its look with the tier (and the Spellbound Rapier's with the
+			// spell in the other hand) - the art fitted to the model it has now, in the look it wears now
+			const int key = Classes::HandLookKey();
+			auto* md = key >= 0 ? a_w->As<RE::TESModel>() : nullptr;
+			if (!md || !md->GetModel()) return {};
+			std::string m = md->GetModel();
+			for (auto& c : m) c = c == '/' ? '\\' : static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+			if (m.starts_with("meshes\\")) m.erase(0, 7);
+			for (const auto& e : gen::kWeaponFxClass) {
+				if (e.key == key && e.model == m) return e.art;
+			}
+			static std::string missed;
+			if (missed != m + std::to_string(key)) {
+				missed = m + std::to_string(key);
+				logger::info("weaponfx: no fitted art for {} in look {}", m, key);
+			}
+			return {};
 		}
 
 		RE::NiNode* Host(RE::NiAVObject* a_root, const RE::NiAVObject* a_ours)
