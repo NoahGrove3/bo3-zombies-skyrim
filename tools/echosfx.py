@@ -1,5 +1,5 @@
 """(Noah, 2026-11-23: the Echo Altar's trials remade) the trials' own sounds, made here from scratch:
-  echo_tone_<0-5>  the six stones of Repeat the Echo: a struck stone bell each, rising through a minor pentatonic
+  (echo_tone_<0-5>: once the stones' bells - the souls' sounds now, tools/soulsfx.py)
   echo_wrong       a wrong stone: the six tones at once, out of tune, sinking
   echo_sing        the altar begins its song: a low swell under a shimmer
   wisp_rise        Lay the Restless to Rest: a soul rising through the mist - an airy rising shimmer
@@ -42,8 +42,7 @@ def reverb(x, secs=1.2, mix=0.28):
 
 # A minor pentatonic from A3: A C D E G A
 FREQ = [220.0, 261.63, 293.66, 329.63, 392.0, 440.0]
-for i, f in enumerate(FREQ):
-    write(f'echo_tone_{i}', reverb(bell(f, 2.2)))
+# (Noah, 2026-11-24: Repeat the Echo gone - its six tones are the souls' whisper and thunk now: tools/soulsfx.py writes them)
 
 t = np.arange(int(SR * 1.6)) / SR
 wrong = sum(bell(f * (1.0 + 0.03 * (i - 2.5)), 1.6) for i, f in enumerate(FREQ))

@@ -1372,7 +1372,7 @@ def guide_text():
            p("All four are won at night, one after another, and your party shares them."),
            p("<b>Lay the Restless to Rest</b> - slay the dead inside the altar's light, the circle round it. Their souls rise to Sovngarde."),
            p("<b>The Stone's Whisper</b> - the altar's voice speaks a riddle naming a place in the city. Find it at night and slay the dead there."),
-           p("<b>Repeat the Echo</b> - at midnight six stones round the altar light up one by one. Touch them in the same order. Miss one and they sing again at the next hour."),
+           p("<b>Hold the Light</b> - step into the altar's light at night and it begins to close round the stone while the dead pour in. Stay inside until it closes. Step out and the light slips back."),
            p("<b>Break the Priest's Seals</b> - three seals in the city's great places, each kept by an elite. Kill the guard, then strike the seal. The last one calls the Dragon Priest out."),
            "[pagebreak]", h("Spells"),
            p("Tap the attack to throw a bolt. Hold it, and both hands gather the spell's full power: the longer you hold, the harder it strikes. "

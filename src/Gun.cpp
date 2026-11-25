@@ -2975,6 +2975,34 @@ namespace coa
 			r->SetAngle({ 0, 0, a_yaw });
 			return r->GetHandle();
 		}
+		// (Noah, 2026-11-24: the trials' light "hyper realistic") one of our models standing in the world, moved and turned by its
+		// owner every frame (the souls flying to the stone, the altar's ring)
+		RE::ObjectRefHandle PlaceModel(const std::string& a_model, const RE::NiPoint3& a_at)
+		{
+			(void)Spellcraft::LoadPath(a_model);
+			auto r = PlaceAtPoint(ModelActivator(a_model), a_at);
+			return r ? r->GetHandle() : RE::ObjectRefHandle{};
+		}
+		void PoseModel(const RE::ObjectRefHandle& a_h, const RE::NiPoint3& a_at, const RE::NiPoint3& a_dir, float a_scale)
+		{
+			auto r = a_h.get();
+			if (!r) return;
+			r->SetPosition(a_at);
+			if (auto* o = r->Get3D()) {
+				o->GetFlags().set(RE::NiAVObject::Flag::kAlwaysDraw, RE::NiAVObject::Flag::kIgnoreFade);
+				if (auto* fn = o->AsFadeNode()) fn->GetRuntimeData().currentFade = 1.0f;
+				o->local.translate = a_at;
+				o->local.rotate = a_dir.Length() > 1e-3f ? Spellcraft::Facing(a_dir) : RE::NiMatrix3{};
+				o->local.scale = std::max(0.01f, a_scale);
+				RE::NiUpdateData ud;
+				o->Update(ud);
+			}
+		}
+		void RemoveModel(RE::ObjectRefHandle& a_h)
+		{
+			if (auto r = a_h.get()) r->Disable(), r->SetDelete(true);
+			a_h = {};
+		}
 		void  PurpleFire(const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life)
 		{
 			QueueFx("CurseOfAlduin\\fx\\purplefire.nif", a_at, a_scale, a_delay, a_life, false);

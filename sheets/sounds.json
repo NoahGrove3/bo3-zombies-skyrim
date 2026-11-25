@@ -8984,7 +8984,7 @@
       "atten": 0,
       "cat": "sfx",
       "loop": false,
-      "use": "Repeat the Echo: stone 1's tone (tools/echosfx.py)"
+      "use": "Lay the Restless to Rest: a soul taken by the altar stone - a whisper and a thunk, variant 1 (tools/soulsfx.py)"
     },
     {
       "id": "echo_tone_1",
@@ -9002,7 +9002,7 @@
       "atten": 0,
       "cat": "sfx",
       "loop": false,
-      "use": "Repeat the Echo: stone 2's tone (tools/echosfx.py)"
+      "use": "Lay the Restless to Rest: a soul taken by the altar stone - a whisper and a thunk, variant 2 (tools/soulsfx.py)"
     },
     {
       "id": "echo_tone_2",
@@ -9020,7 +9020,7 @@
       "atten": 0,
       "cat": "sfx",
       "loop": false,
-      "use": "Repeat the Echo: stone 3's tone (tools/echosfx.py)"
+      "use": "Lay the Restless to Rest: a soul taken by the altar stone - a whisper and a thunk, variant 3 (tools/soulsfx.py)"
     },
     {
       "id": "echo_tone_3",
@@ -9038,7 +9038,7 @@
       "atten": 0,
       "cat": "sfx",
       "loop": false,
-      "use": "Repeat the Echo: stone 4's tone (tools/echosfx.py)"
+      "use": "Lay the Restless to Rest: a soul taken by the altar stone - a whisper and a thunk, variant 4 (tools/soulsfx.py)"
     },
     {
       "id": "echo_tone_4",
@@ -9056,7 +9056,7 @@
       "atten": 0,
       "cat": "sfx",
       "loop": false,
-      "use": "Repeat the Echo: stone 5's tone (tools/echosfx.py)"
+      "use": "Lay the Restless to Rest: a soul taken by the altar stone - a whisper and a thunk, variant 5 (tools/soulsfx.py)"
     },
     {
       "id": "echo_tone_5",
@@ -9074,7 +9074,7 @@
       "atten": 0,
       "cat": "sfx",
       "loop": false,
-      "use": "Repeat the Echo: stone 6's tone (tools/echosfx.py)"
+      "use": "Lay the Restless to Rest: a soul taken by the altar stone - a whisper and a thunk, variant 6 (tools/soulsfx.py)"
     },
     {
       "id": "echo_wrong",

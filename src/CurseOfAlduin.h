@@ -874,6 +874,9 @@ namespace coa
 		void                  Lob(const std::string& a_model, const RE::NiPoint3& a_from, const RE::NiPoint3& a_vel, float a_scale, std::function<void(const RE::NiPoint3&)> a_land, float a_spin = 12.0f, float a_grav = 900.0f);  // (a_spin 0: it flies nose first - a meteor)  // a thrown thing flown on its arc; a_land where it comes down
 		void                  Hazard(const std::string& a_model, const RE::NiPoint3& a_at, float a_scale, float a_life, float a_yaw = 0.0f, std::vector<RE::ObjectRefHandle>* a_placed = nullptr);  // a model of light lingering a_life seconds where it's set (drawn as the flasks' ground fires are)
 		RE::ObjectRefHandle   PlaceAt(RE::TESBoundObject* a_obj, const RE::NiPoint3& a_at, float a_yaw);  // a placed object made at the point itself (its 3D drawn there, not made at the player and moved)
+		RE::ObjectRefHandle   PlaceModel(const std::string& a_model, const RE::NiPoint3& a_at);   // one of our models standing in the world (moved by PoseModel)
+		void                  PoseModel(const RE::ObjectRefHandle& a_h, const RE::NiPoint3& a_at, const RE::NiPoint3& a_dir, float a_scale);   // set where it is, its +Y along a_dir (none: unturned)
+		void                  RemoveModel(RE::ObjectRefHandle& a_h);
 	}
 
 	namespace ArmorForge

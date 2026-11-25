@@ -183,6 +183,9 @@ namespace coa
 			int                                lastHour = -100;
 			int                                touching = -1;  // the stone you stand at (standing still is not a second touch)
 		} g_echo;
+		// Hold the Light (TickHold): the light held so far, out of the trial's seconds
+		struct HoldRun { int town = -1; bool on = false; float held = 0, out = 0, call = 0; } g_hold;
+		constexpr float kHoldFrom = 1100.0f, kHoldTo = 240.0f;
 		// Break the Priest's Seals: each seal (a violet heart-stone over a turning rune circle) and the elite who keeps it
 		struct SealRun
 		{
@@ -494,12 +497,20 @@ namespace coa
 			bool         hold{ false };
 			std::string  head, sub;  // (the trials remade) its words: what it asks, and the count
 			bool         runes{ true };  // (Noah, 2026-11-24: Lay the Restless to Rest not the old ward's ring of runes) the words only, when false
+			int          model{ 0 };     // the world ring's model (its radius as built, tools/trialfx.py), 0: the nearest to radius
 		} g_ring;
+		// (Noah, 2026-11-24: "make sure the ring for the first quest around the altar is hyper realistic ... anything that is supposed
+		// to be glowing or illuminated should look like real light, not a circle in a color") the ring is light lying in the world now,
+		// not lines over the screen: tools/trialfx.py's ring, 48 arcs each set down on the ground under it, lit round as the trial fills
+		struct WorldRing { RE::ObjectRefHandle ref; int R = 0; RE::NiPoint3 c{}; int lit = -1; float groundT = 0; } g_wring;
 		// (Noah, 2026-11-24: "the souls that come from the enemies for killing trials should be light blue wisps that go into the echo
 		// altar's center stone, not a magic effect or a little burst") each of the restless put down sends its soul up out of the body
 		// and across to the altar's centre stone on a soft arc - a pale blue wisp with a fading tail - where the stone takes it with a
 		// small glow and a chime
-		struct Soul { RE::NiPoint3 a, c, b; float t = 0, dur = 1.5f; };
+		// (Noah, 2026-11-24: "hyper realistic and really refined ... Blue spirit flame") the soul is a model in the world now - a
+		// wavering blue spirit flame trailing a long smoky tail (tools/trialfx.py soul.nif) - not a dot drawn over the screen; the
+		// stone takes it with a flash and a ring of light (soul_take.nif), a whisper and a muffled thunk ("Whisper + thunk")
+		struct Soul { RE::NiPoint3 a, c, b; float t = 0, dur = 1.5f; RE::ObjectRefHandle ref; };
 		struct Taken { RE::NiPoint3 at; float t = 0; };
 		std::vector<Soul>  g_souls;
 		std::vector<Taken> g_taken;
@@ -522,63 +533,80 @@ namespace coa
 			const RE::NiPoint3 across{ -dir.y, dir.x, 0 };
 			const float al = std::max(1.0f, std::hypot(across.x, across.y));
 			so.c = (so.a + so.b) * 0.5f + RE::NiPoint3{ across.x / al * side, across.y / al * side, 220.0f + dist * 0.18f };
-			so.dur = std::clamp(dist / 650.0f, 1.2f, 3.2f);
+			so.dur = std::clamp(dist / 520.0f, 1.5f, 3.6f);   // (slow enough to follow it with the eye)
+			so.ref = Gun::PlaceModel("CurseOfAlduin\\trial\\soul.nif", so.a);
 			g_souls.push_back(so);
+		}
+		int RingModelFor(float a_r) { return a_r > 1000.0f ? 1400 : a_r > 700.0f ? 750 : 650; }
+		void RingWorld(float a_delta)
+		{
+			auto& W = g_wring;
+			if (!g_ring.on || !g_ring.runes) {
+				if (W.ref) Gun::RemoveModel(W.ref);
+				W = {};
+				return;
+			}
+			const int R = g_ring.model ? g_ring.model : RingModelFor(g_ring.radius);
+			const float sc = std::max(0.05f, g_ring.radius / static_cast<float>(R));
+			if (!W.ref.get() || R != W.R || W.c.GetDistance(g_ring.center) > 40.0f) {
+				if (W.ref) Gun::RemoveModel(W.ref);
+				W = {};
+				W.ref = Gun::PlaceModel(fmt::format("CurseOfAlduin\\trial\\ring_{}.nif", R), g_ring.center);
+				W.R = R, W.c = g_ring.center;
+				logger::info("curse: the altar's ring of light laid down ({} out)", R);
+			}
+			auto r = W.ref.get();
+			auto* o = r ? r->Get3D() : nullptr;
+			if (!o) return;
+			Gun::PoseModel(W.ref, W.c, {}, sc);
+			// each arc set down on the ground under it (the ring follows the lie of the land, shrinking or not)
+			if ((W.groundT -= a_delta) <= 0) {
+				W.groundT = 0.5f;
+				for (int i = 0; i < 48; ++i) {
+					auto* n = o->GetObjectByName(fmt::format("S{:02d}", i));
+					if (!n) continue;
+					const float a = (i + 0.5f) * 2.0f * RE::NI_PI / 48.0f;
+					RE::NiPoint3 at = W.c + RE::NiPoint3{ std::cos(a) * g_ring.radius, std::sin(a) * g_ring.radius, 0.0f };
+					float land = W.c.z;
+					if (!RE::TES::GetSingleton()->GetLandHeight(at, land) || std::abs(land - W.c.z) > 400.0f) land = W.c.z;
+					n->local.translate = RE::NiPoint3{ std::cos(a) * R, std::sin(a) * R, (land - W.c.z + 3.0f) / sc };
+				}
+				W.lit = -1;   // (and the light set again below, with the update)
+			}
+			// the arcs the trial has reached burn; the rest glimmer
+			const int lit = std::clamp(static_cast<int>(g_ring.frac * 48.0f + 0.5f), 0, 48);
+			if (lit != W.lit) {
+				W.lit = lit;
+				for (int i = 0; i < 48; ++i) {
+					if (auto* L = o->GetObjectByName(fmt::format("S{:02d}L", i))) L->SetAppCulled(i >= lit);
+					if (auto* D = o->GetObjectByName(fmt::format("S{:02d}D", i))) D->SetAppCulled(i < lit);
+				}
+				RE::NiUpdateData ud;
+				o->Update(ud);
+			}
 		}
 		void PublishRing(float a_delta)
 		{
 			g_ring.flash = std::max(0.0f, g_ring.flash - a_delta);
 			std::vector<std::array<float, 3>> pts;
 			auto* cam = RE::Main::WorldRootCamera();
-			// the souls on their way, and the stone taking them
-			std::vector<std::vector<std::array<float, 4>>> souls;
-			std::vector<std::array<float, 4>>              taken;
-			{
-				auto* pl = RE::PlayerCharacter::GetSingleton();
-				const RE::NiPoint3 eye = cam ? cam->world.translate : (pl ? pl->GetPosition() : RE::NiPoint3{});
-				for (auto it = g_souls.begin(); it != g_souls.end();) {
-					it->t += a_delta;
-					if (it->t >= it->dur) {
-						g_taken.push_back({ it->b, 0 });
-						Audio::Mine(static_cast<gen::Sound>(static_cast<int>(gen::Sound::echo_tone_0) + std::rand() % 6), it->b, 0.3f);   // (a bare point plays to no one: carried on you, as near as the stone is)
-						it = g_souls.erase(it);
-						continue;
-					}
-					if (cam) {
-						std::vector<std::array<float, 4>> tr;
-						for (int k = 0; k < 10; ++k) {   // (its head now, and where it was a moment before: the tail)
-							const float tt = it->t - k * 0.035f;
-							if (tt < 0) break;
-							const auto w = SoulAt(*it, tt);
-							float x = 0, y = 0, zc = 0;
-							cam->WorldPtToScreenPt3(w, x, y, zc, 1e-5f);
-							if (zc <= 0) break;
-							tr.push_back({ x, 1.0f - y, zc, 900.0f / std::max(120.0f, w.GetDistance(eye)) });
-						}
-						if (!tr.empty()) souls.push_back(std::move(tr));
-					}
-					++it;
+			// the souls on their way: flown along their arcs, nose first, the stone taking each
+			for (auto it = g_souls.begin(); it != g_souls.end();) {
+				it->t += a_delta;
+				if (it->t >= it->dur) {
+					Gun::RemoveModel(it->ref);
+					Gun::QueueFx("CurseOfAlduin\\trial\\soul_take.nif", it->b, 1.0f, 0.0f, 0.8f, false);
+					Audio::Mine(static_cast<gen::Sound>(static_cast<int>(gen::Sound::echo_tone_0) + std::rand() % 6), it->b, 0.55f);   // (the soul's whisper and the stone's thunk: tools/soulsfx.py)
+					it = g_souls.erase(it);
+					continue;
 				}
-				for (auto it = g_taken.begin(); it != g_taken.end();) {
-					if ((it->t += a_delta) > 0.9f) { it = g_taken.erase(it); continue; }
-					if (cam) {
-						float x = 0, y = 0, zc = 0;
-						cam->WorldPtToScreenPt3(it->at, x, y, zc, 1e-5f);
-						if (zc > 0) taken.push_back({ x, 1.0f - y, it->t, 900.0f / std::max(120.0f, it->at.GetDistance(eye)) });
-					}
-					++it;
-				}
+				const auto at = SoulAt(*it, it->t), ahead = SoulAt(*it, std::min(it->dur, it->t + 0.03f));
+				RE::NiPoint3 dir = ahead - at;
+				if (dir.Length() < 0.01f) dir = it->b - at;
+				Gun::PoseModel(it->ref, at, dir, 1.0f);
+				++it;
 			}
-			if (g_ring.on && g_ring.runes && cam) {
-				constexpr int N = 180;  // (fine enough for the runes riding it to sit smoothly)
-				for (int i = 0; i <= N; ++i) {
-					const float a = i * 2.0f * RE::NI_PI / N;
-					RE::NiPoint3 w = g_ring.center + RE::NiPoint3{ std::cos(a) * g_ring.radius, std::sin(a) * g_ring.radius, 18.0f };
-					float x = 0, y = 0, zc = 0;
-					cam->WorldPtToScreenPt3(w, x, y, zc, 1e-5f);
-					pts.push_back({ x, 1.0f - y, zc });
-				}
-			}
+			RingWorld(a_delta);
 			bool  labelOn = false;
 			float lx = 0, ly = 0;
 			if (g_ring.on && cam) {  // (Noah: the words stay put over the altar)
@@ -590,10 +618,11 @@ namespace coa
 			std::scoped_lock l(Hud::Lock());
 			auto& h = Hud::Edit();
 			h.ringLabelOn = labelOn, h.ringLabelX = lx, h.ringLabelY = ly;
-			h.ringOn = g_ring.on && (!pts.empty() || !g_ring.runes);
-			h.ringRunes = g_ring.runes;
-			h.wisps = std::move(souls), h.wispsTaken = std::move(taken);
-			h.ringPts = std::move(pts);
+			h.ringOn = g_ring.on;   // (its words only: the ring itself is in the world - RingWorld)
+			h.ringRunes = false;
+			h.wisps.clear(), h.wispsTaken.clear();
+			h.ringPts.clear();
+			(void)pts, (void)cam;
 			h.ringFrac = g_ring.frac;
 			h.ringFlash = g_ring.flash;
 			h.ringSeconds = g_ring.seconds;
@@ -688,13 +717,11 @@ namespace coa
 				break;
 			case gen::kTrial_echo:
 				{
-					auto* cal = RE::Calendar::GetSingleton();
-					const float hour = cal ? cal->GetHour() : 0.0f;
-					if (g_echo.phase == 1) h.questGoal = "Watch the stones", h.questFrac = static_cast<float>(g_echo.idx) / std::max(1, n);
-					else if (g_echo.phase == 2) h.questGoal = fmt::format("Touch the stones in the order they sang  {} / {}", g_echo.idx, n), h.questFrac = static_cast<float>(g_echo.idx) / std::max(1, n);
-					else if (hour >= 12.0f) h.questGoal = "Wait by the altar for midnight";
-					else h.questGoal = fmt::format("Wait by the altar - it sings again at {}:00", static_cast<int>(hour) + 1);
-					h.questWarn = !here || std::hypot(player->GetPosition().x - c.x, player->GetPosition().y - c.y) > 2500.0f;
+					const float T = static_cast<float>(std::max(10, Secs(gen::kTrial_echo)));
+					const bool  in = here && std::hypot(player->GetPosition().x - c.x, player->GetPosition().y - c.y) < kHoldFrom + (kHoldTo - kHoldFrom) * std::clamp(g_hold.held / T, 0.0f, 1.0f);
+					h.questGoal = !g_hold.on ? "Step into the altar's light" : in ? fmt::format("Hold the light  {}s", static_cast<int>(std::ceil(T - g_hold.held))) : "Back into the altar's light";
+					h.questFrac = std::clamp(g_hold.held / T, 0.0f, 1.0f);
+					h.questWarn = g_hold.on && !in;
 				}
 				break;
 			case gen::kTrial_seals:
@@ -762,7 +789,7 @@ namespace coa
 			const float d = std::hypot(a_p->GetPosition().x - a_c.x, a_p->GetPosition().y - a_c.y);
 			g_ring = { true, a_c, gen::kCurseLight, static_cast<float>(a_s.prog) / std::max(1, n), g_ring.flash, 0, 1, false,
 				d < gen::kCurseLight ? "LAY THE RESTLESS TO REST" : "BACK INTO THE ALTAR'S LIGHT", fmt::format("{} / {}", a_s.prog, n) };
-			g_ring.runes = false;   // (no ring of runes: the old ward's - Noah: "it should not be recycled from the older trials")
+			// (Noah, 2026-11-24) its ring is the altar's own light lying on the ground (RingWorld), filling round as the souls come in
 			(void)a_z;
 		}
 
@@ -794,107 +821,64 @@ namespace coa
 				d < gen::kCurseWhisperRadius + 300.0f ? "HOLD THIS PLACE" : "GO BACK TO IT", fmt::format("{} / {}", a_s.prog - 1, n) };
 		}
 
-		// Repeat the Echo: six stones in a ring; at midnight (and each hour after, till dawn) the altar sings, you answer
-		constexpr gen::Sound kTone[6] = { gen::Sound::echo_tone_0, gen::Sound::echo_tone_1, gen::Sound::echo_tone_2, gen::Sound::echo_tone_3, gen::Sound::echo_tone_4, gen::Sound::echo_tone_5 };
-		void EchoFail(const RE::NiPoint3& a_c, std::string_view a_why)
+		// (Noah, 2026-11-24: "I want to change the trial where the stones sing to something else that fits better and is also fun" -
+		// "Hold the Light") Hold the Light: at night, step into the altar's light and it begins to close in on the stone - over the
+		// trial's seconds, from 1100 out down to 240 - while the night's dead come for you. Stand inside the ring until it closes; step
+		// out and it falters and slips back (the time held runs back, more slowly). Out for 12 s with nothing left held, it goes
+		// dark and waits for you to step in again.
+		void TickHold(RE::PlayerCharacter* a_p, int a_z, const RE::NiPoint3& a_c, bool a_fighting, float a_dt)
 		{
-			Forms::Play(gen::Sound::echo_wrong);
-			for (const auto& at : g_echo.at) Gun::FxBlast("dark", at + RE::NiPoint3{ 0, 0, 40.0f });
-			(void)a_c;
-			g_echo.phase = 0, g_echo.idx = 0, g_echo.t = 0, g_echo.touching = -1;
-			g_ring.flash = 1.0f;
-			logger::info("curse: Repeat the Echo - {}; it sings again at the next hour", a_why);
-			Classes::VoiceSay(gen::VoTrigger::kEchoWrong, 1.6f);
-		}
-		void TickEcho(RE::PlayerCharacter* a_p, int a_z, const RE::NiPoint3& a_c, float a_yaw, bool a_fighting, float a_dt)
-		{
-			auto&       e = g_echo;
-			auto*       cal = RE::Calendar::GetSingleton();
-			const float hour = cal ? cal->GetHour() : 12.0f;
-			if (e.town != a_z) {
-				ClearEcho();
-				e.town = a_z, e.lastHour = static_cast<int>(hour);
+			auto& H = g_hold;
+			if (H.town != a_z) H = {}, H.town = a_z;
+			const float T = static_cast<float>(std::max(10, Secs(gen::kTrial_echo)));
+			const auto  pp = a_p->GetPosition();
+			const float d = std::hypot(pp.x - a_c.x, pp.y - a_c.y);
+			const float k = std::clamp(H.held / T, 0.0f, 1.0f);
+			const float radius = kHoldFrom + (kHoldTo - kHoldFrom) * k;
+			if (!H.on) {
+				if (a_fighting && d < kHoldFrom) {
+					H.on = true, H.out = 0, H.call = 0;
+					Forms::Play(gen::Sound::echo_sing);
+					Gun::FxBlastSized("light", a_c + RE::NiPoint3{ 0, 0, 300.0f }, 1.2f);
+					Classes::VoiceSay(gen::VoTrigger::kEchoStart, 0.2f);
+					logger::info("curse: Hold the Light - begun ({:.0f} s to hold, {:.0f} held)", T, H.held);
+				}
+				if (d < 4000.0f) {
+					g_ring = { true, a_c, radius, k, g_ring.flash, 0, 0, false, a_fighting ? "STEP INTO THE ALTAR'S LIGHT" : "THE LIGHT WAKES AT NIGHT", "" };
+					g_ring.model = 1400;
+				}
+				return;
 			}
-			const auto pp = a_p->GetPosition();
-			const float dAltar = std::hypot(pp.x - a_c.x, pp.y - a_c.y);
-			for (int i = 0; i < 6; ++i) {
-				if (!e.stone[i].get() && dAltar < 9000.0f) {
-					const float a = a_yaw + i * RE::NI_PI / 3.0f;
-					RE::NiPoint3 at = a_c + RE::NiPoint3{ std::cos(a) * gen::kCurseEchoRadius, std::sin(a) * gen::kCurseEchoRadius, 0.0f };
-					if (auto w = Walkable(a_p, at, 300.0f)) at = *w;
-					at.z += 110.0f;  // (floating, as the altar's own)
-					e.at[i] = at, e.ang[i] = a;
-					e.stone[i] = PlaceStat(a_p, gen::kPillarRock[i], at, 1.6f, a);
-				}
-				e.ang[i] += (8.0f + 1.5f * i) * RE::NI_PI / 180.0f * a_dt;
-				TurnNode(e.stone[i], e.ang[i], 8.0f);
+			if (!a_fighting) {   // (the night's lull or its end: what was held stays, the light waits)
+				H.on = false;
+				return;
 			}
-			const int n = N(gen::kTrial_echo);
-			e.t += a_dt;
-			const int h = static_cast<int>(hour);
-			switch (e.phase) {
-			case 0:
-				if (h != e.lastHour) {
-					e.lastHour = h;
-					if (a_fighting && hour < 12.0f && dAltar < 2500.0f) {  // (after midnight, before dawn, and you at the altar)
-						e.seq.clear();
-						for (int k = 0, prev = -1; k < n; ++k) {
-							int j = std::min(5, static_cast<int>(Rand01() * 6.0f));
-							if (j == prev) j = (j + 1 + static_cast<int>(Rand01() * 5.0f)) % 6;
-							e.seq.push_back(prev = j);
-						}
-						e.phase = 1, e.idx = 0, e.t = -3.2f, e.touching = -1;  // (a breath for your character's word before the first note)
-						Classes::VoiceSay(gen::VoTrigger::kEchoStart, 0.2f);
-						Forms::Play(gen::Sound::echo_sing);
-						Gun::FxBlast("light", a_c + RE::NiPoint3{ 0, 0, 300.0f });
-						logger::info("curse: Repeat the Echo - the altar sings {} notes at {}:00", n, h);
-					}
-				}
-				break;
-			case 1:  // the altar sings: a note a second
-				if (e.t >= 0.95f) {
-					e.t = 0;
-					const int j = e.seq[e.idx];
-					Gun::FxBlastSized("light", e.at[j] + RE::NiPoint3{ 0, 0, 60.0f }, 1.0f);
-					Forms::Play(kTone[j]);
-					if (++e.idx >= n) e.phase = 2, e.idx = 0, e.t = 0;
-				}
-				break;
-			case 2:  // your turn: walk into the stones, in order
-				{
-					int at = -1;
-					for (int i = 0; i < 6; ++i) {
-						if (std::hypot(pp.x - e.at[i].x, pp.y - e.at[i].y) < 170.0f && std::abs(pp.z - e.at[i].z) < 400.0f) at = i;
-					}
-					if (e.touching >= 0 && at != e.touching && std::hypot(pp.x - e.at[e.touching].x, pp.y - e.at[e.touching].y) > 230.0f) e.touching = -1;
-					if (at >= 0 && at != e.touching) {
-						e.touching = at;
-						if (at == e.seq[e.idx]) {
-							Forms::Play(kTone[at]);
-							Gun::FxBlastSized("light", e.at[at] + RE::NiPoint3{ 0, 0, 60.0f }, 1.0f);
-							if (++e.idx >= n) {
-								Forms::Play(gen::Sound::echo_sing);
-								Gun::FxBlastSized("lightmassive", a_c + RE::NiPoint3{ 0, 0, 200.0f }, 1.0f);
-								logger::info("curse: Repeat the Echo - answered");
-								Classes::VoiceSay(gen::VoTrigger::kEchoDone, 1.5f);
-								CompleteTrial(a_z);  // (clears the stones)
-								return;
-							}
-						} else {
-							EchoFail(a_c, "a wrong stone");
-						}
-					} else if (e.t > 30.0f + 4.0f * n) {
-						EchoFail(a_c, "too slow");
-					}
-				}
-				break;
+			const bool in = d < radius;
+			if (in) H.held += a_dt, H.out = 0.0f;
+			else H.held = std::max(0.0f, H.held - 0.6f * a_dt), H.out += a_dt;
+			// every one of the dead in the city hears it
+			if ((H.call -= a_dt) <= 0.0f) H.call = 3.0f, Director::Noise(6.0f);
+			if (H.held >= T) {
+				Forms::Play(gen::Sound::echo_sing);
+				Gun::FxBlastSized("lightmassive", a_c + RE::NiPoint3{ 0, 0, 200.0f }, 1.2f);
+				logger::info("curse: Hold the Light - held to the stone");
+				Classes::VoiceSay(gen::VoTrigger::kEchoDone, 1.5f);
+				H = {}, H.town = a_z;
+				g_ring.on = false;
+				CompleteTrial(a_z);
+				return;
 			}
-			if (!a_fighting) e.phase = 0;
-			std::string head, sub;
-			if (e.phase == 1) head = "WATCH THE STONES";
-			else if (e.phase == 2) head = "TOUCH THEM IN ORDER", sub = fmt::format("{} / {}", e.idx, n);
-			else head = hour >= 12.0f ? "THE STONES SING AT MIDNIGHT" : fmt::format("THE STONES SING AT {}:00", h + 1);
-			if (dAltar < 4000.0f) g_ring = { true, a_c, gen::kCurseEchoRadius, e.phase == 2 ? static_cast<float>(e.idx) / std::max(1, n) : 0.0f, g_ring.flash, 0, 1, false, head, sub };
+			if (H.out > 12.0f && H.held <= 0.0f) {
+				Forms::Play(gen::Sound::echo_wrong);
+				g_ring.flash = 1.0f;
+				H.on = false, H.out = 0;
+				logger::info("curse: Hold the Light - the light went dark (left too long)");
+				Classes::VoiceSay(gen::VoTrigger::kEchoWrong, 1.6f);
+				return;
+			}
+			const int left = static_cast<int>(std::ceil(T - H.held));
+			g_ring = { true, a_c, radius, k, g_ring.flash, left, in ? 1 : 0, true, in ? "HOLD THE LIGHT" : "BACK INTO THE LIGHT", fmt::format("{}s", left) };
+			g_ring.model = 1400;
 		}
 
 		// Break the Priest's Seals: each seal shielded while its guard lives; strike it once he falls. The last calls the priest out.
@@ -1488,8 +1472,8 @@ namespace coa
 				Audio::LoopStop(Audio::kLoopRite, 800);
 			}
 			switch (tr) {
-			case gen::kTrial_echo:  // (the stones stand by day too: the song is at night)
-				TickEcho(player, z, c, yaw, fighting, a_delta);
+			case gen::kTrial_echo:  // (Hold the Light)
+				TickHold(player, z, c, fighting, a_delta);
 				break;
 			case gen::kTrial_restless:
 				if (fighting) TickRestless(player, z, s, c);

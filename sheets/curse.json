@@ -1,6 +1,6 @@
 {
   "sheet": "curse",
-  "about": "The Curse of Alduin: lore, and the trials every city's Echo Altar sets before it wakes. (Noah, 2026-11-23: the trials remade to the story - the same four in every city, each with the city's own places) In order, all at night, shared by the party: restless (Lay the Restless to Rest: n of the risen slain in the altar's light, lightRadius, their souls rising past Alduin's mist), whisper (The Stone's Whisper - Felldir's Whisper once six altars are free: the altar speaks a riddle naming a place in the city (cities.whisper); find it at night and slay n of the risen there, within whisperRadius), echo (Repeat the Echo: at midnight, and every hour after until dawn, the altar flashes n runes on six stones in a ring round it, echoRadius out; touch them in the same order) and seals (Break the Priest's Seals: three dragon-script seals at city landmarks (cities.seals), each guarded by an elite; kill the guard, then strike the seal; the last calls the city's Dragon Priest out at once). Slaying the Dragon Priest frees the city and ends the night. Each trial's n is given per Skyrim difficulty, Novice to Legendary (iDifficulty 0-5). Progress lives in one global per city (5000000 + doneBits*100000 + active*10000 + progress, 9000000 = freed; a value from the old trials, under 5000000, starts the city fresh), saved with the game. Positions are x, y, z in the city's worldspace (the station's): the spot just outside each building's door, from Skyrim.esm. {city} is filled per city, {n} with the trial's count. A freed city is a sanctuary: no undead rise within zoneRadius of its station or in its own location.",
+  "about": "The Curse of Alduin: lore, and the trials every city's Echo Altar sets before it wakes. (Noah, 2026-11-23: the trials remade to the story - the same four in every city, each with the city's own places) In order, all at night, shared by the party: restless (Lay the Restless to Rest: n of the risen slain in the altar's light, lightRadius, their souls rising past Alduin's mist), whisper (The Stone's Whisper - Felldir's Whisper once six altars are free: the altar speaks a riddle naming a place in the city (cities.whisper); find it at night and slay n of the risen there, within whisperRadius), echo (Hold the Light - Noah, 2026-11-24, in place of Repeat the Echo: at night, step into the altar's light and it closes in on the stone over the trial's seconds while the dead pour in; stand inside until it closes - outside, it slips back) and seals (Break the Priest's Seals: three dragon-script seals at city landmarks (cities.seals), each guarded by an elite; kill the guard, then strike the seal; the last calls the city's Dragon Priest out at once). Slaying the Dragon Priest frees the city and ends the night. Each trial's n is given per Skyrim difficulty, Novice to Legendary (iDifficulty 0-5). Progress lives in one global per city (5000000 + doneBits*100000 + active*10000 + progress, 9000000 = freed; a value from the old trials, under 5000000, starts the city fresh), saved with the game. Positions are x, y, z in the city's worldspace (the station's): the spot just outside each building's door, from Skyrim.esm. {city} is filled per city, {n} with the trial's count. A freed city is a sanctuary: no undead rise within zoneRadius of its station or in its own location.",
   "prologueTitle": "THE CURSE OF ALDUIN",
   "prologue": "Helgen burned, and you lived. Alduin did not stay to finish what he started: he flew north over the smoke, and as he went he shouted three words into the earth - SLEN TIID VO, Flesh, Time, Undo. It is the shout he uses to raise his dragons from their burial mounds, but this time it fell on every grave in Skyrim, and every barrow answered. His shout hangs like a mist over every road the dead walk - to Shor's hall and every other - and now the dead of Skyrim cannot pass: the mist turns them back, and when the sun goes down Alduin's voice throws them down to Skyrim again in beams of red light. The Dragon Priests who swore themselves to Alduin in the Merethic Era remember their oaths and wake with them. Only the Echo Altars the ancient Tongues raised in every hold can still his voice, and they have gone dark. Wake them, city by city, and their dead will sleep again.",
   "liftedBanner": "THE ECHO ALTAR OF {CITY} AWAKENS",
@@ -379,25 +379,25 @@
     },
     {
       "id": "echo",
-      "title": "Repeat the Echo",
-      "short": "Touch the stones in the order the altar sings them",
-      "goal": "At midnight, touch the altar's six stones in the order it sings them",
-      "text": "The Tongues woke their altars by answering them: the stone sang, and they sang it back. At midnight six stones rise round the Echo Altar of {city} and it flashes its runes on them, one by one. Touch the stones in the same order while the dead come for you. Miss a note and it sings again at the next hour.",
+      "title": "Hold the Light",
+      "short": "Stand in the altar's light until it closes",
+      "goal": "Stand in the light of the Echo Altar of {city} as it closes round the stone",
+      "text": "When the Tongues first woke their altars, the light had to be held while Alduin's dead came for it. At night, step into the light of the Echo Altar of {city}: it begins to draw in toward the stone, and every one of the risen in the city comes for you. Stay inside the ring until it closes on the stone. Step out and the light falters and slips back.",
       "n": [
-        4,
-        4,
-        5,
-        5,
-        6,
-        6
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
       ],
       "seconds": [
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
+        45,
+        50,
+        55,
+        60,
+        70,
+        80
       ]
     },
     {
