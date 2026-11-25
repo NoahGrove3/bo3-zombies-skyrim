@@ -1331,7 +1331,6 @@ namespace coa
 				const float want = HealthFor(g_current) * gen::elite::healthMult * Settings::UndeadHealthMult();
 				av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kHealth, want - av->GetPermanentActorValue(RE::ActorValue::kHealth));
 				g_elites[actor->GetFormID()] = { actor->GetHandle(), 3.0f, 5.0f, false };
-				if (a_player && actor->GetPosition().GetDistance(a_player->GetPosition()) < 3500.0f) Classes::CombatSay(gen::VoTrigger::kElite, 1.2f);  // (an elite near you: your character's word on it)
 			}
 			g_ours[actor->GetFormID()] = *pick;
 			// (the audit: a combat style is shared - a vanilla human style edited here made followers and townsfolk fight
@@ -1812,7 +1811,6 @@ namespace coa
 			Forms::PlayAt(gen::Sound::boss_growl, boss.get());
 			Audio::BossMusic(true);
 			Hud::Banner(std::string(gen::kEnemies[row].label).append(" rises!"), 5.0f);
-			Classes::VoiceSay(gen::VoTrigger::kBoss, 3.0f);
 			logger::info("boss: {} risen with {:.0f} health", gen::kEnemies[row].id, want);
 			return true;
 		}
@@ -2524,7 +2522,6 @@ namespace coa
 				Hud::Banner(fmt::format("NIGHT {} - WAVE 1 OF {}{}", a_round, g_waves, g_special ? " - THE HOUNDS ARE LOOSE" : ""));
 			}
 			Stats::NightBegins(a_round);
-			Classes::VoiceSay(g_event >= 0 ? gen::VoTrigger::kSpecial : gen::VoTrigger::kNightStart, 2.5f);   // (Noah: the class's voice at the night's start)
 			logger::info("round {} starts: {} waves (the first of {}, 10 more each), up to {} undead at once, {:.0f} Skyrim health each{}", a_round, g_waves, g_waveSize, g_toSpawn, HealthFor(a_round), g_special ? " (hound night)" : "");
 		}
 
@@ -2888,7 +2885,6 @@ namespace coa
 		void Dawn()
 		{
 			int n = 0;
-			if (g_phase == Phase::Fighting) Classes::VoiceSay(gen::VoTrigger::kNightEnd, 3.0f);   // (a night won - not a load by day)
 			g_boss.spawnIn = -1, g_wantHerald = false;  // (the audit: a boss still waiting to rise came the next night, with no reward)
 			// Anyone still fighting our undead lets go first.
 			for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {

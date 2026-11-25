@@ -17,9 +17,7 @@ namespace coa::Settings
 		bool  g_blood = true, g_shake = true, g_softFlash = false, g_scout = false;
 		bool  g_subs = true;      // (Noah, 2026-11-23) subtitles for the Echo Altar's voice and your character's lines
 		float g_subSize = 1.0f;   // their size, against Edge UI's own
-		bool  g_classVo = true;   // (Noah, 2026-11-23) your character's voice lines
-		float g_classVoVol = 1.0f, g_altarVoVol = 1.0f;  // their volume, and the Echo Altar's voice's (0..1)
-		int   g_combatVo = 2;     // combat lines: 0 off, 1 rare, 2 normal, 3 often
+		float g_altarVoVol = 1.0f;  // the Echo Altar's voice's volume (0..1)
 		float g_fog = 1.0f;
 		float g_adsSens = 1.0f;  // (Noah) the look's speed while aiming down sights, against Skyrim's own sensitivity
 		int   g_keys[kKeys] = { 0x02, 0x03, 0x04, 0x05, 0x0E, 0x06, 0x30 };
@@ -210,10 +208,7 @@ namespace coa::Settings
 			g_softFlash = Read(L"Effects", L"bReduceFlashes", 0.0f) != 0.0f;
 			g_subs = Read(L"Subtitles", L"bSubtitles", 1.0f) != 0.0f;
 			g_subSize = std::clamp(Read(L"Subtitles", L"fSubtitleSize", 1.0f), 0.5f, 2.0f);
-			g_classVo = Read(L"Voices", L"bCharacterVoice", 0.0f) != 0.0f;  // (2026-11-23: class lines out of the release - off unless an INI turns them back on)
-			g_classVoVol = std::clamp(Read(L"Voices", L"fCharacterVoiceVolume", 100.0f), 0.0f, 100.0f) / 100.0f;
 			g_altarVoVol = std::clamp(Read(L"Voices", L"fAltarVoiceVolume", 100.0f), 0.0f, 100.0f) / 100.0f;
-			g_combatVo = static_cast<int>(std::clamp(std::round(Read(L"Voices", L"iCombatVoice", 2.0f)), 0.0f, 3.0f));
 			g_padPS = Read(L"Controls", L"bPlayStationIcons", 0.0f) != 0.0f;
 			g_bankRev = Read(L"Dragon", L"bBankReverse", 0.0f) != 0.0f;
 			g_diveInv = Read(L"Dragon", L"bInvertDive", 0.0f) != 0.0f;
@@ -291,10 +286,7 @@ namespace coa::Settings
 	bool  ReduceFlashes() { Ensure(); return g_softFlash; }
 	bool  Subtitles() { Ensure(); return g_subs; }
 	float SubtitleSize() { Ensure(); return g_subSize; }
-	bool  CharacterVoice() { Ensure(); return g_classVo; }
-	float CharacterVoiceVolume() { Ensure(); return g_classVoVol; }
 	float AltarVoiceVolume() { Ensure(); return g_altarVoVol; }
-	int   CombatVoice() { Ensure(); return g_combatVo; }
 	bool  PlayStationIcons() { Ensure(); return g_padPS; }
 	bool  DragonBankReverse() { Ensure(); return g_bankRev; }
 	bool  DragonInvertDive() { Ensure(); return g_diveInv; }

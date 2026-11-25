@@ -429,13 +429,7 @@ o.append('\tstruct TalkPrompt { std::string_view id, gate, ask; std::uint8_t top
 o.append('\tinline constexpr std::array<std::string_view, ' + str(len(_topics)) + '> kTalkTopics{ { ' + ', '.join(_json.dumps(t['title']) for t in _av['topics']) + ' } };')
 o.append(f'\tinline constexpr std::array<TalkLine, {len(_tl)}> kTalkLines{{ {{ ' + ', '.join(f'TalkLine{{ "{k}", {_json.dumps(x)}, {sc:.2f}f }}' for k, x, sc in _tl) + ' } };')
 o.append(f'\tinline constexpr std::array<TalkPrompt, {len(_tp)}> kTalkPrompts{{ {{ ' + ', '.join(f'TalkPrompt{{ "{i}", "{g}", {_json.dumps(a)}, {tp}, {f}, {n} }}' for i, g, a, tp, f, n in _tp) + ' } };')
-# (Noah, 2026-11-21) the class voice lines: per line its class (0 Summoner .. 3 Spellsword), its trigger, its male and female sound
-import json as _json
-_cv = _json.load(open(root / 'sheets' / 'classvo.json'))
-_trig = _cv['triggers']
-o.append('\tenum class VoTrigger : std::uint8_t { ' + ', '.join('k' + ''.join(w.capitalize() for w in t.split('_')) for t in _trig) + ' };')
-o.append('\tstruct ClassVoLine { std::string_view id; std::uint8_t cls; VoTrigger trigger; std::string_view text; };')   # (text: its subtitle) (the wavs are played by file: 640 sound records would not fit the light plugin)
-o.append(f'\tinline constexpr std::array<ClassVoLine, {len(_cv["rows"])}> kClassVo{{ {{ ' + ', '.join(f'ClassVoLine{{ "{r["id"]}", {r["cls"]}, VoTrigger::k' + ''.join(w.capitalize() for w in r['trigger'].split('_')) + ', ' + _json.dumps(r.get('text', '')) + ' }' for r in _cv['rows']) + ' } };')
+# (Noah, 2026-11-24: the class voice lines - "Take it out") no longer built into the game (sheets/classvo.json kept as the record)
 o.append('}')
 with open(root / 'src/Generated.h', 'a') as f: f.write('\n'.join(o) + '\n')
 print('appended v0.2 tables')

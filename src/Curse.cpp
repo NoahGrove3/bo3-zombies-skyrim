@@ -327,7 +327,6 @@ namespace coa
 			for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) {
 				all &= Get(t).freed;
 			}
-			Classes::VoiceSay(all ? gen::VoTrigger::kAllFree : gen::VoTrigger::kFreed, 10.0f);  // (after the Dragon Priest's fall is said)
 			if (all) {
 				// (the story audit: it pointed to the Echo while the dragons still flew)
 				Note(Echo::DragonsSlain() ? std::string(gen::kCurseFreedAll)
@@ -362,7 +361,7 @@ namespace coa
 			Points::Add(500 * s.Count());
 			if (next < kTrialCount) {
 				Hud::QuestBanner(Upper(std::string(Title(tr))) + " - COMPLETE   next: " + Upper(std::string(Title(next))), 6.0f);
-				if (next == gen::kTrial_whisper && Get(a_town).Trial() == gen::kTrial_whisper) SayRiddle(a_town), Classes::VoiceSay(gen::VoTrigger::kWhisperStart, 12.0f);
+				if (next == gen::kTrial_whisper && Get(a_town).Trial() == gen::kTrial_whisper) SayRiddle(a_town);
 			} else {
 				Hud::QuestBanner(Upper(std::string(Title(tr))) + " - COMPLETE   " + std::string(BossName(a_town)) + " comes", 6.0f);
 			}
@@ -823,7 +822,6 @@ namespace coa
 					Put(a_z, a_s);
 					Forms::Play(gen::Sound::quest_step);
 					Gun::FxBlastSized("light", g_whisperAt + RE::NiPoint3{ 0, 0, 100.0f }, 1.2f);
-					Classes::VoiceSay(gen::VoTrigger::kWhisperFound, 0.5f);  // (your character knows the place)
 					logger::info("curse: {} - the whisper's place found ({})", gen::kTowns[a_z], w.place);
 				}
 				return;
@@ -852,7 +850,6 @@ namespace coa
 					H.on = true, H.out = 0, H.call = 0;
 					Forms::Play(gen::Sound::echo_sing);
 					Gun::FxBlastSized("light", a_c + RE::NiPoint3{ 0, 0, 300.0f }, 1.2f);
-					Classes::VoiceSay(gen::VoTrigger::kEchoStart, 0.2f);
 					logger::info("curse: Hold the Light - begun ({:.0f} s to hold, {:.0f} held)", T, H.held);
 				}
 				if (d < 4000.0f) {
@@ -874,7 +871,6 @@ namespace coa
 				Forms::Play(gen::Sound::echo_sing);
 				Gun::FxBlastSized("lightmassive", a_c + RE::NiPoint3{ 0, 0, 200.0f }, 1.2f);
 				logger::info("curse: Hold the Light - held to the stone");
-				Classes::VoiceSay(gen::VoTrigger::kEchoDone, 1.5f);
 				H = {}, H.town = a_z;
 				g_ring.on = false;
 				CompleteTrial(a_z);
@@ -885,7 +881,6 @@ namespace coa
 				g_ring.flash = 1.0f;
 				H.on = false, H.out = 0;
 				logger::info("curse: Hold the Light - the light went dark (left too long)");
-				Classes::VoiceSay(gen::VoTrigger::kEchoWrong, 1.6f);
 				return;
 			}
 			const int left = static_cast<int>(std::ceil(T - H.held));
@@ -959,13 +954,11 @@ namespace coa
 						logger::info("curse: {} - the seal at {} is broken ({} of 3)", gen::kTowns[a_z], pl.place, std::popcount(static_cast<unsigned>(a_s.prog & 7)));
 						if ((a_s.prog & 7) == 7) {
 							g_priestAt = at, g_priestCall = true;  // (Noah: "the last one calls the Dragon Priest out" - at once, here)
-							Classes::VoiceSay(gen::VoTrigger::kPriestCalled, 1.2f);
 							Put(a_z, a_s);
 							CompleteTrial(a_z);
 							return;
 						}
 						Put(a_z, a_s);
-						Classes::VoiceSay(gen::VoTrigger::kSealBroken, 1.0f);
 					}
 				}
 			}
@@ -1024,8 +1017,7 @@ namespace coa
 			ClearRun();
 			Forms::Play(gen::Sound::quest_start);
 			Hud::QuestBanner(Upper(title) + ": " + Ask(a_trial) + (Director::Fighting() ? "" : " (at night)"), 6.0f);
-			if (a_trial == gen::kTrial_whisper) SayRiddle(a_town), Classes::VoiceSay(gen::VoTrigger::kWhisperStart, 12.0f);  // (after the riddle's subtitle)
-			if (a_trial == gen::kTrial_restless) Classes::VoiceSay(gen::VoTrigger::kRestlessStart, 1.0f);
+			if (a_trial == gen::kTrial_whisper) SayRiddle(a_town);  // (after the riddle's subtitle)
 			logger::info("curse: {} trial {} taken up (difficulty {})", gen::kTowns[a_town], gen::kTrials[a_trial].id, Diff());
 		}
 
@@ -1123,7 +1115,6 @@ namespace coa
 				Forms::Play(gen::Sound::quest_step);
 				g_pendingLift = a_town;
 				Kit::OnPriestSlain();  // (Noah: the Dragon Priest's relic)
-				Classes::VoiceSay(gen::VoTrigger::kPriestSlain, 1.5f);
 				Kit::PriestDrop(a_town);  // (Noah: his weapon - to you, and to everyone in the party)
 				Net::PriestSlain(a_town);
 				// (the audit: the kill lived only in memory - a save and load raised the Priest again) kept in the city's own

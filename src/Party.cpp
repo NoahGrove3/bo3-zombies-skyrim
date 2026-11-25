@@ -139,7 +139,6 @@ namespace coa::Party
 
 		void Rise(float a_share, const char* a_why)
 		{
-			Classes::VoiceSay(gen::VoTrigger::kRevived, 1.0f);  // (your character, back on their feet)
 			auto* p = P();
 			auto& f = p->GetActorRuntimeData().boolFlags;
 			f.reset(RE::Actor::BOOL_FLAGS::kNoBleedoutRecovery);
@@ -276,12 +275,10 @@ namespace coa::Party
 			}
 			Stats::OnHurt();
 			logger::info("fallen: you fell (night {}, {} kills tonight) - no save is loaded, the wave begins again", line.night, line.kills);
-			Classes::VoiceSay(gen::VoTrigger::kDowned, 0.3f);
 			(void)p;
 		}
 		void SoloRise(RE::PlayerCharacter* p)
 		{
-			Classes::VoiceSay(gen::VoTrigger::kRevived, 1.2f);
 			Director::RestartWave();
 			Director::NormalTime();
 			auto& f = p->GetActorRuntimeData().boolFlags;
@@ -516,7 +513,6 @@ namespace coa::Party
 			Tablet::OnFell();   // (Noah: the donated weapon is lost if you fall)
 			// ("YOU ARE DOWN" is on the screen itself)
 			logger::info("party: down");
-			Classes::VoiceSay(gen::VoTrigger::kDowned, 0.3f);
 		}
 		if (g_life == Life::Down) {
 			HoldDown();

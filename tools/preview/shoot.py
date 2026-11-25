@@ -27,6 +27,7 @@ with sync_playwright() as pw:
             glow = fxl.filter(ImageFilter.GaussianBlur(9)).point(lambda v: min(255, int(v * 1.6)))
             glow2 = fxl.filter(ImageFilter.GaussianBlur(3)).point(lambda v: min(255, int(v * 0.6)))
             im = ImageChops.add(ImageChops.add(full, glow), glow2)
+            if __import__('os').environ.get('BIG') and i == 0: im.save(OUT / f'{k}_big.png'); full.save(OUT / f'{k}_nofx.png')
             frames.append(im.resize((520, 260), Image.LANCZOS))
         frames[0].save(OUT / f'{k}.png')
         frames[0].save(OUT / f'{k}.webp', save_all=True, append_images=frames[1:], duration=int(1000 / FPS), loop=0, quality=72, method=4)

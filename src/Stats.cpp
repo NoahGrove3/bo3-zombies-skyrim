@@ -102,7 +102,7 @@ namespace coa::Stats
 		g_headRun = a_head ? g_headRun + 1 : (a_gun ? 0 : g_headRun);
 		const bool headStreak = a_head && g_headRun > 0 && g_headRun % 5 == 0;
 		l.unlock();
-		if (multi == 3) Style("MULTI-KILL", 50), Classes::CombatSay(gen::VoTrigger::kMultikill, 0.4f);  // (your character's word on it, now and then)
+		if (multi == 3) Style("MULTI-KILL", 50);
 		else if (multi > 3) Style("MULTI-KILL x" + std::to_string(multi), 25);
 		if (headStreak) Style("HEADSHOT STREAK", 50);
 		if (a_bow && a_dist >= 2800.0f) Style("LONG SHOT", 60);

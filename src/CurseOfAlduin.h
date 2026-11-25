@@ -359,7 +359,6 @@ namespace coa
 		std::vector<FriendGame> FriendsInParties();  // friends in Skyrim with a party open
 		void        TellClass(int a_cls);   // (the altar rework) your class, for the party's auras
 		void        TellWord(int a_w);      // (host) a word silenced: the party's games silence it too
-		void        TellVoice(int a_line, bool a_female);  // (Noah) your class line: the party hears it from your figure, to 20 m
 		void        EggDone(int a_town);  // a hidden quest finished: the party near that altar shares it
 		void        PriestSlain(int a_town);  // (host) a city's Dragon Priest fell: every game in the party receives his weapon
 	}
@@ -432,10 +431,6 @@ namespace coa
 		void               JavelinButton(bool a_left, bool a_down);  // its attack pressed (charge) / let go (throw)
 		bool               JavelinEats(bool a_left, const RE::ButtonEvent* a_b);  // its attack held past a jab: the charge starts, the button kept from Skyrim
 		void               JavelinLook();
-		void               HeardVoice(std::uint64_t a_from, int a_line, bool a_female);  // (co-op) a friend's class line, from their figure, heard to 20 m
-		void               CombatSay(gen::VoTrigger a_trigger, float a_delay = 0.0f);  // a combat line, as the MCM's Combat lines allow
-		void               VoiceSay(gen::VoTrigger a_trigger, float a_delay = 0.0f);  // (Noah) your class's voice line for that moment, male or female as you are
-		void               TickVoice(float a_delta);  // idle lines by day, the first step into a city still cursed  // the javelin jabs with Animated Armoury's rapier moveset (its own model kept)
 		int                FlaskElementInHand(bool a_left);  // which flask that hand holds (drawn or not): 0-6, -1 none
 		void               FlaskAttack(bool a_left);  // its throw
 		void               FlaskAttackUp(bool a_left);  // the attack let go (the Mutagen Gauntlet's beam stops)
@@ -579,10 +574,7 @@ namespace coa
 		bool        ReduceFlashes();              // softer lightning, fewer white flashes
 		bool        Subtitles();                  // (MCM: View & Effects) the Echo Altar's voice and your character's lines subtitled
 		float       SubtitleSize();               // their size, 0.5 .. 2 (1 = Edge UI's own)
-		bool        CharacterVoice();             // (MCM: View & Effects, Voices) your character's voice lines on or off
-		float       CharacterVoiceVolume();       // their volume, 0 .. 1
 		float       AltarVoiceVolume();           // the Echo Altar's voice's volume, 0 .. 1
-		int         CombatVoice();                // combat lines: 0 off, 1 rare, 2 normal, 3 often
 		bool        PlayStationIcons();           // controller prompts drawn as PlayStation buttons (a PS5 pad looks like an Xbox one to Skyrim)
 		bool        DragonBankReverse();          // the dragon leans out of its turns instead of into them (Noah's choice)
 		bool        DragonInvertDive();           // forward pulls up, back dives

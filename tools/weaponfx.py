@@ -82,7 +82,7 @@ LEFT = {'tab_stormtalons_l', 'tab_talons_l', 'tab_cinderclaws_l'}
 # the class weapons: each takes another model at each tier (src/Classes.cpp AdoptTierLook), so each tier's model has its own
 # art; the Spellbound Rapier's look follows the element in your other hand (its BLADE_VIZ key: src/Classes.cpp LookKey)
 BV_KEYS = ['alch', 'carian', 'radiant', 'ss_none', 'ss_fire', 'ss_frost', 'ss_shock', 'ss_sun', 'ss_blood', 'slayer']
-BV_PICK = {'alch': ('flame', 'shadow'), 'carian': ('storm', 'carian'), 'radiant': ('mist', 'white'), 'ss_none': ('runic', 'ss_none'),
+BV_PICK = {'alch': ('flame', 'shadow'), 'carian': ('mist', 'carian'), 'radiant': ('mist', 'white'), 'ss_none': ('runic', 'ss_none'),
            'ss_fire': ('flame', 'orange'), 'ss_frost': ('mist', 'iceblue'), 'ss_shock': ('storm', 'shockv'), 'ss_sun': ('flame', 'gold'),
            'ss_blood': ('runic', 'arcane'), 'slayer': ('flame', 'gold')}
 CLASS_MODELS = {   # the look key(s), each model: its steel shapes and band
@@ -201,29 +201,39 @@ def textures():
     beads = smooth(0.35, 0.75, fbm(H, W, 20, 1, 83))
     core = np.exp(-(u * 7.0) ** 2) * (0.45 + 0.55 * beads); halo = np.exp(-u * 4.5) * 0.22 * (0.6 + 0.4 * beads)
     save_tex(grey(0.5 + 0.5 * core, core * 1.4 + halo), 'molten_strip')
-    # C: lightning off the edge - a 4 x 4 flipbook of strikes: thin winding bolts (iso-lines of noise), each frame its own
+    # C: lightning off the edge - an 8 x 4 flipbook of strikes: thin winding bolts (iso-lines of noise). (Noah, 2026-11-24: "30
+    # FPS so it looks really smooth") 32 drawings played at 28 a second, the same speed as the 16 before: each one between two
+    # of the 16 strikes, its noise eased from one to the next, so the bolts crawl rather than jump
+    FR, KEYS = 32, 16
     fw, fh = 64, 256
+    uu = np.linspace(0, 1, fw)[None, :].repeat(fh, 0)
+    K1 = [fbm(fh, fw, 6, 2, 200 + f * 7) for f in range(KEYS)]
+    K2 = [fbm(fh, fw, 10, 3, 400 + f * 7) for f in range(KEYS)]
+    LV = [(np.random.default_rng(900 + f).random((4, 1)) > 0.3).repeat(fh // 4, 0) for f in range(KEYS)]
     cells = []
-    for f in range(16):
-        uu = np.linspace(0, 1, fw)[None, :].repeat(fh, 0)
-        n = fbm(fh, fw, 6, 2, 200 + f * 7)
-        n2 = fbm(fh, fw, 10, 3, 400 + f * 7)
+    for f in range(FR):
+        t = f * KEYS / FR; i = int(t); fr = t - i; j = (i + 1) % KEYS
+        n = K1[i] * (1 - fr) + K1[j] * fr
+        n2 = K2[i] * (1 - fr) + K2[j] * fr
         bolt = (1 - smooth(0.0, 0.03, np.abs(n - 0.5))) * smooth(0.95, 0.05, uu)
         twig = (1 - smooth(0.0, 0.022, np.abs(n2 - 0.5))) * smooth(0.6, 0.05, uu) * 0.6
-        live = (np.random.default_rng(900 + f).random((4, 1)) > 0.3).repeat(fh // 4, 0)
+        live = LV[i] if fr < 0.5 else LV[j]
         a = np.clip((bolt + twig) * 1.6 * live + np.exp(-uu * 7) * 0.08, 0, 1)
         cells.append(grey(0.6 + 0.4 * bolt, a))
-    atlas = np.zeros((fh * 4, fw * 4, 4))
-    for f, c in enumerate(cells): atlas[(f // 4) * fh:(f // 4 + 1) * fh, (f % 4) * fw:(f % 4 + 1) * fw] = c
+    atlas = np.zeros((fh * 4, fw * 8, 4))
+    for f, c in enumerate(cells): atlas[(f // 8) * fh:(f // 8 + 1) * fh, (f % 8) * fw:(f % 8 + 1) * fw] = c
     save_tex(atlas, 'storm_edge')
-    # C: lightning crawling over the steel - a 4 x 4 flipbook of 2D strikes
+    # C: lightning crawling over the steel - an 8 x 4 flipbook of 2D strikes, eased between 16 the same way
     fs = 128
-    atlas = np.zeros((fs * 4, fs * 4, 4))
-    for f in range(16):
-        n = fbm(fs, fs, 3, 3, 600 + f * 13)
+    atlas = np.zeros((fs * 4, fs * 8, 4))
+    S1 = [fbm(fs, fs, 3, 3, 600 + f * 13) for f in range(KEYS)]
+    S2 = [smooth(0.45, 0.6, fbm(fs, fs, 2, 2, 700 + f)) for f in range(KEYS)]
+    for f in range(FR):
+        t = f * KEYS / FR; i = int(t); fr = t - i; j = (i + 1) % KEYS
+        n = S1[i] * (1 - fr) + S1[j] * fr
         line = 1 - smooth(0.0, 0.028, np.abs(n - 0.5))
-        mask = smooth(0.45, 0.6, fbm(fs, fs, 2, 2, 700 + f))
-        atlas[(f // 4) * fs:(f // 4 + 1) * fs, (f % 4) * fs:(f % 4 + 1) * fs] = grey(0.55 + 0.45 * line, line * mask * 1.2)
+        mask = S2[i] * (1 - fr) + S2[j] * fr
+        atlas[(f // 8) * fs:(f // 8 + 1) * fs, (f % 8) * fs:(f % 8 + 1) * fs] = grey(0.55 + 0.45 * line, line * mask * 1.2)
     save_tex(atlas, 'storm_shell')
     # B: runes cut in the steel - a column of glyphs (each three strokes), tiling along the blade
     G = 32; RH, RW = 1024, 128
@@ -406,7 +416,15 @@ def fit_part(key, V, T, band, look, col):
         ss = np.arange(0, s[-1], stepv)
         pts = np.stack([np.interp(ss, s, cc[:, 0]), np.interp(ss, s, cc[:, 1])], 1)
         k = 3
+        raw = pts.copy()
         pts = np.stack([np.convolve(np.r_[pts[-k:, i], pts[:, i], pts[:k, i]], np.ones(2 * k + 1) / (2 * k + 1), 'valid') for i in range(2)], 1)
+        # (Noah, 2026-11-24: "all the way to the tip of the blade" - "until it reaches the guard") the smoothing rounds a sharp point
+        # inward: within a few units of the tip (the outline's furthest point from the hand) and of the steel's root the outline
+        # keeps its own shape
+        tipx = raw[:, 0].max()
+        keep_raw = np.clip(1.0 - (tipx - raw[:, 0]) / (3.0 if span0 > 30 else 1.6), 0, 1)
+        keep_raw = np.maximum(keep_raw, np.clip(1.0 - (raw[:, 0] - xbase) / (2.5 if span0 > 30 else 1.2), 0, 1))
+        pts = pts * (1 - keep_raw[:, None]) + raw * keep_raw[:, None]
         tang = np.gradient(pts, axis=0); tang /= np.linalg.norm(tang, axis=1, keepdims=True) + 1e-9
         nor = np.stack([tang[:, 1], -tang[:, 0]], 1)
         # (outward: the side away from the steel)
@@ -416,7 +434,7 @@ def fit_part(key, V, T, band, look, col):
         if two_ends:   # (a staff's two blades: the band already leaves the shaft out)
             keepm = np.ones(len(pts), bool)
         else:
-            keepm = ~((pts[:, 0] < xbase + 2.0) & (nor[:, 0] < -0.55))
+            keepm = ~((pts[:, 0] < xbase + (0.9 if span0 > 30 else 0.45)) & (nor[:, 0] < -0.55))   # (only the end facing the guard itself)
         idx = np.where(keepm)[0]
         if not len(idx): continue
         if keepm.all():
@@ -499,7 +517,7 @@ def art_part(F, rows, rng, pre):
         L2 = np.linalg.norm(np.diff(pts, axis=0), axis=1); s = np.r_[0, np.cumsum(L2)]
         n = len(pts)
         # (Noah: "the entire blade length") soft only over the last unit or so at each end of a run
-        fl = 0.6 if small else 1.4
+        fl = 0.25 if small else 0.6   # (soft over only a hair at each end: the light runs to the guard and the tip)
         fade = np.clip(np.minimum(s, s[-1] - s) / fl, 0, 1) if s[-1] < 1e9 else np.ones(n)
         closed = np.linalg.norm(pts[0] - pts[-1]) < 1e-3
         if closed: fade = np.ones(n)
@@ -525,7 +543,7 @@ def art_part(F, rows, rng, pre):
                         a, b = i * k_ + r, i * k_ + r + 1; c2, d = a + k_, b + k_
                         tris += [(a, b, d), (a, d, c2)]
                 emit(f'e{ei}_{li}_{mode}', tex, pal, gain * (1.0 if mode == 'out' else 0.8), verts, uvs, tris, al,
-                     flip=(4, 4) if flipbook else None, fps=14 if flipbook else None, vscroll=0 if flipbook else per,
+                     flip=(8, 4) if flipbook else None, fps=28 if flipbook else None, vscroll=0 if flipbook else per,
                      clamp=None if flipbook else 1)
     # the shell over both faces
     tex, how, tile, gain = L['shell']
@@ -562,7 +580,7 @@ def art_part(F, rows, rng, pre):
                     del verts[base:], uvs[base:], al[base:]; continue
                 tris += [(base, base + 1, base + 2), (base, base + 2, base + 3)]
         if tris:
-            emit(f'shell{side + 1}', tex, cols[0], gain, verts, uvs, tris, al, flip=(4, 4) if flipbook else None, fps=12 if flipbook else None,
+            emit(f'shell{side + 1}', tex, cols[0], gain, verts, uvs, tris, al, flip=(8, 4) if flipbook else None, fps=24 if flipbook else None,
                  vscroll=0 if flipbook else (6.0 if how == 'edge' else 0), pulse=(2.6, 0.45, 1.15) if look in ('runic', 'core') else None)
     # motes: a few billboard sparks along the edges (fxwrite cards)
     kind, dens = L['motes']

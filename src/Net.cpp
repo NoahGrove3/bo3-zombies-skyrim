@@ -513,14 +513,6 @@ namespace coa::Net
 							Tasks::Add([who, cls] { Kit::HeardClass(who, cls); });
 						}
 						break;
-					case kVoice:  // (Noah, 2026-11-23) a friend's class line: heard from their figure, to 20 m
-						if (sz >= 4) {
-							const int  line = d[1] | (d[2] << 8);
-							const bool fem = d[3] != 0;
-							const std::uint64_t who = from;
-							Tasks::Add([who, line, fem] { Classes::HeardVoice(who, line, fem); });
-						}
-						break;
 					case kPriest:  // (Noah: "all players receive the weapon") a Dragon Priest fell in the host's game
 						if (sz >= 2 && d[1] < 16) {
 							const int town = d[1];
@@ -712,12 +704,6 @@ namespace coa::Net
 		if (!g_lobby || a_town < 0 || a_town > 15) return;
 		const std::uint8_t m[2]{ kPriest, static_cast<std::uint8_t>(a_town) };
 		ToAll(m, 2, true);
-	}
-	void TellVoice(int a_line, bool a_female)
-	{
-		if (!g_lobby || a_line < 0 || a_line > 0xFFFF) return;
-		const std::uint8_t m[4]{ kVoice, static_cast<std::uint8_t>(a_line & 0xFF), static_cast<std::uint8_t>(a_line >> 8), static_cast<std::uint8_t>(a_female ? 1 : 0) };
-		ToAll(m, 4, true);
 	}
 	void TellWord(int a_w)
 	{

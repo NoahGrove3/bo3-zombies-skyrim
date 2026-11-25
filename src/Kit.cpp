@@ -422,7 +422,6 @@ namespace coa::Kit
 			if (a_altar) Forms::PlayAt(gen::Sound::forge_upgrade, a_altar);
 			Hud::Banner(ItemName(c, i) + "  -  yours: claim it in Your Kit", 4.0f);
 			logger::info("kit: {} bought ({})", ItemName(c, i), Classes::Name(c));
-			Classes::VoiceSay(gen::VoTrigger::kArmory, 0.6f);
 			return true;
 		}
 		if (a_id == kClaimAll) {   // every unclaimed thing, into your pack
@@ -466,7 +465,6 @@ namespace coa::Kit
 		Hud::Banner((now != was ? was + "  ->  " + now : now) + "  -  " + (t + 1 <= 3 ? std::string(TierLabel(t + 1)) : "Ascend " + std::to_string(t + 1 - 3)) +
 		                (defs[item].kind == Kind::Armour ? (ArmorAscendMult() > 1.001f ? fmt::format("   (damage reduction +{:.0f}%, damage +{:.0f}%)", ArmorResist() * 100.0f, (ArmorAscendMult() - 1.0f) * 100.0f) : fmt::format("   (damage reduction +{:.0f}%)", ArmorResist() * 100.0f)) : fmt::format("   (damage x{:.1f})", UpgradeMult(t + 1))), 4.5f);  // (Noah: "I upgraded my Fire Touch - it didn't seem like it changed anything": what it gained, said)
 		logger::info("kit: {} -> tier {} ({})", now, t + 1, Classes::Name(c));
-		Classes::VoiceSay(gen::VoTrigger::kUpgrade, 0.6f);
 		return true;
 	}
 
@@ -530,7 +528,6 @@ namespace coa::Kit
 		if (p->GetItemCount(w) <= 0) Forms::Give(p, w, 1);
 		Hud::Slain(fmt::format("{} has been slain", b.name), fmt::format("{} received", b.weaponName), 7.0f);
 		logger::info("kit: {} slain - {} received", b.name, b.weaponName);
-		Classes::VoiceSay(gen::VoTrigger::kRelic, 19.0f);  // (after the priest's fall and the city's freeing are said)
 	}
 	void OnPriestSlain()
 	{
