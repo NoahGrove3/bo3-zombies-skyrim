@@ -1248,8 +1248,11 @@ namespace coa::Tablet
 		}
 		// (Noah: "This wand should shoot a small golden ball that does a TON of knock back every 5th hit on enemies. Naturally it
 		// does base damage that bounces to up to 4 enemies if they're standing close together. The projectile needs to be seen
-		// bouncing to each enemy") a ball of golden light from the wand's tip (Fulcimentum's wood wand: its point 63 down its -Y)
-		constexpr float kStarTipY = -63.0f;
+		// bouncing to each enemy") a ball of golden light from the wand's tip
+		// (Noah, 2026-11-24: "Tip animation at the very tip of the wand ... is behind my character, not at the wand's tip") Fulcimentum's
+		// wood wand (SSS\WoodWand1.nif) runs up its +Y: its point 37.7 out, the feathers at its foot (-15) - the orb and the casts
+		// from there
+		constexpr float kStarTipY = 37.5f;
 		int g_starHits = 0;
 		void StarHop(const RE::NiPoint3& a_from, const RE::NiPoint3& a_dir, float a_range, float a_share, int a_left, std::shared_ptr<std::vector<RE::FormID>> a_hit)
 		{

@@ -1501,6 +1501,68 @@ namespace coa
 			a_bone->UpdateDownwardPass(ud, 0);
 		}
 		RE::NiPoint3 BoneZ(const RE::NiAVObject* o) { const auto& r = o->world.rotate; return { r.entry[0][2], r.entry[1][2], r.entry[2][2] }; }
+		// (Noah, 2026-11-24: "the throwing animation for the Javelin is a bit broken. My character's arm is moving in inhumanly
+		// possible ways") the overhand throw set by where the arm should point, not turned on top of whatever the body was doing:
+		// each key is the upper arm's and the forearm's direction in your own frame (forward - toward your aim -, right, up), and
+		// each bone is turned straight onto its direction from wherever the animation left it. Cocked: the upper arm out and back
+		// at shoulder height, the forearm upright behind the head, the point aimed ahead; whipped through over the shoulder, the
+		// arm reaching along your aim as it lets go; the follow-through down and across; then the animation has the arm again
+		void AimBone(RE::NiAVObject* a_bone, RE::NiAVObject* a_child, RE::NiPoint3 a_dir, float a_w)
+		{
+			if (!a_bone || !a_child || a_w <= 0.001f) return;
+			RE::NiPoint3 cur = a_child->world.translate - a_bone->world.translate;
+			if (cur.Length() < 1e-3f || a_dir.Length() < 1e-3f) return;
+			cur.Unitize(), a_dir.Unitize();
+			RE::NiPoint3 ax = cur.Cross(a_dir);
+			const float s = ax.Length(), c = std::clamp(cur.Dot(a_dir), -1.0f, 1.0f);
+			if (s < 1e-4f) return;
+			ax = ax * (1.0f / s);
+			TurnBone(a_bone, AxisAngle(ax, std::atan2(s, c) * a_w));
+		}
+		void PoseJavelin(RE::PlayerCharacter* a_player, RE::NiAVObject* a_root, bool a_first)
+		{
+			const float t = g_throw.t;
+			const float yaw = a_player->data.angle.z, pitch = std::clamp(a_player->data.angle.x, -1.0f, 1.0f);
+			const RE::NiPoint3 f{ std::sin(yaw), std::cos(yaw), 0 }, up{ 0, 0, 1 };
+			const bool L = g_throw.left;
+			const float side = L ? -1.0f : 1.0f;
+			const RE::NiPoint3 r = RE::NiPoint3{ std::cos(yaw), -std::sin(yaw), 0 } * side;   // (out, toward the throwing side)
+			const RE::NiPoint3 aim = f * std::cos(pitch) - up * std::sin(pitch);
+			auto nrm = [](RE::NiPoint3 v) { const float l = v.Length(); return l > 1e-5f ? v * (1.0f / l) : v; };
+			auto mix = [&](const RE::NiPoint3& a, const RE::NiPoint3& b, float k) { return nrm(a * (1.0f - k) + b * k); };
+			// the keys: (upper arm, forearm)
+			const RE::NiPoint3 uaRest = nrm(r * 0.35f - up * 0.9f + f * 0.1f), faRest = nrm(f * 0.6f - up * 0.6f);
+			const RE::NiPoint3 uaCock = nrm(r * 0.8f + up * 0.35f - f * 0.45f), faCock = nrm(up * 0.95f - f * 0.3f + r * 0.05f);
+			const RE::NiPoint3 uaRel = nrm(aim * 0.75f + up * 0.5f + r * 0.35f), faRel = nrm(aim + up * 0.2f);
+			const RE::NiPoint3 uaFol = nrm(f * 0.8f - up * 0.35f + r * 0.05f), faFol = nrm(f * 0.7f - up * 0.6f - r * 0.25f);
+			constexpr float tFollow = 0.62f;
+			RE::NiPoint3 ua, fa;
+			float w = 1.0f, turn = 0.0f;
+			if (t < kJavBack) {
+				const float k = Ease(t / kJavBack);
+				ua = mix(uaRest, uaCock, k), fa = mix(faRest, faCock, k), w = Ease(std::min(1.0f, t / 0.12f)), turn = 0.45f * k;
+			} else if (t < kJavRelease) {
+				const float k = Ease((t - kJavBack) / (kJavRelease - kJavBack));
+				ua = mix(uaCock, uaRel, k), fa = mix(faCock, faRel, k), turn = 0.45f - 0.7f * k;
+			} else if (t < tFollow) {
+				const float k = Ease((t - kJavRelease) / (tFollow - kJavRelease));
+				ua = mix(uaRel, uaFol, k), fa = mix(faRel, faFol, k), turn = -0.25f;
+			} else {
+				const float k = Ease((t - tFollow) / (kJavLen - tFollow));
+				ua = uaFol, fa = faFol, w = 1.0f - k, turn = -0.25f * (1.0f - k);
+			}
+			if (!a_first) TurnBone(a_root->GetObjectByName("NPC Spine2 [Spn2]"), AxisAngle(up, side * turn * w));
+			auto* uab = a_root->GetObjectByName(L ? "NPC L UpperArm [LUar]" : "NPC R UpperArm [RUar]");
+			auto* fab = a_root->GetObjectByName(L ? "NPC L Forearm [LLar]" : "NPC R Forearm [RLar]");
+			auto* hd = a_root->GetObjectByName(L ? "NPC L Hand [LHnd]" : "NPC R Hand [RHnd]");
+			AimBone(uab, fab, ua, w);
+			AimBone(fab, hd, fa, w);
+			// the javelin in that hand: hidden from the release (it is in the air) until it is back
+			for (const bool p1 : { false, true }) {
+				auto* rt = a_player->Get3D(p1);
+				if (auto* node = rt ? rt->GetObjectByName(L ? "SHIELD" : "WEAPON") : nullptr) node->SetAppCulled(g_throw.released && t < kJavLen);
+			}
+		}
 		void PoseThrow(RE::PlayerCharacter* a_player)
 		{
 			if (!g_throw.on) return;
@@ -1509,7 +1571,8 @@ namespace coa
 			auto* root = a_player->Get3D(first);
 			if (!root) return;
 			g_turnFirst = first;
-			const ThrowKeys k = g_throw.over ? JavAt(g_throw.t) : ThrowAt(g_throw.t);
+			if (g_throw.over) { PoseJavelin(a_player, root, first); return; }
+			const ThrowKeys k = ThrowAt(g_throw.t);
 			const float yaw = a_player->data.angle.z;
 			const RE::NiPoint3 r{ std::cos(yaw), -std::sin(yaw), 0 };
 			const RE::NiPoint3 up{ 0, 0, 1 };

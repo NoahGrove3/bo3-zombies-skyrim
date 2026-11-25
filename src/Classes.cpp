@@ -1468,8 +1468,17 @@ namespace coa::Classes
 	namespace
 	{
 		constexpr const char* kJavModel = "CurseOfAlduin\\wyrmspine\\wyrmspine.nif";
-		struct Javelin_ { bool charging = false, away = false, left = false; float charge = 0, away_t = 0, glow = 0; int el = 0, bounces = 0; float power = 0; std::vector<RE::FormID> struck; };
+		struct Javelin_ { bool charging = false, away = false, left = false, pressed = false; float charge = 0, away_t = 0, glow = 0; int el = 0, bounces = 0; float power = 0; std::vector<RE::FormID> struck; };
 		Javelin_ g_jav;
+		// (Noah, 2026-11-24: "I need to be able to see the projectile hit and when it bounces to other enemies") in flight it carries
+		// its element streaming behind it - Skyrim's own bolt of that element (fxmap.ini CurseOfAlduin\wyrmspine\fly_*)
+		const char* JavFlyModel(int a_el)
+		{
+			static constexpr const char* kFly[8] = { "CurseOfAlduin\\wyrmspine\\fly_fire.nif", "CurseOfAlduin\\wyrmspine\\fly_frost.nif", "CurseOfAlduin\\wyrmspine\\fly_shock.nif",
+				"CurseOfAlduin\\wyrmspine\\fly_wind.nif", "CurseOfAlduin\\wyrmspine\\fly_sun.nif", "CurseOfAlduin\\wyrmspine\\fly_blood.nif", "CurseOfAlduin\\wyrmspine\\fly_void.nif",
+				"CurseOfAlduin\\wyrmspine\\fly_poison.nif" };
+			return kFly[std::clamp(a_el, 0, 7)];
+		}
 		float JavTop() { return UpgradeMult(AfterSovngarde() ? kWonderUps + 1 : kWonderUps) * (0.7f + 0.3f * Arcana::Power()); }
 		// the spell in the other hand's element, as the bursts draw them (0 fire 1 frost 2 shock 3 wind 4 sun 5 blood 6 void 7 poison)
 		int JavElement(bool a_left)
@@ -1509,8 +1518,9 @@ namespace coa::Classes
 		{
 			RE::NiPoint3 v = (a_to->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f }) - a_from;
 			const float d = v.Length();
-			v = d > 1.0f ? v * (2600.0f / d) : RE::NiPoint3{ 0, 0, 2600.0f };
-			Gun::Lob(kJavModel, a_from, v, 1.0f, [a_c](const RE::NiPoint3& at) { JavBurst(at, a_c, false); }, 0.0f, 0.0f);
+			// (a bounce flies slowly enough to be followed by eye, its trail streaming)
+			v = d > 1.0f ? v * (1500.0f / d) : RE::NiPoint3{ 0, 0, 1500.0f };
+			Gun::Lob(JavFlyModel(g_jav.el), a_from, v, 1.0f, [a_c](const RE::NiPoint3& at) { JavBurst(at, a_c, false); }, 0.0f, 0.0f);
 			Gun::LobChaseLast(a_to);
 		}
 		void JavBurst(const RE::NiPoint3& a_at, float a_c, bool a_first)
@@ -1525,6 +1535,7 @@ namespace coa::Classes
 			static constexpr const char* kSnd[8] = { "fireball", "frost", "runeshock", "fireball", "light", "bloodplague", "fireball", "poisongas" };
 			static constexpr const char* kRing[8] = { "fire", "frost", "shock", "white", "sun", "blood", "purple", "white" };
 			Gun::FxBlastSized(kBlast[el], a_at, 0.6f + 0.8f * c);
+			Gun::FxBlastSized("light", a_at + RE::NiPoint3{ 0, 0, 30.0f }, 0.35f + 0.3f * c);   // (the strike's flash: seen at a glance, every bounce)
 			Gun::BlastSound(kSnd[el], a_at, 0.8f + 0.2f * c);
 			if (c >= 0.5f) Gun::Ring(kRing[el], a_at, 30.0f, radius * 1.1f, 0.55f);
 			Gun::Motes(std::min(el, 6), a_at, 0.8f + 1.2f * c, 1.5f + c);
@@ -1565,7 +1576,7 @@ namespace coa::Classes
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			if (!p) return;
-			Gun::Lob(kJavModel, a_from, RE::NiPoint3{ 0, 0, 600.0f }, 1.0f, [](const RE::NiPoint3&) {
+			Gun::Lob(JavFlyModel(g_jav.el), a_from, RE::NiPoint3{ 0, 0, 600.0f }, 1.0f, [](const RE::NiPoint3&) {
 				auto* pl = RE::PlayerCharacter::GetSingleton();
 				if (!pl) return;
 				g_jav.away = false;
@@ -1587,14 +1598,59 @@ namespace coa::Classes
 			RE::NiPoint3 aim = (w.translate + dir * 2400.0f) - from;   // (from the hand at the crosshair's point ahead, in either view)
 			if (aim.Length() > 1e-3f) aim.Unitize(); else aim = dir;
 			const float c = g_jav.power;
-			Gun::Lob(kJavModel, from, aim * (3000.0f + 900.0f * c) + RE::NiPoint3{ 0, 0, 60.0f }, 1.0f, [c](const RE::NiPoint3& at) { JavBurst(at, c, true); }, 0.0f, 260.0f);
+			Gun::Lob(JavFlyModel(g_jav.el), from, aim * (2300.0f + 700.0f * c) + RE::NiPoint3{ 0, 0, 60.0f }, 1.0f, [c](const RE::NiPoint3& at) { JavBurst(at, c, true); }, 0.0f, 260.0f);
 			Gun::BlastSound("frost", from, 0.35f);   // (the air torn as it goes)
 			logger::info("javelin: thrown at charge {:.2f}, element {}", c, g_jav.el);
+		}
+		// (Noah, 2026-11-24: "The Destruction class's Javelin is invisible in my character's hands, but I can see it on my back") a
+		// one-handed weapon is drawn only from the hip: its model names the back as its sheath (it is carried there), so the game
+		// leaves it on the back when it is drawn. While it is drawn, a copy of it is held in the hand (in both bodies) and the one
+		// on the back is hidden; put away, the copy goes and the back's is shown again. (If the game ever does put it in the hand
+		// itself, nothing is added.)
+		RE::NiPointer<RE::NiAVObject> g_javHeld[2];
+		void JavHang(RE::PlayerCharacter* a_p)
+		{
+			const bool drawn = a_p->AsActorState()->IsWeaponDrawn();
+			const bool left = a_p->GetEquippedObject(true) == Javelin() && a_p->GetEquippedObject(false) != Javelin();
+			const char* hn = left ? "SHIELD" : "WEAPON";
+			for (const bool fp : { false, true }) {
+				auto& H = g_javHeld[fp ? 1 : 0];
+				auto& bip = a_p->GetBiped(fp);
+				RE::NiAVObject* clone = nullptr;
+				bool inHand = false, ours = false;
+				if (bip) for (const auto slot : { RE::BIPED_OBJECT::kOneHandSword, RE::BIPED_OBJECT::kOneHandDagger, RE::BIPED_OBJECT::kTwoHandMelee, RE::BIPED_OBJECT::kShield }) {
+					auto& o = bip->objects[slot];
+					if (o.item != Javelin() || !o.partClone) continue;
+					clone = o.partClone.get(), ours = true;
+					for (auto* q = clone->parent; q; q = q->parent) if (std::string_view(q->name.c_str()) == hn) inHand = true;
+					break;
+				}
+				auto* root = a_p->Get3D(fp);
+				auto* node = root ? root->GetObjectByName(hn) : nullptr;
+				auto* hand = node ? node->AsNode() : nullptr;
+				const bool want = ours && drawn && !inHand && hand;
+				if (want) {
+					if (!H) H = Gun::LoadModel(kJavModel);
+					if (H && H->parent != hand) {
+						if (H->parent) H->parent->DetachChild2(H.get());
+						hand->AttachChild(H.get(), true);
+						H->local = RE::NiTransform{};
+						RE::NiUpdateData ud;
+						H->Update(ud);
+						logger::info("javelin: held in the {} hand ({} body) - the back's copy hidden", left ? "left" : "right", fp ? "first-person" : "third-person");
+					}
+					if (clone && !clone->GetAppCulled()) clone->SetAppCulled(true);
+				} else {
+					if (H && H->parent) H->parent->DetachChild2(H.get());
+					if (clone && !inHand && clone->GetAppCulled()) clone->SetAppCulled(false);
+				}
+			}
 		}
 		void TickJavelin(float a_delta)
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			if (!p) return;
+			JavHang(p);
 			if (g_jav.away) {
 				g_jav.away_t += a_delta;
 				JavHide(p, true);
@@ -1626,21 +1682,33 @@ namespace coa::Classes
 	// the rapier's thrust (its look's moveset, JavelinLook); held past a light attack's length the attack becomes the throw: the
 	// held button is kept from Skyrim from then on (no power attack of its own starts), any jab still going is stopped, and the
 	// arm draws back to charge
+	// (Noah, 2026-11-24: "When I heavy attack, I shouldn't light attack and then charge the heavy ... if I quickly press the attack
+	// button, it does the jab") the attack button is ours from the press: held past 0.22 s it draws the javelin back to charge (no
+	// jab first); let go sooner and the jab plays then - Skyrim's own light attack (the rapier's thrust), started by us
 	bool JavelinEats(bool a_left, const RE::ButtonEvent* a_b)
 	{
 		if (!a_b || !JavelinInHand(a_left)) return false;
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (!p || p->IsDead()) return false;
-		if (a_b->IsHeld() && a_b->HeldDuration() >= 0.28f) {
-			if (!g_jav.charging && !g_jav.away && !Gun::Throwing()) {
+		if (a_b->IsDown()) {
+			g_jav.pressed = !g_jav.away && !Gun::Throwing();
+			return true;
+		}
+		if (a_b->IsHeld() && !a_b->IsUp()) {
+			if (g_jav.pressed && a_b->HeldDuration() >= 0.22f && !g_jav.charging && !g_jav.away && !Gun::Throwing()) {
 				g_jav.charging = true, g_jav.left = a_left, g_jav.charge = 0, g_jav.glow = 0;
 				g_jav.el = JavElement(a_left);
-				p->NotifyAnimationGraph("attackStop");
 				Gun::JavelinDraw(a_left);
 			}
 			return true;
 		}
-		return false;
+		if (a_b->IsUp()) {
+			if (g_jav.charging) JavelinButton(a_left, false);
+			else if (g_jav.pressed && !g_jav.away) p->NotifyAnimationGraph(a_left ? "attackStartLeftHand" : "attackStart");   // (the tap: the jab)
+			g_jav.pressed = false;
+			return true;
+		}
+		return true;
 	}
 	void JavelinLook()
 	{
@@ -1665,7 +1733,7 @@ namespace coa::Classes
 		if (a_down) return;   // (a press is the jab's: Skyrim's own; the charge begins once it's held - JavelinEats)
 		(void)a_left;
 		if (!g_jav.charging) return;
-		g_jav.charging = false;
+		g_jav.charging = false, g_jav.pressed = false;
 		g_jav.power = std::clamp(g_jav.charge / 1.5f, 0.0f, 1.0f);
 		g_jav.away = true, g_jav.away_t = 0, g_jav.bounces = 0;
 		g_jav.struck.clear();
