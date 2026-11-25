@@ -795,6 +795,18 @@ namespace coa
 		bool                  Reforge();      // the class spell in hand climbs its ladder (Reforge, Bind Pact, Imbue)
 		int                   ReforgeCost();  // -1 no class spell in hand, 0 at the top
 		void                  FxBlast(std::string_view a_name, const RE::NiPoint3& a_at, float a_delay = 0.0f);  // a no-damage Skyrim explosion (look only)
+		// (Noah, 2026-11-25: every weapon's, spell's and flask's abilities their own - "not just recycling the same effect with a
+		// different color") whose effect is being shown: while a scope stands, each effect looks first for that owner's own
+		// entry in the effects map (CurseOfAlduin\fx\w\<owner>_<model>.nif, then _<kind>.nif: burst, ring, ground, blast...)
+		struct FxScope
+		{
+			explicit FxScope(std::string a_owner);
+			~FxScope();
+			FxScope(const FxScope&) = delete;
+			FxScope& operator=(const FxScope&) = delete;
+			std::string prev;
+		};
+		const std::string&    FxOwner();
 		void                  FxFrom(RE::BGSExplosion* a_src, const RE::NiPoint3& a_at, float a_scale);  // any mod's burst, quieted (look only), at a_scale
 		RE::BGSExplosion*     Quiet(RE::BGSExplosion* a_src);  // that burst's quiet copy (no damage, no knockdown, no tint)
 		void                  AreaHurt(const RE::NiPoint3& a_at, float a_radius, float a_share, std::string_view a_blast);

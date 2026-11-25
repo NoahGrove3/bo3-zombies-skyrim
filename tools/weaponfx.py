@@ -82,8 +82,8 @@ LEFT = {'tab_stormtalons_l', 'tab_talons_l', 'tab_cinderclaws_l'}
 # art; the Spellbound Rapier's look follows the element in your other hand (its BLADE_VIZ key: src/Classes.cpp LookKey)
 BV_KEYS = ['alch', 'carian', 'radiant', 'ss_none', 'ss_fire', 'ss_frost', 'ss_shock', 'ss_sun', 'ss_blood', 'slayer']
 BV_PICK = {'alch': ('flame', 'shadow'), 'carian': ('mist', 'purple'), 'radiant': ('core', 'gold'), 'ss_none': ('core', 'white'),
-           'ss_fire': ('core', 'ss_none'), 'ss_frost': ('core', 'blue'), 'ss_shock': ('core', 'blue'), 'ss_sun': ('core', 'gold'),
-           'ss_blood': ('core', 'carian'), 'slayer': ('mist', 'gold')}   # (Noah's picks, the workshop 2026-11-25)
+           'ss_fire': ('flame', 'ss_none'), 'ss_frost': ('frost', 'iceblue'), 'ss_shock': ('storm', 'iceblue'), 'ss_sun': ('radiance', 'orange'),
+           'ss_blood': ('spirit', 'blue'), 'slayer': ('mist', 'gold')}   # (Noah's picks, the workshop 2026-11-25 late)
 CLASS_MODELS = {   # the look key(s), each model: its steel shapes and band
     # (Noah, 2026-11-25: "the weapon effects are at the ends of each side of the staff ... the weapon heads, not the handles") each
     # staff's two capped heads - where its detail is - and none of the plain shaft between
@@ -160,10 +160,31 @@ def smooth(a, b, x):
     return t * t * (3 - 2 * t)
 
 
-def save_tex(rgba, name):
-    """RGBA float [0,1] (rows top to bottom) -> DXT5 DDS with mips"""
+def enhance(rgba, long_side=2048, detail=True, seed=0):
+    """(Noah, 2026-11-25: "2K textures", "4K only for the wonders and Alduin's Bane") a texture drawn small brought up to its
+    full size: resampled (wrapping, so it still tiles) and given fine grain of its own at the new size, so it stays crisp up
+    close instead of turning to soft blur"""
+    import cv2
+    h, w = rgba.shape[:2]
+    f = long_side / max(h, w)
+    if f <= 1.0: return rgba
+    H2, W2 = int(round(h * f)), int(round(w * f))
+    pad = 6
+    big = cv2.copyMakeBorder(rgba.astype(np.float32), pad, pad, pad, pad, cv2.BORDER_WRAP)
+    up = cv2.resize(big, (int(round((w + 2 * pad) * f)), int(round((h + 2 * pad) * f))), interpolation=cv2.INTER_LANCZOS4)
+    o = int(round(pad * f)); up = up[o:o + H2, o:o + W2]
+    if detail:
+        fine = fbm(H2, W2, max(4, H2 // 48), max(4, W2 // 48), 9000 + seed, oct=3)
+        up[..., 3] *= 0.86 + 0.28 * fine
+        up[..., :3] *= (0.95 + 0.1 * fine)[..., None]
+    return np.clip(up, 0, 1)
+
+
+def save_tex(rgba, name, long_side=2048, detail=True):
+    """RGBA float [0,1] (rows top to bottom) -> DXT5 DDS with mips, at 2K (4K for the wonders' and Alduin's Bane's own)"""
     import assets
     TEX.mkdir(parents=True, exist_ok=True)
+    rgba = enhance(np.asarray(rgba, float), long_side, detail and not name.startswith(('bolt_', 'storm_')), sum(map(ord, name)))
     im = Image.fromarray((np.clip(rgba, 0, 1) * 255).astype(np.uint8), 'RGBA')
     assets.write_dds_mips(im, TEX / f'{name}.dds', 'DXT5')
     WORK.mkdir(parents=True, exist_ok=True)
@@ -274,6 +295,30 @@ def textures():
     save_tex(grey(np.clip(1.1 - r, 0, 1), np.exp(-(r * 2.4) ** 2)), 'mote')
     palettes()
     textures_v2()
+    sk_textures()
+    import weaponsig
+    weaponsig.textures()
+
+
+# ---------------------------------------------------------------- Skyrim's own effects as the base (Noah, 2026-11-25)
+SKFX = pathlib.Path('/mnt/user-data/uploads/un_tmp/skfx/textures/effects')   # (read out of Noah's own Skyrim - never committed as they are)
+
+
+def sk_textures():
+    """(Noah, 2026-11-25: "use Skyrim's weapons and abilities and magical effects and elemental effects as a base, and then make
+    our version an enhancement of it"; "Yes, base them like this") Skyrim's own enchantment membranes - the fill its enchanted
+    weapons wear (EnchFireFXShader and its kin: EnchFlameProject01; the shock tile; the vapour; frost cloud; dark swirls; the
+    squiggling wisps) - each brought to 2K and given fine grain, then laid over our looks as their second skin"""
+    def lum(name):
+        im = np.asarray(Image.open(SKFX / f'{name}.dds').convert('RGBA')).astype(float) / 255
+        return im[..., :3].max(2), im[..., 3]
+    for src, dst, how in (('enchflameproject01', 'sk_enchfill', 'lum'), ('shocktile01', 'sk_shock', 'lum'), ('vaportile01', 'sk_vapour', 'lum'),
+                          ('cloudtilefrostsmall', 'sk_frost', 'lum'), ('darkswirls', 'sk_swirls', 'lum'), ('magicsquiggles01', 'sk_wisps', 'lum')):
+        l, a = lum(src)
+        l = (l - l.min()) / max(1e-3, np.ptp(l))
+        if dst in ('sk_vapour', 'sk_frost'): al = smooth(0.25, 0.95, l)   # (the cloud tiles: only their bright billows)
+        else: al = np.clip(l * 1.15, 0, 1) ** 1.2
+        save_tex(grey(0.35 + 0.65 * l, al), dst)
 
 
 # ---------------------------------------------------------------- the looks remade (Noah, 2026-11-24)
@@ -639,7 +684,7 @@ def S(tex, w, wc, per, rep, gain, along='contour', flip=None, fps=None, blend='a
     return dict(tex=tex, w=w, wc=wc, per=per, rep=rep, gain=gain, along=along, flip=flip, fps=fps, blend=blend, dark=dark)
 
 
-def Sh(tex, how, tile, gain, flip=None, fps=None, scroll=0.0, pulse=None, blend='add', dark=False):
+def Sh(tex, how, tile, gain, flip=None, fps=None, scroll=0.0, pulse=None, blend='add', dark=False):  # (a shell over both faces)
     return dict(tex=tex, how=how, tile=tile, gain=gain, flip=flip, fps=fps, scroll=scroll, pulse=pulse, blend=blend, dark=dark)
 
 
@@ -667,6 +712,14 @@ LOOK = {
     'spirit': dict(strips=[S('wisp_strip', 7.5, 4.0, 1.8, 0.7, 0.42, 'axis'), S('wisp_strip', 5.5, 3.0, 1.2, 1.1, 0.28, 'axis')],
                    shell=Sh('haze', 'edge', 26.0, 0.35, scroll=5.0), motes=('drift', 0.2)),
 }
+# (Noah, 2026-11-25: each look on Skyrim's own - Flame on its fire enchantment, Frost on its frost enchantment, Storm on its shock
+# enchantment, Mist on its vapour, Shadow on its dark swirls, Spirit on its magic wisps, Radiance on the light enchantment's
+# glow; Core stays our own) Skyrim's enchantment membrane as each look's second skin, scrolling over the steel
+FILL = {'flame': Sh('sk_enchfill', 'all', 34.0, 0.32, scroll=3.0), 'storm': Sh('sk_shock', 'all', 20.0, 0.45, scroll=2.2),
+        'mist': Sh('sk_vapour', 'band', 28.0, 0.22, scroll=7.0), 'frost': Sh('sk_frost', 'all', 24.0, 0.3, scroll=9.0),
+        'shadow': Sh('sk_swirls', 'all', 26.0, 0.55, scroll=6.0, blend='alpha', dark=True), 'radiance': Sh('sk_enchfill', 'all', 30.0, 0.28, scroll=4.0),
+        'spirit': Sh('sk_wisps', 'all', 24.0, 0.3, flip=(2, 2), fps=3)}
+for _k, _f in FILL.items(): LOOK[_k]['fill'] = _f
 LOOKS = list(LOOK)
 
 
@@ -772,42 +825,49 @@ def art_part(F, rows, rng, pre):
                         tris += [(a, b, d), (a, d, c2)]
                 emit(f'e{ei}_{li}_{mode.replace("+", "p").replace("-", "m")}', st['tex'], pal, st['gain'] * (1.0 if mode == 'out' else 0.8), verts, uvs, tris, al,
                      flip=st['flip'], fps=st['fps'], vscroll=0 if flipbook else st['per'], clamp=None if flipbook else 1, blend=st['blend'], dark=st['dark'])
-    # the shell over both faces
-    sh = L['shell']
-    tile = sh['tile'] * (0.5 if small else 1.0); how = sh['how']
-    mask, depth, dist, res, lo = F['mask'], F['depth'], F['dist'], F['res'], F['lo']
-    step = 4                                     # (a quad every 1.2 units)
-    gh, gw = mask.shape
-    maxd = max(0.5, dist.max())
-    flipbook = bool(sh['flip'])
-    tris = []
-    for side in (-1, 1):
-        verts, uvs, al, tris = [], [], [], []
-        for yi in range(0, gh - step, step):
-            for xi in range(0, gw - step, step):
-                cs = [(yi, xi), (yi, xi + step), (yi + step, xi + step), (yi + step, xi)]
-                if not all(mask[a, b] for a, b in cs): continue
-                base = len(verts)
-                for (a, b) in cs:
-                    p2 = np.array([lo[0] + b * res, lo[1] + a * res])
-                    dz = side * (depth[a, b] + 0.12)
-                    verts.append(to3(F, p2, dz)[0])
-                    if flipbook: tu, tv = (p2[1] % tile) / tile, (p2[0] % tile) / tile   # (each quad its own cell's corner)
-                    else: tu, tv = p2[1] / tile, p2[0] / tile
-                    uvs.append((tu, tv))
-                    e = 1.0 - min(1.0, dist[a, b] / maxd)    # (0 the spine, 1 the edge)
-                    w_ = {'edge': e ** 2.5, 'band': max(0.0, 1.0 - e * 1.6) if maxd > 1.2 else 0.0, 'all': 1.0}[how]
-                    # (Noah, 2026-11-24: "remove the lines ... it almost looks like a sketch") the shell melts away before the edge
-                    w_ *= smooth(0.0, 1.0, (dist[a, b] - res * step * 0.5) / (1.0 if small else 1.8))
-                    al.append(float(w_))
-                if flipbook and (max(u for u, _ in uvs[base:]) - min(u for u, _ in uvs[base:]) > 0.5 or max(v for _, v in uvs[base:]) - min(v for _, v in uvs[base:]) > 0.5):
-                    del verts[base:], uvs[base:], al[base:]; continue
-                tris += [(base, base + 1, base + 2), (base, base + 2, base + 3)]
-        if tris:
-            emit(f'shell{side + 1}', sh['tex'], cols[0], sh['gain'], verts, uvs, tris, al, flip=sh['flip'], fps=sh['fps'],
-                 vscroll=0 if flipbook else sh['scroll'], pulse=sh['pulse'], blend=sh['blend'], dark=sh['dark'])
+    # the shell over both faces, and Skyrim's own enchantment membrane over it (the look's fill)
+    any_tris = False
+    for tag, sh in (('shell', L['shell']), ('fill', L.get('fill'))):
+      if not sh: continue
+      tile = sh['tile'] * (0.5 if small else 1.0); how = sh['how']
+      mask, depth, dist, res, lo = F['mask'], F['depth'], F['dist'], F['res'], F['lo']
+      step = 4                                     # (a quad every 1.2 units)
+      gh, gw = mask.shape
+      maxd = max(0.5, dist.max())
+      flipbook = bool(sh['flip'])
+      tris = []
+      for side in (-1, 1):
+          verts, uvs, al, tris = [], [], [], []
+          for yi in range(0, gh - step, step):
+              for xi in range(0, gw - step, step):
+                  cs = [(yi, xi), (yi, xi + step), (yi + step, xi + step), (yi + step, xi)]
+                  if not all(mask[a, b] for a, b in cs): continue
+                  base = len(verts)
+                  for (a, b) in cs:
+                      p2 = np.array([lo[0] + b * res, lo[1] + a * res])
+                      dz = side * (depth[a, b] + 0.12)
+                      verts.append(to3(F, p2, dz)[0])
+                      if flipbook: tu, tv = (p2[1] % tile) / tile, (p2[0] % tile) / tile   # (each quad its own cell's corner)
+                      else: tu, tv = p2[1] / tile, p2[0] / tile
+                      uvs.append((tu, tv))
+                      e = 1.0 - min(1.0, dist[a, b] / maxd)    # (0 the spine, 1 the edge)
+                      w_ = {'edge': e ** 2.5, 'band': max(0.0, 1.0 - e * 1.6) if maxd > 1.2 else 0.0, 'all': 1.0}[how]
+                      # (Noah, 2026-11-24: "remove the lines ... it almost looks like a sketch") the shell melts away before the edge
+                      w_ *= smooth(0.0, 1.0, (dist[a, b] - res * step * 0.5) / (1.0 if small else 1.8))
+                      al.append(float(w_))
+                  if flipbook and (max(u for u, _ in uvs[base:]) - min(u for u, _ in uvs[base:]) > 0.5 or max(v for _, v in uvs[base:]) - min(v for _, v in uvs[base:]) > 0.5):
+                      del verts[base:], uvs[base:], al[base:]; continue
+                  tris += [(base, base + 1, base + 2), (base, base + 2, base + 3)]
+          if tris:
+              any_tris = True
+              emit(f'{tag}{side + 1}', sh['tex'], cols[0], sh['gain'], verts, uvs, tris, al, flip=sh['flip'], fps=sh['fps'],
+                   vscroll=0 if flipbook else sh['scroll'], pulse=sh['pulse'], blend=sh['blend'], dark=sh['dark'])
+    # (Noah, 2026-11-25) the weapon's own signature over its look (tools/weaponsig.py)
+    import weaponsig
+    weaponsig.apply(F, emit, cols, small, rng)
     # motes: a few billboard sparks along the edges (fxwrite cards)
     kind, dens = L['motes']
+    tris = any_tris
     if not F['edges']: return (0, bool(tris), 0)
     total = sum(np.sum(np.linalg.norm(np.diff(p, axis=0), axis=1)) for p, _ in F['edges'])
     nm = 0   # (Noah, 2026-11-25: the motes stood still beside the blade - "a weird cone of stagnant stars": none)

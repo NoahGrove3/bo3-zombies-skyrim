@@ -647,11 +647,38 @@ namespace coa
 			logger::info("fxmap: {} of our effect models stood in for by Skyrim's own or installed mods'", n);
 			return n;
 		}
+		// (Noah, 2026-11-25) whose effect this is (Gun::FxScope): its own entry first
+		std::string g_fxOwner;
+		const std::vector<FxPart>* OwnFx(const std::string& a_model)
+		{
+			if (g_fxOwner.empty()) return nullptr;
+			std::string stem = FxKey(a_model);
+			if (const auto sl = stem.find_last_of('\\'); sl != std::string::npos) stem.erase(0, sl + 1);
+			if (stem.size() > 4 && stem.compare(stem.size() - 4, 4, ".nif") == 0) stem.resize(stem.size() - 4);
+			const std::string base = "curseofalduin\\fx\\w\\" + g_fxOwner + "_";
+			if (auto it = g_fxMap.find(base + stem + ".nif"); it != g_fxMap.end()) return &it->second;
+			const auto us = stem.find('_');
+			if (auto it = g_fxMap.find(base + stem.substr(0, us) + ".nif"); it != g_fxMap.end()) return &it->second;
+			return nullptr;
+		}
+		// the owner a model speaks for when no scope stands: its own name (arc_purple, flask_fire, cyclone_frost...)
+		std::string OwnerOf(const std::string& a_model)
+		{
+			if (!g_fxOwner.empty()) return g_fxOwner;
+			std::string stem = FxKey(a_model);
+			if (const auto sl = stem.find_last_of('\\'); sl != std::string::npos) stem.erase(0, sl + 1);
+			if (stem.size() > 4 && stem.compare(stem.size() - 4, 4, ".nif") == 0) stem.resize(stem.size() - 4);
+			return stem;
+		}
 		// the stand-ins for one of our models (itself, plain, when it has none)
 		std::vector<FxPart> FxParts(const std::string& a_model)
 		{
 			static bool loaded = false;
 			if (!loaded) loaded = true, FxMapLoad();
+			if (const auto* own = OwnFx(a_model)) {
+				if (static int told = 0; told++ < 60) logger::info("fxmap: {}'s own effect for {}", g_fxOwner, a_model);
+				return *own;
+			}
 			if (auto it = g_fxMap.find(FxKey(a_model)); it != g_fxMap.end()) return it->second;
 			FxPart fp;
 			fp.model = a_model;
@@ -1848,7 +1875,18 @@ namespace coa
 		{
 			g_zones.push_back({ a_dark ? 5 : 6, a_at, a_radius, a_crush + 0.5f, 0.0f, Director::RoundHealth() * gen::kRounds.hpScale * a_share, 0.0f, false, a_crush });
 		}
-		void  FxBlast(std::string_view a_name, const RE::NiPoint3& a_at, float a_delay) { Blast(BlastIndex(a_name), a_at, a_delay, 0.6f); }
+		void  FxBlast(std::string_view a_name, const RE::NiPoint3& a_at, float a_delay)
+		{
+			// (Noah, 2026-11-25) a weapon's, spell's or flask's own stand-in for one of Skyrim's explosions (fxmap w\<owner>_blast.nif)
+			if (!g_fxOwner.empty() && OwnFx(std::string("blast_") + std::string(a_name) + ".nif")) {
+				QueueFx(std::string("blast_") + std::string(a_name) + ".nif", a_at, 1.0f, a_delay, 0.8f, false);
+				return;
+			}
+			Blast(BlastIndex(a_name), a_at, a_delay, 0.6f);
+		}
+		FxScope::FxScope(std::string a_owner) : prev(g_fxOwner) { g_fxOwner = std::move(a_owner); }
+		FxScope::~FxScope() { g_fxOwner = prev; }
+		const std::string& FxOwner() { return g_fxOwner; }
 		void  FxBlastSized(std::string_view a_name, const RE::NiPoint3& a_at, float a_scale) { Blast(BlastIndex(a_name), a_at, 0.0f, a_scale); }
 		void  FxFrom(RE::BGSExplosion* a_src, const RE::NiPoint3& a_at, float a_scale)
 		{
@@ -2072,6 +2110,7 @@ namespace coa
 			const float whole = Director::RoundHealth() * gen::kRounds.hpScale;
 			for (auto& l : g_slashes) {
 				if (!world || !p || !p->Is3DLoaded()) { l.gone = l.s.range + 1; continue; }
+				FxScope fxs(OwnerOf(l.s.model));   // (Noah, 2026-11-25: what it strikes, its own effect - arc_purple, arc_carian...)
 				// (a breath into the swing before it leaves the blade: its angle is the sweep the blade really made, and it sets
 				// out from where you are now, not where you were when the swing began)
 				if (l.wait > 0) {
@@ -2760,6 +2799,8 @@ namespace coa
 		{
 			if (g_lobs.size() > 40) return;
 			Lobbed l;
+			// (Noah, 2026-11-25) where it lands is its own thrower's effect: the scope it was thrown in, or its own name
+			if (a_land) a_land = [owner = OwnerOf(a_model0), f = std::move(a_land)](const RE::NiPoint3& at) { FxScope fxs(owner); f(at); };
 			// (the effects map: the first stand-in named for it flies in its place)
 			const auto parts = FxParts(a_model0);
 			const FxPart& fp = parts.front();
@@ -2873,6 +2914,10 @@ namespace coa
 			if (g_cyclones.size() > 4) return;
 			Cyclone c{ WorldFx(a_s.model), a_s.from, a_s.fwd, a_s.from, a_s.dist, std::max(0.3f, a_s.life), a_s.share };
 			c.touch = std::move(a_s.touch), c.burst = std::move(a_s.burst);
+			if (const auto owner = OwnerOf(a_s.model); !owner.empty()) {   // (Noah, 2026-11-25: its touches and its end its own)
+				if (c.touch) c.touch = [owner, f = std::move(c.touch)](RE::Actor* a) { FxScope fxs(owner); f(a); };
+				if (c.burst) c.burst = [owner, f = std::move(c.burst)](const RE::NiPoint3& at) { FxScope fxs(owner); f(at); };
+			}
 			c.size = std::max(0.1f, a_s.size), c.fec = a_s.fec, c.dragons = a_s.dragons, c.noPull = a_s.noPull || a_s.push;
 			c.follow = a_s.follow, c.push = a_s.push;
 			if (c.fx.ok) g_cyclones.push_back(std::move(c));
@@ -3674,7 +3719,7 @@ namespace coa
 
 
 
-		void FangHit(RE::Actor* a_target, bool a_power) { Props::FangHit(a_target, a_power); }
+		void FangHit(RE::Actor* a_target, bool a_power) { FxScope fxs(a_power ? "bane_heavy" : "bane_light"); Props::FangHit(a_target, a_power); }
 		// ---- (Noah: "all 10 of the weapons from the priests act as normal weapons please make sure they actually have their
 		// abilities") the Dragon Priests' weapons (docs/DRAGON_PRIEST_WEAPONS.md): every hit carries the priest's theme, and a
 		// power attack (for the two bows: every sixth arrow that strikes) looses his signature. Their strength sits between the
@@ -3773,6 +3818,9 @@ namespace coa
 			const float whole = Director::RoundHealth() * gen::kRounds.hpScale;
 			bool heavy = a_power;
 			if (bow && ++g_arrows[w] >= 6) g_arrows[w] = 0, heavy = true;
+			// (Noah, 2026-11-25) each relic's effects its own (fxmap w\priest_<who>_hit|heavy_*)
+			static constexpr const char* kOwner[10] = { "vahlok", "nahkriin", "volsung", "zahkriisos", "otar", "rahgot", "krosis", "hevnoraak", "vokun", "morokei" };
+			FxScope fxs(std::string("priest_") + kOwner[w] + (heavy ? "_heavy" : "_hit"));
 			const auto tp = a_t->GetPosition(), pp = p->GetPosition();
 			RE::NiPoint3 fwd{ std::sin(p->GetAngleZ()), std::cos(p->GetAngleZ()), 0.0f };
 			// (Noah: "all 10 of the dragon priest weapons still act as normal weapons") every hit shows its power plainly: its

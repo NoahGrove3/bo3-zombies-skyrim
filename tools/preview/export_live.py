@@ -150,8 +150,11 @@ def export(key):
 
 def shared():
     T = OUT / 'tex'; T.mkdir(exist_ok=True)
-    for n in sorted({st['tex'] for L in W.LOOK.values() for st in L['strips']} | {L['shell']['tex'] for L in W.LOOK.values()} | {'mote', 'runes'}):
+    names = {st['tex'] for L in W.LOOK.values() for st in L['strips']} | {L['shell']['tex'] for L in W.LOOK.values()} | {'mote', 'runes'}
+    names |= {L['fill']['tex'] for L in W.LOOK.values() if L.get('fill')} | {p.stem for p in W.WORK.glob('sig_*.png')}
+    for n in sorted(names):
         im = Image.open(W.WORK / f'{n}.png')
+        im.thumbnail((1024, 1024), Image.LANCZOS)   # (the page's copy: half the game's 2K, to keep it light)
         im.save(T / f'{n}.png', optimize=True)
     TR = ROOT / 'build' / 'trialfx'
     for n in ['band', 'curtain', 'glow', 'runes', 'smoke', 'spiritflame', 'take', 'trailfire']:

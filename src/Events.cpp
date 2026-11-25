@@ -996,6 +996,22 @@ namespace coa
 			if (!a_actor || !player || a_actor == player || a_actor->IsDead()) {
 				return;
 			}
+			// (Noah, 2026-11-25: "I want the class spells and flasks done too. using skyrim spells and effects as the base") each
+			// class spell's own impact over the spell's own: one of Skyrim's effects chosen for it (fxmap w\spell_<name>_spell_hit),
+			// no more than one a third of a second on any one of the dead (a stream lands many times a second)
+			if (!a_cloak) {
+				static std::unordered_map<std::uint64_t, std::chrono::steady_clock::time_point> last;
+				const auto now = std::chrono::steady_clock::now();
+				auto& t = last[(static_cast<std::uint64_t>(a_actor->GetFormID()) << 8) | static_cast<std::uint64_t>(a_index & 0xFF)];
+				if (now - t > std::chrono::milliseconds(330)) {
+					t = now;
+					if (last.size() > 512) last.clear();
+					std::string slug = "spell_";
+					for (const char c : Arcana::Name(a_index)) slug += std::isalnum(static_cast<unsigned char>(c)) ? static_cast<char>(std::tolower(static_cast<unsigned char>(c))) : '_';
+					Gun::FxScope fxs(slug);
+					Gun::QueueFx("CurseOfAlduin\\fx\\spell_hit.nif", a_actor->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, 1.0f, 0.0f, 0.7f, false);
+				}
+			}
 			// (Noah: the one upgrade curve) its rung and its Ascends are its upgrades
 			const int   ups = Arcana::Ups(a_index);  // (the altar rework: its tier on the one curve)
 			const float grow = UpgradeMult(ups) * (0.7f + 0.3f * Arcana::Power());

@@ -962,6 +962,7 @@ namespace coa::Tablet
 		const float S = Share();
 		const RE::NiPoint3 tp = a_target->GetPosition();
 		const std::string_view id = gen::kTabletWeapons[held].id;
+		Gun::FxScope fxs("tab_" + std::string(id) + (a_power ? "_heavy" : "_hit"));   // (Noah, 2026-11-25: each weapon's effects its own)
 		if (g_countFor != held) g_countFor = held, g_count = 0;   // (a new weapon counts afresh)
 		++g_count;
 		if (id == "stormtalons") {   // every 3rd hit jumps lightning to 2 more; a heavy hit stuns the one struck
