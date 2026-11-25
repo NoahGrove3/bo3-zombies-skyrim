@@ -3909,53 +3909,11 @@ namespace coa::Classes
 			done = true;
 			// (Noah, 2026-11-24: his picks on the Curse Weapon Effects page) each class weapon's look is its own fitted art now
 			// (src/WeaponFx.cpp): the look enchantments keep no shader or art of their own - nothing laid over ours
-			if (auto* dh0 = RE::TESDataHandler::GetSingleton()) {
-				for (const auto& row : gen::kBladeVizFx) for (const auto id : row) {
-					if (auto* m = dh0->LookupForm<RE::EffectSetting>(id, gen::kPlugin)) m->data.enchantShader = nullptr, m->data.enchantEffectArt = nullptr;
-				}
-				logger::info("swords: the tier looks are our own fitted arts (no enchantment shader or art)");
-				return;
-			}
-			struct Src { std::uint32_t id; bool vae; const char* what; };
-			// (the vanilla enchantments it remade are remade again by Vibrant Weapons when that loads after it - their own art
-			// lost: so each look takes the mod's own copy of the effect, which no other mod touches)
-			static constexpr Src kSrc[10] = {
-				{ 0x000D75, true, "purple flames" },            // alch: the Shadowflame Whip (zzOverflowingPurple1)
-				{ 0x00184D, true, "lightning" },                // carian: the Carian Wand (zzOverflowingPurpleBlue1: its shock)
-				{ 0x00438D, true, "white light" },              // radiant: the Radiant Quarterstaff (zzOverflowingmoon1)
-				{ 0x000D73, true, "fire" },                     // ss_none: the Spellbound Rapier's red fire (zzOverflowingOrange1)
-				{ 0x000D73, true, "fire" },                     // ss_fire
-				{ 0x000D74, true, "frost" },                    // ss_frost (zzOverflowingIceBlue1)
-				{ 0x00184D, true, "lightning" },                // ss_shock
-				{ 0x010B53, true, "sunfire" },                  // ss_sun (its Dawnbreaker)
-				{ 0x00438D, true, "arcane white light" },       // ss_blood: now the Arcane blade (zzOverflowingmoon1)
-				{ 0x00184E, true, "golden fire" } };            // slayer (Noah: "should have a gold fire weapon effect not the green" - zzOverflowingYellow1)
 			auto* dh = RE::TESDataHandler::GetSingleton();
-			if (!dh->LookupModByName("VisualAnimatedEnchants.esp")) { logger::info("swords: Visual Animated Enchants is not installed - the looks keep their glow"); return; }
-			int n = 0;
-			for (int k = 0; k < 10; ++k) {
-				auto* from = kSrc[k].vae ? dh->LookupForm<RE::EffectSetting>(kSrc[k].id, "VisualAnimatedEnchants.esp") : RE::TESForm::LookupByID<RE::EffectSetting>(kSrc[k].id);
-				if (!from) { logger::warn("swords: Visual Animated Enchants' {} effect not found", kSrc[k].what); continue; }
-				for (int t = 0; t < 3; ++t) {
-					if (auto* m = dh->LookupForm<RE::EffectSetting>(gen::kBladeVizFx[k][t], gen::kPlugin)) {
-						// (Noah: "remove the red effect ... it looks better with just the elemental effects from the mod" - "Both") the
-						// Spellbound Rapier's looks (3-8) wear the mod's element art alone, no glow over the blade
-						// (Noah: "I want the blade to show the element of the spell in my other hand") the element looks (4-8) wear the
-						// mod's element shader and art again; the bare look (3) none - the static red was our own dark-red Madfire
-						// (Props::TickMad), gone now
-						// (Noah: "the wands shouldn't have an element animation on the wand in hand") the Carian Wand's looks (1) bare
-						if (k == 3 || k == 1) m->data.enchantShader = nullptr;
-						else if (from->data.enchantShader) m->data.enchantShader = from->data.enchantShader;
-						// (Noah: "the red glow on the blade removed") the mod's animated art stayed on the Spellbound Rapier, glowing
-						// red whatever its element, after its spell was gone: its looks keep Vibrant Weapons' element art alone
-						if (k == 3 || k == 1) m->data.enchantEffectArt = nullptr;
-						else if (from->data.enchantEffectArt) m->data.enchantEffectArt = from->data.enchantEffectArt;
-						++n;
-					}
-				}
-				logger::info("swords: look {} - {} ({} shader {}, art {})", k, kSrc[k].what, from->GetFormEditorID(), from->data.enchantShader ? "yes" : "no", from->data.enchantEffectArt ? "yes" : "no");
+			for (const auto& row : gen::kBladeVizFx) for (const auto id : row) {
+				if (auto* m = dh->LookupForm<RE::EffectSetting>(id, gen::kPlugin)) m->data.enchantShader = nullptr, m->data.enchantEffectArt = nullptr;
 			}
-			logger::info("swords: {} tier looks wear Visual Animated Enchants' shaders and art", n);
+			logger::info("swords: the tier looks are our own fitted arts (no enchantment shader or art)");
 		}
 	}
 	int HandLookKey()
@@ -5122,34 +5080,6 @@ namespace coa::Classes
 			for (const auto id : gen::kClassSet[a_cls]) out.push_back({ gen::kPlugin.data(), id });
 			return out;
 		}
-		// the sets the classes wore just before ours (other mods' - taken back from a character still carrying them)
-		std::vector<Piece> PrevSetPieces(int a_cls)
-		{
-			switch (a_cls) {
-			case coffer::kSummoner: return { { "Rogues 'n Raiders.esp", 0x8C94A2 }, { "Rogues 'n Raiders.esp", 0x2998A6 }, { "Rogues 'n Raiders.esp", 0x91A4FB } };
-			case coffer::kDestruction: return { { "Black Mage Armor SE.esp", 0x0146A5 }, { "Black Mage Armor SE.esp", 0x000D71 }, { "Black Mage Armor SE.esp", 0x0146A6 } };
-			case coffer::kAlchemist: return { { "GondorianRangerArmor.esp", 0x000D64 }, { "GondorianRangerArmor.esp", 0x000D66 }, { "GondorianRangerArmor.esp", 0x000D63 } };
-			case coffer::kSpellsword: return { { "Black Mage Armor SE.esp", 0x00DA79 }, { "Black Mage Armor SE.esp", 0x00DFDD }, { "Black Mage Armor SE.esp", 0x00EAC2 }, { "Black Mage Armor SE.esp", 0x00EAC1 } };
-			default: return {};
-			}
-		}
-		// the sets the classes wore before (taken back from a character still carrying them)
-		std::vector<Piece> OldSetPieces(int a_cls, int a_tier, bool a_female)
-		{
-			switch (a_cls) {
-			case coffer::kDestruction:
-				switch (std::clamp(a_tier, 0, 3)) {
-				case 0: return { { "Black Mage Armor SE.esp", 0x0146A5 }, { "Black Mage Armor SE.esp", 0x0146A7 }, { "Black Mage Armor SE.esp", 0x014C0B }, { "Black Mage Armor SE.esp", 0x0146A6 } };  // College robes, hood and scarf, handwraps, boots
-				case 1: return { { "Black Mage Armor SE.esp", 0x002869 }, { "Black Mage Armor SE.esp", 0x008411 }, { "Black Mage Armor SE.esp", 0x002867 }, { "Black Mage Armor SE.esp", 0x002866 } };  // the mantled robes
-				case 2: return { { "Black Mage Armor SE.esp", 0x005E4D }, { "Black Mage Armor SE.esp", 0x00EABA }, { "Black Mage Armor SE.esp", 0x00EAB9 }, { "Black Mage Armor SE.esp", 0x00EAB8 } };  // the plate
-				default: return { { "Black Mage Armor SE.esp", 0x00DA78 }, { "Black Mage Armor SE.esp", 0x00DFDC }, { "Black Mage Armor SE.esp", 0x00EAA3 }, { "Black Mage Armor SE.esp", 0x00EAA2 } };  // the Black Archmage's ebony
-				}
-			case coffer::kAlchemist:  // (Noah: "Could we use the destruction class armor set for male and female alchemist class?") the
-				// Black Mage's robes, as the Destruction class wears them - made for both bodies (the Drifter's outfit had no man's)
-				return OldSetPieces(coffer::kDestruction, a_tier, a_female);
-			default: return {};
-			}
-		}
 		// (Noah: "the armor kits for all classes to stay the same visually through all the upgrades") every tier wears the
 		// set's first look; an upgrade makes it glow as if enchanted (TickArmour)
 		std::vector<RE::TESObjectARMO*> SetFormsAt(int a_cls, int a_look)
@@ -5175,16 +5105,6 @@ namespace coa::Classes
 			for (auto* a : SetFormsAt(a_cls, 0)) if (std::find(out.begin(), out.end(), a) == out.end()) out.push_back(a);  // (the earlier tiers' looks, taken back)
 			for (int i = 0; i < 4; ++i) {   // (the class-coloured Black Mage robes every class wore before the lookbook's sets)
 				if (auto* f = Lookup(gen::kClassArmour[a_cls][i], gen::kPlugin.data())) if (auto* a = f->As<RE::TESObjectARMO>(); a && std::find(out.begin(), out.end(), a) == out.end()) out.push_back(a);
-			}
-			for (const auto& pc : PrevSetPieces(a_cls)) {   // (the other mods' sets the classes wore just before ours)
-				if (auto* f = Lookup(pc.id, pc.plugin)) if (auto* a = f->As<RE::TESObjectARMO>(); a && std::find(out.begin(), out.end(), a) == out.end()) out.push_back(a);
-			}
-			for (int t = 0; t <= 3; ++t) {   // (and the sets the classes wore before every class wore the Black Mage's)
-				for (const bool fem : { false, true }) {
-					for (const auto& pc : OldSetPieces(a_cls, t, fem)) {
-						if (auto* f = Lookup(pc.id, pc.plugin)) if (auto* a = f->As<RE::TESObjectARMO>(); a && std::find(out.begin(), out.end(), a) == out.end()) out.push_back(a);
-					}
-				}
 			}
 			return out;
 		}

@@ -3011,6 +3011,35 @@ namespace coa
 				o->Update(ud);
 			}
 		}
+		// (the soul's fireball) its +Y along its flight, and turned about that line to face you: its flat trail of flames is seen
+		// broadside from wherever you stand
+		void PoseModelFacing(const RE::ObjectRefHandle& a_h, const RE::NiPoint3& a_at, const RE::NiPoint3& a_dir, const RE::NiPoint3& a_eye, float a_scale)
+		{
+			auto r = a_h.get();
+			if (!r) return;
+			RE::NiPoint3 Y = a_dir;
+			if (Y.Length() < 1e-3f) Y = { 0, 0, 1 };
+			Y.Unitize();
+			RE::NiPoint3 Z = a_eye - a_at;
+			Z = Z - Y * Z.Dot(Y);
+			if (Z.Length() < 1e-3f) Z = std::abs(Y.z) < 0.9f ? RE::NiPoint3{ 0, 0, 1 } : RE::NiPoint3{ 1, 0, 0 }, Z = Z - Y * Z.Dot(Y);
+			Z.Unitize();
+			const RE::NiPoint3 X = Y.Cross(Z);
+			r->SetPosition(a_at);
+			if (auto* o = r->Get3D()) {
+				o->GetFlags().set(RE::NiAVObject::Flag::kAlwaysDraw, RE::NiAVObject::Flag::kIgnoreFade);
+				if (auto* fn = o->AsFadeNode()) fn->GetRuntimeData().currentFade = 1.0f;
+				RE::NiMatrix3 M;
+				M.entry[0][0] = X.x, M.entry[1][0] = X.y, M.entry[2][0] = X.z;
+				M.entry[0][1] = Y.x, M.entry[1][1] = Y.y, M.entry[2][1] = Y.z;
+				M.entry[0][2] = Z.x, M.entry[1][2] = Z.y, M.entry[2][2] = Z.z;
+				o->local.translate = a_at;
+				o->local.rotate = M;
+				o->local.scale = std::max(0.01f, a_scale);
+				RE::NiUpdateData ud;
+				o->Update(ud);
+			}
+		}
 		void RemoveModel(RE::ObjectRefHandle& a_h)
 		{
 			if (auto r = a_h.get()) r->Disable(), r->SetDelete(true);

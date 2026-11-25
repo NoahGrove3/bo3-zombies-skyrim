@@ -2910,105 +2910,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 			}
 
-			// The ritual circle: a ring of glowing runes on the ground round the shrine - pale blue light, every rune
-			// its own glyph, lying flat along the ring. The runes the rite has reached burn white-blue (the fill runs
-			// smoothly round, not a step a second); the rest glimmer faintly. Red when the dead break it.
-			// (Noah, 2026-11-24) the restless' souls: pale blue wisps arcing from the bodies into the altar's centre stone, a fading tail
-			// behind each; where the stone takes one, a soft glow swells and fades
-			if (!s.perkMenu) {
-				const ImU32 blue = IM_COL32(150, 212, 255, 255), core = IM_COL32(235, 248, 255, 255);
-				for (const auto& tr : s.wisps) {
-					const float sz = std::clamp(tr[0][3], 0.4f, 4.0f) * k;
-					for (int q = static_cast<int>(tr.size()) - 1; q >= 0; --q) {   // (the tail first, the head over it)
-						const ImVec2 c{ tr[q][0] * size.x, tr[q][1] * size.y };
-						const float  f = 1.0f - static_cast<float>(q) / std::max<std::size_t>(tr.size(), 1);
-						dl->AddCircleFilled(c, (5.0f + 9.0f * f) * sz, Fade(blue, 0.05f * f), 20);
-						dl->AddCircleFilled(c, (2.0f + 4.0f * f) * sz, Fade(blue, 0.22f * f), 16);
-					}
-					const ImVec2 h{ tr[0][0] * size.x, tr[0][1] * size.y };
-					const float  flick = 0.85f + 0.15f * std::sin(now * 23.0f + h.x * 0.01f);
-					dl->AddCircleFilled(h, 16.0f * sz, Fade(blue, 0.07f * flick), 28);
-					dl->AddCircleFilled(h, 9.0f * sz, Fade(blue, 0.18f * flick), 24);
-					dl->AddCircleFilled(h, 4.5f * sz, Fade(blue, 0.55f), 20);
-					dl->AddCircleFilled(h, 2.2f * sz, Fade(core, 0.95f), 16);
-				}
-				for (const auto& tk : s.wispsTaken) {
-					const ImVec2 c{ tk[0] * size.x, tk[1] * size.y };
-					const float  u = std::clamp(tk[2] / 0.9f, 0.0f, 1.0f), sz = std::clamp(tk[3], 0.4f, 4.0f) * k;
-					const float  a = (1.0f - u) * (u < 0.15f ? u / 0.15f : 1.0f);
-					dl->AddCircleFilled(c, (14.0f + 30.0f * u) * sz, Fade(blue, 0.10f * a), 32);
-					dl->AddCircleFilled(c, (6.0f + 10.0f * u) * sz, Fade(blue, 0.30f * a), 24);
-					dl->AddCircle(c, (10.0f + 46.0f * u) * sz, Fade(core, 0.45f * a), 40, 1.5f * k);
-				}
-			}
-
-			if (s.ringOn && (s.ringPts.size() > 8 || !s.ringRunes) && !s.perkMenu) {
+			// The ritual circle's words over the altar (the ring itself and the souls are in the world: src/Curse.cpp RingWorld,
+			// tools/trialfx.py - the screen-drawn ring, runes and wisps cut 2026-11-24)
+			if (s.ringOn && !s.perkMenu) {
 				const float fl = std::clamp(s.ringFlash, 0.0f, 1.0f);
-				static float shown = 0;
-				{
-					const float total = s.ringFrac < 0.999f ? std::max(1.0f, s.ringSeconds / std::max(0.001f, 1.0f - s.ringFrac)) : 1.0f;
-					const float pace = 1.0f / total;  // of the ring a second
-					if (s.ringFrac < shown - 0.02f) {
-						shown = s.ringFrac;  // (broken: it starts over)
-					} else {
-						shown = std::min(std::min(1.0f, s.ringFrac + pace * 0.95f), shown + std::max(pace * dt * (s.ringInside ? 0.0f : 1.0f), (s.ringFrac - shown) * std::min(1.0f, dt * 4)));
-					}
-				}
-				const ImU32 cold = IM_COL32(120, 170, 255, 255), white = IM_COL32(236, 244, 255, 255), hot = IM_COL32(255, 70, 50, 255);
-				const int   n = static_cast<int>(s.ringPts.size());
-				ImVec2      sum{ 0, 0 };
-				int         front = 0;
-				const auto  P = [&](int i) { return ImVec2{ s.ringPts[i][0] * size.x, s.ringPts[i][1] * size.y }; };
-				const auto  visible = [&](int i) { return i >= 0 && i < n && s.ringPts[i][2] > 0; };
-				// the faint line the runes sit on, and a softer one either side
-				for (int i = 0; i + 1 < n; ++i) {
-					if (!visible(i) || !visible(i + 1)) continue;
-					const ImVec2 a = P(i), b = P(i + 1);
-					if (std::abs(a.x - b.x) > size.x * 0.5f) continue;
-					const bool on = (i + 0.5f) / (n - 1) < shown;
-					const ImU32 c = fl > 0.01f ? hot : on ? white : cold;
-					dl->AddLine(a, b, Fade(c, (on ? 0.16f : 0.06f) + 0.2f * fl), (on ? 16.0f : 10.0f) * k);
-					dl->AddLine(a, b, Fade(c, (on ? 0.55f : 0.22f) + 0.3f * fl), 1.4f * k);
-					sum.x += a.x, sum.y += a.y, ++front;
-				}
-				// the runes: 60 glyphs round the ring, each built from 2-4 strokes on a little grid, laid along it
-				static const std::array<std::array<std::int8_t, 16>, 12> kGlyph = { {
-					{ 0, -2, 0, 2, 0, -1, 2, -2, 9 }, { -1, 2, 0, -2, 1, 2, 0, -2, -1, 0, 1, 0, 9 }, { 0, -2, 0, 2, -1, 0, 1, 0, 9 }, { -1, -2, 1, 2, 1, -2, -1, 2, 9 },
-					{ 0, -2, 0, 2, 0, 0, 2, 2, 9 }, { -1, -2, 1, -2, 0, -2, 0, 2, 9 }, { -1, -2, -1, 2, -1, 0, 1, -1, -1, 0, 1, 1, 9 }, { 0, -2, 1, 0, 1, 0, 0, 2, 0, 2, -1, 0, 9 },
-					{ -1, -2, 1, -2, -1, 2, 1, 2, -1, -2, 1, 2, 9 }, { 0, -2, 0, 2, -1, -1, 1, -1, -1, 1, 1, 1, 9 }, { -1, 2, 0, -2, 0, -2, 1, 2, 9 }, { 1, -2, -1, 0, -1, 0, 1, 2, 0, -1, 0, 2, 9 },
-				} };
-				constexpr int kRunes = 60;
-				for (int r = 0; r < (n > 8 ? kRunes : 0); ++r) {
-					const float f = (r + 0.5f) / kRunes;
-					const int   i = std::clamp(static_cast<int>(f * (n - 1)), 1, n - 2);
-					if (!visible(i - 1) || !visible(i + 1)) continue;
-					const ImVec2 c = P(i), a = P(i - 1), b = P(i + 1);
-					if (std::abs(a.x - b.x) > size.x * 0.5f) continue;
-					ImVec2 t{ b.x - a.x, b.y - a.y };
-					const float tl = std::max(0.001f, std::sqrt(t.x * t.x + t.y * t.y));
-					t = { t.x / tl, t.y / tl };
-					// the spacing between ring points sets the rune's size (near ones big, far ones small); its height
-					// runs across the ring, flattened as the ground is seen at a slant
-					const float spacing = tl * 0.5f * (n - 1) / kRunes;
-					const float sx = spacing * 0.16f, sy = std::min(spacing * 0.22f, 22.0f * k);
-					const ImVec2 up{ -t.y, t.x };
-					const float  flat = std::clamp(std::abs(t.x) * 0.35f + 0.25f, 0.25f, 0.6f);
-					const bool   on = f < shown;
-					const bool   edge = on && f > shown - 1.5f / kRunes;  // the one being lit now
-					const float  pulse = 0.5f + 0.5f * std::sin(now * 2.2f + r * 0.7f);
-					const ImU32  col = fl > 0.01f ? hot : on ? white : cold;
-					const float  al = on ? (edge ? 1.0f : 0.85f + 0.15f * pulse) : 0.22f + 0.12f * pulse;
-					const auto&  g = kGlyph[(r * 7 + 3) % kGlyph.size()];
-					for (int q = 0; q + 3 < 16 && g[q] != 9; q += 4) {
-						const ImVec2 p0{ c.x + t.x * g[q] * sx + up.x * g[q + 1] * sy * flat, c.y + t.y * g[q] * sx + up.y * g[q + 1] * sy * flat };
-						const ImVec2 p1{ c.x + t.x * g[q + 2] * sx + up.x * g[q + 3] * sy * flat, c.y + t.y * g[q + 2] * sx + up.y * g[q + 3] * sy * flat };
-						dl->AddLine(p0, p1, Fade(col, al * 0.22f), (on ? 7.0f : 5.0f) * k);  // its glow
-						dl->AddLine(p0, p1, Fade(col, al), (on ? 2.0f : 1.4f) * k);
-					}
-					if (edge) {  // the lighting rune flares
-						dl->AddCircleFilled(c, spacing * 0.5f, Fade(white, 0.10f + 0.08f * pulse), 24);
-					}
-				}
+				const ImU32 cold = IM_COL32(120, 170, 255, 255);
 				if (s.ringLabelOn && !s.ringHead.empty()) {  // (the trials remade: a count, not seconds)
 					const ImVec2 c{ s.ringLabelX * size.x, s.ringLabelY * size.y };
 					TxtC(dl, g_title, 20 * k, c.x, c.y, fl > 0.01f ? IM_COL32(255, 120, 100, 255) : kParch, s.ringHead, 2 * k, cold);

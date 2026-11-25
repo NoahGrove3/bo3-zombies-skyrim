@@ -169,20 +169,6 @@ namespace coa
 		float g_normDelay = 3.0f;            // a moment after a load before old saves' values are read (MigrateRites goes first)
 		// ---- the trial under way (not saved: a load starts a song, a seal's guard or a riddle again)
 		std::unordered_map<RE::FormID, std::pair<std::chrono::steady_clock::time_point, bool>> g_lastBlow;
-		// Repeat the Echo: six stones in a ring round the altar, the song it sings on them, and your answer
-		struct EchoRun
-		{
-			int                                town = -1;
-			std::array<RE::ObjectRefHandle, 6> stone;
-			std::array<RE::NiPoint3, 6>        at{};
-			std::array<float, 6>               ang{}, baseZ{};
-			int                                phase = 0;    // 0 waiting for the hour, 1 the altar sings, 2 your turn
-			std::vector<int>                   seq;
-			int                                idx = 0;      // singing: the note; your turn: the stone wanted next
-			float                              t = 0;        // time in the phase
-			int                                lastHour = -100;
-			int                                touching = -1;  // the stone you stand at (standing still is not a second touch)
-		} g_echo;
 		// Hold the Light (TickHold): the light held so far, out of the trial's seconds
 		struct HoldRun { int town = -1; bool on = false; float held = 0, out = 0, call = 0; } g_hold;
 		constexpr float kHoldFrom = 1100.0f, kHoldTo = 240.0f;
@@ -214,11 +200,6 @@ namespace coa
 			}
 			h = {};
 		}
-		void ClearEcho()
-		{
-			for (auto& h : g_echo.stone) Gone(h);
-			g_echo = {};
-		}
 		void ClearSeals()
 		{
 			for (auto& h : g_seals.stone) Gone(h);
@@ -228,7 +209,6 @@ namespace coa
 
 		void ClearRun()
 		{
-			ClearEcho();
 			ClearSeals();
 			g_whisperTown = -1, g_whisperSay = 0, g_whisperSnapped = false;
 		}
@@ -502,14 +482,39 @@ namespace coa
 		// (Noah, 2026-11-24: "make sure the ring for the first quest around the altar is hyper realistic ... anything that is supposed
 		// to be glowing or illuminated should look like real light, not a circle in a color") the ring is light lying in the world now,
 		// not lines over the screen: tools/trialfx.py's ring, 48 arcs each set down on the ground under it, lit round as the trial fills
-		struct WorldRing { RE::ObjectRefHandle ref; int R = 0; RE::NiPoint3 c{}; int lit = -1; float groundT = 0; } g_wring;
+		struct WorldRing { RE::ObjectRefHandle ref; int R = 0; RE::NiPoint3 c{}; int lit = -1; float groundT = 0, shown = 0, lead = -1; std::unordered_map<RE::BSEffectShaderProperty*, float> base; } g_wring;
+		// (Noah, 2026-11-24: "make it fill in smooth, much smoother so it's not choppy") the arc being lit fades up by how far into
+		// it the trial is: each of its shapes given a material of its own once, and its brightness scaled
+		void FadeArc(RE::NiAVObject* a_arc, float a_k)
+		{
+			if (!a_arc) return;
+			RE::BSVisit::TraverseScenegraphGeometries(a_arc, [&](RE::BSGeometry* g) {
+				auto* ep = netimmerse_cast<RE::BSEffectShaderProperty*>(g->GetGeometryRuntimeData().shaderProperty.get());
+				auto* m = ep ? static_cast<RE::BSEffectShaderMaterial*>(ep->material) : nullptr;
+				if (!m) return RE::BSVisit::BSVisitControl::kContinue;
+				auto it = g_wring.base.find(ep);
+				if (it == g_wring.base.end()) {
+					if (auto* nm = static_cast<RE::BSEffectShaderMaterial*>(m->Create())) {
+						nm->CopyMembers(m);
+						ep->SetMaterial(nm, true);
+						nm->~BSEffectShaderMaterial();
+						RE::free(nm);
+					}
+					m = static_cast<RE::BSEffectShaderMaterial*>(ep->material);
+					it = g_wring.base.emplace(ep, m ? m->baseColorScale : 1.0f).first;
+				}
+				if (m) m->baseColorScale = it->second * std::clamp(a_k, 0.0f, 1.0f);
+				return RE::BSVisit::BSVisitControl::kContinue;
+			});
+		}
 		// (Noah, 2026-11-24: "the souls that come from the enemies for killing trials should be light blue wisps that go into the echo
 		// altar's center stone, not a magic effect or a little burst") each of the restless put down sends its soul up out of the body
 		// and across to the altar's centre stone on a soft arc - a pale blue wisp with a fading tail - where the stone takes it with a
 		// small glow and a chime
-		// (Noah, 2026-11-24: "hyper realistic and really refined ... Blue spirit flame") the soul is a model in the world now - a
-		// wavering blue spirit flame trailing a long smoky tail (tools/trialfx.py soul.nif) - not a dot drawn over the screen; the
-		// stone takes it with a flash and a ring of light (soul_take.nif), a whisper and a muffled thunk ("Whisper + thunk")
+		// (Noah, 2026-11-24: "hyper realistic and really refined"; then "Make it like a fireball that's white. So the flames would be
+		// falling behind it") the soul is a model in the world - a white fireball, its flames streaming back on the wind of its flight
+		// (tools/trialfx.py soul.nif) - not a dot drawn over the screen; the stone takes it with a flash and a ring of light
+		// (soul_take.nif), a whisper and a muffled thunk ("Whisper + thunk")
 		struct Soul { RE::NiPoint3 a, c, b; float t = 0, dur = 1.5f; RE::ObjectRefHandle ref; };
 		struct Taken { RE::NiPoint3 at; float t = 0; };
 		std::vector<Soul>  g_souls;
@@ -573,22 +578,34 @@ namespace coa
 				}
 				W.lit = -1;   // (and the light set again below, with the update)
 			}
-			// the arcs the trial has reached burn; the rest glimmer
-			const int lit = std::clamp(static_cast<int>(g_ring.frac * 48.0f + 0.5f), 0, 48);
-			if (lit != W.lit) {
+			// the arcs the trial has reached burn; the rest glimmer. What is shown eases after the trial (no jumps), and the arc
+			// it is passing through fades up by how far into it it is - the light running round smoothly
+			const float want = std::clamp(g_ring.frac, 0.0f, 1.0f);
+			W.shown += (want - W.shown) * std::min(1.0f, a_delta * 2.2f);
+			if (std::abs(want - W.shown) < 0.0005f) W.shown = want;
+			const float f = W.shown * 48.0f;
+			const int lit = std::clamp(static_cast<int>(f), 0, 48);
+			const int lead = lit < 48 ? lit : -1;
+			const float k = f - static_cast<float>(lit);
+			if (lit != W.lit || lead != static_cast<int>(W.lead)) {
 				W.lit = lit;
 				for (int i = 0; i < 48; ++i) {
-					if (auto* L = o->GetObjectByName(fmt::format("S{:02d}L", i))) L->SetAppCulled(i >= lit);
+					auto* L = o->GetObjectByName(fmt::format("S{:02d}L", i));
+					if (L) {
+						L->SetAppCulled(i > lit || (i == lit && lead < 0));
+						if (i < lit) FadeArc(L, 1.0f);
+					}
 					if (auto* D = o->GetObjectByName(fmt::format("S{:02d}D", i))) D->SetAppCulled(i < lit);
 				}
+				W.lead = static_cast<float>(lead);
 				RE::NiUpdateData ud;
 				o->Update(ud);
 			}
+			if (lead >= 0) if (auto* L = o->GetObjectByName(fmt::format("S{:02d}L", lead))) FadeArc(L, k);
 		}
 		void PublishRing(float a_delta)
 		{
 			g_ring.flash = std::max(0.0f, g_ring.flash - a_delta);
-			std::vector<std::array<float, 3>> pts;
 			auto* cam = RE::Main::WorldRootCamera();
 			// the souls on their way: flown along their arcs, nose first, the stone taking each
 			for (auto it = g_souls.begin(); it != g_souls.end();) {
@@ -603,7 +620,7 @@ namespace coa
 				const auto at = SoulAt(*it, it->t), ahead = SoulAt(*it, std::min(it->dur, it->t + 0.03f));
 				RE::NiPoint3 dir = ahead - at;
 				if (dir.Length() < 0.01f) dir = it->b - at;
-				Gun::PoseModel(it->ref, at, dir, 1.0f);
+				Gun::PoseModelFacing(it->ref, at, dir, cam ? cam->world.translate : at + RE::NiPoint3{ 0, -100.0f, 0 }, 1.0f);
 				++it;
 			}
 			RingWorld(a_delta);
@@ -619,10 +636,6 @@ namespace coa
 			auto& h = Hud::Edit();
 			h.ringLabelOn = labelOn, h.ringLabelX = lx, h.ringLabelY = ly;
 			h.ringOn = g_ring.on;   // (its words only: the ring itself is in the world - RingWorld)
-			h.ringRunes = false;
-			h.wisps.clear(), h.wispsTaken.clear();
-			h.ringPts.clear();
-			(void)pts, (void)cam;
 			h.ringFrac = g_ring.frac;
 			h.ringFlash = g_ring.flash;
 			h.ringSeconds = g_ring.seconds;
@@ -765,8 +778,7 @@ namespace coa
 			bases.push_back(Forms::Ours(gen::kFreedRunes));
 			bases.push_back(Forms::Ours(gen::kHeartStone));
 			auto mine = [&](RE::TESObjectREFR* r) {
-				for (auto& h : g_echo.stone) if (h.get().get() == r) return true;
-				for (auto& h : g_seals.stone) if (h.get().get() == r) return true;
+					for (auto& h : g_seals.stone) if (h.get().get() == r) return true;
 				for (auto& h : g_seals.runes) if (h.get().get() == r) return true;
 				return false;
 			};
@@ -1460,7 +1472,6 @@ namespace coa
 			const bool         here = z >= 0 && Shops::StandFrame(z, c, yaw, ws) && ws == player->GetWorldspace();
 			const int          tr = here && !s.freed ? s.Trial() : -1;
 			// a trial's pieces belong to the trial under way in the city you're in: anything else is cleared
-			if (tr != gen::kTrial_echo && g_echo.town >= 0) ClearEcho();
 			if (tr != gen::kTrial_seals && g_seals.town >= 0) ClearSeals();
 			if (here) {
 				static float sweep = 0;

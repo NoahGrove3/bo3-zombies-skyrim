@@ -63,6 +63,8 @@ def textures():
     # the altar's light: a pale, cold blue warming to white at its heart (the Tongues' light, not a flat colour)
     palette('altar', [(0.0, (0.02, 0.05, 0.16)), (0.35, (0.12, 0.34, 0.78)), (0.62, (0.42, 0.72, 1.0)), (0.86, (0.80, 0.92, 1.0)), (1.0, (1.0, 1.0, 1.0))])
     # the spirit flame: deep blue at the edges, cyan through it, white at the heart
+    # (Noah, 2026-11-24: "Make it like a fireball that's white") white fire: silver-blue only at its thinnest edges
+    palette('whitefire', [(0.0, (0.05, 0.07, 0.12)), (0.3, (0.32, 0.40, 0.58)), (0.6, (0.74, 0.84, 0.98)), (0.84, (0.94, 0.97, 1.0)), (1.0, (1.0, 1.0, 1.0))])
     palette('spirit', [(0.0, (0.01, 0.03, 0.14)), (0.3, (0.05, 0.22, 0.70)), (0.58, (0.25, 0.70, 1.0)), (0.82, (0.70, 0.95, 1.0)), (1.0, (1.0, 1.0, 1.0))])
 
     # the band: across it (u) a thin bright thread in a wide soft falloff; along it (v, wraps) a slow shimmer
@@ -147,6 +149,20 @@ def textures():
         r_, c_ = divmod(f, 4)
         atlas[r_ * F:(r_ + 1) * F, c_ * F:(c_ + 1) * F] = grey(g, a)
     save(atlas, 'spiritflame')
+
+    # the fireball's trailing flames (v along the trail from the head, wraps as it scrolls back; u across): tongues torn back by
+    # the wind of its flight - widest just behind the head, narrowing and breaking into licks further back
+    H, Wd = 512, 128
+    u = np.linspace(-1, 1, Wd)[None, :].repeat(H, 0)
+    v = np.linspace(0, 1, H, endpoint=False)[:, None].repeat(Wd, 1)
+    tn = fbm(H, Wd, 6, 4, 381, 5)
+    fn = fbm(H, Wd, 14, 8, 383, 4)
+    sw = fbm(H, Wd, 3, 2, 387, 3)
+    xs = u + (sw - 0.5) * 0.5
+    field = (1.0 - np.abs(xs) / 0.55) + (tn - 0.5) * 1.9 + (fn - 0.5) * 0.7
+    a = smooth(0.05, 0.75, field) * smooth(1.0, 0.86, np.abs(u)) * 0.85
+    heat = smooth(0.25, 1.6, field)
+    save(grey(0.12 + 0.88 * heat, a * (0.6 + 0.4 * fn)), 'trailfire')
 
     # a soft round glow (the halo, the heart, the embers)
     m = 128; yy, xx = np.mgrid[0:m, 0:m]; r = np.hypot(xx - m / 2 + 0.5, yy - m / 2 + 0.5) / (m / 2)
@@ -272,40 +288,44 @@ def ring(R):
 
 
 def soul():
+    """(Noah, 2026-11-24: "remove the cone shape ... Make it like a fireball that's white. So the flames would be falling behind it
+    because it's traveling through the sky and there's wind") a white fireball: a white-hot heart in a soft halo, its own fire
+    churning round it, and its flames streaming back behind it on the wind of its flight - one flat sheet along -Y that the game
+    turns about the line of flight to face you (src/Curse.cpp poses it so), the flames scrolling back along it; sparks shed
+    behind"""
     J = Job(MESH / 'soul.nif')
     rng = np.random.default_rng(5)
-    # the head: the flame's tongues, its halo, its white heart (cards that face you)
-    J.card('flame', 'spiritflame', 'spirit', 2.2, (13.0, 19.0), (0, 0, 4.0), flip='4x4', fps=22, phase=0.0)
-    J.card('flame2', 'spiritflame', 'spirit', 1.2, (10.0, 15.0), (0, -3.0, 2.0), flip='4x4', fps=17, phase=0.4)
-    J.card('halo', 'glow', 'spirit', 0.45, 46.0, (0, 0, 0))
-    J.card('heart', 'glow', 'spirit', 2.6, 6.5, (0, 1.0, 0))
-    # the tail: two ribbons crossed along -Y, widening and thinning away, the smoke streaming back along them
-    L, n = 170.0, 14
-    for name, axis in (('tailA', 0), ('tailB', 1)):
+    # the head (cards that face you): its halo, the fire churning round it, the white heart
+    J.card('halo', 'glow', 'whitefire', 0.5, 42.0, (0, 0, 0))
+    J.card('fire', 'spiritflame', 'whitefire', 1.6, (15.0, 17.0), (0, 0, 0), flip='4x4', fps=24, phase=0.0)
+    J.card('fire2', 'spiritflame', 'whitefire', 1.0, (12.0, 13.0), (0, 0, 0), flip='4x4', fps=19, phase=0.5)
+    J.card('heart', 'glow', 'whitefire', 3.0, 9.0, (0, 0, 0))
+    # the trail: a sheet in the XY plane from just ahead of the heart back along -Y, widest close behind it
+    L, n = 120.0, 16
+    for name, sc, wmul, per in (('trail', 1.7, 1.0, 0.55), ('trail2', 0.9, 0.7, 0.4)):
         V, T = [], []
         for j in range(n + 1):
-            s = j / n
-            y = -L * s ** 1.1
-            w = 7.0 + 26.0 * s ** 0.8
-            a = (1.0 - s) ** 1.6 * smooth(0.0, 0.08, s)
+            t = j / n
+            y = 6.0 - (L + 6.0) * t
+            w = (10.0 + 12.0 * math.sin(min(1.0, t * 2.2) * math.pi * 0.5) * (1.0 - t) ** 0.7 + 2.0) * wmul
+            a = smooth(0.0, 0.1, t) * (1.0 - t) ** 1.3 if t > 0.0 else 0.0
             for side, uu in ((-1, 0.0), (1, 1.0)):
-                x, z = (side * w, 0.0) if axis == 0 else (0.0, side * w)
-                V.append((x, y, z, uu, s * 2.2, a))
+                V.append((side * w, y, 0.0, uu, t * 1.6, a))
         for j in range(n):
             q = j * 2
             T += [(q, q + 1, q + 3), (q, q + 3, q + 2)]
-        J.shape(name, 'smoke', 'spirit', 1.25, V, T, clamp=1, vscroll=0.9)
-    # embers drifting off the tail
+        J.shape(name, 'trailfire', 'whitefire', sc, V, T, clamp=1, vscroll=per)
+    # sparks shed behind it
     for e in range(6):
-        y = -rng.uniform(20, 140); x = rng.uniform(-14, 14); z = rng.uniform(-14, 14)
-        J.card(f'ember{e}', 'glow', 'spirit', 1.8, rng.uniform(1.4, 2.6), (x, y, z), pulse=f'{0.5 + rng.random():.2f},0.0,1.0')
+        y = -rng.uniform(15, 110); x = rng.uniform(-10, 10); z = rng.uniform(-8, 8)
+        J.card(f'spark{e}', 'glow', 'whitefire', 2.0, rng.uniform(1.0, 2.0), (x, y, z), pulse=f'{0.35 + rng.random() * 0.5:.2f},0.0,1.0')
     J.write('soul')
 
 
 def take():
     J = Job(MESH / 'soul_take.nif')
-    J.card('ring', 'take', 'spirit', 2.0, 70.0, (0, 0, 0), flip='4x4', fps=20, phase=0.0)
-    J.card('flash', 'glow', 'spirit', 1.6, 26.0, (0, 0, 0), pulse='0.8,0.0,1.0')
+    J.card('ring', 'take', 'whitefire', 2.0, 70.0, (0, 0, 0), flip='4x4', fps=20, phase=0.0)
+    J.card('flash', 'glow', 'whitefire', 1.8, 30.0, (0, 0, 0), pulse='0.8,0.0,1.0')
     J.write('soul_take')
 
 

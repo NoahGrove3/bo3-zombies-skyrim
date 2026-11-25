@@ -623,7 +623,6 @@ namespace coa
 				if (a_event->menuName == RE::LoadingMenu::MENU_NAME && !a_event->opening && dataLoaded) {
 					// After a new game, a save from the main menu, or a save loaded in game.
 					Save::OnWorldReady();
-					Arcana::MigrateConjurations();   // (Phase 2: a save's old conjurations made ours)
 					static int loads = 0;
 					if (loads++ > 0) {
 						Watchdog::WorldLoaded();  // (into the world - not the first, which is the main menu's own at start)

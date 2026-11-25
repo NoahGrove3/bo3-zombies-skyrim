@@ -531,7 +531,6 @@ namespace coa
 		bool               Known(int a_index);
 		int                Next(int a_after);            // the next in the pool (the roll flickers through them)
 		void               Give(int a_index, bool a_equip);
-		void               MigrateConjurations();   // (a save from before Phase 2) Calling of the Conjurer's conjurations swapped for ours
 		void               GiveStarter();
 		std::string_view   Name(int a_index);
 		int                ElementOf(int a_index);
@@ -876,12 +875,12 @@ namespace coa
 		RE::ObjectRefHandle   PlaceAt(RE::TESBoundObject* a_obj, const RE::NiPoint3& a_at, float a_yaw);  // a placed object made at the point itself (its 3D drawn there, not made at the player and moved)
 		RE::ObjectRefHandle   PlaceModel(const std::string& a_model, const RE::NiPoint3& a_at);   // one of our models standing in the world (moved by PoseModel)
 		void                  PoseModel(const RE::ObjectRefHandle& a_h, const RE::NiPoint3& a_at, const RE::NiPoint3& a_dir, float a_scale);   // set where it is, its +Y along a_dir (none: unturned)
+		void                  PoseModelFacing(const RE::ObjectRefHandle& a_h, const RE::NiPoint3& a_at, const RE::NiPoint3& a_dir, const RE::NiPoint3& a_eye, float a_scale);   // +Y along a_dir, turned about it to face a_eye
 		void                  RemoveModel(RE::ObjectRefHandle& a_h);
 	}
 
 	namespace ArmorForge
 	{
-		void Build();  // the class robes built from Black Mage Armor SE's files on this PC (once per recipe)
 		void BuildHipBlades();  // the four class swords' models, sheathed at the hip (from Light Greatswords' files on this PC)
 	}
 
@@ -1242,17 +1241,13 @@ namespace coa
 			// floating health bars over the wounded undead near you (screen x, y 0..1, health 0..1, a name for the great ones)
 			struct EnemyBar { float x, y, frac, scale; std::string name; std::uint32_t color; std::uint32_t id{ 0 }; int rank{ 0 }; int fury{ 0 }; };  // rank 0 risen, 1 elite / great, 2 champion, 3 another foe; fury: the fire round it (0 none, 1 special, 2 elite, 3 champion)
 			std::vector<EnemyBar> enemyBars;
-			// the ritual circle (Circle / Hold rites): ring points on screen (x, y 0..1, depth), progress, reset flash
+			// the ritual circle (Circle / Hold rites): its words over the altar, progress, reset flash
 			bool        ringOn{ false }, ringHold{ false };
 			bool        ringLabelOn{ false };  // where its words stand on the screen: over the altar, fixed (not chasing the ring)
 			float       ringLabelX{ 0 }, ringLabelY{ 0 };
-			std::vector<std::array<float, 3>> ringPts;
 			float       ringFrac{ 0 }, ringFlash{ 0 };
 			int         ringSeconds{ 0 }, ringInside{ 0 };
 			std::string ringHead, ringSub;    // (the trials remade) its words, when a trial counts the dead rather than seconds
-			bool        ringRunes{ true };    // (2026-11-24) the ring of runes drawn (false: Lay the Restless to Rest - its words only)
-			std::vector<std::vector<std::array<float, 4>>> wisps;   // (Noah: the restless' souls) each wisp's head and tail: x, y (0-1), depth, size
-			std::vector<std::array<float, 4>> wispsTaken;           // the stone taking one: x, y, age (s), size
 			bool        objOn{ false }, objFront{ false };
 			float       objX{ 0 }, objY{ 0 }, objDist{ 0 };
 			std::string objLabel;
