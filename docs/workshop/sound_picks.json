@@ -1,0 +1,3569 @@
+{
+ "about": "Noah's final sound picks (workshop doc 8maGoe7NgRkTLAWtUFrtir, Nov 25 night): every weapon and ability sound at 20% volume - background, never loud (his words). The Mutagen Staff's flasks and elixir use the Alchemist flasks' own sounds (his note). Slots he left alone keep what plays now, at 20%.",
+ "vol": 20,
+ "weapons": {
+  "vahlok": {
+   "draw": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNBlunt2HandDraw",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   },
+   "swing": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwing2Hand",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   },
+   "heavy": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwing2Hand",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   },
+   "hit": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNImpactBlunt2HandVsFlesh",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "nahkriin": {
+   "draw": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNBlade1HandDrawSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   },
+   "swing": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwingBladeMediumSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "heavy": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwingBladeMediumSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "hit": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNImpactBladeVsFleshSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "volsung": {
+   "draw": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNBlade1HandDrawSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "swing": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwingBladeMediumSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "heavy": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwingBladeMediumSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "hit": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNImpactBladeVsFleshSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "zahkriisos": {
+   "draw": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNBlade2HandDrawSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "swing": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwing2Hand",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "heavy": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwing2Hand",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "hit": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNImpactBlade2HandVsFleshSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "otar": {
+   "draw": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNBlade1HandDrawSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "swing": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwingBladeMediumSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "heavy": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwingBladeMediumSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "hit": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNImpactBladeVsFleshSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "rahgot": {
+   "draw": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNBlade1HandSmallDrawSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "swing": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwingBladeMediumSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "heavy": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwingBladeMediumSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "hit": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNImpactBladeVsFleshSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "krosis": {
+   "draw": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNBlade1HandDrawSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "swing": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwingBladeMediumSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "heavy": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwingBladeMediumSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "hit": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNImpactBladeVsFleshSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "hevnoraak": {
+   "draw": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNAxe2HandDrawSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "swing": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwing2Hand",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "heavy": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwing2Hand",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "hit": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNImpactAxeLargeVsFleshSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "vokun": {
+   "draw": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNAxe2HandDrawSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "swing": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwing2Hand",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "heavy": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwing2Hand",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "hit": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNImpactAxeLargeVsFleshSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "morokei": {
+   "draw": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNBlunt2HandDraw",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "swing": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwing2Hand",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "heavy": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwing2Hand",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "hit": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNImpactBlunt2HandVsFlesh",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "stormtalons": {
+   "draw": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNBlade1HandSmallDrawSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "swing": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwingBladeMediumSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "heavy": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwingBladeMediumSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "hit": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNImpactBladeVsFleshSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "gravebell": {
+   "draw": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNMace1HandDrawSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "swing": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwingBlunt1Hand",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "heavy": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwingBlunt1Hand",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "hit": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNImpactBluntVsFleshSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "talons": {
+   "draw": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNBlade1HandSmallDrawSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "swing": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwingBladeMediumSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "heavy": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwingBladeMediumSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "hit": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNImpactBladeVsFleshSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "riverstone": {
+   "draw": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNAxe2HandDrawSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "swing": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwing2Hand",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "heavy": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwing2Hand",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "hit": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNImpactAxeLargeVsFleshSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "wyrmspine_pike": {
+   "draw": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNBlade2HandDrawSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "swing": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwing2Hand",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "heavy": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwing2Hand",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "hit": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNImpactBlade2HandVsFleshSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "lanternwick": {
+   "draw": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNAxe2HandDrawSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "swing": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwing2Hand",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "heavy": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwing2Hand",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "hit": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNImpactAxeLargeVsFleshSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "cinderclaws": {
+   "draw": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNBlade1HandSmallDrawSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "swing": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwingBladeMediumSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "heavy": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwingBladeMediumSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "hit": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNImpactBladeVsFleshSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "eclipse": {
+   "draw": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNBlade2HandDrawSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "swing": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwing2Hand",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "heavy": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwing2Hand",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "hit": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNImpactBlade2HandVsFleshSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "wanderstar": {
+   "draw": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNStaffHandDrawSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "frostmourn": {
+   "draw": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNBlade1HandSmallDrawSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "swing": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwingBladeMediumSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "heavy": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwingBladeMediumSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "hit": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNImpactBladeVsFleshSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "silverscythe": {
+   "draw": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNAxe2HandDrawSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "swing": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwing2Hand",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "heavy": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwing2Hand",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "hit": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNImpactAxeLargeVsFleshSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "bonereaper": {
+   "draw": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNAxe2HandDrawSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "swing": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwing2Hand",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "heavy": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwing2Hand",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "hit": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNImpactAxeLargeVsFleshSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "wyrmtooth": {
+   "draw": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNAxe2HandDrawSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "swing": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwing2Hand",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "heavy": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwing2Hand",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "hit": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNImpactAxeLargeVsFleshSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "bloodmoon": {
+   "draw": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNAxe2HandDrawSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "swing": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwing2Hand",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "heavy": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwing2Hand",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "hit": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNImpactAxeLargeVsFleshSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "javelin": {
+   "draw": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNBlade1HandDrawSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "swing": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwingBladeMediumSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "heavy": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwingBladeMediumSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "hit": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNImpactBladeVsFleshSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "soulcaller": {
+   "draw": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNStaffHandDrawSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "mutagen": {
+   "draw": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNStaffHandDrawSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "slayer": {
+   "draw": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNBlade2HandDrawSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   },
+   "swing": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwing2Hand",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "heavy": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwing2Hand",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "hit": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNImpactBlade2HandVsFleshSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "bane": {
+   "draw": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNBlade2HandDrawSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "swing": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwing2Hand",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "heavy": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwing2Hand",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "hit": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNImpactBlade2HandVsFleshSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "scythe": {
+   "draw": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNAxe2HandDrawSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "swing": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwing2Hand",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "heavy": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwing2Hand",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "hit": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNImpactAxeLargeVsFleshSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "wand": {
+   "draw": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNStaffHandDrawSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "staff": {
+   "draw": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNAxe2HandDrawSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "swing": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwing2Hand",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "heavy": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwing2Hand",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "hit": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNImpactAxeLargeVsFleshSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "rapier": {
+   "draw": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNBlade1HandDrawSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "swing": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwingBladeMediumSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "heavy": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNSwingBladeMediumSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "hit": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "WPNImpactBladeVsFleshSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  }
+ },
+ "abilities": {
+  "vahlok_hit": {
+   "impact": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "MAGDestructionFireStormExplosion",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "vahlok_heavy": {
+   "impact": {
+    "opt": "a4",
+    "name": "Spirit whoom",
+    "snd": [
+     [
+      "WB_ConjurationSpirit_Sound_Explosion_Whoom",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "nahkriin_hit": {
+   "impact": {
+    "opt": "a3",
+    "name": "Ghost wail",
+    "snd": [
+     [
+      "WB_ConjurationGhosts_Sound_Impact_Wail",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "nahkriin_heavy": {
+   "impact": {
+    "opt": "a3",
+    "name": "Ghost wail",
+    "snd": [
+     [
+      "WB_ConjurationGhosts_Sound_Impact_Wail",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   },
+   "linger": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "volsung_light": {
+   "impact": {
+    "opt": "a3",
+    "name": "Unrelenting Force",
+    "snd": [
+     [
+      "VOCShoutImpactPushSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "volsung_heavy": {
+   "impact": {
+    "opt": "a2",
+    "name": "Unrelenting Force",
+    "snd": [
+     [
+      "VOCShoutImpactPushSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "zahkriisos_hit": {
+   "impact": {
+    "opt": "a2",
+    "name": "Crystalize",
+    "snd": [
+     [
+      "WB_DestructionFrost_Sound_Impact_Crystalize",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "zahkriisos_heavy": {
+   "impact": {
+    "opt": "a4",
+    "name": "Ice burst",
+    "snd": [
+     [
+      "FXExplosionIceSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "otar_hit": {
+   "impact": {
+    "opt": "a2",
+    "name": "Spark hit",
+    "snd": [
+     [
+      "MAGShockImpactSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "otar_heavy": {
+   "impact": {
+    "opt": "a2",
+    "name": "Lightning strike",
+    "snd": [
+     [
+      "WB_DestructionShock_Sound_Explosion_LightningStrike_2C",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "rahgot_hit": {
+   "impact": {
+    "opt": "a2",
+    "name": "Venom splash",
+    "snd": [
+     [
+      "MAG_PoisonImpactSFX",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   },
+   "linger": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "rahgot_heavy": {
+   "impact": {
+    "opt": "a4",
+    "name": "Poison burst",
+    "snd": [
+     [
+      "MAG_PoisonExplosionSFX",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "krosis_hit": {
+   "impact": {
+    "opt": "a2",
+    "name": "Vampiric drain",
+    "snd": [
+     [
+      "MAGAlterationVampireDrainOnHit",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "krosis_heavy": {
+   "impact": {
+    "opt": "a3",
+    "name": "Vampiric drain",
+    "snd": [
+     [
+      "MAGAlterationVampireDrainOnHit",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "hevnoraak_hit": {
+   "impact": {
+    "opt": "a5",
+    "name": "Earth impact",
+    "snd": [
+     [
+      "WB_AlterationEarth_Sound_Impact",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "hevnoraak_heavy": {
+   "impact": {
+    "opt": "a5",
+    "name": "Rumble",
+    "snd": [
+     [
+      "WB_AlterationBaleful_Sound_Impact_Rumble",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "vokun_hit": {
+   "impact": {
+    "opt": "a5",
+    "name": "Subsonic",
+    "snd": [
+     [
+      "WB_Illusion_Sound_Explosion_Subsonic",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "vokun_heavy": {
+   "impact": {
+    "opt": "a2",
+    "name": "Nightmare",
+    "snd": [
+     [
+      "WB_IllusionNightmare_Sound_Release",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   },
+   "linger": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "morokei_hit": {
+   "impact": {
+    "opt": "a4",
+    "name": "Glass jaw",
+    "snd": [
+     [
+      "WB_AlterationTelekinesis_Sound_Explosion_GlassJaw",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "morokei_heavy": {
+   "impact": {
+    "opt": "a3",
+    "name": "Arcane burst",
+    "snd": [
+     [
+      "WB_DestructionCantrip_Sound_Explosion_ArcaneBurst",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "stormtalons_third": {
+   "impact": {
+    "opt": "a4",
+    "name": "Spark hit",
+    "snd": [
+     [
+      "MAGShockImpactSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "stormtalons_heavy": {
+   "impact": {
+    "opt": "a2",
+    "name": "Shock nova",
+    "snd": [
+     [
+      "WB_DestructionShock_Sound_Explosion_ShockNova",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "gravebell_fifth": {
+   "impact": {
+    "opt": "a2",
+    "name": "Turn Undead",
+    "snd": [
+     [
+      "MAGRestorationTurnUndeadFire2DSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 0,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "talons_hit": {
+   "impact": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "riverstone_hit": {
+   "impact": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "riverstone_heavy": {
+   "impact": {
+    "opt": "a5",
+    "name": "Rumble",
+    "snd": [
+     [
+      "WB_AlterationBaleful_Sound_Impact_Rumble",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "wyrmspine_pike_hit": {
+   "impact": {
+    "opt": "a3",
+    "name": "Fwoosh",
+    "snd": [
+     [
+      "WB_DestructionFire_Sound_Impact_Fwoosh",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 0,
+    "set": true
+   }
+  },
+  "wyrmspine_pike_heavy": {
+   "impact": {
+    "opt": "a5",
+    "name": "Ember blast",
+    "snd": [
+     [
+      "WB_DestructionWizardfire_Sound_Explosion_Emberblast",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "lanternwick_light": {
+   "impact": {
+    "opt": "a2",
+    "name": "Frostbite",
+    "snd": [
+     [
+      "MAGFrostBiteImpactSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "lanternwick_heavy": {
+   "impact": {
+    "opt": "a2",
+    "name": "Cryoblast",
+    "snd": [
+     [
+      "WB_DestructionFrost_Sound_Explosion_Cryoblast",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   },
+   "linger": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "cinderclaws_hit": {
+   "impact": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "cinderclaws_heavy": {
+   "impact": {
+    "opt": "a5",
+    "name": "Firebolt thud",
+    "snd": [
+     [
+      "MAGFireboltImpactSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   },
+   "linger": {
+    "opt": "a4",
+    "name": "Embers",
+    "snd": [
+     [
+      "FXFireEmbers02LPSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "eclipse_hit": {
+   "impact": {
+    "opt": "a2",
+    "name": "Auriel's shield",
+    "snd": [
+     [
+      "MAGAurielShieldBlastA",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "eclipse_heavy": {
+   "impact": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "MAGIcicleImpactBreakSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "wanderstar_cast": {
+   "cast": {
+    "opt": "a2",
+    "name": "Light cast",
+    "snd": [
+     [
+      "MAGLightFireSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   },
+   "impact": {
+    "opt": "a5",
+    "name": "Turn Undead",
+    "snd": [
+     [
+      "MAGRestorationTurnUndeadFire2DSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "wanderstar_fifth": {
+   "impact": {
+    "opt": "a3",
+    "name": "Auriel's shield",
+    "snd": [
+     [
+      "MAGAurielShieldBlastA",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "frostmourn_hit": {
+   "impact": {
+    "opt": "a2",
+    "name": "Frostbite",
+    "snd": [
+     [
+      "MAGFrostBiteImpactSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "frostmourn_heavy": {
+   "impact": {
+    "opt": "a5",
+    "name": "Ice burst",
+    "snd": [
+     [
+      "FXExplosionIceSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "silverscythe_fourth": {
+   "impact": {
+    "opt": "a5",
+    "name": "Conjure",
+    "snd": [
+     [
+      "MAGConjureImpactSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "bonereaper_kill": {
+   "impact": {
+    "opt": "a5",
+    "name": "Ethereal call",
+    "snd": [
+     [
+      "WB_ConjurationCommand_Sound_Explosion_EtherealCall",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "wyrmtooth_hit": {
+   "impact": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "wyrmtooth_heavy": {
+   "impact": {
+    "opt": "a2",
+    "name": "Rumble",
+    "snd": [
+     [
+      "WB_AlterationBaleful_Sound_Impact_Rumble",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "bloodmoon_hit": {
+   "impact": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "bloodmoon_heavy": {
+   "impact": {
+    "opt": "a4",
+    "name": "Blood and gore",
+    "snd": [
+     [
+      "coa:flesh_hit_1",
+      1.0,
+      0.0
+     ],
+     [
+      "WB_RestorationBlood_Sound_Release_OrcishHealing",
+      0.6,
+      0.05
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   },
+   "linger": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "javelin_throw": {
+   "cast": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "impact": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "MAGIcicleImpactBreakSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "javelin_land": {
+   "impact": {
+    "opt": "a4",
+    "name": "Firebolt thud",
+    "snd": [
+     [
+      "MAGFireboltImpactSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "javelin_bounce": {
+   "impact": {
+    "opt": "a4",
+    "name": "Firebolt thud",
+    "snd": [
+     [
+      "MAGFireboltImpactSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "soulcaller_beam": {
+   "cast": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   },
+   "impact": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "soulcaller_wolves": {
+   "impact": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "MAGDestructionFireStormExplosion",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "mutagen_flasks": {
+   "impact": {
+    "opt": "a5",
+    "name": "the Alchemist flasks' own sounds (glass, its element's strike, a fire flask's flames)",
+    "snd": [],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true,
+    "flask": true
+   }
+  },
+  "mutagen_elixir": {
+   "impact": {
+    "opt": "a1",
+    "name": "the Alchemist flasks' own sounds (glass, its element's strike, a fire flask's flames)",
+    "snd": [],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true,
+    "flask": true
+   },
+   "linger": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "slayer_light": {
+   "cast": {
+    "opt": "a2",
+    "name": "Emberbolt",
+    "snd": [
+     [
+      "WB_DestructionFire_Sound_Release_Emberbolt",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   },
+   "impact": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "slayer_heavy": {
+   "impact": {
+    "opt": "a3",
+    "name": "Ember blast",
+    "snd": [
+     [
+      "WB_DestructionWizardfire_Sound_Explosion_Emberblast",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "bane_light": {
+   "cast": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   },
+   "impact": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "bane_heavy": {
+   "impact": {
+    "opt": "a5",
+    "name": "Force on a dragon",
+    "snd": [
+     [
+      "VOCShoutImpactPushImpactDragonSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   },
+   "linger": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "scythe_light": {
+   "cast": {
+    "opt": "a3",
+    "name": "Firebolt cast",
+    "snd": [
+     [
+      "MAGFireboltFire2DSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   },
+   "impact": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "scythe_heavy": {
+   "impact": {
+    "opt": "a3",
+    "name": "Fwoosh",
+    "snd": [
+     [
+      "WB_DestructionFire_Sound_Impact_Fwoosh",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   },
+   "linger": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "wand_light": {
+   "cast": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "MAGFireboltFire2DSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "cycle": [
+     "MAGFireboltFire2DSD",
+     "MAGShockFFFireSD",
+     "MAGIcicleFireSD"
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "impact": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "wand_hit": {
+   "impact": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "MAGDestructionFireballExplosion",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "wand_heavy": {
+   "cast": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "MAGFireboltFire2DSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "cycle": [
+     "MAGFireboltFire2DSD",
+     "MAGShockFFFireSD",
+     "MAGIcicleFireSD"
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "impact": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "staff_light": {
+   "cast": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   },
+   "impact": {
+    "opt": "a4",
+    "name": "Auriel's shield",
+    "snd": [
+     [
+      "MAGAurielShieldBlastA",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "staff_heavy": {
+   "impact": {
+    "opt": "a2",
+    "name": "Auriel's Bow (Harkon)",
+    "snd": [
+     [
+      "FXExplosionAurielBowHarkon",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true
+   }
+  },
+  "rapier_light": {
+   "cast": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "impact": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "rapier_heavy": {
+   "impact": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "MAGDestructionFireballExplosion",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "linger": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "rapier_line": {
+   "impact": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "ffire_land": {
+   "impact": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "MAGDestructionFireballExplosion",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "linger": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "ffire_power": {
+   "impact": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "MAGDestructionFireballExplosion",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "ffrost_land": {
+   "impact": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "MAGIcicleImpactBreakSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "linger": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "ffrost_power": {
+   "impact": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "MAGDestructionFrostBiteDragonExplosion",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "fshock_land": {
+   "impact": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "MAGShockFFFireSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "linger": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "fshock_power": {
+   "impact": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "MAGShockFFFireSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "facid_land": {
+   "impact": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "MAGPowerSerpentStoneExplosion",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "linger": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "fholy_land": {
+   "impact": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "MAGFireboltImpactSD",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   },
+   "linger": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "fvoid_land": {
+   "impact": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "MAGDestructionFireStormExplosion",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "fvoid_power": {
+   "impact": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [
+     [
+      "MAGDestructionFireStormExplosion",
+      1.0,
+      0.0
+     ]
+    ],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  },
+  "summon_arrive": {
+   "impact": {
+    "opt": "a1",
+    "name": "As it is now",
+    "snd": [],
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": false
+   }
+  }
+ }
+}

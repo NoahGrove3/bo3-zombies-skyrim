@@ -49,7 +49,7 @@ const AUD = (function () {
   const groups = [...new Map(items.map(x => [x.cid, x.cat])).entries()];
   const SLD = [['vol', 'Volume', 0, 200, 5], ['pitch', 'Pitch', 50, 150, 1], ['varn', 'Variation', 0, 30, 1], ['layerVol', 'Layer volume', 0, 150, 5]];
   const SLH = { vol: 'how loud it plays', pitch: 'higher or lower: below 100 is deeper and slower', varn: 'how much each play differs, so a hundred hits don\'t sound the same', layerVol: 'how loud the layer under it plays' };
-  const defSet = sl => ({ opt: 'a1', vol: 100, pitch: 100, varn: 5, layer: 'none', layerVol: 50 });
+  const defSet = sl => ({ opt: 'a1', vol: 20, pitch: 100, varn: 5, layer: 'none', layerVol: 50 });
   const setOf = (id, sl) => Object.assign(defSet(sl), DB.get('sounds', id) || {});
   const srcOf = o => [...new Set((o.cycle || o.snd.map(x => x[0])).map(r => (SOUNDS.sounds[r] || {}).src).filter(Boolean))].map(s => SRCN[s] || s);
   const slotsOf = (c, i) => i === 0 ? (SOUNDS.weapons[c.it.id] || []).map(s => ['w__' + c.it.id + '__' + s.id, s]) : (SOUNDS.abilities[c.it.abs[i - 1].key] || []).map(s => ['a__' + c.it.abs[i - 1].key + '__' + s.id, s]);
@@ -94,7 +94,7 @@ const AUD = (function () {
   }
   function slotHTML(id, sl) {
     const set = setOf(id, sl), o = sl.opts.find(x => x.id === set.opt) || sl.opts[0], rec = sl.opts.find(x => x.id === sl.rec), saved = DB.get('sounds', id);
-    const mod = set.vol !== 100 || set.pitch !== 100 || set.varn !== 5 || (set.layer && set.layer !== 'none');
+    const mod = set.vol !== 20 || set.pitch !== 100 || set.varn !== 5 || (set.layer && set.layer !== 'none');
     return `<div class="slot${saved && set.opt !== 'a1' ? ' changed' : ''}" data-s="${id}">
 <div class="sh"><button class="play big" data-p="${o.id}" aria-label="Play ${esc(sl.label)}">▶</button><div class="sn"><b>${esc(sl.label)}</b> <span class="cur">${esc(o.name)}${mod ? ' · tuned' : ''}</span>${saved ? '<span class="dot" aria-label="saved"></span>' : ''}</div><button class="btn sm" data-a="open" aria-expanded="${!!this_open(id)}">${this_open(id) ? 'Hide' : 'Options'}</button></div>
 <div class="sbody"${this_open(id) ? '' : ' hidden'}>
