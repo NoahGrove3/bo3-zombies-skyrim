@@ -25,7 +25,7 @@ en = S['enemies']['rows']
 out.append(f'\tinline constexpr std::array<Enemy, {len(en)}> kEnemies{{ {{')
 sys.path.insert(0, str(root / 'tools')); import esp_ids as _eids; _EIDS, _ = _eids.assign(S)
 for e in en:
-    out.append(f'\t\tEnemy{{ {cs(e["id"])}, {cs(e["label"])}, {{ {cs(e["plugin"])}, 0x{(_EIDS[("NPC_", e["localId"][5:])] if e["localId"].startswith("auto:") else hexid(e["localId"])):06X}, {cs(e["editorId"])} }}, {str(e["recordType"]=="LVLN").lower()}, {e["minRound"]}, {e["weight"]}, {str(e["specialRound"]).lower()}, {cs(e["headNode"])}, {str(e["forceCombat"]).lower()}, {e.get("bossEvery", 0)}, {str(e.get("elite", False)).lower()}, {["zombie", "reaper", "necro", "minion"].index(e.get("kind", "zombie"))}, {float(e.get("healthMult", 1.0))}f, {float(e.get("speedMult", 1.0))}f, {str(e.get("rig", True)).lower()} }},')
+    out.append(f'\t\tEnemy{{ {cs(e["id"])}, {cs(e["label"])}, {{ {cs(e["plugin"])}, 0x{(_EIDS[("NPC_", e["localId"][5:])] if e["localId"].startswith("auto:") else hexid(e["localId"])):06X}, {cs(e["editorId"])} }}, {str(e["recordType"]=="LVLN").lower()}, {999 if e.get("removed") else e["minRound"]}, {0 if e.get("removed") else e["weight"]}, {str(e["specialRound"] and not e.get("removed")).lower()}, {cs(e["headNode"])}, {str(e["forceCombat"]).lower()}, {0 if e.get("removed") else e.get("bossEvery", 0)}, {str(e.get("elite", False)).lower()}, {["zombie", "reaper", "necro", "minion"].index(e.get("kind", "zombie"))}, {float(e.get("healthMult", 1.0))}f, {float(e.get("speedMult", 1.0))}f, {str(e.get("rig", True)).lower()} }},')
 out.append('\t} };')
 # sounds
 out.append('\tenum class Sound : int {')

@@ -1669,7 +1669,7 @@ namespace coa
 		{
 			std::optional<std::size_t> row;
 			for (std::size_t i = 0; i < gen::kEnemies.size(); ++i) {
-				if (gen::kEnemies[i].id == "volatile" && Forms::Enemy(i)) row = i;  // (Noah: the infected creep)
+				if (gen::kEnemies[i].id == "volatile" && gen::kEnemies[i].minRound < 999 && Forms::Enemy(i)) row = i;  // (Noah: the infected creep; taken out in the workshop: a Deranged Zombie comes instead)
 			}
 			for (std::size_t i = 0; !row && i < gen::kEnemies.size(); ++i) {
 				if (gen::kEnemies[i].id == "runner" && Forms::Enemy(i)) row = i;
@@ -2618,11 +2618,11 @@ namespace coa
 		void RaiseMiniBoss(RE::PlayerCharacter* a_player)
 		{
 			// (Noah, the creature overhaul) the mini-bosses: Skyrim Immersive Creatures' greatest
-			static constexpr std::string_view kRows[] = { "knight", "mb_deathlord", "lich", "mb_vargrbrute", "mb_minotaur_lord", "mb_giant_brute", "mb_daedroth_lord", "mb_ogrim_lord", "mb_bone_wrath", "mb_wrathman", "mb_mistman", "mb_nether_lich" };
+			static constexpr std::string_view kRows[] = { "knight", "mb_deathlord", "lich", "mb_vargrbrute", "mb_minotaur_lord", "mb_giant_brute", "mb_daedroth_lord", "mb_ogrim_lord", "mb_bone_wrath", "mb_wrathman", "mb_mistman", "mb_nether_lich", "mb_dragon" };   // (Noah, 2026-11-26: the ones he took out never come; a Plague Dragon among them)
 			std::vector<std::string_view> ok;
 			for (auto r : kRows) {
 				for (std::size_t i = 0; i < gen::kEnemies.size(); ++i) {
-					if (gen::kEnemies[i].id == r && Forms::Enemy(i)) ok.push_back(r);
+					if (gen::kEnemies[i].id == r && gen::kEnemies[i].minRound < 999 && Forms::Enemy(i)) ok.push_back(r);
 				}
 			}
 			if (ok.empty()) return;

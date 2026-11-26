@@ -1,6 +1,6 @@
 {
  "sheet": "enemies",
- "about": "The night's enemies (Noah, the creature overhaul): Skyrim Immersive Creatures, Rogues 'n Raiders, Mihail's Zombies and our own Thriceborn (Mihail's CC Zombies' bodies on his zombie race), each under its own mod's name, its own body, animations and AI. localId is the record's id inside its plugin (load-order byte stripped). Tiers by night (minRound); humans (necromancers, cultists, vampires, Dremora) only from night 10 (Noah); the early nights are all undead and creatures. bossEvery: a boss every 5th night (Grahzah, Alduin's Grave-Wing, and the Herald stay). mb_* and knight/lich: the mini-bosses (Director RaiseMiniBoss). priest_*: the cities' Dragon Priests (curse sheet). skeleton: the minion the casters raise; volatile: the night-runner noise draws.",
+ "about": "The night's enemies (Noah, the creature overhaul): Skyrim Immersive Creatures, Rogues 'n Raiders, Mihail's Zombies and our own Thriceborn (Mihail's CC Zombies' bodies on his zombie race), each under its own mod's name, its own body, animations and AI. localId is the record's id inside its plugin (load-order byte stripped). Tiers by night (minRound); humans (necromancers, cultists, vampires, Dremora) only from night 10 (Noah); the early nights are all undead and creatures. bossEvery: a boss every 5th night (Grahzah, Alduin's Grave-Wing, and the Herald stay). mb_* and knight/lich: the mini-bosses (Director RaiseMiniBoss). priest_*: the cities' Dragon Priests (curse sheet). skeleton: the minion the casters raise; volatile: the night-runner noise draws. (Noah, 2026-11-26: \"removed\": true - he took it out in the workshop; it never comes)",
  "columns": [
   "id",
   "label",
@@ -320,7 +320,8 @@
    "kind": "zombie",
    "healthMult": 0.7,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "death_hound2",
@@ -360,7 +361,8 @@
    "kind": "zombie",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "marksman",
@@ -380,7 +382,8 @@
    "kind": "necro",
    "healthMult": 0.9,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "boneman_warrior",
@@ -400,7 +403,8 @@
    "kind": "zombie",
    "healthMult": 1.2,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "necro",
@@ -420,7 +424,8 @@
    "kind": "necro",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "hexer_rime",
@@ -440,7 +445,8 @@
    "kind": "necro",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "hexer_storm",
@@ -460,7 +466,8 @@
    "kind": "necro",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "sk_necromancer",
@@ -480,7 +487,8 @@
    "kind": "necro",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "mage",
@@ -500,7 +508,8 @@
    "kind": "necro",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "apprentice_necro",
@@ -520,7 +529,8 @@
    "kind": "necro",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "cultist",
@@ -540,7 +550,8 @@
    "kind": "necro",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "nightwalker",
@@ -560,7 +571,8 @@
    "kind": "zombie",
    "healthMult": 1.1,
    "speedMult": 1.1,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "tb_malignant",
@@ -640,7 +652,8 @@
    "kind": "zombie",
    "healthMult": 1.2,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "rag_champion",
@@ -660,7 +673,8 @@
    "kind": "zombie",
    "healthMult": 1.3,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "rag_reaper",
@@ -680,7 +694,8 @@
    "kind": "zombie",
    "healthMult": 1.4,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "king",
@@ -700,7 +715,8 @@
    "kind": "necro",
    "healthMult": 1.3,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "ancestor_ghost",
@@ -720,7 +736,8 @@
    "kind": "zombie",
    "healthMult": 1.1,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "draugr_ghost",
@@ -740,7 +757,8 @@
    "kind": "zombie",
    "healthMult": 1.1,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "brute",
@@ -760,7 +778,8 @@
    "kind": "reaper",
    "healthMult": 2.0,
    "speedMult": 0.95,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "frost_brute",
@@ -840,7 +859,8 @@
    "kind": "reaper",
    "healthMult": 1.6,
    "speedMult": 1.05,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "wereskeever",
@@ -860,7 +880,8 @@
    "kind": "zombie",
    "healthMult": 1.2,
    "speedMult": 1.05,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "sk_raider",
@@ -880,7 +901,8 @@
    "kind": "zombie",
    "healthMult": 1.2,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "sk_reaver",
@@ -900,7 +922,8 @@
    "kind": "zombie",
    "healthMult": 1.3,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "adept_necro",
@@ -920,7 +943,8 @@
    "kind": "necro",
    "healthMult": 1.1,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "prophet",
@@ -940,7 +964,8 @@
    "kind": "necro",
    "healthMult": 1.3,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "tb_dread_putrid",
@@ -980,7 +1005,8 @@
    "kind": "reaper",
    "healthMult": 2.5,
    "speedMult": 0.95,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "draugr_guardian",
@@ -1000,7 +1026,8 @@
    "kind": "zombie",
    "healthMult": 1.5,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "draugr_reaper",
@@ -1020,7 +1047,8 @@
    "kind": "zombie",
    "healthMult": 1.7,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "wrath_brute",
@@ -1040,7 +1068,8 @@
    "kind": "reaper",
    "healthMult": 2.0,
    "speedMult": 0.95,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "hybrid",
@@ -1060,7 +1089,8 @@
    "kind": "zombie",
    "healthMult": 1.5,
    "speedMult": 1.05,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "true_hybrid",
@@ -1080,7 +1110,8 @@
    "kind": "reaper",
    "healthMult": 1.8,
    "speedMult": 1.05,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "clannfear",
@@ -1100,7 +1131,8 @@
    "kind": "zombie",
    "healthMult": 1.3,
    "speedMult": 1.05,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "daedroth",
@@ -1120,7 +1152,8 @@
    "kind": "reaper",
    "healthMult": 2.0,
    "speedMult": 0.95,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "hunger",
@@ -1160,7 +1193,8 @@
    "kind": "zombie",
    "healthMult": 1.5,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "dremora_markynaz",
@@ -1180,7 +1214,8 @@
    "kind": "zombie",
    "healthMult": 1.8,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "expert_necro",
@@ -1200,7 +1235,8 @@
    "kind": "necro",
    "healthMult": 1.3,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "master_necro",
@@ -1220,7 +1256,8 @@
    "kind": "necro",
    "healthMult": 1.5,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "soul_wraith",
@@ -1240,7 +1277,8 @@
    "kind": "necro",
    "healthMult": 1.4,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "draugr_overlord",
@@ -1260,7 +1298,8 @@
    "kind": "zombie",
    "healthMult": 2.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "draugr_reaper_ov",
@@ -1280,7 +1319,8 @@
    "kind": "reaper",
    "healthMult": 2.4,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "asc_lich",
@@ -1300,7 +1340,8 @@
    "kind": "necro",
    "healthMult": 1.8,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "mythic_lich",
@@ -1320,7 +1361,8 @@
    "kind": "necro",
    "healthMult": 2.2,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "shadow",
@@ -1340,7 +1382,8 @@
    "kind": "reaper",
    "healthMult": 2.6,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "valkynaz",
@@ -1360,7 +1403,8 @@
    "kind": "necro",
    "healthMult": 2.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "winged_twilight",
@@ -1400,7 +1444,8 @@
    "kind": "reaper",
    "healthMult": 2.4,
    "speedMult": 0.95,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "ogrim",
@@ -1440,7 +1485,8 @@
    "kind": "necro",
    "healthMult": 1.8,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "knight",
@@ -1460,7 +1506,8 @@
    "kind": "reaper",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "mb_deathlord",
@@ -1480,7 +1527,8 @@
    "kind": "reaper",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "lich",
@@ -1500,7 +1548,8 @@
    "kind": "reaper",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "mb_vargrbrute",
@@ -1520,7 +1569,8 @@
    "kind": "reaper",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "mb_minotaur_lord",
@@ -1580,7 +1630,8 @@
    "kind": "reaper",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "mb_ogrim_lord",
@@ -1620,7 +1671,8 @@
    "kind": "reaper",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "mb_wrathman",
@@ -1640,7 +1692,8 @@
    "kind": "reaper",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "mb_mistman",
@@ -1660,7 +1713,8 @@
    "kind": "reaper",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "mb_nether_lich",
@@ -1680,7 +1734,8 @@
    "kind": "reaper",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "skeleton",
@@ -1700,7 +1755,8 @@
    "kind": "minion",
    "healthMult": 0.5,
    "speedMult": 1.1,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "volatile",
@@ -1720,7 +1776,8 @@
    "kind": "zombie",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "priest_draugr",
@@ -1940,7 +1997,8 @@
    "kind": "zombie",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "sk_rag_restless",
@@ -1960,7 +2018,8 @@
    "kind": "zombie",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "rag_wight",
@@ -1980,7 +2039,8 @@
    "kind": "zombie",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "draman_restless",
@@ -2000,7 +2060,8 @@
    "kind": "zombie",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "rag_guardian",
@@ -2020,7 +2081,8 @@
    "kind": "zombie",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "lich_restless",
@@ -2040,7 +2102,8 @@
    "kind": "necro",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "sk_forsworn",
@@ -2060,7 +2123,8 @@
    "kind": "zombie",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "sk_imperial",
@@ -2080,7 +2144,8 @@
    "kind": "zombie",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "sk_stormcloak",
@@ -2100,7 +2165,8 @@
    "kind": "zombie",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "sk_rag_wight",
@@ -2120,7 +2186,8 @@
    "kind": "zombie",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "draman_wight",
@@ -2140,7 +2207,8 @@
    "kind": "zombie",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "sk_forsworn_shaman",
@@ -2160,7 +2228,8 @@
    "kind": "necro",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "sk_imperial_archer",
@@ -2180,7 +2249,8 @@
    "kind": "necro",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "blade_novice",
@@ -2200,7 +2270,8 @@
    "kind": "zombie",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "sk_ghost",
@@ -2220,7 +2291,8 @@
    "kind": "zombie",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "sk_ancient",
@@ -2240,7 +2312,8 @@
    "kind": "necro",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "sk_rag_scourge",
@@ -2260,7 +2333,8 @@
    "kind": "zombie",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "draman_scourge",
@@ -2280,7 +2354,8 @@
    "kind": "zombie",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "bandit_ghost",
@@ -2300,7 +2375,8 @@
    "kind": "zombie",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "blade_journeyman",
@@ -2320,7 +2396,8 @@
    "kind": "zombie",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "dwemer_spectre",
@@ -2340,7 +2417,8 @@
    "kind": "zombie",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "blade_ghost",
@@ -2360,7 +2438,8 @@
    "kind": "zombie",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "boss",
@@ -2380,7 +2459,8 @@
    "kind": "zombie",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "boss2",
@@ -2426,8 +2506,8 @@
    "id": "herald",
    "label": "Grimmvar, Alduin's Herald",
    "plugin": "DiverseDragonsCollectionSE.esp",
-   "localId": "0x023F3F",
-   "editorId": "ogdd_EncDragonDark01",
+   "localId": "0x13FA53",
+   "editorId": "ogdd_EncDragonVile03",
    "recordType": "NPC_",
    "minRound": 1,
    "weight": 0,
@@ -2446,8 +2526,8 @@
    "id": "boss4",
    "label": "Grahzah, Alduin's Grave-Wing",
    "plugin": "DiverseDragonsCollectionSE.esp",
-   "localId": "0x09D809",
-   "editorId": "ogdd_EncDragonNecro01",
+   "localId": "0x13A92C",
+   "editorId": "ogdd_EncDragonNecro04",
    "recordType": "NPC_",
    "minRound": 20,
    "weight": 0,
@@ -2480,7 +2560,8 @@
    "kind": "reaper",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "eg_anomaly",
@@ -2526,8 +2607,8 @@
    "id": "wyrm_tiid",
    "label": "Tiidrah, the Time-Wyrm",
    "plugin": "DiverseDragonsCollectionSE.esp",
-   "localId": "0x13A923",
-   "editorId": "ogdd_EncDragonLunar07",
+   "localId": "0x13A8CE",
+   "editorId": "ogdd_EncDragonAether07",
    "recordType": "NPC_",
    "minRound": 99,
    "weight": 0,
@@ -2600,7 +2681,8 @@
    "kind": "zombie",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "mel_skel_hero",
@@ -2620,7 +2702,8 @@
    "kind": "zombie",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "mel_restless_berserker",
@@ -2640,7 +2723,8 @@
    "kind": "zombie",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "mel_restless_hero",
@@ -2660,7 +2744,8 @@
    "kind": "zombie",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "mel_anc_restless_berserker",
@@ -2680,7 +2765,8 @@
    "kind": "zombie",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "mel_anc_restless_hero",
@@ -2700,7 +2786,8 @@
    "kind": "zombie",
    "healthMult": 1.3,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "mel_imperial_legate",
@@ -2720,7 +2807,8 @@
    "kind": "zombie",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "mel_restless_warlord",
@@ -2740,7 +2828,8 @@
    "kind": "zombie",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "mel_wight_berserker",
@@ -2760,7 +2849,8 @@
    "kind": "zombie",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "mel_wight_hero",
@@ -2780,7 +2870,8 @@
    "kind": "zombie",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "mel_anc_wight_berserker",
@@ -2800,7 +2891,8 @@
    "kind": "zombie",
    "healthMult": 1.0,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "mel_wight_warlord",
@@ -2820,7 +2912,8 @@
    "kind": "zombie",
    "healthMult": 1.3,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "mel_draman_serpentine",
@@ -2840,7 +2933,8 @@
    "kind": "zombie",
    "healthMult": 1.1,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "mel_anc_scourge_hero",
@@ -2860,7 +2954,8 @@
    "kind": "zombie",
    "healthMult": 1.3,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "mel_scourge_warlord",
@@ -2880,7 +2975,8 @@
    "kind": "zombie",
    "healthMult": 1.5,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "mel_war_overlord",
@@ -2900,7 +2996,8 @@
    "kind": "reaper",
    "healthMult": 1.8,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "mel_master_draman_lord",
@@ -2920,7 +3017,8 @@
    "kind": "reaper",
    "healthMult": 1.8,
    "speedMult": 1.0,
-   "rig": false
+   "rig": false,
+   "removed": true
   },
   {
    "id": "mel_guardian_overlord",
@@ -2939,6 +3037,27 @@
    "verify": [],
    "kind": "reaper",
    "healthMult": 2.2,
+   "speedMult": 1.0,
+   "rig": false,
+   "removed": true
+  },
+  {
+   "id": "mb_dragon",
+   "label": "Plague Dragon",
+   "plugin": "DiverseDragonsCollectionSE.esp",
+   "localId": "0x13FA3A",
+   "editorId": "ogdd_EncDragonPlague02",
+   "recordType": "NPC_",
+   "minRound": 99,
+   "weight": 0,
+   "specialRound": false,
+   "headNode": "NPC Head",
+   "forceCombat": true,
+   "bossEvery": 0,
+   "elite": false,
+   "verify": [],
+   "kind": "reaper",
+   "healthMult": 1.0,
    "speedMult": 1.0,
    "rig": false
   }
