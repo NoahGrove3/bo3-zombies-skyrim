@@ -2203,6 +2203,8 @@
   "GLOB:talk_heard_2": "0xded",
   "GLOB:talk_heard_3": "0xdf0",
   "GLOB:talk_heard_4": "0xdf3",
-  "GLOB:talk_heard_5": "0xdf6"
+  "GLOB:talk_heard_5": "0xdf6",
+  "MGEF:testerkit": "0xdf9",
+  "SPEL:testerkit": "0xdfc"
  }
 }

@@ -337,14 +337,7 @@
       "short": "Slay the risen in the altar's light",
       "goal": "Slay the risen in the light of the Echo Altar of {city}",
       "text": "Alduin's mist bars the road to Sovngarde, and the dead of {city} have nowhere to go. Put them down within the light of the city's Echo Altar and their souls rise through the mist at last. Lay {n} of the risen to rest in the altar's light.",
-      "n": [
-        15,
-        19,
-        23,
-        27,
-        31,
-        35
-      ],
+      "n": [15, 20, 25, 30, 35, 40],
       "seconds": [
         0,
         0,
@@ -486,7 +479,7 @@
       "text": "Morokei once held the Staff of Magnus in Labyrinthian, and the College has feared him ever since. He has come to the cliffs above Winterhold, and the storm he calls has not finished yet."
     }
   },
-  "lightRadius": 1400,
-  "whisperRadius": 750,
-  "echoRadius": 650
+  "lightRadius": 560,
+  "whisperRadius": 350,
+  "echoRadius": 460
 }

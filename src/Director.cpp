@@ -1,6 +1,7 @@
 #include <set>
 #include <sstream>
 #include "CurseOfAlduin.h"
+#include "WorkshopPicks.h"
 
 // Night rounds (sheet: rounds). Rounds run from nightStartHour to nightEndHour on Skyrim's clock.
 // The round number saved on the player is the last round CLEARED; a round cut off by dawn starts
@@ -2769,7 +2770,9 @@ namespace coa
 			}
 			Curse::OnWave(true);
 			Stats::Note(Stats::kWave);
-			SlowBeat(0.55f, 0.3f);  // (the last of the wave falls in slow time)
+			// (the last of the wave falls in slow time; Noah's workshop pick: the night's very last kill holds longer, slower)
+			if (const bool last = Picks::kLastKillSlow && g_wave >= g_waves && !Echo::SiegeActive(); last) SlowBeat(1.6f, 0.25f);
+			else SlowBeat(0.55f, 0.3f);
 			Audio::Duck(3.0f);
 			if (auto* pav = a_player->AsActorValueOwner(); pav && !a_player->IsDead() &&
 				pav->GetActorValue(RE::ActorValue::kHealth) < 0.15f * pav->GetPermanentActorValue(RE::ActorValue::kHealth)) {
@@ -4531,6 +4534,16 @@ namespace coa
 			logger::info("fallen: wave {} begins again ({} of the dead gone)", g_wave, n);
 		}
 		void SlowTime(float a_realSeconds, float a_mult) { SlowBeat(a_realSeconds, a_mult); }
+		// (the Tester's Kit: "start the night now, or rounds 5/10/15/20") a night under way ends where it is, the next to fall is night
+		// a_round (0: the one that's next anyway), and the clock goes to the first dark hour - it begins as any night does
+		void DevNight(int a_round)
+		{
+			if (Coop::Client()) { Hud::Banner("Only the host's night can be moved", 3.0f); return; }
+			if (g_phase != Phase::Day) Dawn();
+			if (a_round > 0) Save::Set(gen::kAV_round, a_round - 1);
+			KeepTheDark();
+			logger::info("tester: the night now - night {}", a_round > 0 ? a_round : static_cast<int>(Save::Get(gen::kAV_round)) + 1);
+		}
 		void NormalTime() { g_slowUntil = std::chrono::steady_clock::now(); TickSlow(); }
 		float TakenMult(RE::Actor* a_actor)
 		{

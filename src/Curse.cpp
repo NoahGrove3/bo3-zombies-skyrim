@@ -1,4 +1,5 @@
 #include "CurseOfAlduin.h"
+#include "WorkshopPicks.h"
 
 // The Curse of Alduin (sheet: curse). At Helgen, Alduin shouted SLEN TIID VO (his raising shout) into the earth and every barrow in
 // Skyrim answered; the Echo Altars the Tongues raised in every city have woken only half. (Noah, 2026-11-23: the trials remade to
@@ -170,8 +171,9 @@ namespace coa
 		// ---- the trial under way (not saved: a load starts a song, a seal's guard or a riddle again)
 		std::unordered_map<RE::FormID, std::pair<std::chrono::steady_clock::time_point, bool>> g_lastBlow;
 		// Hold the Light (TickHold): the light held so far, out of the trial's seconds
-		struct HoldRun { int town = -1; bool on = false; float held = 0, out = 0, call = 0; } g_hold;
-		constexpr float kHoldFrom = 1100.0f, kHoldTo = 240.0f;
+		bool g_testerForce = false;   // (the Tester's Kit: a trial taken up whatever the story says)
+		struct HoldRun { int town = -1; bool on = false, wasIn = true; float held = 0, out = 0, call = 0; } g_hold;
+		constexpr float kHoldFrom = Picks::kHoldFrom, kHoldTo = 240.0f;   // (Noah's workshop pick: the ring starts 1410 out)
 		// Break the Priest's Seals: each seal (a violet heart-stone over a turning rune circle) and the elite who keeps it
 		struct SealRun
 		{
@@ -308,7 +310,7 @@ namespace coa
 		{
 			Put(a_town, St{ true });
 			ClearRun();
-			Forms::Play(gen::Sound::curse_lifted);
+			if (!Picks::Trial("freed")) Forms::Play(gen::Sound::curse_lifted);
 			Shops::FreedPulse(a_town);
 			Audio::FreedMusic();
 			std::string text = Fill(gen::kCurseLiftedBanner, a_town);
@@ -481,7 +483,7 @@ namespace coa
 		// (Noah, 2026-11-24: "make sure the ring for the first quest around the altar is hyper realistic ... anything that is supposed
 		// to be glowing or illuminated should look like real light, not a circle in a color") the ring is light lying in the world now,
 		// not lines over the screen: tools/trialfx.py's ring, 48 arcs each set down on the ground under it, lit round as the trial fills
-		struct WorldRing { RE::ObjectRefHandle ref; int R = 0; RE::NiPoint3 c{}; int lit = -1; float groundT = 0, shown = 0, lead = -1; std::unordered_map<RE::BSEffectShaderProperty*, float> base; } g_wring;
+		struct WorldRing { RE::ObjectRefHandle ref; int R = 0; RE::NiPoint3 c{}; int lit = -1; bool painted = false; float groundT = 0, shown = 0, lead = -1; std::unordered_map<RE::BSEffectShaderProperty*, float> base; } g_wring;
 		// (Noah, 2026-11-24: "make it fill in smooth, much smoother so it's not choppy") the arc being lit fades up by how far into
 		// it the trial is: each of its shapes given a material of its own once, and its brightness scaled
 		void FadeArc(RE::NiAVObject* a_arc, float a_k)
@@ -562,6 +564,10 @@ namespace coa
 			auto r = W.ref.get();
 			auto* o = r ? r->Get3D() : nullptr;
 			if (!o) return;
+			if (!W.painted) {   // (Noah's workshop pick: Hold the Light's ring in blue)
+				W.painted = true;
+				if (R == 1400 && *Picks::kHoldPal) Gun::PaintAura(o, Picks::kHoldPal, 1.0f);
+			}
 			Gun::PoseModel(W.ref, W.c, {}, sc);
 			// each arc set down on the ground under it (the ring follows the lie of the land, shrinking or not)
 			if ((W.groundT -= a_delta) <= 0) {
@@ -612,7 +618,7 @@ namespace coa
 				if (it->t >= it->dur) {
 					Gun::RemoveModel(it->ref);
 					Gun::QueueFx("CurseOfAlduin\\trial\\soul_take.nif", it->b, 1.0f, 0.0f, 0.8f, false);
-					Audio::Mine(static_cast<gen::Sound>(static_cast<int>(gen::Sound::echo_tone_0) + std::rand() % 6), it->b, 0.55f);   // (the soul's whisper and the stone's thunk: tools/soulsfx.py)
+					if (!Picks::Trial("soul", &it->b)) Audio::Mine(static_cast<gen::Sound>(static_cast<int>(gen::Sound::echo_tone_0) + std::rand() % 6), it->b, 0.55f);   // (the soul's whisper and the stone's thunk: tools/soulsfx.py)
 					it = g_souls.erase(it);
 					continue;
 				}
@@ -820,7 +826,7 @@ namespace coa
 				if (a_fighting && d < 500.0f && std::abs(pp.z - g_whisperAt.z) < 500.0f) {
 					a_s.prog = 1;
 					Put(a_z, a_s);
-					Forms::Play(gen::Sound::quest_step);
+					if (!Picks::Trial("found")) Forms::Play(gen::Sound::quest_step);
 					Gun::FxBlastSized("light", g_whisperAt + RE::NiPoint3{ 0, 0, 100.0f }, 1.2f);
 					logger::info("curse: {} - the whisper's place found ({})", gen::kTowns[a_z], w.place);
 				}
@@ -863,6 +869,8 @@ namespace coa
 				return;
 			}
 			const bool in = d < radius;
+			if (!in && H.wasIn) Picks::Trial("slip");   // (his pick: stepped out, it slips back)
+			H.wasIn = in;
 			if (in) H.held += a_dt, H.out = 0.0f;
 			else H.held = std::max(0.0f, H.held - 0.6f * a_dt), H.out += a_dt;
 			// every one of the dead in the city hears it
@@ -949,7 +957,7 @@ namespace coa
 					if (strike) {
 						a_s.prog |= 1 << i;
 						Gun::FxBlastSized("lightmassive", at + RE::NiPoint3{ 0, 0, 150.0f }, 0.8f);
-						Forms::Play(gen::Sound::shout_shatter);
+						if (!Picks::Trial("break", &at)) Forms::Play(gen::Sound::shout_shatter);
 						Gone(g.stone[i]), Gone(g.runes[i]);
 						logger::info("curse: {} - the seal at {} is broken ({} of 3)", gen::kTowns[a_z], pl.place, std::popcount(static_cast<unsigned>(a_s.prog & 7)));
 						if ((a_s.prog & 7) == 7) {
@@ -979,6 +987,23 @@ namespace coa
 		float SpawnBoost() { return 1.0f; }  // (the Ward's swarm went with the old trials)
 		int   Steps(int a_town) { return a_town >= 0 && a_town < static_cast<int>(gen::kCurseCities.size()) ? Step(a_town) : 0; }
 
+		void StartTrial(int a_town, int a_trial);
+		// (the Tester's Kit: "start any of the 4 trials at the nearest altar") the city you're in: the trials before it counted done,
+		// that one taken up now - whatever the story says
+		void DevTrial(int a_trial)
+		{
+			const int z = ZoneTown();
+			if (z < 0) { Hud::Banner("Stand in one of the ten cities for its Echo Altar's trials", 3.0f); return; }
+			if (a_trial < 0 || a_trial >= kTrialCount) return;
+			St s;
+			s.done = (1 << a_trial) - 1, s.active = 0, s.prog = 0;
+			Put(z, s);
+			ClearRun();
+			g_testerForce = true;
+			StartTrial(z, a_trial);
+			g_testerForce = false;
+			logger::info("tester: {} - trial {} taken up", gen::kTowns[z], gen::kTrials[a_trial].id);
+		}
 		void StartTrial(int a_town, int a_trial)
 		{
 			if (a_town < 0 || a_town >= static_cast<int>(gen::kCurseCities.size()) || a_trial < 0 || a_trial >= kTrialCount) {
@@ -994,7 +1019,7 @@ namespace coa
 				Hud::QuestBanner(title + " is done", 2.5f);
 				return;
 			}
-			if (std::string why; !Story::TrialsOpen(a_town, &why)) {
+			if (std::string why; !g_testerForce && !Story::TrialsOpen(a_town, &why)) {
 				Hud::Banner(why.empty() ? std::string("The altar sleeps until the story moves on") : why, 4.0f);
 				return;
 			}
@@ -1015,7 +1040,7 @@ namespace coa
 			s.active = a_trial + 1, s.prog = 0;
 			Put(a_town, s);
 			ClearRun();
-			Forms::Play(gen::Sound::quest_start);
+			if (!Picks::Trial("start")) Forms::Play(gen::Sound::quest_start);
 			Hud::QuestBanner(Upper(title) + ": " + Ask(a_trial) + (Director::Fighting() ? "" : " (at night)"), 6.0f);
 			if (a_trial == gen::kTrial_whisper) SayRiddle(a_town);  // (after the riddle's subtitle)
 			logger::info("curse: {} trial {} taken up (difficulty {})", gen::kTowns[a_town], gen::kTrials[a_trial].id, Diff());
@@ -1077,7 +1102,10 @@ namespace coa
 				RE::NiPoint3 stone = c + RE::NiPoint3{ 0, 0, 170.0f };
 				if (auto* alt = Shops::Placed(z, 0)) stone = alt->GetPosition() + RE::NiPoint3{ 0, 0, 170.0f };
 				SendSoul(at, stone);
-				if (g_wispT <= 0) Audio::Mine(gen::Sound::wisp_rise, at, 0.6f), g_wispT = 0.7f;
+				if (g_wispT <= 0) {
+					if (!Picks::Trial("rise", &at)) Audio::Mine(gen::Sound::wisp_rise, at, 0.6f);
+					g_wispT = 0.7f;
+				}
 				g_ring.flash = 0;
 				if (++s.prog >= N(tr)) {
 					CompleteTrial(z);
@@ -1193,7 +1221,7 @@ namespace coa
 				ClearRun();
 			}
 			if (!before.freed && after.freed) {
-				Forms::Play(gen::Sound::curse_lifted);
+				if (!Picks::Trial("freed")) Forms::Play(gen::Sound::curse_lifted);
 				Shops::FreedPulse(a_town);  // (the altar's freeing: the charge, the burst, the runes grow - for the party too)
 				Audio::FreedMusic();
 				std::string text = Fill(gen::kCurseLiftedBanner, a_town);
@@ -1468,11 +1496,13 @@ namespace coa
 				static float sweep = 0;
 				if ((sweep -= a_delta) <= 0) sweep = 3.0f, SweepStrays(player, c);
 			}
-			if (tr == gen::kTrial_restless || tr == gen::kTrial_echo) {
+			// (Noah's workshop picks: the Restless altar keeps its hum; Hold the Light's is the Circle of Protection, while you stand inside)
+			if (tr == gen::kTrial_restless || (tr == gen::kTrial_echo && !Picks::HasTrial("inside"))) {
 				Audio::LoopStart(Audio::kLoopRite, gen::Sound::rite_hum, Shops::Placed(z, 0));
 			} else {
 				Audio::LoopStop(Audio::kLoopRite, 800);
 			}
+			Picks::TrialLoop(tr == gen::kTrial_echo && here && g_hold.on && g_hold.wasIn);
 			switch (tr) {
 			case gen::kTrial_echo:  // (Hold the Light)
 				TickHold(player, z, c, fighting, a_delta);

@@ -865,4 +865,59 @@ namespace coa::Kit
 		SyncWeapons(false);
 		logger::info("dev: everything from every class - {} kit items at tier {}", n, kTop);
 	}
+	// (Noah, 2026-11-26: the Tester's Kit - "switch class, then its weapon/flasks/armour at Base, I, II, III or Ascended") one
+	// class's whole kit at one tier: 0 Base, 1-3 Tier I-III, 4-13 its Ascends (its robes at their top, Tier III)
+	void DevGiveClass(int a_cls, int a_tier)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (!p || a_cls < 0 || a_cls > 3) return;
+		const int  kTop = std::clamp(a_tier, 0, static_cast<int>(kMaxTier));
+		const auto defs = Defs(a_cls);
+		auto&      st = g_cls[a_cls];
+		int        n = 0;
+		for (int i = 0; i < static_cast<int>(defs.size()) && i < kMaxItems; ++i) {
+			const auto& d = defs[i];
+			if (d.at == kGone) continue;
+			st.owned |= 1u << i;
+			switch (d.kind) {
+			case Kind::Ladder: {
+				if (kTop == 0) {
+					const int r1 = LadderRung1(a_cls, d.ref);
+					if (r1 < 0 || !Arcana::Spell(r1)) break;
+					const int k = LadderKnown(a_cls, d.ref);
+					if (k >= 0 && k != r1) Arcana::Replace(k, r1);
+					else if (k < 0) Arcana::Give(r1, false);
+					Arcana::SetLevel(r1, 0);
+					++n;
+					break;
+				}
+				int top = -1;
+				for (int j = 0; j < static_cast<int>(coffer::kSpells.size()); ++j) {
+					const auto& sp = coffer::kSpells[j];
+					if (sp.cls == a_cls && d.ref == std::string_view(sp.ladderLabel) && (top < 0 || sp.rung > coffer::kSpells[top].rung)) top = j;
+				}
+				if (top < 0 || !Arcana::Spell(top)) break;
+				if (const int k = LadderKnown(a_cls, d.ref); k >= 0 && k != top) Arcana::Replace(k, top);
+				else if (!Arcana::Known(top)) Arcana::Give(top, false);
+				Arcana::SetLevel(top, std::max(0, kTop - Arcana::TierOfRung(top)));
+				++n;
+				break;
+			}
+			case Kind::Bomb:
+			case Kind::Blade:
+				st.tier[i] = static_cast<std::uint8_t>(kTop);
+				Grant(a_cls, i, false);
+				++n;
+				break;
+			case Kind::Armour:
+				st.tier[i] = static_cast<std::uint8_t>(std::min(kTop, 3));
+				Classes::GiveArmourSet(a_cls, std::min(kTop, 3), false);
+				++n;
+				break;
+			default: break;
+			}
+		}
+		SyncWeapons(false);
+		logger::info("tester: class {} - {} kit items at tier {}", a_cls, n, kTop);
+	}
 }

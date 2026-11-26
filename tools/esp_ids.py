@@ -77,6 +77,7 @@ def assign(S=None, write=False):
     wanted += [('ARMA', 'underwear'), ('ARMO', 'underwear')]   # (Phase 2: our own underwear, tools/underwear.py)
     wanted += [('ARMO', f'ca_{c}_{p}') for c in CLASS_ARMOUR for p in CLASS_SET[c]] + [('ARMA', f'ca_{c}_{p}_t{t}') for c in CLASS_ARMOUR for p in CLASS_SET[c] for t in range(4)]   # (the class sets, tools/armoursets.py)
     wanted += [('WEAP', 'javelin')]   # (Noah, 2026-11-21: Destruction's wonder, the Wyrmspine Javelin - tools/wyrmspine.py)
+    wanted += [('MGEF', 'testerkit'), ('SPEL', 'testerkit')]   # (Noah, 2026-11-26: the Tester's Kit - a power, only with CurseOfAlduin_Test.ini)
     for kind, key in wanted:
         k = f'{kind}:{key}'
         if k not in frozen:

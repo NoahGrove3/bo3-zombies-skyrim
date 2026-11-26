@@ -172,6 +172,7 @@ namespace coa
 		bool             PlayerSide(RE::Actor* a, RE::PlayerCharacter* a_player);  // the player, a friend, a follower, an Echo ally or a summon of yours
 		void             RestartWave();   // (the BO3 fall, solo) the wave's dead gone, the wave begins again
 		void             SlowTime(float a_realSeconds, float a_mult);  // the world slowed for a beat (solo only)
+		void             DevNight(int a_round);  // (the Tester's Kit) the night begins now, as night a_round (0: the next)
 		void             NormalTime();
 		float            TakenMult(RE::Actor* a_actor);  // how much harder one of ours is hurt (a dazed Barrow Champion 2, a berserk Skeleton Mutant 1.25)
 		void             OnDying(RE::Actor* a_actor);    // any death: a champion or mini-boss pays out at once  // how hard this one of the night's dead hits you, its spells too (1 = as made)
@@ -699,6 +700,7 @@ namespace coa
 		void  SetRaw(int a_town, int a_value);
 		int   Steps(int a_town);                         // trials done (0-4), 5 when freed
 		void  StartTrial(int a_town, int a_trial);       // the altar's menu: take up the next of the four trials (gen::kTrials, in order)
+		void  DevTrial(int a_trial);                     // (the Tester's Kit) that trial taken up now in the city you're in
 		void  NoteHit(RE::FormID a_target, bool a_melee);  // the player's last blow on one of the dead (Trial of Steel)
 		void  OnClassKill(int a_how, int a_element, float a_dist);  // the class trial: 0 summon, 1 Destruction spell, 2 bow/crossbow, 3 melee
 		std::string TrialTitle(int a_trial);             // its name (the class trial's follows your class)
@@ -862,6 +864,7 @@ namespace coa
 		void                  DevNodes();
 		void                  DevLook(const std::string& a_model, const std::string& a_mode, float a_scale, const std::string& a_pal, float a_secs);
 		void                  DevFxReload();
+		void                  PreloadFx();   // every effect model in the map in memory (at data load)
 		void                  TintRef(RE::TESObjectREFR* a_ref, float a_r, float a_g, float a_b);  // a placed model's effect shaders in a colour
 		void                  SetSwingFrom(const RE::NiPoint3* a_at);   // (a wand's cast) SwingFrom is this point until cleared (nullptr)
 		void                  Fling(RE::Actor* a_target, const RE::NiPoint3& a_from, float a_mag);   // thrown from a point (ragdolled)
@@ -1395,5 +1398,28 @@ namespace coa
 		void  DevTestKit();                      // the test kit: every class's whole kit at Tier III
 		bool  Loaded();                           // this save carries the rework's record
 		void PriestDrop(int a_town);  // (Noah: "all players receive the weapon") a city's Dragon Priest slain: his weapon to you, and the card
+		void  DevGiveClass(int a_cls, int a_tier);  // (the Tester's Kit) one class's whole kit at a tier (0 Base, 1-3 Tier I-III, 4-13 its Ascends)
+	}
+
+	// (Noah, 2026-11-26: his workshop picks in the game - src/Picks.cpp, the values in src/WorkshopPicks.h)
+	namespace Picks
+	{
+		void  OnDataLoaded();                                        // Skyrim's own weapon sounds to 20%
+		bool  Card(std::string_view a_card, std::string_view a_slot, const RE::NiPoint3& a_at);   // an ability's picked sound, if he chose one
+		bool  Owner(std::string_view a_owner, std::string_view a_slot, const RE::NiPoint3& a_at); // the same, by the effect's owner (Gun::FxScope)
+		bool  OwnerHasSound(std::string_view a_owner);              // its impact replaced (the old shared blast left out)
+		bool  Trial(std::string_view a_event, const RE::NiPoint3* a_at = nullptr);   // a trial moment's picked sound
+		void  TrialLoop(bool a_on);                                  // Hold the Light: standing inside
+		bool  HasTrial(std::string_view a_event);                    // a trial moment he gave a sound of its own
+		void  OnMeleeHit(RE::Actor* a_target, const RE::TESForm* a_source, bool a_heavy);   // hit-stop, shake, a heavy kill's throw
+		int   Crowd();                                               // the dead near you (counted twice a second)
+		void  Tick(float a_delta);
+	}
+
+	// (Noah, 2026-11-26) the Tester's Kit: a power that's yours only while CurseOfAlduin_Test.ini sits in SKSE\Plugins (src/TesterKit.cpp)
+	namespace Tester
+	{
+		bool  OnCast(RE::FormID a_spell);
+		void  Tick(float a_delta);
 	}
 }

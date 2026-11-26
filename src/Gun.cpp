@@ -1,4 +1,5 @@
 #include "CurseOfAlduin.h"
+#include "WorkshopPicks.h"
 #include "CofferSpells.h"
 #include <sstream>
 
@@ -431,7 +432,7 @@ namespace coa
 					if (g_fecElem >= 0) FecMark(a_target, g_fecElem);  // (FEC: the element's death)
 					a_target->KillImpl(player, damage, true, false);
 				}
-				if (a_head && !a_melee) {
+				if (a_head && !a_melee && Picks::kHeadMarks) {   // (Noah's workshop pick: headshot feedback off - its tick, flash and burst)
 					HeadBurst(a_target);
 				}
 				if (Coop::Client() && ours) {
@@ -452,7 +453,7 @@ namespace coa
 					SafeCombat(a_target, player);
 				}
 			}
-			if (!a_quiet || kill) {
+			if ((!a_quiet || kill) && (a_head && !a_melee ? Picks::kHeadMarks : Picks::kHitMarks)) {   // (his picks: the hit marker, the headshot's)
 				Forms::Play(a_head && !a_melee ? gen::Sound::headshot : gen::Sound::hitmarker);
 				std::scoped_lock l(Hud::Lock());
 				Hud::Edit().hitTime = kill ? 0.3f : 0.2f;
@@ -576,7 +577,8 @@ namespace coa
 		// Read at load and again on the dev command `fxreload`, so a look can be tried in the running game.
 		int BlastIndex(std::string_view a_name);
 		struct FxPart { std::string model, pal; RE::NiPoint3 col{ -1, -1, -1 }; float scale = 1.0f, dz = 0.0f; RE::NiMatrix3 rot; bool play = false, none = false, noparticles = false, nomesh = false; std::vector<std::string> hide; int blast = -1; float orbitR = 0, orbitSpeed = 0, phase = 0;
-			bool grows = false, ground = false, face = false; float g0 = 1, g1 = 1, gGrow = 0.3f, gLife = 1, gFade = 0.5f, delay = 0; };   // (Noah, 2026-11-25: each ability's own elements, grown and faded - tools/abilityfx.py)
+			bool grows = false, ground = false, face = false; float g0 = 1, g1 = 1, gGrow = 0.3f, gLife = 1, gFade = 0.5f, delay = 0;
+			float bright = 1.0f, light = 1.0f, area = 1.0f; };   // (Noah, 2026-11-26: his workshop picks - its glow, the light its parts cast, its owner's reach)   // (Noah, 2026-11-25: each ability's own elements, grown and faded - tools/abilityfx.py)
 		std::unordered_map<std::string, std::vector<FxPart>> g_fxMap;
 		std::string FxKey(std::string a)
 		{
@@ -637,6 +639,9 @@ namespace coa
 							else if (k == "col") std::sscanf(v.c_str(), "%f,%f,%f", &fp.col.x, &fp.col.y, &fp.col.z);
 							else if (k == "grow") fp.grows = std::sscanf(v.c_str(), "%f,%f,%f,%f,%f", &fp.g0, &fp.g1, &fp.gGrow, &fp.gLife, &fp.gFade) == 5;
 							else if (k == "delay") fp.delay = std::stof(v);
+							else if (k == "bright") fp.bright = std::stof(v);
+							else if (k == "light") fp.light = std::stof(v);
+							else if (k == "area") fp.area = std::stof(v);
 							else if (k == "ground") fp.ground = true;
 							else if (k == "face") fp.face = true;
 							else if (k == "r") std::sscanf(v.c_str(), "%f,%f,%f", &rx, &ry, &rz);
@@ -688,6 +693,21 @@ namespace coa
 			if (!loaded) loaded = true, FxMapLoad();
 			if (const auto* own = OwnFx(a_model)) {
 				if (static int told = 0; told++ < 60) logger::info("fxmap: {}'s own effect for {}", g_fxOwner, a_model);
+				// (Noah, 2026-11-26: his sound picks) its own effect going off: its own sound with it
+				if (!own->empty() && !own->front().none) {
+					if (auto* p = RE::PlayerCharacter::GetSingleton()) Picks::Owner(OwnerOf(a_model), "impact", p->GetPosition());
+				}
+				// (his big-night pick: "fewer particles past 30 of the dead near you", light only from the big effects)
+				if (Picks::kFxAutoDetail && Picks::Crowd() > 30 && own->size() > 1) {
+					std::vector<FxPart> thin(own->begin(), own->begin() + static_cast<std::ptrdiff_t>((own->size() + 1) / 2));
+					if (Picks::kFxBigLightsOnly && g_fxOwner.find("_heavy") == std::string::npos) for (auto& fp : thin) fp.light = 0.0f;
+					return thin;
+				}
+				if (Picks::kFxBigLightsOnly && Picks::Crowd() > 30 && g_fxOwner.find("_heavy") == std::string::npos) {
+					std::vector<FxPart> dim(*own);
+					for (auto& fp : dim) fp.light = 0.0f;
+					return dim;
+				}
 				return *own;
 			}
 			if (auto it = g_fxMap.find(FxKey(a_model)); it != g_fxMap.end()) return it->second;
@@ -700,7 +720,16 @@ namespace coa
 		// is shared by every copy of the model in the game) or by a colour laid over its own
 		void TintTree(RE::NiAVObject* a_root, const FxPart& a_part)
 		{
-			if (!a_root || (a_part.pal.empty() && a_part.col.x < 0)) return;
+			if (!a_root) return;
+			// (Noah, 2026-11-26: the workshop's Light slider) the light its parts cast, turned down to his share of the model's own
+			if (a_part.light < 0.999f || a_part.light > 1.001f) {
+				RE::BSVisit::TraverseScenegraphLights(a_root, [&](RE::NiPointLight* l) {
+					if (l) l->GetLightRuntimeData().fade *= std::clamp(a_part.light, 0.0f, 4.0f);
+					return RE::BSVisit::BSVisitControl::kContinue;
+				});
+			}
+			const bool bright = a_part.bright < 0.999f || a_part.bright > 1.001f;
+			if (a_part.pal.empty() && a_part.col.x < 0 && !bright) return;
 			static std::unordered_map<std::string, RE::NiPointer<RE::NiTexture>> pals;
 			RE::NiPointer<RE::NiTexture> pal;
 			if (!a_part.pal.empty()) {
@@ -722,6 +751,7 @@ namespace coa
 						nm->greyscaleTexturePath = a_part.pal.c_str();
 					}
 					if (a_part.col.x >= 0) nm->baseColor = { a_part.col.x, a_part.col.y, a_part.col.z, nm->baseColor.alpha };
+					if (bright) nm->baseColorScale *= std::clamp(a_part.bright, 0.0f, 4.0f);   // (his Brightness slider)
 					ep->SetMaterial(nm, true);
 					nm->~BSEffectShaderMaterial();
 					RE::free(nm);
@@ -754,7 +784,8 @@ namespace coa
 		void WatchTint(RE::TESObjectREFR* a_ref, const FxPart& a_part, bool a_play = false)
 		{
 			a_play = a_play && a_part.play;
-			if (a_ref && (!a_part.pal.empty() || a_part.col.x >= 0 || a_play) && g_tintWatch.size() < 96) g_tintWatch.push_back({ a_ref->GetHandle(), a_part, a_play });
+			const bool tuned = std::abs(a_part.bright - 1.0f) > 0.001f || std::abs(a_part.light - 1.0f) > 0.001f;
+			if (a_ref && (!a_part.pal.empty() || a_part.col.x >= 0 || a_play || tuned) && g_tintWatch.size() < 96) g_tintWatch.push_back({ a_ref->GetHandle(), a_part, a_play });
 		}
 		void TickTints(float a_delta)
 		{
@@ -1056,8 +1087,16 @@ namespace coa
 
 
 
+		// (Noah, 2026-11-26: the workshop's Area slider - "look and gameplay") an owner's reach: its _area entry in the effects map
+		float AreaMult()
+		{
+			if (g_fxOwner.empty()) return 1.0f;
+			if (auto it = g_fxMap.find("curseofalduin\\fx\\w\\" + g_fxOwner + "_area.nif"); it != g_fxMap.end() && !it->second.empty()) return std::clamp(it->second.front().area, 0.2f, 3.0f);
+			return 1.0f;
+		}
 		std::vector<RE::Actor*> Foes(const RE::NiPoint3& a_at, float a_radius)
 		{
+			a_radius *= AreaMult();   // (an ability's own reach, as he set it)
 			auto*                   player = RE::PlayerCharacter::GetSingleton();
 			std::vector<RE::Actor*> out;
 			for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
@@ -1909,11 +1948,14 @@ namespace coa
 		// volume set by how far away it went off (a sound set at a bare point played to no one)
 		void  BlastSound(std::string_view a_name, const RE::NiPoint3& a_at, float a_vol)
 		{
+			// (Noah, 2026-11-26) an ability whose sound he picked plays that instead (its own effect plays it, FxParts)
+			if (!g_fxOwner.empty() && Picks::OwnerHasSound(g_fxOwner)) return;
 			auto* ex = BlastForm(BlastIndex(a_name));
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			if (!ex || !p) return;
 			const float d = p->GetPosition().GetDistance(a_at);
-			const float v = std::clamp(1.0f - (d - 350.0f) / 2400.0f, 0.25f, 1.0f) * a_vol;
+			// (Noah: "the weapon sound effects should be kind of a background noise ... 20%")
+			const float v = std::clamp(1.0f - (d - 350.0f) / 2400.0f, 0.25f, 1.0f) * a_vol * Picks::kWeaponVol;
 			for (auto* snd : { ex->data.sound1, ex->data.sound2 }) if (snd) Audio::Game(snd->GetFormID(), p, std::min(1.0f, v));
 		}
 		// (the class perks: Ember Heart) the night's dead round a point lose a share of a whole zombie's health
@@ -2149,6 +2191,7 @@ namespace coa
 				if (!l.fx.ok) {
 					l.fx = WorldFx(l.s.model);
 					if (!l.fx.ok) { l.gone = l.s.range + 1; continue; }
+					Picks::Owner(g_fxOwner, "cast", l.at);   // (Noah, 2026-11-26: the bolt's own cast sound, where he picked one)
 				}
 				// (Noah: "a little faster ... stay the same shape the whole flight time then fades out") its size held the whole
 				// way, its light dying over the last quarter
@@ -2672,6 +2715,21 @@ namespace coa
 			std::erase_if(g_skyBeams, [](const SkyBeamLive& b) { return b.left <= 0; });
 		}
 		void DevFxReload() { FxMapLoad(); }
+		// (the workshop's Big nights: "hitches fix") every effect model the map names in memory at data load, so the first time
+		// one goes off on a crowded night it doesn't stop the frame to read its file
+		void PreloadFx()
+		{
+			if (g_fxMap.empty()) FxMapLoad();
+			std::unordered_set<std::string> seen;
+			int n = 0;
+			for (const auto& [k, parts] : g_fxMap) {
+				for (const auto& fp : parts) {
+					if (fp.none || fp.blast >= 0 || fp.model.empty() || !seen.insert(fp.model).second) continue;
+					if (Spellcraft::LoadPath(fp.model)) ++n;
+				}
+			}
+			logger::info("fx: {} effect models in memory", n);
+		}
 		void SetSwingFrom(const RE::NiPoint3* a_at) { g_fromSet = a_at != nullptr; if (a_at) g_fromAt = *a_at; }
 		void Fling(RE::Actor* a_target, const RE::NiPoint3& a_from, float a_mag) { Spellcraft::Fling(a_target, a_from, a_mag); }
 		// a placed model's effect shaders laid over with a colour, the moment its model is in (the Tablet of Mysteries' beacon)
@@ -4253,6 +4311,8 @@ namespace coa
 
 		void Tick(float a_delta)
 		{
+			Picks::Tick(a_delta);
+			Tester::Tick(a_delta);
 			KitOnLoad();
 			KitMagicka(a_delta);
 			if (g_kitPending) {

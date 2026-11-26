@@ -389,6 +389,17 @@ recs['SPEL'].append(record('SPEL', fid('SPEL', 'altarbeam'), [
     sub('MDOB', bytes.fromhex('a5350400')), sub('ETYP', tsub('spel_firebolt', 'ETYP')), sub('DESC', z('')),
     sub('SPIT', struct.pack('<IIIfIIffI', 0, 0x1, 0, 0.0, 1, 2, 0.0, 0.0, 0)), sub('EFID', struct.pack('<I', fid('MGEF', 'altarbeam'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 
+# ---- (Noah, 2026-11-26: "come up with a kit that I could use to test everything in all of the different tiers of weapons") the
+# Tester's Kit: a lesser power that does nothing itself - src/TesterKit.cpp opens its menus when it's cast, and gives it to you
+# only while Data/SKSE/Plugins/CurseOfAlduin_Test.ini is there
+cast_mgef('testerkit', "Tester's Kit", 1)
+recs['SPEL'].append(record('SPEL', fid('SPEL', 'testerkit'), [
+    sub('EDID', z('COA_TesterKit')), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z("Tester's Kit")),
+    sub('MDOB', tsub('spel_firebolt', 'MDOB')), sub('ETYP', struct.pack('<I', 0x025BEE)),
+    sub('DESC', z('Any class at any tier, the night at any round, god mode and points, the dead on call and any trial.')),
+    sub('SPIT', struct.pack('<IIIfIIffI', 0, 0x1, 3, 0.0, 1, 0, 0.0, 0.0, 0)),   # free, a lesser power, fire-and-forget, self
+    sub('EFID', struct.pack('<I', fid('MGEF', 'testerkit'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
+
 # ---- (Noah: each class its own wonder) the Destruction class's Tome of the Six Fires: a spell that does nothing itself -
 # Classes::OnCast looses the six element ladders' top spells when it is cast
 cast_mgef('tomecast', 'Six Fires', 1)   # (Noah: 100 magicka, no cooldown)

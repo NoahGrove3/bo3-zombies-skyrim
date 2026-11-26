@@ -1,6 +1,7 @@
 #include "CurseOfAlduin.h"
 #include "CofferSpells.h"
 #include "Perf.h"
+#include "WorkshopPicks.h"
 
 namespace coa
 {
@@ -910,7 +911,7 @@ namespace coa
 		// the wands do: the cross at the crosshair (red and larger on a kill) and its tick (a kill's own sound)
 		void MarkHit(RE::Actor* a_z)
 		{
-			if (!a_z) return;
+			if (!a_z || !Picks::kHitMarks) return;   // (Noah's workshop pick: the hit marker off)
 			static auto last = std::chrono::steady_clock::time_point{};
 			const auto  now = std::chrono::steady_clock::now();
 			const bool  kill = a_z->IsDead() || a_z->AsActorValueOwner()->GetActorValue(RE::ActorValue::kHealth) <= 0;
@@ -1088,6 +1089,7 @@ namespace coa
 					if (auto* t = a_event->target->As<RE::Actor>(); t && a_event->source) Gun::PriestHit(t, a_event->source, heavyHit);  // (the Dragon Priests' weapons)
 					auto* src = a_event->source ? RE::TESForm::LookupByID(a_event->source) : nullptr;
 					if (auto* t = a_event->target->As<RE::Actor>()) Eggs::OnPlayerHit(t, src);   // (the wonders' secrets: who struck what, how)
+					if (auto* t = a_event->target->As<RE::Actor>(); t && !a_event->projectile && Director::IsFoe(t)) Picks::OnMeleeHit(t, src, heavyHit);   // (his hit feel)
 					const bool spellHit = src && src->As<RE::MagicItem>();  // (the charge's own lightning never sets off another charge)
 					if (auto* t = a_event->target->As<RE::Actor>(); t && !spellHit && Director::IsFoe(t)) {
 						Gun::StormHit(t);  // (a blade, a fist or Skyrim's own bow: the Stormblast charge goes off too)
@@ -1262,7 +1264,9 @@ namespace coa
 					Classes::NoteCast(a_event->spell);
 					Tablet::OnCast(a_event->spell);  // (a donated staff's or the Codex's use)
 					Eggs::OnSpellCast(a_event->spell);  // (the wonders' secrets hear its element: never claims it)
-					if (Classes::OnCast(a_event->spell)) {
+					if (Tester::OnCast(a_event->spell)) {
+						// (the Tester's Kit: its menus)
+					} else if (Classes::OnCast(a_event->spell)) {
 						// (the Tome of the Six Fires)
 					} else if (Director::TinyTerrors(a_event->spell)) {
 						// (Tiny Terrors)
@@ -1508,6 +1512,8 @@ namespace coa
 
 		void OnDataLoaded()
 		{
+			Picks::OnDataLoaded();   // (Noah's workshop picks: Skyrim's weapon sounds at 20%)
+			Gun::PreloadFx();        // (Big nights: every effect model in memory before the first night)
 			// (the class-coloured Black Mage robes are gone - each class wears its lookbook set as its mod made it - so ArmorForge::Build no longer runs)
 			ArmorForge::BuildHipBlades();
 			Tablet::AdoptLooks();

@@ -1,4 +1,5 @@
 #include "CurseOfAlduin.h"
+#include "WorkshopPicks.h"
 
 // (Noah: "one longer Easter egg for each class ... make the wonders harder to obtain") the hidden quests, Black Ops style
 // (sheet: eggs): one per class, waking once six cities are freed, never explained in game - and finishing it is the
@@ -1147,7 +1148,7 @@ namespace coa::Eggs
 								return;
 							}
 							Gun::ElemBurst(kFlaskFx[m.el], at + RE::NiPoint3{ 0, 0, 40.0f }, 1.6f, 0.0f, 1.0f);
-							Gun::BlastSound("lightmassive", at, 0.7f);
+							Gun::BlastSound("lightmassive", at, 0.7f / Picks::kWeaponVol);   // (a wonder's secret going wrong: as loud as it was - not a weapon's sound)
 							if (pp.GetDistance(at) < 300.0f) a_p->AsActorValueOwner()->DamageActorValue(RE::ActorValue::kHealth, 15.0f);
 							Hud::QuestBanner(fmt::format("Wrong - only {} frees it. It bursts, and rises again.", kFlaskEl[m.el]), 3.0f);
 							m.wait = 4.0f;

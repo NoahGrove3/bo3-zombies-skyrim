@@ -333,5 +333,95 @@ def build():
     print(len(abil), 'abilities,', len(models), 'real parts')
 
 
-if __name__ == '__main__':
+if __name__ == '__main__' and __import__('sys').argv[1:] != ['final']:
     build()
+
+
+# ---------------------------------------------------------------- (Noah, 2026-11-26) the workshop's final picks, into the game
+FINAL = ROOT / 'docs' / 'workshop' / 'final_picks.json'
+# his notes on the picks (the workshop doc, Nov 25 night)
+FINAL_NOTES = {
+    'volsung_heavy': 'remove the smoke trail effect that lingers after the explosion',   # (its mist part left out)
+    'bonereaper_kill': "use the skyrim reanimation or summon portal for this",            # (Skyrim's conjuring portal)
+}
+
+
+def _plays():
+    """which models need their own animation set going (the effects map's play flag): from the parts and the map as it is"""
+    plays = {p['model'].lower(): p['play'] for th in PARTS.values() for r, p in th.items() if r != 'native'}
+    for line in FXMAP.read_text().splitlines():
+        if '=' not in line or line.lstrip().startswith('#'): continue
+        for seg in line.split('=', 1)[1].split(';'):
+            toks = seg.split()
+            if toks and toks[0].lower() not in plays: plays[toks[0].lower()] = 'play' in toks
+            elif toks and 'play' in toks: plays[toks[0].lower()] = True
+    return plays
+
+
+def final_parts(ab, pk, opts, plays):
+    """one owner's parts as Noah set them: its option's parts (or the one it plays now), at his size, colour, area, speed,
+    density, brightness and light - what the workshop's preview drew (src/Gun.cpp reads bright= and light=)"""
+    card = ab['card']
+    info = opts.get(card)
+    o = next((x for x in info['opts'] if x['id'] == pk.get('opt', 'a1')), info['opts'][0]) if info else None
+    parts = [dict(p) for p in (o['parts'] if o else [])]
+    if card == 'volsung_heavy': parts = [p for p in parts if 'mist' not in p['model']] or parts[:1]
+    if card == 'bonereaper_kill': parts = [dict(model='magic\\summontargetfx.nif', s=1.2, delay=0, ground=False, nat=True, label="Skyrim: the conjuring portal")]
+    k, area = pk.get('size', 100) / 100.0, pk.get('area', 100) / 100.0
+    speed = max(0.2, pk.get('speed', 100) / 100.0)
+    dens = pk.get('density', 100) / 100.0
+    if dens < 0.999 and len(parts) > 1: parts = parts[:max(1, round(len(parts) * dens))]
+    col = pk.get('colour') or ab['col']
+    if ab['owner'].startswith(OWN_COLOUR) and ab['owner'] not in KEEP_PICKED: col = ab['col']   # (the rapier's, javelin's, flasks' elements keep theirs)
+    th = PARTS[ab['theme']]
+    native = col in th['native']
+    ramp = RAMP_OF.get(col, col)
+    out = []
+    for p in parts:
+        m = p['model'].lower()
+        opt = []
+        if not ((p.get('nat') or native) and 'labyrinthianshockwave' not in m): opt.append(f'pal={ramp}')
+        s = p['s'] * k * (area if p.get('ground') else 1.0)
+        opt.append(f's={s:.2f}')
+        if p.get('delay'): opt.append(f'delay={p["delay"] / speed:.2f}')
+        if p.get('ground'): opt.append('ground')
+        if plays.get(m) or m.startswith(('apocnew\\', 'magus\\')) and plays.get(m) is not False: opt.append('play')
+        if abs(pk.get('bright', 100) - 100) > 0.5: opt.append(f'bright={pk["bright"] / 100:.2f}')
+        if abs(pk.get('light', 100) - 100) > 0.5: opt.append(f'light={pk["light"] / 100:.2f}')
+        out.append(f'{m} ' + ' '.join(opt))
+    return out
+
+
+def build_final():
+    """the effects map's own block from Noah's final picks (docs/workshop/final_picks.json) - the cards he kept as they are, or
+    never set, stay as they were built; and each owner's reach (area=) for the code"""
+    import abilityopts
+    picks = json.loads(FINAL.read_text())['abilities']
+    abil = all_abilities()          # (the cards as built before: the "as it is now" of every option list)
+    opts = abilityopts.options()
+    plays = _plays()
+    lines, n = [], 0
+    for ab in abil:
+        pk = picks.get(ab['card'])
+        if pk and pk.get('choice') == 'change':
+            parts = final_parts(ab, pk, opts, plays); n += 1
+            area = pk.get('area', 100)
+            line = f'CurseOfAlduin\\fx\\w\\{ab["owner"]}_burst.nif = ' + ' ; '.join(parts)
+            lines.append(line)
+            if area != 100: lines.append(f'CurseOfAlduin\\fx\\w\\{ab["owner"]}_area.nif = none area={area / 100:.2f}')
+        else:
+            parts = compose(ab)
+            lines.append(f'CurseOfAlduin\\fx\\w\\{ab["owner"]}_burst.nif = ' + ' ; '.join(f'{p["model"]} {p["opts"]}' for p in parts))
+    txt = FXMAP.read_text()
+    txt = txt[:txt.index(MARK0)].rstrip('\n') + '\n'
+    block = ['', MARK0,
+             "# (Noah, 2026-11-26: his workshop picks, final) each ability its own effect, as he set it in the workshop doc: its option's real",
+             '# parts, in his colour and size, his area on the ground parts, his speed on their beats, fewer parts at a lower density,',
+             '# bright= its glow and light= the light its parts cast (src/Gun.cpp). area= on an owner\'s _area line: its reach in the game.',
+             'CurseOfAlduin\\fx\\spell_hit.nif = none'] + lines + [MARK1]
+    FXMAP.write_text(txt + '\n'.join(block) + '\n')
+    print(len(abil), 'owners,', n, 'from his picks')
+
+
+if __name__ == '__main__' and len(__import__('sys').argv) > 1 and __import__('sys').argv[1] == 'final':
+    build_final()

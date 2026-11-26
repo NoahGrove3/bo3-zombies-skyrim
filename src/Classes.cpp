@@ -1,5 +1,6 @@
 #include "CurseOfAlduin.h"
 #include "CofferSpells.h"
+#include "WorkshopPicks.h"
 
 // The four classes (Noah, the classes overhaul): Summoner, Destruction, Ranger, Spellsword. A new character picks one
 // on a full-screen picker the moment it is out of the character creator; the pick hands over the class's starter kit.
@@ -1598,7 +1599,7 @@ namespace coa::Classes
 			if (aim.Length() > 1e-3f) aim.Unitize(); else aim = dir;
 			const float c = g_jav.power;
 			Gun::Lob(JavFlyModel(g_jav.el), from, aim * (2300.0f + 700.0f * c) + RE::NiPoint3{ 0, 0, 60.0f }, 1.0f, [c](const RE::NiPoint3& at) { JavBurst(at, c, true); }, 0.0f, 260.0f);
-			Gun::BlastSound("frost", from, 0.35f);   // (the air torn as it goes)
+			// (Noah's workshop pick: the javelin flies with nothing on it until it lands - no torn-air sound either; its picked throw sound plays)
 			logger::info("javelin: thrown at charge {:.2f}, element {}", c, g_jav.el);
 		}
 		// (Noah, 2026-11-24: "The Destruction class's Javelin is invisible in my character's hands, but I can see it on my back") a
@@ -3349,11 +3350,11 @@ namespace coa::Classes
 			// flask ... fire impact should sound like flames the duration of the effect and the glass break on impact") no potion's
 			// cork or gulp: the glass shattering (Skyrim's oil-lamp trap breaking), the element's own strike, and a fire flask's
 			// flames crackling on where it burns for as long as its fire lasts
-			Audio::Mine(gen::Sound::alch_glass, a_at, 1.0f);
+			Audio::Mine(gen::Sound::alch_glass, a_at, Picks::kWeaponVol);   // (Noah: "Flasks at 20% too")
 			if (a_el == 0) {
 				static std::uint64_t n = 0;
 				const std::uint64_t key = 0xF1A5C000ull + (n++ % 64);
-				Audio::LoopAt(key, gen::Sound::alch_fireloop, a_at, 0.85f);
+				Audio::LoopAt(key, gen::Sound::alch_fireloop, a_at, 0.85f * Picks::kWeaponVol);
 				Tasks::Later(3.0f, [key]() { Audio::LoopStop(key, 700); });
 			}
 			logger::info("alchemist: a flask breaks - glass, Skyrim's {} sound{}", kSpellSnd[std::clamp(a_el, 0, 6)], a_el == 0 ? ", its flames for 3 s" : "");
