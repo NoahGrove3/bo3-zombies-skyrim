@@ -52,12 +52,14 @@ WC.append({'id': 'bane', 'name': "Alduin's Bane", 'sub': 'The last weapon.', 'it
 TESTS = json.load(open('/home/claude/bo3-zombies-skyrim/docs/workshop/tests_master.json'))
 
 RECS = [
-    {'id': 'final', 't': 'Is the doc final?', 'd': 'When your looks, abilities, sounds, hit feel, deaths, trials and big-night picks are set here, I build them all into the game for your test.', 'opts': ['Yes, build my picks', 'Not yet, still picking']},
-    {'id': 'first', 't': 'What I build first', 'd': 'When you call it final, which goes in first (the rest follow in the same build if they fit)?', 'opts': ['Sounds and hit feel', 'The deaths', 'The trials', 'The hitches and big nights']},
-    {'id': 'cards', 't': 'The new simple cards', 'd': 'Every list is now small cards; a click opens the preview beside everything to change, on one screen. Right?', 'opts': ['Yes', 'Change something (note)']},
+    {'id': 'elixir', 't': "The Mutagen Staff's Elixir", 'd': "You asked when it's cast. In this build it never is: block throws the six flasks, and nothing on the staff casts the Elixir (its golden burst belonged to the old Philosopher's Flask). Where should it go?", 'opts': ['On a power attack', 'Hold block 2 s', 'Its own power', 'Leave it out']},
+    {'id': 'headburst', 't': 'Headshot feedback off', 'd': "Off took away the tick and the white flash, and with them the head bursting on a headshot kill. Keep it that way?", 'opts': ['Yes, all of it off', 'Bring the head burst back']},
+    {'id': 'javland', 't': 'Where the javelin lands', 'd': "Your Flame Burst is fire whatever the javelin's element (its parts can't be recoloured). Keep it?", 'opts': ['Yes, fire for all', "Each element its own"]},
+    {'id': 'next', 't': 'After your test', 'd': 'What first in the next build?', 'opts': ['Fix what I marked', 'More looks and abilities', 'Big nights', 'Toward the Nexus release']},
 ]
 
 RECENT = [
+    ['Nov 26', ['<b>Every pick of yours in the game</b>: the looks, the 58 abilities (area is their reach now), sounds at 20% (Skyrim\'s own weapon sounds too, and the flasks), hit feel, markers off, the last kill slow, heavies throwing the body, the trials, big nights.', '<b>The Tester\'s Kit</b>: a power, only with CurseOfAlduin_Test.ini in SKSE\\Plugins: any class at any tier, the relics and wonders, the night now or at 5/10/15/20, god mode, endless magicka and stamina, points, the dead and the trials.', 'Your notes: Volsung\'s smoke gone, the javelin bare in flight, the Bonereaper\'s summon flash.']],
     ['Nov 25, night', ['<b>Simple cards</b>: every list small, a click opens the preview beside all its options on one screen.', '<b>Sounds</b>: every weapon\'s draw, swing, heavy and hit and every ability\'s cast, impact and linger - five real options each, playable, tunable.',
                         '<b>Hit feel</b>, <b>the dead\'s deaths</b>, <b>the Echo Altar\'s trials in 3D</b>, <b>big nights</b> from your own game\'s numbers, and an <b>Issues</b> list.', 'Your picks from the last doc carried over; the Dragon Priest scythe\'s blade from the staff\'s head.']],
     ['Nov 25, late evening', ['<b>Five looks for every weapon</b>, two new ones each.', '<b>Five options of its own for every ability</b>, variations of what it does, with any colour and sliders for size, brightness, area, vibrance, speed, linger, density and light cast.', '<b>The four scythes</b> fixed at the join.']],
@@ -85,16 +87,12 @@ _MN = _json.load(open('/home/claude/bo3-zombies-skyrim/docs/workshop/modnow.json
 MODNOW = _MN['sections']
 NEXUS = _json.load(open('/home/claude/bo3-zombies-skyrim/docs/workshop/nexus.json'))['groups']
 CHANGES = [
-    ['The doc', 'Simple cards, one screen each', 'As you asked: Weapon looks, Abilities, Scythes and the new tabs are now small cards. Click one and it opens over the page with the 3D preview on one side and every option on the other - no scrolling up and down. Esc or Close puts it back.', 'ok'],
-    ['Sounds', 'A sound workshop', 'Every weapon\'s own sounds (draw, swing, heavy swing, hit) and every ability\'s (cast, impact, what lingers): five options each from your own install - Skyrim, Dawnguard, Dragonborn, Apocalypse, Mysticism - and ours, the first what plays now, one marked my pick. Press ▶ to hear any; Hear it play runs the weapon in 3D with every sound on its beat. Volume, pitch, variation and a layer under each.', 'ok'],
-    ['Feel', 'Hit feel', 'Hit-stop and camera shake by weapon weight, seen in the preview exactly as set; the hit markers and kill sounds.', 'ok'],
-    ['The dead', 'How they die', 'Fire, frost, lightning, sun, poison, blood, shadow and plain kills, each with options from real parts and real sounds: burn to ash, shatter, disintegrate, turned to light, melt, drained husk, soul torn out, thrown by a heavy.', 'ok'],
-    ['Trials', 'The Echo Altar and its trials in 3D', 'The altar, its ring of light at real size, the dead coming and the souls rising; edit each trial\'s words, numbers for each difficulty, colours and the sound of each moment.', 'ok'],
-    ['Big nights', 'Your own game\'s numbers', 'Read from your CurseOfAlduin.log (the Nov 24 night): 0.6 ms a frame on average at 84 fps - but single frames of 40-85 ms in Classes, Gun, Director and Shops. Those stutters first, then the knobs.', 'ok'],
-    ['Carried over', 'Your picks from the last doc', 'Your 34 look marks, 8 scythe OKs and 10 ability picks start here as you left them. Your four look changes (Krosis red o2, Volsung white o1, Cinderclaws orange o3, Silver Reaping moon o2) are the defaults now.', 'ok'],
-    ['Scythes', 'The Dragon Priest scythe', 'The blade now comes from the head of the staff, as you asked. Needs your OK.', 'ok'],
-    ['Abilities', 'The bolts in flight', 'Still pale in the previews: three fixes tried, not solved. In the Issues tab.', 'warn'],
-    ['Tests', 'The master test list', 'Everything not yet seen in game: the last build your game ran was 6a0f8a0 (Nov 24, 7 pm), so everything since is on the list, with what to look for.', 'ok'],
+    ['Installed', 'Your picks, all at once', 'The test build is in your game: every look, ability, sound, feel, death, trial and big-night pick you made in the last doc, which carried over here as you left them.', 'ok'],
+    ['Tester', "The Tester's Kit", "Cast it from your Powers. It is there while Data/SKSE/Plugins/CurseOfAlduin_Test.ini exists (I put one in). Delete that file and the power is gone.", 'ok'],
+    ['Sounds', 'At 20%', "Every ability's picked sound at 20%, Skyrim's own draw, sheathe, swing and impact sounds at 20% for every weapon, and the flasks too.", 'ok'],
+    ['Not yet', 'Linger loops and pitch', "A sound that lingers (Cinderclaws' embers) and the pitch slider don't carry into the game yet: those play as before.", 'warn'],
+    ['Not yet', 'The seals radius', "The game has no radius for Break the Priest's Seals, so your 460 changes nothing there.", 'warn'],
+    ['Question', 'The Elixir', "It isn't cast anywhere in this build: see Decisions.", 'warn'],
 ]
 ABJ = json.load(open('/home/claude/bo3-zombies-skyrim/docs/workshop/abilities.json'))
 AB_PARTS = {}
@@ -147,11 +145,16 @@ for v in SOUNDS['sounds'].values(): v.pop('files', None)
 import glob as _g
 _old = '/tmp/claude-0/-home-claude/0ec68033-d637-57d9-8f95-48d7c09e98c8/scratchpad/db_2b/'
 CARRY = {'abilities': json.load(open(WD + 'ability_picks2.json')), 'weaponlooks': {}, 'scythes': {}}
+_now = '/tmp/claude-0/-home-claude/0ec68033-d637-57d9-8f95-48d7c09e98c8/scratchpad/db_8m/'   # (the last doc, 8maGoe7NgRkTLAWtUFrtir: every pick)
 for f in _g.glob(_old + 'weaponlooks/*.json'):
     r = json.load(open(f)); r['choice'] = 'keep'; r['note'] = r.get('note', ''); CARRY['weaponlooks'][r['id']] = r
 for f in _g.glob(_old + 'scythes/*.json'):
     r = json.load(open(f))
     if r['choice'] == 'ok': CARRY['scythes'][r['id']] = r
+for f in _g.glob(_now + '*/*.json'):
+    c = f.split('/')[-2]
+    if c == 'decisions': continue
+    r = json.load(open(f)); CARRY.setdefault(c, {})[r.get('id', f.split('/')[-1][:-5])] = r
 for k, r in CARRY['abilities'].items(): r.setdefault('id', k)
 SNDFILES = sorted({m for v in SOUNDS['sounds'].values() for m in v['mp3']})
 json.dump(SNDFILES, open(str(H / 'sndfiles.json'), 'w'))
@@ -159,6 +162,6 @@ s = (H / 'index.tpl.html').read_text()
 js = (H / 'data.js').read_text().replace('__SHA__', SHA).replace('__COLS__', J(W.COL)).replace('__WCATS__', J(WC)).replace('__TESTS__', J(TESTS)).replace('__RECS__', J(RECS)) \
     .replace('__RECENT__', J(RECENT)).replace('__MODNOW__', J(MODNOW)).replace('__MODNOW_ABOUT__', J(_MN['about'] + ' Last updated: ' + _MN['updated'] + '.')).replace('__NEXUS__', J(NEXUS)).replace('__CHANGES__', J(CHANGES)).replace('__LOOK3__', J({k: [[o['name'], o['desc']] for o in v] for k, v in WL.LOOKS3.items()})).replace('__AB_PARTS__', J(AB_PARTS)).replace('__REALFX__', J(REALFX)).replace('__AB_PICKS__', J(json.load(open('/home/claude/bo3-zombies-skyrim/docs/workshop/ability_picks.json')))).replace('__SCY__', J(SCY)).replace('__CARRY__', J(CARRY)).replace('__SOUNDS__', J(SOUNDS)).replace('__FEEL__', J(FEEL)).replace('__TRIALS__', J(TRIALS)).replace('__DEATHS__', J(DEATHS)).replace('__PERF__', J(PERF)).replace('__ISSUES__', J(ISSUES))
 js += '\n' + (H / 'real.js').read_text() + '\n' + (H / 'zombies.js').read_text() + '\n' + (H / 'app.js').read_text() + '\n' + (H / 'fx2.js').read_text() + '\n' + (H / 'ui.js').read_text() + '\n' + (H / 'sounds.js').read_text() + '\n' + (H / 'extra.js').read_text()
-s = s.replace('__CSS__', (H / 'style.css').read_text()).replace('__JS__', js).replace('__SHA__', SHA).replace('__DATE__', 'NOV 25, 2026').replace('__INSTALL__', INSTALL).replace('__SKBASE__', SKBASE)
+s = s.replace('__CSS__', (H / 'style.css').read_text()).replace('__JS__', js).replace('__SHA__', SHA).replace('__DATE__', 'NOV 26, 2026').replace('__INSTALL__', INSTALL).replace('__SKBASE__', SKBASE)
 (H / 'page.html').write_text(s)
 print('ok', len(s) // 1024, 'KB', sum(len(c['items']) for c in WC), 'looks', sum(len(l) for _, l in TESTS), 'tests')

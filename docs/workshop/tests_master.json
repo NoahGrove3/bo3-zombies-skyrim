@@ -1,54 +1,60 @@
 [
  [
-  "When this doc is final (the next install)",
+  "This build (Nov 26): your picks and the Tester's Kit",
   [
+   {
+    "id": "kit",
+    "t": "The Tester's Kit",
+    "how": "Powers menu: cast Tester's Kit. Try each menu: a class at a tier, the relics, the night now and at 15, god mode, endless magicka and stamina, +50,000, 10 and 30 of the dead, a trial.",
+    "look": "Each choice does what it says, and Back and Escape return to the menu. If a button does the wrong thing, say which: it is the first time the game's own message boxes are used."
+   },
    {
     "id": "looks",
     "t": "Weapon looks in the game",
-    "how": "Draw each relic, Tablet weapon, wonder and class weapon at each tier.",
-    "look": "Each wears the look and colour you picked here, matching its preview: light on its own edges and faces, coming to a point at the tip."
+    "how": "With the kit, each class at Base, I, II, III and Ascend 1; the relics, the Tablet weapons and the wonders.",
+    "look": "Each wears the look and colour you picked here, matching its preview."
    },
    {
     "id": "abilfx",
     "t": "Your ability picks in the game",
-    "how": "Use each weapon's hits, heavies and specials on a crowd.",
-    "look": "Each plays the option you picked, in your colour, at your size, brightness, speed, linger and density, lighting the ground as set."
+    "how": "Each weapon's hits, heavies and specials on 10 of the dead.",
+    "look": "Each plays the option you picked in your colour, size, brightness, speed, linger, density and light. Area changes how far it reaches."
    },
    {
-    "id": "abilarea",
-    "t": "Area of effect",
-    "how": "Use an area ability you set wider or narrower than 100%.",
-    "look": "It reaches the dead as far as it looks: wider reaches further, narrower less."
+    "id": "notes",
+    "t": "Your notes",
+    "how": "Volsung's heavy, the javelin's throw, the Bonereaper's kill.",
+    "look": "Volsung: no smoke left after the blast. Javelin: only the javelin in the air, nothing until it lands. Bonereaper: Skyrim's summon flash where it rises."
    },
    {
     "id": "sounds",
-    "t": "Your sound picks",
-    "how": "Draw, swing light and heavy, and use each ability.",
-    "look": "Each plays the sound you picked, at your volume and pitch, with its layer; a hundred hits don't sound the same."
+    "t": "Sounds at 20%",
+    "how": "Draw, swing and hit with any weapon (Skyrim's or ours), throw flasks, use the abilities.",
+    "look": "Weapon and flask sounds sit in the background; each ability plays the sound you picked; the Mutagen Staff's flasks use the flask sounds."
    },
    {
     "id": "feel",
     "t": "Hit feel",
-    "how": "Hit the dead with a dagger, a sword and a greatsword; power-attack with each.",
-    "look": "A short catch on each hit, longer on a heavy, a shake on heavies, as set per weight."
+    "how": "Light and power attacks with a sword, a greatsword and a dagger on the dead.",
+    "look": "Sword: a short hold on hits, longer on heavies with a little shake. Greatsword: a bit more. Dagger: none. A power attack that kills throws the body."
    },
    {
-    "id": "deaths",
-    "t": "The deaths",
-    "how": "Kill the dead with fire, frost, lightning, sun, poison, blood and shadow weapons, and with a plain heavy.",
-    "look": "Each dies as you picked: ash, shatter, disintegrate, light, melt, husk, soul - with its sound."
+    "id": "marks",
+    "t": "Markers off, last kill slow",
+    "how": "Hit the dead, take headshots, finish a night.",
+    "look": "No crosshair mark or tick on hits or headshots (and no head burst on a headshot kill); the kill's own sound stays; the night's last kill in slow motion."
    },
    {
-    "id": "trialsfix",
-    "t": "The trials as edited",
-    "how": "Run each of the four trials in a city.",
-    "look": "Your words, numbers, ring colour and sounds."
+    "id": "trials",
+    "t": "The trials",
+    "how": "The Dead menu: each of the four trials at one city.",
+    "look": "Restless: 8 m ring, 15 to 40 by difficulty, Ghost wail and Ethereal call. Whisper: 5 m, Ethereal call when found. Hold the Light: ring from 20 m in blue, Circle of Protection while inside, Subsonic when you step out. Seals: Glass jaw when one breaks."
    },
    {
     "id": "perf",
     "t": "A big night",
-    "how": "Play a night past round 15 with a crowd.",
-    "look": "No stutters; the frame rate steady with 30+ of the dead near you."
+    "how": "Night 15 with 30 of the dead, then more.",
+    "look": "No stutter the first time each effect goes off; bodies cleared past 12; fewer particles past 30 of the dead near you."
    }
   ]
  ],
