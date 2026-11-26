@@ -443,3 +443,115 @@ ${tr.common ? '' : `<div class="stage"><canvas aria-label="${esc(tr.title)}, liv
   fl.addEventListener('click', e => { const b = e.target.closest('button[data-g]'); if (!b) return; show = b.dataset.g; fl.querySelectorAll('button').forEach(q => q.setAttribute('aria-pressed', String(q === b))); paint(); });
   paint(); DB.on('uimocks', (d, err) => { if (err) return; paint(); });
 })();
+
+// ---------------------------------------------------------------- BO3 movement: a first-person loop driven by the sliders, before it goes in the game
+(function () {
+  const cv = $('#mvview'); if (!cv) return;
+  const g = cv.getContext('2d'), gg = $('#mvgraph').getContext('2d'), st = $('#mvstatus'), rd = $('#mvread');
+  // the knobs: [id, part, label, min, max, step, today, proposed, unit]
+  const K = [
+    ['run', 'sprint', 'Run speed', 200, 400, 5, 300, 300, 'u/s'],
+    ['sprint', 'sprint', 'Sprint speed', 300, 600, 5, 420, 440, 'u/s'],
+    ['windup', 'sprint', 'Sprint wind-up', 0, 500, 10, 0, 180, 'ms'],
+    ['fovkick', 'sprint', 'Field-of-view kick while sprinting', 0, 15, 1, 0, 7, '°'],
+    ['slide', 'slide', 'Slide start speed', 400, 1000, 10, 720, 720, 'u/s'],
+    ['slidems', 'slide', 'Slide length', 400, 1500, 50, 900, 900, 'ms'],
+    ['dip', 'slide', 'Camera dip in the slide', 0, 60, 1, 0, 34, 'u'],
+    ['roll', 'slide', 'Camera tilt in the slide', 0, 8, 0.5, 0, 3, '°'],
+    ['carry', 'slide', 'Speed kept jumping out of a slide', 0.5, 1.3, 0.05, 1.0, 1.0, 'x'],
+    ['swing', 'swing', 'Light swing speed', 0.8, 1.6, 0.05, 1.0, 1.25, 'x'],
+    ['cancel', 'swing', 'Next swing can start at', 50, 100, 5, 100, 70, '% of the swing'],
+  ];
+  const PARTS = [['sprint', 'Sprint', 'A short wind-up into the sprint and the view widening a little, the way BO3 pushes you forward. Today the sprint is instant and the view never moves.'],
+    ['slide', 'Slide', 'Crouch while sprinting: you drop low and shoot forward, easing off; jump out and keep the speed. Today\'s slide is the same speed but the camera stays at standing height.'],
+    ['swing', 'Quicker swings', 'Light swings faster and cancelable into the next one, through Open Animation Replacer. Heavy swings stay as they are.']];
+  const FOV0 = 115, EYE = 120;
+  const val = {}; let showNow = false, playing = true, slow = false;
+  function load() { const d = DB.all('movement'); K.forEach(k => { const s = d[k[1]]; val[k[0]] = s && s.vals && s.vals[k[0]] != null ? +s.vals[k[0]] : k[7]; }); }
+  const V = id => showNow ? K.find(k => k[0] === id)[6] : val[id];
+  // the loop: 0-1 run, 1-3 sprint, 3 slide, then jump out, land, run
+  function sim() {
+    const out = [], dt = 1 / 60; let z = 0, sp = V('run'), y = 0, vy = 0, fov = FOV0, eye = EYE, roll = 0, ph = '';
+    const slideT = 3.0, slideLen = V('slidems') / 1000, jumpT = slideT + slideLen * 0.75; let slideSp = 0, air = false, landed = -1;
+    for (let t = 0; t < 7; t += dt) {
+      let want = V('run'), fk = 0, dp = 0, rl = 0;
+      if (t >= 1 && t < slideT) { ph = 'Sprint'; const w = V('windup') / 1000; const k = w > 0 ? Math.min(1, (t - 1) / w) : 1; want = V('run') + (V('sprint') - V('run')) * (1 - Math.pow(1 - k, 2)); fk = V('fovkick') * k; sp = want; }
+      else if (t >= slideT && t < jumpT && !air) {
+        ph = 'Slide'; if (!slideSp) slideSp = Math.max(V('slide'), sp * 1.2);
+        const k = (t - slideT) / slideLen; sp = slideSp * (1 - 0.65 * k); dp = V('dip') * Math.min(1, (t - slideT) / 0.12); rl = V('roll') * Math.min(1, (t - slideT) / 0.15); fk = V('fovkick') * 0.6;
+      } else if (t >= jumpT && !air && landed < 0) { air = true; vy = 330; sp = sp * V('carry'); ph = 'Jump'; }
+      else if (air) { ph = 'Jump'; vy -= 980 * dt; y += vy * dt; fk = V('fovkick') * 0.4; if (y <= 0) { y = 0; air = false; landed = t; } }
+      else { ph = landed > 0 ? 'Run' : 'Run'; sp += (V('run') - sp) * Math.min(1, dt * 4); }
+      if (t < 1) { ph = 'Run'; sp = V('run'); }
+      fov += (FOV0 + fk - fov) * Math.min(1, dt * (fk > 0 ? 10 : 6)); eye += (EYE - dp - eye) * Math.min(1, dt * 14); roll += (rl - roll) * Math.min(1, dt * 10);
+      z += sp * dt; out.push({ t, z, sp, y, fov, eye, roll, ph });
+    }
+    return out;
+  }
+  let S = sim(), t0 = performance.now(), tl = 0;
+  function view(f) {
+    const W = cv.width, H = cv.height; g.save(); g.fillStyle = '#0c0f15'; g.fillRect(0, 0, W, H);
+    const focal = (W / 2) / Math.tan(f.fov * Math.PI / 360), cam = f.eye + f.y, hz = H * 0.46;
+    g.translate(W / 2, hz); g.rotate(f.roll * Math.PI / 180); g.translate(-W / 2, -hz);
+    const sky = g.createLinearGradient(0, 0, 0, hz); sky.addColorStop(0, '#1b2333'); sky.addColorStop(1, '#3a2a28'); g.fillStyle = sky; g.fillRect(-200, -200, W + 400, hz + 200);
+    g.fillStyle = '#1a1c1f'; g.fillRect(-200, hz, W + 400, H);
+    const P = (x, yy, zz) => { const d = zz - f.z; if (d < 8) return null; return [W / 2 + x * focal / d, hz + (cam - yy) * focal / d, focal / d]; };
+    g.strokeStyle = 'rgba(200,190,170,.16)'; g.lineWidth = 1;
+    for (let zz = Math.floor(f.z / 100) * 100; zz < f.z + 6000; zz += 100) { const a = P(-1400, 0, zz), b = P(1400, 0, zz); if (a && b) { g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke(); } }
+    for (let x = -1400; x <= 1400; x += 200) { const a = P(x, 0, f.z + 10), b = P(x, 0, f.z + 6000); if (a && b) { g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke(); } }
+    const posts = []; for (let zz = Math.ceil(f.z / 400) * 400; zz < f.z + 6000; zz += 400) posts.push(zz);
+    posts.reverse().forEach(zz => [-420, 420].forEach(x => { const a = P(x, 0, zz), b = P(x, 260, zz); if (!a || !b) return; const w = Math.max(1, 34 * a[2]); g.fillStyle = 'rgba(120,110,96,' + Math.min(1, 0.25 + 260 * a[2] / 300) + ')'; g.fillRect(a[0] - w / 2, b[1], w, a[1] - b[1]); g.fillStyle = 'rgba(214,180,106,.8)'; g.fillRect(a[0] - w / 2, b[1], w, Math.max(1, 6 * a[2])); }));
+    g.restore();
+    // the hands: a dark blade lower right, bobbing
+    g.save(); const bob = f.ph === 'Slide' ? 18 : Math.sin(f.z / 60) * (f.sp / 90); g.translate(W * 0.74, H * 0.92 + bob); g.rotate(-0.5 - (f.ph === 'Sprint' ? 0.25 : 0)); g.fillStyle = '#5b5f66'; g.fillRect(-6, -150, 12, 150); g.fillStyle = '#2b2620'; g.fillRect(-9, 0, 18, 60); g.restore();
+    rd.textContent = `${showNow ? "Today's game" : 'The new movement'} · ${f.ph} · ${Math.round(f.sp)} units/s · view ${f.fov.toFixed(0)}° · eye ${Math.round(f.eye)}`;
+  }
+  function graph(i) {
+    const W = gg.canvas.width, H = gg.canvas.height; gg.clearRect(0, 0, W, H);
+    const cs = getComputedStyle(document.documentElement); gg.fillStyle = cs.getPropertyValue('--panel-2') || '#222'; gg.fillRect(0, 0, W, H);
+    const line = (fn, lo, hi, col) => { gg.strokeStyle = col; gg.lineWidth = 2; gg.beginPath(); S.forEach((f, j) => { const x = j / (S.length - 1) * W, y = H - 12 - (fn(f) - lo) / (hi - lo) * (H - 24); j ? gg.lineTo(x, y) : gg.moveTo(x, y); }); gg.stroke(); };
+    line(f => f.sp, 0, 1000, '#d6b46a'); line(f => f.fov, 100, 135, '#7fb3ff'); line(f => f.eye + f.y, 0, 260, '#9fd18a');
+    gg.fillStyle = cs.getPropertyValue('--muted') || '#999'; gg.font = '11px Inter, sans-serif'; gg.fillText('speed', 8, 14); gg.fillStyle = '#7fb3ff'; gg.fillText('view (FOV)', 60, 14); gg.fillStyle = '#9fd18a'; gg.fillText('eye height', 140, 14);
+    gg.fillStyle = '#d6b46a'; gg.fillText('speed', 8, 14);
+    const x = i / (S.length - 1) * W; gg.strokeStyle = 'rgba(255,255,255,.6)'; gg.lineWidth = 1; gg.beginPath(); gg.moveTo(x, 0); gg.lineTo(x, H); gg.stroke();
+  }
+  function frame(now) {
+    if (playing) tl += Math.max(0, Math.min(0.1, (now - t0) / 1000)) * (slow ? 0.5 : 1); t0 = now;
+    const i = Math.min(S.length - 1, Math.max(0, Math.floor((tl % 7) * 60))); view(S[i]); graph(i);
+    if (!document.hidden && cv.offsetParent) requestAnimationFrame(frame); else setTimeout(() => requestAnimationFrame(frame), 400);
+  }
+  $('#mvplay').onclick = e => { playing = !playing; e.target.setAttribute('aria-pressed', String(playing)); e.target.textContent = playing ? 'Playing' : 'Paused'; };
+  $('#mvslow').onclick = e => { slow = !slow; e.target.setAttribute('aria-pressed', String(slow)); };
+  $('#mvnow').onclick = e => { showNow = !showNow; e.target.setAttribute('aria-pressed', String(showNow)); S = sim(); };
+  // the part cards with their sliders
+  const box = $('#mvparts');
+  box.innerHTML = PARTS.map(([p, n, d]) => `<article class="card" data-p="${p}"><div class="t"><h3>${n}</h3><span class="saved"></span></div><p class="d">${esc(d)}</p>
+    ${K.filter(k => k[1] === p).map(k => `<label class="mvk"><span>${esc(k[2])}</span><input type="range" min="${k[3]}" max="${k[4]}" step="${k[5]}" data-k="${k[0]}" aria-label="${esc(k[2])}"><b data-v="${k[0]}"></b><small>today ${k[6]}${k[8].length < 4 ? ' ' + k[8] : ''}</small></label>`).join('')}
+    <div class="row"><button class="chip" data-c="ok" aria-pressed="false">Approve</button><button class="chip" data-c="change" aria-pressed="false">Change</button><button class="chip" data-reset>Back to my proposal</button></div>
+    <textarea rows="1" placeholder="What to change (optional)" aria-label="Note on ${esc(n)}"></textarea></article>`).join('');
+  function paint() { load(); const d = DB.all('movement'); let ok = 0;
+    box.querySelectorAll('.card').forEach(el => { const s = d[el.dataset.p]; if (s && s.choice === 'ok') ok++;
+      el.querySelectorAll('input[data-k]').forEach(i => { if (document.activeElement !== i) i.value = val[i.dataset.k]; const k = K.find(q => q[0] === i.dataset.k); $('[data-v="' + k[0] + '"]', el).textContent = (+val[k[0]]).toString() + ' ' + k[8]; });
+      el.querySelectorAll('[data-c]').forEach(b => b.setAttribute('aria-pressed', String(!!s && s.choice === b.dataset.c)));
+      $('.saved', el).textContent = s ? (s.choice === 'ok' ? 'Approved' : s.choice === 'change' ? 'To change' : 'Saved') : '';
+      const ta = $('textarea', el); if (document.activeElement !== ta) ta.value = s && s.note || ''; });
+    st.textContent = `${ok} of 3 parts approved.`; S = sim(); swing(); }
+  async function save(el, patch) { const p = el.dataset.p, prev = DB.get('movement', p) || {}, vals = {};
+    K.filter(k => k[1] === p).forEach(k => vals[k[0]] = val[k[0]]);
+    try { await DB.set('movement', p, Object.assign({ id: p, choice: prev.choice || '', note: $('textarea', el).value.slice(0, 2000), vals }, patch)); saveMsg(st, null); } catch (e) { saveMsg(st, e); } paint(); }
+  let tm = 0;
+  box.addEventListener('input', e => { const i = e.target.closest('input[data-k]'); if (!i) return; val[i.dataset.k] = +i.value; const k = K.find(q => q[0] === i.dataset.k); $('[data-v="' + k[0] + '"]', i.closest('.card')).textContent = i.value + ' ' + k[8]; S = sim(); swing(); clearTimeout(tm); const el = i.closest('.card'); tm = setTimeout(() => save(el, {}), 600); });
+  box.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const el = b.closest('.card');
+    if (b.hasAttribute('data-reset')) { K.filter(k => k[1] === el.dataset.p).forEach(k => val[k[0]] = k[7]); save(el, {}); return; }
+    save(el, { choice: b.dataset.c }); });
+  box.addEventListener('change', e => { if (e.target.tagName === 'TEXTAREA') save(e.target.closest('.card'), {}); });
+  // the swing timeline: today's and the new one, three light swings in a row
+  function swing() {
+    const base = [0.22, 0.12, 0.42], tot = base.reduce((a, b) => a + b);
+    const row = (sp, cancel, name) => { const seg = base.map(x => x / sp), one = seg[0] + seg[1] + seg[2] * 1, step = (seg[0] + seg[1] + seg[2]) * cancel / 100, three = step * 2 + one;
+      let h = ''; for (let n = 0; n < 3; n++) { const off = n * step; seg.forEach((w, j) => { const st0 = off + seg.slice(0, j).reduce((a, b) => a + b, 0); h += `<i class="sw s${j}" style="left:${st0 / 2.6 * 100}%;width:${w / 2.6 * 100}%;top:${n * 9}px"></i>`; }); }
+      return `<div class="swrow"><span>${name}</span><div class="swbar">${h}</div><b>3 swings: ${three.toFixed(2)} s</b></div>`; };
+    $('#mvswing').innerHTML = row(1, 100, "Today's game") + row(val.swing, val.cancel, 'The new swing') + `<p class="note" style="margin:6px 0 0"><i class="sw s0 key"></i> wind-up <i class="sw s1 key"></i> strike (the hit lands) <i class="sw s2 key"></i> recovery</p>`;
+  }
+  paint(); requestAnimationFrame(frame); DB.on('movement', (d, err) => { if (!err) paint(); });
+})();

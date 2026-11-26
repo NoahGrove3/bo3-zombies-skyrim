@@ -27,6 +27,7 @@ __CSS__
     <button data-t="decisions" role="tab">Decisions</button>
     <button data-t="modstack" role="tab">Mod stack</button>
     <button data-t="ui" role="tab">UI</button>
+    <button data-t="move" role="tab">BO3 movement</button>
     <button data-t="nexus" role="tab">Road to Nexus</button>
     <button data-t="context" role="tab">The mod now</button>
   </nav>
@@ -137,6 +138,21 @@ __CSS__
     <p class="sub" id="msabout"></p>
     <p class="status" id="msstatus"></p>
     <div id="mslist" style="display:grid;gap:14px"></div>
+  </section>
+
+  <section class="tab" id="move" hidden>
+    <h2>BO3 movement</h2>
+    <p class="sub">Your pick: our own BO3 movement. Here it is before it goes in the game. The view is first person, playing on a loop: run, sprint, slide, jump out of the slide, land. Move a slider and the loop changes at once; the graph under it shows speed, field of view and eye height over the loop. Your game today has the slide and the jump carry already; the sprint wind-up, the field-of-view kick, the slide's camera dip and the quicker swings are new. Approve each part, or change the sliders and mark Change.</p>
+    <p class="status" id="mvstatus"></p>
+    <div class="mvwrap"><canvas id="mvview" width="960" height="420" aria-label="First-person preview of the movement loop"></canvas>
+      <div class="mvread" id="mvread"></div>
+      <canvas id="mvgraph" width="960" height="150" aria-label="Speed, field of view and eye height over the loop"></canvas>
+      <div class="row" style="gap:6px;flex-wrap:wrap"><button class="chip" id="mvplay" aria-pressed="true">Playing</button><button class="chip" id="mvslow" aria-pressed="false">Half speed</button><button class="chip" id="mvnow" aria-pressed="false">Show today's game instead</button></div>
+    </div>
+    <div id="mvparts" class="grid"></div>
+    <h3 style="margin:8px 0 0">Swings</h3>
+    <p class="sub">A light swing in three parts: the wind-up, the strike, the recovery. BO3's melee is short and you can swing again before the arm has fully come back. Today's swing is Skyrim's; the new one plays faster and lets the next swing start early.</p>
+    <div id="mvswing"></div>
   </section>
 
   <section class="tab" id="ui" hidden>
