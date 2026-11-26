@@ -1,6 +1,71 @@
 [
  [
-  "This build (Nov 26 afternoon, your decisions)",
+  "This build (Nov 26 evening, your doc picks)",
+  [
+   {
+    "id": "b6_sprint",
+    "t": "The sprint winds up",
+    "how": "Sprint from a run in first person.",
+    "look": "The speed builds over a moment (not a jump), and the view widens a little while you sprint, easing back when you stop."
+   },
+   {
+    "id": "b6_slide",
+    "t": "The slide tilts",
+    "how": "Sprint, then crouch.",
+    "look": "You drop low and shoot forward; the view tilts a few degrees and comes level as you stand. Jump out of it and you keep the speed."
+   },
+   {
+    "id": "b6_swing",
+    "t": "Quicker light swings",
+    "how": "Light attacks with a sword, then a heavy.",
+    "look": "Light swings about 1.2x as fast; heavies as before (tell me if they're faster too)."
+   },
+   {
+    "id": "b6_ladder",
+    "t": "The kill meter",
+    "how": "Tester's Kit: your class weapon at Tier III. Draw it and kill.",
+    "look": "A thin gold bar above the perks, filling with your kills; gone when you sheathe or hold another weapon; it glows when full (25 kills)."
+   },
+   {
+    "id": "b6_ults",
+    "t": "The four ultimates",
+    "how": "With the meter full: a heavy attack (the Carian Wand: just cast). Try each class.",
+    "look": "Radiant Quarterstaff: three wolves of light come through portals and fight for 15 s. Carian Wand: twelve great bolts rain down ahead in fire, lightning and ice. Shadowflame Scythe: every dead within 12 m has its soul torn out and most fall. Spellbound Rapier: a long lance of your element pierces a line of them."
+   },
+   {
+    "id": "b6_ascend",
+    "t": "Ascends grow the abilities",
+    "how": "Tester's Kit: Ascend 1, then Ascend 10.",
+    "look": "The light bolts, the heavy's tornado and the ultimates bigger and harder-hitting at each Ascend."
+   },
+   {
+    "id": "b6_night",
+    "t": "The night counter",
+    "how": "Start a night.",
+    "look": "Top left: NIGHT in small spaced letters, the number under it, then the wave and the dead left. No moon, no banner across the screen."
+   },
+   {
+    "id": "b6_countdown",
+    "t": "The countdown",
+    "how": "Wait for dusk; clear a wave.",
+    "look": "A 10 s countdown before the night only; nothing counted down between waves (the last three of a wave still marked)."
+   },
+   {
+    "id": "b6_card",
+    "t": "The weapon card",
+    "how": "Draw your class weapon, the javelin, then another.",
+    "look": "Bottom right, clear of the essence: the weapon's name and what it does at its tier. The javelin's draw has its fire sound."
+   },
+   {
+    "id": "b6_world",
+    "t": "The world looks right",
+    "how": "Walk outside Whiterun and Riverwood by day.",
+    "look": "One grass (Folkvangr and the pine grass), no holes or floating grass; Screen-Space GI's light bounce on walls and ground (Community Shaders' menu: Screen-Space GI)."
+   }
+  ]
+ ],
+ [
+  "Last build (Nov 26 afternoon, your decisions)",
   [
    {
     "id": "a4_n5",
@@ -13,12 +78,6 @@
     "t": "A soul torn out",
     "how": "Kill the dead with the Shadowflame Scythe, the Soulcaller or your class weapon; then with an iron sword.",
     "look": "Shadow, spirit and arcane kills: a white beam and burst rise from the body with Alduin's soul sound. The iron sword's kills: nothing extra."
-   },
-   {
-    "id": "a4_hunter",
-    "t": "The loud are hunted",
-    "how": "Make noise (cast, sprint) until the noise meter fills.",
-    "look": "A Deranged Zombie runs at you: fast, tougher than the rest."
    },
    {
     "id": "a4_mods",
@@ -35,7 +94,7 @@
   ]
  ],
  [
-  "Last build (Nov 26, your doc changes)",
+  "Earlier build (Nov 26, your doc changes)",
   [
    {
     "id": "e9_enemies",
@@ -78,6 +137,113 @@
     "t": "Lay the Restless to Rest radius",
     "how": "Kit: the first trial.",
     "look": "The ring of light is wider (860)."
+   }
+  ]
+ ],
+ [
+  "In builds since the last you played (Nov 24, 6a0f8a0)",
+  [
+   {
+    "id": "scygame",
+    "t": "Our own scythes",
+    "how": "Draw and swing each of the nine scythes.",
+    "look": "Each its own scythe, 25% larger, the blade flush at the haft on Wyrmtooth, Silver Reaping and Bloodmoon; on your back when put away."
+   },
+   {
+    "id": "scydp",
+    "t": "The Dragon Priest scythe",
+    "how": "Draw the Shadowflame Scythe at Tier III and Ascended.",
+    "look": "The blade coming from the head of the staff."
+   },
+   {
+    "id": "realfx",
+    "t": "Abilities from real parts",
+    "how": "Use a few relics' hits and heavies.",
+    "look": "Each its own effect made of Skyrim's, the DLCs', Apocalypse's and Mysticism's effects - no flat sprites."
+   },
+   {
+    "id": "chains",
+    "how": "Power-attack a crowd with the Jailor's Keyhammer.",
+    "t": "Vahlok's chains",
+    "look": "Real chain links catch the dead and haul them in."
+   },
+   {
+    "id": "banewind",
+    "t": "Alduin's Bane heavy",
+    "how": "Power-attack a crowd with Alduin's Bane.",
+    "look": "A white wind blast round you; the dead within 10 m hurled far."
+   },
+   {
+    "id": "sunwhite",
+    "t": "The Radiant Quarterstaff heavy in white",
+    "how": "As the Summoner at Tier II and III, power-attack the dead.",
+    "look": "A white bolt from the sky, a white burst, Auriel's sunbeam in white, white motes and ring."
+   },
+   {
+    "id": "portal",
+    "t": "Summons out of Skyrim's portal",
+    "how": "Hold the Soulcaller's Staff until its wolves come; cast any conjuration.",
+    "look": "Each comes out of Skyrim's own conjuring portal."
+   },
+   {
+    "id": "spellsown",
+    "t": "The class spells their own",
+    "how": "Cast a few Destruction spells and Spellsword touches.",
+    "look": "Each plays its own mod's impact, nothing of ours over it."
+   },
+   {
+    "id": "tips",
+    "t": "Looks come to a point",
+    "how": "Draw any blade.",
+    "look": "No hard cut-offs: the light comes to a point at the tip and ends in the weapon's shape; no floating motes; no old pillars of colour on the relics."
+   },
+   {
+    "id": "staffheads",
+    "t": "Staffs glow on their heads",
+    "how": "Draw the Radiant Quarterstaff at each tier and the Rimewick Quarterstaff.",
+    "look": "Only the two heads glow."
+   },
+   {
+    "id": "clawsboth",
+    "t": "Claws in both hands",
+    "how": "Equip Stormtalons, Talons of Woe and Cinderclaws.",
+    "look": "The same look on both hands, lined up with the blades."
+   },
+   {
+    "id": "javhand",
+    "t": "The Wyrmspine Javelin",
+    "how": "Tap to jab, hold and let go to throw.",
+    "look": "Held in the hand, a human overhand throw along your aim, a trail you can follow, its bounce."
+   },
+   {
+    "id": "holdlight",
+    "t": "Hold the Light",
+    "how": "Run the third trial in a city at night.",
+    "look": "The ring of real light closes on the stone while you stand in it; step out and it slips back."
+   },
+   {
+    "id": "souls",
+    "t": "Souls in Lay the Restless to Rest",
+    "how": "Kill the dead in the altar's light.",
+    "look": "Each soul a white-fire spirit flame rising into the stone, with a whisper and a thunk."
+   },
+   {
+    "id": "voicesout",
+    "t": "Class voices out",
+    "how": "Play a night as any class.",
+    "look": "No class voice lines; Felldir's altar voice still there."
+   },
+   {
+    "id": "ground",
+    "t": "Floating trees and rocks",
+    "how": "Travel round a few cities.",
+    "look": "Nothing floating over nothing."
+   },
+   {
+    "id": "newchar",
+    "t": "A new character",
+    "how": "Start a new game.",
+    "look": "One smooth start with no sound under the loading screen; menu music from launch to the menu."
    }
   ]
  ],
@@ -244,113 +410,6 @@
     "t": "A big night",
     "how": "Night 15 with 30 of the dead, then more.",
     "look": "No stutter the first time each effect goes off; bodies cleared past 12; fewer particles past 30 of the dead near you."
-   }
-  ]
- ],
- [
-  "In builds since the last you played (Nov 24, 6a0f8a0)",
-  [
-   {
-    "id": "scygame",
-    "t": "Our own scythes",
-    "how": "Draw and swing each of the nine scythes.",
-    "look": "Each its own scythe, 25% larger, the blade flush at the haft on Wyrmtooth, Silver Reaping and Bloodmoon; on your back when put away."
-   },
-   {
-    "id": "scydp",
-    "t": "The Dragon Priest scythe",
-    "how": "Draw the Shadowflame Scythe at Tier III and Ascended.",
-    "look": "The blade coming from the head of the staff."
-   },
-   {
-    "id": "realfx",
-    "t": "Abilities from real parts",
-    "how": "Use a few relics' hits and heavies.",
-    "look": "Each its own effect made of Skyrim's, the DLCs', Apocalypse's and Mysticism's effects - no flat sprites."
-   },
-   {
-    "id": "chains",
-    "how": "Power-attack a crowd with the Jailor's Keyhammer.",
-    "t": "Vahlok's chains",
-    "look": "Real chain links catch the dead and haul them in."
-   },
-   {
-    "id": "banewind",
-    "t": "Alduin's Bane heavy",
-    "how": "Power-attack a crowd with Alduin's Bane.",
-    "look": "A white wind blast round you; the dead within 10 m hurled far."
-   },
-   {
-    "id": "sunwhite",
-    "t": "The Radiant Quarterstaff heavy in white",
-    "how": "As the Summoner at Tier II and III, power-attack the dead.",
-    "look": "A white bolt from the sky, a white burst, Auriel's sunbeam in white, white motes and ring."
-   },
-   {
-    "id": "portal",
-    "t": "Summons out of Skyrim's portal",
-    "how": "Hold the Soulcaller's Staff until its wolves come; cast any conjuration.",
-    "look": "Each comes out of Skyrim's own conjuring portal."
-   },
-   {
-    "id": "spellsown",
-    "t": "The class spells their own",
-    "how": "Cast a few Destruction spells and Spellsword touches.",
-    "look": "Each plays its own mod's impact, nothing of ours over it."
-   },
-   {
-    "id": "tips",
-    "t": "Looks come to a point",
-    "how": "Draw any blade.",
-    "look": "No hard cut-offs: the light comes to a point at the tip and ends in the weapon's shape; no floating motes; no old pillars of colour on the relics."
-   },
-   {
-    "id": "staffheads",
-    "t": "Staffs glow on their heads",
-    "how": "Draw the Radiant Quarterstaff at each tier and the Rimewick Quarterstaff.",
-    "look": "Only the two heads glow."
-   },
-   {
-    "id": "clawsboth",
-    "t": "Claws in both hands",
-    "how": "Equip Stormtalons, Talons of Woe and Cinderclaws.",
-    "look": "The same look on both hands, lined up with the blades."
-   },
-   {
-    "id": "javhand",
-    "t": "The Wyrmspine Javelin",
-    "how": "Tap to jab, hold and let go to throw.",
-    "look": "Held in the hand, a human overhand throw along your aim, a trail you can follow, its bounce."
-   },
-   {
-    "id": "holdlight",
-    "t": "Hold the Light",
-    "how": "Run the third trial in a city at night.",
-    "look": "The ring of real light closes on the stone while you stand in it; step out and it slips back."
-   },
-   {
-    "id": "souls",
-    "t": "Souls in Lay the Restless to Rest",
-    "how": "Kill the dead in the altar's light.",
-    "look": "Each soul a white-fire spirit flame rising into the stone, with a whisper and a thunk."
-   },
-   {
-    "id": "voicesout",
-    "t": "Class voices out",
-    "how": "Play a night as any class.",
-    "look": "No class voice lines; Felldir's altar voice still there."
-   },
-   {
-    "id": "ground",
-    "t": "Floating trees and rocks",
-    "how": "Travel round a few cities.",
-    "look": "Nothing floating over nothing."
-   },
-   {
-    "id": "newchar",
-    "t": "A new character",
-    "how": "Start a new game.",
-    "look": "One smooth start with no sound under the loading screen; menu music from launch to the menu."
    }
   ]
  ]

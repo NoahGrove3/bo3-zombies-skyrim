@@ -42,13 +42,6 @@
   "game"
  ],
  [
-  "deaths",
-  "One death for every kill",
-  "Your first own death is in (shadow, spirit and arcane kills tear the soul out); fire, frost and shock still use FEC's bodies until ours replace them. Order: see Decisions.",
-  "doing",
-  "game"
- ],
- [
   "dpscythe",
   "The Dragon Priest scythe's blade",
   "Now coming from the head of the staff, as you asked; needs your OK in the Scythes tab.",
@@ -61,5 +54,19 @@
   "The last build your game ran was 6a0f8a0 (Nov 24, 7 pm). Everything in the Test list is still to see in game.",
   "open",
   "test"
+ ],
+ [
+  "noisehunter",
+  "I said a noise hunter comes; it doesn't",
+  "The noise hunter has been off since Nov 17; my last report said otherwise. Your call in Decisions.",
+  "fixed",
+  "doc"
+ ],
+ [
+  "heavyspeed",
+  "Heavies may swing a little faster too",
+  "The light swing's 1.2x is switched off when a power attack starts; the first moment of a heavy may still be quick. Tell me if heavies feel faster.",
+  "watch",
+  "game"
  ]
 ]

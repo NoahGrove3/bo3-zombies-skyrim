@@ -311,3 +311,13 @@ input#inew{font:inherit;font-size:13px;color:var(--fg);background:var(--panel-2)
 .sw.key { position: static; width: 14px; vertical-align: middle; margin: 0 4px 0 10px; }
 .sw.s0 { background: #7d8796; } .sw.s1 { background: #d6b46a; } .sw.s2 { background: #4a5260; }
 @media (max-width: 560px) { .swrow { grid-template-columns: 1fr; } }
+
+/* loading screens */
+.lsgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr)); gap: 10px; }
+.lscard { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; display: grid; }
+.lsimg { aspect-ratio: 16/9; max-width: 100%; background-color: #000; }
+.lsb { padding: 8px 10px 10px; display: grid; gap: 6px; } .lsb p { margin: 0; font-size: 12.5px; color: var(--muted); }
+.lsb .t { display: flex; justify-content: space-between; gap: 6px; } .lsb .tag { font-size: 11px; color: var(--accent); }
+
+.uist { margin: 0; font-size: 12px; } .uist.in { color: var(--ok, #7fbf7f); } .uist.next { color: var(--warn, #d6b46a); } .uist.kept, .uist.tab { color: var(--muted); }
+.lscard, .lsb { min-width: 0; } .lsb p { overflow-wrap: anywhere; }

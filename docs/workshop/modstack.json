@@ -1,5 +1,5 @@
 {
- "about": "Every mod The Curse of Alduin plays with in your game, read from your plugins and SKSE folder. Updated Nov 26 from your picks: 20 plugins turned off (a copy of your old Plugins.txt is kept as Plugins.txt.before-modstack-nov26), the make-our-own work started, two questions left in Decisions (grass, the High Fantasy pack). Your pick shows on each; change any of them here.",
+ "about": "Every mod The Curse of Alduin plays with in your game. Updated Nov 26 evening: Screen-Space GI added, the grass down to Folkvangr and the pine grass (your Plugins.txt kept as Plugins.txt.before-grass-nov26), 20 plugins off from the morning (kept as Plugins.txt.before-modstack-nov26). Your pick shows on each.",
  "groups": [
   [
    "Rendering and light",
@@ -10,7 +10,7 @@
      "The shader engine: light, shadows, parallax.",
      "need",
      "keep",
-     "Kept with its add-ons. Already in your game: Light Limit Fix, Dynamic Cubemaps, Extended Materials (Complex Parallax), Subsurface Scattering, Volumetric Lighting, Screen-Space Shadows, IBL, True PBR, Terrain and Cloud Shadows, Grass Lighting, Water Effects. Missing: Screen-Space GI (a Nexus download for you, see Decisions).",
+     "Kept with its add-ons, all in your game now: Screen-Space GI added Nov 26 (from your Downloads) beside Light Limit Fix, Dynamic Cubemaps, Extended Materials, Subsurface Scattering, Volumetric Lighting, Screen-Space Shadows, IBL, True PBR, Terrain and Cloud Shadows, Grass Lighting and Water Effects.",
      [
       "Keep + add-ons",
       "Switch to ENB (as Nolvus)",
@@ -89,7 +89,7 @@
      "Grass and flowers (seven grass mods).",
      "no",
      "trim",
-     "Your pick: trim to one set. Which one is in Decisions; the others get turned off once you choose.",
+     "Done: Folkvangr with Cathedral 3D Pine Grass; Tamrielic Grass, Veydosebrom and Origins of Forest turned off. Short Grass Mixed and Freak's Floral Fields are still on: see Decisions.",
      [
       "Trim to one set",
       "Keep all"
@@ -212,7 +212,7 @@
      "Bodies burned, frozen or shocked on death.",
      "rec",
      "own",
-     "Your pick: our own deaths. The first one is in this build (a kill by shadow, spirit or arcane tears the soul out). FEC stays on until ours cover every kind of kill, then it goes.",
+     "Your death picks are in: heavy kills throw the body, shadow, spirit and arcane kills tear the soul out. Fire, frost, shock and the rest you left as they are, which is FEC's bodies: keep it or make our own is in Decisions.",
      [
       "Make our own deaths",
       "Keep FEC"
@@ -304,7 +304,7 @@
      "Movement and dodges.",
      "rec",
      "own",
-     "Your pick: our own BO3 movement (sprint, slide, quicker swings). Previews come in the doc first; True Directional Movement stays under it.",
+     "Your BO3 movement is in the game (sprint wind-up and view kick, slide tilt, quicker light swings); True Directional Movement stays under it.",
      [
       "Our own BO3 movement",
       "Keep as is"
@@ -378,7 +378,7 @@
      "The zombies and the Thriceborn bodies.",
      "need",
      "keep",
-     "Your pick: zombies kept. Turned off Nov 26: Bone Colossus, Old God, Giant Family, Fogling, Indrik Mounts. Kept for now: the High Fantasy pack, which I wrongly called unused: CoA's world creatures and the Bolgan sword come from it (see Decisions).",
+     "Your picks: zombies kept, and the High Fantasy pack kept (CoA's world creatures and the Bolgan sword). Off since Nov 26: Bone Colossus, Old God, Giant Family, Fogling, Indrik Mounts.",
      [
       "Keep zombies, drop the rest",
       "Keep all"
@@ -442,7 +442,7 @@
      "Menus and HUD.",
      "rec",
      "own",
-     "Your pick: our own Curse of Alduin look. Every screen is in the UI tab for your OK.",
+     "Your notes on every screen are in the UI tab, each marked in the game now, kept as it was, or next.",
      [
       "Make our own CoA theme",
       "Keep"

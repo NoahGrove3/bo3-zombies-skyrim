@@ -424,10 +424,16 @@ ${tr.common ? '' : `<div class="stage"><canvas aria-label="${esc(tr.title)}, liv
       ['main', 'Main menu', 'Continue, New, Load, Settings, Quit: a centred column of thin capitals under the title.', () => stage(`<div class="u-center"><b style="letter-spacing:.3em">THE CURSE OF ALDUIN</b><i class="rule"></i>${['CONTINUE', 'NEW', 'LOAD', 'SETTINGS', 'QUIT'].map(x => `<small style="margin-top:4px">${x}</small>`).join('')}</div>`, 'title')],
     ]],
   ];
+  // (this build) where each of his notes stands: in the game now, kept as it was (his note), or the next build
+  const UIST = { night: 'in', bars: 'kept', ult: 'in', compass: 'next', quests: 'in', boss: 'next', foehp: 'next', essence: 'kept', hit: 'in', noise: 'kept', marker: 'next',
+    between: 'in', weapon: 'next', banner: 'in', slain: 'next', lore: 'in', hints: 'in', subs: 'kept', death: 'kept', msg: 'next', altarmenu: 'kept', armory: 'kept', perkmenu: 'kept',
+    thuum: 'next', trialsmenu: 'kept', talk: 'kept', tablet: 'next', classpick: 'kept', codex: 'kept', freed: 'next', boot: 'kept', setup: 'kept', loading: 'tab', inv: 'next',
+    magic: 'next', map: 'next', skills: 'next', journal: 'next', dialog: 'next', barter: 'next', levelup: 'kept', main: 'kept' };
+  const UIST_T = { in: 'In the game now, from your note', kept: 'Kept as it is in the game (your note)', next: 'Approved: being built for the next build', tab: 'In the Loading screens tab for your picks' };
   const all = G.flatMap(([g, gl, l]) => l.map(x => ({ g, gl, id: x[0], name: x[1], d: x[2], draw: x[3] })));
   let show = 'all';
   fl.innerHTML = [['all', `Everything (${all.length})`]].concat(G.map(([g, gl, l]) => [g, `${gl} (${l.length})`])).map(([g, n]) => `<button class="chip" data-g="${g}" aria-pressed="${g === show}">${esc(n)}</button>`).join('');
-  box.innerHTML = all.map(x => `<article class="wcard" data-id="${x.id}" data-g="${x.g}">${x.draw()}<div class="wbody"><div class="t"><h3>${esc(x.name)}</h3><span class="saved"></span></div><p class="now">${esc(x.d)}</p>
+  box.innerHTML = all.map(x => `<article class="wcard" data-id="${x.id}" data-g="${x.g}">${x.draw()}<div class="wbody"><div class="t"><h3>${esc(x.name)}</h3><span class="saved"></span></div><p class="now">${esc(x.d)}</p>${UIST[x.id] ? `<p class="note uist ${UIST[x.id]}">${UIST_T[UIST[x.id]]}</p>` : ''}
 <div class="row"><button class="chip" data-c="ok" aria-pressed="false">Approve</button><button class="chip" data-c="change" aria-pressed="false">Change</button></div><textarea rows="1" placeholder="What to change (optional)" aria-label="Note on ${esc(x.name)}"></textarea></div></article>`).join('');
   function paint() { const d = DB.all('uimocks'); let ok = 0, ch = 0;
     box.querySelectorAll('.wcard').forEach(el => { const s = d[el.dataset.id]; if (s && s.choice === 'ok') ok++; if (s && s.choice === 'change') ch++;
@@ -554,4 +560,28 @@ ${tr.common ? '' : `<div class="stage"><canvas aria-label="${esc(tr.title)}, liv
     $('#mvswing').innerHTML = row(1, 100, "Today's game") + row(val.swing, val.cancel, 'The new swing') + `<p class="note" style="margin:6px 0 0"><i class="sw s0 key"></i> wind-up <i class="sw s1 key"></i> strike (the hit lands) <i class="sw s2 key"></i> recovery</p>`;
   }
   paint(); requestAnimationFrame(frame); DB.on('movement', (d, err) => { if (!err) paint(); });
+})();
+
+// ---------------------------------------------------------------- loading screens: every one of the Compendium's, his pick of which show
+(function () {
+  const box = $('#lsgrid'); if (!box) return;
+  const st = $('#lsstatus'), fl = $('#lsfilter'), L = LOADSCREENS;
+  const cats = [...new Set(L.map(o => o.cat))].sort();
+  let show = 'sug';
+  const spr = o => `background-image:url(loadscreens${o.s}.jpg);background-size:1200% 1000%;background-position:${(o.c % 12) / 11 * 100}% ${Math.floor(o.c / 12) / 9 * 100}%`;
+  const chips = () => [['sug', `My picks (${L.filter(o => o.sug).length})`], ['all', `All (${L.length})`], ['use', 'Marked Use'], ['out', 'Marked Leave out']].concat(cats.map(c => [c, c]));
+  fl.innerHTML = chips().map(([k, n]) => `<button class="chip" data-g="${esc(k)}" aria-pressed="${k === show}">${esc(n)}</button>`).join('');
+  function vis(o, d) { const s = d[o.id]; return show === 'all' || (show === 'sug' && o.sug) || (show === 'use' && s && s.choice === 'use') || (show === 'out' && s && s.choice === 'out') || o.cat === show; }
+  function paint() {
+    const d = DB.all('loading'); let u = 0, x = 0; L.forEach(o => { const s = d[o.id]; if (s && s.choice === 'use') u++; if (s && s.choice === 'out') x++; });
+    st.textContent = `${u} marked Use, ${x} Leave out, ${L.length - u - x} not marked yet.`;
+    const list = L.filter(o => vis(o, d)).slice(0, 240);
+    box.innerHTML = list.map(o => { const s = d[o.id] || {}; return `<article class="lscard" data-id="${esc(o.id)}"><div class="lsimg" style="${spr(o)}" role="img" aria-label="${esc(o.id)}"></div>
+      <div class="lsb"><div class="t"><b>${esc(o.id.replace(/([a-z])([A-Z])/g, '$1 $2'))}</b>${o.sug ? '<span class="tag">fits</span>' : ''}</div><p>${esc(o.desc)}</p>
+      <div class="row"><button class="chip" data-c="use" aria-pressed="${s.choice === 'use'}">Use</button><button class="chip" data-c="out" aria-pressed="${s.choice === 'out'}">Leave out</button></div></div></article>`; }).join('') + (L.filter(o => vis(o, d)).length > 240 ? '<p class="note">Showing 240: pick a group above to see the rest.</p>' : '');
+  }
+  box.addEventListener('click', async e => { const b = e.target.closest('button[data-c]'); if (!b) return; const id = b.closest('.lscard').dataset.id;
+    try { await DB.set('loading', id, { id, choice: b.dataset.c }); saveMsg(st, null); } catch (err) { saveMsg(st, err); } paint(); });
+  fl.addEventListener('click', e => { const b = e.target.closest('button[data-g]'); if (!b) return; show = b.dataset.g; fl.querySelectorAll('button').forEach(q => q.setAttribute('aria-pressed', String(q === b))); paint(); });
+  paint(); DB.on('loading', (d, err) => { if (!err) paint(); });
 })();

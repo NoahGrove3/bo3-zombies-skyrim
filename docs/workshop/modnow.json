@@ -1,5 +1,5 @@
 {
- "updated": "Nov 26 2026 (afternoon)",
+ "updated": "Nov 26 2026 (evening)",
  "about": "Everything the mod is, as built - kept in the repo (docs/workshop/modnow.json) and updated with every build. The workshop's \"The mod now\" tab is drawn from it.",
  "sections": [
   [
@@ -9,7 +9,10 @@
     "The dead come down <b>red beams of light</b> from the sky. No XP from them; no casters, archers or shouting enemies at night (Dragon Priests and dragons keep their powers).",
     "<b>The dead</b> (Nov 26, your keep/remove marks): Mihail's zombies (walkers, headless, dread, deranged runners), our six Thriceborn, Rag Draugr and Restless Rag Draugr, Rotten and Bloody Skeletons, the Feral Death Hound, the Hulking Draugr, Ash Spawn and Immolators, the Frost Brute, the Hunger, the Ogrim and the Winged Twilight. Bosses: Grimmvar (a Vile dragon, every 10th night), the Hunting Ground King (from 10), Gehenoth (from 15), Grahzah (a level-4 Necro dragon, from 20). Mini-bosses: the Giant Brute Berserker, Minotaur Lord, Ogrim Lord and a Plague Dragon. 99 others taken out.",
     "<b>Dragons</b> are half size and fly as Skyrim flies them; a dragon boss's breath and the dead it calls land on the ground near you. The three word-dragons: Sanguine (flesh), Aether (time), Otherworld (undoing); the Echo of Alduin a level-7 Dark dragon.",
-    "<b>Bosses</b>: night 5 one of your kept mini-bosses (Giant Brute, Minotaur Lord, Ogrim Lord, Plague Dragon), the Hunting Ground King from 10, Gehenoth from 15, Grahzah from 20. When you're loud, a <b>Deranged Zombie</b> hunts you.",
+    "<b>Bosses</b>: night 5 one of your kept mini-bosses at random (Giant Brute, Minotaur Lord, Ogrim Lord, Plague Dragon), the Hunting Ground King from 10, Gehenoth from 15, Grahzah from 20. No noise hunter (off since Nov 17).",
+    "<b>Movement</b> (your BO3 movement): the sprint winds up (180 ms) to 440 and widens the view 7 degrees; the slide (sprint + crouch) tilts the view 3 degrees and its speed carries into a jump; light swings 1.2x.",
+    "<b>The ability ladder</b>: the class weapons' Tier I light ability, Tier II heavy, Tier III ultimate from a 25-kill meter (Aetherial Host, Starfall, Soul Harvest, Spell Lance); each Ascend +15% damage, +10% size.",
+    "<b>On screen</b>: the night counter a plain number top left with the quests under it; the essence bottom left; the held weapon's card bottom right; the ultimate's meter above the perks; no banners or hints; a 10 s countdown before a night only.",
     "<b>Deaths</b>: a kill by shadow, spirit or arcane tears the soul out (a white beam, Alduin's soul sound); heavies throw the body at half strength; the rest still through FEC until ours replace it.",
     "Free every city at its <b>Echo Altar</b>; the questline ends right before Skyrim's own Alduin fight. The last three dragons and the Echo of Alduin are the hardest fights.",
     "Solo first; co-op for <b>1 to 4 players</b> (Skyrim Together, optional). Releasing free on Nexus.",
@@ -151,7 +154,8 @@
     "Class voice lines (kept in Noah's Downloads only). Runic look. Repeat the Echo (now Hold the Light). The screen-drawn ring, runes and wisps. Dance of Death. Floating motes beside weapons. The relics' built-in effect pillars.",
     "Old kit: guns, altar bows and crossbows, staves, power-ups (until Nordic boons), crew picker, Atronach Reforge, Bone-Throne, Runes, Cloaks, breath spells, relic infusions, the Summoner's heroes and armies, the old wonders (Frostbinder Gauntlets, Wolf Queen's Crown, Horn), the Ranger class.",
     "Mods turned off Nov 26 (Mod stack picks): ENB Light, Faction Crossbows, OffhandBows, Bow Charge Plus, Calling of the Conjurer, Gondorian Ranger Armor, Black Mage Armor SE, Populated Dungeons, The Restless Dead, Rogues 'n Raiders and its 3 add-ons, VAE, Vibrant Weapons Lite, Mihail's Bone Colossus, Old God, Giant Family, Fogling and Indrik Mounts. Traps were declined. The Elixir stays out.",
-    "Enemies taken out Nov 26: every caster (necromancers, cultists, prophets, liches, skeleton mages), the skeleton soldiers and heroes of Rogues 'n Raiders and the Restless Dead, ghosts, Undead Blades, draugr overlords and reapers, Draman, daedroth, dremora, clannfear, hybrids, werewolves, wereskeevers, the soul wraith, the Immortal Draugr Overlord boss, eight mini-bosses and the Resonant Centurion. The Radiant Quarterstaff's sky-bolt heavy (now Holy Water's pillar)."
+    "Enemies taken out Nov 26: every caster (necromancers, cultists, prophets, liches, skeleton mages), the skeleton soldiers and heroes of Rogues 'n Raiders and the Restless Dead, ghosts, Undead Blades, draugr overlords and reapers, Draman, daedroth, dremora, clannfear, hybrids, werewolves, wereskeevers, the soul wraith, the Immortal Draugr Overlord boss, eight mini-bosses and the Resonant Centurion. The Radiant Quarterstaff's sky-bolt heavy (now Holy Water's pillar).",
+    "Nov 26 evening: the night and wave banners, the between-wave countdown, the weapon hints, the blood-moon night counter; Tamrielic Grass, Veydosebrom, Origins of Forest."
    ]
   ]
  ]

@@ -28,6 +28,7 @@ __CSS__
     <button data-t="modstack" role="tab">Mod stack</button>
     <button data-t="ui" role="tab">UI</button>
     <button data-t="move" role="tab">BO3 movement</button>
+    <button data-t="loading" role="tab">Loading screens</button>
     <button data-t="nexus" role="tab">Road to Nexus</button>
     <button data-t="context" role="tab">The mod now</button>
   </nav>
@@ -140,9 +141,17 @@ __CSS__
     <div id="mslist" style="display:grid;gap:14px"></div>
   </section>
 
+  <section class="tab" id="loading" hidden>
+    <h2>Loading screens</h2>
+    <p class="sub">Your note: use the loading screen mods, pick the ones that fit the lore, and you choose. These are all 469 screens of the Load Screen Compendium in your game, each with the line of lore it shows. I marked the ones that fit The Curse of Alduin (dragons, the dead and undead, souls, Sovngarde, the Dragon Priests, barrows and tombs, shouts and the Greybeards): they open first. Mark each one Use or Leave out; the ones you leave out won't show in the game.</p>
+    <p class="status" id="lsstatus"></p>
+    <div class="row" id="lsfilter" style="flex-wrap:wrap;margin:6px 0 12px"></div>
+    <div id="lsgrid" class="lsgrid"></div>
+  </section>
+
   <section class="tab" id="move" hidden>
     <h2>BO3 movement</h2>
-    <p class="sub">Your pick: our own BO3 movement. Here it is before it goes in the game. The view is first person, playing on a loop: run, sprint, slide, jump out of the slide, land. Move a slider and the loop changes at once; the graph under it shows speed, field of view and eye height over the loop. Your game today has the slide and the jump carry already; the sprint wind-up, the field-of-view kick, the slide's camera dip and the quicker swings are new. Approve each part, or change the sliders and mark Change.</p>
+    <p class="sub">Your own BO3 movement, approved and in the game this build at the values you set: the sprint's wind-up and view kick, the slide's tilt (its crouch gives the drop), the 1.2x light swings. The loop plays on: move a slider and mark Change if anything should differ after you play it. "Show today's game" now shows how it was before.</p>
     <p class="status" id="mvstatus"></p>
     <div class="mvwrap"><canvas id="mvview" width="960" height="420" aria-label="First-person preview of the movement loop"></canvas>
       <div class="mvread" id="mvread"></div>
@@ -157,7 +166,7 @@ __CSS__
 
   <section class="tab" id="ui" hidden>
     <h2>UI</h2>
-    <p class="sub">Every place The Curse of Alduin draws its own screen, previewed for your OK: the HUD during a night, the pop-ups, the Echo Altar and its menus, and Skyrim's own menus re-skinned to match. One style throughout, from your notes: Edge UI's clean, flat, scaled-up look in its own face (Jost), thin lines and quiet dark glass, with a little Skyrim (gold rules, a dragon-script accent) and the Curse's red only where something is dangerous. Your round counter pick (Plain number) is in it, smaller and in the same face, and the ultimate bar has no label. Mark each: Approve, or Change with a note.</p>
+    <p class="sub">Every place The Curse of Alduin draws its own screen, with your marks from the last doc and where each stands now: in the game in this build, kept as it was (where you said to keep ours), or approved and being built next. The pictures are the approved style; the ones you changed are described under each. Change a mark or a note any time.</p>
     <p class="status" id="uistatus"></p>
     <div class="row" id="uifilter" style="flex-wrap:wrap;margin:6px 0 12px"></div>
     <div id="uigrid" class="uigrid"></div>
