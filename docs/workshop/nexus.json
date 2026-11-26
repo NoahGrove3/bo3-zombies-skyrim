@@ -1,5 +1,5 @@
 {
- "updated": "Nov 26, 2026",
+ "updated": "Nov 26, 2026 (early morning)",
  "groups": [
   [
    "Gameplay",
@@ -222,6 +222,12 @@
      "A full solo playthrough, start to Sovngarde",
      "todo",
      ""
+    ],
+    [
+     "modstack",
+     "The mod stack: what the release needs, recommends, and what we replace",
+     "doing",
+     "The Mod stack tab (Nov 26)."
     ]
    ]
   ]

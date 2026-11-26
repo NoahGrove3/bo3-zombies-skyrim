@@ -211,3 +211,21 @@ input#inew{font:inherit;font-size:13px;color:var(--fg);background:var(--panel-2)
 .fbody2 .note { margin: 0; }
 .tags { display: flex; flex-wrap: wrap; gap: 4px; margin: 0; }
 .tags span { font-size: 11px; padding: 2px 6px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); }
+
+.uistage { position: relative; aspect-ratio: 16/9; background: radial-gradient(ellipse at 50% 40%, #2a2f3a, #0b0d12 70%); overflow: hidden; }
+.rc { position: absolute; left: 6%; top: 8%; color: #e9e2cf; font-family: Marcellus, serif; display: flex; align-items: center; gap: 6px; }
+.rc2 .rc { left: 6%; top: 42%; }
+.rc.tally .tl { display: inline-block; width: 4px; height: 34px; background: #e8e0c8; margin-right: 6px; border-radius: 2px; box-shadow: 0 0 6px rgba(232,224,200,.4); transform: skewX(-6deg); }
+.rc.tally .tl.x { width: 42px; height: 4px; margin-left: -46px; transform: rotate(-28deg); }
+.rc.tally b { font-size: 40px; font-weight: 400; color: #e9e2cf; }
+.rc.tally .rule { position: absolute; left: 0; right: -10px; bottom: -8px; height: 1px; background: linear-gradient(90deg, #d6b46a, transparent); }
+.rc.rune b { font-size: 44px; font-weight: 400; color: #d6b46a; text-shadow: 0 0 12px rgba(214,180,106,.5); }
+.rc.rune .fr { color: #8a2a1e; font-size: 22px; }
+.rc.plain { flex-direction: column; align-items: flex-start; gap: 0; }
+.rc.plain small { letter-spacing: .25em; font-size: 10px; color: #b9b2a0; }
+.rc.plain b { font-size: 36px; font-weight: 400; }
+.perks { position: absolute; left: 50%; bottom: 8%; transform: translateX(-50%); display: flex; gap: 6px; }
+.perks span { width: 22px; height: 22px; border: 1px solid #d6b46a; border-radius: 50%; background: rgba(0,0,0,.4); }
+.ult { position: absolute; left: 50%; bottom: calc(8% + 30px); transform: translateX(-50%); width: 34%; height: 6px; background: rgba(255,255,255,.12); border: 1px solid rgba(214,180,106,.6); border-radius: 3px; }
+.ult i { display: block; height: 100%; background: linear-gradient(90deg, #8a2a1e, #d6b46a); }
+.ult em { position: absolute; left: 50%; top: -15px; transform: translateX(-50%); font-style: normal; font-size: 9px; letter-spacing: .3em; color: #d6b46a; }

@@ -1,5 +1,5 @@
 {
- "updated": "Nov 25 2026 (late evening)",
+ "updated": "Nov 26 2026 (early morning)",
  "about": "Everything the mod is, as built - kept in the repo (docs/workshop/modnow.json) and updated with every build. The workshop's \"The mod now\" tab is drawn from it.",
  "sections": [
   [
@@ -7,10 +7,13 @@
    [
     "Skyrim played as Black Ops 3 Zombies: <b>nights of the dead</b> in each of Skyrim's <b>10 Dragon Priest cities</b> (Riverwood, Whiterun, Solitude, Windhelm, Markarth, Riften, Falkreath, Morthal, Dawnstar, Winterhold), rounds that climb, <b>Cursed Essence</b> earned on every kill.",
     "The dead come down <b>red beams of light</b> from the sky. No XP from them; no casters, archers or shouting enemies at night (Dragon Priests and dragons keep their powers).",
+    "<b>The dead</b> (Nov 26, your keep/remove marks): Mihail's zombies (walkers, headless, dread, deranged runners), our six Thriceborn, Rag Draugr and Restless Rag Draugr, Rotten and Bloody Skeletons, the Feral Death Hound, the Hulking Draugr, Ash Spawn and Immolators, the Frost Brute, the Hunger, the Ogrim and the Winged Twilight. Bosses: Grimmvar (a Vile dragon, every 10th night), the Hunting Ground King (from 10), Gehenoth (from 15), Grahzah (a level-4 Necro dragon, from 20). Mini-bosses: the Giant Brute Berserker, Minotaur Lord, Ogrim Lord and a Plague Dragon. 99 others taken out.",
+    "<b>Dragons</b> are half size and fly as Skyrim flies them; a dragon boss's breath and the dead it calls land on the ground near you. The three word-dragons: Sanguine (flesh), Aether (time), Otherworld (undoing); the Echo of Alduin a level-7 Dark dragon.",
     "Free every city at its <b>Echo Altar</b>; the questline ends right before Skyrim's own Alduin fight. The last three dragons and the Echo of Alduin are the hardest fights.",
     "Solo first; co-op for <b>1 to 4 players</b> (Skyrim Together, optional). Releasing free on Nexus.",
     "Special nights: <b>The Pack, Daedric Incursion, Armored Champions, Blood Fog</b>.",
-    "After night 10: kill essence tapers, and Tablet, upgrade and Armory prices rise 3% a night (brews stay fixed)."
+    "After night 10: kill essence tapers, and Tablet, upgrade and Armory prices rise 3% a night (brews stay fixed).",
+    "<b>Hit feel</b>: no hit pause and no shake (Nov 26). Bodies fly half as far (Alduin's Bane as before)."
    ]
   ],
   [
@@ -95,7 +98,7 @@
   [
    "Wonders, secrets and the last weapon",
    [
-    "Wonders: <b>Soulcaller's Staff</b>, <b>Wyrmspine Javelin</b>, <b>Mutagen Staff</b>, <b>Dragon Slayer</b>.",
+    "Wonders: <b>Soulcaller's Staff</b> (white soul-gem glow on its glass head), <b>Wyrmspine Javelin</b> (throw only; it leaves your hand until it returns, flies bare, bursts in its element, Dragonfire look on its head; a solid model, the bones overlapping), <b>Mutagen Staff</b> (Living Mutagen glow on its head), <b>Dragon Slayer</b>.",
     "Hidden quests: <b>wyrm, sixfires, vortex, slayer</b>.",
     "<b>Alduin's Bane</b>, from the Hall of the Awakened: a meteor on each light hit (landing in Alduin's own explosion), a white tornado on heavy."
    ]
@@ -106,7 +109,8 @@
     "Every relic, wonder and class weapon tier wears <b>its own look</b> (Nov 25: \"custom weapon looks ... not changing their model or adding something on top\"): five looks designed for each weapon (tools/weaponlooks.py), all light on its own edges and faces, many in two colours, built from our textures and Skyrim's own enchantment membranes at 2K (4K on the wonders and Alduin's Bane). <b>Noah's picks are in</b> (Nov 25): third looks on the Grief Blade, Storm Blade, Sacrifice Knife, Nightcaller's Scythe, Glacier Greatsword, Rimewick and Radiant Quarterstaff; second looks on the Windcutter, Bloodmoon Scythe and Frostmourn; the Keyhammer's first look in green; the rest their first.",
     "No pieces laid over the weapons (the Nov 25 signatures - chains, crystals, seals, rings - retired) and no shared look families.",
     "Effects come to a point at the tips and ends; quarterstaffs glow on their heads only; the Gravebell doesn't pulse. Scythes 25% larger. <b>Our own scythes</b> (tools/scythes.py): nine, each from Skyrim's own weapons of its make - a battleaxe's pole (a Dragon Priest's staff, a pair of spines) and a sword's blade bent into a crescent, its guard as the collar - in the game now (Nov 25: Noah's OK, with the blade flush where it meets the haft on Wyrmtooth, Silver Reaping and Bloodmoon).",
-    "Nov 25 evening: two more looks for every weapon (five each); the scythes' joins fixed - Wyrmtooth, Silver Reaping and Bloodmoon's blades square to the haft, the Dragon Priest's blade lower and clamped round the staff."
+    "Nov 25 evening: two more looks for every weapon (five each); the scythes' joins fixed - Wyrmtooth, Silver Reaping and Bloodmoon's blades square to the haft, the Dragon Priest's blade lower and clamped round the staff.",
+    "Nov 26: every weapon art rebuilt from the looks the workshop shows (the shock rapier and Storm Blade had been older builds); the nine scythe blades and the Bonereaper's skull turned the right way out (they were see-through)."
    ]
   ],
   [
@@ -144,7 +148,8 @@
    [
     "Class voice lines (kept in Noah's Downloads only). Runic look. Repeat the Echo (now Hold the Light). The screen-drawn ring, runes and wisps. Dance of Death. Floating motes beside weapons. The relics' built-in effect pillars.",
     "Old kit: guns, altar bows and crossbows, staves, power-ups (until Nordic boons), crew picker, Atronach Reforge, Bone-Throne, Runes, Cloaks, breath spells, relic infusions, the Summoner's heroes and armies, the old wonders (Frostbinder Gauntlets, Wolf Queen's Crown, Horn), the Ranger class.",
-    "Mods no longer read: Visual Animated Enchants, Vibrant Weapons Lite, Black Mage Armor SE, Calling of the Conjurer, Summonable Spriggans, Gondorian Ranger Armor. Traps were declined."
+    "Mods no longer read: Visual Animated Enchants, Vibrant Weapons Lite, Black Mage Armor SE, Calling of the Conjurer, Summonable Spriggans, Gondorian Ranger Armor (they still load in your game: see Mod stack). Traps were declined.",
+    "Enemies taken out Nov 26: every caster (necromancers, cultists, prophets, liches, skeleton mages), the skeleton soldiers and heroes of Rogues 'n Raiders and the Restless Dead, ghosts, Undead Blades, draugr overlords and reapers, Draman, daedroth, dremora, clannfear, hybrids, werewolves, wereskeevers, the soul wraith, the Immortal Draugr Overlord boss, eight mini-bosses and the Resonant Centurion. The Radiant Quarterstaff's sky-bolt heavy (now Holy Water's pillar)."
    ]
   ]
  ]

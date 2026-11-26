@@ -1,0 +1,51 @@
+{"about": "Every mod The Curse of Alduin plays with in your game, read from your plugins and SKSE folder (Nov 26). For each: what it does for CoA, whether the release needs it, and my pick - keep it, swap it for a better one, make our own, or drop it. Nolvus-level quality comes mostly from lighting, weather, shaders and effects; CoA already has the same backbone (Community Shaders, Lux, Azurite), so the gains are in the places marked below.",
+"groups": [
+ ["Rendering and light", [
+  ["cs", "Community Shaders", "The shader engine: light, shadows, parallax.", "need", "keep", "Keep, and turn on its add-ons: Light Limit Fix (every spell and flask lights the night), Screen-Space GI, Dynamic Cubemaps, Complex Parallax. Lighter than ENB on big nights.", ["Keep + add-ons", "Switch to ENB (as Nolvus)", "Keep as is"]],
+  ["enblight", "ENB Light", "Light placement for ENB.", "no", "drop", "Its lights are made for ENB; with Community Shaders Light Limit Fix does the job. Drop it, or keep only if you go ENB.", ["Drop", "Keep"]],
+  ["lux", "Lux, Lux Via, Lux Orbis", "Interior, road and exterior lighting.", "rec", "keep", "The same lighting Nolvus uses. Keep.", ["Keep", "Drop"]],
+  ["azurite", "Azurite Weathers III", "Weather and sky.", "rec", "keep", "Fine for dark nights. NAT III (Nolvus' weather) is the other choice; it's brighter and heavier.", ["Keep", "Try NAT III", "Make our own Curse weathers"]],
+  ["rw2", "Realistic Water Two", "Water.", "no", "keep", "Keep.", ["Keep", "Drop"]]]],
+ ["Land and textures", [
+  ["skyland", "Skyland (Watercolor)", "Landscape textures.", "no", "keep", "Keep: cities and roads are where the nights happen.", ["Keep", "Swap for another landscape pack"]],
+  ["grass", "Folkvangr, Cathedral 3D Pine Grass, Origins of Forest, Tamrielic Grass, Veydosebrom, Short Grass, Freak's Floral Fields", "Grass and flowers (seven grass mods).", "no", "trim", "Seven grass mods overlap and cost frames on big nights. Keep one main grass set and Landscape Fixes.", ["Trim to one set", "Keep all"]],
+  ["trees", "Happy Little Trees", "Trees.", "no", "keep", "Keep.", ["Keep", "Swap"]],
+  ["seasons", "Seasons of Skyrim / Seasonal Landscapes, Snow Over Skyrim", "Seasons and snow.", "no", "keep", "Keep (Nolvus has seasons too).", ["Keep", "Drop"]],
+  ["smim", "SMIM, Lit Road Signs, Icy cave and biome remasters", "Static meshes and caves.", "no", "keep", "Keep.", ["Keep", "Drop"]]]],
+ ["Magic and effects", [
+  ["apoc", "Apocalypse - Magic of Skyrim", "Spells; its effects are parts of our abilities.", "need", "keep", "Keep: many of our ability effects are built from its parts.", ["Keep"]],
+  ["myst", "Mysticism", "Spells; its effects are parts of our abilities.", "need", "keep", "Keep, same reason.", ["Keep"]],
+  ["dsi", "Deadly Spell Impacts", "Scorch marks where spells land.", "rec", "keep", "Keep.", ["Keep", "Drop"]],
+  ["embers", "Embers XD (+ Fire Magick)", "Fire and embers.", "rec", "keep", "Keep.", ["Keep", "Drop"]],
+  ["runes", "Strange Runes", "Rune spell looks.", "no", "keep", "Keep.", ["Keep", "Drop"]],
+  ["vae", "Visual Animated Enchants, Vibrant Weapons Lite", "Weapon glows (no longer used by CoA).", "no", "drop", "Our own weapon looks replaced them; they still load but do nothing for CoA. Drop both.", ["Drop", "Keep"]],
+  ["fec", "Frozen Electrocuted Combusted (FEC)", "Bodies burned, frozen or shocked on death.", "rec", "own", "The Deaths tab's picks replace it with our own deaths; until they're in the game it stays.", ["Make our own deaths", "Keep FEC"]]]],
+ ["Weapons", [
+  ["aa", "Animated Armoury", "Quarterstaffs, rapiers, claws, pikes; their moves.", "need", "keep", "Keep: class weapons and Tablet weapons use its models and animations.", ["Keep"]],
+  ["fulci", "Fulcimentum - More Staves and Wands", "The wands and the Soulcaller's look.", "need", "keep", "Keep, or we make our own wand and staff models later.", ["Keep", "Make our own"]],
+  ["lgs", "Light Greatswords, Ultra Greatswords", "Alduin's Bane's model.", "need", "own", "Only Alduin's Bane uses them. Make our own Bane model (like the Dragon Slayer) and drop both.", ["Make our own Bane", "Keep"]],
+  ["bows", "Faction Crossbows, Offhand Bows, Bow Charge Plus", "Bows.", "no", "keep", "Keep for now.", ["Keep", "Drop"]],
+  ["spellsword", "Spell Sword / Spellsword", "Spell-in-blade casting.", "rec", "keep", "Keep.", ["Keep", "Drop"]]]],
+ ["Combat and movement", [
+  ["mco", "MCO / ADXP, Precision, TrueHUD, SCAR, Modern Combat AI", "Combat moves, hit detection, enemy AI.", "need", "keep", "The same base Nolvus uses. Keep.", ["Keep"]],
+  ["tdm", "True Directional Movement, TK Dodge, Better Jumping", "Movement and dodges.", "rec", "own", "For BO3 movement: keep TDM, replace TK Dodge with our own slide and sprint (see Decisions).", ["Our own BO3 movement", "Keep as is"]],
+  ["parkour", "SkyParkour (and its slide)", "Climbing and a slide.", "rec", "keep", "Keep; its slide is a start for ours.", ["Keep", "Drop"]],
+  ["oar", "Open/Dynamic Animation Replacer, Behavior Data Injector", "Animation frameworks.", "need", "keep", "Keep.", ["Keep"]],
+  ["glide", "Paragliding", "Gliding (our dragon glide).", "need", "keep", "Keep.", ["Keep"]]]],
+ ["The dead and creatures", [
+  ["sic", "Skyrim Immersive Creatures", "Most of the night's creatures and mini-bosses.", "need", "keep", "Keep: you kept its brutes, Hunger, Ogrim and mini-bosses.", ["Keep"]],
+  ["rnr", "Rogues 'n Raiders (+ add-ons)", "Skeletons.", "no", "drop", "You took out all its skeletons. Drop it unless you want them back.", ["Drop", "Keep"]],
+  ["mihail", "Mihail's Zombies (+ his other packs)", "The zombies and the Thriceborn bodies.", "need", "keep", "Keep mihailzombies. His Bone Colossus, Old God, Giant Family, Fogling, High Fantasy and Indrik packs aren't used by CoA.", ["Keep zombies, drop the rest", "Keep all"]],
+  ["ddc", "Diverse Dragons Collection", "Every dragon.", "need", "keep", "Keep.", ["Keep"]],
+  ["restless", "The Restless Dead", "Undead variety.", "no", "check", "Not used by CoA's rows now; check before dropping.", ["Drop", "Keep"]],
+  ["conj", "Calling of the Conjurer, Gondorian Ranger Armor, Black Mage Armor", "Old summons and armour (no longer used).", "no", "drop", "CoA stopped reading them. Drop.", ["Drop", "Keep"]],
+  ["populated", "Populated Dungeons Caves Ruins Legendary", "More enemies in dungeons.", "no", "check", "Can fight with the night's numbers. Your call.", ["Drop", "Keep"]]]],
+ ["Interface", [
+  ["ui", "SkyUI, Untarnished UI (subtitles), moreHUD, Tween Menu Overhaul, Modern Wait Menu, Character Menu", "Menus and HUD.", "rec", "own", "The UI tab will preview every menu in the Untarnished style with our twist; then we make our own theme.", ["Make our own CoA theme", "Keep"]],
+  ["maps", "FWMF fantasy paper maps, Legendary Map, HD Local Map, Flat Map Markers", "Maps.", "no", "keep", "Keep.", ["Keep", "Drop"]]]],
+ ["Characters", [
+  ["bodies", "CBBE, HIMBO, High Poly Head, RaceMenu, XPMSE, SMP hair, eyes and brows", "Bodies and faces.", "no", "keep", "Player-side; the class armour is fitted to CBBE 3BA and HIMBO. Keep.", ["Keep"]],
+  ["followers", "Fabulous Followers, Faithful Faces, SerketHetyt overhauls, PAN NPCs", "NPC looks.", "no", "keep", "Keep.", ["Keep", "Drop"]]]],
+ ["Co-op", [
+  ["st", "Skyrim Together", "Co-op for 1-4.", "rec", "keep", "Keep.", ["Keep"]]]]
+]}

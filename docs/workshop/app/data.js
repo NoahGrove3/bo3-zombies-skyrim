@@ -237,6 +237,7 @@ const DEATHS = __DEATHS__;
 const PERF = __PERF__;
 const DRAGONS = __DRAGONS__;   // (Diverse Dragons Collection: its 28 kinds, seven levels each - read from Noah's plugin)
 const FOES = __FOES__;   // (the night's enemies: sheets/enemies.json)
+const MODSTACK = __MODSTACK__;
 const ISSUES = __ISSUES__;   // (your picks so far: docs/workshop/ability_picks.json)   // (tools/realfx.py: the themes' real parts, the styles, each card's theme - real.js puts them together)   // (tools/realfx.py: each card's real parts)
 const SCY = __SCY__;   // (tools/scythes.py: our own scythes, for your OK)
 // ---- the test list: what to do in game, what to look for

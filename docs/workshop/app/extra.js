@@ -281,11 +281,11 @@ ${tr.common ? '' : `<div class="stage"><canvas aria-label="${esc(tr.title)}, liv
 (function () {
   const box = $('#dragons'), st = $('#ddstatus'); if (!box) return;
   const ROLES = [
-    ['herald', "Grimmvar, Alduin's Herald", 'The boss every 10th night.', 'Dark', 1, 'Dark', 3, 'A Dark dragon fits Alduin\'s herald; level 3 so night 10 has a real fight.'],
-    ['boss4', "Grahzah, Alduin's Grave-Wing", 'The boss every 5th night from night 20.', 'Necro', 1, 'Necro', 4, 'The Necro dragon is the undead one; level 4 for night 20 and on.'],
-    ['mini', 'Mini-boss dragon (new)', 'A dragon among the mini-bosses, from night 15. None today.', '', 0, 'Plague', 2, 'A smaller, sickly dragon reads as lesser than the bosses.'],
+    ['herald', "Grimmvar, Alduin's Herald", 'The boss every 10th night.', 'Vile', 3, 'Dark', 3, 'A Dark dragon fits Alduin\'s herald; level 3 so night 10 has a real fight.'],
+    ['boss4', "Grahzah, Alduin's Grave-Wing", 'The boss every 5th night from night 20.', 'Necro', 4, 'Necro', 4, 'The Necro dragon is the undead one; level 4 for night 20 and on.'],
+    ['mini', 'Mini-boss dragon (new)', 'A dragon among the mini-bosses.', 'Plague', 2, 'Plague', 2, 'A smaller, sickly dragon reads as lesser than the bosses.'],
     ['wyrm_slen', 'Slenvahrin, the Flesh-Wyrm', 'Act III: the first word, SLEN (flesh).', 'Sanguine', 7, 'Sanguine', 7, 'Blood-red for flesh.'],
-    ['wyrm_tiid', 'Tiidrah, the Time-Wyrm', 'Act III: the second word, TIID (time).', 'Lunar', 7, 'Aether', 7, 'Aether\'s ghostly blue reads more like time slipping than Lunar\'s silver.'],
+    ['wyrm_tiid', 'Tiidrah, the Time-Wyrm', 'Act III: the second word, TIID (time).', 'Aether', 7, 'Aether', 7, 'Aether\'s ghostly blue reads more like time slipping than Lunar\'s silver.'],
     ['wyrm_vo', 'Vonahlok, the Undoing', 'Act III: the third word, VO (undo).', 'Otherworld', 7, 'Otherworld', 7, 'Otherworld fits undoing.'],
     ['echo_alduin', 'The Echo of Alduin', 'Act IV, on the Throat of the World.', 'Dark', 7, 'Dark', 7, 'Black like Alduin, at the greatest level.'],
   ];
@@ -319,7 +319,7 @@ ${tr.common ? '' : `<div class="stage"><canvas aria-label="${esc(tr.title)}, liv
   box.innerHTML = list.map(f => `<article class="fcard" data-id="${f.id}">
 <div class="fimg">${f.img >= 0 ? `<span class="spr" role="img" aria-label="${esc(f.label)}, from its model" style="background-position:${(f.img % 12) * 100 / 11}% ${Math.floor(f.img / 12) * 100 / 11}%"></span>` : '<span>No picture yet</span>'}</div>
 <div class="fbody2"><b>${esc(f.label)}</b><p class="note">${esc(f.note)}</p>
-<p class="tags"><span>${f.minRound >= 99 ? 'Story or special' : 'From night ' + (f.minRound || 1)}</span><span>${ROLE[f.kind] || 'Melee'}</span>${f.hp !== 1 ? `<span>${f.hp}x health</span>` : ''}${f.spd > 1 ? '<span>faster</span>' : f.spd < 1 ? '<span>slower</span>' : ''}<span>${esc(f.plugin.replace(/\.es[mp]$/, ''))}</span></p>
+<p class="tags">${f.out ? '<span style="color:#e08a7a;border-color:#e08a7a">Taken out</span>' : '<span style="color:var(--accent);border-color:var(--accent)">In the game</span>'}<span>${f.minRound >= 99 ? 'Story or special' : 'From night ' + (f.minRound || 1)}</span><span>${ROLE[f.kind] || 'Melee'}</span>${f.hp !== 1 ? `<span>${f.hp}x health</span>` : ''}${f.spd > 1 ? '<span>faster</span>' : f.spd < 1 ? '<span>slower</span>' : ''}<span>${esc(f.plugin.replace(/\.es[mp]$/, ''))}</span></p>
 <span class="row"><button class="chip" data-c="keep" aria-pressed="false">Keep</button><button class="chip" data-c="swap" aria-pressed="false">Swap</button><button class="chip" data-c="remove" aria-pressed="false">Remove</button></span>
 <textarea rows="1" placeholder="Swap for what, or a note (optional)" aria-label="Note on ${esc(f.label)}"></textarea></div></article>`).join('');
   function paint() { const d = DB.all('foes'); box.querySelectorAll('.fcard').forEach(el => { const s = d[el.dataset.id];
@@ -331,4 +331,57 @@ ${tr.common ? '' : `<div class="stage"><canvas aria-label="${esc(tr.title)}, liv
   box.addEventListener('click', e => { const b = e.target.closest('button[data-c]'); if (b) save(b.closest('.fcard'), { choice: b.dataset.c }); });
   box.addEventListener('change', e => { if (e.target.tagName === 'TEXTAREA') save(e.target.closest('.fcard'), {}); });
   paint(); DB.on('foes', (d, err) => { if (err) return; paint(); });
+})();
+
+
+// ---------------------------------------------------------------- the mod stack: every mod CoA plays with, and what to do with each
+(function () {
+  const box = $('#mslist'), st = $('#msstatus'); if (!box) return;
+  $('#msabout').textContent = MODSTACK.about;
+  const NEED = { need: 'CoA needs it', rec: 'Recommended with CoA', no: 'Not needed by CoA' };
+  const VERD = { keep: 'Keep', drop: 'Drop', own: 'Make our own', trim: 'Trim', check: 'Check' };
+  box.innerHTML = MODSTACK.groups.map(([g, l]) => `<div class="card"><div class="k">${esc(g)}</div><div style="display:grid;gap:4px">${l.map(([id, name, role, need, verdict, why, opts]) => `<div class="nrow" data-id="${id}" style="display:grid;gap:4px;padding:8px 0;border-top:1px solid var(--line)">
+<div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:6px"><b style="font-weight:600">${esc(name)}</b><span class="tags"><span>${NEED[need]}</span><span>My pick: ${VERD[verdict]}</span></span></div>
+<p class="note" style="margin:0">${esc(role)} ${esc(why)}</p>
+<span class="row" style="flex-wrap:wrap">${opts.map((o, i) => `<button class="chip" data-o="${i}" aria-pressed="false">${esc(o)}</button>`).join('')}</span>
+<textarea rows="1" placeholder="A note (optional)" aria-label="Note on ${esc(name)}"></textarea></div>`).join('')}</div></div>`).join('');
+  const flat = MODSTACK.groups.flatMap(([g, l]) => l);
+  function paint() { const d = DB.all('modstack'); let n = 0;
+    box.querySelectorAll('.nrow').forEach(el => { const s = d[el.dataset.id]; if (s) n++;
+      el.querySelectorAll('[data-o]').forEach(b => b.setAttribute('aria-pressed', String(!!s && s.pick === b.textContent)));
+      const ta = $('textarea', el); if (document.activeElement !== ta) ta.value = s && s.note || ''; });
+    st.textContent = n ? `${n} of ${flat.length} marked.` : `${flat.length} entries; none marked yet.`; }
+  async function save(el, patch) { const it = flat.find(x => x[0] === el.dataset.id), prev = DB.get('modstack', it[0]) || {};
+    try { await DB.set('modstack', it[0], Object.assign({ id: it[0], mod: it[1], pick: prev.pick || '', note: $('textarea', el).value.slice(0, 2000) }, patch)); saveMsg(st, null); } catch (e) { saveMsg(st, e); } paint(); }
+  box.addEventListener('click', e => { const b = e.target.closest('button[data-o]'); if (b) save(b.closest('.nrow'), { pick: b.textContent }); });
+  box.addEventListener('change', e => { if (e.target.tagName === 'TEXTAREA') save(e.target.closest('.nrow'), {}); });
+  paint(); DB.on('modstack', (d, err) => { if (err) return; paint(); });
+})();
+
+// ---------------------------------------------------------------- the UI: the round counter and the ultimate meter, previewed
+(function () {
+  const box = $('#uigrid'), st = $('#uistatus'); if (!box) return;
+  const OPTS = [
+    ['a1', 'Bone tally', 'BO3\'s tally marks redrawn as bone-white strokes, the number in Untarnished\'s serif once past five; a thin gold rule under it.', 'tally'],
+    ['a2', 'Rune numeral', 'The night\'s number as a single large numeral in a dragon-script frame, gold on dark glass; it pulses red when the night turns.', 'rune'],
+    ['a3', 'Plain number', 'Just the number and NIGHT above it, small caps, Untarnished\'s colours; the cleanest of the three.', 'plain'],
+  ];
+  function counter(kind, n) {
+    if (kind === 'tally') { let s = ''; const full = Math.min(n, 5); for (let i = 0; i < full; i++) s += i === 4 ? '<i class="tl x"></i>' : '<i class="tl"></i>'; return `<div class="rc tally">${n <= 5 ? s : `<b>${n}</b>`}<span class="rule"></span></div>`; }
+    if (kind === 'rune') return `<div class="rc rune"><span class="fr">&#x16DF;</span><b>${n}</b><span class="fr">&#x16DF;</span></div>`;
+    return `<div class="rc plain"><small>NIGHT</small><b>${n}</b></div>`;
+  }
+  box.innerHTML = OPTS.map(([id, name, d, kind]) => `<article class="wcard" data-id="${id}"><div class="uistage">${counter(kind, 4)}<div class="rc2">${counter(kind, 17)}</div>
+<div class="perks"><span></span><span></span><span></span><span></span></div><div class="ult"><i style="width:70%"></i><em>ULTIMATE</em></div></div>
+<div class="wbody"><div class="t"><h3>${esc(name)}</h3><span class="saved"></span></div><p class="now">${esc(d)}</p>
+<div class="row"><button class="btn sm" data-a="pick" aria-pressed="false">Use this one</button></div><textarea rows="1" placeholder="What to change (optional)" aria-label="Note on ${esc(name)}"></textarea></div></article>`).join('');
+  function paint() { const s = DB.get('ui', 'roundcounter'); box.querySelectorAll('.wcard').forEach(el => { const on = !!s && s.pick === el.dataset.id;
+    el.querySelector('[data-a]').setAttribute('aria-pressed', String(on)); $('.saved', el).textContent = on ? 'Saved: your pick' : '';
+    const ta = $('textarea', el); if (document.activeElement !== ta) ta.value = s && s.notes && s.notes[el.dataset.id] || ''; }); }
+  async function save(id, pick) { const prev = DB.get('ui', 'roundcounter') || { notes: {} }; const notes = Object.assign({}, prev.notes || {});
+    box.querySelectorAll('.wcard').forEach(el => notes[el.dataset.id] = $('textarea', el).value.slice(0, 1000));
+    try { await DB.set('ui', 'roundcounter', { id: 'roundcounter', pick: pick || prev.pick || '', notes }); saveMsg(st, null); } catch (e) { saveMsg(st, e); } paint(); }
+  box.addEventListener('click', e => { const b = e.target.closest('button[data-a]'); if (b) save(b.closest('.wcard').dataset.id, b.closest('.wcard').dataset.id); });
+  box.addEventListener('change', e => { if (e.target.tagName === 'TEXTAREA') save(null, null); });
+  paint(); DB.on('ui', (d, err) => { if (err) return; paint(); });
 })();

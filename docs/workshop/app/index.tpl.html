@@ -25,6 +25,8 @@ __CSS__
     <button data-t="tests" role="tab">Test list<span class="n" data-count="tests"></span></button>
     <button data-t="issues" role="tab">Issues<span class="n" data-count="issues"></span></button>
     <button data-t="decisions" role="tab">Decisions</button>
+    <button data-t="modstack" role="tab">Mod stack</button>
+    <button data-t="ui" role="tab">UI</button>
     <button data-t="nexus" role="tab">Road to Nexus</button>
     <button data-t="context" role="tab">The mod now</button>
   </nav>
@@ -77,7 +79,7 @@ __CSS__
     <p class="status" id="enstatus">Loading your picks…</p>
     <div class="wgrid" id="engrid"></div>
     <h2 style="margin-top:18px">The dragons</h2>
-    <p class="sub">Every dragon of ours is one of Diverse Dragons Collection's: 28 kinds, each at seven levels (1 the youngest, 7 the greatest). Pick the kind and level for each role. In game every dragon is now <b>half its size</b>, as you asked. <b>My pick</b> is marked; what's in the game now is shown on each.</p>
+    <p class="sub">Every dragon of ours is one of Diverse Dragons Collection's: 28 kinds, each at seven levels (1 the youngest, 7 the greatest). Pick the kind and level for each role. Every dragon is half its size in game. Your picks from the last doc are in the game now. <b>My pick</b> is marked; what's in the game now is shown on each.</p>
     <p class="status" id="ddstatus"></p>
     <div id="dragons" style="display:grid;gap:10px"></div>
     <h2 style="margin-top:18px">Every enemy: what it is and what it does</h2>
@@ -128,6 +130,20 @@ __CSS__
     <h2>Decisions</h2>
     <p class="status" id="decstatus">Loading your decisions…</p>
     <div style="display:grid;gap:10px" id="recs"></div>
+  </section>
+
+  <section class="tab" id="modstack" hidden>
+    <h2>Mod stack</h2>
+    <p class="sub" id="msabout"></p>
+    <p class="status" id="msstatus"></p>
+    <div id="mslist" style="display:grid;gap:14px"></div>
+  </section>
+
+  <section class="tab" id="ui" hidden>
+    <h2>UI</h2>
+    <p class="sub">Your answers: the round counter shown here first, and the ultimate meter "right above the perks, centred, only when wielding a weapon with an ultimate unlocked". These are the first two pieces of the full UI tab (every Skyrim menu in the Untarnished style with our twist), which comes with the ability remake. Pick one counter and say what to change.</p>
+    <p class="status" id="uistatus"></p>
+    <div id="uigrid" class="wgrid"></div>
   </section>
 
   <section class="tab" id="nexus" hidden>

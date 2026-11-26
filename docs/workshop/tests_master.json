@@ -1,5 +1,52 @@
 [
  [
+  "This build (Nov 26, your doc changes)",
+  [
+   {
+    "id": "e9_enemies",
+    "t": "Only the dead you kept",
+    "how": "Play nights 1 to 20 (Tester's Kit: night 5, 10, 15, 20).",
+    "look": "Only the enemies you kept come; no casters, skeleton soldiers, ghosts, daedra you removed. The night-5 boss is gone (see Decisions)."
+   },
+   {
+    "id": "e9_dragons",
+    "t": "Your dragons",
+    "how": "Night 10 (Grimmvar), night 20 (Grahzah); a mini-boss night.",
+    "look": "Grimmvar a Vile dragon, Grahzah a Necro dragon (level 4), a Plague Dragon can come as a mini-boss; all half size."
+   },
+   {
+    "id": "e9_hitfeel",
+    "t": "No hit pause, no shake",
+    "how": "Fight with each weapon.",
+    "look": "No pause and no camera shake on hits."
+   },
+   {
+    "id": "e9_radiant",
+    "t": "Radiant Quarterstaff heavy",
+    "how": "Tier II or III heavy attack.",
+    "look": "Holy Water's pillar, in white, standing upright."
+   },
+   {
+    "id": "e9_looks",
+    "t": "Weapon looks match the doc",
+    "how": "Spellbound Rapier with shock, the Storm Blade, the javelin, the Soulcaller.",
+    "look": "Each looks like its pick in Weapon looks (the shock rapier's Spark Runes, the Storm Blade's third look, the javelin's Dragonfire, the Soulcaller's white Soul Gem Glow)."
+   },
+   {
+    "id": "e9_abil",
+    "t": "Your 15 ability picks",
+    "how": "Alduin's Bane light, javelin, Carian Wand, Wandering Star, Soulcaller, Shadowflame Scythe and Dragon Slayer heavies.",
+    "look": "Each as you set it in Abilities (sizes, speeds, light)."
+   },
+   {
+    "id": "e9_trial",
+    "t": "Lay the Restless to Rest radius",
+    "how": "Kit: the first trial.",
+    "look": "The ring of light is wider (860)."
+   }
+  ]
+ ],
+ [
   "This build (Nov 26, fixes): what you marked",
   [
    {
