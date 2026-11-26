@@ -1643,6 +1643,7 @@ namespace coa
 				MoonUpdate::func = moon.write_vfunc(0x3, MoonUpdate::thunk);
 			}
 			PlayerKill::func = vtbl.write_vfunc(0x10E, PlayerKill::thunk);
+			Picks::Install();
 			PlayerUseSkill::func = vtbl.write_vfunc(0xF7, PlayerUseSkill::thunk);
 			PlayerSelfHarm::func = vtbl.write_vfunc(0x104, PlayerSelfHarm::thunk);
 			{

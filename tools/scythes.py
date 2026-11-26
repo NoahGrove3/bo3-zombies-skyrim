@@ -184,7 +184,9 @@ def blade(rel, width, bend, top, flush=False):
         X = -1.0 + cx + nx * x
         Y = top + cy + ny * x
         Z = P[:, 2] * 1.2
-        out.append(dict(b, V=np.stack([X, Y, Z], 1)))
+        # (Noah, 2026-11-26: "Wyrmtooth Scythe (and others) are 2D/see-through") laid along -X and across -Y, the sword's own
+        # frame is mirrored (a reflection): its faces turned inward, culled from outside. Wound the other way, they face out
+        out.append(dict(b, V=np.stack([X, Y, Z], 1), T=np.asarray(b['T'])[:, [0, 2, 1]]))
         guard.append(np.stack([X, Y, Z], 1)[s < 0])
     if flush:
         G = np.concatenate(guard)
@@ -199,7 +201,7 @@ def skull(at):
     V = sk['V'].copy()   # (its crown up +Z, face along -Y: turned to look out along the blade, -X)
     V = np.stack([V[:, 1], V[:, 2], -V[:, 0]], 1) * 0.62
     V += np.array(at) - V.mean(0)
-    return [dict(sk, V=V)]
+    return [dict(sk, V=V, T=np.asarray(sk['T'])[:, [0, 2, 1]])]   # (that turn mirrors it: wound the other way, it faces out)
 
 
 def build(name):

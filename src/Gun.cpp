@@ -840,7 +840,7 @@ namespace coa
 						ex->SetModel(src->GetModel());
 						ex->data = src->data;
 						ex->data.damage = 0.0f;
-						ex->data.force = std::min(src->data.force, 40.0f);
+						ex->data.force = std::min(src->data.force * kRagdoll, 40.0f * kRagdoll);
 						ex->data.flags.reset(RE::BGSExplosionData::Flag::kKnockDown_Always, RE::BGSExplosionData::Flag::kKnockDown_ByFormula);
 						ex->data.spawnProjectile = nullptr;
 						ex->formEnchanting = nullptr;
@@ -877,7 +877,7 @@ namespace coa
 				ex->SetModel(a_src->GetModel());
 				ex->data = a_src->data;
 				ex->data.damage = 0.0f;
-				ex->data.force = std::min(a_src->data.force, 40.0f);
+				ex->data.force = std::min(a_src->data.force * kRagdoll, 40.0f * kRagdoll);
 				ex->data.flags.reset(RE::BGSExplosionData::Flag::kKnockDown_Always, RE::BGSExplosionData::Flag::kKnockDown_ByFormula);
 				ex->data.spawnProjectile = nullptr;
 				ex->formEnchanting = nullptr;
@@ -980,7 +980,7 @@ namespace coa
 				ex->boundData = src->boundData;
 				ex->SetModel(src->GetModel());
 				ex->data = src->data;
-				ex->data.damage = 0.0f, ex->data.force = std::min(src->data.force, 40.0f);
+				ex->data.damage = 0.0f, ex->data.force = std::min(src->data.force * kRagdoll, 40.0f * kRagdoll);
 				ex->data.flags.reset(RE::BGSExplosionData::Flag::kKnockDown_Always, RE::BGSExplosionData::Flag::kKnockDown_ByFormula);
 				ex->data.impactDataSet = nullptr, ex->data.impactPlacedObject = nullptr, ex->data.spawnProjectile = nullptr;
 				ex->data.light = nullptr;   // (its orange light too)
@@ -1164,7 +1164,7 @@ namespace coa
 			Blast(BlastIndex("shockmass"), at, 0.05f, 0.6f);
 			if (!a_target->IsDead()) {
 				if (auto* proc = p->GetActorRuntimeData().currentProcess; proc && L == 3) {
-					proc->KnockExplosion(a_target, at + RE::NiPoint3{ 0, 0, 140.0f }, 1.6f);
+					proc->KnockExplosion(a_target, at + RE::NiPoint3{ 0, 0, 140.0f }, 1.6f * kRagdoll);
 				} else {
 					Stagger(a_target, 0.7f);
 				}
@@ -1600,11 +1600,24 @@ namespace coa
 		{
 			const float t = g_throw.t;
 			const float yaw = a_player->data.angle.z, pitch = std::clamp(a_player->data.angle.x, -1.0f, 1.0f);
-			const RE::NiPoint3 f{ std::sin(yaw), std::cos(yaw), 0 }, up{ 0, 0, 1 };
+			RE::NiPoint3 f{ std::sin(yaw), std::cos(yaw), 0 }, up{ 0, 0, 1 };
 			const bool L = g_throw.left;
 			const float side = L ? -1.0f : 1.0f;
-			const RE::NiPoint3 r = RE::NiPoint3{ std::cos(yaw), -std::sin(yaw), 0 } * side;   // (out, toward the throwing side)
-			const RE::NiPoint3 aim = f * std::cos(pitch) - up * std::sin(pitch);
+			RE::NiPoint3 r = RE::NiPoint3{ std::cos(yaw), -std::sin(yaw), 0 } * side;   // (out, toward the throwing side)
+			RE::NiPoint3 aim = f * std::cos(pitch) - up * std::sin(pitch);
+			// (Noah, 2026-11-26: "when using the wyrmspine javelin, my arm, when looking around, looks broken and my wrist is twisted
+			// when charging") in first person the arms hang off the camera: the throw's keys are the view's own - its forward, up and
+			// side - so the arm holds the same shape on screen however far up or down you look
+			if (a_first) {
+				if (auto* cam = RE::PlayerCamera::GetSingleton(); cam && cam->cameraRoot) {
+					const auto& CR = cam->cameraRoot->world.rotate;
+					RE::NiPoint3 cf{ CR.entry[0][1], CR.entry[1][1], CR.entry[2][1] }, cu{ CR.entry[0][2], CR.entry[1][2], CR.entry[2][2] }, cx{ CR.entry[0][0], CR.entry[1][0], CR.entry[2][0] };
+					if (cf.Length() > 0.5f && cu.Length() > 0.5f) {
+						cf.Unitize(), cu.Unitize(), cx.Unitize();
+						f = cf, up = cu, r = cx * side, aim = cf;
+					}
+				}
+			}
 			auto nrm = [](RE::NiPoint3 v) { const float l = v.Length(); return l > 1e-5f ? v * (1.0f / l) : v; };
 			auto mix = [&](const RE::NiPoint3& a, const RE::NiPoint3& b, float k) { return nrm(a * (1.0f - k) + b * k); };
 			// the keys: (upper arm, forearm)
@@ -4654,7 +4667,7 @@ namespace coa
 				const float range = 800.0f + 300.0f * L;
 				for (auto* f : InCone(aim, range, 45.0f)) {
 					if (Damage(f, base, false, false)) continue;
-					if (proc) { RE::NiPoint3 away = f->GetPosition() - me; away.z = 0; away.Unitize(); proc->KnockExplosion(f, f->GetPosition() - away * 100.0f + RE::NiPoint3{ 0, 0, -60 }, 1.5f + 0.8f * L); }
+					if (proc) { RE::NiPoint3 away = f->GetPosition() - me; away.z = 0; away.Unitize(); proc->KnockExplosion(f, f->GetPosition() - away * 100.0f + RE::NiPoint3{ 0, 0, -60 }, (1.5f + 0.8f * L) * kRagdoll); }
 					if (L >= 3) { blastAt("giantslam", f->GetPosition(), 0.3f, 0.4f); Damage(f, base * 0.8f, false, false); }  // stone spikes
 				}
 				for (int st = 1; st <= 6; ++st) blastAt("giantslam", me + RE::NiPoint3{ aim.dir.x, aim.dir.y, 0 } * (range * st / 6.0f), 0.06f * st, 0.45f);
@@ -4692,7 +4705,7 @@ namespace coa
 					auto*       av = f->AsActorValueOwner();
 					const float frac = av->GetActorValue(RE::ActorValue::kHealth) / std::max(1.0f, av->GetPermanentActorValue(RE::ActorValue::kHealth));
 					if (frac <= cut && !Director::IsBoss(f)) { Damage(f, 1.0e7f, false, false); continue; }
-					if (proc) { RE::NiPoint3 away = f->GetPosition() - me; away.z = 0; away.Unitize(); proc->KnockExplosion(f, f->GetPosition() - away * 120.0f, 1.5f + 1.0f * L); }
+					if (proc) { RE::NiPoint3 away = f->GetPosition() - me; away.z = 0; away.Unitize(); proc->KnockExplosion(f, f->GetPosition() - away * 120.0f, (1.5f + 1.0f * L) * kRagdoll); }
 					Director::Web(f->GetPosition(), 45.0f, 2.0f + 2.0f * L, 70.0f);
 				}
 				blastAt("dark", me + RE::NiPoint3{ 0, 0, 40 }, 0.0f, 0.6f + 0.1f * L);

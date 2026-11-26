@@ -251,6 +251,7 @@ namespace coa::Picks
 	};
 	inline constexpr float kHoldFrom = 1410.0f;   // Hold the Light: the ring's start
 	inline constexpr const char* kHoldPal = "blue";   // its ring's colour (one of our ramps; empty: as built)
+	inline constexpr float kDragonScale = 0.5f;   // (Noah, 2026-11-26: "Scale dragons to 50%") every dragon in the world at half its size
 	inline constexpr bool kFxAutoDetail = true;   // fewer particles past 30 of the dead near you
 	inline constexpr bool kFxBigLightsOnly = true;   // only big effects cast light on a big night
 }

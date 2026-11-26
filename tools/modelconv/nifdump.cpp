@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
 		auto tr = s->GetTransformToParent();
 		printf("  xform t(%.2f %.2f %.2f) scale %.3f\n", tr.translation.x, tr.translation.y, tr.translation.z, tr.scale);
 		for (uint32_t i = 0; i < 9; ++i) { std::string t; nif.GetTextureSlot(s, t, i); if (!t.empty()) printf("  tex%u %s\n", i, t.c_str()); }
-		if (auto* sh = nif.GetShader(s)) printf("  shader %s type %u flags1 %08X flags2 %08X\n", sh->GetBlockName(), sh->GetShaderType(), 0u, 0u);
+		if (auto* sh = nif.GetShader(s)) printf("  shader %s type %u flags1 %08X flags2 %08X\n", sh->GetBlockName(), sh->GetShaderType(), (unsigned)(dynamic_cast<nifly::BSLightingShaderProperty*>(sh)?dynamic_cast<nifly::BSLightingShaderProperty*>(sh)->shaderFlags1:dynamic_cast<nifly::BSEffectShaderProperty*>(sh)?dynamic_cast<nifly::BSEffectShaderProperty*>(sh)->shaderFlags1:0), (unsigned)(dynamic_cast<nifly::BSLightingShaderProperty*>(sh)?dynamic_cast<nifly::BSLightingShaderProperty*>(sh)->shaderFlags2:dynamic_cast<nifly::BSEffectShaderProperty*>(sh)?dynamic_cast<nifly::BSEffectShaderProperty*>(sh)->shaderFlags2:0));
 		std::vector<std::string> bones; nif.GetShapeBoneList(s, bones);
 		if (!bones.empty()) { printf("  skinned to %zu bones:", bones.size()); for (auto& b : bones) printf(" [%s]", b.c_str()); printf("\n"); }
 	}

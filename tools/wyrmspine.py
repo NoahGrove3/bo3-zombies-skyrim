@@ -34,20 +34,20 @@ def vertebra(M, z0, z1, k, rng):
     """one of the spine's bones along z0..z1: a waisted centrum with rims at each end, its spinous ridge raking back
     toward the foot on the throwing side (+x), two stubby transverse processes either side"""
     L = z1 - z0
-    r_end, r_mid = 0.66, 0.5
+    r_end, r_mid = 0.66, 0.57   # (Noah, 2026-11-26: "gaps between the bones" - less waisted, and they overlap a core)
     prof = []
-    for t in np.linspace(0, 1, 13):
+    for t in np.linspace(0, 1, 19):
         rim = math.exp(-((t - 0.06) / 0.07) ** 2) + math.exp(-((t - 0.94) / 0.07) ** 2)
         r = r_mid + (r_end - r_mid) * (2 * t - 1) ** 2 + 0.09 * rim
         prof.append((z0 + t * L, r * (0.97 + 0.06 * rng.random())))
-    M.add('Vert', 'hiltbone', *pw.lathe(prof, 20))
+    M.add('Vert', 'hiltbone', *pw.lathe(prof, 32))
     # the ridge: a flattened blade of bone raked back
     a = 0.0
     base = np.array([0.45 * math.cos(a), 0.45 * math.sin(a), z0 + 0.55 * L])
-    pw.talon(M, 'hiltbone', base, (1.0, 0.0, -0.35), (0.6, 0.0, -1.0), 1.25 + 0.15 * rng.random(), 0.26, seg=10)
+    pw.talon(M, 'hiltbone', base, (1.0, 0.0, -0.35), (0.6, 0.0, -1.0), 1.25 + 0.15 * rng.random(), 0.26, seg=16)
     for s in (-1, 1):   # the side stubs
         b = np.array([0.0, 0.44 * s, z0 + 0.5 * L])
-        pw.talon(M, 'hiltbone', b, (0.0, s * 1.0, -0.15), (0.0, s * 0.7, -0.7), 0.55, 0.17, seg=8)
+        pw.talon(M, 'hiltbone', b, (0.0, s * 1.0, -0.15), (0.0, s * 0.7, -0.7), 0.55, 0.17, seg=12)
 
 
 def build():
@@ -78,13 +78,15 @@ def build():
         pw.talon(M, 'hiltbone', d * 0.85 + [0, 0, 25.9], d * 0.55 + [0, 0, 1.0], -d * 0.35 + [0, 0, 1.0], 3.0, 0.28)
     # the spine: vertebrae from the foot to the collar, the grip's span bound instead
     for a, b in ((SHAFT[0], GRIP[0] - 0.5), (GRIP[1] + 0.5, SHAFT[1])):   # (each run fitted whole between its ends)
-        n = max(1, round((b - a) / 2.4))
+        n = max(1, round((b - a) / 2.0))
         L = (b - a) / n
         for i in range(n):
             z = a + i * L
-            vertebra(M, z, z + L - 0.12, i, rng)
-            # the sinew between: a dark cord, a little narrower
-            M.add('Sinew', 'scales', *pw.lathe([(z + L - 0.14, 0.42), (z + L + 0.02, 0.45)], 16))
+            vertebra(M, z - 0.08, z + L + 0.08, i, rng)   # (each bone a touch into the next: no light between them)
+            # the sinew between: a dark cord round each joint, binding it
+            M.add('Sinew', 'scales', *pw.lathe([(z + L - 0.22, 0.58), (z + L, 0.64), (z + L + 0.22, 0.58)], 28))
+        # (Noah, 2026-11-26: "gaps between the bones") a solid core of bone through the whole run, under the vertebrae
+        M.add('Core', 'hiltbone', *pw.lathe([(a - 0.1, 0.5), (b + 0.1, 0.5)], 24))
     # the grip: the scale binding between iron collars (the hand round it at z = 0)
     M.add('Iron', 'iron', *pw.lathe([(GRIP[0] - 0.5, 0.62), (GRIP[0] - 0.3, 0.8), (GRIP[0] + 0.05, 0.74)], 22))
     M.add('Grip', 'scales', *pw.lathe([(GRIP[0], 0.68)] + [(zz, 0.7 + 0.04 * math.sin(math.pi * (zz - GRIP[0]) / (GRIP[1] - GRIP[0]))) for zz in np.linspace(GRIP[0] + 0.05, GRIP[1] - 0.05, 26)] + [(GRIP[1], 0.68)], 24,

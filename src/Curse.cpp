@@ -341,7 +341,9 @@ namespace coa
 		void SayRiddle(int a_town)
 		{
 			if (a_town < 0 || a_town >= static_cast<int>(gen::kCurseCities.size())) return;
-			Hud::Subtitle(std::string(gen::kCurseCities[a_town].riddle), 11.0f);
+			// (Noah, 2026-11-26: "I saw the subtitles for the echo alter's voice but didn't hear it" - the altar only speaks once it is
+			// freed) the riddle is the trial's own words, in the quest line and the journal - never the altar's voice's subtitle
+			logger::info("curse: {} - the whisper's riddle: \"{}\"", gen::kTowns[a_town], gen::kCurseCities[a_town].riddle);
 			g_whisperSay = 120.0f;
 		}
 		// a trial done: the next one begins at once (in order); the last, the seals, calls the Dragon Priest out
@@ -483,7 +485,7 @@ namespace coa
 		// (Noah, 2026-11-24: "make sure the ring for the first quest around the altar is hyper realistic ... anything that is supposed
 		// to be glowing or illuminated should look like real light, not a circle in a color") the ring is light lying in the world now,
 		// not lines over the screen: tools/trialfx.py's ring, 48 arcs each set down on the ground under it, lit round as the trial fills
-		struct WorldRing { RE::ObjectRefHandle ref; int R = 0; RE::NiPoint3 c{}; int lit = -1; bool painted = false; float groundT = 0, shown = 0, lead = -1; std::unordered_map<RE::BSEffectShaderProperty*, float> base; } g_wring;
+		struct WorldRing { RE::ObjectRefHandle ref; int R = 0; RE::NiPoint3 c{}; int lit = -1; bool painted = false, told = false; float groundT = 0, shown = 0, lead = -1; std::unordered_map<RE::BSEffectShaderProperty*, float> base; } g_wring;
 		// (Noah, 2026-11-24: "make it fill in smooth, much smoother so it's not choppy") the arc being lit fades up by how far into
 		// it the trial is: each of its shapes given a material of its own once, and its brightness scaled
 		void FadeArc(RE::NiAVObject* a_arc, float a_k)
@@ -569,6 +571,14 @@ namespace coa
 				if (R == 1400 && *Picks::kHoldPal) Gun::PaintAura(o, Picks::kHoldPal, 1.0f);
 			}
 			Gun::PoseModel(W.ref, W.c, {}, sc);
+			if (!W.told) {   // (what the game made of it, once: where it stands, how far it reaches, whether it is drawn)
+				W.told = true;
+				int arcs = 0;
+				for (int i = 0; i < 48; ++i) arcs += o->GetObjectByName(fmt::format("S{:02d}", i)) ? 1 : 0;
+				logger::info("curse: the ring ({}) at ({:.0f},{:.0f},{:.0f}) scale {:.2f}: {} arcs, world bound r {:.0f} at ({:.0f},{:.0f},{:.0f}), culled {}, alpha-culled {}",
+					R, o->world.translate.x, o->world.translate.y, o->world.translate.z, sc, arcs, o->worldBound.radius,
+					o->worldBound.center.x, o->worldBound.center.y, o->worldBound.center.z, o->GetAppCulled(), r->IsDisabled());
+			}
 			// each arc set down on the ground under it (the ring follows the lie of the land, shrinking or not)
 			if ((W.groundT -= a_delta) <= 0) {
 				W.groundT = 0.5f;
@@ -577,8 +587,11 @@ namespace coa
 					if (!n) continue;
 					const float a = (i + 0.5f) * 2.0f * RE::NI_PI / 48.0f;
 					RE::NiPoint3 at = W.c + RE::NiPoint3{ std::cos(a) * g_ring.radius, std::sin(a) * g_ring.radius, 0.0f };
+					// (Noah, 2026-11-26: "the ring around the echo altar ... is invisible", and the Whisper's and Hold the Light's)
+					// on top of what's there - the altar's platform, a path, a porch - not the terrain buried under it
 					float land = W.c.z;
-					if (!RE::TES::GetSingleton()->GetLandHeight(at, land) || std::abs(land - W.c.z) > 400.0f) land = W.c.z;
+					if (const auto top = Director::GroundAt({ at.x, at.y, W.c.z }, 150.0f); top && std::abs(*top - W.c.z) < 400.0f) land = *top;
+					else if (!RE::TES::GetSingleton()->GetLandHeight(at, land) || std::abs(land - W.c.z) > 400.0f) land = W.c.z;
 					n->local.translate = RE::NiPoint3{ std::cos(a) * R, std::sin(a) * R, (land - W.c.z + 3.0f) / sc };
 				}
 				W.lit = -1;   // (and the light set again below, with the update)

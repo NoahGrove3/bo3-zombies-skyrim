@@ -66,10 +66,14 @@ WEAPONS = {
     'tab_bonereaper':    ('CurseOfAlduin\\reapers\\Skeleton.nif', ['Blade'], None, 'o1', 'green'),
     'tab_wyrmtooth':     ('CurseOfAlduin\\reapers\\dragonTeeth.nif', ['Blade'], None, 'o1', 'green'),
     'tab_bloodmoon':     ('CurseOfAlduin\\reapers\\vampire.nif', ['Blade'], None, 'o2', 'red'),
-    'fang':              ('Light Greatswords\\dragonbone\\LightGreatsword.nif', ['DragonboneGreatsword:0'], None, 'o1', 'orange'),
+    'fang':              ('Light Greatswords\\dragonbone\\LightGreatsword.nif', ['DragonboneGreatsword:0'], None, 'o2', 'orange'),   # (doc 5865977: o2)
     # (Noah, 2026-11-24: "both left and right claws ... carry the same effect") the claws' left-hand twins
     'tab_stormtalons_l': ('weapons\\NewArmoury\\Fists\\GlassClawLft.nif', ['GlassClawGlass1'], None, 'o1', 'blue'),
     'tab_talons_l':      ('weapons\\NewArmoury\\Fists\\DBClawLft.nif', ['DBClaw_MTL_B'], None, 'o1', 'red'),
+    # (Noah, 2026-11-26: "Whole-weapon effects on the Mutagen Staff, the Soulcaller Staff and the javelin") their heads
+    'flaskweap_philosopher': ('CurseOfAlduin\\alchemist\\mutagen_staff_qs.nif', ['Brass:1', 'Glass:3', 'Orbglass:4', 'Tubeglass:5'], (44, 99), 'o1', 'poison'),
+    'soulcaller':        ('SSS\\GlassStaff.nif', ['1stPersonGlassMace:0'], None, 'o1', 'purple'),
+    'javelin':           ('CurseOfAlduin\\wyrmspine\\wyrmspine.nif', ['Dbone:1', 'Runes:0'], None, 'o1', 'orange'),
     'tab_cinderclaws_l': ('weapons\\NewArmoury\\Fists\\DaedricClawLft.nif', ['DaedricClaws_MTL_B'], None, 'o3', 'orange'),   # (its right hand's pick)
 }
 # (the claws: several blades fanned out - each its own outline in its own plane)
@@ -81,7 +85,7 @@ LEFT = {'tab_stormtalons_l', 'tab_talons_l', 'tab_cinderclaws_l'}
 # the class weapons: each takes another model at each tier (src/Classes.cpp AdoptTierLook), so each tier's model has its own
 # art; the Spellbound Rapier's look follows the element in your other hand (its BLADE_VIZ key: src/Classes.cpp LookKey)
 BV_KEYS = ['alch', 'carian', 'radiant', 'ss_none', 'ss_fire', 'ss_frost', 'ss_shock', 'ss_sun', 'ss_blood', 'slayer']
-BV_PICK = {'alch': ('o1', 'shadow'), 'carian': ('o1', 'purple'), 'radiant': ('o3', 'gold'), 'ss_none': ('o1', 'white'), 'ss_fire': ('o1', 'ss_none'), 'ss_frost': ('o1', 'iceblue'), 'ss_shock': ('o1', 'iceblue'), 'ss_sun': ('o1', 'orange'), 'ss_blood': ('o1', 'blue'), 'slayer': ('o1', 'gold')}   # (Noah's picks, the workshop 2026-11-25, doc 8cd53a1)
+BV_PICK = {'alch': ('o1', 'shadow'), 'carian': ('o1', 'purple'), 'radiant': ('o3', 'gold'), 'ss_none': ('o1', 'white'), 'ss_fire': ('o2', 'orange'), 'ss_frost': ('o1', 'iceblue'), 'ss_shock': ('o1', 'iceblue'), 'ss_sun': ('o1', 'orange'), 'ss_blood': ('o1', 'blue'), 'slayer': ('o3', 'gold')}   # (Noah's picks, the workshop 2026-11-25, doc 8cd53a1; ss_fire and slayer changed in doc 5865977, 2026-11-26)
 CLASS_MODELS = {   # the look key(s), each model: its steel shapes and band
     # (Noah, 2026-11-25: "the weapon effects are at the ends of each side of the staff ... the weapon heads, not the handles") each
     # staff's two capped heads - where its detail is - and none of the plain shaft between

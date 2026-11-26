@@ -1468,7 +1468,7 @@ namespace coa::Classes
 	namespace
 	{
 		constexpr const char* kJavModel = "CurseOfAlduin\\wyrmspine\\wyrmspine.nif";
-		struct Javelin_ { bool charging = false, away = false, left = false, pressed = false; float charge = 0, away_t = 0, glow = 0; int el = 0, bounces = 0; float power = 0; std::vector<RE::FormID> struck; };
+		struct Javelin_ { bool charging = false, away = false, left = false, pressed = false, flying = false; float charge = 0, away_t = 0, glow = 0; int el = 0, bounces = 0; float power = 0; std::vector<RE::FormID> struck; };
 		Javelin_ g_jav;
 		// (Noah, 2026-11-24: "I need to be able to see the projectile hit and when it bounces to other enemies") in flight it carries
 		// its element streaming behind it - Skyrim's own bolt of that element (fxmap.ini CurseOfAlduin\wyrmspine\fly_*)
@@ -1505,11 +1505,18 @@ namespace coa::Classes
 			}
 			return Gun::SwingFrom();
 		}
+		RE::NiPointer<RE::NiAVObject> g_javHeld[2];
+		// (Noah, 2026-11-26: "When I throw the javelin, it should leave my hand until it returns") every copy of it on you - the
+		// game's own (in the hand or on the back), the one we hold in the hand - unseen while it flies, seen again as it comes home
 		void JavHide(RE::PlayerCharacter* a_p, bool a_hide)
 		{
 			for (const bool p1 : { false, true }) {
 				auto* rt = a_p->Get3D(p1);
 				if (auto* node = rt ? rt->GetObjectByName(g_jav.left ? "SHIELD" : "WEAPON") : nullptr) node->SetAppCulled(a_hide);
+				if (auto& bip = a_p->GetBiped(p1)) {
+					for (auto& o : bip->objects) if (o.item == Javelin() && o.partClone) o.partClone->SetAppCulled(a_hide);
+				}
+				if (auto& H = g_javHeld[p1 ? 1 : 0]) H->SetAppCulled(a_hide);
 			}
 		}
 		void JavHome(const RE::NiPoint3& a_from);
@@ -1579,9 +1586,10 @@ namespace coa::Classes
 			Gun::Lob(JavFlyModel(g_jav.el), a_from, RE::NiPoint3{ 0, 0, 600.0f }, 1.0f, [](const RE::NiPoint3&) {
 				auto* pl = RE::PlayerCharacter::GetSingleton();
 				if (!pl) return;
-				g_jav.away = false;
+				g_jav.away = false, g_jav.flying = false;
 				JavHide(pl, false);
-				Gun::ElemBurst(g_jav.el, JavHand(pl, g_jav.left), 0.35f, 0.0f, 0.3f);
+				// (Noah, 2026-11-26: "when it returns to my character, it shouldn't leave the damaging impact animation. It should only
+				// do that when it's bouncing from enemy to enemy") home quietly
 				logger::info("javelin: back in your hand");
 			}, 0.0f, 0.0f);
 			Gun::LobHomeLast(p);
@@ -1598,6 +1606,8 @@ namespace coa::Classes
 			RE::NiPoint3 aim = (w.translate + dir * 2400.0f) - from;   // (from the hand at the crosshair's point ahead, in either view)
 			if (aim.Length() > 1e-3f) aim.Unitize(); else aim = dir;
 			const float c = g_jav.power;
+			g_jav.flying = true;
+			JavHide(p, true);
 			Gun::Lob(JavFlyModel(g_jav.el), from, aim * (2300.0f + 700.0f * c) + RE::NiPoint3{ 0, 0, 60.0f }, 1.0f, [c](const RE::NiPoint3& at) { JavBurst(at, c, true); }, 0.0f, 260.0f);
 			// (Noah's workshop pick: the javelin flies with nothing on it until it lands - no torn-air sound either; its picked throw sound plays)
 			logger::info("javelin: thrown at charge {:.2f}, element {}", c, g_jav.el);
@@ -1607,9 +1617,9 @@ namespace coa::Classes
 		// leaves it on the back when it is drawn. While it is drawn, a copy of it is held in the hand (in both bodies) and the one
 		// on the back is hidden; put away, the copy goes and the back's is shown again. (If the game ever does put it in the hand
 		// itself, nothing is added.)
-		RE::NiPointer<RE::NiAVObject> g_javHeld[2];
 		void JavHang(RE::PlayerCharacter* a_p)
 		{
+			if (g_jav.flying) return;   // (in flight: nothing of it in your hands or on your back - JavHide)
 			const bool drawn = a_p->AsActorState()->IsWeaponDrawn();
 			const bool left = a_p->GetEquippedObject(true) == Javelin() && a_p->GetEquippedObject(false) != Javelin();
 			const char* hn = left ? "SHIELD" : "WEAPON";
@@ -1653,8 +1663,8 @@ namespace coa::Classes
 			JavHang(p);
 			if (g_jav.away) {
 				g_jav.away_t += a_delta;
-				JavHide(p, true);
-				if (g_jav.away_t > 12.0f) { g_jav.away = false; JavHide(p, false); logger::warn("javelin: lost in flight - back in your hand"); }
+				if (g_jav.flying) JavHide(p, true);   // (out of the hand as it's let go - not while the arm still throws)
+				if (g_jav.away_t > 12.0f) { g_jav.away = false, g_jav.flying = false; JavHide(p, false); logger::warn("javelin: lost in flight - back in your hand"); }
 				return;
 			}
 			if (!g_jav.charging) return;
@@ -1690,12 +1700,19 @@ namespace coa::Classes
 		if (!a_b || !JavelinInHand(a_left)) return false;
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (!p || p->IsDead()) return false;
+		// (Noah, 2026-11-26: "I don't want to make it have a light attack. It should only be the throw") the press draws it back to
+		// charge at once; let go and it flies - no jab
 		if (a_b->IsDown()) {
 			g_jav.pressed = !g_jav.away && !Gun::Throwing();
+			if (g_jav.pressed && !g_jav.charging) {
+				g_jav.charging = true, g_jav.left = a_left, g_jav.charge = 0, g_jav.glow = 0;
+				g_jav.el = JavElement(a_left);
+				Gun::JavelinDraw(a_left);
+			}
 			return true;
 		}
 		if (a_b->IsHeld() && !a_b->IsUp()) {
-			if (g_jav.pressed && a_b->HeldDuration() >= 0.22f && !g_jav.charging && !g_jav.away && !Gun::Throwing()) {
+			if (g_jav.pressed && !g_jav.charging && !g_jav.away && !Gun::Throwing()) {
 				g_jav.charging = true, g_jav.left = a_left, g_jav.charge = 0, g_jav.glow = 0;
 				g_jav.el = JavElement(a_left);
 				Gun::JavelinDraw(a_left);
@@ -1704,7 +1721,6 @@ namespace coa::Classes
 		}
 		if (a_b->IsUp()) {
 			if (g_jav.charging) JavelinButton(a_left, false);
-			else if (g_jav.pressed && !g_jav.away) p->NotifyAnimationGraph(a_left ? "attackStartLeftHand" : "attackStart");   // (the tap: the jab)
 			g_jav.pressed = false;
 			return true;
 		}
@@ -4360,7 +4376,18 @@ namespace coa::Classes
 		AdoptLook(mut, s);
 		if (!ownModel.empty()) mut->SetModel(ownModel.c_str());
 		if (ownFirst) mut->firstPersonModelObject = ownFirst;
-		mut->attackDamage = 50;   // (Noah, 2026-11-20: "light attack and heavy attack is normal and 50 damage on contact")
+		// (Noah, 2026-11-26: "the mutagen staff sits wrong in first person" - Animated Armoury's own quarterstaff looks right) our
+		// record began as Skyrim's staff and kept its WeapTypeStaff keyword: in first person a staff's held pose answered to it over
+		// the quarterstaff's. The staff's keywords the quarterstaff hasn't, taken off
+		{
+			std::vector<RE::BGSKeyword*> drop;
+			for (std::uint32_t i = 0; i < mut->numKeywords; ++i) {
+				auto* k = mut->keywords[i];
+				if (k && (k->GetFormID() == 0x01E716 || k->GetFormID() == 0x08F958) && !s->HasKeyword(k)) drop.push_back(k);
+			}
+			if (!drop.empty()) mut->RemoveKeywords(drop), logger::info("alchemist: the Mutagen Staff's staff keywords ({}) taken off", drop.size());
+		}
+		mut->attackDamage = 50;  // (Noah, 2026-11-20: "light attack and heavy attack is normal and 50 damage on contact")
 		mut->formEnchanting = nullptr, mut->amountofEnchantment = 0;   // (no staff cast of Skyrim's: its beam and flasks are ours)
 		logger::info("alchemist: the Mutagen Staff takes the look of {} - swung as a quarterstaff", s->GetName());
 	}
@@ -4497,8 +4524,12 @@ namespace coa::Classes
 			const auto now = p->AsActorState()->GetWeaponState();
 			const bool sheathedNow = now == RE::WEAPON_STATE::kSheathed && was != RE::WEAPON_STATE::kSheathed && was != RE::WEAPON_STATE::kWantToDraw;
 			was = now;
-			for (bool left : { false, true }) if (const int el = FlaskHeld(left); el >= 0) g_lastFlask[left ? 1 : 0] = FlaskItem(el)->GetFormID();
-			if (!sheathedNow) return;
+			// (Noah, 2026-11-26: "when I sheath the mutagen staff ... it turns into the Shadow Flame Scythe. And then if I put it away
+			// ... it gives me the Spellbound Rapier") the Mutagen Staff is a weapon of its own, never one of the flasks the scythe
+			// swaps with - and the swap is the Alchemist's alone
+			auto thrown = [](bool a_left) { const int el = FlaskHeld(a_left); return el >= 0 && el < 6 ? el : -1; };
+			for (bool left : { false, true }) if (const int el = thrown(left); el >= 0) g_lastFlask[left ? 1 : 0] = FlaskItem(el)->GetFormID();
+			if (!sheathedNow || Get() != 2) return;
 			auto* em = RE::ActorEquipManager::GetSingleton();
 			if (!em) return;
 			auto* rightSlot = RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F42);
@@ -4507,13 +4538,13 @@ namespace coa::Classes
 				// the scythe put away: the flasks to hand - those held last, else the ones you carry, one in each hand
 				std::vector<RE::TESBoundObject*> pick;
 				for (auto id : g_lastFlask) if (auto* f = RE::TESForm::LookupByID<RE::TESBoundObject>(id); f && p->GetItemCount(f) > 0 && std::find(pick.begin(), pick.end(), f) == pick.end()) pick.push_back(f);
-				for (int el = 0; el < 7 && pick.size() < 2; ++el) if (auto* f = FlaskItem(el); f && p->GetItemCount(f) > 0 && std::find(pick.begin(), pick.end(), f) == pick.end()) pick.push_back(f);
+				for (int el = 0; el < 6 && pick.size() < 2; ++el) if (auto* f = FlaskItem(el); f && p->GetItemCount(f) > 0 && std::find(pick.begin(), pick.end(), f) == pick.end()) pick.push_back(f);
 				if (pick.empty()) return;
 				em->UnequipObject(p, sc, nullptr, 1, nullptr, false, false, false, true);
 				em->EquipObject(p, pick[0], nullptr, 1, rightSlot, false, false, false, true);
 				if (pick.size() > 1) em->EquipObject(p, pick[1], nullptr, 1, leftSlot, false, false, false, true);
 				logger::info("classes: the scythe sheathed - {} flask(s) to hand", pick.size());
-			} else if (FlaskHeld(false) >= 0 || FlaskHeld(true) >= 0) {
+			} else if (thrown(false) >= 0 || thrown(true) >= 0) {
 				// the flasks put away: the scythe back in both hands
 				if (p->GetItemCount(sc) <= 0) return;
 				em->EquipObject(p, sc, nullptr, 1, nullptr, false, false, false, true);

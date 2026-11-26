@@ -1,4 +1,5 @@
 #include "CurseOfAlduin.h"
+#include <mutex>
 #include "WorkshopPicks.h"
 
 // (Noah, 2026-11-26: "make the volume on all of the weapon sound effects 20% ... I assigned all the sound effects I want to use
@@ -53,6 +54,47 @@ namespace coa::Picks
 		}
 		int  g_crowd = 0;
 		float g_crowdT = 0;
+
+		// (Noah, 2026-11-26: "the enemies kind of teleport around when I'm hitting them, and it glitches my character out" -
+		// the hit's hold slowed the whole world's clock, physics and all, every blow) the hold is now only the striker's and
+		// the struck one's animation: theirs alone stands still for its moment (as Precision's hit-stop does); the world, its
+		// physics and everyone else go on at full speed
+		struct Hold { RE::FormID id; std::chrono::steady_clock::time_point until; };
+		std::vector<Hold> g_hold;
+		std::mutex g_holdLock;
+		float HeldScale(RE::Actor* a_actor)
+		{
+			if (!a_actor) return 1.0f;
+			std::lock_guard lk(g_holdLock);
+			if (g_hold.empty()) return 1.0f;
+			const auto now = std::chrono::steady_clock::now();
+			std::erase_if(g_hold, [&](const Hold& h) { return h.until <= now; });
+			for (const auto& h : g_hold) if (h.id == a_actor->GetFormID()) return 0.05f;
+			return 1.0f;
+		}
+		template <int N>
+		struct HoldAnim
+		{
+			static void thunk(RE::Actor* a_this, float a_delta) { func(a_this, a_delta * HeldScale(a_this)); }
+			static inline REL::Relocation<decltype(thunk)> func;
+		};
+		void HoldFor(RE::Actor* a_actor, float a_seconds)
+		{
+			if (!a_actor || a_seconds <= 0.0f) return;
+			std::lock_guard lk(g_holdLock);
+			const auto until = std::chrono::steady_clock::now() + std::chrono::microseconds(static_cast<long long>(a_seconds * 1.0e6f));
+			for (auto& h : g_hold) if (h.id == a_actor->GetFormID()) { h.until = std::max(h.until, until); return; }
+			g_hold.push_back({ a_actor->GetFormID(), until });
+		}
+	}
+
+	void Install()
+	{
+		REL::Relocation<std::uintptr_t> pc{ RE::VTABLE_PlayerCharacter[0] };
+		HoldAnim<0>::func = pc.write_vfunc(0x7D, HoldAnim<0>::thunk);
+		REL::Relocation<std::uintptr_t> ch{ RE::VTABLE_Character[0] };
+		HoldAnim<1>::func = ch.write_vfunc(0x7D, HoldAnim<1>::thunk);
+		logger::info("picks: the hit's hold on the striker's and the struck one's animation only (UpdateAnimation hooked)");
 	}
 
 	void OnDataLoaded()
@@ -150,7 +192,7 @@ namespace coa::Picks
 		const auto  now = std::chrono::steady_clock::now();
 		if (now - last > std::chrono::milliseconds(140)) {
 			last = now;
-			if (const float ms = a_heavy ? kStopH[k] : kStopL[k]; ms > 0.5f) Director::SlowTime(ms / 1000.0f, 0.05f);
+			if (const float ms = a_heavy ? kStopH[k] : kStopL[k]; ms > 0.5f && !Net::InLobby()) HoldFor(p, ms / 1000.0f), HoldFor(a_target, ms / 1000.0f);
 			if (a_heavy && kShakeH[k] > 0.5f && Settings::ScreenShake()) RE::ShakeCamera(kShakeH[k] / 100.0f * 0.6f, p->GetPosition(), 0.25f);
 		}
 		// (The dead: "Heavies throw them") a power attack's killing blow hurls the body back - after the night's own damage for the
@@ -166,7 +208,7 @@ namespace coa::Picks
 					away.z = 0;
 					if (away.Length() < 1.0f) away = { 0, 1, 0 };
 					away.Unitize();
-					proc->KnockExplosion(a.get(), a->GetPosition() - away * 60.0f + RE::NiPoint3{ 0, 0, 55.0f }, 5.0f);   // (from waist height behind, as every kill's fall - Director - but three times as hard)
+					proc->KnockExplosion(a.get(), a->GetPosition() - away * 60.0f + RE::NiPoint3{ 0, 0, 55.0f }, 5.0f * Gun::kRagdoll);   // (from waist height behind, as every kill's fall - Director - but three times as hard; halved with all the rest)
 				}
 			});
 		}
@@ -183,5 +225,43 @@ namespace coa::Picks
 		const auto pp = p->GetPosition();
 		for (auto h : Director::AliveHandles()) if (auto a = h.get(); a && !a->IsDead() && a->GetPosition().GetDistance(pp) < 3000.0f) ++n;
 		g_crowd = n;
+		// (Noah, 2026-11-26: "Some enemies float in the sky, alive and unkillable") one of the night's dead held high over the land
+		// for four seconds running - not a dragon, not a body flying from a blow - set down on the ground under it, awake
+		{
+			static std::unordered_map<RE::FormID, float> high;
+			std::unordered_map<RE::FormID, float> now;
+			for (auto h : Director::AliveHandles()) {
+				auto a = h.get();
+				if (!a || a->IsDead() || a->IsDisabled() || !a->Is3DLoaded() || a->HasKeywordString("ActorTypeDragon") || a->IsInRagdollState()) continue;
+				auto* cell = a->GetParentCell();
+				if (!cell || cell->IsInteriorCell()) continue;
+				auto at = a->GetPosition();
+				float land = at.z;
+				if (!RE::TES::GetSingleton()->GetLandHeight(at, land) || at.z - land < 600.0f) continue;
+				const float t = (high.contains(a->GetFormID()) ? high[a->GetFormID()] : 0.0f) + 0.5f;
+				if (t >= 4.0f) {
+					at.z = Director::GroundAt({ at.x, at.y, land }, 200.0f).value_or(land) + 10.0f;
+					a->SetPosition(at, true);
+					a->EnableAI(true);
+					logger::info("night: {} was held {:.0f} over the land - set down", a->GetName(), a->GetPosition().z - land);
+					continue;
+				}
+				now[a->GetFormID()] = t;
+			}
+			high = std::move(now);
+		}
+		// (Noah, 2026-11-26: "Scale dragons to 50%") each dragon about at half the size it was made at - the bosses, the
+		// mini-bosses, the three wyrms and the Echo of Alduin (Diverse Dragons' all) and Skyrim's own. Told by its own scale: one
+		// at its full size or more (100+) is halved; one already under it (halved here, kept so in the save) is left be
+		if (auto* pl = RE::ProcessLists::GetSingleton()) {
+			for (auto& h : pl->highActorHandles) {
+				auto a = h.get();
+				if (!a || a->IsDead() || !a->HasKeywordString("ActorTypeDragon")) continue;
+				const auto rs = a->GetReferenceRuntimeData().refScale;
+				if (rs < 100) continue;
+				a->SetScale(rs / 100.0f * kDragonScale);
+				logger::info("dragons: {} at half its size ({:.2f} -> {:.2f})", a->GetName(), rs / 100.0f, rs / 100.0f * kDragonScale);
+			}
+		}
 	}
 }

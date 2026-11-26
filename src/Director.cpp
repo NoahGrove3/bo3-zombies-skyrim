@@ -1938,10 +1938,18 @@ namespace coa
 			}
 			const float cd = g_boss.enraged ? gen::boss::enrageCooldownMult : 1.0f;
 			const float dist = boss->GetPosition().GetDistance(a_player->GetPosition());
+			// (Noah, 2026-11-26: "the necromantic dragon's breath is hard to see and its flight is broken") a dragon boss flies as
+			// Skyrim flies it: none of the ground Wyrm's leaps into the sky, steps through the earth or lunges set it down; its
+			// breath is ours, seen down every line of the cone
+			const bool flier = boss->HasKeywordString("ActorTypeDragon");
+			if (flier) g_boss.leapT = -1.0f, g_boss.roar = 1e6f, g_boss.step = 1e6f;
 			// Fire Breath: he rears and draws breath (a second to get clear), then breathes a cone of fire at you
 			if (g_boss.breathWind >= 0) {
 				if ((g_boss.breathWind -= a_delta) < 0) {
-					const auto bp = OnGround(boss->GetPosition()), pp = a_player->GetPosition();
+					const auto pp = a_player->GetPosition();
+					// (a dragon on the wing: its breath on the ground under it at your height - the ground near it, not its own
+					// altitude, where the cone burned unseen in the air)
+					const auto bp = flier ? OnGround({ boss->GetPosition().x, boss->GetPosition().y, pp.z + 200.0f }) : OnGround(boss->GetPosition());
 					RE::NiPoint3 dir = pp - bp;
 					dir.z = 0;
 					dir.Unitize();
@@ -1953,7 +1961,8 @@ namespace coa
 						const float spread = t * 0.32f;  // the cone widens
 						for (int j = -1; j <= 1; ++j) {
 							const auto at = OnGround(bp + dir * t + side * (spread * j));
-							g_hazards.push_back({ at, 0.12f + 0.07f * k, 90.0f + t * 0.12f, gen::boss::eruptionDamage * 0.6f, j == 0 ? "dragonfire" : "", false });
+							g_hazards.push_back({ at, 0.12f + 0.07f * k, 90.0f + t * 0.12f, gen::boss::eruptionDamage * 0.6f, j == 0 || flier ? "dragonfire" : "", false });
+							if (flier && j == 0) Gun::FxBlast("dragonfire", at + RE::NiPoint3{ 0, 0, 60.0f + 30.0f * k }, 0.12f + 0.07f * k);   // (the stream in the air too, down to where it lands)
 						}
 					}
 					Forms::PlayAt(gen::Sound::boss_breath, boss.get());
@@ -1977,7 +1986,7 @@ namespace coa
 						dir = dir * (1.0f / len);
 						boss->SetHeading(std::atan2(dir.x, dir.y));
 						const float lunge = std::clamp(len - 170.0f, 0.0f, 140.0f);  // closes in, never through you
-						boss->SetPosition(bp + dir * lunge, true);
+						if (!flier) boss->SetPosition(bp + dir * lunge, true);
 					}
 					boss->NotifyAnimationGraph(last ? "attackPowerStartForward" : (g_boss.comboLeft % 2 ? "attackStart" : "attackStartLeft"));
 					Undead::CueFor(boss.get(), last ? Undead::kCueRoar : (g_boss.comboLeft % 2 ? Undead::kCueSwipeR : Undead::kCueSwipeL), last ? 0.5f : 0.45f);
@@ -2075,7 +2084,10 @@ namespace coa
 				g_boss.meteors = 13.0f;
 			}
 			if ((g_boss.summon -= a_delta) <= 0) {
-				const auto bp = boss->GetPosition();
+				// (Noah, 2026-11-26: "some enemies float in the sky, alive and unkillable" - a dragon boss on the wing called its dead
+				// at its own height) they rise on the ground under it, at your height
+				auto bp = boss->GetPosition();
+				if (flier) bp = OnGround({ bp.x, bp.y, a_player->GetPosition().z + 200.0f });
 				// (the audit: no cap - about 21 of the dead a minute, each holding the wave) only while the field has room
 				for (int i = 0; i < static_cast<int>(gen::boss::summonCount) && static_cast<int>(g_alive.size()) < R.maxAlive; ++i) {
 					const float a = i * 2.0f * RE::NI_PI / gen::boss::summonCount;
@@ -3031,7 +3043,7 @@ namespace coa
 				// pushed from waist height behind: they fold and drop (a push from below the feet floated them up)
 				const RE::NiPoint3 from = a->GetPosition() - away * 60.0f + RE::NiPoint3{ 0, 0, 55.0f };
 				if (c.tries == 0) {
-					proc->KnockExplosion(a.get(), from, 1.6f);
+					proc->KnockExplosion(a.get(), from, 1.6f * Gun::kRagdoll);   // (Noah, 2026-11-26: "they fling too far" - half as hard)
 					++c.tries;
 				} else if (c.age > 0.6f && !a->IsInRagdollState()) {
 					proc->KnockExplosion(a.get(), from, 3.0f + c.tries);
@@ -4536,6 +4548,12 @@ namespace coa
 		void SlowTime(float a_realSeconds, float a_mult) { SlowBeat(a_realSeconds, a_mult); }
 		// (the Tester's Kit: "start the night now, or rounds 5/10/15/20") a night under way ends where it is, the next to fall is night
 		// a_round (0: the one that's next anyway), and the clock goes to the first dark hour - it begins as any night does
+		// (the trial rings: each arc on what you'd walk on - a platform, a path, the grass - not on the terrain under it)
+		std::optional<float> GroundAt(const RE::NiPoint3& a_at, float a_above)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			return WalkTop(p ? p->GetParentCell() : nullptr, a_at, a_above);
+		}
 		void DevNight(int a_round)
 		{
 			if (Coop::Client()) { Hud::Banner("Only the host's night can be moved", 3.0f); return; }

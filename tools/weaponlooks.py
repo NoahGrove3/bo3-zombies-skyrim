@@ -270,6 +270,40 @@ W['slayer'] = (('gold', 'white'), [
 
 # ---------------------------------------------------------------- two more each (Noah, 2026-11-25: "add 2 more for each weapon on the
 # weapon looks" - five to pick from), each its own idea for that weapon, not a recolour of its first three
+# (Noah, 2026-11-26: "Whole-weapon effects on the Mutagen Staff, the Soulcaller Staff and the javelin") their five looks each
+W['flaskweap_philosopher'] = (('poison', 'purple'), [
+    L('Living Mutagen', 'Green-violet light swirling in the glass head, bubbling up the brass.',
+      [E('molten_strip', 1.6, 1.0, 3.0, 1.0, 0.8), E('sig_embers', 2.4, 1.4, 1.2, 0.8, 0.8, along='axis', col='c2')], [Fc('sk_swirls', 'all', 14.0, 0.45, scroll=4.0), Fc('halo_shell', 'edge', 12.0, 0.3, pulse=(2.5, 0.6, 1.2), col='c2')]),
+    L('Six Vials', 'The six elements chasing each other round the head in turn.',
+      [E('stream_strip', 1.2, 0.8, 1.0, 1.2, 0.9, along='axis'), E('stream_strip', 1.0, 0.6, 1.6, 1.0, 0.6, col='c2')], [Fc('sk_enchfill', 'all', 16.0, 0.35, scroll=3.0)]),
+    L('Alembic Smoke', 'Coloured smoke curling off the head like a flask left on the fire.',
+      [E('shade_strip', 4.0, 2.2, 2.4, 0.9, 0.7, along='axis', blend='alpha', dark=True), E('mist_strip0', 3.0, 1.8, 4.0, 1.0, 0.3, col='c2')], [Fc('sk_vapour', 'edge', 14.0, 0.3, scroll=4.0)]),
+    L('Transmutation Runes', 'Alchemical sigils lit along the brass, pulsing slowly.',
+      [E('sig_runes', 1.8, 1.0, 8.0, 0.6, 1.0), E('stream_strip', 0.8, 0.5, 2.0, 1.0, 0.4, col='c2')], [Fc('cracks', 'band', 12.0, 0.7, pulse=(3.0, 0.5, 1.2))]),
+    L('Volatile Core', 'The head glowing hot from inside, cracks of green light flaring.',
+      [E('molten_strip', 2.0, 1.2, 2.0, 1.0, 1.1)], [Fc('cracks', 'all', 12.0, 1.3, pulse=(2.0, 0.5, 1.3)), Fc('haze', 'edge', 14.0, 0.3, scroll=5.0, col='c2')])])
+W['soulcaller'] = (('purple', 'white'), [
+    L('Soul Wisps', 'Pale violet souls drifting up off the glass head.',
+      [E('wisp_strip', 4.0, 2.2, 1.4, 0.7, 0.45, along='axis'), E('stream_strip', 1.0, 0.6, 1.2, 1.0, 0.6, col='c2')], [Fc('sk_wisps', 'all', 14.0, 0.35, flip=(2, 2), fps=5)]),
+    L('Soul Gem Glow', 'The glass head lit from within like a filled soul gem.',
+      [E('molten_strip', 1.4, 0.8, 4.0, 1.0, 0.7)], [Fc('halo_shell', 'all', 14.0, 0.5, pulse=(3.0, 0.6, 1.2)), Fc('sk_enchfill', 'band', 16.0, 0.3, scroll=4.0, col='c2')]),
+    L('Spectral Mist', 'A cold violet mist rolling off the head.',
+      [E('mist_strip0', 4.0, 2.2, 5.0, 0.8, 0.3), E('mist_strip1', 3.0, 1.8, 4.0, 1.2, 0.22, col='c2')], [Fc('haze', 'edge', 14.0, 0.3, scroll=6.0)]),
+    L('Conjurer\'s Runes', 'Summoning runes circling the head, bright and slow.',
+      [E('sig_runes', 2.0, 1.2, 6.0, 0.6, 1.0), E('stream_strip', 0.8, 0.5, 2.0, 1.0, 0.5, col='c2')], [Fc('halo_shell', 'edge', 14.0, 0.3, pulse=(4.0, 0.6, 1.1))]),
+    L('Soul Fire', 'Violet fire licking up the glass head.',
+      [E('fire_rise0', 4.0, 2.2, 0.8, 1.1, 0.7, along='axis'), E('sig_embers', 2.2, 1.2, 1.0, 0.8, 0.7, along='axis', col='c2')], [Fc('sk_enchfill', 'all', 18.0, 0.32, scroll=3.0)])])
+W['javelin'] = (('orange', 'white'), [
+    L('Wyrm Ember', 'The bone head glowing orange, embers trailing back down the shaft.',
+      [E('molten_strip', 1.6, 1.0, 3.0, 1.0, 0.9), E('sig_embers', 2.6, 1.4, 1.0, 0.8, 0.8, along='axisdown', col='c2')], [Fc('cracks', 'all', 12.0, 1.1, pulse=(3.0, 0.5, 1.2))]),
+    L('Dragon Runes', 'The runes down the head burning bright.',
+      [E('sig_runes', 1.8, 1.0, 6.0, 0.6, 1.1), E('stream_strip', 0.8, 0.5, 1.6, 1.0, 0.5, col='c2')], [Fc('haze', 'edge', 14.0, 0.3, scroll=5.0)]),
+    L('Comet Head', 'A bright head with a long trail streaming back off it.',
+      [E('wisp_strip', 5.0, 2.6, 1.2, 0.7, 0.45, along='axisdown'), E('stream_strip', 1.0, 0.6, 0.8, 1.0, 0.6, col='c2')], [Fc('halo_shell', 'all', 14.0, 0.4, pulse=(2.0, 0.6, 1.3))]),
+    L('Elemental Edge', 'A thin line of light along the head\'s edges, the colour of its element.',
+      [E('molten_strip', 1.2, 0.8, 0.8, 2.0, 1.1), E('stream_strip', 0.8, 0.5, 0.6, 1.0, 0.6, col='c2')], [Fc('sk_enchfill', 'band', 14.0, 0.25, scroll=3.0)]),
+    L('Dragonfire', 'Fire rolling off the head toward the point.',
+      [E('fire_rise0', 5.0, 2.8, 0.6, 1.2, 0.8, along='axis'), E('fire_rise1', 3.6, 2.0, 0.4, 1.8, 0.55, along='axis', col='c2')], [Fc('sk_enchfill', 'all', 18.0, 0.32, scroll=2.0)])])
 MORE = {
  'priest_vahlok': [
     L('Iron Runes', 'Prison runes burning green down the hammer\'s face, the edges dark and still.',

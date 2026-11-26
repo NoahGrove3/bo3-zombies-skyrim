@@ -1702,6 +1702,26 @@ NAKED_TORSO = 0x000D67
 # Skyrim's own addon for that mesh does: body+forearms+calves, the hood's hair, long hair and ears, the gauntlets' hands and
 # forearms, the boots' feet and calves
 CS_AA_SLOT = {'robes': 0x114, 'cuirass': 0x114, 'hood': 0x2802, 'gauntlets': 0x18, 'boots': 0x180}
+# (Noah, 2026-11-26: the Spellsword's set made the body under it vanish - its addon and NakedTorso both on the body slot, and
+# Skyrim draws one) the Spellsword's cuirass is worn on slot 58 (tools/armoursets.py OWN_SLOT), the body left to NakedTorso
+CS_OWN_SLOT = {('spellsword', 'cuirass'): 58}
+# (Noah, 2026-11-26: "the class sets when viewing them in the inventory, they don't have a model") each piece's look on the
+# ground and in the inventory: Skyrim's own for the armour it was made from (the Necromancer's and Arch-Mage's robes and boots,
+# a mage's hood for the hoods, which Skyrim only has on its hooded robes; the Morag Tong's chitin; the Draugr's)
+CS_GND = {
+    ('summoner', 'robes'): ('Clothes\\Necromancer\\NecromancerRobesGND.nif', 'Clothes\\Necromancer\\NecromancerRobesGND.nif'),
+    ('summoner', 'hood'): ('Clothes\\MageApprentice\\MageAppHoodGND.nif', 'Clothes\\MageApprentice\\MageAppHood_F_GND.nif'),
+    ('summoner', 'boots'): ('Clothes\\Necromancer\\NecromancerBootsGND.nif', 'Clothes\\Necromancer\\NecromancerBootsGND.nif'),
+    ('destruction', 'robes'): ('Clothes\\Archmage\\M\\ArchmageRobesGND.nif', 'Clothes\\Archmage\\F\\ArchmageRobesF_GND.nif'),
+    ('destruction', 'hood'): ('Clothes\\MageApprentice\\MageAppHoodGND.nif', 'Clothes\\MageApprentice\\MageAppHood_F_GND.nif'),
+    ('destruction', 'boots'): ('Clothes\\Archmage\\M\\ArchmageBootsGND.nif', 'Clothes\\Archmage\\F\\ArchmageBootsF_GND.nif'),
+    ('alchemist', 'cuirass'): ('DLC02\\Armor\\ChitinLight\\CuirassGND.nif', 'DLC02\\Armor\\ChitinLight\\CuirassGND.nif'),
+    ('alchemist', 'gauntlets'): ('DLC02\\Armor\\ChitinLight\\GauntletsGND.nif', 'DLC02\\Armor\\ChitinLight\\GauntletsGND.nif'),
+    ('alchemist', 'boots'): ('DLC02\\Armor\\ChitinLight\\BootsGND.nif', 'DLC02\\Armor\\ChitinLight\\BootsGND.nif'),
+    ('spellsword', 'cuirass'): ('Armor\\Draugr\\DraugrArmorMale_GO.nif', 'Armor\\Draugr\\DraugrArmorMale_GO.nif'),
+    ('spellsword', 'gauntlets'): ('Armor\\Draugr\\DraugrGauntletsMale_GO.nif', 'Armor\\Draugr\\DraugrGauntletsMale_GO.nif'),
+    ('spellsword', 'boots'): ('Armor\\Draugr\\DraugrBootsMale_GO.nif', 'Armor\\Draugr\\DraugrBootsFemale_GO.nif'),
+}
 for _c, _ps in CLASS_SET.items():
     for _p in _ps:
         for _t in range(4):
@@ -1710,13 +1730,14 @@ for _c, _ps in CLASS_SET.items():
             # first-person piece in the tier's look (tools/armoursets.py first_person); the rest keep their own model
             fp = (lambda sx: z(f'CurseOfAlduin\\armour\\{_c}\\{_p}_{sx}_1p_t{_t}_1.nif')) if CS_SLOT[_p] == 1 << 2 else m
             recs['ARMA'].append(record('ARMA', fid('ARMA', f'ca_{_c}_{_p}_t{_t}'), [
-                sub('EDID', z(f'COA_CS_{_c}_{_p}_T{_t}AA')), sub('BOD2', struct.pack('<II', CS_AA_SLOT.get(_p, CS_SLOT[_p]), 0)), sub('RNAM', struct.pack('<I', 0x19)),
+                sub('EDID', z(f'COA_CS_{_c}_{_p}_T{_t}AA')), sub('BOD2', struct.pack('<II', (1 << (CS_OWN_SLOT[(_c, _p)] - 30)) if (_c, _p) in CS_OWN_SLOT else CS_AA_SLOT.get(_p, CS_SLOT[_p]), 0)), sub('RNAM', struct.pack('<I', 0x19)),
                 sub('DNAM', bytes.fromhex('000002020000001700000000')),
                 sub('MOD2', m('m')), sub('MOD3', m('f')), sub('MOD4', fp('m')), sub('MOD5', fp('f'))] + [sub('MODL', struct.pack('<I', r)) for r in UW_RACES]))
         addons = [fid('ARMA', f'ca_{_c}_{_p}_t0')] + ([NAKED_TORSO] if CS_SLOT[_p] == 1 << 2 else [])
         recs['ARMO'].append(record('ARMO', fid('ARMO', f'ca_{_c}_{_p}'), [
             sub('EDID', z(f'COA_CS_{_c}_{_p}')), sub('OBND', bytes(12)), sub('FULL', z(f'{CS_NAME[_c]} Set {_p.title()}')),
-            sub('BOD2', struct.pack('<II', CS_SLOT[_p], 0)), sub('RNAM', struct.pack('<I', 0x19)),
+            sub('MOD2', z(CS_GND[(_c, _p)][0])), sub('MOD4', z(CS_GND[(_c, _p)][1])),
+            sub('BOD2', struct.pack('<II', CS_SLOT[_p] | ((1 << (CS_OWN_SLOT[(_c, _p)] - 30)) if (_c, _p) in CS_OWN_SLOT else 0), 0)), sub('RNAM', struct.pack('<I', 0x19)),
             sub('KSIZ', struct.pack('<I', 2)), sub('KWDA', struct.pack('<II', CS_KW[_p], 0x06BBD3))] +
             [sub('MODL', struct.pack('<I', a)) for a in addons] +
             [sub('DATA', struct.pack('<If', 0, 1.0)), sub('DNAM', struct.pack('<I', 0))]))

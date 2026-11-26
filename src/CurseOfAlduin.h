@@ -172,6 +172,7 @@ namespace coa
 		bool             PlayerSide(RE::Actor* a, RE::PlayerCharacter* a_player);  // the player, a friend, a follower, an Echo ally or a summon of yours
 		void             RestartWave();   // (the BO3 fall, solo) the wave's dead gone, the wave begins again
 		void             SlowTime(float a_realSeconds, float a_mult);  // the world slowed for a beat (solo only)
+		std::optional<float> GroundAt(const RE::NiPoint3& a_at, float a_above);   // the top of what one walks on there (a ray down)
 		void             DevNight(int a_round);  // (the Tester's Kit) the night begins now, as night a_round (0: the next)
 		void             NormalTime();
 		float            TakenMult(RE::Actor* a_actor);  // how much harder one of ours is hurt (a dazed Barrow Champion 2, a berserk Skeleton Mutant 1.25)
@@ -771,6 +772,9 @@ namespace coa
 
 	namespace Gun
 	{
+		// (Noah, 2026-11-26: "reduce the amount of ragdoll enemies receive by about half ... other than Alduin's Bane") every push
+		// on the dead - a kill's fall, a blast's force, an ability's knock - at half its strength (the Bane's own throw keeps its)
+		inline constexpr float kRagdoll = 0.5f;
 		RE::NiPointer<RE::NiAVObject> LoadModel(const std::string& a_path);   // one of our models (a fresh copy), by its path under Meshes
 		std::vector<RE::Actor*> FoesNear(const RE::NiPoint3& a_at, float a_radius);   // the night's dead (and your other foes) round a point
 		void                  HitShare(RE::Actor* a_target, float a_share);           // a blow of a share of one of the night's dead's health
@@ -1404,6 +1408,7 @@ namespace coa
 	// (Noah, 2026-11-26: his workshop picks in the game - src/Picks.cpp, the values in src/WorkshopPicks.h)
 	namespace Picks
 	{
+		void  Install();                                             // the hit's hold: the striker's and struck one's animation only
 		void  OnDataLoaded();                                        // Skyrim's own weapon sounds to 20%
 		bool  Card(std::string_view a_card, std::string_view a_slot, const RE::NiPoint3& a_at);   // an ability's picked sound, if he chose one
 		bool  Owner(std::string_view a_owner, std::string_view a_slot, const RE::NiPoint3& a_at); // the same, by the effect's owner (Gun::FxScope)

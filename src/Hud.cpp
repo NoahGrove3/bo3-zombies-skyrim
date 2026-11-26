@@ -1876,6 +1876,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// number, WAVE x / y and the dead still to fall (or the breath before the next) under it
 			// (Noah: hidden until a class is chosen - the essence, the perks and the night's box)
 			const bool classChosen = Classes::Get() >= 0;
+			static float leftFoot = 0;   // (the quests stack under the night's box, top-left)
+			leftFoot = 0;
 			if (Hud::kEdgeHud && s.round > 0 && classChosen) {
 				// (Noah: "remake the Nights Survived and wave box on the top left UI so its higher quality and animated to match the
 				// Cursed essence box" - "Blood moon", "Ring round the emblem", "Blood red") no frame: a shadow fading out to the right,
@@ -1897,6 +1899,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const float wx = moon.x + hh + 16 * k;
 				const float w = wx + (waveOn ? std::max({ Measure(g_title, 15 * k, wave).x, Measure(g_body, 13 * k, sub).x, ev ? Measure(g_body, 11 * k, evLab).x : 0.0f }) : 0.0f);
 				const float foot = moon.y + hh + (s.waveTheme.empty() || !waveOn ? 10 : 30) * k;
+				leftFoot = foot;
 				if (waveOn) dl->AddRectFilledMultiColor({ 0, 0 }, { w + 70 * k, foot }, IM_COL32(0, 0, 0, 90), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 60));
 				else dl->AddCircleFilled(moon, hh * 1.6f, IM_COL32(0, 0, 0, 45), 40);
 				// the moon
@@ -2694,8 +2697,73 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					Txt(dl, g_body, 15 * k, { a.x + 14 * k, a.y + 100 * k }, Fade(IM_COL32(255, 200, 110, 255), std::min(1.0f, s.questNoteTime)), s.questNote);
 				}
 			}
+			// (Noah, 2026-11-26: "the Echo Altars Trials UI right under my compass, instead of it being there, it should be where other
+			// selected quests are ... on the top left of my screen under the Night Counter UI box. And that should be where all quests
+			// go. For normal Skyrim and our mod") one stack, top-left under the night's box: the trial under way (its name, what to do,
+			// its clock, a thin bar, the riddle), then each quest chosen in the journal with its open goals - Skyrim's and ours alike
+			if (Hud::kEdgeHud && !s.perkMenu && (!s.questTitle.empty() || !s.tracked.empty())) {
+				const float x = 30 * k, maxW = std::min(460 * k, size.x * 0.30f);
+				float y = std::max(leftFoot + 14 * k, 30 * k);
+				auto wrap = [&](ImFont* f, float px, const std::string& str, float w) {
+					std::vector<std::string> rows(1);
+					for (std::size_t p0 = 0, p1; p0 < str.size(); p0 = p1 + 1) {
+						p1 = str.find(' ', p0);
+						if (p1 == std::string::npos) p1 = str.size();
+						if (p1 <= p0) continue;
+						const std::string wd = str.substr(p0, p1 - p0);
+						if (!rows.back().empty() && Measure(f, px, rows.back() + " " + wd).x > w && rows.size() < 3) rows.emplace_back();
+						rows.back() += (rows.back().empty() ? "" : " ") + wd;
+					}
+					return rows;
+				};
+				auto block = [&](const std::string& title, const std::vector<std::string>& goals, const std::string& sub, float frac, bool warn) {
+					std::vector<std::vector<std::string>> gl;
+					float h = 26 * k;
+					for (const auto& g : goals) { gl.push_back(wrap(g_body, 16 * k, g, maxW - 18 * k)); h += 21 * k * gl.back().size(); }
+					const auto sl = sub.empty() ? std::vector<std::string>{} : wrap(g_body, 15 * k, sub, maxW - 18 * k);
+					h += 19 * k * sl.size() + (frac >= 0 ? 10 * k : 0.0f);
+					dl->AddRectFilledMultiColor({ 0, y - 6 * k }, { x + maxW + 50 * k, y + h + 4 * k }, IM_COL32(0, 0, 0, 95), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 95));
+					dl->AddLine({ x - 12 * k, y - 4 * k }, { x - 12 * k, y + h + 2 * k }, Fade(kGold, 0.75f), 2 * k);
+					Txt(dl, g_title, 18 * k, { x, y }, Fade(kGold, 0.95f), Upper(title), 1.5f * k, IM_COL32(0, 0, 0, 200));
+					float gy = y + 26 * k;
+					const bool blink = warn && std::fmod(now, 0.8f) < 0.4f;
+					for (const auto& rows : gl) {
+						const ImVec2 c{ x + 4 * k, gy + 9 * k };
+						const ImVec2 d[4] = { { c.x, c.y - 3.5f * k }, { c.x + 3.5f * k, c.y }, { c.x, c.y + 3.5f * k }, { c.x - 3.5f * k, c.y } };
+						dl->AddConvexPolyFilled(d, 4, Fade(kGold, 0.8f));
+						for (const auto& r : rows) {
+							Txt(dl, g_body, 16 * k, { x + 16 * k, gy }, blink ? IM_COL32(255, 96, 70, 255) : IM_COL32(225, 216, 196, 240), r, 1.2f * k, IM_COL32(0, 0, 0, 200));
+							gy += 21 * k;
+						}
+					}
+					if (frac >= 0) {
+						const float bw = std::min(maxW - 16 * k, 260 * k);
+						dl->AddRectFilled({ x + 16 * k, gy + 2 * k }, { x + 16 * k + bw, gy + 5 * k }, IM_COL32(20, 16, 12, 170));
+						dl->AddRectFilled({ x + 16 * k, gy + 2 * k }, { x + 16 * k + bw * std::clamp(frac, 0.0f, 1.0f), gy + 5 * k }, IM_COL32(214, 178, 96, 255));
+						gy += 10 * k;
+					}
+					for (const auto& r : sl) {
+						Txt(dl, g_body, 15 * k, { x + 16 * k, gy }, IM_COL32(190, 205, 235, 235), r, 1.2f * k, IM_COL32(0, 0, 0, 220));
+						gy += 19 * k;
+					}
+					y += h + 16 * k;
+				};
+				if (!s.questTitle.empty()) {
+					std::string line = s.questGoal;
+					if (s.questTimer >= 0) {
+						const int t = std::max(0, static_cast<int>(std::ceil(s.questTimer)));
+						line += "   " + std::to_string(t / 60) + ":" + (t % 60 < 10 ? "0" : "") + std::to_string(t % 60);
+					}
+					block(s.questTitle, { line }, s.questSub, s.questFrac, s.questWarn);
+				}
+				for (const auto& t : s.tracked) {
+					if (t.title == s.questTitle) continue;
+					block(t.title, t.goals, std::string(), -1.0f, false);
+					if (y > size.y * 0.62f) break;
+				}
+			}
 			// the trial under way at night: a slim line under the compass - its name, its count, its clock
-			if (!s.questTitle.empty() && !s.perkMenu) {
+			if (!Hud::kEdgeHud && !s.questTitle.empty() && !s.perkMenu) {
 				// (Noah: "the box displaying the current trial" sat over Edge UI's compass) below it
 				const float y0 = (Hud::kEdgeHud ? 158 : 100) * k, cxs = size.x * 0.5f;
 				const ImU32 warn = IM_COL32(255, 96, 70, 255);

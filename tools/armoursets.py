@@ -245,6 +245,22 @@ def first_person(cls):
         print(cls, sx, 'first person:', stems)
 
 
+# (Noah, 2026-11-26: "when I'm wearing the spellsword armor, it makes my character invisible" - the body under it gone) Skyrim
+# draws one addon per body slot of an armour: the cuirass's own addon and Skyrim's NakedTorso both claimed the body, so the
+# player's body never came. A cuirass that doesn't cover the arms and legs itself (the Spellsword's, Skyrim's Draugr armour,
+# whose arms and legs were its own skin, dropped for the player's body) wears its armour on a slot of its own (58), the body
+# keeping slot 32 for NakedTorso - src/../tools/gen_esp.py gives that addon slot 58
+OWN_SLOT = {('spellsword', 'cuirass'): 58}
+
+
+def own_slot():
+    for (cls, piece), slot in OWN_SLOT.items():
+        for f in (OUT / cls).glob(f'{piece}_[mf]_t[0-3]_[01].nif'):
+            tmp = f.with_suffix('.part.nif')
+            subprocess.run([str(A.TOOLS / 'setpart'), str(f), str(tmp), str(slot)], check=True, capture_output=True)
+            tmp.replace(f)
+
+
 def zero_bounds():
     """(2026-11-24: the sleeves culled in first person) every skinned shape's bounding sphere left empty, as Skyrim's own armour
     keeps it (nifly works one out round the bind pose on save) - tools/modelconv/zerobounds.cpp"""
@@ -259,9 +275,11 @@ if __name__ == '__main__':
             for o in ex.map(one, list(jobs(classes))): pass
     if '--first-person' in sys.argv:
         for cls in classes: first_person(cls)
+        own_slot()
         zero_bounds()
         raise SystemExit
     made = {}
     for cls in classes: tiers(cls, made)
     for cls in classes: first_person(cls)
+    own_slot()
     zero_bounds()

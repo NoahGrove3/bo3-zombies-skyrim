@@ -366,6 +366,13 @@ def final_parts(ab, pk, opts, plays):
     o = next((x for x in info['opts'] if x['id'] == pk.get('opt', 'a1')), info['opts'][0]) if info else None
     parts = [dict(p) for p in (o['parts'] if o else [])]
     if card == 'volsung_heavy': parts = [p for p in parts if 'mist' not in p['model']] or parts[:1]
+    # (Noah, 2026-11-26: "the Mistblade looks good, but the heavy attack should be an area of effect, like a mist, not a rectangle of
+    # the mist effect") a cloud that rolls out over the ground: the gas trap's spreading bank and the ash spawn's billow, in pale
+    # grey-white, the ghost's flash at its heart
+    if card == 'nahkriin_heavy': parts = [dict(model='effects\\fxgastrapblast.nif', s=1.5, delay=0, ground=True, pal='white', fixed=True),
+                                          dict(model='dlc02\\effects\\poisongasexplosion.nif', s=1.1, delay=0.06, ground=True, pal='white', fixed=True),
+                                          dict(model='effects\\fxgastrapblast.nif', s=2.1, delay=0.35, ground=True, pal='white', fixed=True),
+                                          dict(model='effects\\impacteffects\\fxghostimpact.nif', s=0.67, delay=0.08, ground=False)]
     if card == 'bonereaper_kill': parts = [dict(model='magic\\summontargetfx.nif', s=1.2, delay=0, ground=False, nat=True, label="Skyrim: the conjuring portal")]
     k, area = pk.get('size', 100) / 100.0, pk.get('area', 100) / 100.0
     speed = max(0.2, pk.get('speed', 100) / 100.0)
@@ -380,14 +387,18 @@ def final_parts(ab, pk, opts, plays):
     for p in parts:
         m = p['model'].lower()
         opt = []
-        if not ((p.get('nat') or native) and 'labyrinthianshockwave' not in m): opt.append(f'pal={ramp}')
-        s = p['s'] * k * (area if p.get('ground') else 1.0)
+        if p.get('pal'): opt.append(f'pal={p["pal"]}')
+        elif not ((p.get('nat') or native) and 'labyrinthianshockwave' not in m): opt.append(f'pal={ramp}')
+        s = p['s'] * (1.0 if p.get('fixed') else k * (area if p.get('ground') else 1.0))
         opt.append(f's={s:.2f}')
         if p.get('delay'): opt.append(f'delay={p["delay"] / speed:.2f}')
         if p.get('ground'): opt.append('ground')
         if plays.get(m) or m.startswith(('apocnew\\', 'magus\\')) and plays.get(m) is not False: opt.append('play')
         if abs(pk.get('bright', 100) - 100) > 0.5: opt.append(f'bright={pk["bright"] / 100:.2f}')
         if abs(pk.get('light', 100) - 100) > 0.5: opt.append(f'light={pk["light"] / 100:.2f}')
+        # (Noah, 2026-11-26: "the beam is not coming from the sky. It's rotating around on the ground sideways") Auriel's sunbeam runs
+        # down its own +Y (the bow's shot): stood up on end, a shaft of light from the sky
+        if 'aurielsunbeam' in m: opt.append('r=-90,0,0')
         out.append(f'{m} ' + ' '.join(opt))
     return out
 
@@ -403,6 +414,9 @@ def build_final():
     lines, n = [], 0
     for ab in abil:
         pk = picks.get(ab['card'])
+        # (Noah, 2026-11-26, the doc's decision "Where the javelin lands": "Each element its own") his Flame Burst is the fire
+        # javelin's landing; every other element lands in its own colour, as built
+        if ab['owner'].startswith('fly_') and ab['owner'] not in ('fly_fire',): pk = None
         if pk and pk.get('choice') == 'change':
             parts = final_parts(ab, pk, opts, plays); n += 1
             area = pk.get('area', 100)
@@ -411,7 +425,7 @@ def build_final():
             if area != 100: lines.append(f'CurseOfAlduin\\fx\\w\\{ab["owner"]}_area.nif = none area={area / 100:.2f}')
         else:
             parts = compose(ab)
-            lines.append(f'CurseOfAlduin\\fx\\w\\{ab["owner"]}_burst.nif = ' + ' ; '.join(f'{p["model"]} {p["opts"]}' for p in parts))
+            lines.append(f'CurseOfAlduin\\fx\\w\\{ab["owner"]}_burst.nif = ' + ' ; '.join(f'{p["model"]} {p["opts"]}' + (' r=-90,0,0' if 'aurielsunbeam' in p['model'].lower() else '') for p in parts))
     txt = FXMAP.read_text()
     txt = txt[:txt.index(MARK0)].rstrip('\n') + '\n'
     block = ['', MARK0,
