@@ -2,7 +2,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="artifact-thumbnail" href="thumb.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Jost:wght@300;400;500;600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap">
 <style>
 __CSS__
 </style>
@@ -141,9 +141,10 @@ __CSS__
 
   <section class="tab" id="ui" hidden>
     <h2>UI</h2>
-    <p class="sub">Your answers: the round counter shown here first, and the ultimate meter "right above the perks, centred, only when wielding a weapon with an ultimate unlocked". These are the first two pieces of the full UI tab (every Skyrim menu in the Untarnished style with our twist), which comes with the ability remake. Pick one counter and say what to change.</p>
+    <p class="sub">Every place The Curse of Alduin draws its own screen, previewed for your OK: the HUD during a night, the pop-ups, the Echo Altar and its menus, and Skyrim's own menus re-skinned to match. One style throughout, from your notes: Edge UI's clean, flat, scaled-up look in its own face (Jost), thin lines and quiet dark glass, with a little Skyrim (gold rules, a dragon-script accent) and the Curse's red only where something is dangerous. Your round counter pick (Plain number) is in it, smaller and in the same face, and the ultimate bar has no label. Mark each: Approve, or Change with a note.</p>
     <p class="status" id="uistatus"></p>
-    <div id="uigrid" class="wgrid"></div>
+    <div class="row" id="uifilter" style="flex-wrap:wrap;margin:6px 0 12px"></div>
+    <div id="uigrid" class="uigrid"></div>
   </section>
 
   <section class="tab" id="nexus" hidden>

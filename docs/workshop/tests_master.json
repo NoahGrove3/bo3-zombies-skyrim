@@ -1,6 +1,41 @@
 [
  [
-  "This build (Nov 26, your doc changes)",
+  "This build (Nov 26 afternoon, your decisions)",
+  [
+   {
+    "id": "a4_n5",
+    "t": "Night 5 has a boss again",
+    "how": "Tester's Kit: jump to night 5 (try two new games).",
+    "look": "One of your kept mini-bosses (Giant Brute, Minotaur Lord, Ogrim Lord or the Plague Dragon) leads night 5; it can differ between games."
+   },
+   {
+    "id": "a4_soul",
+    "t": "A soul torn out",
+    "how": "Kill the dead with the Shadowflame Scythe, the Soulcaller or your class weapon; then with an iron sword.",
+    "look": "Shadow, spirit and arcane kills: a white beam and burst rise from the body with Alduin's soul sound. The iron sword's kills: nothing extra."
+   },
+   {
+    "id": "a4_hunter",
+    "t": "The loud are hunted",
+    "how": "Make noise (cast, sprint) until the noise meter fills.",
+    "look": "A Deranged Zombie runs at you: fast, tougher than the rest."
+   },
+   {
+    "id": "a4_mods",
+    "t": "The game starts without the 20 mods",
+    "how": "Launch with _Play The Curse of Alduin and start or load a game.",
+    "look": "No missing-master message; the world, dungeons and your weapons as before; no Restless Dead or Populated Dungeons spawns."
+   },
+   {
+    "id": "a4_wild",
+    "t": "World creatures still there",
+    "how": "Walk the wilds near Whiterun and Riverwood.",
+    "look": "The High Fantasy creatures still show up (that pack stays on until you decide)."
+   }
+  ]
+ ],
+ [
+  "Last build (Nov 26, your doc changes)",
   [
    {
     "id": "e9_enemies",
@@ -47,7 +82,7 @@
   ]
  ],
  [
-  "This build (Nov 26, fixes): what you marked",
+  "Earlier build (Nov 26, fixes): what you marked",
   [
    {
     "id": "fx_mutagen1st",
@@ -154,7 +189,7 @@
   ]
  ],
  [
-  "This build (Nov 26): your picks and the Tester's Kit",
+  "Earlier build (Nov 26): your picks and the Tester's Kit",
   [
    {
     "id": "kit",

@@ -36,15 +36,15 @@
  ],
  [
   "feel",
-  "No hit-stop or shake on melee hits",
-  "Hits pass through; shakes only on big events. The Hit feel tab is the fix.",
-  "doing",
+  "Hit feel set to your picks",
+  "You picked no hit pause and no shake on melee hits; that's in the game since Nov 26.",
+  "fixed",
   "game"
  ],
  [
   "deaths",
   "One death for every kill",
-  "Fire, frost and shock kills use the FEC mod's bodies; everything else falls the same. The dead tab is the fix.",
+  "Your first own death is in (shadow, spirit and arcane kills tear the soul out); fire, frost and shock still use FEC's bodies until ours replace them. Order: see Decisions.",
   "doing",
   "game"
  ],
