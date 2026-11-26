@@ -47,18 +47,24 @@ for k, n, w, nt in EL:
     cls.append(it(k, 'Spellbound Rapier · ' + n, f'cls_dragonbonerapier_{k}', 'Spellsword, ' + w, nt, look=look, col=col, tiers=rt))
 cls.append(it('slayer', 'Dragon Slayer', 'cls_dragonslayer_slayer', 'The Spellsword\'s wonder'))
 WC.append({'id': 'class', 'name': 'Class weapons', 'sub': 'One look per weapon across all its tiers; each tier\'s model is fitted on its own. The Spellbound Rapier\'s look follows the spell in your other hand, so each element is its own card.', 'items': cls})
+WC.append({'id': 'wonders', 'name': 'Wonders', 'sub': 'New: their own effects on the whole weapon (you asked for them on the Mutagen Staff, the Soulcaller and the javelin). Five looks each; the first is in the game now.', 'items': [
+    it('flaskweap_philosopher', 'Mutagen Staff', 'flaskweap_philosopher', "The Alchemist's wonder", 'On its head: the brass, the glass and the orb.'),
+    it('soulcaller', "Soulcaller's Staff", 'soulcaller', "The Summoner's wonder", 'On its glass head.'),
+    it('javelin', 'Wyrmspine Javelin', 'javelin', "Destruction's wonder", 'On its bone head. The model is remade: a solid core, the bones overlapping, a finer mesh.')]})
 WC.append({'id': 'bane', 'name': "Alduin's Bane", 'sub': 'The last weapon.', 'items': [it('fang', "Alduin's Bane", 'fang', 'The Hall of the Awakened', 'Its model is still Light Greatswords\'; ours replaces it.')]})
 
 TESTS = json.load(open('/home/claude/bo3-zombies-skyrim/docs/workshop/tests_master.json'))
 
 RECS = [
-    {'id': 'elixir', 't': "The Mutagen Staff's Elixir", 'd': "You asked when it's cast. In this build it never is: block throws the six flasks, and nothing on the staff casts the Elixir (its golden burst belonged to the old Philosopher's Flask). Where should it go?", 'opts': ['On a power attack', 'Hold block 2 s', 'Its own power', 'Leave it out']},
-    {'id': 'headburst', 't': 'Headshot feedback off', 'd': "Off took away the tick and the white flash, and with them the head bursting on a headshot kill. Keep it that way?", 'opts': ['Yes, all of it off', 'Bring the head burst back']},
-    {'id': 'javland', 't': 'Where the javelin lands', 'd': "Your Flame Burst is fire whatever the javelin's element (its parts can't be recoloured). Keep it?", 'opts': ['Yes, fire for all', "Each element its own"]},
-    {'id': 'next', 't': 'After your test', 'd': 'What first in the next build?', 'opts': ['Fix what I marked', 'More looks and abilities', 'Big nights', 'Toward the Nexus release']},
+    {'id': 'hitfeel', 't': 'Hit pause: on or off?', 'd': "In the last doc you set all three weapon groups to no pause and no shake (about 20 minutes before you wrote that hit feel is perfect as is), but you also picked 'Pause only you and it'. The game still has your earlier pause (heavier weapons longer), now only on you and what you hit. Which do you want?", 'opts': ['Keep the pause as in the game', 'No pause, no shake (as the doc says)', 'A lighter pause']},
+    {'id': 'lightning', 't': 'The lightning look in game', 'd': "You saw a different look on the Spellbound Rapier with shock and on the Storm Blade than the one you picked (shock: Spark Runes, ice-blue; Storm Blade: its third look, blue). What was different?", 'opts': ['The colour', 'The shape (sparks vs runes)', 'A different effect on top', 'No effect at all']},
+    {'id': 'ultimate', 't': 'The ultimate meter', 'd': "Tier III's ultimate fires from a meter that kills fill; a heavy attack with it full fires it. Where should the meter show?", 'opts': ['Under the crosshair', 'Beside the health bar', 'Round the night box', 'On the weapon itself (glow)']},
+    {'id': 'bo3anim', 't': 'BO3-style movement and attacks', 'd': "Sprinting, sliding and simpler attacks. Your game already has SkyParkour's slide installed. Which way?", 'opts': ['Make our own (slide, sprint, simple swings)', 'Find a mod on the Nexus for me to pick', 'Our own slide on SkyParkour, a mod for attacks', 'Later']},
+    {'id': 'roundui', 't': 'The new round counter', 'd': 'Remade cleaner and simpler in the Untarnished UI style with our twist. Should it be in the next build, or shown here first?', 'opts': ['Here first', 'Straight in the game']},
 ]
 
 RECENT = [
+    ['Nov 26, morning', ['<b>Your test marks fixed</b>: the Spellsword body, teleporting, see-through scythes, the javelin, dragons at half size and flying freely, the floating dead, the radiant sunbeam, the Mistblade mist, the trial rings and the altar\'s voice.', '<b>New</b>: effects on the Mutagen Staff, Soulcaller and javelin; a Diverse Dragons pick for every dragon; keep or swap any of the dead; a progress bar on the Road to Nexus.']],
     ['Nov 26', ['<b>Every pick of yours in the game</b>: the looks, the 58 abilities (area is their reach now), sounds at 20% (Skyrim\'s own weapon sounds too, and the flasks), hit feel, markers off, the last kill slow, heavies throwing the body, the trials, big nights.', '<b>The Tester\'s Kit</b>: a power, only with CurseOfAlduin_Test.ini in SKSE\\Plugins: any class at any tier, the relics and wonders, the night now or at 5/10/15/20, god mode, endless magicka and stamina, points, the dead and the trials.', 'Your notes: Volsung\'s smoke gone, the javelin bare in flight, the Bonereaper\'s summon flash.']],
     ['Nov 25, night', ['<b>Simple cards</b>: every list small, a click opens the preview beside all its options on one screen.', '<b>Sounds</b>: every weapon\'s draw, swing, heavy and hit and every ability\'s cast, impact and linger - five real options each, playable, tunable.',
                         '<b>Hit feel</b>, <b>the dead\'s deaths</b>, <b>the Echo Altar\'s trials in 3D</b>, <b>big nights</b> from your own game\'s numbers, and an <b>Issues</b> list.', 'Your picks from the last doc carried over; the Dragon Priest scythe\'s blade from the staff\'s head.']],
@@ -87,12 +93,16 @@ _MN = _json.load(open('/home/claude/bo3-zombies-skyrim/docs/workshop/modnow.json
 MODNOW = _MN['sections']
 NEXUS = _json.load(open('/home/claude/bo3-zombies-skyrim/docs/workshop/nexus.json'))['groups']
 CHANGES = [
-    ['Installed', 'Your picks, all at once', 'The test build is in your game: every look, ability, sound, feel, death, trial and big-night pick you made in the last doc, which carried over here as you left them.', 'ok'],
-    ['Tester', "The Tester's Kit", "Cast it from your Powers. It is there while Data/SKSE/Plugins/CurseOfAlduin_Test.ini exists (I put one in). Delete that file and the power is gone.", 'ok'],
-    ['Sounds', 'At 20%', "Every ability's picked sound at 20%, Skyrim's own draw, sheathe, swing and impact sounds at 20% for every weapon, and the flasks too.", 'ok'],
-    ['Not yet', 'Linger loops and pitch', "A sound that lingers (Cinderclaws' embers) and the pitch slider don't carry into the game yet: those play as before.", 'warn'],
-    ['Not yet', 'The seals radius', "The game has no radius for Break the Priest's Seals, so your 460 changes nothing there.", 'warn'],
-    ['Question', 'The Elixir', "It isn't cast anywhere in this build: see Decisions.", 'warn'],
+    ['Fixed', 'The Spellsword body', 'The armour and your body both claimed the body slot; the cuirass is on its own slot now, so your body shows under it.', 'ok'],
+    ['Fixed', 'No more teleporting', 'The hit pause slowed the whole world; now only you and what you hit pause, as you picked. Ragdoll at half strength (Alduin\'s Bane as it was).', 'ok'],
+    ['Fixed', 'See-through scythes', 'All nine scythe blades (and the Bonereaper\'s skull) were built inside out, so you saw through them. Turned the right way.', 'ok'],
+    ['Fixed', 'Dragons', 'Every dragon at half size. A dragon boss flies as Skyrim flies it (it was being sent into the sky and dropped like the ground Wyrm); its breath burns on the ground near you and the dead it calls rise on the ground. That was the floating dead.', 'ok'],
+    ['Fixed', 'The javelin', 'Solid shaft with no gaps, finer model, the wrist straight while you charge, gone from your hand until it returns, no burst on return, throw only.', 'ok'],
+    ['New', 'Whole-weapon effects', 'The Mutagen Staff, the Soulcaller and the javelin wear their own effects: five looks each in Weapon looks.', 'ok'],
+    ['New', 'Dragons and the dead', 'In The dead: pick the Diverse Dragons kind and level for every dragon role, and mark any enemy to keep, swap or remove.', 'ok'],
+    ['Maybe', 'Mutagen Staff in first person', 'It still had Skyrim\'s staff keywords, which can change how it is held; taken off. Tell me if it still sits wrong.', 'warn'],
+    ['Question', 'The lightning look', 'I need to know what was different: see Decisions.', 'warn'],
+    ['Next', 'Abilities remade', 'The new ladder (Tier I light, II heavy, III an ultimate from a kill meter), the Rapier\'s lance, the Arcane Maul\'s runes, the Nordic Storm Blade, and the UI previews come in the next doc.', 'warn'],
 ]
 ABJ = json.load(open('/home/claude/bo3-zombies-skyrim/docs/workshop/abilities.json'))
 AB_PARTS = {}
@@ -145,7 +155,7 @@ for v in SOUNDS['sounds'].values(): v.pop('files', None)
 import glob as _g
 _old = '/tmp/claude-0/-home-claude/0ec68033-d637-57d9-8f95-48d7c09e98c8/scratchpad/db_2b/'
 CARRY = {'abilities': json.load(open(WD + 'ability_picks2.json')), 'weaponlooks': {}, 'scythes': {}}
-_now = '/tmp/claude-0/-home-claude/0ec68033-d637-57d9-8f95-48d7c09e98c8/scratchpad/db_8m/'   # (the last doc, 8maGoe7NgRkTLAWtUFrtir: every pick)
+_now = '/tmp/claude-0/-home-claude/0ec68033-d637-57d9-8f95-48d7c09e98c8/scratchpad/db_merge/'   # (the last two docs, 8maGoe7NgRkTLAWtUFrtir and 7HRQonZH3WfbTd1bQF2HrF: every pick, the later winning)
 for f in _g.glob(_old + 'weaponlooks/*.json'):
     r = json.load(open(f)); r['choice'] = 'keep'; r['note'] = r.get('note', ''); CARRY['weaponlooks'][r['id']] = r
 for f in _g.glob(_old + 'scythes/*.json'):
@@ -158,9 +168,19 @@ for f in _g.glob(_now + '*/*.json'):
 for k, r in CARRY['abilities'].items(): r.setdefault('id', k)
 SNDFILES = sorted({m for v in SOUNDS['sounds'].values() for m in v['mp3']})
 json.dump(SNDFILES, open(str(H / 'sndfiles.json'), 'w'))
+_dd = {}
+for _l in open(WD + 'dd_list.txt'):
+    _id, _ed = _l.split()
+    import re as _re
+    _m = _re.match(r'ogdd_EncDragon([A-Za-z]+)(\d+)$', _ed)
+    if _m: _dd.setdefault(_m.group(1), []).append([int(_m.group(2)), _id[2:]])
+DRAGONS = {'kinds': {k: sorted(v) for k, v in sorted(_dd.items())}}
+_EN = json.load(open('/home/claude/bo3-zombies-skyrim/sheets/enemies.json'))
+_rows = _EN['rows'] if isinstance(_EN, dict) and 'rows' in _EN else _EN
+FOES = [{'id': r['id'], 'label': r['label'], 'plugin': r['plugin'], 'kind': r.get('kind', ''), 'minRound': r.get('minRound', 0), 'edid': r.get('editorId', '')} for r in _rows if r.get('minRound', 99) < 99 or r['id'].startswith(('mb_', 'priest_', 'wyrm_', 'echo_', 'boss', 'herald', 'knight', 'lich'))]
 s = (H / 'index.tpl.html').read_text()
 js = (H / 'data.js').read_text().replace('__SHA__', SHA).replace('__COLS__', J(W.COL)).replace('__WCATS__', J(WC)).replace('__TESTS__', J(TESTS)).replace('__RECS__', J(RECS)) \
-    .replace('__RECENT__', J(RECENT)).replace('__MODNOW__', J(MODNOW)).replace('__MODNOW_ABOUT__', J(_MN['about'] + ' Last updated: ' + _MN['updated'] + '.')).replace('__NEXUS__', J(NEXUS)).replace('__CHANGES__', J(CHANGES)).replace('__LOOK3__', J({k: [[o['name'], o['desc']] for o in v] for k, v in WL.LOOKS3.items()})).replace('__AB_PARTS__', J(AB_PARTS)).replace('__REALFX__', J(REALFX)).replace('__AB_PICKS__', J(json.load(open('/home/claude/bo3-zombies-skyrim/docs/workshop/ability_picks.json')))).replace('__SCY__', J(SCY)).replace('__CARRY__', J(CARRY)).replace('__SOUNDS__', J(SOUNDS)).replace('__FEEL__', J(FEEL)).replace('__TRIALS__', J(TRIALS)).replace('__DEATHS__', J(DEATHS)).replace('__PERF__', J(PERF)).replace('__ISSUES__', J(ISSUES))
+    .replace('__RECENT__', J(RECENT)).replace('__MODNOW__', J(MODNOW)).replace('__MODNOW_ABOUT__', J(_MN['about'] + ' Last updated: ' + _MN['updated'] + '.')).replace('__NEXUS__', J(NEXUS)).replace('__CHANGES__', J(CHANGES)).replace('__LOOK3__', J({k: [[o['name'], o['desc']] for o in v] for k, v in WL.LOOKS3.items()})).replace('__AB_PARTS__', J(AB_PARTS)).replace('__REALFX__', J(REALFX)).replace('__AB_PICKS__', J(json.load(open('/home/claude/bo3-zombies-skyrim/docs/workshop/ability_picks.json')))).replace('__SCY__', J(SCY)).replace('__CARRY__', J(CARRY)).replace('__SOUNDS__', J(SOUNDS)).replace('__FEEL__', J(FEEL)).replace('__TRIALS__', J(TRIALS)).replace('__DEATHS__', J(DEATHS)).replace('__PERF__', J(PERF)).replace('__ISSUES__', J(ISSUES)).replace('__DRAGONS__', J(DRAGONS)).replace('__FOES__', J(FOES))
 js += '\n' + (H / 'real.js').read_text() + '\n' + (H / 'zombies.js').read_text() + '\n' + (H / 'app.js').read_text() + '\n' + (H / 'fx2.js').read_text() + '\n' + (H / 'ui.js').read_text() + '\n' + (H / 'sounds.js').read_text() + '\n' + (H / 'extra.js').read_text()
 s = s.replace('__CSS__', (H / 'style.css').read_text()).replace('__JS__', js).replace('__SHA__', SHA).replace('__DATE__', 'NOV 26, 2026').replace('__INSTALL__', INSTALL).replace('__SKBASE__', SKBASE)
 (H / 'page.html').write_text(s)

@@ -76,6 +76,14 @@ __CSS__
     <p class="sub" id="ensub"></p>
     <p class="status" id="enstatus">Loading your picks…</p>
     <div class="wgrid" id="engrid"></div>
+    <h2 style="margin-top:18px">The dragons</h2>
+    <p class="sub">Every dragon of ours is one of Diverse Dragons Collection's: 28 kinds, each at seven levels (1 the youngest, 7 the greatest). Pick the kind and level for each role. In game every dragon is now <b>half its size</b>, as you asked. <b>My pick</b> is marked; what's in the game now is shown on each.</p>
+    <p class="status" id="ddstatus"></p>
+    <div id="dragons" style="display:grid;gap:10px"></div>
+    <h2 style="margin-top:18px">The night's dead: keep or swap</h2>
+    <p class="sub">Every enemy the nights can send, in the order they first come. Mark any you want swapped and say for what; I'll find it in your mods.</p>
+    <p class="status" id="fstatus"></p>
+    <div id="foes" style="display:grid;gap:6px"></div>
   </section>
 
   <section class="tab" id="trials" hidden>
@@ -125,6 +133,7 @@ __CSS__
   <section class="tab" id="nexus" hidden>
     <h2>Road to Nexus</h2>
     <p class="sub">Everything between now and a Nexus release, so nothing gets lost. I update it every build; you can mark any line yourself and leave a note, and I'll read them.</p>
+    <div class="bar" id="nbar" role="progressbar" aria-label="Road to Nexus" aria-valuemin="0" aria-valuemax="100"><i></i></div>
     <div class="progress" id="nprog"></div>
     <p class="status" id="nstatus"></p>
     <div id="nlist" style="display:grid;gap:14px"></div>

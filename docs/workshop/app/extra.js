@@ -275,3 +275,55 @@ ${tr.common ? '' : `<div class="stage"><canvas aria-label="${esc(tr.title)}, liv
   box.addEventListener('change', e => { if (e.target.tagName === 'TEXTAREA') save(e.target.closest('.test').dataset.id, { note: e.target.value.slice(0, 2000) }); });
   paint(); DB.on('issues', (d, err) => { if (err) { st.textContent = err === 'offline' ? 'Adding and marking issues works when this page is opened in Claude.' : ''; return; } st.textContent = ''; if (!box.contains(document.activeElement)) paint(); });
 })();
+
+
+// ---------------------------------------------------------------- the dragons: which of Diverse Dragons' kinds and levels plays each role
+(function () {
+  const box = $('#dragons'), st = $('#ddstatus'); if (!box) return;
+  const ROLES = [
+    ['herald', "Grimmvar, Alduin's Herald", 'The boss every 10th night.', 'Dark', 1, 'Dark', 3, 'A Dark dragon fits Alduin\'s herald; level 3 so night 10 has a real fight.'],
+    ['boss4', "Grahzah, Alduin's Grave-Wing", 'The boss every 5th night from night 20.', 'Necro', 1, 'Necro', 4, 'The Necro dragon is the undead one; level 4 for night 20 and on.'],
+    ['mini', 'Mini-boss dragon (new)', 'A dragon among the mini-bosses, from night 15. None today.', '', 0, 'Plague', 2, 'A smaller, sickly dragon reads as lesser than the bosses.'],
+    ['wyrm_slen', 'Slenvahrin, the Flesh-Wyrm', 'Act III: the first word, SLEN (flesh).', 'Sanguine', 7, 'Sanguine', 7, 'Blood-red for flesh.'],
+    ['wyrm_tiid', 'Tiidrah, the Time-Wyrm', 'Act III: the second word, TIID (time).', 'Lunar', 7, 'Aether', 7, 'Aether\'s ghostly blue reads more like time slipping than Lunar\'s silver.'],
+    ['wyrm_vo', 'Vonahlok, the Undoing', 'Act III: the third word, VO (undo).', 'Otherworld', 7, 'Otherworld', 7, 'Otherworld fits undoing.'],
+    ['echo_alduin', 'The Echo of Alduin', 'Act IV, on the Throat of the World.', 'Dark', 7, 'Dark', 7, 'Black like Alduin, at the greatest level.'],
+  ];
+  const kinds = Object.keys(DRAGONS.kinds);
+  const get = r => Object.assign({ kind: r[3] || 'none', lvl: r[4] || 1 }, DB.get('dragons', r[0]) || {});
+  box.innerHTML = ROLES.map(r => `<div class="card" data-id="${r[0]}"><div class="ddrow"><div><b>${esc(r[1])}</b><p class="note">${esc(r[2])} In game now: <b>${r[3] ? esc(r[3]) + ' ' + r[4] : 'none'}</b>. My pick: <b>${esc(r[5])} ${r[6]}</b> - ${esc(r[7])}</p></div>
+<label>Kind <select data-k="kind">${(r[0] === 'mini' ? ['none'] : []).concat(kinds).map(k => `<option value="${k}">${k === 'none' ? 'None' : esc(k)}</option>`).join('')}</select></label>
+<label>Level <select data-k="lvl">${[1, 2, 3, 4, 5, 6, 7].map(n => `<option value="${n}">${n}</option>`).join('')}</select></label></div>
+<div class="row" style="margin-top:6px"><button class="btn sm" data-rec="1">Use my pick</button><span class="saved"></span></div>
+<textarea rows="1" placeholder="A note (optional)" aria-label="Note on ${esc(r[1])}"></textarea></div>`).join('');
+  function paint() { box.querySelectorAll('.card').forEach(el => { const r = ROLES.find(q => q[0] === el.dataset.id), s = get(r), saved = DB.get('dragons', r[0]);
+    $('[data-k=kind]', el).value = s.kind; $('[data-k=lvl]', el).value = String(s.lvl);
+    $('.saved', el).textContent = saved ? `Saved: ${saved.kind === 'none' ? 'none' : saved.kind + ' ' + saved.lvl}` : '';
+    const ta = $('textarea', el); if (document.activeElement !== ta) ta.value = saved && saved.note || ''; }); }
+  async function save(el, patch) { const r = ROLES.find(q => q[0] === el.dataset.id), s = get(r);
+    const row = Object.assign({ id: r[0], role: r[1], kind: s.kind, lvl: +s.lvl, note: $('textarea', el).value.slice(0, 2000) }, patch);
+    const k = DRAGONS.kinds[row.kind]; row.form = k ? (k.find(([n]) => n === +row.lvl) || [])[1] || '' : '';
+    try { await DB.set('dragons', r[0], row); saveMsg(st, null); } catch (e) { saveMsg(st, e); } paint(); }
+  box.addEventListener('change', e => { const el = e.target.closest('.card'); if (!el) return;
+    if (e.target.dataset.k) save(el, { [e.target.dataset.k]: e.target.dataset.k === 'lvl' ? +e.target.value : e.target.value }); else save(el, {}); });
+  box.addEventListener('click', e => { const b = e.target.closest('button[data-rec]'); if (!b) return; const el = b.closest('.card'), r = ROLES.find(q => q[0] === el.dataset.id); save(el, { kind: r[5], lvl: r[6] }); });
+  paint(); DB.on('dragons', (d, err) => { if (err) { st.textContent = err === 'offline' ? 'Saving works when this page is opened in Claude.' : ''; return; } paint(); });
+})();
+
+// ---------------------------------------------------------------- the night's dead: keep or swap
+(function () {
+  const box = $('#foes'), st = $('#fstatus'); if (!box) return;
+  const list = FOES.slice().sort((a, b) => (a.minRound || 0) - (b.minRound || 0));
+  box.innerHTML = list.map(f => `<div class="frow" data-id="${f.id}"><div><b style="font-weight:600">${esc(f.label)}</b> <span class="note">· ${f.minRound >= 99 ? 'story or special' : 'from night ' + (f.minRound || 1)} · ${esc(f.plugin.replace(/\.es[mp]$/, ''))}</span></div>
+<span class="row"><button class="chip" data-c="keep" aria-pressed="false">Keep</button><button class="chip" data-c="swap" aria-pressed="false">Swap</button><button class="chip" data-c="remove" aria-pressed="false">Remove</button></span>
+<textarea rows="1" style="grid-column:1/-1" placeholder="Swap for what, or a note (optional)" aria-label="Note on ${esc(f.label)}"></textarea></div>`).join('');
+  function paint() { const d = DB.all('foes'); box.querySelectorAll('.frow').forEach(el => { const s = d[el.dataset.id];
+    el.querySelectorAll('[data-c]').forEach(b => b.setAttribute('aria-pressed', String(!!s && s.choice === b.dataset.c)));
+    const ta = $('textarea', el); if (document.activeElement !== ta) ta.value = s && s.note || ''; });
+    const v = Object.values(d); st.textContent = v.length ? `${v.filter(x => x.choice === 'swap').length} to swap, ${v.filter(x => x.choice === 'remove').length} to remove, ${v.filter(x => x.choice === 'keep').length} kept.` : `${list.length} enemies; none marked yet.`; }
+  async function save(el, patch) { const f = list.find(q => q.id === el.dataset.id), prev = DB.get('foes', f.id) || {};
+    try { await DB.set('foes', f.id, Object.assign({ id: f.id, label: f.label, choice: prev.choice || 'keep', note: $('textarea', el).value.slice(0, 2000) }, patch)); saveMsg(st, null); } catch (e) { saveMsg(st, e); } paint(); }
+  box.addEventListener('click', e => { const b = e.target.closest('button[data-c]'); if (b) save(b.closest('.frow'), { choice: b.dataset.c }); });
+  box.addEventListener('change', e => { if (e.target.tagName === 'TEXTAREA') save(e.target.closest('.frow'), {}); });
+  paint(); DB.on('foes', (d, err) => { if (err) return; paint(); });
+})();

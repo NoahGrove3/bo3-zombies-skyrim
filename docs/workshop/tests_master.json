@@ -1,5 +1,112 @@
 [
  [
+  "This build (Nov 26, fixes): what you marked",
+  [
+   {
+    "id": "fx_mutagen1st",
+    "t": "Mutagen Staff in first person",
+    "how": "Kit: Alchemist at Tier I, draw the Mutagen Staff in first person, swing it.",
+    "look": "It sits in your hands as Animated Armoury's Dwarven Quarterstaff does. (Its staff keywords are off; if it still sits wrong, tell me how: too far, turned, too low.)"
+   },
+   {
+    "id": "fx_ssbody",
+    "t": "Spellsword armour body",
+    "how": "Kit: Spellsword at each tier, look at yourself in third person.",
+    "look": "Your body shows under the cuirass; no gaps."
+   },
+   {
+    "id": "fx_setinv",
+    "t": "Class sets in the inventory",
+    "how": "Open the inventory on each class set piece; drop one.",
+    "look": "Each piece shows a model in the inventory and on the ground."
+   },
+   {
+    "id": "fx_hitstop",
+    "t": "Hit pause and no teleporting",
+    "how": "Fight 30 of the dead with light and heavy attacks.",
+    "look": "Only you and what you hit pause; no enemy jumps from where it stood."
+   },
+   {
+    "id": "fx_ragdoll",
+    "t": "Ragdoll at half strength",
+    "how": "Heavy attacks and blasts on the dead; then Alduin's Bane.",
+    "look": "Bodies fly about half as far as before; Alduin's Bane as before."
+   },
+   {
+    "id": "fx_scythes",
+    "t": "Scythes solid",
+    "how": "Kit: Tablet weapons; look at the Wyrmtooth, Bonereaper, Silver Reaping and Bloodmoon scythes from every side; the Alchemist's Shadowflame Scythe at each tier.",
+    "look": "Solid blades from both sides, no see-through faces (they were inside out)."
+   },
+   {
+    "id": "fx_jav",
+    "t": "The javelin",
+    "how": "Kit: the wonders. Hold to charge, look around, throw; watch it bounce and come back.",
+    "look": "No twisted wrist; the shaft solid with no gaps; it leaves your hand till it returns; no burst when it comes back; no light attack; its new effect on its head."
+   },
+   {
+    "id": "fx_wfx",
+    "t": "Effects on the Mutagen Staff and Soulcaller",
+    "how": "Draw each.",
+    "look": "A green-violet glow on the Mutagen Staff's head; soul wisps on the Soulcaller's glass head."
+   },
+   {
+    "id": "fx_dragons",
+    "t": "Dragons",
+    "how": "Kit: night 20 (Grahzah); and any dragon in the world.",
+    "look": "Every dragon at half its size; Grahzah flies freely, its breath burns on the ground where you can see it, and the dead it calls rise on the ground."
+   },
+   {
+    "id": "fx_float",
+    "t": "No floating dead",
+    "how": "Play a few nights, the boss nights too.",
+    "look": "None of the dead hang in the sky. If one does, it is set down within a few seconds (the log says so)."
+   },
+   {
+    "id": "fx_radiant",
+    "t": "Radiant Quarterstaff and Holy Water",
+    "how": "Heavy attack with the Radiant Quarterstaff; throw Holy Water.",
+    "look": "The sunbeam comes down from the sky and stands upright, not lying on the ground."
+   },
+   {
+    "id": "fx_mist",
+    "t": "Mistblade heavy",
+    "how": "Heavy attack with the Mistblade.",
+    "look": "A round cloud of mist on the area, not a rectangle."
+   },
+   {
+    "id": "fx_rings",
+    "t": "Trial rings",
+    "how": "Kit: each trial at Riverwood.",
+    "look": "The ring of light shows for Lay the Restless to Rest, The Stone's Whisper and Hold the Light (and Break the Seals)."
+   },
+   {
+    "id": "fx_altarvoice",
+    "t": "The altar quiet during trials",
+    "how": "Run the trials.",
+    "look": "No subtitles from the altar until it is freed; the riddle is in the quest text."
+   },
+   {
+    "id": "fx_quests",
+    "t": "Quests top-left",
+    "how": "Start a trial, and have a Skyrim quest tracked.",
+    "look": "Both listed top-left under the night box."
+   },
+   {
+    "id": "fx_sheath",
+    "t": "Sheathing the Mutagen Staff",
+    "how": "Alchemist: draw and sheathe the Mutagen Staff several times.",
+    "look": "It stays the Mutagen Staff; no cycling into the Shadowflame Scythe or Spellbound Rapier."
+   },
+   {
+    "id": "fx_picks",
+    "t": "Your new look picks",
+    "how": "Spellbound Rapier with fire; the Dragon Slayer; Alduin's Bane.",
+    "look": "Rapier fire: Heat Shimmer (orange). Dragon Slayer: its third look. Alduin's Bane: Time-Wound."
+   }
+  ]
+ ],
+ [
   "This build (Nov 26): your picks and the Tester's Kit",
   [
    {

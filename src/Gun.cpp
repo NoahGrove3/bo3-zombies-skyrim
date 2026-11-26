@@ -840,7 +840,7 @@ namespace coa
 						ex->SetModel(src->GetModel());
 						ex->data = src->data;
 						ex->data.damage = 0.0f;
-						ex->data.force = std::min(src->data.force * kRagdoll, 40.0f * kRagdoll);
+						ex->data.force = std::min(src->data.force * Gun::kRagdoll, 40.0f * Gun::kRagdoll);
 						ex->data.flags.reset(RE::BGSExplosionData::Flag::kKnockDown_Always, RE::BGSExplosionData::Flag::kKnockDown_ByFormula);
 						ex->data.spawnProjectile = nullptr;
 						ex->formEnchanting = nullptr;
@@ -877,7 +877,7 @@ namespace coa
 				ex->SetModel(a_src->GetModel());
 				ex->data = a_src->data;
 				ex->data.damage = 0.0f;
-				ex->data.force = std::min(a_src->data.force * kRagdoll, 40.0f * kRagdoll);
+				ex->data.force = std::min(a_src->data.force * Gun::kRagdoll, 40.0f * Gun::kRagdoll);
 				ex->data.flags.reset(RE::BGSExplosionData::Flag::kKnockDown_Always, RE::BGSExplosionData::Flag::kKnockDown_ByFormula);
 				ex->data.spawnProjectile = nullptr;
 				ex->formEnchanting = nullptr;
@@ -980,7 +980,7 @@ namespace coa
 				ex->boundData = src->boundData;
 				ex->SetModel(src->GetModel());
 				ex->data = src->data;
-				ex->data.damage = 0.0f, ex->data.force = std::min(src->data.force * kRagdoll, 40.0f * kRagdoll);
+				ex->data.damage = 0.0f, ex->data.force = std::min(src->data.force * Gun::kRagdoll, 40.0f * Gun::kRagdoll);
 				ex->data.flags.reset(RE::BGSExplosionData::Flag::kKnockDown_Always, RE::BGSExplosionData::Flag::kKnockDown_ByFormula);
 				ex->data.impactDataSet = nullptr, ex->data.impactPlacedObject = nullptr, ex->data.spawnProjectile = nullptr;
 				ex->data.light = nullptr;   // (its orange light too)
@@ -1164,7 +1164,7 @@ namespace coa
 			Blast(BlastIndex("shockmass"), at, 0.05f, 0.6f);
 			if (!a_target->IsDead()) {
 				if (auto* proc = p->GetActorRuntimeData().currentProcess; proc && L == 3) {
-					proc->KnockExplosion(a_target, at + RE::NiPoint3{ 0, 0, 140.0f }, 1.6f * kRagdoll);
+					proc->KnockExplosion(a_target, at + RE::NiPoint3{ 0, 0, 140.0f }, 1.6f * Gun::kRagdoll);
 				} else {
 					Stagger(a_target, 0.7f);
 				}

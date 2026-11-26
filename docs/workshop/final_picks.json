@@ -1044,6 +1044,42 @@
    "speed": 100,
    "trigger": "Every hit",
    "vib": 100
+  },
+  "ffire_power": {
+   "area": 100,
+   "bright": 100,
+   "choice": "change",
+   "colour": "orange",
+   "density": 100,
+   "id": "ffire_power",
+   "item": "Alchemist: Fire Flask",
+   "light": 100,
+   "linger": 100,
+   "note": "",
+   "opt": "a2",
+   "optName": "Fire Wave",
+   "size": 150,
+   "speed": 100,
+   "trigger": "Tier power",
+   "vib": 100
+  },
+  "ffire_land": {
+   "area": 100,
+   "bright": 100,
+   "choice": "change",
+   "colour": "orange",
+   "density": 100,
+   "id": "ffire_land",
+   "item": "Alchemist: Fire Flask",
+   "light": 100,
+   "linger": 100,
+   "note": "",
+   "opt": "a3",
+   "optName": "Burst and Pool",
+   "size": 110,
+   "speed": 100,
+   "trigger": "Where it breaks",
+   "vib": 100
   }
  },
  "feel": {

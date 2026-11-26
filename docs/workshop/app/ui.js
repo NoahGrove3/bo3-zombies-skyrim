@@ -325,6 +325,7 @@ ${n ? `<p class="note">${esc(n)}</p>` : ''}<textarea rows="1" placeholder="A not
       el.querySelectorAll('[data-s]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.s === cur)));
       const ta = $('textarea', el); if (document.activeElement !== ta && s && typeof s.note === 'string') ta.value = s.note; });
     const pct = Math.round(100 * (c.done + 0.5 * c.testing + 0.3 * c.doing) / flat.length);
+    { const bar = $('#nbar'); if (bar) { $('i', bar).style.width = pct + '%'; bar.setAttribute('aria-valuenow', String(pct)); } }
     prog.innerHTML = `<span><b>${pct}%</b> of the way</span><span><b>${c.done}</b> done</span><span><b>${c.testing}</b> testing</span><span><b>${c.doing}</b> in progress</span><span><b>${c.todo}</b> to do</span>`;
   }
   async function save(id, status) { const el = box.querySelector(`.nrow[data-id="${id}"]`), it = flat.find(x => x.id === id), prev = DB.get('nexus', id) || {};
