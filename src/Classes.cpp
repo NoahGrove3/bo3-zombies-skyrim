@@ -607,6 +607,24 @@ namespace coa::Classes
 				av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.02f);
 			}
 		}
+		// (Noah, 2026-11-26: the Deaths tab, "Soul torn out") a kill by shadow, spirit or arcane - the Keyhammer, Mistblade, Nightcaller's
+		// Scythe, Arcane Maul, Silver Reaping Scythe, Bonereaper, Soulcaller's Staff, the Shadowflame Scythe and the Carian Wand - tears the
+		// soul out of the body
+		if (a_dying && !a_bySummon) {
+			if (auto it = g_lastHit.find(a_dying->GetFormID()); it != g_lastHit.end()) {
+				static std::unordered_set<RE::FormID> shadow;
+				if (shadow.empty()) {
+					if (auto* dh = RE::TESDataHandler::GetSingleton()) {
+						for (std::uint32_t id : { 0xE87u, 0xE88u, 0xE8Fu, 0xE90u, 0xEF0u, 0xEF1u, 0xF12u })
+							if (auto* w = dh->LookupForm<RE::TESObjectWEAP>(id, gen::kPlugin)) shadow.insert(w->GetFormID());
+					}
+					shadow.insert(0);   // (looked once)
+				}
+				const auto w = it->second;
+				const bool cls = (ClassWeapon(1) && ClassWeapon(1)->GetFormID() == w) || (ClassWeapon(2) && ClassWeapon(2)->GetFormID() == w);
+				if (w && (shadow.contains(w) || cls)) Picks::SoulTorn(a_dying);
+			}
+		}
 		int killHow = -1;
 		// (Dragonbreaker) a kill made by the Dragon Slayer feeds it an ember
 		if (a_dying && !a_bySummon) if (auto it = g_lastHit.find(a_dying->GetFormID()); it != g_lastHit.end() && Slayer() && it->second == Slayer()->GetFormID()) SlayerKill();

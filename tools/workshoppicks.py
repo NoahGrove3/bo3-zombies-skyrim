@@ -67,6 +67,13 @@ def main():
           f'\tinline constexpr bool kHeadMarks = {"false" if mk("head") == "off" else "true"};  // a headshot\'s tick and white flash',
           f'\tinline constexpr bool kLastKillSlow = {"true" if mk("last") == "slow" else "false"};  // the night\'s last kill in slow motion',
           f'\tinline constexpr bool kHeavyThrows = {"true" if FINAL["deaths"].get("plain", {}).get("opt") == "a2" else "false"};  // a power attack\'s kill throws the body']
+    # (Noah, 2026-11-26: Decisions, "Yes, next build") the deaths he picked: a kill by shadow, spirit or arcane tears the soul out
+    DE = json.loads((W / 'deaths.json').read_text())
+    sh = FINAL['deaths'].get('shadow', {}).get('opt', 'a1')
+    o = next(x for x in next(d for d in DE if d['id'] == 'shadow')['opts'] if x['id'] == sh)
+    ss = [snd(r) for r in o['snd'] if not r.startswith('coa:')][:3] or ['{ "Skyrim.esm", 0, 0.0f, 0.0f, -1 }']
+    L += [f'\tinline constexpr bool kSoulTorn = {"true" if sh == "a3" else "false"};   // a kill by shadow, spirit or arcane: the soul rises out of the body',
+          f'\tinline constexpr Snd kSoulTornSnd = {ss[0]};']
     # trial sounds he changed: event -> its sound
     tr = FINAL['trials']
     evs = []
@@ -82,6 +89,7 @@ def main():
     L += [f'\tinline constexpr float kHoldFrom = {float(ec.get("radius", 1100)):.1f}f;   // Hold the Light: the ring\'s start',
           f'\tinline constexpr const char* kHoldPal = "{"blue" if ec.get("ring", "").lower() in ("#007bff",) else ""}";   // its ring\'s colour (one of our ramps; empty: as built)']
     pf = FINAL['perf']
+    L += ['\tinline constexpr float kDragonScale = 0.5f;   // (Noah, 2026-11-26: "Scale dragons to 50%") every dragon in the world at half its size']
     L += [f'\tinline constexpr bool kFxAutoDetail = {"true" if pf.get("detail", {}).get("choice") == "auto" else "false"};   // fewer particles past 30 of the dead near you',
           f'\tinline constexpr bool kFxBigLightsOnly = {"true" if pf.get("lights", {}).get("choice") == "big" else "false"};   // only big effects cast light on a big night',
           '}', '']

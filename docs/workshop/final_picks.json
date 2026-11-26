@@ -1122,11 +1122,11 @@
   "heavy": {
    "id": "heavy",
    "name": "Greatswords, axes, hammers, scythes and halberds",
-   "opt": "a3",
-   "shakeH": 22,
+   "opt": "a1",
+   "shakeH": 0,
    "shakeK": 0,
-   "stopH": 60,
-   "stopL": 25
+   "stopH": 0,
+   "stopL": 0
   },
   "light": {
    "id": "light",
@@ -1160,11 +1160,11 @@
   "medium": {
    "id": "medium",
    "name": "Swords and maces",
-   "opt": "a3",
-   "shakeH": 15,
+   "opt": "a1",
+   "shakeH": 0,
    "shakeK": 0,
-   "stopH": 45,
-   "stopL": 18
+   "stopH": 0,
+   "stopL": 0
   }
  },
  "deaths": {

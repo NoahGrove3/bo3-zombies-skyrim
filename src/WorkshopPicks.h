@@ -232,13 +232,15 @@ namespace coa::Picks
 		{ "Skyrim.esm", 0x10FD65 },   // WPNImpactGenericLoFi
 	};
 	// hit feel by weight - light (daggers, claws), medium (swords, maces, rapiers), heavy (two-handed): stop on a hit, on a heavy (ms); shake on a heavy (%)
-	inline constexpr float kStopL[3] = { 0.0f, 0.0f, 0.0f };   // (Noah, 2026-11-26, Decisions: "No pause, no shake")
+	inline constexpr float kStopL[3] = { 0.0f, 0.0f, 0.0f };
 	inline constexpr float kStopH[3] = { 0.0f, 0.0f, 0.0f };
 	inline constexpr float kShakeH[3] = { 0.0f, 0.0f, 0.0f };
 	inline constexpr bool kHitMarks = false;   // the crosshair's hit and kill marks and their ticks
 	inline constexpr bool kHeadMarks = false;  // a headshot's tick and white flash
 	inline constexpr bool kLastKillSlow = true;  // the night's last kill in slow motion
 	inline constexpr bool kHeavyThrows = true;  // a power attack's kill throws the body
+	inline constexpr bool kSoulTorn = true;   // a kill by shadow, spirit or arcane: the soul rises out of the body
+	inline constexpr Snd kSoulTornSnd = { "Skyrim.esm", 0x10E0D6, 1.000f, 0.00f, -1 };
 	inline constexpr CardSnd kTrialSnd[] = {
 		{ "start", "trial", { { "Apocalypse - Magic of Skyrim.esp", 0x11F241, 1.000f, 0.00f, -1 } }, 1 },   // Ethereal call
 		{ "freed", "trial", { { "Skyrim.esm", 0x10E0D6, 1.000f, 0.00f, -1 } }, 1 },   // Souls set free

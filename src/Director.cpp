@@ -1482,10 +1482,21 @@ namespace coa
 					rows[n++] = i, every = gen::kEnemies[i].bossEvery;
 				}
 			}
+			// (Noah, 2026-11-26, Decisions: "A kept mini-boss as the night-5 boss") the first boss night (night 5) is one of the
+			// mini-bosses he kept - the Giant Brute Berserker, the Minotaur Lord, the Ogrim Lord or the Plague Dragon - in turn by save
+			if (g_current < 2 * every) {
+				static constexpr std::string_view kFirst[] = { "mb_giant_brute", "mb_minotaur_lord", "mb_ogrim_lord", "mb_dragon" };
+				int ok[4], m = 0;
+				for (auto id : kFirst)
+					for (int i = 0; i < static_cast<int>(gen::kEnemies.size()); ++i)
+						if (gen::kEnemies[i].id == id && gen::kEnemies[i].minRound < 999 && Forms::Enemy(i)) ok[m++] = i;
+				static const int seed = static_cast<int>(std::random_device{}() % 997);   // (one pick a session: the same one all night)
+				if (m > 0) return ok[(seed + g_current) % m];
+			}
 			if (n == 0) {
 				return -1;
 			}
-			const int turn = std::max(0, g_current / std::max(1, every) - 1);
+			const int turn = std::max(0, g_current / std::max(1, every) - 2);
 			return rows[turn % n];
 		}
 

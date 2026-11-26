@@ -127,6 +127,14 @@ namespace coa::Picks
 		const char* card = CardOf(a_owner);
 		return card && Card(card, a_slot, a_at);
 	}
+	void SoulTorn(RE::Actor* a_dying)
+	{
+		if (!kSoulTorn || !a_dying) return;
+		auto at = a_dying->GetPosition();
+		at.z += 70.0f;
+		Gun::QueueFx("CurseOfAlduin\\fx\\death_soul.nif", at, 1.0f, 0.15f, 0.0f, false);
+		if (kSoulTornSnd.id) PlayOne(kSoulTornSnd, at, 0.6f);
+	}
 	bool OwnerHasSound(std::string_view a_owner)
 	{
 		const char* card = CardOf(a_owner);

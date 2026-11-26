@@ -1415,6 +1415,7 @@ namespace coa
 		bool  OwnerHasSound(std::string_view a_owner);              // its impact replaced (the old shared blast left out)
 		bool  Trial(std::string_view a_event, const RE::NiPoint3* a_at = nullptr);   // a trial moment's picked sound
 		void  TrialLoop(bool a_on);                                  // Hold the Light: standing inside
+		void  SoulTorn(RE::Actor* a_dying);                          // (Noah's death pick) a kill by shadow, spirit or arcane: its soul rises out of it
 		bool  HasTrial(std::string_view a_event);                    // a trial moment he gave a sound of its own
 		void  OnMeleeHit(RE::Actor* a_target, const RE::TESForm* a_source, bool a_heavy);   // hit-stop, shake, a heavy kill's throw
 		int   Crowd();                                               // the dead near you (counted twice a second)
