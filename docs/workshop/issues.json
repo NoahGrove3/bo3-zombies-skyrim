@@ -2,36 +2,36 @@
  [
   "bolts",
   "The bolts in flight look pale in the previews",
-  "The fire bolts (Dragon Slayer, Spellbound Rapier, Shadowflame Scythe) look washed out in the doc while flying; the game draws them as Skyrim does. I tried three fixes; not solved yet.",
-  "open",
+  "The fire bolts looked washed out while flying in the previews: a softer white core and more of the flame's colour now. Check them in Abilities.",
+  "fixed",
   "doc"
  ],
  [
   "hitch",
   "Stutters of 40-85 ms on a night",
-  "Your Nov 24 log: Classes 85 ms, Gun 75 ms, Director 59 ms, Shops 42 ms at worst. Rare, but felt.",
-  "open",
+  "Your Nov 24 log: Classes 85 ms, Gun 75 ms, Director 59 ms, Shops 42 ms at worst. I can't find which part from that log alone: the mod times itself every night, so tonight's log will show it. Play a long night and I'll read it.",
+  "watch",
   "game"
  ],
  [
   "mem",
   "Little memory left late in a night",
-  "At the end of your Nov 24 night Windows had 768 MB free of 32 GB (Skyrim at 12 GB). To watch: the vanishing-dead hunt found this before.",
+  "At the end of your Nov 24 night Windows had 768 MB free of 32 GB (Skyrim at 12 GB). Tonight's log tells me if it still climbs.",
   "watch",
   "game"
  ],
  [
   "generic",
   "Most abilities use Skyrim's generic blast sounds",
-  "The relics play a few shared blasts (the Firestorm's roar for many); the Tablet weapons' abilities play none of their own. The Sounds tab is the fix.",
-  "doing",
+  "Every ability you hadn't set now plays the doc's recommended sound (37 of them), not Skyrim's shared blasts.",
+  "fixed",
   "game"
  ],
  [
   "swings",
-  "Light and heavy swings sound the same",
-  "Each weapon plays Skyrim's swing for its type on both. The Sounds tab gives the heavy its own.",
-  "doing",
+  "Light and heavy swings sounded the same",
+  "Every weapon now plays its own swing and its own heavy over Skyrim's (and its own draw and hit).",
+  "fixed",
   "game"
  ],
  [
@@ -44,15 +44,15 @@
  [
   "dpscythe",
   "The Dragon Priest scythe's blade",
-  "Now coming from the head of the staff, as you asked; needs your OK in the Scythes tab.",
-  "check",
+  "Confirmed with all the scythes.",
+  "fixed",
   "game"
  ],
  [
   "notplayed",
-  "Nothing since Nov 24 evening played yet",
-  "The last build your game ran was 6a0f8a0 (Nov 24, 7 pm). Everything in the Test list is still to see in game.",
-  "open",
+  "Nothing since Nov 24 played yet",
+  "You're testing this build now: the Test list's first group is what's new.",
+  "check",
   "test"
  ],
  [

@@ -362,7 +362,7 @@ ${tr.common ? '' : `<div class="stage"><canvas aria-label="${esc(tr.title)}, liv
 (function () {
   const box = $('#uigrid'), st = $('#uistatus'), fl = $('#uifilter'); if (!box) return;
   // the pieces each preview is built from
-  const night = (n, wave, left) => `<div class="u-night"><small>NIGHT</small><b>${n}</b><span>Wave ${wave} &middot; ${left} left</span></div>`;
+  const night = (n, wave, left) => `<div class="u-night"><small>N I G H T</small><b>${n}</b><span>Wave ${wave} / 5 &middot; ${left} left</span></div>`;   // (as in the game now: smaller, cleaner)
   const bars = () => `<div class="u-bars"><i class="hp" style="--v:.72"></i><i class="mp" style="--v:.5"></i><i class="sp" style="--v:.86"></i></div>`;
   const perks = () => `<div class="u-perks">${['&#x16A0;', '&#x16B1;', '&#x16C9;', '&#x16DF;'].map(r => `<span>${r}</span>`).join('')}</div>`;
   const ult = v => `<div class="u-ult"><i style="width:${v * 100}%"></i></div>`;
@@ -372,25 +372,25 @@ ${tr.common ? '' : `<div class="stage"><canvas aria-label="${esc(tr.title)}, liv
   const stage = (inner, cls) => `<div class="u-stage ${cls || ''}">${inner}</div>`;
   const G = [
     ['hud', 'During a night', [
-      ['night', 'Night counter and wave', 'Top left: NIGHT and the number (your Plain number, smaller, in Jost), the wave and the dead left under it.', () => stage(night(12, 3, 17) + comp())],
+      ['night', 'Night counter and wave', 'In the game now: top left, NIGHT in small spaced letters, the number under it, the wave and the dead left under that. No moon.', () => stage(night(12, 3, 17) + comp())],
       ['bars', 'Health, magicka, stamina, shout', 'Bottom centre: three thin bars with no frames; the shout card beside them with its cooldown ring.', () => stage(bars() + `<div class="u-shout"><b>FUS</b><i style="--v:.35"></i></div>`)],
       ['ult', 'Ultimate meter and perks', 'Right above the perks, centred; only while you hold a weapon with its ultimate unlocked. No label: it glows gold when full.', () => stage(ult(.7) + perks() + bars())],
       ['compass', 'Compass', 'Top centre: a thin line, letters, quest diamonds, the altars and the dead as dots.', () => stage(comp())],
-      ['quests', 'Quests and trials', 'Top left under the night: the trial under way (title, goal and its clock) and the quests you track.', () => stage(night(4, 1, 9) + `<div class="u-quests"><b>LAY THE RESTLESS TO REST</b><span>Souls laid: 7 / 15 &middot; 0:42</span><i style="--v:.47"></i><b>The Golden Claw</b><span>Retrieve the claw</span></div>`)],
+      ['quests', 'Quests and trials', 'In the game now: under the night counter, smaller - the trial (its task, the count and its clock) and the quests you track.', () => stage(night(4, 1, 9) + `<div class="u-quests sm"><b>LAY THE RESTLESS TO REST</b><span>Slay the risen in the altar\'s light  7 / 15  0:42</span><i style="--v:.47"></i><b>THE GOLDEN CLAW</b><span>Retrieve the claw</span></div>`)],
       ['boss', 'Boss bar', 'Top centre under the compass: the name in capitals, a long thin bar; red edge when it is enraged.', () => stage(comp() + `<div class="u-boss"><b>GRAHZAH, ALDUIN'S GRAVE-WING</b><i style="--v:.62"></i></div>`)],
       ['foehp', 'Health over the dead', 'Small bars over the wounded near you; a name over the great ones.', () => stage(`<div class="u-foe" style="left:38%;top:44%"><i style="--v:.4"></i></div><div class="u-foe big" style="left:56%;top:30%"><b>Minotaur Lord</b><i style="--v:.8"></i></div>`)],
-      ['essence', 'Cursed Essence and kills', 'Bottom right: your essence; +10 rising where a kill falls; a style bonus (MULTI-KILL) beside the total.', () => stage(`<div class="u-ess"><span class="u-pop">+40 MULTI-KILL</span><b>12,480</b><small>CURSED ESSENCE</small></div><span class="u-kill" style="left:46%;top:46%">+10</span>`)],
-      ['hit', 'Getting hit', 'A red arc toward a blow you can\'t see, and a red edge after a hit; the screen darkens a little when you are surrounded.', () => stage(`<div class="u-vig"></div><div class="u-arc"></div>`)],
-      ['noise', 'Noise and stealth', 'A thin meter under the crosshair while you are loud (a hunter hears you when full); the sneak eye as a small arc.', () => stage(`<div class="u-noise"><i style="--v:.6"></i></div><div class="u-eye"><i style="--v:.3"></i></div>`)],
+      ['essence', 'Cursed Essence and kills', 'Kept as in the game: bottom left, the burning essence with CURSED ESSENCE over the count; +10 where a kill falls.', () => stage(`<div class="u-ess left"><small>CURSED ESSENCE</small><b>12,480</b><span class="u-pop">+40 MULTI-KILL</span></div><span class="u-kill" style="left:46%;top:46%">+10</span>`)],
+      ['hit', 'Getting hit', 'In the game now: the red arc toward a blow you can\'t see at half size, a red edge after a hit.', () => stage(`<div class="u-vig"></div><div class="u-arc half"></div>`)],
+      ['noise', 'Noise and stealth', 'No noise meter (your note); the sneak icons as they are in the game.', () => stage(`<div class="u-eye"><i style="--v:.3"></i></div>`)],
       ['marker', 'Quest marker and prompts', 'Our objective marker with its distance; the Activate prompt for things of ours (an orb, the Tablet).', () => stage(`<div class="u-mark" style="left:62%;top:38%">&#9670;<small>84 m</small></div><div class="u-prompt"><kbd>E</kbd> Roll the Tablet <small>2,000</small></div>`)],
-      ['between', 'Between nights', 'The next night\'s countdown and the last three of a wave marked at the screen\'s edge.', () => stage(`<div class="u-center"><small>THE NIGHT RETURNS IN</small><b>0:48</b></div><div class="u-last">&#9664; 3</div>`)],
+      ['between', 'Between nights', 'In the game now: a 10 s countdown only before a night (none between waves); the last three of a wave still marked at the screen\'s edge.', () => stage(`<div class="u-center"><small>THE NIGHT BEGINS IN</small><b>10</b></div><div class="u-last">&#9664; 3</div>`)],
       ['weapon', 'Weapon counters', 'The donated weapon\'s uses, the Soulcaller\'s souls, the Tablet hold: small rings beside the bars.', () => stage(bars() + `<div class="u-rings"><span><i style="--v:.66"></i>Uses</span><span><i style="--v:.4"></i>Souls 4/10</span></div>`)],
     ]],
     ['pop', 'Pop-ups and words', [
-      ['banner', 'Night and wave banners', 'Centre, high: NIGHT 12 in large thin capitals with a gold rule; fades in half a second.', () => stage(`<div class="u-banner"><small>THE DEAD RISE</small><b>NIGHT 12</b><i></i></div>`)],
+      ['banner', 'Night and wave banners', 'In the game now: no banner across the screen - the night counter says it.', () => stage(night(12, 1, 24))],
       ['slain', 'Dragon Priest slain', 'The relic card: the priest\'s name, the relic received, a small dragon-script line.', () => stage(`<div class="u-card"><small>&#x16DF; DRAGON PRIEST SLAIN &#x16DF;</small><b>Vahlok the Jailor</b><span>Jailor's Keyhammer received</span></div>`)],
-      ['lore', 'Lore cards', 'A new weapon or wonder: its name and what it does, lower left, for a few seconds.', () => stage(`<div class="u-lore"><b>DRAGON SLAYER</b><span>Light: a golden fireball, 2x damage to dragons. Heavy: 5 s of golden fireballs.</span></div>`)],
-      ['hints', 'Hints', 'The Carian Wand and Mutagen Staff hints: one line, lower centre, with the key.', () => stage(`<div class="u-prompt"><kbd>Hold</kbd> Charge the wand: release to cast</div>`)],
+      ['lore', 'Lore cards', 'In the game now: drawing a weapon shows its name and what it does at its tier, bottom right, clear of the essence.', () => stage(`<div class="u-ess left"><small>CURSED ESSENCE</small><b>12,480</b></div><div class="u-lore right"><b>RADIANT QUARTERSTAFF III</b><span>The Summoner\'s quarterstaff of white sunlight. Tier III: a great sunbeam. Fill the meter (25 kills) and a heavy calls the Aetherial Host.</span></div>`)],
+      ['hints', 'Hints', 'In the game now: no hints (your note) - the weapon cards say what each does.', () => stage('')],
       ['subs', 'Subtitles', 'Centred, Jost, with the speaker\'s name in small capitals; the altar voice\'s in gold.', () => stage(`<div class="u-subs"><small>FELLDIR THE OLD</small>The city is yours again. Ask, and I will answer.</div>`)],
       ['death', 'Falling (the BO3 death)', 'The screen drains to grey; YOU FELL, the night you reached, and the bar to rise.', () => stage(`<div class="u-death"><b>YOU FELL</b><span>Night 12 &middot; 431 of the dead</span><i style="--v:.55"></i><small>HOLD TO RISE</small></div>`, 'grey')],
       ['msg', 'Message boxes', 'Skyrim\'s message boxes (the Tester\'s Kit, choices): a dark glass panel, buttons as thin outlined rows.', () => stage(`<div class="u-msg"><b>Tester's Kit</b>${['Weapons', 'The night', 'Stay alive', 'The dead', 'Close'].map(x => `<span>${x}</span>`).join('')}</div>`)],
@@ -569,7 +569,7 @@ ${tr.common ? '' : `<div class="stage"><canvas aria-label="${esc(tr.title)}, liv
   const cats = [...new Set(L.map(o => o.cat))].sort();
   let show = 'sug';
   const spr = o => `background-image:url(loadscreens${o.s}.jpg);background-size:1200% 1000%;background-position:${(o.c % 12) / 11 * 100}% ${Math.floor(o.c / 12) / 9 * 100}%`;
-  const chips = () => [['sug', `My picks (${L.filter(o => o.sug).length})`], ['all', `All (${L.length})`], ['use', 'Marked Use'], ['out', 'Marked Leave out']].concat(cats.map(c => [c, c]));
+  const chips = () => [['sug', `In the game (${L.filter(o => o.sug).length})`], ['all', `All (${L.length})`], ['use', 'Marked Use'], ['out', 'Marked Leave out']].concat(cats.map(c => [c, c]));
   fl.innerHTML = chips().map(([k, n]) => `<button class="chip" data-g="${esc(k)}" aria-pressed="${k === show}">${esc(n)}</button>`).join('');
   function vis(o, d) { const s = d[o.id]; return show === 'all' || (show === 'sug' && o.sug) || (show === 'use' && s && s.choice === 'use') || (show === 'out' && s && s.choice === 'out') || o.cat === show; }
   function paint() {

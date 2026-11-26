@@ -434,13 +434,13 @@ function ringPart(fx, s, R, o = {}) {   // the shockwave ring: a band racing out
   };
 }
 function boltPart(fx, s, r, o = {}) {   // a bolt flying from a to b, a trail of fire behind it
-  const head = Card(fx, 't_glow', 2.6), fire = Card(fx, 't_spiritflame', 1.5, { flip: [4, 4] }), trail = Ribbon(fx, 't_trailfire', 1.5, 18, { clamp: true }), hist = [];
+  const head = Card(fx, 't_glow', 1.3), fire = Card(fx, 't_spiritflame', 1.9, { flip: [4, 4] })   // (the Issues tab: a softer core, more of the flame's colour - the bolts read pale before), trail = Ribbon(fx, 't_trailfire', 1.5, 18, { clamp: true }), hist = [];
   return (t, a, b, dur, arc) => {
     const k = t / dur, on = t >= 0 && k < 1;
     head.visible = fire.visible = trail.visible = on; if (!on) { hist.length = 0; return; }
     const p = a.clone().lerp(b, k); p.y += Math.sin(Math.PI * k) * (arc || 0);
     hist.unshift(p.clone()); while (hist.length > 18) hist.pop();
-    head.position.copy(p); head.scale.setScalar(70 * s); fire.position.copy(p); fire.scale.setScalar(46 * s); setCell(fire.material.uniforms, [4, 4], 24, t, 0);
+    head.position.copy(p); head.scale.setScalar(52 * s); fire.position.copy(p); fire.scale.setScalar(46 * s); setCell(fire.material.uniforms, [4, 4], 24, t, 0);
     const pts = hist.length > 1 ? hist : [p, p.clone().add(new THREE.Vector3(-1, 0, 0))];
     trail.userData.set(pts, f => 16 * s * (1 - f), f => (1 - f) ** 1.4); trail.material.uniforms.off.value.set(0, t * 2);
   };

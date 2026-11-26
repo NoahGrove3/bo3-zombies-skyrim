@@ -16,12 +16,12 @@ __CSS__
     <button data-t="changed" role="tab">What changed</button>
     <button data-t="looks" role="tab">Weapon looks<span class="n" data-count="looks"></span></button>
     <button data-t="abilities" role="tab">Abilities<span class="n" data-count="abil"></span></button>
+    <button data-t="weapons" role="tab">Weapons</button>
     <button data-t="sounds" role="tab">Sounds<span class="n" data-count="snd"></span></button>
     <button data-t="feel" role="tab">Hit feel</button>
     <button data-t="enemies" role="tab">The dead</button>
     <button data-t="trials" role="tab">Echo Altar trials</button>
     <button data-t="perf" role="tab">Big nights</button>
-    <button data-t="scythes" role="tab">Scythes<span class="n" data-count="scy"></span></button>
     <button data-t="tests" role="tab">Test list<span class="n" data-count="tests"></span></button>
     <button data-t="issues" role="tab">Issues<span class="n" data-count="issues"></span></button>
     <button data-t="decisions" role="tab">Decisions</button>
@@ -113,11 +113,11 @@ __CSS__
     <div id="ilist" style="display:grid;gap:8px"></div>
   </section>
 
-  <section class="tab" id="scythes" hidden>
-    <h2>Our own scythes</h2>
-    <p class="sub">Nine scythes of our own, built from Skyrim's own weapons and keeping each one's theme: the pole of one of Skyrim's battleaxes (or a Dragon Priest's staff, or a spine) with the blade of a sword of the same make bent into a reaping crescent, its own guard kept as the collar. 25% larger than Skyrim's. <b>In the game now</b>, as you OK'd them, the blade flush with the haft on Wyrmtooth, Silver Reaping and Bloodmoon. Drag to turn, scroll to zoom.</p>
-    <p class="status" id="sstatus">Loading your marks…</p>
-    <div class="wgrid" id="sgrid"></div>
+  <section class="tab" id="weapons" hidden>
+    <h2>Weapons</h2>
+    <p class="sub">Every weapon model The Curse of Alduin uses in the game: the class weapons at each tier, the Dragon Priests' relics, the Tablet's weapons, the wonders, Alduin's Bane and our own scythes (all confirmed). Click one to turn it in 3D: drag to turn, scroll to zoom.</p>
+    <div class="row" id="wtfilter" style="flex-wrap:wrap;margin:6px 0 12px"></div>
+    <div class="wgrid" id="wtgrid"></div>
   </section>
 
   <section class="tab" id="tests" hidden>
@@ -143,7 +143,7 @@ __CSS__
 
   <section class="tab" id="loading" hidden>
     <h2>Loading screens</h2>
-    <p class="sub">Your note: use the loading screen mods, pick the ones that fit the lore, and you choose. These are all 469 screens of the Load Screen Compendium in your game, each with the line of lore it shows. I marked the ones that fit The Curse of Alduin (dragons, the dead and undead, souls, Sovngarde, the Dragon Priests, barrows and tombs, shouts and the Greybeards): they open first. Mark each one Use or Leave out; the ones you leave out won't show in the game.</p>
+    <p class="sub">In the game now, as you said: the 123 I marked "fits" (dragons, the dead and undead, souls, Sovngarde, the Dragon Priests, barrows and tombs, shouts and the Greybeards; your three Use marks are among them) show at random whenever the game loads - fast travel, a door, a save loaded in a game. Continue or Load from the main menu shows our own Curse of Alduin loading screen. Mark any of them Use or Leave out to change the list next build.</p>
     <p class="status" id="lsstatus"></p>
     <div class="row" id="lsfilter" style="flex-wrap:wrap;margin:6px 0 12px"></div>
     <div id="lsgrid" class="lsgrid"></div>

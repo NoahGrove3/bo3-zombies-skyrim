@@ -1,3 +1,6 @@
+const WTHUMB = key => { const i = WTAB.cell[key]; if (i == null) return ''; const c = i % WTAB.cols, r = Math.floor(i / WTAB.cols);
+  return `<div class="wthumb" role="img" aria-label="" style="background-image:url(weapons.jpg);background-size:${WTAB.cols * 100}% ${WTAB.rows * 100}%;background-position:${c / (WTAB.cols - 1) * 100}% ${r / (WTAB.rows - 1) * 100}%"></div>`; };
+const WKEY_BY_NAME = (() => { const m = {}; WTAB.groups.forEach(g => g.items.forEach(it => { if (!m[it.name]) m[it.name] = it.key; })); return m; })();
 // ================================================================ tabs
 (function () {
   const nav = $('#tabs'), tabs = [...document.querySelectorAll('section.tab')];
@@ -69,7 +72,7 @@ function whenNear(el, f) { el.__init = f; el.classList.add('compact'); el.tabInd
   function pickOf(it) { const s = DB.get('weaponlooks', it.id); return { look: (s && s.choice === 'change' && s.look) || it.look, col: (s && s.choice === 'change' && s.colour) || it.col, s }; }
   function build() {
     grid.innerHTML = WCATS.map(c => `<div class="wgroup" data-c="${c.id}" style="grid-column:1/-1;display:grid;gap:2px;margin-top:6px"><h3 style="font-family:var(--display);font-weight:400;font-size:20px;color:var(--accent)">${esc(c.name)}</h3><p class="sub" style="font-size:13px">${esc(c.sub)}</p></div>` +
-      c.items.map(it => `<article class="wcard" data-id="${it.id}" data-c="${c.id}">
+      c.items.map(it => `<article class="wcard" data-id="${it.id}" data-c="${c.id}">${WTHUMB(it.key)}
 <div class="stage"><canvas aria-label="${esc(it.name)}, live"></canvas><div class="ld">${GL.ok ? 'Loading…' : 'Live previews need WebGL'}</div><div class="ov"><span class="ovl"></span><span class="ovr"></span></div></div>
 ${it.tiers ? `<div class="tiers" role="group" aria-label="Tier">${it.tiers.map(([k, n], i) => `<button data-k="${k}" aria-pressed="${i === it.tiers.length - 1}">${esc(n)}</button>`).join('')}</div>` : ''}
 <div class="wbody"><div class="t"><h3>${esc(it.name)}</h3><span class="saved"></span></div>
@@ -164,7 +167,7 @@ ${it.note ? `<p class="note">${esc(it.note)}</p>` : ''}
   // (the sound workshop plays each ability as you've set it here)
   window.abArgs = key => { const a = items.flatMap(x => x.abs).find(x => x.key === key); if (!a) return null; const p = pickOf(a); return [p.style, p.col, p.size, a.where, optsOf(a).length ? { pick: p } : null]; };
   grid.innerHTML = ABIL.map(([cat, cid, list]) => `<div data-c="${cid}" style="grid-column:1/-1;display:grid;gap:2px;margin-top:6px"><h3 style="font-family:var(--display);font-weight:400;font-size:20px;color:var(--accent)">${esc(cat)}</h3></div>` +
-    list.map(([id, name, abs]) => `<article class="wcard" data-id="${id}" data-c="${cid}">
+    list.map(([id, name, abs]) => `<article class="wcard" data-id="${id}" data-c="${cid}">${WTHUMB(WKEY_BY_NAME[name] || '')}
 <div class="abtabs" role="tablist" aria-label="${esc(name)}'s abilities">${abs.map((a, i) => `<button role="tab" data-i="${i}" aria-selected="${i === 0}">${esc(a[1])}</button>`).join('')}</div>
 <div class="stage" style="margin-top:8px"><canvas aria-label="${esc(name)}'s ability, live"></canvas><div class="ld">${GL.ok ? '' : 'Live previews need WebGL'}</div><div class="ov"><span class="ovl"></span><span class="ovr">loops</span></div></div>
 <div class="wbody"><div class="t"><h3>${esc(name)}</h3><span class="saved"></span></div>
@@ -335,37 +338,16 @@ ${n ? `<p class="note">${esc(n)}</p>` : ''}<textarea rows="1" placeholder="A not
   paint(); DB.on('nexus', (d, err) => { if (err) { st.textContent = err === 'offline' ? 'Marking lines works when this page is opened in Claude.' : ''; return; } paint(); });
 })();
 
-// ================================================================ our own scythes (for your OK before they go in game)
+// ================================================================ the Weapons tab: every weapon model of ours, a picture on each card, 3D when opened
 (function () {
-  const grid = $('#sgrid'), st = $('#sstatus');
-  grid.innerHTML = SCY.map(x => `<article class="wcard" data-id="${x.id}">
-<div class="stage"><canvas aria-label="${esc(x.title)}, live"></canvas><div class="ld">${GL.ok ? 'Loading…' : 'Live previews need WebGL'}</div><div class="ov"><span class="ovl">${esc(x.theme)}</span><span class="ovr"></span></div></div>
-<div class="wbody"><div class="t"><h3>${esc(x.title)}</h3><span class="saved"></span></div>
-<p class="now">${esc(x.built)}</p>
-<div class="row"><button class="btn sm" data-a="ok" aria-pressed="false">Looks right</button><button class="btn sm" data-a="change" aria-pressed="false">Change something</button></div>
-<textarea rows="2" placeholder="What to change (optional)" aria-label="Note on ${esc(x.title)}"></textarea>
-</div></article>`).join('');
-  const cards = {};
-  grid.querySelectorAll('.wcard').forEach(el => {
-    const x = SCY.find(q => q.id === el.dataset.id), c = { el, x }; cards[x.id] = c;
-    whenNear(el, () => { if (!GL.ok) return; c.view = weaponView($('canvas', el), info => { const ld = $('.ld', el); if (info.error) { ld.textContent = 'This preview didn\'t load.'; return; } ld.textContent = ''; $('.ovr', el).textContent = info.length ? `${info.length.toFixed(2)} m long` : ''; }); c.view.show('scy_' + x.id, 'o1', 'own'); });
-    paint(c);
-  });
-  function paint(c) {
-    const s = DB.get('scythes', c.x.id), el = c.el;
-    $('.saved', el).textContent = s ? (s.choice === 'ok' ? 'Saved: looks right' : 'Saved: change something') : '';
-    el.querySelector('[data-a="ok"]').setAttribute('aria-pressed', String(!!s && s.choice === 'ok'));
-    el.querySelector('[data-a="change"]').setAttribute('aria-pressed', String(!!s && s.choice === 'change'));
-    const ta = $('textarea', el); if (document.activeElement !== ta) ta.value = s && typeof s.note === 'string' ? s.note : '';
-  }
-  async function save(c, patch) {
-    const prev = DB.get('scythes', c.x.id) || {};
-    const row = { id: c.x.id, title: c.x.title, choice: prev.choice || 'change', note: $('textarea', c.el).value.slice(0, 2000), ...patch };
-    try { await DB.set('scythes', c.x.id, row); saveMsg(st, null); count(); } catch (e) { saveMsg(st, e); }
-    paint(c);
-  }
-  grid.addEventListener('click', e => { const el = e.target.closest('.wcard'), b = e.target.closest('button[data-a]'); if (!el || !b) return; save(cards[el.dataset.id], { choice: b.dataset.a }); });
-  grid.addEventListener('change', e => { if (e.target.tagName === 'TEXTAREA') save(cards[e.target.closest('.wcard').dataset.id], {}); });
-  function count() { const d = Object.values(DB.all('scythes')); st.textContent = d.length ? `${d.length} of ${SCY.length} scythes marked (${d.filter(x => x.choice === 'ok').length} look right).` : `None of the ${SCY.length} scythes marked yet.`; }
-  DB.on('scythes', (d, err) => { if (err) { st.textContent = err === 'offline' ? 'Saving works when this page is opened in Claude.' : 'Your marks could not be loaded.'; return; } count(); Object.values(cards).forEach(paint); });
+  const grid = $('#wtgrid'), fl = $('#wtfilter'); if (!grid) return;
+  let show = 'all';
+  fl.innerHTML = [['all', 'All']].concat(WTAB.groups.map(g => [g.id, g.name])).map(([k, n]) => `<button class="chip" data-g="${k}" aria-pressed="${k === show}">${esc(n)}</button>`).join('');
+  grid.innerHTML = WTAB.groups.map(g => `<div class="wtg" data-g="${g.id}" style="grid-column:1/-1;margin-top:6px"><h3 style="font-family:var(--display);font-weight:400;font-size:20px;color:var(--accent)">${esc(g.name)}</h3></div>` +
+    g.items.map(it => `<article class="wcard" data-key="${esc(it.key)}" data-g="${g.id}">${WTHUMB(it.key)}
+<div class="stage"><canvas aria-label="${esc(it.name)}, 3D"></canvas><div class="ld">${GL.ok ? 'Loading…' : 'Live previews need WebGL'}</div><div class="ov"><span class="ovl"></span><span class="ovr"></span></div></div>
+<div class="wbody"><div class="t"><h3>${esc(it.name)}</h3></div><p class="now">${esc([it.tier, it.where].filter(Boolean).join(' · '))}</p></div></article>`).join('')).join('');
+  grid.querySelectorAll('.wcard').forEach(el => whenNear(el, () => { if (!GL.ok) return; const v = weaponView($('canvas', el), info => { const ld = $('.ld', el); if (info.error) { ld.textContent = 'This preview didn\'t load.'; return; } ld.textContent = ''; $('.ovr', el).textContent = info.length ? `${info.length.toFixed(2)} m long` : ''; }); v.show(el.dataset.key, 'o1', 'own'); }));
+  fl.addEventListener('click', e => { const b = e.target.closest('button[data-g]'); if (!b) return; show = b.dataset.g; fl.querySelectorAll('button').forEach(q => q.setAttribute('aria-pressed', String(q === b)));
+    grid.querySelectorAll('[data-g]').forEach(x => x.hidden = show !== 'all' && x.dataset.g !== show); });
 })();

@@ -321,3 +321,11 @@ input#inew{font:inherit;font-size:13px;color:var(--fg);background:var(--panel-2)
 
 .uist { margin: 0; font-size: 12px; } .uist.in { color: var(--ok, #7fbf7f); } .uist.next { color: var(--warn, #d6b46a); } .uist.kept, .uist.tab { color: var(--muted); }
 .lscard, .lsb { min-width: 0; } .lsb p { overflow-wrap: anywhere; }
+
+/* weapon pictures on the cards (shown on the small card; the 3D view replaces it when opened) */
+.wthumb { aspect-ratio: 16/9; max-width: 100%; border-radius: 8px; background-color: #14171d; order: 0; }
+.wcard.open > .wthumb { display: none; }
+.u-quests.sm b { font-size: 8px; } .u-quests.sm span { font-size: 8px; } .u-quests.sm { max-width: 34%; }
+.u-ess.left { left: 4%; right: auto; text-align: left; }
+.u-lore.right { left: auto; right: 4%; bottom: 22%; border-left: 2px solid #c9a86a; max-width: 40%; }
+.u-arc.half { width: 60px; height: 60px; margin: -30px; }

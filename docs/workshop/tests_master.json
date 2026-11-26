@@ -1,6 +1,35 @@
 [
  [
-  "This build (Nov 26 evening, your doc picks)",
+  "This build (Nov 26 night)",
+  [
+   {
+    "id": "c1_continue",
+    "t": "Continue shows our loading screen",
+    "how": "From the main menu, Continue (or Load).",
+    "look": "Our own Curse of Alduin loading screen the whole time, faded off when the world is in."
+   },
+   {
+    "id": "c1_ls",
+    "t": "Only the fitting loading screens",
+    "how": "Fast travel or go through a few doors.",
+    "look": "Dragons, the dead, souls, barrows, shouts, Riverwood, Whiterun, Solitude: no farm animals or guild screens."
+   },
+   {
+    "id": "c1_sounds",
+    "t": "Every weapon its own sounds",
+    "how": "Draw, swing light, swing heavy and hit with a relic, a Tablet weapon and your class weapon.",
+    "look": "Each has its own sound over Skyrim's, light and heavy different; all quiet (20%)."
+   },
+   {
+    "id": "c1_ash",
+    "t": "Fire kills burn to ash",
+    "how": "Kill the dead with fire (a fire spell, the Fire Flask, the rapier in fire).",
+    "look": "They burn, fall, and a moment later crumble into a glowing ash pile; loot them through the ash."
+   }
+  ]
+ ],
+ [
+  "Last build (Nov 26 evening, your doc picks)",
   [
    {
     "id": "b6_sprint",
@@ -65,7 +94,7 @@
   ]
  ],
  [
-  "Last build (Nov 26 afternoon, your decisions)",
+  "Earlier build (Nov 26 afternoon, your decisions)",
   [
    {
     "id": "a4_n5",

@@ -1,5 +1,5 @@
 {
- "updated": "Nov 26 2026 (evening)",
+ "updated": "Nov 26 2026 (night)",
  "about": "Everything the mod is, as built - kept in the repo (docs/workshop/modnow.json) and updated with every build. The workshop's \"The mod now\" tab is drawn from it.",
  "sections": [
   [
@@ -13,7 +13,8 @@
     "<b>Movement</b> (your BO3 movement): the sprint winds up (180 ms) to 440 and widens the view 7 degrees; the slide (sprint + crouch) tilts the view 3 degrees and its speed carries into a jump; light swings 1.2x.",
     "<b>The ability ladder</b>: the class weapons' Tier I light ability, Tier II heavy, Tier III ultimate from a 25-kill meter (Aetherial Host, Starfall, Soul Harvest, Spell Lance); each Ascend +15% damage, +10% size.",
     "<b>On screen</b>: the night counter a plain number top left with the quests under it; the essence bottom left; the held weapon's card bottom right; the ultimate's meter above the perks; no banners or hints; a 10 s countdown before a night only.",
-    "<b>Deaths</b>: a kill by shadow, spirit or arcane tears the soul out (a white beam, Alduin's soul sound); heavies throw the body at half strength; the rest still through FEC until ours replace it.",
+    "<b>Loading screens</b>: 123 of the Load Screen Compendium's that fit the Curse, at random; our own Curse of Alduin screen when a saved game loads from the main menu. <b>Sounds</b>: every weapon its own draw, swing, heavy and hit; the abilities on their picked or recommended sounds; all at 20%.",
+    "<b>Deaths</b>: a kill by shadow, spirit or arcane tears the soul out (a white beam, Alduin's soul sound); heavies throw the body at half strength; fire kills burn to a pile of ash; the rest through FEC, as you chose.",
     "Free every city at its <b>Echo Altar</b>; the questline ends right before Skyrim's own Alduin fight. The last three dragons and the Echo of Alduin are the hardest fights.",
     "Solo first; co-op for <b>1 to 4 players</b> (Skyrim Together, optional). Releasing free on Nexus.",
     "Special nights: <b>The Pack, Daedric Incursion, Armored Champions, Blood Fog</b>.",

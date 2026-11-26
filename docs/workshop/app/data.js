@@ -240,7 +240,8 @@ const FOES = __FOES__;   // (the night's enemies: sheets/enemies.json)
 const MODSTACK = __MODSTACK__;
 const LOADSCREENS = __LOADSCREENS__;   // (the Load Screen Compendium's screens: its sheet and cell, its lore line, whether it fits)
 const ISSUES = __ISSUES__;   // (your picks so far: docs/workshop/ability_picks.json)   // (tools/realfx.py: the themes' real parts, the styles, each card's theme - real.js puts them together)   // (tools/realfx.py: each card's real parts)
-const SCY = __SCY__;   // (tools/scythes.py: our own scythes, for your OK)
+const SCY = __SCY__;
+const WTAB = __WTAB__;   // (Noah, Nov 26: the Weapons tab - every weapon model the mod uses, each a picture on its card)   // (tools/scythes.py: our own scythes, for your OK)
 // ---- the test list: what to do in game, what to look for
 const TESTS = __TESTS__;
 // ---- the decisions this build
