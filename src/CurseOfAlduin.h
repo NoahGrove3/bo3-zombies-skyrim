@@ -464,6 +464,8 @@ namespace coa
 		bool               MutagenInHand();                      // the Mutagen Staff drawn in your hands
 		void               MutagenBlock(bool a_down);            // the block button pressed / let go with it drawn
 		void               MutagenPower();                       // a power attack swung with it
+		void               LadderKill(RE::Actor* a_killer);   // (the ladder) a kill fills the held class weapon's meter
+		bool               TryUltimate();             // (the ladder) the meter full: fire the held weapon's ultimate (and empty it)
 		float              UltimateFill();            // (the ladder) the held class weapon's kill meter 0..1, -1 when it has no ultimate (below Tier III, or not drawn)
 		void               MaceSwing(bool a_power);  // a swing of a class sword (any swing: hit or miss) - its tier's arc, burst and Tier III
 		void               SlayerSwing(bool a_power);  // the Dragon Slayer's swing: a charged one spends its dragon embers (Dragonbreaker)
