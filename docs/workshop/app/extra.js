@@ -310,20 +310,25 @@ ${tr.common ? '' : `<div class="stage"><canvas aria-label="${esc(tr.title)}, liv
   paint(); DB.on('dragons', (d, err) => { if (err) { st.textContent = err === 'offline' ? 'Saving works when this page is opened in Claude.' : ''; return; } paint(); });
 })();
 
-// ---------------------------------------------------------------- the night's dead: keep or swap
+// ---------------------------------------------------------------- the night's dead: each one's picture, what it does, keep or swap
 (function () {
   const box = $('#foes'), st = $('#fstatus'); if (!box) return;
+  const ROLE = { zombie: 'Melee', reaper: 'Heavy', necro: 'Caster', minion: 'Raised' };
   const list = FOES.slice().sort((a, b) => (a.minRound || 0) - (b.minRound || 0));
-  box.innerHTML = list.map(f => `<div class="frow" data-id="${f.id}"><div><b style="font-weight:600">${esc(f.label)}</b> <span class="note">· ${f.minRound >= 99 ? 'story or special' : 'from night ' + (f.minRound || 1)} · ${esc(f.plugin.replace(/\.es[mp]$/, ''))}</span></div>
+  box.className = 'fgrid';
+  box.innerHTML = list.map(f => `<article class="fcard" data-id="${f.id}">
+<div class="fimg">${f.img >= 0 ? `<span class="spr" role="img" aria-label="${esc(f.label)}, from its model" style="background-position:${(f.img % 12) * 100 / 11}% ${Math.floor(f.img / 12) * 100 / 11}%"></span>` : '<span>No picture yet</span>'}</div>
+<div class="fbody2"><b>${esc(f.label)}</b><p class="note">${esc(f.note)}</p>
+<p class="tags"><span>${f.minRound >= 99 ? 'Story or special' : 'From night ' + (f.minRound || 1)}</span><span>${ROLE[f.kind] || 'Melee'}</span>${f.hp !== 1 ? `<span>${f.hp}x health</span>` : ''}${f.spd > 1 ? '<span>faster</span>' : f.spd < 1 ? '<span>slower</span>' : ''}<span>${esc(f.plugin.replace(/\.es[mp]$/, ''))}</span></p>
 <span class="row"><button class="chip" data-c="keep" aria-pressed="false">Keep</button><button class="chip" data-c="swap" aria-pressed="false">Swap</button><button class="chip" data-c="remove" aria-pressed="false">Remove</button></span>
-<textarea rows="1" style="grid-column:1/-1" placeholder="Swap for what, or a note (optional)" aria-label="Note on ${esc(f.label)}"></textarea></div>`).join('');
-  function paint() { const d = DB.all('foes'); box.querySelectorAll('.frow').forEach(el => { const s = d[el.dataset.id];
+<textarea rows="1" placeholder="Swap for what, or a note (optional)" aria-label="Note on ${esc(f.label)}"></textarea></div></article>`).join('');
+  function paint() { const d = DB.all('foes'); box.querySelectorAll('.fcard').forEach(el => { const s = d[el.dataset.id];
     el.querySelectorAll('[data-c]').forEach(b => b.setAttribute('aria-pressed', String(!!s && s.choice === b.dataset.c)));
     const ta = $('textarea', el); if (document.activeElement !== ta) ta.value = s && s.note || ''; });
     const v = Object.values(d); st.textContent = v.length ? `${v.filter(x => x.choice === 'swap').length} to swap, ${v.filter(x => x.choice === 'remove').length} to remove, ${v.filter(x => x.choice === 'keep').length} kept.` : `${list.length} enemies; none marked yet.`; }
   async function save(el, patch) { const f = list.find(q => q.id === el.dataset.id), prev = DB.get('foes', f.id) || {};
     try { await DB.set('foes', f.id, Object.assign({ id: f.id, label: f.label, choice: prev.choice || 'keep', note: $('textarea', el).value.slice(0, 2000) }, patch)); saveMsg(st, null); } catch (e) { saveMsg(st, e); } paint(); }
-  box.addEventListener('click', e => { const b = e.target.closest('button[data-c]'); if (b) save(b.closest('.frow'), { choice: b.dataset.c }); });
-  box.addEventListener('change', e => { if (e.target.tagName === 'TEXTAREA') save(e.target.closest('.frow'), {}); });
+  box.addEventListener('click', e => { const b = e.target.closest('button[data-c]'); if (b) save(b.closest('.fcard'), { choice: b.dataset.c }); });
+  box.addEventListener('change', e => { if (e.target.tagName === 'TEXTAREA') save(e.target.closest('.fcard'), {}); });
   paint(); DB.on('foes', (d, err) => { if (err) return; paint(); });
 })();

@@ -1,3 +1,4 @@
+import os
 import json, sys, pathlib
 sys.path.insert(0, '/home/claude/bo3-zombies-skyrim/tools')
 import weaponfx as W
@@ -177,7 +178,10 @@ for _l in open(WD + 'dd_list.txt'):
 DRAGONS = {'kinds': {k: sorted(v) for k, v in sorted(_dd.items())}}
 _EN = json.load(open('/home/claude/bo3-zombies-skyrim/sheets/enemies.json'))
 _rows = _EN['rows'] if isinstance(_EN, dict) and 'rows' in _EN else _EN
-FOES = [{'id': r['id'], 'label': r['label'], 'plugin': r['plugin'], 'kind': r.get('kind', ''), 'minRound': r.get('minRound', 0), 'edid': r.get('editorId', '')} for r in _rows if r.get('minRound', 99) < 99 or r['id'].startswith(('mb_', 'priest_', 'wyrm_', 'echo_', 'boss', 'herald', 'knight', 'lich'))]
+_NOTES = json.load(open(WD + 'enemy_notes.json'))
+_SHEET = json.load(open('/home/claude/bo3-zombies-skyrim/build/preview/enemies_sheet.json'))
+FOES = [{'id': r['id'], 'label': r['label'], 'plugin': r['plugin'], 'kind': r.get('kind', ''), 'minRound': r.get('minRound', 0), 'edid': r.get('editorId', ''),
+         'hp': r.get('healthMult', 1), 'spd': r.get('speedMult', 1), 'note': _NOTES.get(r['id'], ''), 'img': _SHEET['idx'].get(r['id'], -1)} for r in _rows]
 s = (H / 'index.tpl.html').read_text()
 js = (H / 'data.js').read_text().replace('__SHA__', SHA).replace('__COLS__', J(W.COL)).replace('__WCATS__', J(WC)).replace('__TESTS__', J(TESTS)).replace('__RECS__', J(RECS)) \
     .replace('__RECENT__', J(RECENT)).replace('__MODNOW__', J(MODNOW)).replace('__MODNOW_ABOUT__', J(_MN['about'] + ' Last updated: ' + _MN['updated'] + '.')).replace('__NEXUS__', J(NEXUS)).replace('__CHANGES__', J(CHANGES)).replace('__LOOK3__', J({k: [[o['name'], o['desc']] for o in v] for k, v in WL.LOOKS3.items()})).replace('__AB_PARTS__', J(AB_PARTS)).replace('__REALFX__', J(REALFX)).replace('__AB_PICKS__', J(json.load(open('/home/claude/bo3-zombies-skyrim/docs/workshop/ability_picks.json')))).replace('__SCY__', J(SCY)).replace('__CARRY__', J(CARRY)).replace('__SOUNDS__', J(SOUNDS)).replace('__FEEL__', J(FEEL)).replace('__TRIALS__', J(TRIALS)).replace('__DEATHS__', J(DEATHS)).replace('__PERF__', J(PERF)).replace('__ISSUES__', J(ISSUES)).replace('__DRAGONS__', J(DRAGONS)).replace('__FOES__', J(FOES))
