@@ -601,6 +601,7 @@ namespace coa::Classes
 	void OnKill(bool a_bySummon, RE::Actor* a_dying, RE::Actor* a_killer)
 	{
 		if (!a_bySummon) LadderKill(a_killer);   // (the ladder's kill meter)
+		Picks::FireAsh(a_dying);   // (his fire death: to ash)
 		// (the class guide: the Summoner alone lent the party nothing) a Summoner in your party: each of your kills heals you 2%
 		if (g_class.load() != coffer::kSummoner && Kit::PartyHas(coffer::kSummoner)) {
 			if (auto* p = RE::PlayerCharacter::GetSingleton(); p && !p->IsDead()) {

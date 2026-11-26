@@ -55,6 +55,15 @@ def main():
             ss = [snd(r, g * VOL, d) for r, g, d in lay]
             rows.append(f'\t\t{{ "w:{wkey}", "{sid}", {{ {", ".join(ss)} }}, {len(ss)} }},')
     L += ['\tinline constexpr CardSnd kCardSnd[] = {'] + rows + ['\t};']
+    # each weapon by the start of its name in game (its tiers' I, II, III after it): the key its picks are under
+    NAMES = [("Jailor's Keyhammer", 'vahlok'), ('Mistblade', 'nahkriin'), ('Windcutter', 'volsung'), ('Glacier Greatsword', 'zahkriisos'), ('Storm Blade', 'otar'),
+             ('Sacrifice Knife', 'rahgot'), ('Grief Blade', 'krosis'), ('Sealbreaker', 'hevnoraak'), ("Nightcaller's Scythe", 'vokun'), ('Arcane Maul', 'morokei'),
+             ('Stormtalons', 'stormtalons'), ('Gravebell Mace', 'gravebell'), ('Talons of Woe', 'talons'), ('Riverstone Halberd', 'riverstone'), ('Wyrmspine Pike', 'wyrmspine_pike'),
+             ('Rimewick Quarterstaff', 'lanternwick'), ('Cinderclaws', 'cinderclaws'), ('Eclipse Edge', 'eclipse'), ('The Wandering Star', 'wanderstar'), ('Frostmourn Rapier', 'frostmourn'),
+             ('Silver Reaping Scythe', 'silverscythe'), ('Bonereaper', 'bonereaper'), ('Wyrmtooth Scythe', 'wyrmtooth'), ('Bloodmoon Scythe', 'bloodmoon'),
+             ('Wyrmspine Javelin', 'javelin'), ("Soulcaller's Staff", 'soulcaller'), ('Mutagen Staff', 'mutagen'), ('Dragon Slayer', 'slayer'), ("Alduin's Bane", 'bane'),
+             ('Shadowflame Scythe', 'scythe'), ('Carian Wand', 'wand'), ('Radiant Quarterstaff', 'staff'), ('Spellbound Rapier', 'rapier')]
+    L += ['\tinline constexpr std::pair<const char*, const char*> kWeaponKey[] = {'] + [f'\t\t{{ "{n}", "w:{k}" }},' for n, k in NAMES] + ['\t};']
     # the owners (src/Gun.cpp FxScope) and the card each speaks for
     own = [(a['owner'], a['card']) for a in realfx.ABIL]
     L += ['\tinline constexpr std::pair<const char*, const char*> kOwnerCard[] = {'] + [f'\t\t{{ "{o}", "{c}" }},' for o, c in own] + ['\t};']
@@ -82,6 +91,12 @@ def main():
     ss = [snd(r) for r in o['snd'] if not r.startswith('coa:')][:3] or ['{ "Skyrim.esm", 0, 0.0f, 0.0f, -1 }']
     L += [f'\tinline constexpr bool kSoulTorn = {"true" if sh == "a3" else "false"};   // a kill by shadow, spirit or arcane: the soul rises out of the body',
           f'\tinline constexpr Snd kSoulTornSnd = {ss[0]};']
+    # (Noah, 2026-11-26 evening: The dead, "Burn to ash") a kill by fire burns, falls and crumbles to a pile of glowing ash
+    fi = FINAL['deaths'].get('fire', {}).get('opt', 'a1')
+    fo = next(x for x in next(d for d in DE if d['id'] == 'fire')['opts'] if x['id'] == fi)
+    fs = [snd(r) for r in fo['snd'] if not r.startswith('coa:') and r in BY][:1] or ['{ "Skyrim.esm", 0, 0.0f, 0.0f, -1 }']
+    L += [f'\tinline constexpr bool kFireAsh = {"true" if fi == "a2" else "false"};   // a kill by fire: the body to a pile of ash',
+          f'\tinline constexpr Snd kFireAshSnd = {fs[0]};']
     # trial sounds he changed: event -> its sound
     tr = FINAL['trials']
     evs = []

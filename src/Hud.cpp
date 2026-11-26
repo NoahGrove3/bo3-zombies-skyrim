@@ -35,6 +35,7 @@ namespace coa
 		using PresentFn = HRESULT(WINAPI*)(IDXGISwapChain*, UINT, UINT);
 		PresentFn            g_present = nullptr;
 		std::mutex           g_lock;
+		float                g_loadCover = 0;   // (a saved game from the main menu) our loading screen's alpha
 		Hud::State           g_state;
 		std::deque<std::pair<std::string, float>>                    g_bannerQ;  // (messages waiting their turn)
 		std::deque<std::tuple<std::string, std::string, float>>     g_loreQ;
@@ -6380,8 +6381,26 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				coverPhase = 1, coverStart = tCover, creatorSince = {};
 				logger::info("hud: a new game - its loading screen up until the creator at Riverwood");
 			}
+			// (Noah, Nov 26: "When a player hits continue from the main menu, I actually want them to use the Curse of Alduin loading
+			// screen that we made") leaving the main menu for a saved game (Continue, Load): our own loading screen over Skyrim's
+			// until the world is in, then faded off; loading screens inside a game stay the Compendium's he picked
+			static int loadCover = 0;   // 0 off, 1 up, 2 fading off
+			static std::chrono::steady_clock::time_point loadStart{}, loadFade{}, loadIn{};
+			if (wasOnMain && !onMainMenu && coverPhase == 0) {
+				loadCover = 1, loadStart = tCover, loadIn = {};
+				logger::info("hud: a saved game from the main menu - our loading screen up");
+			}
 			wasOnMain = onMainMenu;
-			if (onMainMenu) coverPhase = 0;
+			if (onMainMenu) coverPhase = 0, loadCover = 0;
+			if (loadCover == 1) {
+				auto* ui0 = RE::UI::GetSingleton();
+				const bool loading = ui0 && ui0->IsMenuOpen(RE::LoadingMenu::MENU_NAME);
+				if (loading || !InGame()) loadIn = {};
+				else if (!loadIn.time_since_epoch().count()) loadIn = tCover;
+				if ((loadIn.time_since_epoch().count() && secs(tCover - loadIn) > 0.6f) || secs(tCover - loadStart) > 180.0f) loadCover = 2, loadFade = tCover;
+			}
+			g_loadCover = loadCover == 1 ? 1.0f : loadCover == 2 ? std::max(0.0f, 1.0f - secs(tCover - loadFade) / 1.0f) : 0.0f;
+			if (loadCover == 2 && g_loadCover <= 0.0f) loadCover = 0;
 			constexpr const char* kNewGameFile = "Data/SKSE/Plugins/CurseOfAlduin/newgame_seconds.txt";
 			static double newGameLen = [] {
 				double d = 30.0;
@@ -6651,6 +6670,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				float p = static_cast<float>(tUp < L ? 0.92 * (tUp / L) : 0.92 + 0.06 * (1.0 - std::exp(-(tUp - L) / 10.0)));
 				p += (1.0f - p) * fin;
 				if (coverPhase) DrawBootScreen(io.DisplaySize, paint, p, "THE ROAD TO RIVERWOOD", "Every night they rise again. Every night, a few more.", black);
+			}
+			if (g_loadCover > 0.0f && !coverPhase) {
+				const float u = g_loadCover;
+				DrawBootScreen(io.DisplaySize, u * u * (3.0f - 2.0f * u));
 			}
 			// (the launch's loading screen, once Skyrim's data is in and our menu ready: faded off over it)
 			if (!g_bootDone && !bootScreen) {

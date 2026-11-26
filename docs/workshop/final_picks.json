@@ -718,7 +718,7 @@
    "optName": "Skybolt",
    "size": 80,
    "speed": 100,
-   "trigger": "Heavy (Tier II–III)",
+   "trigger": "Heavy (Tier II\u2013III)",
    "vib": 100
   },
   "staff_light": {
@@ -1114,7 +1114,7 @@
    "optName": "As it is now",
    "size": 80,
    "speed": 100,
-   "trigger": "Tier II–III",
+   "trigger": "Tier II\u2013III",
    "vib": 100
   }
  },
@@ -1177,8 +1177,8 @@
   "fire": {
    "id": "fire",
    "name": "Killed by fire",
-   "opt": "a1",
-   "optName": "As it is now"
+   "opt": "a2",
+   "optName": "Burn to ash"
   },
   "frost": {
    "id": "frost",

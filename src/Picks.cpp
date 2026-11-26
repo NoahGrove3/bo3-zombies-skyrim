@@ -127,14 +127,32 @@ namespace coa::Picks
 		const char* card = CardOf(a_owner);
 		return card && Card(card, a_slot, a_at);
 	}
-	void WeaponDrawn()
+	// the weapon in hand's key for its picked sounds ("w:<key>"), by the start of its name; nullptr for any other weapon
+	const char* HeldWeaponKey()
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		auto* o = p ? p->GetEquippedObject(false) : nullptr;
-		if (!o) return;
-		static RE::FormID jav = 0;
-		if (!jav) if (auto* f = RE::TESDataHandler::GetSingleton()->LookupForm(gen::kJavelinWeap, gen::kPlugin)) jav = f->GetFormID();
-		if (o->GetFormID() == jav) Card("w:javelin", "draw", p->GetPosition());
+		const char* nm = o ? o->GetName() : nullptr;
+		if (!nm || !nm[0]) return nullptr;
+		const std::string_view n(nm);
+		for (const auto& [pre, key] : kWeaponKey) if (n.rfind(pre, 0) == 0) return key;
+		return nullptr;
+	}
+	// (Noah, Nov 26: the Issues tab's "light and heavy swings sound the same" fixed) its swing, or its heavy, laid over Skyrim's
+	void WeaponSwing(bool a_power)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (const char* k = HeldWeaponKey(); k && p) Card(k, a_power ? "heavy" : "swing", p->GetPosition());
+	}
+	void WeaponHit(const RE::NiPoint3& a_at)
+	{
+		if (const char* k = HeldWeaponKey()) Card(k, "hit", a_at);
+	}
+	void WeaponDrawn()
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (!p) return;
+		if (const char* k = HeldWeaponKey()) Card(k, "draw", p->GetPosition());
 		// (Noah, Nov 26 doc) the held weapon's lore card, bottom right - a new weapon at once, the same one again after a while
 		static std::string lastT;
 		static auto        lastAt = std::chrono::steady_clock::time_point{};
@@ -144,6 +162,33 @@ namespace coa::Picks
 			Hud::WeaponCard(t, x, 7.0f);
 			lastT = t, lastAt = now;
 		}
+	}
+	// (Noah, Nov 26 evening: The dead, "Burn to ash") a kill by fire - a fire effect on it as it dies - burns, falls, and a moment on
+	// crumbles to Skyrim's own pile of glowing ash (the body hidden under it; its loot through the ash, as the glider's fire leaves)
+	void FireAsh(RE::Actor* a_dying)
+	{
+		if (!kFireAsh || !a_dying) return;
+		static auto* kw = RE::TESForm::LookupByID<RE::BGSKeyword>(0x01CEAD);   // MagicDamageFire
+		bool fire = false;
+		if (auto* mt = a_dying->AsMagicTarget(); mt && kw) {
+			if (auto* list = mt->GetActiveEffectList()) {
+				for (auto* ae : *list) {
+					auto* mg = ae ? ae->GetBaseObject() : nullptr;
+					if (mg && mg->HasKeyword(kw)) { fire = true; break; }
+				}
+			}
+		}
+		if (!fire) return;
+		Tasks::Later(1.15f, [h = a_dying->GetHandle()] {
+			auto a = h.get();
+			static auto* ashBase = RE::TESForm::LookupByID<RE::TESBoundObject>(0x0000001B);   // DefaultAshPile1
+			if (!a || !a->IsDead() || !a->Is3DLoaded() || !ashBase || a->extraList.GetByType<RE::ExtraAshPileRef>()) return;
+			if (auto ash = a->PlaceObjectAtMe(ashBase, false)) {
+				a->extraList.Add(new RE::ExtraAshPileRef(ash->CreateRefHandle()));
+				if (auto* r3 = a->Get3D()) r3->SetAppCulled(true);
+				if (kFireAshSnd.id) PlayOne(kFireAshSnd, a->GetPosition(), 0.6f);
+			}
+		});
 	}
 	void SoulTorn(RE::Actor* a_dying)
 	{
@@ -206,6 +251,7 @@ namespace coa::Picks
 		auto* w = a_source ? a_source->As<RE::TESObjectWEAP>() : nullptr;
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (!w || !p || !a_target || w->IsBow() || w->IsCrossbow() || w->IsStaff()) return;
+		if (w == p->GetEquippedObject(false)) WeaponHit(a_target->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f });   // (its own hit sound, the workshop's)
 		int k = 1;
 		switch (w->GetWeaponType()) {
 		case RE::WEAPON_TYPE::kHandToHandMelee:

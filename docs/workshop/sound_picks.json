@@ -1,5 +1,5 @@
 {
- "about": "Noah's final sound picks (workshop doc 8maGoe7NgRkTLAWtUFrtir, Nov 25 night): every weapon and ability sound at 20% volume - background, never loud (his words). The Mutagen Staff's flasks and elixir use the Alchemist flasks' own sounds (his note). Slots he left alone keep what plays now, at 20%. Nov 26 afternoon (doc XziAfzRj): the Wyrmspine Javelin's draw (with fire), throw (Ember bolt) and landing (Fwoosh).",
+ "about": "Noah's final sound picks (workshop doc 8maGoe7NgRkTLAWtUFrtir, Nov 25 night): every weapon and ability sound at 20% volume - background, never loud (his words). The Mutagen Staff's flasks and elixir use the Alchemist flasks' own sounds (his note). Slots he left alone keep what plays now, at 20%. Nov 26 afternoon (doc XziAfzRj): the Wyrmspine Javelin's draw (with fire), throw (Ember bolt) and landing (Fwoosh). Nov 26 evening (doc 2S9Qv1, his \"fix all of those problems\" for the Issues tab's generic sounds and same-sounding swings): every slot he hadn't set takes the doc's recommended option (marked rec), weapons' draw, swing, heavy and hit too.",
  "vol": 20,
  "weapons": {
   "vahlok": {
@@ -86,28 +86,44 @@
     "set": true
    },
    "swing": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Swing with a whoosh",
     "snd": [
      [
       "WPNSwingBladeMediumSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.35,
+      0.02
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "heavy": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Heavy with spirit",
     "snd": [
      [
       "WPNSwingBladeMediumSD",
       1.0,
+      0
+     ],
+     [
+      "WB_ConjurationBanish_Sound_Release_Hiss",
+      0.7,
+      0.04
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.3,
       0.0
      ]
     ],
@@ -115,15 +131,21 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "hit": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Undead flesh, wet",
     "snd": [
      [
-      "WPNImpactBladeVsFleshSD",
+      "WPNImpactBladeVsFleshDraugr",
       1.0,
+      0
+     ],
+     [
+      "coa:flesh_hit_0",
+      0.55,
       0.0
      ]
     ],
@@ -131,49 +153,72 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "volsung": {
    "draw": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Draw with wind",
     "snd": [
      [
       "WPNBlade1HandDrawSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "VOCShoutFXSprintFireSD",
+      0.45,
+      0.08
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "swing": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Swing with a whoosh",
     "snd": [
      [
       "WPNSwingBladeMediumSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.35,
+      0.02
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "heavy": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Heavy with wind",
     "snd": [
      [
       "WPNSwingBladeMediumSD",
       1.0,
+      0
+     ],
+     [
+      "VOCShoutFXSprintFireSD",
+      0.7,
+      0.04
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.3,
       0.0
      ]
     ],
@@ -181,15 +226,21 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "hit": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Undead flesh, wet",
     "snd": [
      [
-      "WPNImpactBladeVsFleshSD",
+      "WPNImpactBladeVsFleshDraugr",
       1.0,
+      0
+     ],
+     [
+      "coa:flesh_hit_0",
+      0.55,
       0.0
      ]
     ],
@@ -197,49 +248,72 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "zahkriisos": {
    "draw": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Draw with frost",
     "snd": [
      [
       "WPNBlade2HandDrawSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "WB_DestructionFrost_Release_1_Sound_Tiny",
+      0.45,
+      0.08
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "swing": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Swing with a whoosh",
     "snd": [
      [
       "WPNSwing2Hand",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.35,
+      0.02
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "heavy": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Heavy with frost",
     "snd": [
      [
       "WPNSwing2Hand",
       1.0,
+      0
+     ],
+     [
+      "WB_DestructionFrost_Release_1_Sound_Tiny",
+      0.7,
+      0.04
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.3,
       0.0
      ]
     ],
@@ -247,15 +321,21 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "hit": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Undead flesh, wet",
     "snd": [
      [
-      "WPNImpactBlade2HandVsFleshSD",
+      "WPNImpactBlade2HandVsFleshDraugr",
       1.0,
+      0
+     ],
+     [
+      "coa:flesh_hit_0",
+      0.55,
       0.0
      ]
     ],
@@ -263,49 +343,72 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "otar": {
    "draw": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Draw with lightning",
     "snd": [
      [
       "WPNBlade1HandDrawSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "WB_DestructionShock_Sound_Release_JoyBuzzer_2",
+      0.45,
+      0.08
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "swing": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Swing with a whoosh",
     "snd": [
      [
       "WPNSwingBladeMediumSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.35,
+      0.02
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "heavy": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Heavy with lightning",
     "snd": [
      [
       "WPNSwingBladeMediumSD",
       1.0,
+      0
+     ],
+     [
+      "WB_DestructionShock_Sound_Release_JoyBuzzer_2",
+      0.7,
+      0.04
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.3,
       0.0
      ]
     ],
@@ -313,15 +416,21 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "hit": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Undead flesh, wet",
     "snd": [
      [
-      "WPNImpactBladeVsFleshSD",
+      "WPNImpactBladeVsFleshDraugr",
       1.0,
+      0
+     ],
+     [
+      "coa:flesh_hit_0",
+      0.55,
       0.0
      ]
     ],
@@ -329,49 +438,72 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "rahgot": {
    "draw": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Draw with venom",
     "snd": [
      [
       "WPNBlade1HandSmallDrawSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "MAG_PoisonReleaseSFX",
+      0.45,
+      0.08
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "swing": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Swing with a whoosh",
     "snd": [
      [
       "WPNSwingBladeMediumSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.35,
+      0.02
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "heavy": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Heavy with venom",
     "snd": [
      [
       "WPNSwingBladeMediumSD",
       1.0,
+      0
+     ],
+     [
+      "MAG_PoisonReleaseSFX",
+      0.7,
+      0.04
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.3,
       0.0
      ]
     ],
@@ -379,15 +511,21 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "hit": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Undead flesh, wet",
     "snd": [
      [
-      "WPNImpactBladeVsFleshSD",
+      "WPNImpactBladeVsFleshDraugr",
       1.0,
+      0
+     ],
+     [
+      "coa:flesh_hit_0",
+      0.55,
       0.0
      ]
     ],
@@ -395,49 +533,72 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "krosis": {
    "draw": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Draw with blood magic",
     "snd": [
      [
       "WPNBlade1HandDrawSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "WB_RestorationBlood_Sound_Release_OrcishHealing",
+      0.45,
+      0.08
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "swing": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Swing with a whoosh",
     "snd": [
      [
       "WPNSwingBladeMediumSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.35,
+      0.02
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "heavy": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Heavy with blood magic",
     "snd": [
      [
       "WPNSwingBladeMediumSD",
       1.0,
+      0
+     ],
+     [
+      "WB_RestorationBlood_Sound_Release_OrcishHealing",
+      0.7,
+      0.04
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.3,
       0.0
      ]
     ],
@@ -445,15 +606,21 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "hit": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Undead flesh, wet",
     "snd": [
      [
-      "WPNImpactBladeVsFleshSD",
+      "WPNImpactBladeVsFleshDraugr",
       1.0,
+      0
+     ],
+     [
+      "coa:flesh_hit_0",
+      0.55,
       0.0
      ]
     ],
@@ -461,49 +628,72 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "hevnoraak": {
    "draw": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Draw with stone",
     "snd": [
      [
       "WPNAxe2HandDrawSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "WB_AlterationEarth_Sound_Release",
+      0.45,
+      0.08
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "swing": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Swing with a whoosh",
     "snd": [
      [
       "WPNSwing2Hand",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.35,
+      0.02
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "heavy": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Heavy with stone",
     "snd": [
      [
       "WPNSwing2Hand",
       1.0,
+      0
+     ],
+     [
+      "WB_AlterationEarth_Sound_Release",
+      0.7,
+      0.04
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.3,
       0.0
      ]
     ],
@@ -511,15 +701,21 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "hit": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Undead flesh, wet",
     "snd": [
      [
-      "WPNImpactAxeLargeVsFleshSD",
+      "WPNImpactBlade2HandVsFleshDraugr",
       1.0,
+      0
+     ],
+     [
+      "coa:flesh_hit_0",
+      0.55,
       0.0
      ]
     ],
@@ -527,49 +723,72 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "vokun": {
    "draw": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Draw with shadow",
     "snd": [
      [
       "WPNAxe2HandDrawSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "WB_IllusionShadow_Sound_Release_Buff",
+      0.45,
+      0.08
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "swing": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Swing with a whoosh",
     "snd": [
      [
       "WPNSwing2Hand",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.35,
+      0.02
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "heavy": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Heavy with shadow",
     "snd": [
      [
       "WPNSwing2Hand",
       1.0,
+      0
+     ],
+     [
+      "WB_IllusionShadow_Sound_Release_Buff",
+      0.7,
+      0.04
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.3,
       0.0
      ]
     ],
@@ -577,15 +796,21 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "hit": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Undead flesh, wet",
     "snd": [
      [
-      "WPNImpactAxeLargeVsFleshSD",
+      "WPNImpactBlade2HandVsFleshDraugr",
       1.0,
+      0
+     ],
+     [
+      "coa:flesh_hit_0",
+      0.55,
       0.0
      ]
     ],
@@ -593,49 +818,72 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "morokei": {
    "draw": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Draw with arcane magic",
     "snd": [
      [
       "WPNBlunt2HandDraw",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "MAGAlterationReleaseSD",
+      0.45,
+      0.08
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "swing": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Swing with a whoosh",
     "snd": [
      [
       "WPNSwing2Hand",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.35,
+      0.02
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "heavy": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Heavy with arcane magic",
     "snd": [
      [
       "WPNSwing2Hand",
       1.0,
+      0
+     ],
+     [
+      "MAGAlterationReleaseSD",
+      0.7,
+      0.04
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.3,
       0.0
      ]
     ],
@@ -643,15 +891,21 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "hit": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Undead flesh, wet",
     "snd": [
      [
       "WPNImpactBlunt2HandVsFlesh",
       1.0,
+      0
+     ],
+     [
+      "coa:flesh_hit_0",
+      0.55,
       0.0
      ]
     ],
@@ -659,49 +913,72 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "stormtalons": {
    "draw": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Draw with lightning",
     "snd": [
      [
       "WPNBlade1HandSmallDrawSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "WB_DestructionShock_Sound_Release_JoyBuzzer_2",
+      0.45,
+      0.08
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "swing": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Swing with a whoosh",
     "snd": [
      [
       "WPNSwingBladeMediumSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.35,
+      0.02
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "heavy": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Heavy with lightning",
     "snd": [
      [
       "WPNSwingBladeMediumSD",
       1.0,
+      0
+     ],
+     [
+      "WB_DestructionShock_Sound_Release_JoyBuzzer_2",
+      0.7,
+      0.04
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.3,
       0.0
      ]
     ],
@@ -709,15 +986,21 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "hit": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Undead flesh, wet",
     "snd": [
      [
-      "WPNImpactBladeVsFleshSD",
+      "WPNImpactBladeVsFleshDraugr",
       1.0,
+      0
+     ],
+     [
+      "coa:flesh_hit_0",
+      0.55,
       0.0
      ]
     ],
@@ -725,49 +1008,72 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "gravebell": {
    "draw": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Draw with light",
     "snd": [
      [
       "WPNMace1HandDrawSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "MAGLightFireSD",
+      0.45,
+      0.08
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "swing": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Swing with a whoosh",
     "snd": [
      [
       "WPNSwingBlunt1Hand",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.35,
+      0.02
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "heavy": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Heavy with light",
     "snd": [
      [
       "WPNSwingBlunt1Hand",
       1.0,
+      0
+     ],
+     [
+      "MAGLightFireSD",
+      0.7,
+      0.04
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.3,
       0.0
      ]
     ],
@@ -775,15 +1081,21 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "hit": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Undead flesh, wet",
     "snd": [
      [
       "WPNImpactBluntVsFleshSD",
       1.0,
+      0
+     ],
+     [
+      "coa:flesh_hit_0",
+      0.55,
       0.0
      ]
     ],
@@ -791,49 +1103,72 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "talons": {
    "draw": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Draw with blood magic",
     "snd": [
      [
       "WPNBlade1HandSmallDrawSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "WB_RestorationBlood_Sound_Release_OrcishHealing",
+      0.45,
+      0.08
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "swing": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Swing with a whoosh",
     "snd": [
      [
       "WPNSwingBladeMediumSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.35,
+      0.02
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "heavy": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Heavy with blood magic",
     "snd": [
      [
       "WPNSwingBladeMediumSD",
       1.0,
+      0
+     ],
+     [
+      "WB_RestorationBlood_Sound_Release_OrcishHealing",
+      0.7,
+      0.04
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.3,
       0.0
      ]
     ],
@@ -841,15 +1176,21 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "hit": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Undead flesh, wet",
     "snd": [
      [
-      "WPNImpactBladeVsFleshSD",
+      "WPNImpactBladeVsFleshDraugr",
       1.0,
+      0
+     ],
+     [
+      "coa:flesh_hit_0",
+      0.55,
       0.0
      ]
     ],
@@ -857,49 +1198,72 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "riverstone": {
    "draw": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Draw with stone",
     "snd": [
      [
       "WPNAxe2HandDrawSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "WB_AlterationEarth_Sound_Release",
+      0.45,
+      0.08
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "swing": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Swing with a whoosh",
     "snd": [
      [
       "WPNSwing2Hand",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.35,
+      0.02
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "heavy": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Heavy with stone",
     "snd": [
      [
       "WPNSwing2Hand",
       1.0,
+      0
+     ],
+     [
+      "WB_AlterationEarth_Sound_Release",
+      0.7,
+      0.04
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.3,
       0.0
      ]
     ],
@@ -907,15 +1271,21 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "hit": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Undead flesh, wet",
     "snd": [
      [
-      "WPNImpactAxeLargeVsFleshSD",
+      "WPNImpactBlade2HandVsFleshDraugr",
       1.0,
+      0
+     ],
+     [
+      "coa:flesh_hit_0",
+      0.55,
       0.0
      ]
     ],
@@ -923,49 +1293,72 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "wyrmspine_pike": {
    "draw": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Draw with fire",
     "snd": [
      [
       "WPNBlade2HandDrawSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "WB_DestructionFire_Sound_Release_1",
+      0.45,
+      0.08
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "swing": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Swing with a whoosh",
     "snd": [
      [
       "WPNSwing2Hand",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.35,
+      0.02
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "heavy": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Heavy with fire",
     "snd": [
      [
       "WPNSwing2Hand",
       1.0,
+      0
+     ],
+     [
+      "WB_DestructionFire_Sound_Release_1",
+      0.7,
+      0.04
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.3,
       0.0
      ]
     ],
@@ -973,15 +1366,21 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "hit": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Undead flesh, wet",
     "snd": [
      [
-      "WPNImpactBlade2HandVsFleshSD",
+      "WPNImpactBlade2HandVsFleshDraugr",
       1.0,
+      0
+     ],
+     [
+      "coa:flesh_hit_0",
+      0.55,
       0.0
      ]
     ],
@@ -989,49 +1388,72 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "lanternwick": {
    "draw": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Draw with frost",
     "snd": [
      [
       "WPNAxe2HandDrawSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "WB_DestructionFrost_Release_1_Sound_Tiny",
+      0.45,
+      0.08
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "swing": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Swing with a whoosh",
     "snd": [
      [
       "WPNSwing2Hand",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.35,
+      0.02
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "heavy": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Heavy with frost",
     "snd": [
      [
       "WPNSwing2Hand",
       1.0,
+      0
+     ],
+     [
+      "WB_DestructionFrost_Release_1_Sound_Tiny",
+      0.7,
+      0.04
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.3,
       0.0
      ]
     ],
@@ -1039,15 +1461,21 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "hit": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Undead flesh, wet",
     "snd": [
      [
-      "WPNImpactAxeLargeVsFleshSD",
+      "WPNImpactBlade2HandVsFleshDraugr",
       1.0,
+      0
+     ],
+     [
+      "coa:flesh_hit_0",
+      0.55,
       0.0
      ]
     ],
@@ -1055,49 +1483,72 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "cinderclaws": {
    "draw": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Draw with fire",
     "snd": [
      [
       "WPNBlade1HandSmallDrawSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "WB_DestructionFire_Sound_Release_1",
+      0.45,
+      0.08
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "swing": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Swing with a whoosh",
     "snd": [
      [
       "WPNSwingBladeMediumSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.35,
+      0.02
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "heavy": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Heavy with fire",
     "snd": [
      [
       "WPNSwingBladeMediumSD",
       1.0,
+      0
+     ],
+     [
+      "WB_DestructionFire_Sound_Release_1",
+      0.7,
+      0.04
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.3,
       0.0
      ]
     ],
@@ -1105,15 +1556,21 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "hit": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Undead flesh, wet",
     "snd": [
      [
-      "WPNImpactBladeVsFleshSD",
+      "WPNImpactBladeVsFleshDraugr",
       1.0,
+      0
+     ],
+     [
+      "coa:flesh_hit_0",
+      0.55,
       0.0
      ]
     ],
@@ -1121,49 +1578,72 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "eclipse": {
    "draw": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Draw with light",
     "snd": [
      [
       "WPNBlade2HandDrawSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "MAGLightFireSD",
+      0.45,
+      0.08
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "swing": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Swing with a whoosh",
     "snd": [
      [
       "WPNSwing2Hand",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.35,
+      0.02
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "heavy": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Heavy with light",
     "snd": [
      [
       "WPNSwing2Hand",
       1.0,
+      0
+     ],
+     [
+      "MAGLightFireSD",
+      0.7,
+      0.04
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.3,
       0.0
      ]
     ],
@@ -1171,15 +1651,21 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "hit": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Undead flesh, wet",
     "snd": [
      [
-      "WPNImpactBlade2HandVsFleshSD",
+      "WPNImpactBlade2HandVsFleshDraugr",
       1.0,
+      0
+     ],
+     [
+      "coa:flesh_hit_0",
+      0.55,
       0.0
      ]
     ],
@@ -1187,67 +1673,96 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "wanderstar": {
    "draw": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Draw with light",
     "snd": [
      [
       "WPNStaffHandDrawSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "MAGLightFireSD",
+      0.45,
+      0.08
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "frostmourn": {
    "draw": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Draw with frost",
     "snd": [
      [
       "WPNBlade1HandSmallDrawSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "WB_DestructionFrost_Release_1_Sound_Tiny",
+      0.45,
+      0.08
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "swing": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Swing with a whoosh",
     "snd": [
      [
       "WPNSwingBladeMediumSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.35,
+      0.02
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "heavy": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Heavy with frost",
     "snd": [
      [
       "WPNSwingBladeMediumSD",
       1.0,
+      0
+     ],
+     [
+      "WB_DestructionFrost_Release_1_Sound_Tiny",
+      0.7,
+      0.04
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.3,
       0.0
      ]
     ],
@@ -1255,15 +1770,21 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "hit": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Undead flesh, wet",
     "snd": [
      [
-      "WPNImpactBladeVsFleshSD",
+      "WPNImpactBladeVsFleshDraugr",
       1.0,
+      0
+     ],
+     [
+      "coa:flesh_hit_0",
+      0.55,
       0.0
      ]
     ],
@@ -1271,49 +1792,72 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "silverscythe": {
    "draw": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Draw with spirit",
     "snd": [
      [
       "WPNAxe2HandDrawSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "WB_ConjurationBanish_Sound_Release_Hiss",
+      0.45,
+      0.08
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "swing": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Swing with a whoosh",
     "snd": [
      [
       "WPNSwing2Hand",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.35,
+      0.02
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "heavy": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Heavy with spirit",
     "snd": [
      [
       "WPNSwing2Hand",
       1.0,
+      0
+     ],
+     [
+      "WB_ConjurationBanish_Sound_Release_Hiss",
+      0.7,
+      0.04
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.3,
       0.0
      ]
     ],
@@ -1321,15 +1865,21 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "hit": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Undead flesh, wet",
     "snd": [
      [
-      "WPNImpactAxeLargeVsFleshSD",
+      "WPNImpactBlade2HandVsFleshDraugr",
       1.0,
+      0
+     ],
+     [
+      "coa:flesh_hit_0",
+      0.55,
       0.0
      ]
     ],
@@ -1337,49 +1887,72 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "bonereaper": {
    "draw": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Draw with spirit",
     "snd": [
      [
       "WPNAxe2HandDrawSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "WB_ConjurationBanish_Sound_Release_Hiss",
+      0.45,
+      0.08
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "swing": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Swing with a whoosh",
     "snd": [
      [
       "WPNSwing2Hand",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.35,
+      0.02
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "heavy": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Heavy with spirit",
     "snd": [
      [
       "WPNSwing2Hand",
       1.0,
+      0
+     ],
+     [
+      "WB_ConjurationBanish_Sound_Release_Hiss",
+      0.7,
+      0.04
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.3,
       0.0
      ]
     ],
@@ -1387,15 +1960,21 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "hit": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Undead flesh, wet",
     "snd": [
      [
-      "WPNImpactAxeLargeVsFleshSD",
+      "WPNImpactBlade2HandVsFleshDraugr",
       1.0,
+      0
+     ],
+     [
+      "coa:flesh_hit_0",
+      0.55,
       0.0
      ]
     ],
@@ -1403,49 +1982,72 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "wyrmtooth": {
    "draw": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Draw with blood magic",
     "snd": [
      [
       "WPNAxe2HandDrawSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "WB_RestorationBlood_Sound_Release_OrcishHealing",
+      0.45,
+      0.08
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "swing": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Swing with a whoosh",
     "snd": [
      [
       "WPNSwing2Hand",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.35,
+      0.02
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "heavy": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Heavy with blood magic",
     "snd": [
      [
       "WPNSwing2Hand",
       1.0,
+      0
+     ],
+     [
+      "WB_RestorationBlood_Sound_Release_OrcishHealing",
+      0.7,
+      0.04
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.3,
       0.0
      ]
     ],
@@ -1453,15 +2055,21 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "hit": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Undead flesh, wet",
     "snd": [
      [
-      "WPNImpactAxeLargeVsFleshSD",
+      "WPNImpactBlade2HandVsFleshDraugr",
       1.0,
+      0
+     ],
+     [
+      "coa:flesh_hit_0",
+      0.55,
       0.0
      ]
     ],
@@ -1469,49 +2077,72 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "bloodmoon": {
    "draw": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Draw with blood magic",
     "snd": [
      [
       "WPNAxe2HandDrawSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "WB_RestorationBlood_Sound_Release_OrcishHealing",
+      0.45,
+      0.08
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "swing": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Swing with a whoosh",
     "snd": [
      [
       "WPNSwing2Hand",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.35,
+      0.02
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "heavy": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Heavy with blood magic",
     "snd": [
      [
       "WPNSwing2Hand",
       1.0,
+      0
+     ],
+     [
+      "WB_RestorationBlood_Sound_Release_OrcishHealing",
+      0.7,
+      0.04
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.3,
       0.0
      ]
     ],
@@ -1519,15 +2150,21 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "hit": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Undead flesh, wet",
     "snd": [
      [
-      "WPNImpactAxeLargeVsFleshSD",
+      "WPNImpactBlade2HandVsFleshDraugr",
       1.0,
+      0
+     ],
+     [
+      "coa:flesh_hit_0",
+      0.55,
       0.0
      ]
     ],
@@ -1535,7 +2172,8 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "javelin": {
@@ -1561,28 +2199,44 @@
     "set": true
    },
    "swing": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Swing with a whoosh",
     "snd": [
      [
       "WPNSwingBladeMediumSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.35,
+      0.02
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "heavy": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Heavy with fire",
     "snd": [
      [
       "WPNSwingBladeMediumSD",
       1.0,
+      0
+     ],
+     [
+      "WB_DestructionFire_Sound_Release_1",
+      0.7,
+      0.04
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.3,
       0.0
      ]
     ],
@@ -1590,15 +2244,21 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "hit": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Undead flesh, wet",
     "snd": [
      [
-      "WPNImpactBladeVsFleshSD",
+      "WPNImpactBladeVsFleshDraugr",
       1.0,
+      0
+     ],
+     [
+      "coa:flesh_hit_0",
+      0.55,
       0.0
      ]
     ],
@@ -1606,43 +2266,56 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "soulcaller": {
    "draw": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Draw with arcane magic",
     "snd": [
      [
       "WPNStaffHandDrawSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "MAGAlterationReleaseSD",
+      0.45,
+      0.08
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "mutagen": {
    "draw": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Draw with light",
     "snd": [
      [
       "WPNStaffHandDrawSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "MAGLightFireSD",
+      0.45,
+      0.08
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "slayer": {
@@ -1663,28 +2336,44 @@
     "set": true
    },
    "swing": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Swing with a whoosh",
     "snd": [
      [
       "WPNSwing2Hand",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.35,
+      0.02
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "heavy": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Heavy with fire",
     "snd": [
      [
       "WPNSwing2Hand",
       1.0,
+      0
+     ],
+     [
+      "WB_DestructionFire_Sound_Release_1",
+      0.7,
+      0.04
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.3,
       0.0
      ]
     ],
@@ -1692,15 +2381,21 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "hit": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Undead flesh, wet",
     "snd": [
      [
-      "WPNImpactBlade2HandVsFleshSD",
+      "WPNImpactBlade2HandVsFleshDraugr",
       1.0,
+      0
+     ],
+     [
+      "coa:flesh_hit_0",
+      0.55,
       0.0
      ]
     ],
@@ -1708,49 +2403,72 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "bane": {
    "draw": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Draw with wind",
     "snd": [
      [
       "WPNBlade2HandDrawSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "VOCShoutFXSprintFireSD",
+      0.45,
+      0.08
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "swing": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Swing with a whoosh",
     "snd": [
      [
       "WPNSwing2Hand",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.35,
+      0.02
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "heavy": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Heavy with wind",
     "snd": [
      [
       "WPNSwing2Hand",
       1.0,
+      0
+     ],
+     [
+      "VOCShoutFXSprintFireSD",
+      0.7,
+      0.04
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.3,
       0.0
      ]
     ],
@@ -1758,15 +2476,21 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "hit": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Undead flesh, wet",
     "snd": [
      [
-      "WPNImpactBlade2HandVsFleshSD",
+      "WPNImpactBlade2HandVsFleshDraugr",
       1.0,
+      0
+     ],
+     [
+      "coa:flesh_hit_0",
+      0.55,
       0.0
      ]
     ],
@@ -1774,49 +2498,72 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "scythe": {
    "draw": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Draw with shadow",
     "snd": [
      [
       "WPNAxe2HandDrawSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "WB_IllusionShadow_Sound_Release_Buff",
+      0.45,
+      0.08
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "swing": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Swing with a whoosh",
     "snd": [
      [
       "WPNSwing2Hand",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.35,
+      0.02
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "heavy": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Heavy with shadow",
     "snd": [
      [
       "WPNSwing2Hand",
       1.0,
+      0
+     ],
+     [
+      "WB_IllusionShadow_Sound_Release_Buff",
+      0.7,
+      0.04
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.3,
       0.0
      ]
     ],
@@ -1824,15 +2571,21 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "hit": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Undead flesh, wet",
     "snd": [
      [
-      "WPNImpactAxeLargeVsFleshSD",
+      "WPNImpactBlade2HandVsFleshDraugr",
       1.0,
+      0
+     ],
+     [
+      "coa:flesh_hit_0",
+      0.55,
       0.0
      ]
     ],
@@ -1840,67 +2593,96 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "wand": {
    "draw": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Draw with arcane magic",
     "snd": [
      [
       "WPNStaffHandDrawSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "MAGAlterationReleaseSD",
+      0.45,
+      0.08
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "staff": {
    "draw": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Draw with light",
     "snd": [
      [
       "WPNAxe2HandDrawSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "MAGLightFireSD",
+      0.45,
+      0.08
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "swing": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Swing with a whoosh",
     "snd": [
      [
       "WPNSwing2Hand",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.35,
+      0.02
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "heavy": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Heavy with light",
     "snd": [
      [
       "WPNSwing2Hand",
       1.0,
+      0
+     ],
+     [
+      "MAGLightFireSD",
+      0.7,
+      0.04
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.3,
       0.0
      ]
     ],
@@ -1908,15 +2690,21 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "hit": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Undead flesh, wet",
     "snd": [
      [
-      "WPNImpactAxeLargeVsFleshSD",
+      "WPNImpactBlade2HandVsFleshDraugr",
       1.0,
+      0
+     ],
+     [
+      "coa:flesh_hit_0",
+      0.55,
       0.0
      ]
     ],
@@ -1924,49 +2712,72 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "rapier": {
    "draw": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Draw with fire",
     "snd": [
      [
       "WPNBlade1HandDrawSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "WB_DestructionFire_Sound_Release_1",
+      0.45,
+      0.08
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "swing": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Swing with a whoosh",
     "snd": [
      [
       "WPNSwingBladeMediumSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.35,
+      0.02
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "heavy": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Heavy with fire",
     "snd": [
      [
       "WPNSwingBladeMediumSD",
       1.0,
+      0
+     ],
+     [
+      "WB_DestructionFire_Sound_Release_1",
+      0.7,
+      0.04
+     ],
+     [
+      "coa:sp_cold_whoosh",
+      0.3,
       0.0
      ]
     ],
@@ -1974,15 +2785,21 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "hit": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Undead flesh, wet",
     "snd": [
      [
-      "WPNImpactBladeVsFleshSD",
+      "WPNImpactBladeVsFleshDraugr",
       1.0,
+      0
+     ],
+     [
+      "coa:flesh_hit_0",
+      0.55,
       0.0
      ]
     ],
@@ -1990,7 +2807,8 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   }
  },
@@ -2067,14 +2885,21 @@
     "set": true
    },
    "linger": {
-    "opt": "a1",
-    "name": "As it is now",
-    "snd": [],
+    "opt": "a2",
+    "name": "Whispers",
+    "snd": [
+     [
+      "AMBSteamCrackSoulCairnWhispers2DLPSD",
+      1.0,
+      0.0
+     ]
+    ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "volsung_light": {
@@ -2203,14 +3028,21 @@
     "set": true
    },
    "linger": {
-    "opt": "a1",
-    "name": "As it is now",
-    "snd": [],
+    "opt": "a2",
+    "name": "Venom stream",
+    "snd": [
+     [
+      "MAG_PoisonFireLoopSFX",
+      1.0,
+      0.0
+     ]
+    ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "rahgot_heavy": {
@@ -2339,14 +3171,21 @@
     "set": true
    },
    "linger": {
-    "opt": "a1",
-    "name": "As it is now",
-    "snd": [],
+    "opt": "a2",
+    "name": "Illusion held",
+    "snd": [
+     [
+      "MAGIllusionFireLPM",
+      1.0,
+      0.0
+     ]
+    ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "morokei_hit": {
@@ -2553,14 +3392,21 @@
     "set": true
    },
    "linger": {
-    "opt": "a1",
-    "name": "As it is now",
-    "snd": [],
+    "opt": "a2",
+    "name": "Blizzard",
+    "snd": [
+     [
+      "MAGDestructionBlizzard2DLPM",
+      1.0,
+      0.0
+     ]
+    ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "cinderclaws_hit": {
@@ -2834,14 +3680,21 @@
     "set": true
    },
    "linger": {
-    "opt": "a1",
-    "name": "As it is now",
-    "snd": [],
+    "opt": "a2",
+    "name": "Bats",
+    "snd": [
+     [
+      "MAGNightCloakBatsHitLPM",
+      1.0,
+      0.0
+     ]
+    ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "javelin_throw": {
@@ -2862,11 +3715,11 @@
     "set": true
    },
    "impact": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Fwoosh",
     "snd": [
      [
-      "MAGIcicleImpactBreakSD",
+      "WB_DestructionFire_Sound_Impact_Fwoosh",
       1.0,
       0.0
      ]
@@ -2875,7 +3728,8 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "javelin_land": {
@@ -2926,14 +3780,21 @@
     "set": true
    },
    "impact": {
-    "opt": "a1",
-    "name": "As it is now",
-    "snd": [],
+    "opt": "a2",
+    "name": "Aetherial",
+    "snd": [
+     [
+      "MAGAetherialShieldImpact",
+      1.0,
+      0.0
+     ]
+    ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "soulcaller_wolves": {
@@ -2980,14 +3841,21 @@
     "flask": true
    },
    "linger": {
-    "opt": "a1",
-    "name": "As it is now",
-    "snd": [],
+    "opt": "a2",
+    "name": "Stendarr's Aura",
+    "snd": [
+     [
+      "MAGDestructionStendarrsAura2DLP",
+      1.0,
+      0.0
+     ]
+    ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "slayer_light": {
@@ -3008,14 +3876,21 @@
     "set": true
    },
    "impact": {
-    "opt": "a1",
-    "name": "As it is now",
-    "snd": [],
+    "opt": "a2",
+    "name": "Fwoosh",
+    "snd": [
+     [
+      "WB_DestructionFire_Sound_Impact_Fwoosh",
+      1.0,
+      0.0
+     ]
+    ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "slayer_heavy": {
@@ -3104,14 +3979,21 @@
     "set": true
    },
    "impact": {
-    "opt": "a1",
-    "name": "As it is now",
-    "snd": [],
+    "opt": "a2",
+    "name": "Fwoosh",
+    "snd": [
+     [
+      "WB_DestructionFire_Sound_Impact_Fwoosh",
+      1.0,
+      0.0
+     ]
+    ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "scythe_heavy": {
@@ -3132,56 +4014,66 @@
     "set": true
    },
    "linger": {
-    "opt": "a1",
-    "name": "As it is now",
-    "snd": [],
+    "opt": "a2",
+    "name": "Fire burning",
+    "snd": [
+     [
+      "FXFireMedium01LPSD",
+      1.0,
+      0.0
+     ]
+    ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "wand_light": {
    "cast": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Magic missile",
     "snd": [
      [
-      "MAGFireboltFire2DSD",
+      "WB_DestructionGold_Sound_Release_MagicMissile",
       1.0,
       0.0
      ]
     ],
-    "cycle": [
-     "MAGFireboltFire2DSD",
-     "MAGShockFFFireSD",
-     "MAGIcicleFireSD"
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true,
+    "rec": true
+   },
+   "impact": {
+    "opt": "a2",
+    "name": "Arcane burst",
+    "snd": [
+     [
+      "WB_DestructionCantrip_Sound_Explosion_ArcaneBurst",
+      1.0,
+      0.0
+     ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
-   },
-   "impact": {
-    "opt": "a1",
-    "name": "As it is now",
-    "snd": [],
-    "vol": 20,
-    "pitch": 100,
-    "varn": 5,
-    "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "wand_hit": {
    "impact": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Arcane burst",
     "snd": [
      [
-      "MAGDestructionFireballExplosion",
+      "WB_DestructionCantrip_Sound_Explosion_ArcaneBurst",
       1.0,
       0.0
      ]
@@ -3190,40 +4082,44 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "wand_heavy": {
    "cast": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Magic missile",
     "snd": [
      [
-      "MAGFireboltFire2DSD",
+      "WB_DestructionGold_Sound_Release_MagicMissile",
       1.0,
       0.0
      ]
     ],
-    "cycle": [
-     "MAGFireboltFire2DSD",
-     "MAGShockFFFireSD",
-     "MAGIcicleFireSD"
+    "vol": 20,
+    "pitch": 100,
+    "varn": 5,
+    "layerVol": 50,
+    "set": true,
+    "rec": true
+   },
+   "impact": {
+    "opt": "a2",
+    "name": "Plasma",
+    "snd": [
+     [
+      "WB_AlterationChaos_Sound_Explosion_Plasma",
+      1.0,
+      0.0
+     ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
-   },
-   "impact": {
-    "opt": "a1",
-    "name": "As it is now",
-    "snd": [],
-    "vol": 20,
-    "pitch": 100,
-    "varn": 5,
-    "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "staff_light": {
@@ -3274,33 +4170,47 @@
   },
   "rapier_light": {
    "cast": {
-    "opt": "a1",
-    "name": "As it is now",
-    "snd": [],
+    "opt": "a2",
+    "name": "Emberbolt",
+    "snd": [
+     [
+      "WB_DestructionFire_Sound_Release_Emberbolt",
+      1.0,
+      0.0
+     ]
+    ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "impact": {
-    "opt": "a1",
-    "name": "As it is now",
-    "snd": [],
+    "opt": "a2",
+    "name": "Fwoosh",
+    "snd": [
+     [
+      "WB_DestructionFire_Sound_Impact_Fwoosh",
+      1.0,
+      0.0
+     ]
+    ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "rapier_heavy": {
    "impact": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Immolation",
     "snd": [
      [
-      "MAGDestructionFireballExplosion",
+      "WB_DestructionFire_Sound_Impact_Immolation",
       1.0,
       0.0
      ]
@@ -3309,38 +4219,53 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "linger": {
-    "opt": "a1",
-    "name": "As it is now",
-    "snd": [],
+    "opt": "a2",
+    "name": "Fire burning",
+    "snd": [
+     [
+      "FXFireMedium01LPSD",
+      1.0,
+      0.0
+     ]
+    ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "rapier_line": {
    "impact": {
-    "opt": "a1",
-    "name": "As it is now",
-    "snd": [],
+    "opt": "a2",
+    "name": "Shatter",
+    "snd": [
+     [
+      "WB_DestructionFrost_Sound_Explosion_Shatter",
+      1.0,
+      0.0
+     ]
+    ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "ffire_land": {
    "impact": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Fwoosh",
     "snd": [
      [
-      "MAGDestructionFireballExplosion",
+      "WB_DestructionFire_Sound_Impact_Fwoosh",
       1.0,
       0.0
      ]
@@ -3349,26 +4274,34 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "linger": {
-    "opt": "a1",
-    "name": "As it is now",
-    "snd": [],
+    "opt": "a2",
+    "name": "Fire burning",
+    "snd": [
+     [
+      "FXFireMedium01LPSD",
+      1.0,
+      0.0
+     ]
+    ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "ffire_power": {
    "impact": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Atronach burst",
     "snd": [
      [
-      "MAGDestructionFireballExplosion",
+      "NPCAtronachFlameDeathExplosion3D",
       1.0,
       0.0
      ]
@@ -3377,16 +4310,17 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "ffrost_land": {
    "impact": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Ice burst",
     "snd": [
      [
-      "MAGIcicleImpactBreakSD",
+      "FXExplosionIceSD",
       1.0,
       0.0
      ]
@@ -3395,26 +4329,34 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "linger": {
-    "opt": "a1",
-    "name": "As it is now",
-    "snd": [],
+    "opt": "a2",
+    "name": "Blizzard",
+    "snd": [
+     [
+      "MAGDestructionBlizzard2DLPM",
+      1.0,
+      0.0
+     ]
+    ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "ffrost_power": {
    "impact": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Cryoblast",
     "snd": [
      [
-      "MAGDestructionFrostBiteDragonExplosion",
+      "WB_DestructionFrost_Sound_Explosion_Cryoblast",
       1.0,
       0.0
      ]
@@ -3423,16 +4365,17 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "fshock_land": {
    "impact": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Shock nova",
     "snd": [
      [
-      "MAGShockFFFireSD",
+      "WB_DestructionShock_Sound_Explosion_ShockNova",
       1.0,
       0.0
      ]
@@ -3441,26 +4384,34 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "linger": {
-    "opt": "a1",
-    "name": "As it is now",
-    "snd": [],
+    "opt": "a2",
+    "name": "Lightning held",
+    "snd": [
+     [
+      "MAGShockConcentrationFireLPMSD",
+      1.0,
+      0.0
+     ]
+    ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "fshock_power": {
    "impact": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Storm Call",
     "snd": [
      [
-      "MAGShockFFFireSD",
+      "VOCShoutImpactStormCallNearSD",
       1.0,
       0.0
      ]
@@ -3469,16 +4420,17 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "facid_land": {
    "impact": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Poison burst",
     "snd": [
      [
-      "MAGPowerSerpentStoneExplosion",
+      "MAG_PoisonExplosionSFX",
       1.0,
       0.0
      ]
@@ -3487,26 +4439,34 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "linger": {
-    "opt": "a1",
-    "name": "As it is now",
-    "snd": [],
+    "opt": "a2",
+    "name": "Venom stream",
+    "snd": [
+     [
+      "MAG_PoisonFireLoopSFX",
+      1.0,
+      0.0
+     ]
+    ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "fholy_land": {
    "impact": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Auriel's shield",
     "snd": [
      [
-      "MAGFireboltImpactSD",
+      "MAGAurielShieldBlastA",
       1.0,
       0.0
      ]
@@ -3515,26 +4475,34 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    },
    "linger": {
-    "opt": "a1",
-    "name": "As it is now",
-    "snd": [],
+    "opt": "a2",
+    "name": "Stendarr's Aura",
+    "snd": [
+     [
+      "MAGDestructionStendarrsAura2DLP",
+      1.0,
+      0.0
+     ]
+    ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "fvoid_land": {
    "impact": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Subsonic energy",
     "snd": [
      [
-      "MAGDestructionFireStormExplosion",
+      "WB_Restoration_Sound_Explosion_SubsonicEnergy",
       1.0,
       0.0
      ]
@@ -3543,16 +4511,17 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "fvoid_power": {
    "impact": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Glass jaw",
     "snd": [
      [
-      "MAGDestructionFireStormExplosion",
+      "WB_AlterationTelekinesis_Sound_Explosion_GlassJaw",
       1.0,
       0.0
      ]
@@ -3561,19 +4530,27 @@
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   },
   "summon_arrive": {
    "impact": {
-    "opt": "a1",
-    "name": "As it is now",
-    "snd": [],
+    "opt": "a2",
+    "name": "Detonate",
+    "snd": [
+     [
+      "WB_ConjurationDetonate_Sound_Explosion_Blast",
+      1.0,
+      0.0
+     ]
+    ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true,
+    "rec": true
    }
   }
  }

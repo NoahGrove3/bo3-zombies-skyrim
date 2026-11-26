@@ -1,4 +1,5 @@
 #include "CurseOfAlduin.h"
+#include "LoadScreens.h"
 #include "CofferSpells.h"
 #include "Perf.h"
 #include "WorkshopPicks.h"
@@ -1322,8 +1323,9 @@ namespace coa
 			for (auto* ls : dh->GetFormArray<RE::TESLoadScreen>()) {
 				if (!ls) continue;
 				auto* f = ls->GetFile(0);
-				if (f && std::string_view(f->GetFilename()) == "LoadScreenCompendium.esp") {
-					++on;
+				if (f && std::string_view(f->GetFilename()) == "LoadScreenCompendium.esp" &&
+					std::find(std::begin(gen::kLoadScreensUsed), std::end(gen::kLoadScreensUsed), ls->GetLocalFormID()) != std::end(gen::kLoadScreensUsed)) {
+					++on;   // (Noah, Nov 26: only the ones that fit the Curse - the workshop's Loading screens tab)
 					continue;
 				}
 				auto* never = new RE::TESConditionItem();
