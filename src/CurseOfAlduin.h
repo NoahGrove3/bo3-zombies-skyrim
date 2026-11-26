@@ -464,6 +464,7 @@ namespace coa
 		bool               MutagenInHand();                      // the Mutagen Staff drawn in your hands
 		void               MutagenBlock(bool a_down);            // the block button pressed / let go with it drawn
 		void               MutagenPower();                       // a power attack swung with it
+		float              UltimateFill();            // (the ladder) the held class weapon's kill meter 0..1, -1 when it has no ultimate (below Tier III, or not drawn)
 		void               MaceSwing(bool a_power);  // a swing of a class sword (any swing: hit or miss) - its tier's arc, burst and Tier III
 		void               SlayerSwing(bool a_power);  // the Dragon Slayer's swing: a charged one spends its dragon embers (Dragonbreaker)
 		void               SlayerKill();              // a kill by the Dragon Slayer: an ember
@@ -1318,6 +1319,7 @@ namespace coa
 		void        Banner(std::string a_text, float a_seconds = 4.0f);
 		void        QuestBanner(std::string a_text, float a_seconds);  // (log only, 2026-11-23: no quest lines across the screen)
 		void        Subtitle(std::string a_text, float a_seconds);     // a spoken line in the HUD's own subtitle line (Edge UI), if the MCM's subtitles are on
+		void        SetUltimate(float a_fill);   // (the ladder) the held class weapon's kill meter 0..1, -1 hidden
 		void        WeaponCard(std::string a_title, std::string a_text, float a_seconds);   // (Noah, Nov 26 doc) the held weapon's lore card, bottom right
 		void        Hint(std::string a_text, float a_seconds);         // a weapon's hint across the screen (the Carian Wand, the Mutagen Staff - the only ones left)
 		void        ShoutLearned(std::string_view a_name, std::string_view a_words);  // the shout-learned pop-up (the one banner still shown)

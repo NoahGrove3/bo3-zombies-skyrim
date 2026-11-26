@@ -11,7 +11,7 @@
 
 // BO3-style HUD (sheet: hud), drawn with Dear ImGui over Skyrim's frame from a Present hook
 // (the hook itself follows SkyCraft's Overlay.cpp, MIT, chasmlol).
-namespace coa::Hud { void DrawWeaponCard(ImDrawList* dl, ImVec2 size, float k); }
+namespace coa::Hud { void DrawWeaponCard(ImDrawList* dl, ImVec2 size, float k); float UltimateShown(); }
 namespace coa
 {
 	namespace
@@ -2131,6 +2131,18 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				// visible centered above the health bar") all four slots in the row: the held brews first, then the open slots as a
 				// faint outline, the locked ones fainter still
 				const int   slotsAll = gen::kMaxPerks, slotsOpen = std::clamp(s.perkSlots, 0, slotsAll);
+				// (Noah, Nov 26 doc: the ultimate's meter "right above the perks centered ... only when weilding a weapon that has an
+				// ultimate unlocked", no label) a thin gold bar that glows when full
+				if (const float uf = Hud::UltimateShown(); uf >= 0.0f) {
+					static float shownU = 0;
+					shownU += (uf - shownU) * std::min(1.0f, dt * 6.0f);
+					const float bw = 220 * k, by = y - 46 * k - r - 22 * k, bx = cx - bw * 0.5f;
+					dl->AddRectFilled({ bx, by }, { bx + bw, by + 3 * k }, IM_COL32(255, 255, 255, 30));
+					const bool full = uf >= 0.999f;
+					const float glow = full ? 0.6f + 0.4f * std::sin(now * 4.0f) : 0.0f;
+					if (full) dl->AddRectFilled({ bx - 2 * k, by - 2 * k }, { bx + bw + 2 * k, by + 5 * k }, IM_COL32(243, 220, 156, static_cast<int>(70 * glow)), 2 * k);
+					dl->AddRectFilledMultiColor({ bx, by }, { bx + bw * std::clamp(shownU, 0.0f, 1.0f), by + 3 * k }, IM_COL32(201, 168, 106, 255), IM_COL32(243, 220, 156, 255), IM_COL32(243, 220, 156, 255), IM_COL32(201, 168, 106, 255));
+				}
 				{
 					const float py = y - 46 * k;
 					float       sx = cx - (std::max(n, slotsAll) - 1) * pg * 0.5f + n * pg;
@@ -6979,6 +6991,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			logger::info("quest (not shown): {}", a_text);
 		}
 		// (Noah, Nov 26 doc: the hints - "dont include this only the Lore Cards") the log only
+		namespace { std::atomic<float> g_ultFill{ -1.0f }; }
+		void SetUltimate(float a_fill) { g_ultFill = a_fill; }
+		float UltimateShown() { return g_ultFill; }
 		void Hint(std::string a_text, float a_seconds) { (void)a_seconds; logger::info("hint (not shown): {}", a_text); }
 		namespace { std::string g_wcTitle, g_wcText; std::chrono::steady_clock::time_point g_wcAt{}; float g_wcLen = 0; }
 		void WeaponCard(std::string a_title, std::string a_text, float a_seconds)

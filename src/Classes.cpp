@@ -600,6 +600,7 @@ namespace coa::Classes
 	void SlayerKill();
 	void OnKill(bool a_bySummon, RE::Actor* a_dying, RE::Actor* a_killer)
 	{
+		if (!a_bySummon) LadderKill(a_killer);   // (the ladder's kill meter)
 		// (the class guide: the Summoner alone lent the party nothing) a Summoner in your party: each of your kills heals you 2%
 		if (g_class.load() != coffer::kSummoner && Kit::PartyHas(coffer::kSummoner)) {
 			if (auto* p = RE::PlayerCharacter::GetSingleton(); p && !p->IsDead()) {
@@ -865,6 +866,7 @@ namespace coa::Classes
 	std::string WonderLineNow();
 	void Tick()
 	{
+		Hud::SetUltimate(UltimateFill());   // (the ladder's meter, above the perks)
 		static auto last = std::chrono::steady_clock::now();
 		if (std::chrono::steady_clock::now() - last < std::chrono::seconds(1)) return;
 		last = std::chrono::steady_clock::now();
@@ -2585,6 +2587,8 @@ namespace coa::Classes
 		auto* w = CarianBlade();
 		if (!p || !w) return;
 		const int t = std::max(0, Kit::TierOfWeapon(w));
+		// (the ladder) the wand's heavy is its held cast: at Tier III with the meter full, the cast lets Starfall go first
+		if (t >= 3 && TryUltimate()) return;
 		static int turn = 0, casts = 0, last = -1;
 		++casts;
 		// (Noah: "instead of it firing a great bolt every third cast, it should be every other cast. And it should shoot randomly
@@ -3871,13 +3875,13 @@ namespace coa::Classes
 		// (Noah, 2026-11-12: "update all the weapons descriptions so they are short and to the point")
 		inline const Card kCards[] = {
 			{ "Radiant Quarterstaff", "The Summoner's quarterstaff of white sunlight.",
-				{ "Tier I: light attacks throw sun balls.", "Tier II: heavy attacks call a sunbeam on your target.", "Tier III: heavy attacks call a great sunbeam." } },
+				{ "Tier I: light attacks throw sun balls.", "Tier II: heavy attacks call a sunbeam on your target.", "Tier III: a great sunbeam. Fill the meter (25 kills) and a heavy attack calls the Aetherial Host: three wolves of light for 15 s." } },
 			{ "Carian Wand", "The Battle-mage's wand. Hold to cast a bolt every 0.5 s, cycling fire, lightning and ice.",
-				{ "Tier I: bolts every 0.5 s.", "Tier II: every 2nd bolt is a great bolt that pierces.", "Tier III: every 2nd bolt is a great bolt with a volley either side." } },
+				{ "Tier I: bolts every 0.5 s.", "Tier II: every 2nd bolt is a great bolt that pierces.", "Tier III: great bolts with a volley either side. Fill the meter (25 kills) and your next cast brings Starfall: twelve great bolts rain down ahead." } },
 			{ "Shadowflame Scythe", "The Alchemist's scythe. Sheathe it to bring your flasks to hand.",
-				{ "Tier I: light attacks fire burning shadowflame bolts.", "Tier II: heavy attacks raise a purple fire tornado.", "Tier III: heavy attacks raise a great purple fire tornado." } },
+				{ "Tier I: light attacks fire burning shadowflame bolts.", "Tier II: heavy attacks raise a purple fire tornado.", "Tier III: a great purple fire tornado. Fill the meter (25 kills) and a heavy attack brings Soul Harvest: every dead within 12 m has its soul torn out." } },
 			{ "Spellbound Rapier", "The Spellsword's blade. It takes the element of the spell in your other hand.",
-				{ "Tier I: light attacks fire bolts of that element.", "Tier II: heavy attacks raise a tornado that casts your spell on all it hits.", "Tier III: heavy attacks raise a great tornado." } },
+				{ "Tier I: light attacks fire bolts of that element.", "Tier II: heavy attacks raise a tornado that casts your spell on all it hits.", "Tier III: a great tornado. Fill the meter (25 kills) and a heavy attack looses the Spell Lance: your element pierces everything in a line." } },
 			// (Noah, 2026-11-21: the descriptions approved) Skyrim's own staff, its card in our words
 			{ "Wyrmspine Javelin", "The Battle-mage's wonder. Light attack jabs. Hold attack to charge, let go to throw: it bursts in your other hand's element, bigger the longer you held. A kill sends it on to the next enemy; then it flies back to you.", {} },
 		};
@@ -3968,6 +3972,52 @@ namespace coa::Classes
 		card->obj.DeleteMember("charge");
 		menu->uiMovie->Invoke("_root.Menu_mc.UpdateItemCardInfo", nullptr, &card->obj, 1);
 		if (static int said = 0; said++ < 12) logger::info("cards: {} - its card laid over ({}, no charge): {}", nm, field, want);
+	}
+	// ---- (Noah, Nov 26 doc: the ability ladder) the four class weapons: Tier I the light ability, Tier II the heavy, Tier III an
+	// ultimate a heavy attack fires once the kill meter is full (25 kills with the weapon - "Kills only (about 25 to fill)"); each
+	// Ascend +15% damage and +10% size ("+15% damage, +10% size"). His ultimates: the Radiant Quarterstaff's Aetherial Host (three
+	// wolves of light run with you for 15 s), the Carian Wand's Starfall (twelve great bolts rain down in front of you), the
+	// Shadowflame Scythe's Soul Harvest (every dead within 12 m has its soul torn out) and the Spellbound Rapier's Spell Lance (a
+	// long lance of your element pierces everything in a line)
+	namespace
+	{
+		constexpr float      kUltKills = 25.0f;
+		std::array<float, 4> g_ultKills{};
+		float                g_ascK = 1.0f;   // the swing under way's Ascend size (ClassCyclone reads it)
+		int AscOf(const RE::TESForm* a_w) { return std::max(0, Kit::TierOfWeapon(a_w) - 3); }
+		float AscDmg(int a_asc) { return 1.0f + 0.15f * a_asc; }
+		float AscSize(int a_asc) { return 1.0f + 0.10f * a_asc; }
+		int HeldClassWeapon(RE::TESForm** a_out = nullptr)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* w = p ? p->GetEquippedObject(false) : nullptr;
+			const int cls = SwordClass(w);
+			if (a_out) *a_out = w;
+			return cls >= 0 && Kit::TierOfWeapon(w) >= 3 ? cls : -1;
+		}
+		void FireUltimate(int a_cls, RE::TESForm* a_w);   // (below: it calls the Soulcaller's wolves)
+	}
+	void LadderKill(RE::Actor* a_killer)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (!p || a_killer != p) return;
+		if (const int cls = HeldClassWeapon(); cls >= 0) g_ultKills[cls] = std::min(kUltKills, g_ultKills[cls] + 1.0f);
+	}
+	float UltimateFill()
+	{
+		const int cls = HeldClassWeapon();
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (cls < 0 || !p || !p->AsActorState()->IsWeaponDrawn()) return -1.0f;
+		return g_ultKills[cls] / kUltKills;
+	}
+	bool TryUltimate()
+	{
+		RE::TESForm* w = nullptr;
+		const int cls = HeldClassWeapon(&w);
+		if (cls < 0 || g_ultKills[cls] < kUltKills) return false;
+		g_ultKills[cls] = 0;
+		FireUltimate(cls, w);
+		return true;
 	}
 	void ClassCyclone(int a_cls, int a_key, int a_t, float a_pw, RE::SpellItem* a_spell, const RE::NiPoint3& a_me, const RE::NiPoint3& a_dir)
 	{
@@ -4068,6 +4118,7 @@ namespace coa::Classes
 				Gun::Knock(f, 0.6f);
 			}
 		};
+		cs.size *= g_ascK;   // (each Ascend 10% bigger)
 		Gun::ElemCyclone(std::move(cs));
 		logger::info("swords: a {} cyclone of {} (tier {})", big ? "large" : "small", kModel[el], a_t);
 	}
@@ -4083,7 +4134,10 @@ namespace coa::Classes
 		last = now;
 		const int t = std::clamp(Kit::TierOfWeapon(w), 0, 3);
 		if (t < 1) return;
-		const float pw = UpgradeMult(t) * (0.7f + 0.3f * Arcana::Power());
+		const int asc = AscOf(w);
+		g_ascK = AscSize(asc);
+		const float pw = UpgradeMult(t) * (0.7f + 0.3f * Arcana::Power()) * AscDmg(asc);
+		if (a_power && t >= 3 && TryUltimate()) return;   // (the ladder's Tier III: a heavy with the meter full fires the ultimate)
 		const RE::NiPoint3 dir = Gun::SwingDir();
 		const RE::NiPoint3 me = p->GetPosition();
 		const int key = LookKey(cls);
@@ -4106,8 +4160,8 @@ namespace coa::Classes
 			const bool isBolt = true;   // (Noah, clip 10: the Radiant Quarterstaff's a white sun ball now, a bolt like the rest)
 			sl.bolt = isBolt;
 			if (isBolt) sl.speed = 1150.0f;
-			sl.scale = (isBolt ? 1.3f : 0.9f) + 0.15f * t;
-			sl.share = BladeShare(w->As<RE::TESObjectWEAP>()) * (0.7f + 0.3f * Arcana::Power());   // (the blade's own light blow, at its tier)
+			sl.scale = ((isBolt ? 1.3f : 0.9f) + 0.15f * t) * AscSize(asc);
+			sl.share = BladeShare(w->As<RE::TESObjectWEAP>()) * (0.7f + 0.3f * Arcana::Power()) * AscDmg(asc);   // (the blade's own light blow, at its tier)
 			sl.flingKill = 16.0f;   // (Noah: "send enemies flying if the slash kills them")
 			// (Noah: "when enemies are killed by my sword swinging on them, they explode in golden fire instead of purple fire") Skyrim's
 			// fire death burns orange whatever it's asked: the Shadowflame's dead die in its own violet fire instead (below)
@@ -5170,6 +5224,83 @@ namespace coa::Classes
 				auto* av = p->AsActorValueOwner();  // (a speed change shows once the carry weight is touched)
 				av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, 0.1f);
 				av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, -0.1f);
+			}
+		}
+	}
+	namespace
+	{
+		void FireUltimate(int a_cls, RE::TESForm* a_w)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p) return;
+			const int   asc = AscOf(a_w);
+			const float dm = UpgradeMult(3) * (0.7f + 0.3f * Arcana::Power()) * AscDmg(asc), sz = AscSize(asc);
+			const RE::NiPoint3 me = p->GetPosition(), dir = Gun::SwingDir();
+			const RE::NiPoint3 fwd = Flat(dir, p);
+			const float whole = Director::RoundHealth() * gen::kRounds.hpScale;
+			logger::info("ladder: {} ultimate (Ascend {})", a_cls == 0 ? "Aetherial Host" : a_cls == 1 ? "Starfall" : a_cls == 2 ? "Soul Harvest" : "Spell Lance", asc);
+			if (a_cls == 0) {   // Aetherial Host: three wolves of light, 15 s
+				Gun::BlastSound("lightmassive", me, 0.9f);
+				Gun::Ring("white", me, 40.0f, 520.0f * sz, 0.8f);
+				auto* base = SoulWolf();
+				for (int n = 0; n < 3 && base; ++n) {
+					const float a = p->GetAngleZ() + (n - 1) * 0.9f;
+					const RE::NiPoint3 at = me + RE::NiPoint3{ std::sin(a) * 200.0f, std::cos(a) * 200.0f, 0.0f };
+					Gun::QueueFx("CurseOfAlduin\\fx\\soul_portal.nif", at, 1.0f, 0.0f, 0.0f, false);
+					Tasks::Later(0.15f + 0.15f * n, [base, at, whole, dm, sz] {
+						auto* pc = RE::PlayerCharacter::GetSingleton();
+						if (!pc || pc->IsDead()) return;
+						if (auto* c = RaiseAlly(pc, base, at, 15.0f, whole * 2.0f * dm, 12)) {
+							c->SetScale(1.15f * sz);
+							c->AsActorValueOwner()->SetActorValue(RE::ActorValue::kAttackDamageMult, 2.0f * dm);
+							g_soulWolves.push_back({ c->GetHandle(), 0.0f });   // (the Soulcaller's pack: the same white light and eyes)
+						}
+					});
+				}
+			} else if (a_cls == 1) {   // Starfall: twelve great bolts down in front of you, fire, lightning and ice in turn
+				for (int n = 0; n < 12; ++n) {
+					static std::mt19937 rng{ std::random_device{}() };
+					std::uniform_real_distribution<float> u(-1.0f, 1.0f);
+					const float d = 300.0f + 900.0f * (0.5f + 0.5f * u(rng)), side = 450.0f * u(rng);
+					const RE::NiPoint3 right{ fwd.y, -fwd.x, 0.0f };
+					const RE::NiPoint3 at = OnGround(me + fwd * d + right * side, me.z);
+					const int el = n % 3;   // (0 fire, 1 shock, 2 frost)
+					Tasks::Later(0.12f * n, [at, el, dm, sz, whole] {
+						Gun::Meteor(at, false, 0.9f * sz, [el, dm, sz, whole](const RE::NiPoint3& hit) {
+							static constexpr int kB[3] = { 0, 2, 1 };   // (ElemBurst: 0 fire 1 frost 2 shock)
+							static constexpr const char* kS[3] = { "fireball", "runeshock", "frost" };
+							Gun::ElemBurst(kB[el], hit + RE::NiPoint3{ 0, 0, 40.0f }, 1.2f * sz, 0.0f, 0.8f);
+							Gun::BlastSound(kS[el], hit, 0.8f);
+							Gun::AreaHurt(hit, 300.0f * sz, 0.55f * dm, "");
+							(void)whole;
+						});
+					});
+				}
+			} else if (a_cls == 2) {   // Soul Harvest: every one of the dead within 12 m has its soul torn out
+				Gun::BlastSound("bloodplague", me, 0.9f);
+				Gun::Ring("purple", me, 40.0f, 840.0f * sz, 0.9f);
+				for (auto* f : NearFoes(me, 840.0f * sz, 40)) { Picks::SoulTorn(f); Shadowburn(f, 3); }
+				Gun::AreaHurt(me, 840.0f * sz, 2.5f * dm, "");   // (most of the night's dead fall; a boss takes a great wound)
+				(void)whole;
+			} else {   // Spell Lance: a long lance of your element through everything in a line
+				const int key = LookKey(3);
+				Gun::SlashSpec sl;
+				sl.model = ArcModel(key);
+				sl.from = Gun::SwingFrom();
+				sl.dir = dir;
+				sl.roll = Gun::SwingRoll(dir);
+				sl.range = 3200.0f;
+				sl.radius = 170.0f * sz;
+				sl.bolt = true, sl.speed = 2600.0f;
+				sl.scale = 2.4f * sz;
+				sl.share = 1.6f * dm;
+				sl.flingKill = 22.0f;
+				sl.onHit = [key](RE::Actor* a, bool) {
+					if (!a) return;
+					Gun::ElemBurst(key == 5 ? 1 : key == 6 ? 2 : key == 7 ? 4 : key == 8 ? 5 : 0, a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, 0.6f, 0.0f, 0.5f);
+				};
+				Gun::Slash(sl);
+				Gun::BlastSound("lightmassive", me, 0.8f);
 			}
 		}
 	}
