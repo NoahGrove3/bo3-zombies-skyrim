@@ -46,6 +46,14 @@ def main():
             if not sl.get('set') or sl.get('flask') or sl['opt'] == 'a1' or not sl['snd']: continue
             ss = [snd(r, g * VOL, d) for r, g, d in sl['snd']][:3]
             rows.append(f'\t\t{{ "{card}", "{sid}", {{ {", ".join(ss)} }}, {len(ss)} }},')
+    # each weapon's picked draw, swing, heavy and hit (Skyrim's own WPN layer already plays: only the layers over it)
+    for wkey, slots in SP['weapons'].items():
+        for sid, sl in slots.items():
+            if not sl.get('set') or sl['opt'] == 'a1': continue
+            lay = [(r, g, d) for r, g, d in sl['snd'] if not r.startswith('WPN')][:3]
+            if not lay: continue
+            ss = [snd(r, g * VOL, d) for r, g, d in lay]
+            rows.append(f'\t\t{{ "w:{wkey}", "{sid}", {{ {", ".join(ss)} }}, {len(ss)} }},')
     L += ['\tinline constexpr CardSnd kCardSnd[] = {'] + rows + ['\t};']
     # the owners (src/Gun.cpp FxScope) and the card each speaks for
     own = [(a['owner'], a['card']) for a in realfx.ABIL]

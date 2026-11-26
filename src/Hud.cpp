@@ -11,6 +11,7 @@
 
 // BO3-style HUD (sheet: hud), drawn with Dear ImGui over Skyrim's frame from a Present hook
 // (the hook itself follows SkyCraft's Overlay.cpp, MIT, chasmlol).
+namespace coa::Hud { void DrawWeaponCard(ImDrawList* dl, ImVec2 size, float k); }
 namespace coa
 {
 	namespace
@@ -1358,6 +1359,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		{
 			DrawBody(s, size);
 			if (!Classes::Open() && !Intro::SetupOpen()) DrawMessages(s, size);
+			if (!Classes::Open() && !Intro::SetupOpen() && !s.perkMenu && s.deathT < 0.0f) Hud::DrawWeaponCard(ImGui::GetForegroundDrawList(), size, size.y / 1080.0f);
 		}
 		void DrawBody(const Hud::State& s, ImVec2 size)
 		{
@@ -1879,91 +1881,32 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			static float leftFoot = 0;   // (the quests stack under the night's box, top-left)
 			leftFoot = 0;
 			if (Hud::kEdgeHud && s.round > 0 && classChosen) {
-				// (Noah: "remake the Nights Survived and wave box on the top left UI so its higher quality and animated to match the
-				// Cursed essence box" - "Blood moon", "Ring round the emblem", "Blood red") no frame: a shadow fading out to the right,
-				// an animated blood moon ringed by turning dragon-script (the wave's segments lit round it through a night), a small
-				// red label over the big number, the wave and the dead still to fall beside it
+				// (Noah, Nov 26 doc: his Plain number - "smaller text and make it cleaner and more centered in the top left corner")
+				// NIGHT in small spaced capitals, the number under it, the wave and the dead still to fall under that; the night's
+				// kind beside the number in its tint. No moon, no frame: a soft shadow behind
 				const bool   waveOn = s.nightActive && s.waves > 0 && s.sanctuary.empty();
 				const bool   ev = s.nightActive && s.nightEvent >= 0 && s.nightEvent < static_cast<int>(gen::kEvents.size());
 				const float  flash = std::clamp(roundFlash, 0.0f, 1.0f);
-				const ImU32  kBlood = IM_COL32(235, 70, 55, 240);
-				const float  cr = 15 * k, hh = cr * (flash > 0 ? 2.2f + 0.3f * flash : 2.2f);
-				const ImVec2 moon{ 24 * k + cr * 2.2f, 22 * k + cr * 2.2f };
+				const ImVec2 p{ 36 * k, 30 * k };
+				const std::string lab = s.nightActive ? "N I G H T" : "N I G H T S   S U R V I V E D";
 				const std::string num = std::to_string(s.round);
-				const std::string wave = waveOn ? fmt::format("WAVE {} / {}", s.wave, s.waves) : std::string();
-				const std::string sub = !waveOn ? std::string() : s.waveRest > 0 ? fmt::format("Next wave in {:.0f}", std::ceil(s.waveRest)) : fmt::format("{} left to fall", std::max(0, s.waveLeft));
+				const std::string sub = waveOn && s.waveRest <= 0 ? fmt::format("Wave {} / {}  \xC2\xB7  {} left", s.wave, s.waves, std::max(0, s.waveLeft)) : waveOn ? fmt::format("Wave {} / {}", std::min(s.wave + 1, s.waves), s.waves) : std::string();
 				const std::string evLab = ev ? Upper(std::string(gen::kEvents[s.nightEvent].label)) : std::string();
-				// (Noah, 2026-11-24: "make the night survived engraved in the red moon instead of the tally marks next to the moon.
-				// Keep the wave and enemies left next to the red moon when a night is happening" - "Glowing ember", "Only during a
-				// night") the number burns in the moon's face; beside it only the night's wave and its dead still to fall
-				const float wx = moon.x + hh + 16 * k;
-				const float w = wx + (waveOn ? std::max({ Measure(g_title, 15 * k, wave).x, Measure(g_body, 13 * k, sub).x, ev ? Measure(g_body, 11 * k, evLab).x : 0.0f }) : 0.0f);
-				const float foot = moon.y + hh + (s.waveTheme.empty() || !waveOn ? 10 : 30) * k;
+				const float numPx = 30 * k, numW = Measure(g_num, numPx, num).x;
+				const float w = std::max({ Measure(g_body, 9 * k, lab).x, numW + (ev ? 12 * k + Measure(g_body, 9 * k, evLab).x : 0.0f), Measure(g_body, 11 * k, sub).x });
+				const float foot = p.y + 12 * k + numPx + (sub.empty() ? 4 : 18) * k + (s.waveTheme.empty() || !waveOn ? 0 : 16) * k;
 				leftFoot = foot;
-				if (waveOn) dl->AddRectFilledMultiColor({ 0, 0 }, { w + 70 * k, foot }, IM_COL32(0, 0, 0, 90), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 60));
-				else dl->AddCircleFilled(moon, hh * 1.6f, IM_COL32(0, 0, 0, 45), 40);
-				// the moon
-				if (g_moon) {
-					const int   fr = static_cast<int>(now * 24.0f) % 48;
-					const float uu = (fr % 8) / 8.0f, vv = (fr / 8) / 6.0f;
-					dl->AddCircleFilled(moon, hh * 0.9f, IM_COL32(0, 0, 0, 110), 40);
-					dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_moon)), { moon.x - hh, moon.y - hh }, { moon.x + hh, moon.y + hh }, { uu, vv }, { uu + 0.125f, vv + 1.0f / 6.0f });
-					if (flash > 0) dl->AddCircleFilled(moon, hh * 1.05f, IM_COL32(255, 60, 40, static_cast<int>(70 * flash)), 40);
-				} else {
-					dl->AddCircleFilled(moon, cr * 1.6f, IM_COL32(200, 30, 20, 50), 32);
-					dl->AddCircleFilled(moon, cr * 0.95f, IM_COL32(190, 35, 25, 255), 40);
+				dl->AddRectFilledMultiColor({ 0, 0 }, { p.x + w + 60 * k, foot + 10 * k }, IM_COL32(0, 0, 0, 80), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 50));
+				Txt(dl, g_body, 9 * k, p, IM_COL32(184, 180, 168, 230), lab, 1 * k, IM_COL32(0, 0, 0, 200));
+				const ImU32 nc = flash > 0 ? IM_COL32(255, static_cast<int>(235 - 60 * flash), static_cast<int>(225 - 120 * flash), 255) : IM_COL32(236, 235, 230, 255);
+				Txt(dl, g_num, numPx, { p.x - 1 * k, p.y + 11 * k }, nc, num, 1.2f * k, IM_COL32(0, 0, 0, 200));
+				if (ev) {
+					const auto  t = gen::kEvents[s.nightEvent].tint;
+					const ImU32 c = IM_COL32(std::min(255, static_cast<int>(((t >> 24) & 0xFF) * 1.6f) + 60), std::min(255, static_cast<int>(((t >> 16) & 0xFF) * 1.6f) + 60), std::min(255, static_cast<int>(((t >> 8) & 0xFF) * 1.6f) + 60), 255);
+					Txt(dl, g_body, 9 * k, { p.x + numW + 12 * k, p.y + 11 * k + numPx * 0.42f }, c, evLab, 1 * k, IM_COL32(0, 0, 0, 200));
 				}
-				// the wave's segments round it: done bright, the one being fought breathing, the rest dim
-				if (waveOn) {
-					static int   lastWaveE = 0;
-					static float startE = 0;
-					if (s.wave != lastWaveE) startE = 1.0f, lastWaveE = s.wave;
-					startE = std::max(0.0f, startE - dt * 1.2f);
-					const int   n = std::clamp(s.waves, 1, 40);
-					const float R = hh * 1.02f;
-					for (int i = 0; i < n; ++i) {
-						const float a0 = -1.5708f + 6.2832f * i / n + 0.07f, a1 = -1.5708f + 6.2832f * (i + 1) / n - 0.07f;
-						const bool  done = i + 1 < s.wave || (i + 1 == s.wave && s.waveRest > 0);
-						const bool  cur = i + 1 == s.wave && s.waveRest <= 0;
-						const float al = done ? 0.95f : cur ? 0.55f + 0.45f * std::sin(now * 5.0f) : 0.25f;
-						dl->PathArcTo(moon, R + (cur ? startE * 5 * k : 0.0f), a0, a1, 8);
-						dl->PathStroke(Fade(done || cur ? IM_COL32(255, 80, 60, 255) : IM_COL32(140, 60, 55, 255), al), 0, (cur ? 3.5f : 2.5f) * k);
-					}
-				}
-				// the night's number, burning in the moon: an ember's halo breathing round it, its face molten - white-hot for a
-				// moment as a new night begins
-				{
-					const float px = hh * (num.size() <= 2 ? 1.12f : 0.82f);
-					const ImVec2 m = Measure(g_num, px, num);
-					const ImVec2 at{ moon.x - m.x * 0.5f, moon.y - m.y * 0.5f + px * 0.02f };
-					const float breathe = 0.78f + 0.22f * std::sin(now * 2.2f);
-					dl->AddCircleFilled(moon, hh * 0.62f, IM_COL32(255, 90, 20, static_cast<int>((26 + 40 * flash) * breathe)), 32);   // (the heat under it)
-					for (int ring = 0; ring < 2; ++ring) {
-						const float r = px * (ring ? 0.10f : 0.055f);
-						const ImU32 c = ring ? IM_COL32(255, 70, 15, 255) : IM_COL32(255, 120, 35, 255);
-						for (int i = 0; i < 12; ++i) {
-							const float an = i * 0.5236f;
-							dl->AddText(g_num, px, { at.x + std::cos(an) * r, at.y + std::sin(an) * r }, Fade(c, (ring ? 0.16f : 0.30f) * (breathe + flash)), num.c_str());
-						}
-					}
-					dl->AddText(g_num, px, { at.x + px * 0.035f, at.y + px * 0.045f }, IM_COL32(40, 6, 2, 210), num.c_str());   // (the cut: dark under the fire)
-					const ImU32 core = flash > 0 ? IM_COL32(255, static_cast<int>(175 + 70 * flash), static_cast<int>(80 + 130 * flash), 255) : IM_COL32(255, static_cast<int>(150 + 30 * breathe), 60, 255);
-					dl->AddText(g_num, px, at, core, num.c_str());
-					dl->PushClipRect({ at.x, at.y }, { at.x + m.x, at.y + m.y * 0.42f }, true);   // (its top hotter)
-					dl->AddText(g_num, px, at, Fade(IM_COL32(255, 225, 160, 255), 0.45f * breathe), num.c_str());
-					dl->PopClipRect();
-				}
-				// beside it, only through a night: the night's kind, its wave, the dead still to fall
-				if (waveOn) {
-					if (ev) {
-						const auto  t = gen::kEvents[s.nightEvent].tint;
-						const ImU32 c = IM_COL32(std::min(255, static_cast<int>(((t >> 24) & 0xFF) * 1.6f) + 60), std::min(255, static_cast<int>(((t >> 16) & 0xFF) * 1.6f) + 60), std::min(255, static_cast<int>(((t >> 8) & 0xFF) * 1.6f) + 60), 255);
-						Txt(dl, g_body, 11 * k, { wx + 1 * k, moon.y - 27 * k }, c, evLab, 1 * k, IM_COL32(0, 0, 0, 200));
-					}
-					Txt(dl, g_title, 15 * k, { wx, moon.y - 12 * k }, kParch, wave, 1 * k, IM_COL32(0, 0, 0, 200));
-					Txt(dl, g_body, 13 * k, { wx, moon.y + 6 * k }, kBlood, sub, 1 * k, IM_COL32(0, 0, 0, 200));
-					if (!s.waveTheme.empty()) Txt(dl, g_title, 13 * k, { moon.x - hh, moon.y + hh + 4 * k }, s.waveThemeColor ? s.waveThemeColor : IM_COL32(255, 90, 60, 255), Upper(s.waveTheme), 1 * k, IM_COL32(0, 0, 0, 200));
-				}
+				if (!sub.empty()) Txt(dl, g_body, 11 * k, { p.x, p.y + 13 * k + numPx }, IM_COL32(201, 197, 186, 235), sub, 1 * k, IM_COL32(0, 0, 0, 200));
+				if (waveOn && !s.waveTheme.empty()) Txt(dl, g_body, 10 * k, { p.x, p.y + 29 * k + numPx }, s.waveThemeColor ? s.waveThemeColor : IM_COL32(255, 90, 60, 255), Upper(s.waveTheme), 1 * k, IM_COL32(0, 0, 0, 200));
 			}
 			if (!Hud::kEdgeHud && s.round > 0) {
 				const ImVec2 p{ 40 * k, 20 * k };
@@ -2549,7 +2492,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 
 			// (Noah: "smoother round flow") the last three seconds before a wave: the numeral, beating once a second
-			if (s.nightActive && s.waveRest > 0.02f && s.waveRest <= 3.0f) {
+			// (Noah, Nov 26 doc: "dont show the nights countdown in between waves only at the start of a night") off
+			if (false && s.nightActive && s.waveRest > 0.02f && s.waveRest <= 3.0f) {
 				const int   n = static_cast<int>(std::ceil(s.waveRest));
 				const float f = s.waveRest - std::floor(s.waveRest);  // (1 just ticked .. 0)
 				const float pop = 1.0f + 0.35f * f * f;
@@ -2578,7 +2522,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// (hit feedback) a blow from where you weren't looking: a red arc on that side of the crosshair
 			if (s.hurtDirT > 0.0f) {
 				const ImVec2 c{ size.x * 0.5f, size.y * 0.5f };
-				const float  R = size.y * 0.16f, al = std::clamp(s.hurtDirT / 0.4f, 0.0f, 1.0f);
+				const float  R = size.y * 0.08f, al = std::clamp(s.hurtDirT / 0.4f, 0.0f, 1.0f);   // (Noah, Nov 26 doc: "make the arc about half size")
 				const float  mid = s.hurtDir - 1.5708f;  // (0 = straight ahead: the arc's top)
 				dl->PathArcTo(c, R, mid - 0.45f, mid + 0.45f, 24);
 				dl->PathStroke(IM_COL32(220, 40, 30, static_cast<int>(210 * al)), 0, 5.0f * k);
@@ -2702,8 +2646,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// go. For normal Skyrim and our mod") one stack, top-left under the night's box: the trial under way (its name, what to do,
 			// its clock, a thin bar, the riddle), then each quest chosen in the journal with its open goals - Skyrim's and ours alike
 			if (Hud::kEdgeHud && !s.perkMenu && (!s.questTitle.empty() || !s.tracked.empty())) {
-				const float x = 30 * k, maxW = std::min(460 * k, size.x * 0.30f);
-				float y = std::max(leftFoot + 14 * k, 30 * k);
+				// (Noah, Nov 26 doc: "make the box smaller to match the night adjustment") smaller type, narrower
+				const float x = 36 * k, maxW = std::min(330 * k, size.x * 0.24f), Q = 0.78f;
+				float y = std::max(leftFoot + 12 * k, 30 * k);
 				auto wrap = [&](ImFont* f, float px, const std::string& str, float w) {
 					std::vector<std::string> rows(1);
 					for (std::size_t p0 = 0, p1; p0 < str.size(); p0 = p1 + 1) {
@@ -2718,22 +2663,22 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				};
 				auto block = [&](const std::string& title, const std::vector<std::string>& goals, const std::string& sub, float frac, bool warn) {
 					std::vector<std::vector<std::string>> gl;
-					float h = 26 * k;
-					for (const auto& g : goals) { gl.push_back(wrap(g_body, 16 * k, g, maxW - 18 * k)); h += 21 * k * gl.back().size(); }
-					const auto sl = sub.empty() ? std::vector<std::string>{} : wrap(g_body, 15 * k, sub, maxW - 18 * k);
-					h += 19 * k * sl.size() + (frac >= 0 ? 10 * k : 0.0f);
+					float h = 26 * Q * k;
+					for (const auto& g : goals) { gl.push_back(wrap(g_body, 16 * Q * k, g, maxW - 18 * k)); h += 21 * Q * k * gl.back().size(); }
+					const auto sl = sub.empty() ? std::vector<std::string>{} : wrap(g_body, 15 * Q * k, sub, maxW - 18 * k);
+					h += 19 * Q * k * sl.size() + (frac >= 0 ? 10 * k : 0.0f);
 					dl->AddRectFilledMultiColor({ 0, y - 6 * k }, { x + maxW + 50 * k, y + h + 4 * k }, IM_COL32(0, 0, 0, 95), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 95));
 					dl->AddLine({ x - 12 * k, y - 4 * k }, { x - 12 * k, y + h + 2 * k }, Fade(kGold, 0.75f), 2 * k);
-					Txt(dl, g_title, 18 * k, { x, y }, Fade(kGold, 0.95f), Upper(title), 1.5f * k, IM_COL32(0, 0, 0, 200));
-					float gy = y + 26 * k;
+					Txt(dl, g_title, 18 * Q * k, { x, y }, Fade(kGold, 0.95f), Upper(title), 1.5f * k, IM_COL32(0, 0, 0, 200));
+					float gy = y + 26 * Q * k;
 					const bool blink = warn && std::fmod(now, 0.8f) < 0.4f;
 					for (const auto& rows : gl) {
-						const ImVec2 c{ x + 4 * k, gy + 9 * k };
-						const ImVec2 d[4] = { { c.x, c.y - 3.5f * k }, { c.x + 3.5f * k, c.y }, { c.x, c.y + 3.5f * k }, { c.x - 3.5f * k, c.y } };
+						const ImVec2 c{ x + 4 * k, gy + 7 * k };
+						const ImVec2 d[4] = { { c.x, c.y - 2.8f * k }, { c.x + 2.8f * k, c.y }, { c.x, c.y + 2.8f * k }, { c.x - 2.8f * k, c.y } };
 						dl->AddConvexPolyFilled(d, 4, Fade(kGold, 0.8f));
 						for (const auto& r : rows) {
-							Txt(dl, g_body, 16 * k, { x + 16 * k, gy }, blink ? IM_COL32(255, 96, 70, 255) : IM_COL32(225, 216, 196, 240), r, 1.2f * k, IM_COL32(0, 0, 0, 200));
-							gy += 21 * k;
+							Txt(dl, g_body, 16 * Q * k, { x + 14 * k, gy }, blink ? IM_COL32(255, 96, 70, 255) : IM_COL32(225, 216, 196, 240), r, 1.2f * k, IM_COL32(0, 0, 0, 200));
+							gy += 21 * Q * k;
 						}
 					}
 					if (frac >= 0) {
@@ -2743,10 +2688,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						gy += 10 * k;
 					}
 					for (const auto& r : sl) {
-						Txt(dl, g_body, 15 * k, { x + 16 * k, gy }, IM_COL32(190, 205, 235, 235), r, 1.2f * k, IM_COL32(0, 0, 0, 220));
-						gy += 19 * k;
+						Txt(dl, g_body, 15 * Q * k, { x + 14 * k, gy }, IM_COL32(190, 205, 235, 235), r, 1.2f * k, IM_COL32(0, 0, 0, 220));
+						gy += 19 * Q * k;
 					}
-					y += h + 16 * k;
+					y += h + 12 * k;
 				};
 				if (!s.questTitle.empty()) {
 					std::string line = s.questGoal;
@@ -7033,7 +6978,42 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			(void)a_seconds;
 			logger::info("quest (not shown): {}", a_text);
 		}
-		void Hint(std::string a_text, float a_seconds) { ShowBanner(std::move(a_text), a_seconds); }
+		// (Noah, Nov 26 doc: the hints - "dont include this only the Lore Cards") the log only
+		void Hint(std::string a_text, float a_seconds) { (void)a_seconds; logger::info("hint (not shown): {}", a_text); }
+		namespace { std::string g_wcTitle, g_wcText; std::chrono::steady_clock::time_point g_wcAt{}; float g_wcLen = 0; }
+		void WeaponCard(std::string a_title, std::string a_text, float a_seconds)
+		{
+			std::scoped_lock l(g_lock);
+			g_wcTitle = std::move(a_title), g_wcText = std::move(a_text), g_wcLen = a_seconds, g_wcAt = std::chrono::steady_clock::now();
+		}
+		void DrawWeaponCard(ImDrawList* dl, ImVec2 size, float k)   // bottom right, clear of the essence (bottom left): a gold rule, the name, what it does
+		{
+			std::string t, x;
+			float a = 0;
+			{
+				std::scoped_lock l(g_lock);
+				const float e = std::chrono::duration<float>(std::chrono::steady_clock::now() - g_wcAt).count();
+				if (g_wcText.empty() || e > g_wcLen) return;
+				a = std::min({ 1.0f, e / 0.35f, (g_wcLen - e) / 0.5f });
+				t = g_wcTitle, x = g_wcText;
+			}
+			const float w = std::min(380 * k, size.x * 0.3f), px = 13 * k, x0 = size.x - 40 * k - w;
+			std::vector<std::string> rows(1);
+			{
+				std::istringstream in(x);
+				std::string        wd;
+				while (in >> wd) {
+					if (!rows.back().empty() && Measure(g_body, px, rows.back() + " " + wd).x > w - 16 * k) rows.emplace_back();
+					rows.back() += (rows.back().empty() ? "" : " ") + wd;
+				}
+			}
+			const float h = 22 * k + rows.size() * px * 1.3f, y0 = size.y - 150 * k - h;
+			dl->AddRectFilledMultiColor({ x0 - 20 * k, y0 - 8 * k }, { size.x, y0 + h + 8 * k }, IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, static_cast<int>(110 * a)), IM_COL32(0, 0, 0, static_cast<int>(110 * a)), IM_COL32(0, 0, 0, 0));
+			dl->AddLine({ x0 - 8 * k, y0 }, { x0 - 8 * k, y0 + h }, Fade(kGold, 0.9f * a), 2 * k);
+			Txt(dl, g_title, 15 * k, { x0, y0 }, Fade(kGold, a), Upper(t), 1 * k, Fade(IM_COL32(0, 0, 0, 200), a));
+			float y = y0 + 22 * k;
+			for (const auto& r : rows) { Txt(dl, g_body, px, { x0, y }, Fade(IM_COL32(220, 216, 205, 255), a), r, 1 * k, Fade(IM_COL32(0, 0, 0, 200), a)); y += px * 1.3f; }
+		}
 		// (Noah, 2026-11-23: "use the Edge's UI for learning the new shouts from our mod") Skyrim's own word-of-power notice -
 		// the dragon words drawn letter by letter over the shout's name, as Edge UI styles it - through the HUD's own
 		// ShowNotification (its kind 3, SHOUT_UPDATE); our banner only if the HUD can't be reached

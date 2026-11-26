@@ -1,5 +1,5 @@
 {
- "about": "Noah's final sound picks (workshop doc 8maGoe7NgRkTLAWtUFrtir, Nov 25 night): every weapon and ability sound at 20% volume - background, never loud (his words). The Mutagen Staff's flasks and elixir use the Alchemist flasks' own sounds (his note). Slots he left alone keep what plays now, at 20%.",
+ "about": "Noah's final sound picks (workshop doc 8maGoe7NgRkTLAWtUFrtir, Nov 25 night): every weapon and ability sound at 20% volume - background, never loud (his words). The Mutagen Staff's flasks and elixir use the Alchemist flasks' own sounds (his note). Slots he left alone keep what plays now, at 20%. Nov 26 afternoon (doc XziAfzRj): the Wyrmspine Javelin's draw (with fire), throw (Ember bolt) and landing (Fwoosh).",
  "vol": 20,
  "weapons": {
   "vahlok": {
@@ -1540,20 +1540,25 @@
   },
   "javelin": {
    "draw": {
-    "opt": "a1",
-    "name": "As it is now",
+    "opt": "a2",
+    "name": "Draw with fire",
     "snd": [
      [
       "WPNBlade1HandDrawSD",
       1.0,
-      0.0
+      0
+     ],
+     [
+      "WB_DestructionFire_Sound_Release_1",
+      0.45,
+      0.08
      ]
     ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true
    },
    "swing": {
     "opt": "a1",
@@ -2841,14 +2846,20 @@
   },
   "javelin_throw": {
    "cast": {
-    "opt": "a1",
-    "name": "As it is now",
-    "snd": [],
+    "opt": "a2",
+    "name": "Emberbolt",
+    "snd": [
+     [
+      "WB_DestructionFire_Sound_Release_Emberbolt",
+      1.0,
+      0.0
+     ]
+    ],
     "vol": 20,
     "pitch": 100,
     "varn": 5,
     "layerVol": 50,
-    "set": false
+    "set": true
    },
    "impact": {
     "opt": "a1",
@@ -2869,11 +2880,11 @@
   },
   "javelin_land": {
    "impact": {
-    "opt": "a4",
-    "name": "Firebolt thud",
+    "opt": "a2",
+    "name": "Fwoosh",
     "snd": [
      [
-      "MAGFireboltImpactSD",
+      "WB_DestructionFire_Sound_Impact_Fwoosh",
       1.0,
       0.0
      ]

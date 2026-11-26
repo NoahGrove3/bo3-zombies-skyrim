@@ -127,6 +127,24 @@ namespace coa::Picks
 		const char* card = CardOf(a_owner);
 		return card && Card(card, a_slot, a_at);
 	}
+	void WeaponDrawn()
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* o = p ? p->GetEquippedObject(false) : nullptr;
+		if (!o) return;
+		static RE::FormID jav = 0;
+		if (!jav) if (auto* f = RE::TESDataHandler::GetSingleton()->LookupForm(gen::kJavelinWeap, gen::kPlugin)) jav = f->GetFormID();
+		if (o->GetFormID() == jav) Card("w:javelin", "draw", p->GetPosition());
+		// (Noah, Nov 26 doc) the held weapon's lore card, bottom right - a new weapon at once, the same one again after a while
+		static std::string lastT;
+		static auto        lastAt = std::chrono::steady_clock::time_point{};
+		std::string        t, x;
+		const auto         now = std::chrono::steady_clock::now();
+		if (Classes::HeldCard(t, x) && (t != lastT || now - lastAt > std::chrono::seconds(90))) {
+			Hud::WeaponCard(t, x, 7.0f);
+			lastT = t, lastAt = now;
+		}
+	}
 	void SoulTorn(RE::Actor* a_dying)
 	{
 		if (!kSoulTorn || !a_dying) return;

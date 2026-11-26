@@ -1474,6 +1474,10 @@ namespace coa
 		bool         g_keyF = false, g_keyB = false, g_keyL = false, g_keyR = false;
 		bool         g_sprintKey = false;  // sprint held (omni-sprint in first person)
 		float        g_omni = 0;           // the omni-sprint's share now (eased 0..1)
+		float        g_sprintK = 0;        // (Noah's BO3 movement) the sprint's wind-up: 0..1 over kSprintWindup
+		float        g_fovKick = 0;        // degrees the view is widened now (eased)
+		float        g_rollNow = 0;        // the slide's camera tilt applied now (radians)
+		std::atomic<bool> g_power{ false };  // a power attack under way
 		bool         g_chaseOn = false;              // (dev: the filming camera is turning the view itself)
 		const RE::NiMatrix3* BindRot(const char* a_name);
 		float BankSign() { return Settings::DragonBankReverse() ? -1.0f : 1.0f; }
@@ -2421,7 +2425,14 @@ namespace coa
 		}
 
 		// the left stick's own events (the glide reads it when the game's movement reading has nothing)
-		bool Dodging() { return g_dodgeT >= 0.0f && g_dodgeT < 0.6f; }
+		float FovKick() { return g_fovKick; }
+	bool  PowerSwing() { return g_power; }
+	void  OnSwingTag(std::string_view a_tag)
+	{
+		if (a_tag.find("attackpower") != std::string_view::npos || a_tag.find("powerattack") != std::string_view::npos) g_power = true;
+		else if (a_tag == "attackstop" || a_tag == "attackstart") g_power = false;
+	}
+	bool Dodging() { return g_dodgeT >= 0.0f && g_dodgeT < 0.6f; }
 		bool Gliding() { return g_hadDragon || g_dive; }
 		void OnStick(const RE::ThumbstickEvent* a_event)
 		{
@@ -3282,7 +3293,11 @@ namespace coa
 			}
 
 			// ---- run/sprint speed, eased so switching sprint <-> run <-> strafe never jolts
-			float want = gen::kRunBoost + (sprint ? gen::kSprintBoost : 0.0f);
+			// (Noah's BO3 movement, Nov 26 doc) the sprint winds up: its extra speed eases in over kSprintWindup (quick to drop)
+			if (sprint) g_sprintK = gen::kSprintWindup > 0 ? std::min(1.0f, g_sprintK + a_delta / gen::kSprintWindup) : 1.0f;
+			else g_sprintK = std::max(0.0f, g_sprintK - a_delta * 8.0f);
+			const float windK = 1.0f - (1.0f - g_sprintK) * (1.0f - g_sprintK);
+			float want = gen::kRunBoost + gen::kSprintBoost * windK;
 			// (Noah: "sprint in all directions like omni-movement in first person ... sprint backwards while casting spells or
 			// drawing a bow") in first person, sprint held while moving any way - back, sideways, casting, a bow drawn - runs
 			// you at sprint speed (Skyrim only sprints forward with empty hands, so its own sprint is left to that). It costs
@@ -3306,6 +3321,25 @@ namespace coa
 			}
 			g_smooth += (want - g_smooth) * std::min(1.0f, a_delta * gen::kGroundAccel * 0.5f);
 			Apply(g_smooth);
+			// the view widens with the sprint (less in a slide and the jump out of one); Gun's FOV line adds it each frame
+			{
+				const float kick = gen::kSprintFov * (g_slide > 0 ? 0.6f : air && g_groundVel.Length() > 350.0f ? 0.4f : std::max(windK, g_omni));
+				g_fovKick += (kick - g_fovKick) * std::min(1.0f, a_delta * (kick > g_fovKick ? 10.0f : 6.0f));
+			}
+			// the slide tilts the first-person camera a little (applied as a change on top of what the camera has, undone after)
+			if (auto* cam = RE::PlayerCamera::GetSingleton(); cam && cam->cameraRoot) {
+				const float want = g_slide > 0 && cam->IsInFirstPerson() ? gen::kSlideRoll * 3.14159265f / 180.0f : 0.0f;
+				const float next = g_rollNow + (want - g_rollNow) * std::min(1.0f, a_delta * 10.0f);
+				if (std::abs(next - g_rollNow) > 1e-5f) {
+					const float d = next - g_rollNow, c = std::cos(d), sn = std::sin(d);
+					RE::NiMatrix3 r;   // about the camera's forward (Y) axis
+					r.entry[0][0] = c;  r.entry[0][1] = 0; r.entry[0][2] = sn;
+					r.entry[1][0] = 0;  r.entry[1][1] = 1; r.entry[1][2] = 0;
+					r.entry[2][0] = -sn; r.entry[2][1] = 0; r.entry[2][2] = c;
+					cam->cameraRoot->local.rotate = cam->cameraRoot->local.rotate * r;
+					g_rollNow = next;
+				}
+			}
 		}
 	}
 }

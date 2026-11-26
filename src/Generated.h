@@ -17,7 +17,7 @@ namespace coa::gen
 		std::array<float, 5> earlyRoundScale; int hpStart, hpLinearPerRound, hpLinearUntil; float hpMultAfter, hpScale;
 		float spawnDelayStart, spawnDelayDecay, spawnDelayMin; int specialEveryRounds, specialFirstRound;
 		std::array<float, 2> spawnRingExterior, spawnRingInterior; float spawnHeightOffset; int maxCorpses; };
-	inline constexpr Rounds kRounds{ 21.0f, 5.6f, 15.0f, 15.0f, 64, 24, 6,
+	inline constexpr Rounds kRounds{ 21.0f, 5.6f, 10.0f, 10.0f, 64, 24, 6,
 		{ 0.25f, 0.3f, 0.5f, 0.7f, 0.9f }, 225, 150, 9, 1.1f, 8.0f,
 		1.0f, 0.95f, 0.15f, 6, 10,
 		{ 3400.f, 4600.f }, { 1400.f, 2100.f }, 120.f, 12 };
@@ -1530,9 +1530,10 @@ namespace coa::gen
 		LocationDef{ 8, 0x01773A, 1, 3, true, 27854.0f, 104015.0f, -13632.0f, 5.0f, 0x00003C },
 		LocationDef{ 9, 0x0177EF, 1, 3, true, 109290.0f, 101508.0f, -9019.0f, 238.0f, 0x00003C },
 	} };
-	inline constexpr float kRunBoost = -9.0f, kSprintBoost = 21.0f, kSlideSpeed = 720.0f, kSlideSeconds = 0.9f, kSlideBoost = 0.0f, kSlideJump = 1.0f, kAirControl = 520.0f, kAirMax = 0.0f, kSprintStamina = 0.2f, kJumpHeight = 1.2f;
+	inline constexpr float kRunBoost = -9.0f, kSprintBoost = 26.0f, kSlideSpeed = 720.0f, kSlideSeconds = 0.9f, kSlideBoost = 0.0f, kSlideJump = 1.0f, kAirControl = 520.0f, kAirMax = 0.0f, kSprintStamina = 0.2f, kJumpHeight = 1.2f;
 	inline constexpr float kStrafeSpeed = 0.97f, kBackSpeed = 0.85f, kGroundAccel = 14.0f, kTurnRate = 2.0f;
 	inline constexpr float kAdsFov = 55.0f, kAdsSeconds = 0.12f, kAdsSpeed = -30.0f, kWorldFov = 115.0f, kViewmodelFov = 80.0f, kFpsCap = 0.0f;
+	inline constexpr float kSprintWindup = 0.18f, kSprintFov = 7.0f, kSlideDip = 34.0f, kSlideRoll = 3.0f, kLightSwing = 1.2f;
 	inline constexpr float kAdsEyeDistance = 20.0f, kAdsSightHeight = 5.0f, kAdsViewmodelFov = 62.0f;
 	inline constexpr FormRef kQ_MQQuickstart{ "Skyrim.esm", 0x04679E, "MQQuickstart" };
 	inline constexpr FormRef kQ_MQ102Marker{ "Skyrim.esm", 0x038B08, "MQ102OutsideRiverwoodMarker" };

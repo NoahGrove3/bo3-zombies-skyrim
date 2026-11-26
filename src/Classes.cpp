@@ -1118,7 +1118,7 @@ namespace coa::Classes
 			auto*       held = p->GetEquippedObject(false);
 			auto*       wp = held ? held->As<RE::TESObjectWEAP>() : nullptr;
 			const bool  ranged = IsRangerWeapon(wp);
-			const float want = ranged ? Settings::DrawSpeed() : Settings::MeleeSpeed();
+			const float want = ranged ? Settings::DrawSpeed() : Settings::MeleeSpeed() * (Movement::PowerSwing() ? 1.0f : gen::kLightSwing);   // (Noah's BO3 movement: light swings 1.2x)
 			if (std::abs(av->GetBaseActorValue(RE::ActorValue::kWeaponSpeedMult) - want) > 0.01f) av->SetBaseActorValue(RE::ActorValue::kWeaponSpeedMult, want);
 			if (std::abs(av->GetBaseActorValue(RE::ActorValue::kLeftWeaponSpeedMultiply) - want) > 0.01f) av->SetBaseActorValue(RE::ActorValue::kLeftWeaponSpeedMultiply, want);
 		}  // (Noah: still there before the class was chosen - from the first moment now)
@@ -3865,20 +3865,11 @@ namespace coa::Classes
 	// item card for our swords: what the sword is, and what its tier does - and no charge bar (their tier looks are an
 	// enchantment of looks alone, with charge that never runs down). The card's own text is laid over with ours each time the
 	// game fills it, and redrawn
-	void TickItemCard()
+	namespace
 	{
-		auto* ui = RE::UI::GetSingleton();
-		if (!ui || !ui->IsMenuOpen(RE::InventoryMenu::MENU_NAME)) return;
-		auto menu = ui->GetMenu<RE::InventoryMenu>();
-		if (!menu || !menu->uiMovie) return;
-		auto* card = menu->GetRuntimeData().itemCard;
-		if (!card || !card->obj.IsObject() || !card->view) return;
-		RE::GFxValue name;
-		if (!card->obj.GetMember("name", &name) || !name.IsString() || !name.GetString()) return;
-		const std::string nm = name.GetString();
 		struct Card { const char* name; const char* base; const char* tier[3]; };
 		// (Noah, 2026-11-12: "update all the weapons descriptions so they are short and to the point")
-		static const Card kCards[] = {
+		inline const Card kCards[] = {
 			{ "Radiant Quarterstaff", "The Summoner's quarterstaff of white sunlight.",
 				{ "Tier I: light attacks throw sun balls.", "Tier II: heavy attacks call a sunbeam on your target.", "Tier III: heavy attacks call a great sunbeam." } },
 			{ "Carian Wand", "The Battle-mage's wand. Hold to cast a bolt every 0.5 s, cycling fire, lightning and ice.",
@@ -3890,6 +3881,36 @@ namespace coa::Classes
 			// (Noah, 2026-11-21: the descriptions approved) Skyrim's own staff, its card in our words
 			{ "Wyrmspine Javelin", "The Battle-mage's wonder. Light attack jabs. Hold attack to charge, let go to throw: it bursts in your other hand's element, bigger the longer you held. A kill sends it on to the next enemy; then it flies back to you.", {} },
 		};
+	}
+	// (Noah, Nov 26 doc: "only the Lore Cards to show players what the weapon theyre holding does") the card of the weapon in
+	// your hand, at its tier: its name and what it does
+	bool HeldCard(std::string& a_title, std::string& a_text)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* o = p ? p->GetEquippedObject(false) : nullptr;
+		if (!o || !o->GetName() || !o->GetName()[0]) return false;
+		const std::string nm = o->GetName();
+		for (const auto& k : kCards) {
+			if (nm.rfind(k.name, 0) != 0) continue;
+			const std::string rest = nm.substr(std::strlen(k.name));
+			const int t = rest == " III" ? 3 : rest == " II" ? 2 : rest == " I" ? 1 : 0;
+			a_title = nm;
+			a_text = t == 0 ? std::string(k.base) : std::string(k.base) + " " + k.tier[t - 1];
+			return true;
+		}
+		return false;
+	}
+	void TickItemCard()
+	{
+		auto* ui = RE::UI::GetSingleton();
+		if (!ui || !ui->IsMenuOpen(RE::InventoryMenu::MENU_NAME)) return;
+		auto menu = ui->GetMenu<RE::InventoryMenu>();
+		if (!menu || !menu->uiMovie) return;
+		auto* card = menu->GetRuntimeData().itemCard;
+		if (!card || !card->obj.IsObject() || !card->view) return;
+		RE::GFxValue name;
+		if (!card->obj.GetMember("name", &name) || !name.IsString() || !name.GetString()) return;
+		const std::string nm = name.GetString();
 		static const Card kFlasks[] = {
 			{ "Fire Flask", "Bursts into flame where it lands.", {} },
 			{ "Frost Flask", "Bursts into killing cold where it lands.", {} },

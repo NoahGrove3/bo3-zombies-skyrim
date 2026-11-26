@@ -73,12 +73,15 @@ namespace coa
 				if (a_e && a_e->tag.c_str()) {
 					std::string t(a_e->tag.c_str());
 					std::transform(t.begin(), t.end(), t.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+					Movement::OnSwingTag(t);
 					if (t == "weaponswing") {
 						g_weaponSwing = true;
 						MeleeSwing(false);
 						// (Noah, 2026-11-20: the Mutagen Staff's "light attack and heavy attack is normal" - its flasks come from blocking only)
 					} else if (t == "weaponleftswing") {
 						MeleeSwing(true);
+					} else if (t == "weapondraw") {
+						Picks::WeaponDrawn();
 					}
 				}
 				return RE::BSEventNotifyControl::kContinue;
@@ -4403,7 +4406,7 @@ namespace coa
 			if (auto* cam = RE::PlayerCamera::GetSingleton()) {
 				// the field of view is the player's own (Settings: first person and third person each)
 				auto& rd = cam->GetRuntimeData2();
-				rd.worldFOV = cam->IsInFirstPerson() ? Settings::FovFirst() : Settings::FovThird();
+				rd.worldFOV = (cam->IsInFirstPerson() ? Settings::FovFirst() : Settings::FovThird()) + Movement::FovKick();   // (+ the sprint's kick)
 				// the hands follow the same slider: a wider view draws them smaller and further off, a narrower one closer
 				rd.firstPersonFOV = std::clamp(gen::kViewmodelFov + (Settings::FovFirst() - 100.0f) * 0.6f, 55.0f, 110.0f);
 			}

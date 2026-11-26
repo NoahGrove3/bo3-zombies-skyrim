@@ -2417,7 +2417,7 @@ namespace coa
 					g_event = s.event;
 					if (g_event >= 0 && g_event < static_cast<int>(gen::kEvents.size())) {
 						StartEvent(g_event);
-						Hud::Banner("NIGHT " + std::to_string(s.round) + " - " + std::string(gen::kEvents[g_event].banner), 6.0f);
+						/* (Noah, Nov 26 doc: no night or wave banners - the night counter says it) */ ;
 					}
 				}
 			} else if (s.phase == 1) {
@@ -2539,11 +2539,11 @@ namespace coa
 				StartEvent(g_event);
 				const auto& ev = gen::kEvents[g_event];
 				g_toSpawn = std::clamp(static_cast<int>(std::ceil(g_toSpawn * ev.spawnMult)), 8, R.maxAlive * 3 / 2);
-				Hud::Banner("NIGHT " + std::to_string(a_round) + " - " + std::string(ev.banner), 6.0f);
+				/* (Noah, Nov 26 doc: no night or wave banners - the night counter says it) */ ;
 			} else {
 				Forms::Play(g_special ? gen::Sound::event_bloodmoon : gen::Sound::night_start);
 				if (g_special && !Coop::Client()) TwilightNight();
-				Hud::Banner(fmt::format("NIGHT {} - WAVE 1 OF {}{}", a_round, g_waves, g_special ? " - THE HOUNDS ARE LOOSE" : ""));
+				/* (Noah, Nov 26 doc: no night or wave banners - the night counter says it) */ ;
 			}
 			Stats::NightBegins(a_round);
 			logger::info("round {} starts: {} waves (the first of {}, 10 more each), up to {} undead at once, {:.0f} Skyrim health each{}", a_round, g_waves, g_waveSize, g_toSpawn, HealthFor(a_round), g_special ? " (hound night)" : "");
@@ -2672,10 +2672,10 @@ namespace coa
 			if (g_waveTheme >= 0) {
 				const auto& ev = gen::kEvents[g_waveTheme];
 				Forms::Play(ev.sound);
-				Hud::Banner(fmt::format("WAVE {} - {}", g_wave, ev.label), 4.0f);
+				/* (Noah, Nov 26 doc: no night or wave banners - the night counter says it) */ ;
 				Atmos::Lightning(0.8f);
 			} else {
-				Hud::Banner(fmt::format("WAVE {} OF {}", g_wave, g_waves), 3.0f);
+				/* (Noah, Nov 26 doc: no night or wave banners - the night counter says it) */ ;
 				Atmos::Lightning(0.35f);
 			}
 			if (g_wave == g_miniWave && !Coop::Client() && g_champ.handle.get() && g_miniWave < g_waves) {
@@ -2850,7 +2850,7 @@ namespace coa
 			g_waveSpawned = 0;
 			g_waveRest = kWaveRest;
 			Forms::Play(gen::Sound::round_end);
-			Hud::Banner(fmt::format("WAVE {} CLEARED - {} MORE", g_wave - 1, g_waves - g_wave + 1), 3.5f);
+			/* (Noah, Nov 26 doc: no night or wave banners - the night counter says it) */ ;
 		}
 
 		// (the Endless Night) the clock set back to the evening's first dark hour, so the next night follows the last at once

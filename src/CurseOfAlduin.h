@@ -384,6 +384,7 @@ namespace coa
 	namespace Classes
 	{
 		int HandLookKey();     // (Noah, 2026-11-24) the look the class weapon in your right hand wears, or -1 (src/WeaponFx.cpp)
+		bool HeldCard(std::string& a_title, std::string& a_text);   // the weapon in hand's card (its name, what it does at its tier)
 		void TickItemCard();   // (Noah: the swords' item cards "way too long" - each tier's card tells only what it is and what that tier does; the charge bar hidden)
 		int              Get();            // -1 none chosen yet
 		RE::TESObjectARMO* Underwear();    // (Noah: no bare body) Underwear.esp's bra and underwear
@@ -1011,6 +1012,9 @@ namespace coa
 	namespace Movement
 	{
 		bool Dodging();  // a dodge roll under way
+		float FovKick();  // (Noah's BO3 movement) degrees the view widens now: sprinting, sliding, the jump out of a slide
+		bool  PowerSwing();   // a power attack under way (the light swing's speed boost is held off)
+		void  OnSwingTag(std::string_view a_tag);   // the animation graph's attack tags
 		bool Gliding();  // on the dragon glider (or just landed from a dive)
 		void DevFpGlide(std::string_view a_mode);   // (dev: fpglide [third]) first person glides as it is, or turns to third (the old way); logs the graphs
 		RE::NiMatrix3 SlerpRot(const RE::NiMatrix3& a_from, const RE::NiMatrix3& a_to, float a_t);
@@ -1314,6 +1318,7 @@ namespace coa
 		void        Banner(std::string a_text, float a_seconds = 4.0f);
 		void        QuestBanner(std::string a_text, float a_seconds);  // (log only, 2026-11-23: no quest lines across the screen)
 		void        Subtitle(std::string a_text, float a_seconds);     // a spoken line in the HUD's own subtitle line (Edge UI), if the MCM's subtitles are on
+		void        WeaponCard(std::string a_title, std::string a_text, float a_seconds);   // (Noah, Nov 26 doc) the held weapon's lore card, bottom right
 		void        Hint(std::string a_text, float a_seconds);         // a weapon's hint across the screen (the Carian Wand, the Mutagen Staff - the only ones left)
 		void        ShoutLearned(std::string_view a_name, std::string_view a_words);  // the shout-learned pop-up (the one banner still shown)
 		void        Say(std::string a_who, std::string a_line, float a_seconds = 4.5f);  // a townsperson's words, as a subtitle
@@ -1415,6 +1420,7 @@ namespace coa
 		bool  OwnerHasSound(std::string_view a_owner);              // its impact replaced (the old shared blast left out)
 		bool  Trial(std::string_view a_event, const RE::NiPoint3* a_at = nullptr);   // a trial moment's picked sound
 		void  TrialLoop(bool a_on);                                  // Hold the Light: standing inside
+		void  WeaponDrawn();                                         // the weapon in hand's picked draw sound (the Wyrmspine Javelin's fire)
 		void  SoulTorn(RE::Actor* a_dying);                          // (Noah's death pick) a kill by shadow, spirit or arcane: its soul rises out of it
 		bool  HasTrial(std::string_view a_event);                    // a trial moment he gave a sound of its own
 		void  OnMeleeHit(RE::Actor* a_target, const RE::TESForm* a_source, bool a_heavy);   // hit-stop, shake, a heavy kill's throw

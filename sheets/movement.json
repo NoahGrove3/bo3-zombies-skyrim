@@ -20,8 +20,8 @@
     },
     {
       "id": "sprint_boost",
-      "what": "extra SpeedMult while sprinting (30% slower with the run: 160 down to 112)",
-      "value": 21,
+      "what": "extra SpeedMult while sprinting (Noah, Nov 26 doc: sprint 440 against run 300 - 117 total)",
+      "value": 26,
       "durationMs": 0,
       "verify": [
         "value"
@@ -184,6 +184,60 @@
       "id": "turn_rate",
       "what": "turning while running/sprinting (Skyrim rotateWhileMovingRun multiplier)",
       "value": 2.0,
+      "durationMs": 0,
+      "verify": [
+        "value"
+      ]
+    },
+    {
+      "id": "sprint_windup",
+      "what": "Noah's BO3 movement (Nov 26 doc): the sprint's wind-up - its extra speed eases in over this many ms",
+      "value": 180,
+      "durationMs": 0,
+      "verify": [
+        "value"
+      ]
+    },
+    {
+      "id": "sprint_fov",
+      "what": "Noah's BO3 movement: the view widens this many degrees while sprinting (60% of it in a slide, 40% in the jump out)",
+      "value": 7,
+      "durationMs": 0,
+      "verify": [
+        "value"
+      ]
+    },
+    {
+      "id": "slide_dip",
+      "what": "Noah's BO3 movement: the camera drops this far in a slide (units; the slide's crouch gives most of it)",
+      "value": 34,
+      "durationMs": 0,
+      "verify": [
+        "value"
+      ]
+    },
+    {
+      "id": "slide_roll",
+      "what": "Noah's BO3 movement: the camera tilts this many degrees in a slide",
+      "value": 3,
+      "durationMs": 0,
+      "verify": [
+        "value"
+      ]
+    },
+    {
+      "id": "light_swing",
+      "what": "Noah's BO3 movement: light swings play this much faster (heavy swings as they are)",
+      "value": 1.2,
+      "durationMs": 0,
+      "verify": [
+        "value"
+      ]
+    },
+    {
+      "id": "swing_cancel",
+      "what": "Noah's BO3 movement: the next light swing may start at this % of the one before (not yet: needs the swing animations)",
+      "value": 90,
       "durationMs": 0,
       "verify": [
         "value"

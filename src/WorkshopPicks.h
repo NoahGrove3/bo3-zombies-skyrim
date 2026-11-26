@@ -48,7 +48,8 @@ namespace coa::Picks
 		{ "bonereaper_kill", "impact", { { "Apocalypse - Magic of Skyrim.esp", 0x11F241, 0.200f, 0.00f, -1 } }, 1 },
 		{ "wyrmtooth_heavy", "impact", { { "Apocalypse - Magic of Skyrim.esp", 0x0059B5, 0.200f, 0.00f, -1 } }, 1 },
 		{ "bloodmoon_heavy", "impact", { { nullptr, 0, 0.200f, 0.00f, static_cast<int>(gen::Sound::flesh_hit) }, { "Apocalypse - Magic of Skyrim.esp", 0x13DA18, 0.120f, 0.05f, -1 } }, 2 },
-		{ "javelin_land", "impact", { { "Skyrim.esm", 0x03C8FC, 0.200f, 0.00f, -1 } }, 1 },
+		{ "javelin_throw", "cast", { { "Apocalypse - Magic of Skyrim.esp", 0x023DF7, 0.200f, 0.00f, -1 } }, 1 },
+		{ "javelin_land", "impact", { { "Apocalypse - Magic of Skyrim.esp", 0x000D67, 0.200f, 0.00f, -1 } }, 1 },
 		{ "javelin_bounce", "impact", { { "Skyrim.esm", 0x03C8FC, 0.200f, 0.00f, -1 } }, 1 },
 		{ "slayer_light", "cast", { { "Apocalypse - Magic of Skyrim.esp", 0x023DF7, 0.200f, 0.00f, -1 } }, 1 },
 		{ "slayer_heavy", "impact", { { "Apocalypse - Magic of Skyrim.esp", 0x02A504, 0.200f, 0.00f, -1 } }, 1 },
@@ -57,6 +58,7 @@ namespace coa::Picks
 		{ "scythe_heavy", "impact", { { "Apocalypse - Magic of Skyrim.esp", 0x000D67, 0.200f, 0.00f, -1 } }, 1 },
 		{ "staff_light", "impact", { { "Dawnguard.esm", 0x0132FC, 0.200f, 0.00f, -1 } }, 1 },
 		{ "staff_heavy", "impact", { { "Dawnguard.esm", 0x011F86, 0.200f, 0.00f, -1 } }, 1 },
+		{ "w:javelin", "draw", { { "Apocalypse - Magic of Skyrim.esp", 0x000D65, 0.090f, 0.08f, -1 } }, 1 },
 	};
 	inline constexpr std::pair<const char*, const char*> kOwnerCard[] = {
 		{ "priest_vahlok_hit", "vahlok_hit" },
