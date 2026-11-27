@@ -93,6 +93,7 @@ function drawNow() {
 <h3 class="sub">Test by category</h3><div id="cats"></div>
 <h3 class="sub">Back to fix</h3><div id="fails"></div>
 <h3 class="sub">Decisions waiting for you</h3><div id="decs"></div>
+<h3 class="sub">Decisions you've made</h3><p class="hint">Every answer you've given - here or in chat - and what was done with it, newest first. A pick you make above moves down here (you can still change it until the next build).</p><div id="decmade"></div>
 <h3 class="sub">Being built next</h3><div id="next"></div>`;
   // the categories with something to test
   const cats = D.systems.filter(s => readyIn(s.id).length);
@@ -172,7 +173,16 @@ function paintNow() {
   const fails = ready.filter(f => statusOf(f) === 'failed');
   $('#fails').innerHTML = fails.length ? `<div class="flist">${fails.map(f => `<div class="frow"><div class="ttl"><b>${esc(f.t)}</b><span>${pill('failed')}</span></div><p>${esc((markOf(f) || {}).note || 'No note yet: what went wrong?')}</p></div>`).join('')}</div>`
     : '<p class="empty">Nothing failed in this build so far.</p>';
-  $$('#decs [data-dec]').forEach(box => {
+  // (Nov 27: "save the older ones I make") answered ones move to the made list; the record of earlier builds under them
+  $$('#decs [data-dec], #decmade [data-dec]').forEach(box => {
+    const p = DB.get('decisions', box.dataset.dec) || {};
+    const want = p.pick ? $('#decmade') : $('#decs');
+    if (box.parentElement !== want) want.prepend(box);
+  });
+  if (!$('#decs [data-dec]')) { if (!$('#decs .empty')) $('#decs').insertAdjacentHTML('beforeend', '<p class="empty">Nothing waiting: every decision answered.</p>'); }
+  else $$('#decs .empty').forEach(x => x.remove());
+  if (!$('#decmade .made')) $('#decmade').insertAdjacentHTML('beforeend', `<div class="flist made">${(D.decided || []).map(d => `<div class="frow"><div class="ttl"><b>${esc(d.q)}</b><span>${pill('done')} <span class="lbl">&nbsp;${esc(SYS[d.sys] ? SYS[d.sys].name : d.sys)} &middot; ${esc(d.when)} &middot; ${esc(d.where)}</span></span></div><p><b>Your answer:</b> ${esc(d.pick)}</p><p class="muted">${esc(d.done)}</p></div>`).join('')}</div>`);
+  $$('#decs [data-dec], #decmade [data-dec]').forEach(box => {
     const d = D.decisions.find(x => x.id === box.dataset.dec), p = DB.get('decisions', d.id) || {};
     $$('button[data-opt]', box).forEach(b => b.setAttribute('aria-pressed', String(p.pick === b.dataset.opt)));
     const o = d.opts.find(x => x.id === p.pick); $('.optabout', box).textContent = o ? o.about : 'Hover or tap an option to choose it; tap it again to clear.';

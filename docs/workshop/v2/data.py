@@ -14,8 +14,8 @@ import json, pathlib, subprocess
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent.parent.parent
 
-INSTALLED = {'sha': '3edd0b7', 'date': '2026-11-27', 'label': 'Your Nov 27 picks: each class\'s moves and the looks',
-             'extra': 'Each class\'s own moves, the wonders\' looks, the armour sets\' looks, the flasks\' swirling potions and smaller bursts, the Rune Arrow cursor, the bars hiding when full, and your fixes (installed Nov 27 03:20)'}
+INSTALLED = {'sha': '82b25a6', 'date': '2026-11-27', 'label': 'Your 3edd0b7 test fixed, the 11 new Tablet weapons and the Wheel, Ember Tally HUD and menus, the preview\'s effects in the game',
+             'extra': 'Builds 3 and 4 (the Tablet\'s 11 new weapons and the Wheel; the Ember Tally HUD, the altar menu, the Inventory recoloured and the Magic and Tab menus remade) and every note of your 3edd0b7 test: the effects baked from the workshop\'s own previews, the weapon and armour looks\' aura, the moves by tier, the flasks, the main menu and loading screens'}
 
 # ------------------------------------------------------------------------------------------------ the systems (categories)
 SYSTEMS = [
@@ -45,8 +45,8 @@ FEATURES = []
 def F(i, s, t, st, what, how='', look='', note='', since=''):
     FEATURES.append(dict(id=i, sys=s, t=t, st=st, what=what, how=how, look=look, note=note, since=since))
 
-B = '3edd0b7'   # (the build installed now: builds 1 and 2 of Nov 27, 7eb037f and 3edd0b7)
-B0 = '3938d82'   # (the one before it)
+B = '82b25a6'   # (the build installed now: builds 3 and 4 of Nov 27 and the fixes of your 3edd0b7 test)
+B0 = '3edd0b7'   # (the one before it)
 
 # ---- movement
 F('mv_sprint', 'movement', 'Sprint winds up', 'done', 'The sprint builds over 180 ms to 440 and widens the view 7 degrees.', since='286a000')
@@ -221,6 +221,67 @@ F('st_r20', 'stability', 'Round 20 crash', 'ready', 'The game fell 0.6 s after a
   how='Play to round 20, heavy attacks on big crowds.', look='No crash. If one comes, Crash Logger writes a log I can read.', note='"I crashed on round 20 when I did a heavy attack on a crowd using one of the tablet scythes".', since=B0)
 
 
+
+# ---- (Nov 27, after your 3edd0b7 test) each mark folded in: a pass done, a fail fixed and back to test with your note
+def U(i, **kw):
+    for f in FEATURES:
+        if f['id'] == i: f.update(kw); return
+    raise SystemExit(f'no feature {i}')
+T3 = '3edd0b7'
+for i in ('nt_loot', 'tb_storm', 'wd_mutagenstrike'): U(i, st='done', since=T3)
+U('mv_alchemist', st='ready', what='Reaping Arc (Tier I): the sweep itself catches every one of the dead in front of you - your Shadowfire impact on each, the burn stacking (as the preview: no ball). Shadowfire Eruption (Tier II): the preview\'s eruption, its geysers the reach of the blow. Philosopher\'s Edge (Tier III): every 10th kill, the next bursts into Essence and shadowfire.',
+  how='Tester\'s Kit: the scythe at base (plain), Tier I (light), II (heavy), III (10 kills and one more).', look='Nothing extra at base; the sweep from I, the eruption from II, the burst from III.',
+  note='Last test (3edd0b7): "it all works from base tier when it should be unlocked as it\'s fully upgraded"; "Light attack from base is shooting the purple fire ball but it explodes like 3m in front".', since=B)
+U('mv_destruction', st='ready', what='The tap is the Glintstone Bolt from base (your pick); the Arcane Ray from Tier II (hold attack), each start written to the log; Starfall from Tier III (every 25th bolt, the preview\'s arcane impact where each lands).',
+  how='Wand at Tier II: hold attack 2-3 s. Tier III: tap 25 bolts.', look='The violet beam from the tip, magicka dropping; twelve bolts falling ahead.', note='Last test (3edd0b7): "Arcane ray doesn\'t work"; "doesn\'t cast the beam when holding attack".', since=B)
+U('mv_summoner', st='ready', what='Radiant Strike (Tier I): the preview\'s holy impact on each strike. Pillar of Dawn (Tier II): the preview\'s holy pillar on the one ahead (the old sunbeam gone). Ancestor\'s Guard (Tier III): every 20 kills.',
+  how='Quarterstaff at Tier I, II, III: light hits, heavies, 20 kills.', look='The same golden impact and pillar as the workshop\'s preview.', note='Last test (3edd0b7): "I want the preview effects in this workshop to be exactly how it shows in game if not better"; "still using the old ... attacks".', since=B)
+U('mv_spellsword', st='ready', what='Spellthrust (Tier I) with the preview\'s impact in your element; Spell Pillar (Tier II): the preview\'s pillar, one beam; Elemental Wake (Tier III).',
+  how='Rapier at Tier I, II, III with fire, frost, shock in the other hand.', look='One pillar in the element, as the preview.', note='Last test (3edd0b7): "The heavy attacks ... look very poor in game"; "casts the heavy attack at base tier"; "casting 2 beams instead of one".', since=B)
+U('mv_slide', st='ready', note='Last test (3edd0b7): "Nothing changed". Now also started by the crouch itself (sneaking a moment after a sprint), and every try written to the log.', since=B)
+U('nov27_models', st='ready', what='Every class weapon in your picked model at every tier, its look now with the preview\'s aura (a skin of light on the steel, motes rising, a glow); the wand\'s tip light at its tip at base too; your summons ignore your hits; the cards list each move as it unlocks.',
+  how='Tester\'s Kit: each class weapon at base, I, III, Legendary; hit one of your summons.', look='The aura on the weapon from every side; the summon never turns on you.', note='Last test (3edd0b7): see History - the looks, the summons, the wand, the moves, the descriptions.', since=B)
+U('cw_layers', st='ready', note='Last test (3edd0b7): "it\'s the old preview selections ... the low quality 2D effects". The aura the preview draws is now in the game on every look.', since=B)
+U('cw_tierlooks', st='done', what='Your picks in the game with the preview\'s 3D aura: the skin of light on the model\'s own triangles, motes born on it, a glow round each part.', how='Each class weapon at I, III and Legendary.', look='Glowing from every side, never a flat card.', since=B)
+U('nov27_firestorm', st='ready', t='Fire Storm replaces Inferno', what='Your correction: Immolate stays Destruction\'s Tier III fire spell; Fire Storm takes Inferno\'s place (Walls, Tier III).',
+  how='Altar: the fire ladder at Tier III, then the Walls ladder at Tier III.', look='Immolate in Fire; Fire Storm in Walls; no Inferno.', note='Last test (3edd0b7): "the spell I actually want to remove is inferno".', since=B)
+U('sp_immolate', st='done', t='Immolate kept', what='Immolate stays (your correction).', since=B)
+U('nov27_fixes', st='done', since=T3)
+U('wd_javhand', st='ready', t='Javelin held overhand', what='While charging, the palm turns toward your head - the overhand grip of a javelin throw.', how='Hold to charge the javelin, look around, throw.', look='Overhand grip, palm toward your head.', note='Last test (3edd0b7): "My palm is facing the sky now".', since=B)
+U('wd_javlook', st='ready', note='Last test (3edd0b7): "It stays the same looking like a white flaming effect". The aura in the element\'s colour is new.', since=B)
+U('wd_looks', st='ready', note='Last test (3edd0b7): Soulcaller flat from some angles; the Mutagen Staff\'s look below its orb. Now the aura on each, and the Mutagen look on the orb in first person.', since=B)
+U('wd_bane', st='ready', note='Last test (3edd0b7): "It\'s still the old version". Its fire is the preview\'s impact now - and a question for you in Decisions.', since=B)
+U('wd_soulmana', st='ready', note='Last test (3edd0b7): "No mana usage no purple spawn portal ... the cats blue holographic effect is only visible from certain angles". Fixed: the cast read in every state, the portal kept 2.5 s, the cat\'s body glowing blue.', since=B)
+U('cw_flasklook', st='ready', what='The potion\'s swirl seen from every side (the glass no longer hides it) and slow enough to read as moving; the neck 1.5x long (your pick).', note='Last test (3edd0b7): "the swirling animation is broken".', since=B)
+U('fl_holy', st='ready', t='Flask bursts as the preview', what='Every flask\'s burst is the preview\'s Ring (your pick), baked, its ring reaching exactly as far as the flask hurts, facing you from every side, played once; the Legendary rings too. No gold flickers, no line on the floor, no white flames.',
+  how='Throw each flask at a crowd; look from the side and from above.', look='The same ring as the workshop, the size of what it catches.', note='Last test (3edd0b7): see History.', since=B)
+U('fl_size', st='done', t='Flask bursts half the size (folded into "Flask bursts as the preview")', since=B)
+U('ar_looks', st='ready', what='The Embers are motes rising all round you, from every side; the Sheen a flowing glow brightest at its edges. The Mantle as you approved it.', note='Last test (3edd0b7): "They don\'t look in game how they look in the preview".', since=B)
+U('ar_ssbody', st='building', what='Full-length legs for the set - pick in Decisions.', note='Last test (3edd0b7): "the back is clipping through my legs and I don\'t like that my legs are visible".')
+U('nov27_tablet', st='ready', t='The Wheel', what='The Tablet turns six of its weapons round on a wheel of runes and eases the prize to the front; its rarity\'s colour.', how='Roll the Tablet.', look='The Wheel, not the old roll.', note='Last test (3edd0b7): "It\'s still using the old roll animation" (the Wheel came in build 3).', since=B)
+U('tb_claws', st='done', since=T3)
+U('ld_continue', st='ready', what='The Ember Tally main menu (the Alduin painting, embers rising, the title); our loading screen for every save you load - from the menu, the journal, or after you fall - reading LOADING SAVE; Continue never taken for a new game.',
+  how='Launch; Continue; then load from the journal.', look='The painting with embers; our screen with LOADING SAVE each time.', note='Last test (3edd0b7): see History.', since=B)
+U('tb_lineup', st='ready', how='Roll the Tablet many times; Tester\'s Kit: the Tablet weapons.', look='The 11 new weapons and your seven, by rarity; each with its uses ring.', since=B)
+U('tb_bonereaper', st='done', since=B)
+U('tb_rarity', st='ready', what='Rare 100 uses, Epic 60, Legendary 30 (your pick); blue, purple, gold.', how='Roll several Tablet weapons and look at their uses ring.', look='100 / 60 / 30 uses by rarity, in blue, purple or gold.', since=B)
+U('tb_roll', st='done', t='The Wheel (tested as "The Wheel" above)', what='Your pick: the Wheel.', since=B)
+U('ui_menus', st='ready', what='The Inventory recoloured (Untarnished UI\'s layout in our colours - your latest pick); the Magic menu remade (our categories and list); the Tab menu\'s four medallions.', how='Open the inventory, the magic menu, Tab.', look='Warm Ember Tally colours on the inventory; our list on magic.', since=B)
+U('hd_night', st='ready', t='Ember Tally HUD', what='The night\'s ember tally, quests under it (a trial over its altar), the compass, Essence with kill pops, brews, the boss bar, the hold prompt, the countdown, the Tablet uses ring, the priest\'s card, falling.', how='Play a night.', look='As the workshop\'s In-game UI.', since=B)
+U('hd_banner', st='ready', t='Banners and lore cards', what='Ember Tally banners and lore fading in and out.', how='Free a trial step; read a lore card.', look='Ember Tally words fading in and out.', since=B)
+U('hd_impacts2d', st='done', t='Impacts from the previews (tested with each class\'s moves)', what='The class moves\' impacts and pillars, the flasks and the Bane\'s fire are the workshop\'s own effects baked for the game.', since=B)
+F('st_crash27', 'stability', 'Random crash (Nov 27, 03:53)', 'ready', 'The dead heard one of our burst effects and the game fell reading its sound: every burst of ours is silent to the dead now.',
+  how='Play nights as usual.', look='No crash.', note='"my game just randomly crashed".', since=B)
+F('fd_runes', 'felldir', 'Trial riddles carved on the altar', 'ready', 'Your pick: before an altar is freed, Felldir is silent - the Whisper trial\'s riddle is carved on the stone (quest line, journal, Codex), never his speech.',
+  how='Take a city\'s Stone\'s Whisper trial.', look='"Carved on the altar: ..." - no quotes, no voice.', note='"the echo alter trials show Feldirs voice lines and hints ... but his voice is turned off until the echo alter is freed".', since=B)
+F('tb_new11', 'tablet', 'The 11 new Tablet weapons', 'ready', 'Voice of the Mountain, Soulrender, Chaurus Fang, Mace of the Bound, Giant\'s Toe Club, Spriggan\'s Heartroot, Grasp of Apocrypha, Dragonguard Ward-Shield (left hand, your right kept), Sweetroll of the Damned, Lil\' Atronach and the Frostbite Egg Sac (thrown).',
+  how='Tester\'s Kit: the Tablet weapons; try each on the dead.', look='Each its own power as in the Tablet tab.', since=B)
+F('mv_tiers', 'classes', 'Moves unlock by tier', 'ready', 'Your pick: Light at Tier I, Heavy at Tier II, Special at Tier III (the wand\'s tap always its Glintstone Bolt).',
+  how='Each class weapon at base, I, II, III.', look='Base plain; one more move each tier.', since=B)
+F('sm_ignore', 'summons', 'Your summons ignore your hits', 'ready', 'Your pick: your blows and spells pass without hurting them, and they never turn on you.', how='Hit your own summon a few times.', look='It keeps fighting the dead.', note='"my summons will fight me back if I hit them and I can\'t kill them".', since=B)
+F('tb_mend', 'tablet', 'The Tablet says when it mends', 'ready', 'Holding a worn Tablet weapon, the hold mends it: the prompt says "Hold to mend the <weapon>", and a hint shows it.', how='Hold a used Tablet weapon at the Tablet.', look='The mend prompt; to roll, put the weapon away.', note='"sometimes when I roll the tablet it takes my essence then doesn\'t roll".', since=B)
+F('cb_jump', 'combat', 'The dead jumping when struck', 'building', 'A probe: any of the dead that moves more than 45 units right after your hit is written to the log, with why (ragdoll, stagger).', note='"when hitting enemies with the frostmourn rapier they twitch or teleport for a split second ... this needs to be fixed for all weapons".')
+
 # ------------------------------------------------------------------------------------------------ the class weapons: one model each (his pick)
 CLASSES = [
     dict(id='alchemist', lk='alch', name='Alchemist', weapon='Shadowflame Scythe', now='Forsworn at Tier I, Falmer II, Dwarven III, Dragon Priest Legendary',
@@ -344,27 +405,46 @@ ROLLS = [
 
 # ------------------------------------------------------------------------------------------------ decisions waiting for Noah
 DECISIONS = [
-    dict(id='immolate', sys='spells', q='What replaces Immolate (the Destruction fire spell at Tier III)?',
-         opts=[('fireStorm', 'Fire Storm', 'Skyrim\'s master fire spell: a ring of flame bursting out round you.'),
-               ('meteor', 'Meteor', 'A meteor called down where you aim (the look of Alduin\'s Bane\'s, smaller).'),
-               ('flameWall', 'Wall of Flames', 'A burning wall laid along the ground ahead.'),
-               ('inferno', 'Inferno Bolt', 'A slow, heavy fire bolt that bursts in a wide blast.')]),
-    dict(id='altarui', sys='hud', q='Your note on the Echo Altar menus: keep the altar menu you have in the game now, or use the new one (class painting, tab icons, every brew\'s icon - see In-game UI > Every screen > The Echo Altar)?',
-         opts=[('new', 'The new one', 'The class painting, the tab icons along the top, every brew with its own icon, in your direction.'),
-               ('keep', 'Keep my current altar menu', 'Leave the altar menu as it is in the game now.'),
-               ('mix', 'Mix them', 'Keep the current one, adding the class painting and the icons to it (say how in the note).')]),
-    dict(id='menumusic', sys='loading', q='Your note on the launch screen and main menu: which music should they play? (It starts with the launch screen and fades out when a game starts.)',
-         opts=[('dragonborn', 'Dragonborn (the main theme)', 'Skyrim\'s choir theme, the one from the trailer.'),
-               ('farhorizons', 'Far Horizons', 'Skyrim\'s quiet, longing exploration piece.'),
-               ('ancientstones', 'Ancient Stones', 'Skyrim\'s low, ominous ruin theme - the most like a curse.'),
-               ('sovngarde', 'Sovngarde', 'Skyrim\'s choir for the hall of the dead - fits the souls Alduin keeps from it.'),
-               ('own', 'Our own', 'A new piece for The Curse of Alduin (later, from your own pick of styles).')]),
-    dict(id='bonereaper', sys='tablet', q='The Bonereaper\'s raise caused the round 20 crash (fixed now). Keep it in the Tablet?',
-         opts=[('keep', 'Keep it', 'Fixed; it stays as it is until the lineup review.'),
-               ('review', 'Decide in the lineup review', 'Keep, cut or rework it with the rest of the Tablet.'),
-               ('cut', 'Cut it now', 'Take it out of the Tablet from the next build.')]),
+    dict(id='sspants', sys='armour', q='Your Spellsword set note: "the back is clipping through my legs and I don\'t like that my legs are visible". Which full-length legs should the set wear (in its own colours, refitted to your body like the rest)?',
+         opts=[('nordic', 'Nordic Carved legs', 'Dragonborn\'s Nordic Carved armour: heavy carved plate down to the boots, close to the Draugr cuirass\'s style.'),
+               ('ahzidal', 'Ahzidal\'s legs', 'Ahzidal\'s armour (Dragonborn): the ancient Dragon Priest robes and plate, the set\'s first inspiration.'),
+               ('steelplate', 'Steel Plate legs', 'Skyrim\'s Steel Plate: clean plate over mail, a knight\'s legs.'),
+               ('blackmage', 'Black Mage legs', 'The Black Mage Armor you have installed: dark fitted trousers and greaves, a battle-mage look.'),
+               ('draugrcloth', 'Draugr wraps', 'The Draugr set\'s own wrapped cloth and leather legs, made solid (no skin showing).')]),
+    dict(id='menuwords', sys='hud', q='The new main menu (the Alduin painting, rising embers, the title) is in this build with Edge UI\'s own words over it, where Edge puts them. Should the words be ours instead - CONTINUE, NEW, LOAD, SETTINGS, QUIT centred under the title in Ember Tally, as the workshop shows?',
+         opts=[('ours', 'Our centred words', 'Drawn by us under the title in Ember Tally; keys, pad and mouse work as now. Needs a careful test (if the list can\'t be read, Edge\'s words come back).'),
+               ('edge', 'Keep Edge UI\'s words', 'The new scene with Edge\'s menu words, as in this build.')]),
+    dict(id='baneold', sys='wonders', q='Your note on Alduin\'s Bane: "It\'s still the old version". What feels old?',
+         opts=[('heavy', 'The heavy\'s white tornado', 'Replace the heavy with a new one (we pick it on the Wonders page).'),
+               ('look', 'Its look on the blade', 'Words of Power + World-Eater\'s Fire on the blade - pick again on the Wonders page.'),
+               ('light', 'The light hits\' fire', 'Ash of Helgen\'s fire on each hit (now the preview\'s impact).'),
+               ('model', 'The sword itself', 'The dragonbone greatsword model.')]),
 ]
 
+
+
+# ------------------------------------------------------------------------------------------------ decisions you've made (Nov 27: "save the older ones I make"):
+# the question, your answer, where you gave it, and what was done with it - kept here for good, newest first. A pick you make in the
+# workshop moves here at the next build.
+DECIDED = [
+    dict(when='2026-11-27', sys='armour', q='The Spellsword pants clip at the back and show your legs. What should replace them?', pick='Show me options', where='chat', done='The options are in Decisions waiting for you.'),
+    dict(when='2026-11-27', sys='flasks', q='How much longer should the flask\'s spout be?', pick='1.5x as long', where='chat', done='Held and thrown flasks, the neck from the shoulder to the lip half again as long.'),
+    dict(when='2026-11-27', sys='felldir', q='Felldir is silent until an altar is freed, yet the Whisper trial showed his riddle as speech. How to close the gap?', pick='Runes on the altar', where='chat', done='Before an altar is freed its riddle is carved on the stone: the quest line, the journal, the Codex, the trial\'s words.'),
+    dict(when='2026-11-27', sys='summons', q='What should happen when you hit your own summon?', pick='Ignore your hits', where='chat', done='Your blows and spells pass harmlessly and they never turn on you.'),
+    dict(when='2026-11-27', sys='classes', q='Reaping Arc threw a ball that burst 3 m ahead; the preview has no ball. Which?', pick='Match the preview', where='chat', done='A sweep in front of you; each of the dead caught gets your Shadowfire impact.'),
+    dict(when='2026-11-27', sys='classes', q='What does the Carian wand\'s tap do before its Light unlocks?', pick='Glintstone Bolt from base', where='chat', done='The tap is always the Glintstone Bolt; the Ray waits for Tier II, Starfall for Tier III.'),
+    dict(when='2026-11-27', sys='classes', q='At which tiers do each class\'s Light, Heavy and Special unlock?', pick='Light I, Heavy II, Special III', where='chat', done='In the game; the weapon cards list each move as it unlocks.'),
+    dict(when='2026-11-27', sys='hud', q='The co-op screens: now or later?', pick='Later, with co-op testing', where='chat', done='Kept for the co-op test (In-game UI keeps them).'),
+    dict(when='2026-11-27', sys='hud', q='The HUD, the altar menu and the menus: in one build or in parts?', pick='All in one build', where='chat', done='Build 4 (installed with build 3, a2ffc6b).'),
+    dict(when='2026-11-27', sys='tablet', q='Soulrender: how many kills, how many warriors?', pick='10 kills, 3 warriors', where='chat', done='In build 3.'),
+    dict(when='2026-11-27', sys='tablet', q='Grasp of Apocrypha: its power when?', pick='Every cast, every 5th ring', where='chat', done='In build 3.'),
+    dict(when='2026-11-27', sys='tablet', q='The Dragonguard Ward-Shield: what happens to your right hand?', pick='Keep my right-hand weapon', where='chat', done='The shield goes in your left hand only (build 3).'),
+    dict(when='2026-11-27', sys='tablet', q='How many uses does a Tablet weapon have?', pick='By rarity: 100/60/30', where='chat', done='Rare 100, Epic 60, Legendary 30 (build 3).'),
+    dict(when='2026-11-27', sys='tablet', q='The Bonereaper\'s raise caused the round 20 crash (fixed). Keep it in the Tablet?', pick='Cut it now', where='workshop', done='Cut with the six others in the lineup (since 3938d82).'),
+    dict(when='2026-11-27', sys='loading', q='Which music for the launch screen and main menu?', pick='Dragonborn (the main theme)', where='workshop', done='In the game since 3938d82.'),
+    dict(when='2026-11-27', sys='hud', q='Keep the altar menu you have, or the new one (class painting, tab icons, every brew\'s icon)?', pick='The new one', where='workshop', done='The new Echo Altar menu in Ember Tally (build 4).'),
+    dict(when='2026-11-27', sys='spells', q='What replaces Immolate (the Destruction fire spell at Tier III)?', pick='Fire Storm - then corrected: Immolate stays, Fire Storm replaces Inferno', where='workshop and your test', done='Immolate is back; Fire Storm takes Inferno\'s place in Walls (this build).'),
+]
 
 # ------------------------------------------------------------------------------------------------ each class's own moves (Nov 27: "how can we set up the unique
 # abilities each class has? not all of them cast the same spells or powers like the tablet weapon pool" - "Own moves, like the
@@ -766,6 +846,7 @@ def main():
             assert f['how'] and f['look'], 'a ready feature needs how and look: ' + f['id']
     data = dict(installed=INSTALLED, systems=[dict(id=a, name=b, about=c) for a, b, c in SYSTEMS], features=FEATURES,
                 decisions=[dict(d, opts=[dict(id=a, name=b, about=c) for a, b, c in d['opts']]) for d in DECISIONS],
+                decided=DECIDED,
                 builds=builds(), installs=INSTALLS, bible=BIBLE,
                 elements=[dict(id=a, name=b, col=c, about=d) for a, b, c, d in ELEMENTS], kit=[dict(name=a, about=b) for a, b in KIT_PARTS],
                 classes=CLASSES, tablet=TABLET, tabnew=TABLET_NEW, kits=element_kits(), abil=CLASS_ABIL, tabnew2=TABLET_NEW2, rarity=RARITY_DEFAULT, odds=ODDS_DEFAULT, rolls=ROLLS, lore=lore(), notelog=NOTE_LOG, picklog=PICK_LOG, moves=CLASS_MOVES, wonders=WONDERS)

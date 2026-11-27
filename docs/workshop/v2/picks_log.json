@@ -1,93 +1,12 @@
 [
  {
-  "round": "Your final picks, Nov 27 (build 7eb037f)",
+  "round": "Your 3edd0b7 test, Nov 27",
   "date": "2026-11-27",
-  "changed": [
-   {
-    "where": "Alchemist: armour look",
-    "pick": "Mantle; Legendary + Sheen"
-   },
-   {
-    "where": "Destruction: armour look",
-    "pick": "Embers; Legendary + Sheen"
-   },
-   {
-    "where": "Spellsword: armour look",
-    "pick": "Sheen; Legendary + Embers"
-   },
-   {
-    "where": "Summoner: armour look",
-    "pick": "Sheen; Legendary + Embers"
-   },
-   {
-    "where": "Destruction: model",
-    "pick": "Daedric wand"
-   },
-   {
-    "where": "Voidglass Flask",
-    "pick": "liquid swirl; cork wisp; impact nova at 50%"
-   },
-   {
-    "where": "Fire Flask",
-    "pick": "liquid swirl; cork wisp; impact nova at 50%"
-   },
-   {
-    "where": "Frost Flask",
-    "pick": "liquid swirl; cork wisp; impact nova at 50%"
-   },
-   {
-    "where": "Philosopher's Flask",
-    "pick": "liquid swirl; cork wisp; impact nova at 50%"
-   },
-   {
-    "where": "Acid Flask",
-    "pick": "liquid swirl; cork wisp; impact nova at 50%"
-   },
-   {
-    "where": "Shock Flask",
-    "pick": "liquid swirl; cork wisp; impact nova at 50%"
-   },
-   {
-    "where": "Holy Water",
-    "pick": "liquid swirl; cork wisp; impact nova at 50%"
-   },
-   {
-    "where": "New Tablet weapon: Azura's Fallen Star",
-    "pick": "no"
-   },
-   {
-    "where": "Destruction: tier looks",
-    "pick": "I: Sorcery; II: Glintstone Mist; III: Glintstone Mist; Legendary: Glintstone Mist at its brightest"
-   },
-   {
-    "where": "UI cursor",
-    "pick": "Rune Arrow"
-   },
-   {
-    "where": "Wonder: Alduin's Bane",
-    "pick": "look Words of Power; strength + World-Eater's Fire; Light attack: Ash of Helgen; Heavy attack: White tornado (today); approved"
-   },
-   {
-    "where": "Wonder: Wyrmspine Javelin",
-    "pick": "look Elemental Edge; look with fire Elemental Edge; look with frost Elemental Edge; look with shock Elemental Edge; strength + Dragonfire; element Shock; Hold, then throw: Bursting throw (today); Its return: Flies back (today); approved"
-   },
-   {
-    "where": "Wonder: Mutagen Staff",
-    "pick": "look Transmutation Runes; strength + Living Mutagen; Hold block: the flasks: Six elements (today); Its staff strike: Mutating strike; change"
-   },
-   {
-    "where": "Wonder: Dragon Slayer",
-    "pick": "look Dragonfire Runes; strength + Slayer's Runes; Light attack: Golden fireball (today); Heavy attack: Golden rain (today); approved"
-   },
-   {
-    "where": "Wonder: Soulcaller's Staff",
-    "pick": "look Spectral Mist; strength + Soul Fire; Hold: the soul beam: Soul Beam (today); Every 20 souls: Spectral sabre cat (today); change"
-   }
-  ],
+  "changed": [],
   "now": [
    {
     "where": "Alchemist: moves",
-    "pick": "light: not picked; heavy: not picked; special: not picked"
+    "pick": "light: Reaping Arc; heavy: Shadowfire Eruption; special: Philosopher's Edge"
    },
    {
     "where": "Destruction: moves",
@@ -451,7 +370,7 @@
    },
    {
     "where": "UI: Choosing your class",
-    "pick": "mark cleared"
+    "pick": "approved"
    },
    {
     "where": "UI: You are down",
@@ -471,7 +390,7 @@
    },
    {
     "where": "UI: The scoreboard",
-    "pick": "mark cleared"
+    "pick": "approved"
    },
    {
     "where": "UI: The party",
@@ -483,7 +402,7 @@
    },
    {
     "where": "UI: The Codex",
-    "pick": "mark cleared"
+    "pick": "approved"
    },
    {
     "where": "UI: Compass",
@@ -507,11 +426,11 @@
    },
    {
     "where": "UI: Inventory: remade",
-    "pick": "picked"
+    "pick": "mark cleared"
    },
    {
     "where": "UI: Inventory: recoloured",
-    "pick": "mark cleared"
+    "pick": "picked"
    },
    {
     "where": "UI: Loading screens",
@@ -555,7 +474,7 @@
    },
    {
     "where": "UI: New character",
-    "pick": "mark cleared"
+    "pick": "approved"
    },
    {
     "where": "UI: Dragon Priest slain",
@@ -588,6 +507,126 @@
    {
     "where": "UI: A Tablet weapon\\'s uses",
     "pick": "approved"
+   },
+   {
+    "where": "Wonder: Alduin's Bane",
+    "pick": "look Words of Power; strength + World-Eater's Fire; Light attack: Ash of Helgen; Heavy attack: White tornado (today); approved"
+   },
+   {
+    "where": "Wonder: Wyrmspine Javelin",
+    "pick": "look Elemental Edge; look with fire Elemental Edge; look with frost Elemental Edge; look with shock Elemental Edge; strength + Dragonfire; element Shock; Hold, then throw: Bursting throw (today); Its return: Flies back (today); approved"
+   },
+   {
+    "where": "Wonder: Mutagen Staff",
+    "pick": "look Transmutation Runes; strength + Living Mutagen; Hold block: the flasks: Six elements (today); Its staff strike: Mutating strike; change"
+   },
+   {
+    "where": "Wonder: Dragon Slayer",
+    "pick": "look Dragonfire Runes; strength + Slayer's Runes; Light attack: Golden fireball (today); Heavy attack: Golden rain (today); approved"
+   },
+   {
+    "where": "Wonder: Soulcaller's Staff",
+    "pick": "look Spectral Mist; strength + Soul Fire; Hold: the soul beam: Soul Beam (today); Every 20 souls: Spectral sabre cat (today); change"
+   }
+  ]
+ },
+ {
+  "round": "Install 3edd0b7, Nov 27 (your UI and look picks)",
+  "date": "2026-11-27",
+  "changed": [
+   {
+    "where": "Alchemist: moves",
+    "pick": "light: Reaping Arc; heavy: Shadowfire Eruption; special: Philosopher's Edge"
+   },
+   {
+    "where": "UI: Choosing your class",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: The scoreboard",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: The Codex",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Inventory: remade",
+    "pick": "mark cleared"
+   },
+   {
+    "where": "UI: Inventory: recoloured",
+    "pick": "picked"
+   },
+   {
+    "where": "UI: New character",
+    "pick": "approved"
+   }
+  ]
+ },
+ {
+  "round": "Your final picks, Nov 27 (build 7eb037f)",
+  "date": "2026-11-27",
+  "changed": [
+   {
+    "where": "Alchemist: armour look",
+    "pick": "Mantle; Legendary + Sheen"
+   },
+   {
+    "where": "Destruction: armour look",
+    "pick": "Embers; Legendary + Sheen"
+   },
+   {
+    "where": "Spellsword: armour look",
+    "pick": "Sheen; Legendary + Embers"
+   },
+   {
+    "where": "Summoner: armour look",
+    "pick": "Sheen; Legendary + Embers"
+   },
+   {
+    "where": "Destruction: model",
+    "pick": "Daedric wand"
+   },
+   {
+    "where": "Voidglass Flask",
+    "pick": "liquid swirl; cork wisp; impact nova at 50%"
+   },
+   {
+    "where": "Fire Flask",
+    "pick": "liquid swirl; cork wisp; impact nova at 50%"
+   },
+   {
+    "where": "Frost Flask",
+    "pick": "liquid swirl; cork wisp; impact nova at 50%"
+   },
+   {
+    "where": "Philosopher's Flask",
+    "pick": "liquid swirl; cork wisp; impact nova at 50%"
+   },
+   {
+    "where": "Acid Flask",
+    "pick": "liquid swirl; cork wisp; impact nova at 50%"
+   },
+   {
+    "where": "Shock Flask",
+    "pick": "liquid swirl; cork wisp; impact nova at 50%"
+   },
+   {
+    "where": "Holy Water",
+    "pick": "liquid swirl; cork wisp; impact nova at 50%"
+   },
+   {
+    "where": "New Tablet weapon: Azura's Fallen Star",
+    "pick": "no"
+   },
+   {
+    "where": "Destruction: tier looks",
+    "pick": "I: Sorcery; II: Glintstone Mist; III: Glintstone Mist; Legendary: Glintstone Mist at its brightest"
+   },
+   {
+    "where": "UI cursor",
+    "pick": "Rune Arrow"
    },
    {
     "where": "Wonder: Alduin's Bane",

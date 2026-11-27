@@ -1,9 +1,9 @@
 {
  "installed": {
-  "sha": "3edd0b7",
+  "sha": "82b25a6",
   "date": "2026-11-27",
-  "label": "Your Nov 27 picks: each class's moves and the looks",
-  "extra": "Each class's own moves, the wonders' looks, the armour sets' looks, the flasks' swirling potions and smaller bursts, the Rune Arrow cursor, the bars hiding when full, and your fixes (installed Nov 27 03:20)"
+  "label": "Your 3edd0b7 test fixed, the 11 new Tablet weapons and the Wheel, Ember Tally HUD and menus, the preview's effects in the game",
+  "extra": "Builds 3 and 4 (the Tablet's 11 new weapons and the Wheel; the Ember Tally HUD, the altar menu, the Inventory recoloured and the Magic and Tab menus remade) and every note of your 3edd0b7 test: the effects baked from the workshop's own previews, the weapon and armour looks' aura, the moves by tier, the flasks, the main menu and loading screens"
  },
  "systems": [
   {
@@ -117,8 +117,8 @@
    "what": "Crouch while sprinting (any time in it, the omni-sprint too): you slide, the view tilts, and a jump out of it keeps the speed. Fixed: Skyrim took the crouch key first, so the sprint had ended and you were sneaking before we heard it - no slide, and the sneak it left stood you up still sneaking. Now how you were a moment before the press is what counts.",
    "how": "Sprint for two or three seconds, then crouch. Then slide again and jump while sliding. Stand still and crouch once, then stand.",
    "look": "A slide every time from a sprint; after it you stand up and the sneak eye goes away. Crouching from a stand still sneaks normally.",
-   "note": "Last test (3938d82): \"now it wont slide at all and my sneak eye pops up while im standing\".",
-   "since": "3edd0b7"
+   "note": "Last test (3edd0b7): \"Nothing changed\". Now also started by the crouch itself (sneaking a moment after a sprint), and every try written to the log.",
+   "since": "82b25a6"
   },
   {
    "id": "mv_omni",
@@ -234,56 +234,56 @@
    "id": "cw_tierlooks",
    "sys": "classes",
    "t": "Tier looks: one look, stronger each tier",
-   "st": "building",
-   "what": "Your picks saved for all four. Now made in 3D on the model itself (its own surface glowing, particles born on it, a volume of light round each part) - never flat or an outline at any angle; the game gets the same from 4K baked textures with a 2K option.",
-   "how": "",
-   "look": "",
+   "st": "done",
+   "what": "Your picks in the game with the preview's 3D aura: the skin of light on the model's own triangles, motes born on it, a glow round each part.",
+   "how": "Each class weapon at I, III and Legendary.",
+   "look": "Glowing from every side, never a flat card.",
    "note": "",
-   "since": ""
+   "since": "82b25a6"
   },
   {
    "id": "nov27_models",
    "sys": "classes",
    "t": "One model per class weapon, in game",
    "st": "ready",
-   "what": "The Dragon Priest scythe, the Daedric wand (your final pick), the Ebony quarterstaff and the Daedric rapier at every tier; your looks faint at Tier I and stronger each tier. (The wand's Tier I in Sorcery, your pick, comes with the looks build.)",
-   "how": "Tester's Kit: each class weapon at Tier I, then III, then Legendary.",
-   "look": "The same model every tier, the wand now the Daedric one; its glow faint at I, full at III, brightest at Legendary.",
-   "note": "",
-   "since": "3edd0b7"
+   "what": "Every class weapon in your picked model at every tier, its look now with the preview's aura (a skin of light on the steel, motes rising, a glow); the wand's tip light at its tip at base too; your summons ignore your hits; the cards list each move as it unlocks.",
+   "how": "Tester's Kit: each class weapon at base, I, III, Legendary; hit one of your summons.",
+   "look": "The aura on the weapon from every side; the summon never turns on you.",
+   "note": "Last test (3edd0b7): see History - the looks, the summons, the wand, the moves, the descriptions.",
+   "since": "82b25a6"
   },
   {
    "id": "nov27_tablet",
    "sys": "tablet",
-   "t": "Tablet lineup and rarity",
+   "t": "The Wheel",
    "st": "ready",
-   "what": "Only your seven kept weapons roll (the seven cut ones never come up). Rare 60%, Epic 30%, Legendary 10% (Legendary from night 8); the glow blue, purple or gold; a Legendary win rings the bell.",
-   "how": "Roll the Tablet several times (Tester's Kit: tablet roll).",
-   "look": "Stormtalons, Rimewick and Eclipse come up purple, the rest blue; no Bloodmoon, Bonereaper, Riverstone, Silver Scythe, Talons, Wandering Star or Wyrmtooth.",
-   "note": "",
-   "since": "3938d82"
+   "what": "The Tablet turns six of its weapons round on a wheel of runes and eases the prize to the front; its rarity's colour.",
+   "how": "Roll the Tablet.",
+   "look": "The Wheel, not the old roll.",
+   "note": "Last test (3edd0b7): \"It's still using the old roll animation\" (the Wheel came in build 3).",
+   "since": "82b25a6"
   },
   {
    "id": "nov27_firestorm",
    "sys": "spells",
-   "t": "Fire Storm replaces Immolate",
+   "t": "Fire Storm replaces Inferno",
    "st": "ready",
-   "what": "Destruction's Tier III fire spell is Skyrim's Fire Storm: a ring of flame bursting out round you.",
-   "how": "Altar: Destruction's fire ladder at Tier III; cast it among the dead.",
-   "look": "Fire Storm in the list where Immolate was; flames burst out all round you.",
-   "note": "",
-   "since": "3938d82"
+   "what": "Your correction: Immolate stays Destruction's Tier III fire spell; Fire Storm takes Inferno's place (Walls, Tier III).",
+   "how": "Altar: the fire ladder at Tier III, then the Walls ladder at Tier III.",
+   "look": "Immolate in Fire; Fire Storm in Walls; no Inferno.",
+   "note": "Last test (3edd0b7): \"the spell I actually want to remove is inferno\".",
+   "since": "82b25a6"
   },
   {
    "id": "nov27_fixes",
    "sys": "classes",
    "t": "Your fixes: javelin, auto-switch, class change",
-   "st": "ready",
+   "st": "done",
    "what": "The javelin is held and put away like a staff (over the shoulder, onto your back; the press only throws). Class weapons are no longer taken off and on when put away (the switching you saw). Changing class costs 20,000.",
    "how": "Draw and put away the javelin; carry two class weapons and put one away; change class at an altar.",
    "look": "The javelin goes onto your back with a matching animation; the weapon you held stays the one you hold; the altar asks 20,000.",
    "note": "",
-   "since": "3938d82"
+   "since": "3edd0b7"
   },
   {
    "id": "nov27_small",
@@ -294,7 +294,7 @@
    "how": "Start the game; open the class choice at an altar; look at a city's trials.",
    "look": "Dragonborn at the menu; gold names and words on the class cards; \"Slay the Undead\" first.",
    "note": "",
-   "since": "3938d82"
+   "since": "3edd0b7"
   },
   {
    "id": "ui_coop",
@@ -333,34 +333,34 @@
    "id": "ui_menus",
    "sys": "hud",
    "t": "Inventory, Magic and Tab menus ours",
-   "st": "idea",
-   "what": "Recoloured (Untarnished UI's layout in our colours) or remade (our own pages): pick one of each in the workshop.",
-   "how": "",
-   "look": "",
+   "st": "ready",
+   "what": "The Inventory recoloured (Untarnished UI's layout in our colours - your latest pick); the Magic menu remade (our categories and list); the Tab menu's four medallions.",
+   "how": "Open the inventory, the magic menu, Tab.",
+   "look": "Warm Ember Tally colours on the inventory; our list on magic.",
    "note": "",
-   "since": ""
+   "since": "82b25a6"
   },
   {
    "id": "tb_rarity",
    "sys": "tablet",
    "t": "Rarity: Rare, Epic, Legendary",
-   "st": "idea",
-   "what": "Each Tablet weapon is Rare (blue), Epic (purple) or Legendary (gold) by strength; rarer ones roll less often (60/30/10 to start, yours to set). Uses rebalanced once the lineup is final.",
-   "how": "",
-   "look": "",
+   "st": "ready",
+   "what": "Rare 100 uses, Epic 60, Legendary 30 (your pick); blue, purple, gold.",
+   "how": "Roll several Tablet weapons and look at their uses ring.",
+   "look": "100 / 60 / 30 uses by rarity, in blue, purple or gold.",
    "note": "",
-   "since": ""
+   "since": "82b25a6"
   },
   {
    "id": "tb_roll",
    "sys": "tablet",
-   "t": "A new roll for the Tablet",
-   "st": "idea",
-   "what": "Four rolls to pick from in the workshop: The Reel, Pillar of Light, The Wheel, Soul Storm - each ending in the rarity's colour.",
+   "t": "The Wheel (tested as \"The Wheel\" above)",
+   "st": "done",
+   "what": "Your pick: the Wheel.",
    "how": "",
    "look": "",
    "note": "",
-   "since": ""
+   "since": "82b25a6"
   },
   {
    "id": "cw_ownmodels",
@@ -382,51 +382,51 @@
    "how": "",
    "look": "",
    "note": "",
-   "since": "3edd0b7"
+   "since": "82b25a6"
   },
   {
    "id": "mv_summoner",
    "sys": "classes",
    "t": "Summoner: Radiant Strike, Pillar of Dawn, Ancestor's Guard",
    "st": "ready",
-   "what": "Light: each strike of the quarterstaff flares with sunlight that sears the dead and staggers them for a moment. Heavy: a pillar of sunlight falls where you strike. Special: every 20 kills, a ghost of light rises from the 20th body out of a pillar of light and fights beside you for 12 s.",
-   "how": "Summoner, the quarterstaff at any tier: light hits, heavies, then 20 kills.",
-   "look": "A small sun-flare and burn on each hit; the white pillar on heavies; a see-through warrior rising out of light on the 20th kill.",
-   "note": "",
-   "since": "3edd0b7"
+   "what": "Radiant Strike (Tier I): the preview's holy impact on each strike. Pillar of Dawn (Tier II): the preview's holy pillar on the one ahead (the old sunbeam gone). Ancestor's Guard (Tier III): every 20 kills.",
+   "how": "Quarterstaff at Tier I, II, III: light hits, heavies, 20 kills.",
+   "look": "The same golden impact and pillar as the workshop's preview.",
+   "note": "Last test (3edd0b7): \"I want the preview effects in this workshop to be exactly how it shows in game if not better\"; \"still using the old ... attacks\".",
+   "since": "82b25a6"
   },
   {
    "id": "mv_destruction",
    "sys": "classes",
    "t": "Destruction: Glintstone Bolt, Arcane Ray, Starfall",
    "st": "ready",
-   "what": "The wand is Destruction's own now (no spell needed in the other hand). Tap attack: a glintstone bolt from the tip that bends a little toward the nearest of the dead, at most one every 0.5 s. Hold attack: the Arcane Ray from the tip, wider and hotter the longer you hold it, draining your magicka (it stops when you run out). Every 25th bolt: Starfall, twelve great bolts raining in front of you.",
-   "how": "Destruction, the wand: tap attack quickly several times; then hold it for a few seconds; then tap 25 bolts.",
-   "look": "Bolts no faster than every half second; the violet beam from the wand's tip with your magicka bar dropping; twelve bolts falling ahead on the 25th.",
-   "note": "",
-   "since": "3edd0b7"
+   "what": "The tap is the Glintstone Bolt from base (your pick); the Arcane Ray from Tier II (hold attack), each start written to the log; Starfall from Tier III (every 25th bolt, the preview's arcane impact where each lands).",
+   "how": "Wand at Tier II: hold attack 2-3 s. Tier III: tap 25 bolts.",
+   "look": "The violet beam from the tip, magicka dropping; twelve bolts falling ahead.",
+   "note": "Last test (3edd0b7): \"Arcane ray doesn't work\"; \"doesn't cast the beam when holding attack\".",
+   "since": "82b25a6"
   },
   {
    "id": "mv_alchemist",
    "sys": "classes",
    "t": "Alchemist: Reaping Arc, Shadowfire Eruption, Philosopher's Edge",
    "st": "ready",
-   "what": "Light: a wide violet sweep through every one of the dead in front of you, setting them smouldering in shadowfire; the burn stacks with each sweep (up to three). Heavy: geysers of shadowfire burst up in a ring round you. Special: every 10th kill, your next kill bursts into Cursed Essence (+150) and shadowfire.",
-   "how": "Alchemist, the scythe: light swings into a crowd, a heavy among them, then 10 kills and one more.",
-   "look": "A wide sweep hitting several at once; eight violet bursts in a ring on the heavy; a hint on the 10th kill and a burst with an Essence count on the next.",
-   "note": "",
-   "since": "3edd0b7"
+   "what": "Reaping Arc (Tier I): the sweep itself catches every one of the dead in front of you - your Shadowfire impact on each, the burn stacking (as the preview: no ball). Shadowfire Eruption (Tier II): the preview's eruption, its geysers the reach of the blow. Philosopher's Edge (Tier III): every 10th kill, the next bursts into Essence and shadowfire.",
+   "how": "Tester's Kit: the scythe at base (plain), Tier I (light), II (heavy), III (10 kills and one more).",
+   "look": "Nothing extra at base; the sweep from I, the eruption from II, the burst from III.",
+   "note": "Last test (3edd0b7): \"it all works from base tier when it should be unlocked as it's fully upgraded\"; \"Light attack from base is shooting the purple fire ball but it explodes like 3m in front\".",
+   "since": "82b25a6"
   },
   {
    "id": "mv_spellsword",
    "sys": "classes",
    "t": "Spellsword: Spellthrust, Spell Pillar, Elemental Wake",
    "st": "ready",
-   "what": "All follow the spell in your other hand. Light: each thrust that lands carries it - fire burns, frost slows, shock arcs to one more of the dead. Heavy: a pillar of your element pours down on the one ahead. Special: your kills leave a patch of the element on the ground for 4 s that hurts the dead crossing it.",
-   "how": "Spellsword with fire, then frost, then shock in the other hand: thrusts, heavies, kills.",
-   "look": "Fire burns, frost slows, lightning jumping to a second; a pillar in the element on heavies; element patches where the dead fall.",
-   "note": "",
-   "since": "3edd0b7"
+   "what": "Spellthrust (Tier I) with the preview's impact in your element; Spell Pillar (Tier II): the preview's pillar, one beam; Elemental Wake (Tier III).",
+   "how": "Rapier at Tier I, II, III with fire, frost, shock in the other hand.",
+   "look": "One pillar in the element, as the preview.",
+   "note": "Last test (3edd0b7): \"The heavy attacks ... look very poor in game\"; \"casts the heavy attack at base tier\"; \"casting 2 beams instead of one\".",
+   "since": "82b25a6"
   },
   {
    "id": "cw_ults",
@@ -530,13 +530,13 @@
   {
    "id": "sp_immolate",
    "sys": "spells",
-   "t": "Fire Storm replaces Immolate",
-   "st": "building",
-   "what": "Your pick (Decisions): Skyrim's Fire Storm takes Immolate's place in the Destruction fire spells, in the next build.",
+   "t": "Immolate kept",
+   "st": "done",
+   "what": "Immolate stays (your correction).",
    "how": "",
    "look": "",
    "note": "\"I want to replace the immolate from the spell pool\".",
-   "since": ""
+   "since": "82b25a6"
   },
   {
    "id": "fl_fire",
@@ -552,13 +552,13 @@
   {
    "id": "fl_holy",
    "sys": "flasks",
-   "t": "Holy Water leaves no glow behind",
+   "t": "Flask bursts as the preview",
    "st": "ready",
-   "what": "The golden light it casts is cut back and its motes and burst now end with the beam, so no golden hue stays after it.",
-   "how": "Throw Holy Water at Tier III (its sunbeam), then watch the ground after the beam is gone.",
-   "look": "The beam and burst, then nothing: no golden tint left on the ground or the dead.",
-   "note": "Last test (3938d82): \"there was a lingering hue after the beam disappears\".",
-   "since": "3edd0b7"
+   "what": "Every flask's burst is the preview's Ring (your pick), baked, its ring reaching exactly as far as the flask hurts, facing you from every side, played once; the Legendary rings too. No gold flickers, no line on the floor, no white flames.",
+   "how": "Throw each flask at a crowd; look from the side and from above.",
+   "look": "The same ring as the workshop, the size of what it catches.",
+   "note": "Last test (3edd0b7): see History.",
+   "since": "82b25a6"
   },
   {
    "id": "fl_rest",
@@ -598,22 +598,22 @@
    "sys": "flasks",
    "t": "The flasks' swirling potions",
    "st": "ready",
-   "what": "Your picks for all six: a skin of light over the potion with its swirls turning round and climbing through it, in the flask's colour, so the liquid moves in the glass; the element's wisp still curls off the cork.",
+   "what": "The potion's swirl seen from every side (the glass no longer hides it) and slow enough to read as moving; the neck 1.5x long (your pick).",
    "how": "Hold each flask in your hand and look at it; throw one and watch it fly.",
    "look": "The potion swirling inside the glass, in its element's colour; a wisp off the cork.",
-   "note": "",
-   "since": "3edd0b7"
+   "note": "Last test (3edd0b7): \"the swirling animation is broken\".",
+   "since": "82b25a6"
   },
   {
    "id": "fl_size",
    "sys": "flasks",
-   "t": "Flask bursts half the size, with a ring",
-   "st": "ready",
+   "t": "Flask bursts half the size (folded into \"Flask bursts as the preview\")",
+   "st": "done",
    "what": "Your pick: the Ring impact at 50%. Each flask's burst is half its old size, and a low ring of its element runs out along the ground to the edge of what it catches. The glass shatter and the Legendary bursts are smaller too.",
    "how": "Throw each flask you have at a crowd, at its tier.",
    "look": "A small burst and a ring spreading on the ground, not a screen-filling explosion.",
    "note": "\"the explosion size for the flasks needs to be much less its a bit overwhelming currently\".",
-   "since": "3edd0b7"
+   "since": "82b25a6"
   },
   {
    "id": "ui_bars",
@@ -624,7 +624,7 @@
    "how": "Stand still with everything full; then take a hit, cast, sprint, shout.",
    "look": "The plate fades away when full and returns the moment a bar drops.",
    "note": "",
-   "since": "3edd0b7"
+   "since": "82b25a6"
   },
   {
    "id": "ui_cursor",
@@ -635,62 +635,62 @@
    "how": "Open the main menu, the inventory, the map and the altar with the mouse.",
    "look": "The iron arrowhead with its gold edge and a slowly glowing rune, its point exactly where you click.",
    "note": "",
-   "since": "3edd0b7"
+   "since": "82b25a6"
   },
   {
    "id": "tb_lineup",
    "sys": "tablet",
    "t": "The Tablet lineup redone",
-   "st": "building",
+   "st": "ready",
    "what": "Your lineup: the seven you kept and the 11 you added (Voice of the Mountain, Soulrender, Chaurus Fang, Mace of the Bound, Giant's Toe Club, Sweetroll of the Damned, Lil' Atronach, Grasp of Apocrypha, Frostbite Egg Sac, Spriggan's Heartroot, Dragonguard Ward-Shield), by rarity, rolled with the Wheel.",
-   "how": "",
-   "look": "",
+   "how": "Roll the Tablet many times; Tester's Kit: the Tablet weapons.",
+   "look": "The 11 new weapons and your seven, by rarity; each with its uses ring.",
    "note": "",
-   "since": ""
+   "since": "82b25a6"
   },
   {
    "id": "tb_claws",
    "sys": "tablet",
    "t": "Both claws from the Tester's Kit",
-   "st": "ready",
+   "st": "done",
    "what": "The kit gives each claw's left-hand twin too, and equipping a claw puts its twin in your other hand.",
    "how": "Tester's Kit: the Tablet weapons; equip Stormtalons and Cinderclaws from the inventory.",
    "look": "A claw in each hand every time.",
    "note": "\"The test kit was only giving me one claw\".",
-   "since": "3938d82"
+   "since": "3edd0b7"
   },
   {
    "id": "tb_storm",
    "sys": "tablet",
    "t": "Stormtalons: lightning, not ice",
-   "st": "ready",
+   "st": "done",
    "what": "The heavy hit's stun no longer coats the dead in ice: a lightning arc and a shock burst.",
    "how": "Stormtalons: heavy hits, and three light hits in a row.",
    "look": "Lightning on the heavy and on every 3rd hit; no ice anywhere.",
    "note": "",
-   "since": "3938d82"
+   "since": "3edd0b7"
   },
   {
    "id": "tb_bonereaper",
    "sys": "tablet",
    "t": "Seven Tablet weapons cut",
-   "st": "building",
+   "st": "done",
    "what": "Your marks: Bloodmoon, Bonereaper, Riverstone, Silver Reaping, Talons of Woe, the Wandering Star and Wyrmtooth no longer roll (since 3938d82); the 11 new ones you added take their place in the next build.",
    "how": "",
    "look": "",
    "note": "",
-   "since": ""
+   "since": "82b25a6"
   },
   {
    "id": "wd_javhand",
    "sys": "wonders",
-   "t": "Javelin held palm to you",
+   "t": "Javelin held overhand",
    "st": "ready",
-   "what": "The hand turned so the palm faces you while charging and throwing; the charge effect over your head removed.",
-   "how": "Destruction wonder: hold to charge, look around, throw.",
-   "look": "Palm towards you on the shaft; nothing floating above your head.",
-   "note": "\"hand twisted ... palm facing towards the player\"; \"remove the charge element\".",
-   "since": "3938d82"
+   "what": "While charging, the palm turns toward your head - the overhand grip of a javelin throw.",
+   "how": "Hold to charge the javelin, look around, throw.",
+   "look": "Overhand grip, palm toward your head.",
+   "note": "Last test (3edd0b7): \"My palm is facing the sky now\".",
+   "since": "82b25a6"
   },
   {
    "id": "wd_bane",
@@ -700,8 +700,8 @@
    "what": "Your pick for its Light: each hit sets the one struck burning, a patch of embers smoulders under it, and a moment later the fire spreads to those beside it (the meteors are gone). Its Heavy is still the white tornado.",
    "how": "Light hits on a crowd with Alduin's Bane; then a heavy.",
    "look": "Fire on the one hit and embers under it, then the ones next to it catch; the heavy's white tornado as before.",
-   "note": "",
-   "since": "3edd0b7"
+   "note": "Last test (3edd0b7): \"It's still the old version\". Its fire is the preview's impact now - and a question for you in Decisions.",
+   "since": "82b25a6"
   },
   {
    "id": "wd_javlook",
@@ -711,8 +711,8 @@
    "what": "Your pick, Elemental Edge with Dragonfire over it, now in the element of the spell in your other hand: fire orange, frost ice-blue, shock violet-blue.",
    "how": "Hold the javelin with a fire spell in your other hand, then frost, then shock.",
    "look": "Its look changes colour with the spell in your other hand.",
-   "note": "",
-   "since": "3edd0b7"
+   "note": "Last test (3edd0b7): \"It stays the same looking like a white flaming effect\". The aura in the element's colour is new.",
+   "since": "82b25a6"
   },
   {
    "id": "wd_looks",
@@ -722,8 +722,8 @@
    "what": "Your picks: the Soulcaller Spectral Mist + Soul Fire; the Mutagen Staff Transmutation Runes + Living Mutagen (on its orb); the Dragon Slayer Dragonfire Runes + Slayer's Runes; Alduin's Bane Words of Power + World-Eater's Fire.",
    "how": "Draw each wonder and look at it.",
    "look": "Each in your picked look with the second laid over it.",
-   "note": "",
-   "since": "3edd0b7"
+   "note": "Last test (3edd0b7): Soulcaller flat from some angles; the Mutagen Staff's look below its orb. Now the aura on each, and the Mutagen look on the orb in first person.",
+   "since": "82b25a6"
   },
   {
    "id": "cw_layers",
@@ -733,8 +733,8 @@
    "what": "Your tier picks: the Destruction wand in Sorcery at Tier I, then Glintstone Mist; at Legendary (Ascend) the Summoner's quarterstaff adds Dawn Halo and the Spellsword's rapier adds Spellbound over its look; the Alchemist and Destruction at their brightest.",
    "how": "Tester's Kit: the wand at Tier I then II; the quarterstaff and rapier at Tier III then Ascend.",
    "look": "The wand's look changes from Tier I to II; the quarterstaff and rapier gain a second look at Ascend.",
-   "note": "",
-   "since": "3edd0b7"
+   "note": "Last test (3edd0b7): \"it's the old preview selections ... the low quality 2D effects\". The aura the preview draws is now in the game on every look.",
+   "since": "82b25a6"
   },
   {
    "id": "wd_soulmana",
@@ -744,14 +744,14 @@
    "what": "Its held beam now drains your magicka (it stops when there's none left). Each spectral sabre cat comes out of Skyrim's purple conjuring portal: the portal opens, and the cat steps out of it.",
    "how": "Hold the Soulcaller's beam on the dead; let your magicka run out; take 20 souls.",
    "look": "Your magicka dropping while it runs; the purple portal, then the cat out of it.",
-   "note": "\"the spectral cat should spawn from skyrims purple portals. and the beam should cost mana.\"",
-   "since": "3edd0b7"
+   "note": "Last test (3edd0b7): \"No mana usage no purple spawn portal ... the cats blue holographic effect is only visible from certain angles\". Fixed: the cast read in every state, the portal kept 2.5 s, the cat's body glowing blue.",
+   "since": "82b25a6"
   },
   {
    "id": "wd_mutagenstrike",
    "sys": "wonders",
    "t": "Mutagen Staff: Mutating Strike",
-   "st": "ready",
+   "st": "done",
    "what": "Your pick for its staff strike: each strike marks the one struck, and a second later the mark bursts as the next flask's element in turn - fire, frost, shock, acid, holy water, voidglass - like the block's flasks.",
    "how": "Strike the dead several times with the Mutagen Staff.",
    "look": "A burst a second after each strike, a different element each time, cycling through all six.",
@@ -789,29 +789,29 @@
    "how": "Any raise on many kinds of the dead, rounds 15 to 20 (the Bonereaper no longer rolls from the Tablet).",
    "look": "Thralls rise and fight; no crash.",
    "note": "",
-   "since": "3938d82"
+   "since": "3edd0b7"
   },
   {
    "id": "ar_ssbody",
    "sys": "armour",
    "t": "Spellsword set shows your body",
-   "st": "ready",
-   "what": "The cuirass now uses a slot of its own, so the body slot stays free and your body shows under it.",
+   "st": "building",
+   "what": "Full-length legs for the set - pick in Decisions.",
    "how": "Tester's Kit: Spellsword set at each tier; look at yourself in third person.",
    "look": "Your body under the cuirass. If the cuirass itself is missing now, tell me.",
-   "note": "\"Still makes my body invisible\".",
-   "since": "3938d82"
+   "note": "Last test (3edd0b7): \"the back is clipping through my legs and I don't like that my legs are visible\".",
+   "since": "3edd0b7"
   },
   {
    "id": "ar_looks",
    "sys": "armour",
    "t": "Each set's own look",
    "st": "ready",
-   "what": "Your picks, once the set is upgraded and worn: the Summoner a Sheen (a rim of light round you, sun-gold), Destruction Embers (ribbons of violet embers rising round you), the Alchemist a Mantle (a soft column of shadowfire light), the Spellsword a Sheen in its element's colour. At Legendary each adds its second: the Summoner and the Spellsword the Embers, Destruction and the Alchemist the Sheen. Hidden in first person (the Sheen's rim may show on your arms).",
+   "what": "The Embers are motes rising all round you, from every side; the Sheen a flowing glow brightest at its edges. The Mantle as you approved it.",
    "how": "Tester's Kit: each class's set at Tier I, then III, then Ascend (Legendary); look in third person.",
    "look": "Faint at Tier I, stronger each tier; the second look joining at Legendary; nothing blocking your view in first person.",
-   "note": "",
-   "since": "3edd0b7"
+   "note": "Last test (3edd0b7): \"They don't look in game how they look in the preview\".",
+   "since": "82b25a6"
   },
   {
    "id": "ar_inv",
@@ -850,12 +850,12 @@
    "id": "nt_loot",
    "sys": "nights",
    "t": "No loot on the night's dead",
-   "st": "ready",
+   "st": "done",
    "what": "Looking at a night enemy's body or ash shows no loot list.",
    "how": "Look at bodies and ash piles of the night's dead; then at a chest.",
    "look": "Nothing listed for the dead; chests still list their loot.",
    "note": "",
-   "since": "3938d82"
+   "since": "3edd0b7"
   },
   {
    "id": "nt_float",
@@ -877,7 +877,7 @@
    "how": "Tester's Kit: night 20 (Grahzah), and a dragon in the wild.",
    "look": "Dragons come down to fight within about 20 seconds.",
    "note": "\"The dragons get stuck flying in the air\".",
-   "since": "3938d82"
+   "since": "3edd0b7"
   },
   {
    "id": "dr_half",
@@ -943,7 +943,7 @@
    "how": "At a freed altar, Talk: ask a question, then click another while he answers.",
    "look": "The first answer finishes, then the second starts.",
    "note": "\"The Echo Altar's voice sometimes cuts out\".",
-   "since": "3938d82"
+   "since": "3edd0b7"
   },
   {
    "id": "fd_four",
@@ -954,7 +954,7 @@
    "how": "At a freed altar, open each Talk topic.",
    "look": "Four questions at most in each list.",
    "note": "\"way too many dialogue options\".",
-   "since": "3938d82"
+   "since": "3edd0b7"
   },
   {
    "id": "fd_quiet",
@@ -970,46 +970,46 @@
   {
    "id": "hd_night",
    "sys": "hud",
-   "t": "Bigger night counter and quests",
+   "t": "Ember Tally HUD",
    "st": "ready",
-   "what": "The night box and the quest list under it are larger.",
-   "how": "Start a night; have a trial and a Skyrim quest tracked.",
-   "look": "Easier to read at a glance, top left.",
+   "what": "The night's ember tally, quests under it (a trial over its altar), the compass, Essence with kill pops, brews, the boss bar, the hold prompt, the countdown, the Tablet uses ring, the priest's card, falling.",
+   "how": "Play a night.",
+   "look": "As the workshop's In-game UI.",
    "note": "\"Make it larger as well as the quests under it\".",
-   "since": "3938d82"
+   "since": "82b25a6"
   },
   {
    "id": "hd_banner",
    "sys": "hud",
-   "t": "Quest banner style",
-   "st": "building",
-   "what": "Goes into the In-game UI redesign.",
-   "how": "",
-   "look": "",
+   "t": "Banners and lore cards",
+   "st": "ready",
+   "what": "Ember Tally banners and lore fading in and out.",
+   "how": "Free a trial step; read a lore card.",
+   "look": "Ember Tally words fading in and out.",
    "note": "\"the banner looks off and the size needs to be a bit larger\".",
-   "since": ""
+   "since": "82b25a6"
   },
   {
    "id": "hd_impacts2d",
    "sys": "hud",
-   "t": "Impact effects in 2D look",
-   "st": "building",
-   "what": "Impacts that look flat: part of the element kits rebuild.",
+   "t": "Impacts from the previews (tested with each class's moves)",
+   "st": "done",
+   "what": "The class moves' impacts and pillars, the flasks and the Bane's fire are the workshop's own effects baked for the game.",
    "how": "",
    "look": "",
    "note": "\"impact effects ... look really low quality in 2D\".",
-   "since": ""
+   "since": "82b25a6"
   },
   {
    "id": "ld_continue",
    "sys": "loading",
    "t": "Continue shows our screen",
    "st": "ready",
-   "what": "Our Curse of Alduin loading screen whenever a save loads from the main menu (Continue or Load).",
-   "how": "From the main menu, Continue; then Load a save.",
-   "look": "Our own screen the whole time, faded off when the world is in.",
-   "note": "\"Loading in a save still shows the loading screens from the mod\".",
-   "since": "3938d82"
+   "what": "The Ember Tally main menu (the Alduin painting, embers rising, the title); our loading screen for every save you load - from the menu, the journal, or after you fall - reading LOADING SAVE; Continue never taken for a new game.",
+   "how": "Launch; Continue; then load from the journal.",
+   "look": "The painting with embers; our screen with LOADING SAVE each time.",
+   "note": "Last test (3edd0b7): see History.",
+   "since": "82b25a6"
   },
   {
    "id": "ld_doors",
@@ -1075,115 +1075,343 @@
    "how": "Play to round 20, heavy attacks on big crowds.",
    "look": "No crash. If one comes, Crash Logger writes a log I can read.",
    "note": "\"I crashed on round 20 when I did a heavy attack on a crowd using one of the tablet scythes\".",
-   "since": "3938d82"
+   "since": "3edd0b7"
+  },
+  {
+   "id": "st_crash27",
+   "sys": "stability",
+   "t": "Random crash (Nov 27, 03:53)",
+   "st": "ready",
+   "what": "The dead heard one of our burst effects and the game fell reading its sound: every burst of ours is silent to the dead now.",
+   "how": "Play nights as usual.",
+   "look": "No crash.",
+   "note": "\"my game just randomly crashed\".",
+   "since": "82b25a6"
+  },
+  {
+   "id": "fd_runes",
+   "sys": "felldir",
+   "t": "Trial riddles carved on the altar",
+   "st": "ready",
+   "what": "Your pick: before an altar is freed, Felldir is silent - the Whisper trial's riddle is carved on the stone (quest line, journal, Codex), never his speech.",
+   "how": "Take a city's Stone's Whisper trial.",
+   "look": "\"Carved on the altar: ...\" - no quotes, no voice.",
+   "note": "\"the echo alter trials show Feldirs voice lines and hints ... but his voice is turned off until the echo alter is freed\".",
+   "since": "82b25a6"
+  },
+  {
+   "id": "tb_new11",
+   "sys": "tablet",
+   "t": "The 11 new Tablet weapons",
+   "st": "ready",
+   "what": "Voice of the Mountain, Soulrender, Chaurus Fang, Mace of the Bound, Giant's Toe Club, Spriggan's Heartroot, Grasp of Apocrypha, Dragonguard Ward-Shield (left hand, your right kept), Sweetroll of the Damned, Lil' Atronach and the Frostbite Egg Sac (thrown).",
+   "how": "Tester's Kit: the Tablet weapons; try each on the dead.",
+   "look": "Each its own power as in the Tablet tab.",
+   "note": "",
+   "since": "82b25a6"
+  },
+  {
+   "id": "mv_tiers",
+   "sys": "classes",
+   "t": "Moves unlock by tier",
+   "st": "ready",
+   "what": "Your pick: Light at Tier I, Heavy at Tier II, Special at Tier III (the wand's tap always its Glintstone Bolt).",
+   "how": "Each class weapon at base, I, II, III.",
+   "look": "Base plain; one more move each tier.",
+   "note": "",
+   "since": "82b25a6"
+  },
+  {
+   "id": "sm_ignore",
+   "sys": "summons",
+   "t": "Your summons ignore your hits",
+   "st": "ready",
+   "what": "Your pick: your blows and spells pass without hurting them, and they never turn on you.",
+   "how": "Hit your own summon a few times.",
+   "look": "It keeps fighting the dead.",
+   "note": "\"my summons will fight me back if I hit them and I can't kill them\".",
+   "since": "82b25a6"
+  },
+  {
+   "id": "tb_mend",
+   "sys": "tablet",
+   "t": "The Tablet says when it mends",
+   "st": "ready",
+   "what": "Holding a worn Tablet weapon, the hold mends it: the prompt says \"Hold to mend the <weapon>\", and a hint shows it.",
+   "how": "Hold a used Tablet weapon at the Tablet.",
+   "look": "The mend prompt; to roll, put the weapon away.",
+   "note": "\"sometimes when I roll the tablet it takes my essence then doesn't roll\".",
+   "since": "82b25a6"
+  },
+  {
+   "id": "cb_jump",
+   "sys": "combat",
+   "t": "The dead jumping when struck",
+   "st": "building",
+   "what": "A probe: any of the dead that moves more than 45 units right after your hit is written to the log, with why (ragdoll, stagger).",
+   "how": "",
+   "look": "",
+   "note": "\"when hitting enemies with the frostmourn rapier they twitch or teleport for a split second ... this needs to be fixed for all weapons\".",
+   "since": ""
   }
  ],
  "decisions": [
   {
-   "id": "immolate",
-   "sys": "spells",
-   "q": "What replaces Immolate (the Destruction fire spell at Tier III)?",
+   "id": "sspants",
+   "sys": "armour",
+   "q": "Your Spellsword set note: \"the back is clipping through my legs and I don't like that my legs are visible\". Which full-length legs should the set wear (in its own colours, refitted to your body like the rest)?",
    "opts": [
     {
-     "id": "fireStorm",
-     "name": "Fire Storm",
-     "about": "Skyrim's master fire spell: a ring of flame bursting out round you."
+     "id": "nordic",
+     "name": "Nordic Carved legs",
+     "about": "Dragonborn's Nordic Carved armour: heavy carved plate down to the boots, close to the Draugr cuirass's style."
     },
     {
-     "id": "meteor",
-     "name": "Meteor",
-     "about": "A meteor called down where you aim (the look of Alduin's Bane's, smaller)."
+     "id": "ahzidal",
+     "name": "Ahzidal's legs",
+     "about": "Ahzidal's armour (Dragonborn): the ancient Dragon Priest robes and plate, the set's first inspiration."
     },
     {
-     "id": "flameWall",
-     "name": "Wall of Flames",
-     "about": "A burning wall laid along the ground ahead."
+     "id": "steelplate",
+     "name": "Steel Plate legs",
+     "about": "Skyrim's Steel Plate: clean plate over mail, a knight's legs."
     },
     {
-     "id": "inferno",
-     "name": "Inferno Bolt",
-     "about": "A slow, heavy fire bolt that bursts in a wide blast."
+     "id": "blackmage",
+     "name": "Black Mage legs",
+     "about": "The Black Mage Armor you have installed: dark fitted trousers and greaves, a battle-mage look."
+    },
+    {
+     "id": "draugrcloth",
+     "name": "Draugr wraps",
+     "about": "The Draugr set's own wrapped cloth and leather legs, made solid (no skin showing)."
     }
    ]
   },
   {
-   "id": "altarui",
+   "id": "menuwords",
    "sys": "hud",
-   "q": "Your note on the Echo Altar menus: keep the altar menu you have in the game now, or use the new one (class painting, tab icons, every brew's icon - see In-game UI > Every screen > The Echo Altar)?",
+   "q": "The new main menu (the Alduin painting, rising embers, the title) is in this build with Edge UI's own words over it, where Edge puts them. Should the words be ours instead - CONTINUE, NEW, LOAD, SETTINGS, QUIT centred under the title in Ember Tally, as the workshop shows?",
    "opts": [
     {
-     "id": "new",
-     "name": "The new one",
-     "about": "The class painting, the tab icons along the top, every brew with its own icon, in your direction."
+     "id": "ours",
+     "name": "Our centred words",
+     "about": "Drawn by us under the title in Ember Tally; keys, pad and mouse work as now. Needs a careful test (if the list can't be read, Edge's words come back)."
     },
     {
-     "id": "keep",
-     "name": "Keep my current altar menu",
-     "about": "Leave the altar menu as it is in the game now."
-    },
-    {
-     "id": "mix",
-     "name": "Mix them",
-     "about": "Keep the current one, adding the class painting and the icons to it (say how in the note)."
+     "id": "edge",
+     "name": "Keep Edge UI's words",
+     "about": "The new scene with Edge's menu words, as in this build."
     }
    ]
   },
   {
-   "id": "menumusic",
-   "sys": "loading",
-   "q": "Your note on the launch screen and main menu: which music should they play? (It starts with the launch screen and fades out when a game starts.)",
+   "id": "baneold",
+   "sys": "wonders",
+   "q": "Your note on Alduin's Bane: \"It's still the old version\". What feels old?",
    "opts": [
     {
-     "id": "dragonborn",
-     "name": "Dragonborn (the main theme)",
-     "about": "Skyrim's choir theme, the one from the trailer."
+     "id": "heavy",
+     "name": "The heavy's white tornado",
+     "about": "Replace the heavy with a new one (we pick it on the Wonders page)."
     },
     {
-     "id": "farhorizons",
-     "name": "Far Horizons",
-     "about": "Skyrim's quiet, longing exploration piece."
+     "id": "look",
+     "name": "Its look on the blade",
+     "about": "Words of Power + World-Eater's Fire on the blade - pick again on the Wonders page."
     },
     {
-     "id": "ancientstones",
-     "name": "Ancient Stones",
-     "about": "Skyrim's low, ominous ruin theme - the most like a curse."
+     "id": "light",
+     "name": "The light hits' fire",
+     "about": "Ash of Helgen's fire on each hit (now the preview's impact)."
     },
     {
-     "id": "sovngarde",
-     "name": "Sovngarde",
-     "about": "Skyrim's choir for the hall of the dead - fits the souls Alduin keeps from it."
-    },
-    {
-     "id": "own",
-     "name": "Our own",
-     "about": "A new piece for The Curse of Alduin (later, from your own pick of styles)."
-    }
-   ]
-  },
-  {
-   "id": "bonereaper",
-   "sys": "tablet",
-   "q": "The Bonereaper's raise caused the round 20 crash (fixed now). Keep it in the Tablet?",
-   "opts": [
-    {
-     "id": "keep",
-     "name": "Keep it",
-     "about": "Fixed; it stays as it is until the lineup review."
-    },
-    {
-     "id": "review",
-     "name": "Decide in the lineup review",
-     "about": "Keep, cut or rework it with the rest of the Tablet."
-    },
-    {
-     "id": "cut",
-     "name": "Cut it now",
-     "about": "Take it out of the Tablet from the next build."
+     "id": "model",
+     "name": "The sword itself",
+     "about": "The dragonbone greatsword model."
     }
    ]
   }
  ],
+ "decided": [
+  {
+   "when": "2026-11-27",
+   "sys": "armour",
+   "q": "The Spellsword pants clip at the back and show your legs. What should replace them?",
+   "pick": "Show me options",
+   "where": "chat",
+   "done": "The options are in Decisions waiting for you."
+  },
+  {
+   "when": "2026-11-27",
+   "sys": "flasks",
+   "q": "How much longer should the flask's spout be?",
+   "pick": "1.5x as long",
+   "where": "chat",
+   "done": "Held and thrown flasks, the neck from the shoulder to the lip half again as long."
+  },
+  {
+   "when": "2026-11-27",
+   "sys": "felldir",
+   "q": "Felldir is silent until an altar is freed, yet the Whisper trial showed his riddle as speech. How to close the gap?",
+   "pick": "Runes on the altar",
+   "where": "chat",
+   "done": "Before an altar is freed its riddle is carved on the stone: the quest line, the journal, the Codex, the trial's words."
+  },
+  {
+   "when": "2026-11-27",
+   "sys": "summons",
+   "q": "What should happen when you hit your own summon?",
+   "pick": "Ignore your hits",
+   "where": "chat",
+   "done": "Your blows and spells pass harmlessly and they never turn on you."
+  },
+  {
+   "when": "2026-11-27",
+   "sys": "classes",
+   "q": "Reaping Arc threw a ball that burst 3 m ahead; the preview has no ball. Which?",
+   "pick": "Match the preview",
+   "where": "chat",
+   "done": "A sweep in front of you; each of the dead caught gets your Shadowfire impact."
+  },
+  {
+   "when": "2026-11-27",
+   "sys": "classes",
+   "q": "What does the Carian wand's tap do before its Light unlocks?",
+   "pick": "Glintstone Bolt from base",
+   "where": "chat",
+   "done": "The tap is always the Glintstone Bolt; the Ray waits for Tier II, Starfall for Tier III."
+  },
+  {
+   "when": "2026-11-27",
+   "sys": "classes",
+   "q": "At which tiers do each class's Light, Heavy and Special unlock?",
+   "pick": "Light I, Heavy II, Special III",
+   "where": "chat",
+   "done": "In the game; the weapon cards list each move as it unlocks."
+  },
+  {
+   "when": "2026-11-27",
+   "sys": "hud",
+   "q": "The co-op screens: now or later?",
+   "pick": "Later, with co-op testing",
+   "where": "chat",
+   "done": "Kept for the co-op test (In-game UI keeps them)."
+  },
+  {
+   "when": "2026-11-27",
+   "sys": "hud",
+   "q": "The HUD, the altar menu and the menus: in one build or in parts?",
+   "pick": "All in one build",
+   "where": "chat",
+   "done": "Build 4 (installed with build 3, a2ffc6b)."
+  },
+  {
+   "when": "2026-11-27",
+   "sys": "tablet",
+   "q": "Soulrender: how many kills, how many warriors?",
+   "pick": "10 kills, 3 warriors",
+   "where": "chat",
+   "done": "In build 3."
+  },
+  {
+   "when": "2026-11-27",
+   "sys": "tablet",
+   "q": "Grasp of Apocrypha: its power when?",
+   "pick": "Every cast, every 5th ring",
+   "where": "chat",
+   "done": "In build 3."
+  },
+  {
+   "when": "2026-11-27",
+   "sys": "tablet",
+   "q": "The Dragonguard Ward-Shield: what happens to your right hand?",
+   "pick": "Keep my right-hand weapon",
+   "where": "chat",
+   "done": "The shield goes in your left hand only (build 3)."
+  },
+  {
+   "when": "2026-11-27",
+   "sys": "tablet",
+   "q": "How many uses does a Tablet weapon have?",
+   "pick": "By rarity: 100/60/30",
+   "where": "chat",
+   "done": "Rare 100, Epic 60, Legendary 30 (build 3)."
+  },
+  {
+   "when": "2026-11-27",
+   "sys": "tablet",
+   "q": "The Bonereaper's raise caused the round 20 crash (fixed). Keep it in the Tablet?",
+   "pick": "Cut it now",
+   "where": "workshop",
+   "done": "Cut with the six others in the lineup (since 3938d82)."
+  },
+  {
+   "when": "2026-11-27",
+   "sys": "loading",
+   "q": "Which music for the launch screen and main menu?",
+   "pick": "Dragonborn (the main theme)",
+   "where": "workshop",
+   "done": "In the game since 3938d82."
+  },
+  {
+   "when": "2026-11-27",
+   "sys": "hud",
+   "q": "Keep the altar menu you have, or the new one (class painting, tab icons, every brew's icon)?",
+   "pick": "The new one",
+   "where": "workshop",
+   "done": "The new Echo Altar menu in Ember Tally (build 4)."
+  },
+  {
+   "when": "2026-11-27",
+   "sys": "spells",
+   "q": "What replaces Immolate (the Destruction fire spell at Tier III)?",
+   "pick": "Fire Storm - then corrected: Immolate stays, Fire Storm replaces Inferno",
+   "where": "workshop and your test",
+   "done": "Immolate is back; Fire Storm takes Inferno's place in Walls (this build)."
+  }
+ ],
  "builds": [
+  {
+   "sha": "82b25a6",
+   "when": "2026-11-27 05:27",
+   "what": "Noah's 3edd0b7 test, part 3 - the preview's effects in the game: the workshop's own effects baked frame by frame into 4K flipbooks (tools/fxbake.py) and played once from their start on cards that face you from every side (src/Baked.inl): the flasks' Ring sized to exactly what each flask catches, the Summoner's and the Spellsword's pillars, every class Light's impact, Shadowfire Eruption, Alduin's "
+  },
+  {
+   "sha": "9afc6cf",
+   "when": "2026-11-27 05:04",
+   "what": "Noah's 3edd0b7 test, part 2: summons ignore your hits (no fight with you); the javelin gripped overhand, palm to your head; the Carian wand's tip light at its tip at every tier; the slide seen by the crouch itself (logged); the Tablet says when the hold mends instead of turning; a probe for the dead jumping when struck"
+  },
+  {
+   "sha": "9db4ab3",
+   "when": "2026-11-27 04:59",
+   "what": "Noah's 3edd0b7 test, part 1: Fire Storm in Inferno's place (Immolate kept); the class moves unlock Light I, Heavy II, Special III (the wand's tap always its Glintstone Bolt); Reaping Arc a sweep as in the preview (no ball); the Spell Pillar one beam; Arcane Ray logged; the Whisper trial's riddle carved on the altar (Felldir silent until freed); the Inventory recoloured (Untarnished layout, our col"
+  },
+  {
+   "sha": "a2ffc6b",
+   "when": "2026-11-27 04:14",
+   "what": "Ember Tally menus: the Inventory and Magic menus' categories and list drawn ours (Skyrim's 3D model and item card kept, the flasks under Weapons as Skyrim files them; a click selects, a second uses), the Tab menu's four medallions with the night, essence and class"
+  },
+  {
+   "sha": "ae642d1",
+   "when": "2026-11-27 04:11",
+   "what": "Release split in two (the zip had reached GitHub's 2 GB limit): the textures in CurseOfAlduin-0.2.0-textures.zip; the cut Codex's model and textures removed (the Grasp of Apocrypha's book takes its place)"
+  },
+  {
+   "sha": "38faa88",
+   "when": "2026-11-27 04:09",
+   "what": "Ember Tally HUD, part 1 (Noah's Nov 27 UI direction): the night's ember tally, quests under it (the altar's trial over its altar), our compass, Cursed Essence bottom right with kill pops, brews bottom left, the boss bar, the hold prompt, the night's countdown, the Tablet weapon's uses ring, the priest's card, banners and lore fading in and out, falling; the new Echo Altar menu (tabs with icons, th"
+  },
+  {
+   "sha": "bad5a40",
+   "when": "2026-11-27 03:56",
+   "what": "Crash fix (Noah, Nov 27 03:53): our effect bursts make no sound the dead can hear - the crash was Skyrim's detection, on a worker thread, handling one of them"
+  },
+  {
+   "sha": "ae3d562",
+   "when": "2026-11-27 03:31",
+   "what": "The Tablet's eleven new weapons (Noah's Nov 27 picks) and the Wheel roll"
+  },
   {
    "sha": "3edd0b7",
    "when": "2026-11-27 03:01",
@@ -4456,8 +4684,8 @@
     },
     {
      "t": "The Stone's Whisper",
-     "s": "Find the place the altar's voice names",
-     "d": "At night a voice speaks from the Echo Altar of the city, and it speaks in riddles. Find the place it names, and hold it against the dead: slay a number of of the risen there."
+     "s": "Find the place the altar's runes name",
+     "d": "At night runes glow on the Echo Altar of the city, carved as a riddle. Find the place they name, and hold it against the dead: slay a number of of the risen there."
     },
     {
      "t": "Hold the Light",
@@ -5490,98 +5718,261 @@
      "done": "The Thu'um tab will hold only Dragon's Updraft and Tiny Terrors (built with the altar menu)."
     }
    ]
+  },
+  {
+   "build": "Install 3edd0b7, Nov 27 - your test, and builds 3 and 4",
+   "date": "2026-11-27",
+   "notes": [
+    {
+     "when": "2026-11-27",
+     "where": "chat",
+     "note": "Uses by rarity",
+     "choice": "By rarity: 100/60/30",
+     "done": "Rare 100, Epic 60, Legendary 30 uses (your pick) - in build 3."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "chat",
+     "note": "Ward-Shield",
+     "choice": "Keep my right-hand weapon",
+     "done": "The Dragonguard Ward-Shield goes in your left hand and keeps your right-hand weapon (your pick)."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "chat",
+     "note": "Grasp of Apocrypha",
+     "choice": "Every cast, every 5th ring",
+     "done": "Its power on every cast, a ring of tentacles every 5th (your pick)."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "chat",
+     "note": "Soulrender",
+     "choice": "10 kills, 3 warriors",
+     "done": "10 kills raise 3 spirit warriors (your pick)."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "chat",
+     "note": "Build 4 order",
+     "choice": "All in one build; co-op UI later",
+     "done": "The HUD, the altar menu and the menus in one build (your pick); the co-op screens later, with co-op testing."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "chat",
+     "note": "\"my game just randomly crashed\"",
+     "choice": "",
+     "done": "The log: the dead heard one of our burst effects as a sound and the game fell reading it. Every burst of ours is silent to the dead now (build 3)."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "chat",
+     "note": "Felldir's voice lines and hints show in the trials while his voice is off until the altar is freed",
+     "choice": "Runes on the altar",
+     "done": "Your pick, \"Runes on the altar\": before an altar is freed its riddle is carved on the stone (the quest line, the journal, the Codex, the trial's words), never his speech."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "chat",
+     "note": "Moves unlock by tier",
+     "choice": "Light I, Heavy II, Special III; Glintstone Bolt from base",
+     "done": "Your pick: Light at Tier I, Heavy at Tier II, Special at Tier III; the wand's tap is always its Glintstone Bolt."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "chat",
+     "note": "Reaping Arc",
+     "choice": "Match the preview",
+     "done": "Your pick: as the preview - a sweep in front of you, each one caught gets your Shadowfire impact; no ball."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "chat",
+     "note": "Summons fight back when hit",
+     "choice": "Ignore your hits",
+     "done": "Your pick: your hits pass harmlessly and they never turn on you."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "chat",
+     "note": "Longer flask spout",
+     "choice": "1.5x as long",
+     "done": "The neck 1.5x as long, held and thrown (your pick)."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "chat",
+     "note": "Spellsword pants",
+     "choice": "Show me options",
+     "done": "Options to pick are in Decisions (your pick: \"Show me options\")."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "marks/cw_layers",
+     "note": "The look changes when upgraded but it's the old preview selections, the low quality 2D effects.",
+     "choice": "",
+     "done": "Every weapon look now has the preview's aura in the game too: a skin of light on the steel's own surface, motes rising off it and a glow round each part - not only the flat strips."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "marks/fl_holy",
+     "note": "Fire flask explosion way too big; the visuals must be the size of the damage; gold flickering textures and a gold line on the floor (holy); only visible from some angles and not looped, a pause every 3 s; longer spout; white flames on the void flask.",
+     "choice": "",
+     "done": "The bursts are now the preview's Ring itself, baked, sized exactly to what each flask catches, facing you from every side, played once from its start - the flickers, the line and the white flames are gone with the old parts. The potion's swirl: seen from every side (the glass no longer hides it) and slow, so it reads as moving. Neck 1.5x long."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "marks/fl_size",
+     "note": "Fire flask blast massive; its impact a low quality expanding dome.",
+     "choice": "",
+     "done": "The fire burst and its Legendary ring are the preview's Ring now, sized to the damage."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "marks/ld_continue",
+     "note": "The old menu shows instead of the new one, add embers; loading a save plays random screens; on an existing save say \"loading save\" not \"road to riverwood\".",
+     "choice": "",
+     "done": "The Ember Tally main menu (the Alduin painting, rising embers, the title); our screen for every save you load (from the menu, the journal or after you fall), reading LOADING SAVE; Continue is no longer taken for a new game."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "marks/mv_alchemist",
+     "note": "Works but all from base tier; should unlock as it's upgraded.",
+     "choice": "",
+     "done": "Light at Tier I, Heavy at Tier II, Special at Tier III."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "marks/mv_destruction",
+     "note": "Arcane Ray doesn't work.",
+     "choice": "",
+     "done": "The Ray comes at Tier II (your ladder) and now writes to the log each time it starts, so if it still fails I can see why."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "marks/mv_slide",
+     "note": "Nothing changed.",
+     "choice": "",
+     "done": "The slide is now also started by what the crouch does (sneaking a moment after sprinting), in case another mod takes the key; each try is logged."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "marks/mv_spellsword",
+     "note": "The heavy looks poor in game, fantastic in the preview.",
+     "choice": "",
+     "done": "The Spell Pillar is the preview's pillar, baked, one beam."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "marks/mv_summoner",
+     "note": "I want the preview effects exactly in game if not better.",
+     "choice": "",
+     "done": "Pillar of Dawn and Radiant Strike are the preview's own pillar and impact, baked."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "marks/nov27_firestorm",
+     "note": "Immolate is fine; the spell to remove is Inferno.",
+     "choice": "",
+     "done": "Immolate is back; Fire Storm takes Inferno's place (Walls, Tier III)."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "marks/nov27_fixes",
+     "note": "Hand faces the sky; should hold the javelin overhand while charging.",
+     "choice": "",
+     "done": "The palm turned toward your head while charging, the overhand grip."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "marks/nov27_models",
+     "note": "Summoner's old looks and attacks; summons fight back and can't be killed; wand beam; wand base glow in the handle; Alchemist looks; base fireball bursts 3 m ahead; base heavy; Spellsword heavy at base, 2 beams, no animation; set looks poor; descriptions.",
+     "choice": "",
+     "done": "New looks on every weapon; the moves by tier; summons ignore your hits; the wand's tip light at its tip; Reaping Arc a sweep; one pillar; the Sheen and Embers redone; the cards list each move as it unlocks."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "marks/ar_looks",
+     "note": "They don't look in game like the preview.",
+     "choice": "",
+     "done": "The Embers are rising motes from every side now, the Sheen a flowing glow brightest at its edges."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "marks/ar_ssbody",
+     "note": "Change the Spellsword pants: the back clips through my legs and my legs show.",
+     "choice": "",
+     "done": "Options in Decisions."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "marks/cw_flasklook",
+     "note": "Cork wisps fine; the swirl is broken.",
+     "choice": "",
+     "done": "Fixed with the flask notes above."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "marks/nov27_tablet",
+     "note": "Still the old roll; enemies twitch or teleport when hit (all weapons).",
+     "choice": "",
+     "done": "The Wheel is in builds 3 and 4 (installed). The jumps: each one that moves more than 45 units right after a hit is now logged with why, to find it."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "marks/tb_claws",
+     "note": "Sometimes the Tablet takes my essence and doesn't roll.",
+     "choice": "",
+     "done": "Holding a worn Tablet weapon, the hold mends it instead of rolling - the prompt now says \"Hold to mend the <weapon>\", and a hint shows it was mended."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "marks/wd_bane",
+     "note": "Still the old version.",
+     "choice": "",
+     "done": "Its Light's fire is the preview's impact now. If something else feels old, say what in Decisions."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "marks/wd_javhand",
+     "note": "Palm faces the sky.",
+     "choice": "",
+     "done": "Overhand, palm toward your head."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "marks/wd_javlook",
+     "note": "Stays a white flaming look.",
+     "choice": "",
+     "done": "The new aura is in the element's colour; the strips under it are the same picks."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "marks/wd_looks",
+     "note": "Soulcaller flat from some angles; Mutagen effect lower than the orb.",
+     "choice": "",
+     "done": "The aura on every wonder; the Mutagen Staff's look moved up onto its orb in first person (its first-person model sits higher)."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "marks/wd_soulmana",
+     "note": "No mana use, no portal, the cat's glow only from some angles.",
+     "choice": "",
+     "done": "The beam's cast is read in every state (logged); the portal lies 2.5 s with its animation; the cat's body itself glows blue from every side."
+    }
+   ]
   }
  ],
  "picklog": [
   {
-   "round": "Your final picks, Nov 27 (build 7eb037f)",
+   "round": "Your 3edd0b7 test, Nov 27",
    "date": "2026-11-27",
-   "changed": [
-    {
-     "where": "Alchemist: armour look",
-     "pick": "Mantle; Legendary + Sheen"
-    },
-    {
-     "where": "Destruction: armour look",
-     "pick": "Embers; Legendary + Sheen"
-    },
-    {
-     "where": "Spellsword: armour look",
-     "pick": "Sheen; Legendary + Embers"
-    },
-    {
-     "where": "Summoner: armour look",
-     "pick": "Sheen; Legendary + Embers"
-    },
-    {
-     "where": "Destruction: model",
-     "pick": "Daedric wand"
-    },
-    {
-     "where": "Voidglass Flask",
-     "pick": "liquid swirl; cork wisp; impact nova at 50%"
-    },
-    {
-     "where": "Fire Flask",
-     "pick": "liquid swirl; cork wisp; impact nova at 50%"
-    },
-    {
-     "where": "Frost Flask",
-     "pick": "liquid swirl; cork wisp; impact nova at 50%"
-    },
-    {
-     "where": "Philosopher's Flask",
-     "pick": "liquid swirl; cork wisp; impact nova at 50%"
-    },
-    {
-     "where": "Acid Flask",
-     "pick": "liquid swirl; cork wisp; impact nova at 50%"
-    },
-    {
-     "where": "Shock Flask",
-     "pick": "liquid swirl; cork wisp; impact nova at 50%"
-    },
-    {
-     "where": "Holy Water",
-     "pick": "liquid swirl; cork wisp; impact nova at 50%"
-    },
-    {
-     "where": "New Tablet weapon: Azura's Fallen Star",
-     "pick": "no"
-    },
-    {
-     "where": "Destruction: tier looks",
-     "pick": "I: Sorcery; II: Glintstone Mist; III: Glintstone Mist; Legendary: Glintstone Mist at its brightest"
-    },
-    {
-     "where": "UI cursor",
-     "pick": "Rune Arrow"
-    },
-    {
-     "where": "Wonder: Alduin's Bane",
-     "pick": "look Words of Power; strength + World-Eater's Fire; Light attack: Ash of Helgen; Heavy attack: White tornado (today); approved"
-    },
-    {
-     "where": "Wonder: Wyrmspine Javelin",
-     "pick": "look Elemental Edge; look with fire Elemental Edge; look with frost Elemental Edge; look with shock Elemental Edge; strength + Dragonfire; element Shock; Hold, then throw: Bursting throw (today); Its return: Flies back (today); approved"
-    },
-    {
-     "where": "Wonder: Mutagen Staff",
-     "pick": "look Transmutation Runes; strength + Living Mutagen; Hold block: the flasks: Six elements (today); Its staff strike: Mutating strike; change"
-    },
-    {
-     "where": "Wonder: Dragon Slayer",
-     "pick": "look Dragonfire Runes; strength + Slayer's Runes; Light attack: Golden fireball (today); Heavy attack: Golden rain (today); approved"
-    },
-    {
-     "where": "Wonder: Soulcaller's Staff",
-     "pick": "look Spectral Mist; strength + Soul Fire; Hold: the soul beam: Soul Beam (today); Every 20 souls: Spectral sabre cat (today); change"
-    }
-   ],
+   "changed": [],
    "now": [
     {
      "where": "Alchemist: moves",
-     "pick": "light: not picked; heavy: not picked; special: not picked"
+     "pick": "light: Reaping Arc; heavy: Shadowfire Eruption; special: Philosopher's Edge"
     },
     {
      "where": "Destruction: moves",
@@ -5945,7 +6336,7 @@
     },
     {
      "where": "UI: Choosing your class",
-     "pick": "mark cleared"
+     "pick": "approved"
     },
     {
      "where": "UI: You are down",
@@ -5965,7 +6356,7 @@
     },
     {
      "where": "UI: The scoreboard",
-     "pick": "mark cleared"
+     "pick": "approved"
     },
     {
      "where": "UI: The party",
@@ -5977,7 +6368,7 @@
     },
     {
      "where": "UI: The Codex",
-     "pick": "mark cleared"
+     "pick": "approved"
     },
     {
      "where": "UI: Compass",
@@ -6001,11 +6392,11 @@
     },
     {
      "where": "UI: Inventory: remade",
-     "pick": "picked"
+     "pick": "mark cleared"
     },
     {
      "where": "UI: Inventory: recoloured",
-     "pick": "mark cleared"
+     "pick": "picked"
     },
     {
      "where": "UI: Loading screens",
@@ -6049,7 +6440,7 @@
     },
     {
      "where": "UI: New character",
-     "pick": "mark cleared"
+     "pick": "approved"
     },
     {
      "where": "UI: Dragon Priest slain",
@@ -6082,6 +6473,126 @@
     {
      "where": "UI: A Tablet weapon\\'s uses",
      "pick": "approved"
+    },
+    {
+     "where": "Wonder: Alduin's Bane",
+     "pick": "look Words of Power; strength + World-Eater's Fire; Light attack: Ash of Helgen; Heavy attack: White tornado (today); approved"
+    },
+    {
+     "where": "Wonder: Wyrmspine Javelin",
+     "pick": "look Elemental Edge; look with fire Elemental Edge; look with frost Elemental Edge; look with shock Elemental Edge; strength + Dragonfire; element Shock; Hold, then throw: Bursting throw (today); Its return: Flies back (today); approved"
+    },
+    {
+     "where": "Wonder: Mutagen Staff",
+     "pick": "look Transmutation Runes; strength + Living Mutagen; Hold block: the flasks: Six elements (today); Its staff strike: Mutating strike; change"
+    },
+    {
+     "where": "Wonder: Dragon Slayer",
+     "pick": "look Dragonfire Runes; strength + Slayer's Runes; Light attack: Golden fireball (today); Heavy attack: Golden rain (today); approved"
+    },
+    {
+     "where": "Wonder: Soulcaller's Staff",
+     "pick": "look Spectral Mist; strength + Soul Fire; Hold: the soul beam: Soul Beam (today); Every 20 souls: Spectral sabre cat (today); change"
+    }
+   ]
+  },
+  {
+   "round": "Install 3edd0b7, Nov 27 (your UI and look picks)",
+   "date": "2026-11-27",
+   "changed": [
+    {
+     "where": "Alchemist: moves",
+     "pick": "light: Reaping Arc; heavy: Shadowfire Eruption; special: Philosopher's Edge"
+    },
+    {
+     "where": "UI: Choosing your class",
+     "pick": "approved"
+    },
+    {
+     "where": "UI: The scoreboard",
+     "pick": "approved"
+    },
+    {
+     "where": "UI: The Codex",
+     "pick": "approved"
+    },
+    {
+     "where": "UI: Inventory: remade",
+     "pick": "mark cleared"
+    },
+    {
+     "where": "UI: Inventory: recoloured",
+     "pick": "picked"
+    },
+    {
+     "where": "UI: New character",
+     "pick": "approved"
+    }
+   ]
+  },
+  {
+   "round": "Your final picks, Nov 27 (build 7eb037f)",
+   "date": "2026-11-27",
+   "changed": [
+    {
+     "where": "Alchemist: armour look",
+     "pick": "Mantle; Legendary + Sheen"
+    },
+    {
+     "where": "Destruction: armour look",
+     "pick": "Embers; Legendary + Sheen"
+    },
+    {
+     "where": "Spellsword: armour look",
+     "pick": "Sheen; Legendary + Embers"
+    },
+    {
+     "where": "Summoner: armour look",
+     "pick": "Sheen; Legendary + Embers"
+    },
+    {
+     "where": "Destruction: model",
+     "pick": "Daedric wand"
+    },
+    {
+     "where": "Voidglass Flask",
+     "pick": "liquid swirl; cork wisp; impact nova at 50%"
+    },
+    {
+     "where": "Fire Flask",
+     "pick": "liquid swirl; cork wisp; impact nova at 50%"
+    },
+    {
+     "where": "Frost Flask",
+     "pick": "liquid swirl; cork wisp; impact nova at 50%"
+    },
+    {
+     "where": "Philosopher's Flask",
+     "pick": "liquid swirl; cork wisp; impact nova at 50%"
+    },
+    {
+     "where": "Acid Flask",
+     "pick": "liquid swirl; cork wisp; impact nova at 50%"
+    },
+    {
+     "where": "Shock Flask",
+     "pick": "liquid swirl; cork wisp; impact nova at 50%"
+    },
+    {
+     "where": "Holy Water",
+     "pick": "liquid swirl; cork wisp; impact nova at 50%"
+    },
+    {
+     "where": "New Tablet weapon: Azura's Fallen Star",
+     "pick": "no"
+    },
+    {
+     "where": "Destruction: tier looks",
+     "pick": "I: Sorcery; II: Glintstone Mist; III: Glintstone Mist; Legendary: Glintstone Mist at its brightest"
+    },
+    {
+     "where": "UI cursor",
+     "pick": "Rune Arrow"
     },
     {
      "where": "Wonder: Alduin's Bane",
