@@ -867,7 +867,10 @@ namespace coa::Tablet
 			g_uses = d.uses;
 			Rename(g_held, g_uses);
 			Forms::PlayAt(gen::Sound::forge_upgrade, a_ref);
+			// (Noah, Nov 27: "sometimes when I roll the tablet it takes my essence then doesn't roll" - holding a worn Tablet weapon, the
+			// hold mends it, and the word of it went to a banner, which is no longer shown) said where you see it
 			Hud::Banner(std::string(d.label) + "  -  mended  (next: " + Num(Price()) + ")", 3.0f);
+			Hud::Hint(std::string(d.label) + " mended - put it away to turn the Tablet", 2.5f);
 			logger::info("tablet: {} mended for {}", d.id, price);
 			return;
 		}
@@ -1855,7 +1858,7 @@ namespace coa::Tablet
 			frac = std::clamp(g_holdT / kHoldTime, 0.0f, 1.0f);
 			// (Ember Tally: the key, then "Hold to turn the Tablet", its price in gold after the dash - src/HudTally.inl TallyHold)
 			what = g_phase == Phase::Offering && g_prize >= 0 ? "Hold to take the " + std::string(gen::kTabletWeapons[g_prize].label)
-				: g_held >= 0 && Carrying() && g_uses < gen::kTabletWeapons[g_held].uses ? "Hold to mend it - " + Num(Price())
+				: g_held >= 0 && Carrying() && g_uses < gen::kTabletWeapons[g_held].uses ? "Hold to mend the " + std::string(gen::kTabletWeapons[g_held].label) + " - " + Num(Price())
 				: "Hold to turn the Tablet - " + Num(Price());
 			if (held && g_holdT >= kHoldTime) {
 				g_holdLatched = true, g_holdT = 0.0f, frac = -1.0f;

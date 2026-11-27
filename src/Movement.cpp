@@ -2538,6 +2538,7 @@ namespace coa
 				auto* st0 = player->AsActorState();
 				const bool sprinting = (st0 && st0->IsSprinting()) || g_omni > 0.5f || g_sinceSprint < 0.3f;
 				if (sprinting && st0 && !g_sneakBefore) g_wantSlide = true;
+				if (static int said = 0; said++ < 20) logger::info("slide: crouch pressed - sprinting {} (state {}, omni {:.2f}, {:.2f} s since) sneaking before {}", sprinting, st0 && st0->IsSprinting(), g_omni, g_sinceSprint, g_sneakBefore);
 			}
 			if (ev == ue->jump && g_slide > 0) {
 				g_wantJumpCarry = true;
@@ -3233,7 +3234,14 @@ namespace coa
 			const float        hs = std::sqrt(hv.x * hv.x + hv.y * hv.y);
 
 			// ---- slide: sprint + crouch. You keep (and boost) your speed, can steer a little, and it eases off.
+			// (Noah, test of 3edd0b7: still "Nothing changed" - the crouch key's event may never reach us, another mod taking it) the
+			// crouch is seen by what it does too: you were sprinting a moment ago and this frame you are sneaking - that is the slide
+			if (!g_wantSlide && g_slide <= 0 && !g_forcedSneak && !Riding() && st && st->IsSneaking() && !g_sneakBefore && g_sinceSprint < 0.35f) {
+				g_wantSlide = true;
+				if (static int said = 0; said++ < 20) logger::info("slide: the crouch seen in the sprint ({:.2f} s after it)", g_sinceSprint);
+			}
 			if (g_wantSlide) {
+				if (static int said = 0; said++ < 20) logger::info("slide: start asked - air {} controller {} speed {:.0f}", air, cc != nullptr, hs);
 				g_wantSlide = false;
 				if (!air && cc) {
 					g_slide = gen::kSlideSeconds;

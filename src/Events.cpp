@@ -273,6 +273,19 @@ namespace coa
 				if (ByPlayer(a_attacker) && MySummon(a_this) && !a_this->IsDead()) {
 					auto* av = a_this->AsActorValueOwner();
 					av->RestoreActorValue(RE::ActorValue::kHealth, std::abs(a_damage));  // (the blow given back)
+					// (Noah, Nov 27: "my summons will fight me back if I hit them" - his pick, "Ignore your hits") Skyrim's own count of
+					// friendly hits is switched off for it (Papyrus's IgnoreFriendlyHits), and a fight it picked with you is dropped
+					a_this->formFlags |= RE::TESObjectREFR::RecordFlags::kIgnoreFriendlyHits;
+					Tasks::Later(0.05f, [h = a_this->GetHandle()] {
+						auto a = h.get();
+						auto* pc = RE::PlayerCharacter::GetSingleton();
+						if (!a || !pc || a->IsDead()) return;
+						auto t = a->GetActorRuntimeData().currentCombatTarget.get();
+						if (a->IsHostileToActor(pc) || (t && t.get() == pc)) {
+							a->StopCombat();
+							if (static int said = 0; said++ < 10) logger::info("summons: {} let your blow go (no fight with you)", a->GetName());
+						}
+					});
 				}
 			}
 			static inline REL::Relocation<decltype(thunk)> func;
@@ -1092,6 +1105,22 @@ namespace coa
 					auto* src = a_event->source ? RE::TESForm::LookupByID(a_event->source) : nullptr;
 					if (auto* t = a_event->target->As<RE::Actor>()) Eggs::OnPlayerHit(t, src);   // (the wonders' secrets: who struck what, how)
 					if (auto* t = a_event->target->As<RE::Actor>(); t && !a_event->projectile && Director::IsFoe(t)) Picks::OnMeleeHit(t, src, heavyHit);   // (his hit feel)
+					// (Noah, Nov 27: "when hitting enemies with the frostmourn rapier they twitch or teleport for a split second in reaction to
+					// my hits ... for all weapons") a probe: where the one struck stands a moment after the blow - a jump says what moved it
+					if (auto* t = a_event->target->As<RE::Actor>(); t && Director::IsFoe(t)) {
+						const RE::NiPoint3 at0 = t->GetPosition();
+						Tasks::Later(0.12f, [h = t->GetHandle(), at0, heavyHit] {
+							auto a = h.get();
+							if (!a) return;
+							const RE::NiPoint3 d = a->GetPosition() - at0;
+							const float moved = std::hypot(d.x, d.y);
+							if (moved > 45.0f) {
+								static int said = 0;
+								if (said++ < 40) logger::info("hit probe: {} moved {:.0f} in 0.12 s after your {} (ragdoll {}, staggered {}, dead {})", a->GetName(), moved, heavyHit ? "heavy" : "blow",
+									a->IsInRagdollState(), a->AsActorState()->actorState2.staggered != 0, a->IsDead());
+							}
+						});
+					}
 					const bool spellHit = src && src->As<RE::MagicItem>();  // (the charge's own lightning never sets off another charge)
 					if (auto* t = a_event->target->As<RE::Actor>(); t && !spellHit && Director::IsFoe(t)) {
 						Gun::StormHit(t);  // (a blade, a fist or Skyrim's own bow: the Stormblast charge goes off too)

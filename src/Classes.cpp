@@ -2505,8 +2505,10 @@ namespace coa::Classes
 		// each of the five wands' tip along its model's +Y (Fulcimentum's SSS\\*Wand.nif): steel, stalhrim, glass, ebony, daedric
 		float WandTipY(RE::TESObjectWEAP* a_w)
 		{
-			static constexpr float kTipY[5] = { 20.0f, 37.5f, 33.5f, 39.0f, 36.0f };
-			return kTipY[std::clamp(a_w ? Kit::TierOfWeapon(a_w) : 0, 0, 4)];
+			// (Noah, Nov 27: "the base level of the carian wand's glowing tip is ... in the wand's handle" - the wand is the Daedric one at
+			// every tier now, his pick, but the base tier still read the steel wand's shorter tip) the Daedric wand's tip at every tier
+			(void)a_w;
+			return 36.0f;
 		}
 		RE::NiPoint3 WandTipAtY(RE::PlayerCharacter* a_p, float a_tipY);
 		RE::NiPoint3 WandTip(RE::PlayerCharacter* a_p) { return WandTipAtY(a_p, WandTipY(CarianBlade())); }

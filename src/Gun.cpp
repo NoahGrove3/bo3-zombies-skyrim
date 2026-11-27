@@ -1670,7 +1670,13 @@ namespace coa
 					// rolled about the javelin's line so its palm (the hand bone's -Y) turns back toward you
 					const auto& H = hd->world.rotate;
 					RE::NiPoint3 palm{ -H.entry[0][1], -H.entry[1][1], -H.entry[2][1] };
-					const RE::NiPoint3 toYou = f * -1.0f;
+					// (Noah, Nov 27 test: "My palm is facing the sky now instead of towards my player's head. I should be throwing the
+					// javelin overhand") the palm turned toward your head - the hand above and behind it, gripping the shaft overhand -
+					// not toward "back" (along the javelin's own line that was no direction at all, and the hand was left facing up)
+					RE::NiPoint3 headAt = a_player->GetPosition() + RE::NiPoint3{ 0, 0, 120.0f };
+					if (auto* hb = a_root->GetObjectByName("NPC Head [Head]")) headAt = hb->world.translate;
+					if (a_first) if (auto* cam = RE::PlayerCamera::GetSingleton(); cam && cam->cameraRoot) headAt = cam->cameraRoot->world.translate;
+					const RE::NiPoint3 toYou = nrm(headAt - hd->world.translate);
 					auto flat = [&](RE::NiPoint3 v) { return nrm(v - want * v.Dot(want)); };
 					const RE::NiPoint3 pa = flat(palm), pb = flat(toYou);
 					if (pa.Length() > 0.5f && pb.Length() > 0.5f) {
