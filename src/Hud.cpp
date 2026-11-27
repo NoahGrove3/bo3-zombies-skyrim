@@ -4657,7 +4657,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// the embers: each born low, rising and drifting on the wind, swaying, its glow flickering and cooling from white-gold to deep
 			// red as it climbs; a few big soft ones near the eye, out of focus
 			{
-				struct Ember { float x, y, vy, vx, sway, ph, r, life, age; bool nearEye;   // ('near' is a Windows macro) };
+				struct Ember { float x, y, vy, vx, sway, ph, r, life, age; bool nearEye; };   // ('near' is a Windows macro)
 				static std::vector<Ember> em;
 				static std::mt19937 rng{ 1127 };
 				std::uniform_real_distribution<float> U(0, 1);

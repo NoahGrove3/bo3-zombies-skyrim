@@ -1,6 +1,6 @@
 {
  "installed": {
-  "sha": "82b25a6",
+  "sha": "ed9dd2c",
   "date": "2026-11-27",
   "label": "Your 3edd0b7 test fixed, the 11 new Tablet weapons and the Wheel, Ember Tally HUD and menus, the preview's effects in the game",
   "extra": "Builds 3 and 4 (the Tablet's 11 new weapons and the Wheel; the Ember Tally HUD, the altar menu, the Inventory recoloured and the Magic and Tab menus remade) and every note of your 3edd0b7 test: the effects baked from the workshop's own previews, the weapon and armour looks' aura, the moves by tier, the flasks, the main menu and loading screens"
@@ -118,7 +118,7 @@
    "how": "Sprint for two or three seconds, then crouch. Then slide again and jump while sliding. Stand still and crouch once, then stand.",
    "look": "A slide every time from a sprint; after it you stand up and the sneak eye goes away. Crouching from a stand still sneaks normally.",
    "note": "Last test (3edd0b7): \"Nothing changed\". Now also started by the crouch itself (sneaking a moment after a sprint), and every try written to the log.",
-   "since": "82b25a6"
+   "since": "ed9dd2c"
   },
   {
    "id": "mv_omni",
@@ -239,7 +239,7 @@
    "how": "Each class weapon at I, III and Legendary.",
    "look": "Glowing from every side, never a flat card.",
    "note": "",
-   "since": "82b25a6"
+   "since": "ed9dd2c"
   },
   {
    "id": "nov27_models",
@@ -250,7 +250,7 @@
    "how": "Tester's Kit: each class weapon at base, I, III, Legendary; hit one of your summons.",
    "look": "The aura on the weapon from every side; the summon never turns on you.",
    "note": "Last test (3edd0b7): see History - the looks, the summons, the wand, the moves, the descriptions.",
-   "since": "82b25a6"
+   "since": "ed9dd2c"
   },
   {
    "id": "nov27_tablet",
@@ -261,7 +261,7 @@
    "how": "Roll the Tablet.",
    "look": "The Wheel, not the old roll.",
    "note": "Last test (3edd0b7): \"It's still using the old roll animation\" (the Wheel came in build 3).",
-   "since": "82b25a6"
+   "since": "ed9dd2c"
   },
   {
    "id": "nov27_firestorm",
@@ -272,7 +272,7 @@
    "how": "Altar: the fire ladder at Tier III, then the Walls ladder at Tier III.",
    "look": "Immolate in Fire; Fire Storm in Walls; no Inferno.",
    "note": "Last test (3edd0b7): \"the spell I actually want to remove is inferno\".",
-   "since": "82b25a6"
+   "since": "ed9dd2c"
   },
   {
    "id": "nov27_fixes",
@@ -338,7 +338,7 @@
    "how": "Open the inventory, the magic menu, Tab.",
    "look": "Warm Ember Tally colours on the inventory; our list on magic.",
    "note": "",
-   "since": "82b25a6"
+   "since": "ed9dd2c"
   },
   {
    "id": "tb_rarity",
@@ -349,7 +349,7 @@
    "how": "Roll several Tablet weapons and look at their uses ring.",
    "look": "100 / 60 / 30 uses by rarity, in blue, purple or gold.",
    "note": "",
-   "since": "82b25a6"
+   "since": "ed9dd2c"
   },
   {
    "id": "tb_roll",
@@ -360,7 +360,7 @@
    "how": "",
    "look": "",
    "note": "",
-   "since": "82b25a6"
+   "since": "ed9dd2c"
   },
   {
    "id": "cw_ownmodels",
@@ -382,7 +382,7 @@
    "how": "",
    "look": "",
    "note": "",
-   "since": "82b25a6"
+   "since": "ed9dd2c"
   },
   {
    "id": "mv_summoner",
@@ -393,7 +393,7 @@
    "how": "Quarterstaff at Tier I, II, III: light hits, heavies, 20 kills.",
    "look": "The same golden impact and pillar as the workshop's preview.",
    "note": "Last test (3edd0b7): \"I want the preview effects in this workshop to be exactly how it shows in game if not better\"; \"still using the old ... attacks\".",
-   "since": "82b25a6"
+   "since": "ed9dd2c"
   },
   {
    "id": "mv_destruction",
@@ -404,7 +404,7 @@
    "how": "Wand at Tier II: hold attack 2-3 s. Tier III: tap 25 bolts.",
    "look": "The violet beam from the tip, magicka dropping; twelve bolts falling ahead.",
    "note": "Last test (3edd0b7): \"Arcane ray doesn't work\"; \"doesn't cast the beam when holding attack\".",
-   "since": "82b25a6"
+   "since": "ed9dd2c"
   },
   {
    "id": "mv_alchemist",
@@ -415,7 +415,7 @@
    "how": "Tester's Kit: the scythe at base (plain), Tier I (light), II (heavy), III (10 kills and one more).",
    "look": "Nothing extra at base; the sweep from I, the eruption from II, the burst from III.",
    "note": "Last test (3edd0b7): \"it all works from base tier when it should be unlocked as it's fully upgraded\"; \"Light attack from base is shooting the purple fire ball but it explodes like 3m in front\".",
-   "since": "82b25a6"
+   "since": "ed9dd2c"
   },
   {
    "id": "mv_spellsword",
@@ -426,7 +426,7 @@
    "how": "Rapier at Tier I, II, III with fire, frost, shock in the other hand.",
    "look": "One pillar in the element, as the preview.",
    "note": "Last test (3edd0b7): \"The heavy attacks ... look very poor in game\"; \"casts the heavy attack at base tier\"; \"casting 2 beams instead of one\".",
-   "since": "82b25a6"
+   "since": "ed9dd2c"
   },
   {
    "id": "cw_ults",
@@ -536,7 +536,7 @@
    "how": "",
    "look": "",
    "note": "\"I want to replace the immolate from the spell pool\".",
-   "since": "82b25a6"
+   "since": "ed9dd2c"
   },
   {
    "id": "fl_fire",
@@ -558,7 +558,7 @@
    "how": "Throw each flask at a crowd; look from the side and from above.",
    "look": "The same ring as the workshop, the size of what it catches.",
    "note": "Last test (3edd0b7): see History.",
-   "since": "82b25a6"
+   "since": "ed9dd2c"
   },
   {
    "id": "fl_rest",
@@ -602,7 +602,7 @@
    "how": "Hold each flask in your hand and look at it; throw one and watch it fly.",
    "look": "The potion swirling inside the glass, in its element's colour; a wisp off the cork.",
    "note": "Last test (3edd0b7): \"the swirling animation is broken\".",
-   "since": "82b25a6"
+   "since": "ed9dd2c"
   },
   {
    "id": "fl_size",
@@ -613,7 +613,7 @@
    "how": "Throw each flask you have at a crowd, at its tier.",
    "look": "A small burst and a ring spreading on the ground, not a screen-filling explosion.",
    "note": "\"the explosion size for the flasks needs to be much less its a bit overwhelming currently\".",
-   "since": "82b25a6"
+   "since": "ed9dd2c"
   },
   {
    "id": "ui_bars",
@@ -624,7 +624,7 @@
    "how": "Stand still with everything full; then take a hit, cast, sprint, shout.",
    "look": "The plate fades away when full and returns the moment a bar drops.",
    "note": "",
-   "since": "82b25a6"
+   "since": "ed9dd2c"
   },
   {
    "id": "ui_cursor",
@@ -635,7 +635,7 @@
    "how": "Open the main menu, the inventory, the map and the altar with the mouse.",
    "look": "The iron arrowhead with its gold edge and a slowly glowing rune, its point exactly where you click.",
    "note": "",
-   "since": "82b25a6"
+   "since": "ed9dd2c"
   },
   {
    "id": "tb_lineup",
@@ -646,7 +646,7 @@
    "how": "Roll the Tablet many times; Tester's Kit: the Tablet weapons.",
    "look": "The 11 new weapons and your seven, by rarity; each with its uses ring.",
    "note": "",
-   "since": "82b25a6"
+   "since": "ed9dd2c"
   },
   {
    "id": "tb_claws",
@@ -679,7 +679,7 @@
    "how": "",
    "look": "",
    "note": "",
-   "since": "82b25a6"
+   "since": "ed9dd2c"
   },
   {
    "id": "wd_javhand",
@@ -690,7 +690,7 @@
    "how": "Hold to charge the javelin, look around, throw.",
    "look": "Overhand grip, palm toward your head.",
    "note": "Last test (3edd0b7): \"My palm is facing the sky now\".",
-   "since": "82b25a6"
+   "since": "ed9dd2c"
   },
   {
    "id": "wd_bane",
@@ -701,7 +701,7 @@
    "how": "Light hits on a crowd with Alduin's Bane; then a heavy.",
    "look": "Fire on the one hit and embers under it, then the ones next to it catch; the heavy's white tornado as before.",
    "note": "Last test (3edd0b7): \"It's still the old version\". Its fire is the preview's impact now - and a question for you in Decisions.",
-   "since": "82b25a6"
+   "since": "ed9dd2c"
   },
   {
    "id": "wd_javlook",
@@ -712,7 +712,7 @@
    "how": "Hold the javelin with a fire spell in your other hand, then frost, then shock.",
    "look": "Its look changes colour with the spell in your other hand.",
    "note": "Last test (3edd0b7): \"It stays the same looking like a white flaming effect\". The aura in the element's colour is new.",
-   "since": "82b25a6"
+   "since": "ed9dd2c"
   },
   {
    "id": "wd_looks",
@@ -723,7 +723,7 @@
    "how": "Draw each wonder and look at it.",
    "look": "Each in your picked look with the second laid over it.",
    "note": "Last test (3edd0b7): Soulcaller flat from some angles; the Mutagen Staff's look below its orb. Now the aura on each, and the Mutagen look on the orb in first person.",
-   "since": "82b25a6"
+   "since": "ed9dd2c"
   },
   {
    "id": "cw_layers",
@@ -734,7 +734,7 @@
    "how": "Tester's Kit: the wand at Tier I then II; the quarterstaff and rapier at Tier III then Ascend.",
    "look": "The wand's look changes from Tier I to II; the quarterstaff and rapier gain a second look at Ascend.",
    "note": "Last test (3edd0b7): \"it's the old preview selections ... the low quality 2D effects\". The aura the preview draws is now in the game on every look.",
-   "since": "82b25a6"
+   "since": "ed9dd2c"
   },
   {
    "id": "wd_soulmana",
@@ -745,7 +745,7 @@
    "how": "Hold the Soulcaller's beam on the dead; let your magicka run out; take 20 souls.",
    "look": "Your magicka dropping while it runs; the purple portal, then the cat out of it.",
    "note": "Last test (3edd0b7): \"No mana usage no purple spawn portal ... the cats blue holographic effect is only visible from certain angles\". Fixed: the cast read in every state, the portal kept 2.5 s, the cat's body glowing blue.",
-   "since": "82b25a6"
+   "since": "ed9dd2c"
   },
   {
    "id": "wd_mutagenstrike",
@@ -811,7 +811,7 @@
    "how": "Tester's Kit: each class's set at Tier I, then III, then Ascend (Legendary); look in third person.",
    "look": "Faint at Tier I, stronger each tier; the second look joining at Legendary; nothing blocking your view in first person.",
    "note": "Last test (3edd0b7): \"They don't look in game how they look in the preview\".",
-   "since": "82b25a6"
+   "since": "ed9dd2c"
   },
   {
    "id": "ar_inv",
@@ -976,7 +976,7 @@
    "how": "Play a night.",
    "look": "As the workshop's In-game UI.",
    "note": "\"Make it larger as well as the quests under it\".",
-   "since": "82b25a6"
+   "since": "ed9dd2c"
   },
   {
    "id": "hd_banner",
@@ -987,7 +987,7 @@
    "how": "Free a trial step; read a lore card.",
    "look": "Ember Tally words fading in and out.",
    "note": "\"the banner looks off and the size needs to be a bit larger\".",
-   "since": "82b25a6"
+   "since": "ed9dd2c"
   },
   {
    "id": "hd_impacts2d",
@@ -998,7 +998,7 @@
    "how": "",
    "look": "",
    "note": "\"impact effects ... look really low quality in 2D\".",
-   "since": "82b25a6"
+   "since": "ed9dd2c"
   },
   {
    "id": "ld_continue",
@@ -1009,7 +1009,7 @@
    "how": "Launch; Continue; then load from the journal.",
    "look": "The painting with embers; our screen with LOADING SAVE each time.",
    "note": "Last test (3edd0b7): see History.",
-   "since": "82b25a6"
+   "since": "ed9dd2c"
   },
   {
    "id": "ld_doors",
@@ -1086,7 +1086,7 @@
    "how": "Play nights as usual.",
    "look": "No crash.",
    "note": "\"my game just randomly crashed\".",
-   "since": "82b25a6"
+   "since": "ed9dd2c"
   },
   {
    "id": "fd_runes",
@@ -1097,7 +1097,7 @@
    "how": "Take a city's Stone's Whisper trial.",
    "look": "\"Carved on the altar: ...\" - no quotes, no voice.",
    "note": "\"the echo alter trials show Feldirs voice lines and hints ... but his voice is turned off until the echo alter is freed\".",
-   "since": "82b25a6"
+   "since": "ed9dd2c"
   },
   {
    "id": "tb_new11",
@@ -1108,7 +1108,7 @@
    "how": "Tester's Kit: the Tablet weapons; try each on the dead.",
    "look": "Each its own power as in the Tablet tab.",
    "note": "",
-   "since": "82b25a6"
+   "since": "ed9dd2c"
   },
   {
    "id": "mv_tiers",
@@ -1119,7 +1119,7 @@
    "how": "Each class weapon at base, I, II, III.",
    "look": "Base plain; one more move each tier.",
    "note": "",
-   "since": "82b25a6"
+   "since": "ed9dd2c"
   },
   {
    "id": "sm_ignore",
@@ -1130,7 +1130,7 @@
    "how": "Hit your own summon a few times.",
    "look": "It keeps fighting the dead.",
    "note": "\"my summons will fight me back if I hit them and I can't kill them\".",
-   "since": "82b25a6"
+   "since": "ed9dd2c"
   },
   {
    "id": "tb_mend",
@@ -1141,7 +1141,7 @@
    "how": "Hold a used Tablet weapon at the Tablet.",
    "look": "The mend prompt; to roll, put the weapon away.",
    "note": "\"sometimes when I roll the tablet it takes my essence then doesn't roll\".",
-   "since": "82b25a6"
+   "since": "ed9dd2c"
   },
   {
    "id": "cb_jump",
@@ -1372,6 +1372,11 @@
   }
  ],
  "builds": [
+  {
+   "sha": "ed9dd2c",
+   "when": "2026-11-27 05:52",
+   "what": "Fix build: 'near' is a Windows macro (the menu's embers)"
+  },
   {
    "sha": "82b25a6",
    "when": "2026-11-27 05:27",
