@@ -312,7 +312,7 @@ o.append(f'\tinline constexpr std::uint32_t kArtIceShell = 0x{IDS[("ARTO", "fx_i
 EL8 = ['fire', 'frost', 'shock', 'poison', 'disease', 'sun', 'blood', 'arcane']
 SCID = [r['id'] for r in S['spellcraft']['rows']]
 TBW = S['tablet']['rows']
-o.append('\tstruct TabletWeapon { std::string_view id, label; bool battered; int type, uses; std::uint32_t form, show, gloves; std::string_view lookPlugin; std::uint32_t look, left; };  // look: another mod\'s weapon it wears (left: its left-hand twin)  // type: 0 fists 1 mace 2 dagger 3 battleaxe 4 bow 5 staff 6 greatsword 7 book 8 scythe')
+o.append('\tstruct TabletWeapon { std::string_view id, label; bool battered; int type, uses, rarity; bool pool; std::uint32_t form, show, gloves; std::string_view lookPlugin; std::uint32_t look, left; };  // look: another mod\'s weapon it wears (left: its left-hand twin)  // type: 0 fists 1 mace 2 dagger 3 battleaxe 4 bow 5 staff 6 greatsword 7 book 8 scythe')
 _TBT = ['fists', 'mace', 'dagger', 'battleaxe', 'bow', 'staff', 'greatsword', 'book', 'scythe']
 o.append(f'\tinline constexpr std::array<TabletWeapon, {len(TBW)}> kTabletWeapons{{ {{')
 for w in TBW:
@@ -320,7 +320,7 @@ for w in TBW:
     show = IDS.get(('STAT', 'tabshow_' + w['id']), 0)
     gloves = IDS.get(('ARMO', 'tabglove_' + w['id']), 0)
     lk = w.get('look', {})
-    o.append(f'\t\tTabletWeapon{{ {cs(w["id"])}, {cs(w["label"])}, {str(w["grade"] == "battered").lower()}, {_TBT.index(w["type"])}, {w["uses"]}, 0x{form:03X}, 0x{show:03X}, 0x{gloves:03X}, {cs(lk.get("plugin", ""))}, {lk.get("id", "0x0")}, {lk.get("left", "0x0")} }},')
+    o.append(f'\t\tTabletWeapon{{ {cs(w["id"])}, {cs(w["label"])}, {str(w["grade"] == "battered").lower()}, {_TBT.index(w["type"])}, {w["uses"]}, {["rare", "epic", "legendary"].index(w.get("rarity", "rare"))}, {str(w.get("pool", True)).lower()}, 0x{form:03X}, 0x{show:03X}, 0x{gloves:03X}, {cs(lk.get("plugin", ""))}, {lk.get("id", "0x0")}, {lk.get("left", "0x0")} }},')
 o.append('\t} };')
 o.append(f'\tinline constexpr std::uint32_t kTabletArrow = 0x{IDS[("AMMO", "tab_arrow")]:03X};')
 o.append('\tinline constexpr std::array<std::pair<std::string_view, std::uint32_t>, ' + str(len(esp_ids.SCYTHES)) + '> kScytheFirst{ { ' + ', '.join('{ ' + cs(esp_ids.scythe_model(n)) + ', 0x' + format(IDS[('STAT', '1st_scythe_' + n.lower())], '03X') + ' }' for n in esp_ids.SCYTHES) + ' } };  // (each scythe model: its first-person STAT, the item menu\'s view)')

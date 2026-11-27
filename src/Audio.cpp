@@ -762,6 +762,20 @@ namespace coa::Audio
 		static constexpr const char* kRoot[3] = { "Music\\CurseOfAlduin\\", "Data\\Music\\CurseOfAlduin\\", "\\Data\\Music\\CurseOfAlduin\\" };
 		const bool again = h.IsValid();
 		h = RE::BSSoundHandle{};
+		// (Noah, Nov 27 workshop: the menu music - "Dragonborn (the main theme)") Skyrim's own main theme, from its own archive;
+		// our old track only if the game can't give it
+		static int theme = -1;   // (-1 untried, 0 the theme plays, 1 it won't: ours)
+		if (theme != 1) {
+			static constexpr const char* kTheme[3] = { "Music\\Special\\mus_maintheme.xwm", "Data\\Music\\Special\\mus_maintheme.xwm", "\\Data\\Music\\Special\\mus_maintheme.xwm" };
+			for (int k = 0; k < 3 && !h.IsValid(); ++k) {
+				RE::BSResource::ID id;
+				id.GenerateFromPath(kTheme[k]);
+				am->GetSoundHandleByFile(h, id, 0x1A, 128);
+				if (h.IsValid() && theme < 0) logger::info("audio: menu music is Skyrim's main theme ('{}')", kTheme[k]);
+			}
+			if (!h.IsValid() && theme < 0) logger::warn("audio: Skyrim's main theme wouldn't play - our menu track instead");
+			theme = h.IsValid() ? 0 : 1;
+		}
 		for (int k = how < 0 ? 0 : how; k < 3 && !h.IsValid(); k = how < 0 ? k + 1 : 3) {
 			RE::BSResource::ID id;
 			id.GenerateFromPath((std::string(kRoot[k]) + "mus_menu.wav").c_str());

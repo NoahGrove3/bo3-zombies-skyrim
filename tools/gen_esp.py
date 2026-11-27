@@ -953,7 +953,7 @@ for name, hx in T['efsh_ghostwolf']['subs']:
 recs['EFSH'].append(record('EFSH', fid('EFSH', 'soulpurple'), subs))
 # (Noah: the Tablet's roll "with green being a common weapon and gold being a legendary") the reel's little weapons glow in
 # their rarity: worn green, battered gold (src/Tablet.cpp)
-for key, fill, edge in (('tabletgreen', (40, 200, 70), (130, 255, 150)), ('tabletgold', (235, 165, 30), (255, 225, 120))):
+for key, fill, edge in (('tabletgreen', (40, 110, 255), (150, 200, 255)), ('tabletgold', (235, 165, 30), (255, 225, 120))):
     d = bytearray(tsub('efsh_enchpurple', 'DATA'))
     d[0] |= 0x08
     struct.pack_into('<f', d, 0x20, 2.0)
@@ -1381,7 +1381,7 @@ def guide_text():
              "The last of them calls out the city's Dragon Priest. Slay it and the night ends at once - dawn breaks and the city is safe for good. Skyrim's difficulty sets how hard the trials are."),
            "[pagebreak]", h("The Four Trials"),
            p("All four are won at night, one after another, and your party shares them."),
-           p("<b>Lay the Restless to Rest</b> - slay the dead inside the altar's light, the circle round it. Their souls rise to Sovngarde."),
+           p("<b>Slay the Undead</b> - slay the dead inside the altar's light, the circle round it. Their souls rise to Sovngarde."),
            p("<b>The Stone's Whisper</b> - the altar's voice speaks a riddle naming a place in the city. Find it at night and slay the dead there."),
            p("<b>Hold the Light</b> - step into the altar's light at night and it begins to close round the stone while the dead pour in. Stay inside until it closes. Step out and the light slips back."),
            p("<b>Break the Priest's Seals</b> - three seals in the city's great places, each kept by an elite. Kill the guard, then strike the seal. The last one calls the Dragon Priest out."),

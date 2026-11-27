@@ -15,6 +15,8 @@ namespace coa::WeaponFx
 		{
 			RE::NiPointer<RE::NiAVObject> obj;
 			std::string                   path;
+			float                         gain = -1.0f;   // (the tier strength applied to it)
+			std::vector<std::pair<RE::BSEffectShaderMaterial*, RE::NiColorA>> base;   // (each effect shader's own colour, before the tier's strength)
 			void Detach()
 			{
 				if (obj && obj->parent) obj->parent->DetachChild2(obj.get());
@@ -98,10 +100,28 @@ namespace coa::WeaponFx
 					H.Detach();
 					H.obj = Gun::LoadModel(std::string(art));
 					H.path = std::string(art);
+					H.gain = -1.0f, H.base.clear();
+					if (H.obj) RE::BSVisit::TraverseScenegraphGeometries(H.obj.get(), [&](RE::BSGeometry* g) {
+						if (auto* ep = netimmerse_cast<RE::BSEffectShaderProperty*>(g->GetGeometryRuntimeData().shaderProperty.get())) {
+							if (auto* m = static_cast<RE::BSEffectShaderMaterial*>(ep->material)) H.base.emplace_back(m, m->baseColor);
+						}
+						return RE::BSVisit::BSVisitControl::kContinue;
+					});
 					if (H.obj) logger::info("weaponfx: {} hung on the {} {}-hand weapon", art, v ? "first-person" : "third-person", hand ? "left" : "right");
 					else logger::warn("weaponfx: {} could not be loaded", art);
 				}
 				if (!H.obj) continue;
+				// (Noah, Nov 27 workshop: "one look, stronger each tier" - his picks: I faint, II a glowing edge, III full, Legendary
+				// brighter still) a class weapon's art at its tier's strength; every other weapon of ours at full
+				{
+					static constexpr float kTierGain[5] = { 0.45f, 0.45f, 0.7f, 1.0f, 1.35f };
+					const int t = hand == 0 && Classes::HandLookKey() >= 0 ? Kit::TierOfWeapon(held) : -1;
+					const float gain = t < 0 ? 1.0f : kTierGain[std::clamp(t, 0, 4)];
+					if (gain != H.gain) {
+						H.gain = gain;
+						for (auto& [m, c] : H.base) m->baseColor = RE::NiColorA{ c.red, c.green, c.blue, std::min(1.0f, c.alpha * gain) }, m->baseColorScale = gain > 1.0f ? gain : 1.0f;
+					}
+				}
 				if (H.obj->parent != host) {
 					H.Detach();
 					host->AttachChild(H.obj.get(), true);

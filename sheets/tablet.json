@@ -1,239 +1,267 @@
 {
-  "sheet": "tablet",
-  "about": "(Noah) the Tablet of Mysteries' donated weapons (docs/TABLET_OF_MYSTERIES.md): worn = one tier above your class sword, battered = two; uses = hits / arrows / casts before it breaks; lost if you fall. model: the weapon's own (tools/tabletweapons.py; the fists have none - they are gloves, tools/tabletgloves.py); show: the model that rises out of the tablet's pool; gloves: the fists' gloves (first-person and third-person models).",
-  "columns": [
-    "id",
-    "label",
-    "grade",
-    "type",
-    "uses",
-    "model",
-    "power",
-    "owner",
-    "show",
-    "gloves"
-  ],
-  "rows": [
-    {
-      "id": "stormtalons",
-      "label": "Stormtalons",
-      "grade": "worn",
-      "type": "dagger",
-      "uses": 100,
-      "model": "weapons\\NewArmoury\\Fists\\GlassClaw.nif",
-      "power": "Glass claws. Every 3rd hit chains lightning to 2 more of the dead. Heavy: stuns.",
-      "owner": "Left by a storm-mage who fought with her hands when her magicka ran dry.",
-      "look": {
-        "plugin": "NewArmoury.esp",
-        "id": "0x19AAAA",
-        "left": "0x19AAE0"
-      },
-      "verify": [],
-      "show": "weapons\\NewArmoury\\Fists\\GlassClaw.nif",
-      "gloves": []
-    },
-    {
-      "id": "gravebell",
-      "label": "Gravebell Mace",
-      "grade": "worn",
-      "type": "mace",
-      "uses": 100,
-      "model": "CurseOfAlduin\\tablet\\gravebell.nif",
-      "power": "A mace. Every 5th hit tolls the bell, stunning the dead within 5 m.",
-      "owner": "Taken from a ruined temple of Arkay.",
-      "verify": [],
-      "show": "CurseOfAlduin\\tablet\\gravebell.nif",
-      "gloves": []
-    },
-    {
-      "id": "talons",
-      "label": "Talons of Woe",
-      "grade": "battered",
-      "type": "dagger",
-      "uses": 30,
-      "model": "weapons\\NewArmoury\\Fists\\DBClaw.nif",
-      "power": "Dragonbone claws. Their bleeding runs twice as deep, and kills heal you a little.",
-      "owner": "Cut from the talons of a dragon that fell over Whiterun.",
-      "look": {
-        "plugin": "NewArmoury.esp",
-        "id": "0x19AAB2",
-        "left": "0x19AAEE"
-      },
-      "verify": [],
-      "show": "weapons\\NewArmoury\\Fists\\DBClaw.nif",
-      "gloves": []
-    },
-    {
-      "id": "riverstone",
-      "label": "Riverstone Halberd",
-      "grade": "worn",
-      "type": "battleaxe",
-      "uses": 100,
-      "model": "CurseOfAlduin\\tablet\\riverstone.nif",
-      "power": "A halberd. Hits knock the dead back. Heavy: splits the ground in a line ahead.",
-      "owner": "Dragged out of the White River.",
-      "verify": [],
-      "show": "CurseOfAlduin\\tablet\\riverstone.nif",
-      "gloves": [],
-      "look": {
-        "plugin": "NewArmoury.esp",
-        "id": "0x16801F"
-      }
-    },
-    {
-      "id": "wyrmspine",
-      "label": "Wyrmspine Pike",
-      "grade": "battered",
-      "type": "greatsword",
-      "uses": 30,
-      "model": "weapons\\NewArmoury\\Pikes\\DragonBonePike.nif",
-      "power": "A pike. Thrusts pierce 2 more of the dead in a line. Heavy: a shockwave that staggers the dead within 8 m.",
-      "owner": "Carved from the spine of the first dragon Alduin raised.",
-      "look": {
-        "plugin": "NewArmoury.esp",
-        "id": "0x153BB9"
-      },
-      "verify": [],
-      "show": "weapons\\NewArmoury\\Pikes\\DragonBonePike.nif",
-      "gloves": []
-    },
-    {
-      "id": "lanternwick",
-      "label": "Rimewick Quarterstaff",
-      "grade": "battered",
-      "type": "battleaxe",
-      "uses": 30,
-      "model": "CurseOfAlduin\\tablet\\lanternwick.nif",
-      "power": "A quarterstaff. Light: freezes the dead for 3 s. Heavy: a 10 m blizzard for 6 s.",
-      "owner": "Carried by a lamplighter of Riften until the lamps went out.",
-      "verify": [],
-      "show": "CurseOfAlduin\\tablet\\lanternwick.nif",
-      "gloves": [],
-      "look": {
-        "plugin": "NewArmoury.esp",
-        "id": "0x18B765"
-      }
-    },
-    {
-      "id": "cinderclaws",
-      "label": "Cinderclaws",
-      "grade": "worn",
-      "type": "dagger",
-      "uses": 100,
-      "model": "weapons\\NewArmoury\\Fists\\DaedricClaw.nif",
-      "power": "Ember claws. Every swipe sets the dead burning. Heavy: a fan of embers.",
-      "owner": "Pried from a dremora who walked out of an Oblivion gate.",
-      "look": {
-        "plugin": "NewArmoury.esp",
-        "id": "0x19AAAC",
-        "left": "0x19AAE8"
-      },
-      "verify": [],
-      "show": "weapons\\NewArmoury\\Fists\\DaedricClaw.nif",
-      "gloves": []
-    },
-    {
-      "id": "eclipse",
-      "label": "Eclipse Edge",
-      "grade": "battered",
-      "type": "greatsword",
-      "uses": 30,
-      "model": "CurseOfAlduin\\tablet\\eclipse.nif",
-      "power": "A greatsword. Hits alternate frost and sun. Heavy: an ice shockwave, then a sun shockwave (10 m).",
-      "owner": "Its last bearer saw the sun go out over Sky Haven.",
-      "verify": [],
-      "show": "CurseOfAlduin\\tablet\\eclipse.nif",
-      "gloves": [],
-      "look": {
-        "plugin": "NewArmoury.esp",
-        "id": "0x153BB0"
-      }
-    },
-    {
-      "id": "wanderstar",
-      "label": "The Wandering Star",
-      "grade": "battered",
-      "type": "staff",
-      "uses": 30,
-      "model": "CurseOfAlduin\\tablet\\wanderstar.nif",
-      "power": "A wand. Hold to cast a gold star every 0.5 s that bounces to up to 4 of the dead. Every 5th hit throws them far.",
-      "owner": "Found at the bottom of the College's collapsed well.",
-      "verify": [],
-      "show": "CurseOfAlduin\\tablet\\wanderstar.nif",
-      "gloves": [],
-      "look": {
-        "plugin": "Fulcimentum - More Staves and Wands of Skyrim.esp",
-        "id": "0x800"
-      }
-    },
-    {
-      "id": "frostmourn",
-      "label": "Frostmourn Rapier",
-      "grade": "worn",
-      "type": "dagger",
-      "uses": 100,
-      "model": "weapons\\NewArmoury\\Rapier\\StahlrimRapier.nif",
-      "power": "A rapier. Thrusts slow the dead. Heavy: freezes a ring of the dead around you.",
-      "owner": "Brought from Solstheim by a duellist of Raven Rock.",
-      "look": {
-        "plugin": "NewArmoury.esp",
-        "id": "0x01EE21"
-      },
-      "verify": [],
-      "show": "weapons\\NewArmoury\\Rapier\\StahlrimRapier.nif",
-      "gloves": []
-    },
-    {
-      "id": "silverscythe",
-      "label": "Silver Reaping Scythe",
-      "grade": "worn",
-      "type": "scythe",
-      "uses": 100,
-      "model": "CurseOfAlduin\\reapers\\silver.nif",
-      "power": "A scythe. Every 4th hit: a silver flash that briefly slows the dead.",
-      "owner": "Left at the Hall of the Vigilant after it burned.",
-      "verify": [],
-      "show": "CurseOfAlduin\\reapers\\silver.nif",
-      "gloves": []
-    },
-    {
-      "id": "bonereaper",
-      "label": "Bonereaper",
-      "grade": "battered",
-      "type": "scythe",
-      "uses": 30,
-      "model": "CurseOfAlduin\\reapers\\Skeleton.nif",
-      "power": "A scythe. 1 kill in 4 rises to fight for you for 20 s.",
-      "owner": "Dug out of a necromancer's grave outside Falkreath.",
-      "verify": [],
-      "show": "CurseOfAlduin\\reapers\\Skeleton.nif",
-      "gloves": []
-    },
-    {
-      "id": "wyrmtooth",
-      "label": "Wyrmtooth Scythe",
-      "grade": "worn",
-      "type": "scythe",
-      "uses": 100,
-      "model": "CurseOfAlduin\\reapers\\dragonTeeth.nif",
-      "power": "A scythe. Hits make the dead bleed. Heavy: a shockwave that staggers the dead within 8 m.",
-      "owner": "Pulled from a dragon mound's bones.",
-      "verify": [],
-      "show": "CurseOfAlduin\\reapers\\dragonTeeth.nif",
-      "gloves": []
-    },
-    {
-      "id": "bloodmoon",
-      "label": "Bloodmoon Scythe",
-      "grade": "battered",
-      "type": "scythe",
-      "uses": 30,
-      "model": "CurseOfAlduin\\reapers\\vampire.nif",
-      "power": "A scythe. Hits drain blood to heal you. Heavy: drains everything it touches.",
-      "owner": "Taken from a vampire lord who hunted the cursed for sport.",
-      "verify": [],
-      "show": "CurseOfAlduin\\reapers\\vampire.nif",
-      "gloves": []
-    }
-  ]
+ "sheet": "tablet",
+ "about": "(Noah) the Tablet of Mysteries' donated weapons (docs/TABLET_OF_MYSTERIES.md): worn = one tier above your class sword, battered = two; uses = hits / arrows / casts before it breaks; lost if you fall. model: the weapon's own (tools/tabletweapons.py; the fists have none - they are gloves, tools/tabletgloves.py); show: the model that rises out of the tablet's pool; gloves: the fists' gloves (first-person and third-person models). (Nov 27: Noah's lineup - seven cut from the pool (kept as forms so old saves load), rarity Rare/Epic/Legendary, rarer rolls less often: 60/30/10.)",
+ "columns": [
+  "id",
+  "label",
+  "grade",
+  "type",
+  "uses",
+  "model",
+  "power",
+  "owner",
+  "show",
+  "gloves"
+ ],
+ "rows": [
+  {
+   "id": "stormtalons",
+   "label": "Stormtalons",
+   "grade": "worn",
+   "type": "dagger",
+   "uses": 100,
+   "model": "weapons\\NewArmoury\\Fists\\GlassClaw.nif",
+   "power": "Glass claws. Every 3rd hit chains lightning to 2 more of the dead. Heavy: stuns.",
+   "owner": "Left by a storm-mage who fought with her hands when her magicka ran dry.",
+   "look": {
+    "plugin": "NewArmoury.esp",
+    "id": "0x19AAAA",
+    "left": "0x19AAE0"
+   },
+   "verify": [],
+   "show": "weapons\\NewArmoury\\Fists\\GlassClaw.nif",
+   "gloves": [],
+   "rarity": "epic",
+   "pool": true
+  },
+  {
+   "id": "gravebell",
+   "label": "Gravebell Mace",
+   "grade": "worn",
+   "type": "mace",
+   "uses": 100,
+   "model": "CurseOfAlduin\\tablet\\gravebell.nif",
+   "power": "A mace. Every 5th hit tolls the bell, stunning the dead within 5 m.",
+   "owner": "Taken from a ruined temple of Arkay.",
+   "verify": [],
+   "show": "CurseOfAlduin\\tablet\\gravebell.nif",
+   "gloves": [],
+   "rarity": "rare",
+   "pool": true
+  },
+  {
+   "id": "talons",
+   "label": "Talons of Woe",
+   "grade": "battered",
+   "type": "dagger",
+   "uses": 30,
+   "model": "weapons\\NewArmoury\\Fists\\DBClaw.nif",
+   "power": "Dragonbone claws. Their bleeding runs twice as deep, and kills heal you a little.",
+   "owner": "Cut from the talons of a dragon that fell over Whiterun.",
+   "look": {
+    "plugin": "NewArmoury.esp",
+    "id": "0x19AAB2",
+    "left": "0x19AAEE"
+   },
+   "verify": [],
+   "show": "weapons\\NewArmoury\\Fists\\DBClaw.nif",
+   "gloves": [],
+   "rarity": "rare",
+   "pool": false
+  },
+  {
+   "id": "riverstone",
+   "label": "Riverstone Halberd",
+   "grade": "worn",
+   "type": "battleaxe",
+   "uses": 100,
+   "model": "CurseOfAlduin\\tablet\\riverstone.nif",
+   "power": "A halberd. Hits knock the dead back. Heavy: splits the ground in a line ahead.",
+   "owner": "Dragged out of the White River.",
+   "verify": [],
+   "show": "CurseOfAlduin\\tablet\\riverstone.nif",
+   "gloves": [],
+   "look": {
+    "plugin": "NewArmoury.esp",
+    "id": "0x16801F"
+   },
+   "rarity": "rare",
+   "pool": false
+  },
+  {
+   "id": "wyrmspine",
+   "label": "Wyrmspine Pike",
+   "grade": "battered",
+   "type": "greatsword",
+   "uses": 30,
+   "model": "weapons\\NewArmoury\\Pikes\\DragonBonePike.nif",
+   "power": "A pike. Thrusts pierce 2 more of the dead in a line. Heavy: a shockwave that staggers the dead within 8 m.",
+   "owner": "Carved from the spine of the first dragon Alduin raised.",
+   "look": {
+    "plugin": "NewArmoury.esp",
+    "id": "0x153BB9"
+   },
+   "verify": [],
+   "show": "weapons\\NewArmoury\\Pikes\\DragonBonePike.nif",
+   "gloves": [],
+   "rarity": "rare",
+   "pool": true
+  },
+  {
+   "id": "lanternwick",
+   "label": "Rimewick Quarterstaff",
+   "grade": "battered",
+   "type": "battleaxe",
+   "uses": 30,
+   "model": "CurseOfAlduin\\tablet\\lanternwick.nif",
+   "power": "A quarterstaff. Light: freezes the dead for 3 s. Heavy: a 10 m blizzard for 6 s.",
+   "owner": "Carried by a lamplighter of Riften until the lamps went out.",
+   "verify": [],
+   "show": "CurseOfAlduin\\tablet\\lanternwick.nif",
+   "gloves": [],
+   "look": {
+    "plugin": "NewArmoury.esp",
+    "id": "0x18B765"
+   },
+   "rarity": "epic",
+   "pool": true
+  },
+  {
+   "id": "cinderclaws",
+   "label": "Cinderclaws",
+   "grade": "worn",
+   "type": "dagger",
+   "uses": 100,
+   "model": "weapons\\NewArmoury\\Fists\\DaedricClaw.nif",
+   "power": "Ember claws. Every swipe sets the dead burning. Heavy: a fan of embers.",
+   "owner": "Pried from a dremora who walked out of an Oblivion gate.",
+   "look": {
+    "plugin": "NewArmoury.esp",
+    "id": "0x19AAAC",
+    "left": "0x19AAE8"
+   },
+   "verify": [],
+   "show": "weapons\\NewArmoury\\Fists\\DaedricClaw.nif",
+   "gloves": [],
+   "rarity": "rare",
+   "pool": true
+  },
+  {
+   "id": "eclipse",
+   "label": "Eclipse Edge",
+   "grade": "battered",
+   "type": "greatsword",
+   "uses": 30,
+   "model": "CurseOfAlduin\\tablet\\eclipse.nif",
+   "power": "A greatsword. Hits alternate frost and sun. Heavy: an ice shockwave, then a sun shockwave (10 m).",
+   "owner": "Its last bearer saw the sun go out over Sky Haven.",
+   "verify": [],
+   "show": "CurseOfAlduin\\tablet\\eclipse.nif",
+   "gloves": [],
+   "look": {
+    "plugin": "NewArmoury.esp",
+    "id": "0x153BB0"
+   },
+   "rarity": "epic",
+   "pool": true
+  },
+  {
+   "id": "wanderstar",
+   "label": "The Wandering Star",
+   "grade": "battered",
+   "type": "staff",
+   "uses": 30,
+   "model": "CurseOfAlduin\\tablet\\wanderstar.nif",
+   "power": "A wand. Hold to cast a gold star every 0.5 s that bounces to up to 4 of the dead. Every 5th hit throws them far.",
+   "owner": "Found at the bottom of the College's collapsed well.",
+   "verify": [],
+   "show": "CurseOfAlduin\\tablet\\wanderstar.nif",
+   "gloves": [],
+   "look": {
+    "plugin": "Fulcimentum - More Staves and Wands of Skyrim.esp",
+    "id": "0x800"
+   },
+   "rarity": "rare",
+   "pool": false
+  },
+  {
+   "id": "frostmourn",
+   "label": "Frostmourn Rapier",
+   "grade": "worn",
+   "type": "dagger",
+   "uses": 100,
+   "model": "weapons\\NewArmoury\\Rapier\\StahlrimRapier.nif",
+   "power": "A rapier. Thrusts slow the dead. Heavy: freezes a ring of the dead around you.",
+   "owner": "Brought from Solstheim by a duellist of Raven Rock.",
+   "look": {
+    "plugin": "NewArmoury.esp",
+    "id": "0x01EE21"
+   },
+   "verify": [],
+   "show": "weapons\\NewArmoury\\Rapier\\StahlrimRapier.nif",
+   "gloves": [],
+   "rarity": "rare",
+   "pool": true
+  },
+  {
+   "id": "silverscythe",
+   "label": "Silver Reaping Scythe",
+   "grade": "worn",
+   "type": "scythe",
+   "uses": 100,
+   "model": "CurseOfAlduin\\reapers\\silver.nif",
+   "power": "A scythe. Every 4th hit: a silver flash that briefly slows the dead.",
+   "owner": "Left at the Hall of the Vigilant after it burned.",
+   "verify": [],
+   "show": "CurseOfAlduin\\reapers\\silver.nif",
+   "gloves": [],
+   "rarity": "rare",
+   "pool": false
+  },
+  {
+   "id": "bonereaper",
+   "label": "Bonereaper",
+   "grade": "battered",
+   "type": "scythe",
+   "uses": 30,
+   "model": "CurseOfAlduin\\reapers\\Skeleton.nif",
+   "power": "A scythe. 1 kill in 4 rises to fight for you for 20 s.",
+   "owner": "Dug out of a necromancer's grave outside Falkreath.",
+   "verify": [],
+   "show": "CurseOfAlduin\\reapers\\Skeleton.nif",
+   "gloves": [],
+   "rarity": "rare",
+   "pool": false
+  },
+  {
+   "id": "wyrmtooth",
+   "label": "Wyrmtooth Scythe",
+   "grade": "worn",
+   "type": "scythe",
+   "uses": 100,
+   "model": "CurseOfAlduin\\reapers\\dragonTeeth.nif",
+   "power": "A scythe. Hits make the dead bleed. Heavy: a shockwave that staggers the dead within 8 m.",
+   "owner": "Pulled from a dragon mound's bones.",
+   "verify": [],
+   "show": "CurseOfAlduin\\reapers\\dragonTeeth.nif",
+   "gloves": [],
+   "rarity": "rare",
+   "pool": false
+  },
+  {
+   "id": "bloodmoon",
+   "label": "Bloodmoon Scythe",
+   "grade": "battered",
+   "type": "scythe",
+   "uses": 30,
+   "model": "CurseOfAlduin\\reapers\\vampire.nif",
+   "power": "A scythe. Hits drain blood to heal you. Heavy: drains everything it touches.",
+   "owner": "Taken from a vampire lord who hunted the cursed for sport.",
+   "verify": [],
+   "show": "CurseOfAlduin\\reapers\\vampire.nif",
+   "gloves": [],
+   "rarity": "rare",
+   "pool": false
+  }
+ ]
 }

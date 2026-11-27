@@ -1618,7 +1618,7 @@ namespace coa::gen
 	inline constexpr std::array<std::uint32_t, 10> kRiteQuests{ 0xBEF, 0xBF0, 0xBF1, 0xBF2, 0xBF3, 0xBF4, 0xBF5, 0xBF6, 0xBF7, 0xBF8 };   // the cities' quests in the journal
 	struct TrialDef { std::string_view id, title, shortText, goal, text; std::array<int, 6> n, seconds; };  // per Skyrim difficulty, Novice..Legendary
 	inline constexpr std::array<TrialDef, 4> kTrials{ {
-		TrialDef{ "restless", "Lay the Restless to Rest", "Slay the risen in the altar's light", "Slay the risen in the light of the Echo Altar of {city}", "Alduin's mist bars the road to Sovngarde, and the dead of {city} have nowhere to go. Put them down within the light of the city's Echo Altar and their souls rise through the mist at last. Lay {n} of the risen to rest in the altar's light.", { 15, 20, 25, 30, 35, 40 }, { 0, 0, 0, 0, 0, 0 } },
+		TrialDef{ "restless", "Slay the Undead", "Slay the risen in the altar's light", "Slay the risen in the light of the Echo Altar of {city}", "Alduin's mist bars the road to Sovngarde, and the dead of {city} have nowhere to go. Put them down within the light of the city's Echo Altar and their souls rise through the mist at last. Lay {n} of the risen to rest in the altar's light.", { 15, 20, 25, 30, 35, 40 }, { 0, 0, 0, 0, 0, 0 } },
 		TrialDef{ "whisper", "The Stone's Whisper", "Find the place the altar's voice names", "Find the place the altar's voice names in {city}, and slay the risen there", "At night a voice speaks from the Echo Altar of {city}, and it speaks in riddles. Find the place it names, and hold it against the dead: slay {n} of the risen there.", { 10, 12, 14, 16, 18, 20 }, { 0, 0, 0, 0, 0, 0 } },
 		TrialDef{ "echo", "Hold the Light", "Stand in the altar's light until it closes", "Stand in the light of the Echo Altar of {city} as it closes round the stone", "When the Tongues first woke their altars, the light had to be held while Alduin's dead came for it. At night, step into the light of the Echo Altar of {city}: it begins to draw in toward the stone, and every one of the risen in the city comes for you. Stay inside the ring until it closes on the stone. Step out and the light falters and slips back.", { 1, 1, 1, 1, 1, 1 }, { 45, 50, 55, 60, 70, 80 } },
 		TrialDef{ "seals", "Break the Priest's Seals", "Shatter the Dragon Priest's three seals", "Break the Dragon Priest's three seals in {city}", "The Dragon Priest who holds the altar of {city} silent has bound it with three seals of dragon script, set at the city's great places and each kept by one of his chosen. Kill each guard and strike its seal. When the last one breaks, the priest comes out to meet you.", { 3, 3, 3, 3, 3, 3 }, { 0, 0, 0, 0, 0, 0 } },
@@ -1663,22 +1663,22 @@ namespace coa::gen
 		SpellcraftDef{ "barrowhorn", "Horn of the Dragon Priests", 0xFFC45C, 0xFFF3D6, 8, 3, 1600.0f, 60.0f, 560.0f, 1, 0.0f, 5, 0.0f, 6, 13, "The War-Host Charges", 1600.0f, 110.0f, "A war-cry that hurls the dead back in a wave. Charged: the old war-host of the barrows charges down the line in front of you.", 0xC6E, 0xC6F },
 	} };
 	inline constexpr std::uint32_t kArtIceShell = 0xBC0, kArtRoots = 0xBC1, kArtBurn = 0xBC2, kArtPoison = 0xBC3, kArtPortal = 0xCB2, kArtPortalBig = 0xCB5;  // status looks on the struck
-	struct TabletWeapon { std::string_view id, label; bool battered; int type, uses; std::uint32_t form, show, gloves; std::string_view lookPlugin; std::uint32_t look, left; };  // look: another mod's weapon it wears (left: its left-hand twin)  // type: 0 fists 1 mace 2 dagger 3 battleaxe 4 bow 5 staff 6 greatsword 7 book 8 scythe
+	struct TabletWeapon { std::string_view id, label; bool battered; int type, uses, rarity; bool pool; std::uint32_t form, show, gloves; std::string_view lookPlugin; std::uint32_t look, left; };  // look: another mod's weapon it wears (left: its left-hand twin)  // type: 0 fists 1 mace 2 dagger 3 battleaxe 4 bow 5 staff 6 greatsword 7 book 8 scythe
 	inline constexpr std::array<TabletWeapon, 14> kTabletWeapons{ {
-		TabletWeapon{ "stormtalons", "Stormtalons", false, 2, 100, 0xEE5, 0xEE0, 0x000, "NewArmoury.esp", 0x19AAAA, 0x19AAE0 },
-		TabletWeapon{ "gravebell", "Gravebell Mace", false, 1, 100, 0xEBE, 0xEB5, 0x000, "", 0x0, 0x0 },
-		TabletWeapon{ "talons", "Talons of Woe", true, 2, 30, 0xEE6, 0xEE1, 0x000, "NewArmoury.esp", 0x19AAB2, 0x19AAEE },
-		TabletWeapon{ "riverstone", "Riverstone Halberd", false, 3, 100, 0xEC0, 0xEB7, 0x000, "NewArmoury.esp", 0x16801F, 0x0 },
-		TabletWeapon{ "wyrmspine", "Wyrmspine Pike", true, 6, 30, 0xEE7, 0xEE2, 0x000, "NewArmoury.esp", 0x153BB9, 0x0 },
-		TabletWeapon{ "lanternwick", "Rimewick Quarterstaff", true, 3, 30, 0xEC2, 0xEB9, 0x000, "NewArmoury.esp", 0x18B765, 0x0 },
-		TabletWeapon{ "cinderclaws", "Cinderclaws", false, 2, 100, 0xEE8, 0xEE3, 0x000, "NewArmoury.esp", 0x19AAAC, 0x19AAE8 },
-		TabletWeapon{ "eclipse", "Eclipse Edge", true, 6, 30, 0xEC4, 0xEBA, 0x000, "NewArmoury.esp", 0x153BB0, 0x0 },
-		TabletWeapon{ "wanderstar", "The Wandering Star", true, 5, 30, 0xEC5, 0xEBB, 0x000, "Fulcimentum - More Staves and Wands of Skyrim.esp", 0x800, 0x0 },
-		TabletWeapon{ "frostmourn", "Frostmourn Rapier", false, 2, 100, 0xEE9, 0xEE4, 0x000, "NewArmoury.esp", 0x01EE21, 0x0 },
-		TabletWeapon{ "silverscythe", "Silver Reaping Scythe", false, 8, 100, 0xEF0, 0xEEC, 0x000, "", 0x0, 0x0 },
-		TabletWeapon{ "bonereaper", "Bonereaper", true, 8, 30, 0xEF1, 0xEED, 0x000, "", 0x0, 0x0 },
-		TabletWeapon{ "wyrmtooth", "Wyrmtooth Scythe", false, 8, 100, 0xEF2, 0xEEE, 0x000, "", 0x0, 0x0 },
-		TabletWeapon{ "bloodmoon", "Bloodmoon Scythe", true, 8, 30, 0xEF3, 0xEEF, 0x000, "", 0x0, 0x0 },
+		TabletWeapon{ "stormtalons", "Stormtalons", false, 2, 100, 1, true, 0xEE5, 0xEE0, 0x000, "NewArmoury.esp", 0x19AAAA, 0x19AAE0 },
+		TabletWeapon{ "gravebell", "Gravebell Mace", false, 1, 100, 0, true, 0xEBE, 0xEB5, 0x000, "", 0x0, 0x0 },
+		TabletWeapon{ "talons", "Talons of Woe", true, 2, 30, 0, false, 0xEE6, 0xEE1, 0x000, "NewArmoury.esp", 0x19AAB2, 0x19AAEE },
+		TabletWeapon{ "riverstone", "Riverstone Halberd", false, 3, 100, 0, false, 0xEC0, 0xEB7, 0x000, "NewArmoury.esp", 0x16801F, 0x0 },
+		TabletWeapon{ "wyrmspine", "Wyrmspine Pike", true, 6, 30, 0, true, 0xEE7, 0xEE2, 0x000, "NewArmoury.esp", 0x153BB9, 0x0 },
+		TabletWeapon{ "lanternwick", "Rimewick Quarterstaff", true, 3, 30, 1, true, 0xEC2, 0xEB9, 0x000, "NewArmoury.esp", 0x18B765, 0x0 },
+		TabletWeapon{ "cinderclaws", "Cinderclaws", false, 2, 100, 0, true, 0xEE8, 0xEE3, 0x000, "NewArmoury.esp", 0x19AAAC, 0x19AAE8 },
+		TabletWeapon{ "eclipse", "Eclipse Edge", true, 6, 30, 1, true, 0xEC4, 0xEBA, 0x000, "NewArmoury.esp", 0x153BB0, 0x0 },
+		TabletWeapon{ "wanderstar", "The Wandering Star", true, 5, 30, 0, false, 0xEC5, 0xEBB, 0x000, "Fulcimentum - More Staves and Wands of Skyrim.esp", 0x800, 0x0 },
+		TabletWeapon{ "frostmourn", "Frostmourn Rapier", false, 2, 100, 0, true, 0xEE9, 0xEE4, 0x000, "NewArmoury.esp", 0x01EE21, 0x0 },
+		TabletWeapon{ "silverscythe", "Silver Reaping Scythe", false, 8, 100, 0, false, 0xEF0, 0xEEC, 0x000, "", 0x0, 0x0 },
+		TabletWeapon{ "bonereaper", "Bonereaper", true, 8, 30, 0, false, 0xEF1, 0xEED, 0x000, "", 0x0, 0x0 },
+		TabletWeapon{ "wyrmtooth", "Wyrmtooth Scythe", false, 8, 100, 0, false, 0xEF2, 0xEEE, 0x000, "", 0x0, 0x0 },
+		TabletWeapon{ "bloodmoon", "Bloodmoon Scythe", true, 8, 30, 0, false, 0xEF3, 0xEEF, 0x000, "", 0x0, 0x0 },
 	} };
 	inline constexpr std::uint32_t kTabletArrow = 0xEC9;
 	inline constexpr std::array<std::pair<std::string_view, std::uint32_t>, 10> kScytheFirst{ { { "CurseOfAlduin\\reapers\\forsworn.nif", 0xF1C }, { "CurseOfAlduin\\reapers\\falmer.nif", 0xF1D }, { "CurseOfAlduin\\reapers\\dwarven.nif", 0xF1E }, { "CurseOfAlduin\\scythes\\glass.nif", 0xF1F }, { "CurseOfAlduin\\reapers\\dragonpriest.nif", 0xF20 }, { "CurseOfAlduin\\reapers\\silver.nif", 0xF21 }, { "CurseOfAlduin\\reapers\\Skeleton.nif", 0xF22 }, { "CurseOfAlduin\\reapers\\dragonTeeth.nif", 0xF23 }, { "CurseOfAlduin\\reapers\\vampire.nif", 0xF24 }, { "CurseOfAlduin\\reapers\\daedric.nif", 0xF25 } } };  // (each scythe model: its first-person STAT, the item menu's view)

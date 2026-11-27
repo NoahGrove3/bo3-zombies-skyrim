@@ -85,7 +85,7 @@ LEFT = {'tab_stormtalons_l', 'tab_talons_l', 'tab_cinderclaws_l'}
 # the class weapons: each takes another model at each tier (src/Classes.cpp AdoptTierLook), so each tier's model has its own
 # art; the Spellbound Rapier's look follows the element in your other hand (its BLADE_VIZ key: src/Classes.cpp LookKey)
 BV_KEYS = ['alch', 'carian', 'radiant', 'ss_none', 'ss_fire', 'ss_frost', 'ss_shock', 'ss_sun', 'ss_blood', 'slayer']
-BV_PICK = {'alch': ('o1', 'shadow'), 'carian': ('o1', 'purple'), 'radiant': ('o3', 'gold'), 'ss_none': ('o1', 'white'), 'ss_fire': ('o2', 'orange'), 'ss_frost': ('o1', 'iceblue'), 'ss_shock': ('o1', 'iceblue'), 'ss_sun': ('o1', 'orange'), 'ss_blood': ('o1', 'blue'), 'slayer': ('o3', 'gold')}   # (Noah's picks, the workshop 2026-11-25, doc 8cd53a1; ss_fire and slayer changed in doc 5865977, 2026-11-26)
+BV_PICK = {'alch': ('o3', 'shadow'), 'carian': ('o1', 'purple'), 'radiant': ('o1', 'gold'), 'ss_none': ('o1', 'white'), 'ss_fire': ('o2', 'orange'), 'ss_frost': ('o1', 'iceblue'), 'ss_shock': ('o1', 'iceblue'), 'ss_sun': ('o1', 'orange'), 'ss_blood': ('o1', 'blue'), 'slayer': ('o3', 'gold')}   # (Noah's picks, the workshop 2026-11-25, doc 8cd53a1; ss_fire and slayer changed in doc 5865977, 2026-11-26)
 CLASS_MODELS = {   # the look key(s), each model: its steel shapes and band
     # (Noah, 2026-11-25: "the weapon effects are at the ends of each side of the staff ... the weapon heads, not the handles") each
     # staff's two capped heads - where its detail is - and none of the plain shaft between

@@ -846,7 +846,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const float cx = (a.x + b.x) * 0.5f;
 				// always: its number and name (every card still told apart); the rest only on the card in focus
 				TxtC(dl, g_body, 16 * k, cx, a.y + 18 * k, Fade(c.col, 0.9f), std::to_string(i + 1));
-				TxtC(dl, g_title, (28 + 4 * eo) * k, cx, a.y + 38 * k, e > 0.5f ? IM_COL32(255, 248, 232, 255) : kParch, c.name, 2.5f * k * eo, Fade(c.col, 0.8f));
+				// (Noah, Nov 27 workshop: "keep this screen as it is ... but make the text gold like in this preview") Ember Tally's gold
+				TxtC(dl, g_title, (28 + 4 * eo) * k, cx, a.y + 38 * k, e > 0.5f ? IM_COL32(255, 217, 138, 255) : IM_COL32(241, 200, 110, 255), c.name, 2.5f * k * eo, Fade(IM_COL32(232, 112, 63, 255), 0.7f));
 				if (const float ta = std::clamp((eo - 0.35f) / 0.65f, 0.0f, 1.0f); ta > 0.01f) {   // (the words wait for the card to open)
 					// (Noah: "when moving from one class to another the text looks weird like it expands with more text for a split
 					// second") the words are laid out once at the open card's width and never re-wrapped as it grows or shrinks -
@@ -881,7 +882,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					// the motto: a short gold rule over it, the title face
 					dl->AddRectFilledMultiColor({ cx - 70 * k, y - 8 * k }, { cx, y - 6.8f * k }, Fade(kGold, 0), Fade(kGold, ta), Fade(kGold, ta), Fade(kGold, 0));
 					dl->AddRectFilledMultiColor({ cx, y - 8 * k }, { cx + 70 * k, y - 6.8f * k }, Fade(kGold, ta), Fade(kGold, 0), Fade(kGold, 0), Fade(kGold, ta));
-					TxtC(dl, g_title, mPx, cx, y, Fade(IM_COL32(246, 236, 214, 255), ta), c.tag, 1.5f * k * ta, Fade(c.col, 0.6f * ta));
+					TxtC(dl, g_title, mPx, cx, y, Fade(IM_COL32(245, 226, 184, 255), ta), c.tag, 1.5f * k * ta, Fade(IM_COL32(232, 112, 63, 255), 0.5f * ta));
 					y += mPx + 22 * k;
 					const auto sec = [&](const char* h, const char* t) {
 						// the heading in the title face, gold, with a fine rule either side
@@ -889,9 +890,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						const float ry = y + hPx * 0.55f;
 						dl->AddRectFilledMultiColor({ cx - hw * 0.5f - 46 * k, ry }, { cx - hw * 0.5f - 8 * k, ry + 1.0f * k }, Fade(kGold, 0), Fade(kGold, 0.8f * ta), Fade(kGold, 0.8f * ta), Fade(kGold, 0));
 						dl->AddRectFilledMultiColor({ cx + hw * 0.5f + 8 * k, ry }, { cx + hw * 0.5f + 46 * k, ry + 1.0f * k }, Fade(kGold, 0.8f * ta), Fade(kGold, 0), Fade(kGold, 0), Fade(kGold, 0.8f * ta));
-						TxtC(dl, g_title, hPx, cx, y, Fade(kGold, ta), h);
+						TxtC(dl, g_title, hPx, cx, y, Fade(IM_COL32(241, 200, 110, 255), ta), h);
 						y += hPx + 8 * k;
-						y += wrapC(g_body, bPx, bLh, y, Fade(IM_COL32(222, 212, 192, 240), ta), t, true) + 14 * k;
+						y += wrapC(g_body, bPx, bLh, y, Fade(IM_COL32(236, 218, 178, 240), ta), t, true) + 14 * k;
 					};
 					sec("FIGHTS WITH", c.arms);
 					sec("GROWS BY", c.grow);
@@ -3165,7 +3166,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const ImU32 cc = cls < 0 ? IM_COL32(255, 210, 120, 255) : kParch;
 					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, cc, cls < 0 ? std::string("CHOOSE YOUR CLASS") : "CLASS: " + Upper(std::string(Classes::Name(cls))));
 					Txt(dl, g_body, 17 * k, { L + 36 * k, y + 32 * k }, IM_COL32(196, 182, 160, 235),
-						cls < 0 ? std::string("Summoner, Destruction, Alchemist or Spellsword - free, your first path") : std::string("Change class - 50,000 Cursed Essence; your gear and spells stay with you"));
+						cls < 0 ? std::string("Summoner, Destruction, Alchemist or Spellsword - free, your first path") : std::string("Change class - 20,000 Cursed Essence; your gear and spells stay with you"));
 					if (cls >= 0) price(y + 2 * k, Classes::SwitchCost(), s.points >= Classes::SwitchCost());
 					y += 64 * k;
 					Divider(dl, cx, y, w * 0.30f, k, 0.6f);

@@ -290,9 +290,17 @@ namespace coa::Kit
 						auto* p = RE::PlayerCharacter::GetSingleton();
 						auto* em = RE::ActorEquipManager::GetSingleton();
 						if (p && em && p->GetEquippedObject(false) == w) {
-							if (a_reequip && !ItemMenusOpen()) {
-								em->UnequipObject(p, w, nullptr, 1, nullptr, false, false, false, true);
-								em->EquipObject(p, w, nullptr, 1, nullptr, false, false, false, true);
+							// (Noah, Nov 27: class weapons switching on their own when put away) only while it's drawn, back into the
+							// same (right) hand, and whatever the left hand held put back too
+							if (a_reequip && !ItemMenusOpen() && p->AsActorState()->IsWeaponDrawn()) {
+								auto* right = RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F42);
+								auto* left = p->GetEquippedObject(true);
+								em->UnequipObject(p, w, nullptr, 1, right, false, false, false, true);
+								em->EquipObject(p, w, nullptr, 1, right, false, false, false, true);
+								if (left && p->GetEquippedObject(true) != left) {
+									if (auto* sp = left->As<RE::SpellItem>()) em->EquipSpell(p, sp, RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F43));
+									else if (auto* bo = left->As<RE::TESBoundObject>()) em->EquipObject(p, bo, nullptr, 1, RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F43), false, false, false, true);
+								}
 							} else g_lookPending = true;
 						}
 					}
@@ -707,7 +715,10 @@ namespace coa::Kit
 		// current detail") every kit weapon's card follows its tier - its name and its damage - and the Riftblade's own fire
 		// burns brighter each tier
 		TickMadGlow(a_delta);
-		if (g_lookPending && !ItemMenusOpen()) { g_lookPending = false; SyncWeapons(true); }  // (a sword's new look, once the menu is shut)
+		if (g_lookPending && !ItemMenusOpen()) {   // (a sword's new look, once the menu is shut and it's drawn)
+			auto* pp = RE::PlayerCharacter::GetSingleton();
+			if (pp && pp->AsActorState()->IsWeaponDrawn()) { g_lookPending = false; SyncWeapons(true); }
+		}  // (a sword's new look, once the menu is shut)
 		static float look = 0;
 		if ((look -= a_delta) <= 0) {
 			look = 1.0f;

@@ -274,14 +274,21 @@ namespace coa::Tablet
 		// never the one you already carry
 		int Pick()
 		{
-			// (Noah: "Tablet worn weapons from night 4, battered from night 8") before night 8 only the worn
-			const bool battered = (Gun::TestKitOn() || Save::Get(gen::kAV_round) + 1 >= 8) && std::uniform_int_distribution<int>(0, 99)(g_rng) < 15;
-			std::vector<int> pool;
+			// (Noah, Nov 27: "3 rarity weapons ... Rare Blue, Purple Epic, Gold Legendary" - "rarer = less often") 60 / 30 / 10;
+			// no Legendary before night 8 (his old rule for the battered). Only his lineup rolls: the cut ones are kept as forms only
+			const bool late = Gun::TestKitOn() || Save::Get(gen::kAV_round) + 1 >= 8;
+			const int w[3] = { 60, 30, late ? 10 : 0 };
+			std::vector<int> pool, wt;
 			for (int i = 0; i < static_cast<int>(gen::kTabletWeapons.size()); ++i) {
-				if (gen::kTabletWeapons[i].battered == battered && i != g_held) pool.push_back(i);
+				const auto& d = gen::kTabletWeapons[i];
+				if (d.pool && i != g_held && w[d.rarity] > 0) pool.push_back(i), wt.push_back(w[d.rarity]);
 			}
 			if (pool.empty()) return 0;
-			return pool[std::uniform_int_distribution<int>(0, static_cast<int>(pool.size()) - 1)(g_rng)];
+			// (each rarity's share split among its weapons, so adding weapons to a rarity never changes how often the rarity comes up)
+			int per[3] = {}; for (int i : pool) ++per[gen::kTabletWeapons[i].rarity];
+			std::vector<double> ww; for (std::size_t k = 0; k < pool.size(); ++k) ww.push_back(static_cast<double>(wt[k]) / per[gen::kTabletWeapons[pool[k]].rarity]);
+			std::discrete_distribution<int> pick(ww.begin(), ww.end());
+			return pool[pick(g_rng)];
 		}
 		void ClearReel()
 		{
@@ -299,7 +306,11 @@ namespace coa::Tablet
 		RE::NiColor RarityColour(int a_w)
 		{
 			if (a_w < 0) return { 1.0f, 1.0f, 1.0f };
-			return gen::kTabletWeapons[a_w].battered ? RE::NiColor{ 1.0f, 0.70f, 0.16f } : RE::NiColor{ 0.30f, 1.0f, 0.36f };
+			switch (gen::kTabletWeapons[a_w].rarity) {   // (Rare blue, Epic purple, Legendary gold)
+			case 2:  return { 1.0f, 0.70f, 0.16f };
+			case 1:  return { 0.66f, 0.30f, 1.0f };
+			default: return { 0.24f, 0.55f, 1.0f };
+			}
 		}
 		// its model lit from within in that colour (every lit shader of it given its own glow), breathing a little
 		void RarityLight(RE::TESObjectREFR* a_r, int a_w, float a_k)
@@ -320,7 +331,8 @@ namespace coa::Tablet
 		void Glow(RE::TESObjectREFR* a_r, int a_w, bool& a_done)
 		{
 			if (a_done || !a_r || a_w < 0 || !a_r->Is3DLoaded()) return;
-			auto* sh = Forms::Ours(gen::kTabletWeapons[a_w].battered ? gen::kTabletGold : gen::kTabletGreen);
+			const int r = gen::kTabletWeapons[a_w].rarity;
+			auto* sh = Forms::Ours(r == 2 ? gen::kTabletGold : r == 1 ? gen::kSoulPurple : gen::kTabletGreen);   // (kTabletGreen is the Rare blue now)
 			if (auto* e = sh ? sh->As<RE::TESEffectShader>() : nullptr) a_r->ApplyEffectShader(e, -1.0f);
 			a_done = true;
 		}
@@ -498,7 +510,7 @@ namespace coa::Tablet
 			if (w >= 0 && sh) {
 				const auto* o = sh->Get3D();
 				const RE::NiPoint3 mid = o && o->worldBound.radius > 1.0f ? o->worldBound.center : sh->GetPosition() + RE::NiPoint3{ 0, 0, 40.0f };
-				Gun::Motes(gen::kTabletWeapons[w].battered ? 8 : 7, mid, g_phase == Phase::Offering ? 0.45f : 0.25f, 1.1f);
+				Gun::Motes(gen::kTabletWeapons[w].rarity == 2 ? 8 : gen::kTabletWeapons[w].rarity == 1 ? 9 : 1, mid, g_phase == Phase::Offering ? 0.45f : 0.25f, 1.1f);
 			}
 		}
 		// how high over its plinth the tablet is: coming down the beam (falling faster and faster), going up it
@@ -778,7 +790,7 @@ namespace coa::Tablet
 		// (Noah: after a random 4-8 rolls the skull can come: the essence back, and the tablet moves)
 		g_skull = g_rolls > g_moveAfter;
 		g_prize = g_skull ? -1 : Pick();
-		g_gold = !g_skull && gen::kTabletWeapons[g_prize].battered;
+		g_gold = !g_skull && gen::kTabletWeapons[g_prize].rarity == 2;   // (a Legendary win rings the bell)
 		Forms::PlayAt(gen::Sound::coffer_charge, a_ref);
 		Forms::PlayAt(gen::Sound::coffer_spin, a_ref);
 		logger::info("tablet: rolled in {} for {} - {}", g_town >= 0 ? gen::kTowns[g_town] : "?", price, g_skull ? "the skull" : gen::kTabletWeapons[g_prize].id);

@@ -4,7 +4,7 @@
 
 // The four classes (Noah, the classes overhaul): Summoner, Destruction, Ranger, Spellsword. A new character picks one
 // on a full-screen picker the moment it is out of the character creator; the pick hands over the class's starter kit.
-// Any Echo Altar can switch class for 50,000 Cursed Essence. (Noah: "one inventory for each player so a player can mix
+// Any Echo Altar can switch class for 20,000 Cursed Essence. (Noah: "one inventory for each player so a player can mix
 // and match") everything you carry - weapons, armour, spells - stays with you; a class's own powers (the horn, the
 // Mutagen Staff, the flasks) answer only to that class. The class you take up gets its kit the first time.
 // Co-save 'CLAS': [class+1] then, per class, [kit given][n] and n x [spell index, level].
@@ -498,7 +498,7 @@ namespace coa::Classes
 	int  Selected() { return g_sel.load(); }
 	bool Switching() { return g_switching.load(); }
 	std::string_view Name(int a_cls) { return a_cls >= 0 && a_cls < 4 ? coffer::kClassName[a_cls] : "None"; }
-	int  SwitchCost() { return 50000; }   // (Noah: "I want to make the change class 50,000 cursed essence so people cant just flip through them")
+	int  SwitchCost() { return 20000; }   // (Noah, Nov 27: "make the class change cost 20k instead of 50k")
 
 	void OpenPicker(bool a_switch)
 	{
@@ -1760,6 +1760,11 @@ namespace coa::Classes
 		if (ownFirst) j->firstPersonModelObject = ownFirst;
 		if (ownSlot) j->SetEquipSlot(ownSlot);
 		j->weaponData.reach = std::max(j->weaponData.reach, 1.3f);   // (a spear's length: a longer reach than the rapier's)
+		// (Noah, Nov 27: "the javelin does the one hand sword put away animation but it shows up on my back" - "the jab should be
+		// gone so only the throw", put away on the back properly) no rapier's moves left to use (the press only ever throws): it
+		// is held and put away as a staff - one hand, drawn over the shoulder from the back, where its model hangs - so the other
+		// hand keeps its spell for the throw's element
+		j->weaponData.animationType = RE::WEAPON_TYPE::kStaff;
 		logger::info("javelin: jabs as {} (reach {:.2f})", s->GetName(), j->weaponData.reach);
 	}
 	void JavelinButton(bool a_left, bool a_down)
@@ -3318,7 +3323,8 @@ namespace coa::Classes
 		if (c == 1) {
 			// (Noah, 2026-11-24: "Ascended just makes it do more damage. It shouldn't change the way the sword looks" - "Tier III gets
 			// the last") Steel, Stalhrim, Glass, then the Daedric wand from Tier III on; the Ebony wand is no longer worn
-			static constexpr std::uint32_t kWand[5] = { 0x000805, 0x000812, 0x000807, 0x000816, 0x000816 };
+			// (Noah, Nov 27 workshop: "one model per class weapon" - his pick, the Glass wand, at every tier; the tiers change its look only)
+			static constexpr std::uint32_t kWand[5] = { 0x000807, 0x000807, 0x000807, 0x000807, 0x000807 };
 			auto* f = Lookup(kWand[std::clamp(a_tier, 0, 4)], "Fulcimentum - More Staves and Wands of Skyrim.esp");
 			auto* s = f ? f->As<RE::TESObjectWEAP>() : nullptr;
 			if (!s) return false;
@@ -3332,7 +3338,8 @@ namespace coa::Classes
 			// (Noah: "all scythes should be smaller" - 60%: tools/scythes.sh makes them on your machine from your own Battle Scythe)
 			// (Noah, 2026-11-24: Ascended keeps Tier III's look - "Tier III gets the last") Forsworn, Falmer, Dwarven, then the Dragon
 			// Priest's scythe from Tier III on; the Glass scythe is no longer worn
-			static constexpr const char* kScythe[5] = { "CurseOfAlduin\\reapers\\forsworn.nif", "CurseOfAlduin\\reapers\\falmer.nif", "CurseOfAlduin\\reapers\\dwarven.nif",
+			// (Noah, Nov 27 workshop: one model - his pick, the Dragon Priest scythe - at every tier)
+			static constexpr const char* kScythe[5] = { "CurseOfAlduin\\reapers\\dragonpriest.nif", "CurseOfAlduin\\reapers\\dragonpriest.nif", "CurseOfAlduin\\reapers\\dragonpriest.nif",
 				"CurseOfAlduin\\reapers\\dragonpriest.nif", "CurseOfAlduin\\reapers\\dragonpriest.nif" };
 			const bool changed = ScytheLook(a_w, kScythe[std::clamp(a_tier, 0, 4)]);
 			if (changed) logger::info("classes: the {} takes the look of {}", a_w->GetName(), kScythe[std::clamp(a_tier, 0, 4)]);
@@ -3342,7 +3349,9 @@ namespace coa::Classes
 		const Src* src = c == 0 ? &kQStaff : c == 3 ? &kRapier : nullptr;
 		if (!src) return false;
 		// (Noah, 2026-11-24: "One per tier") Base Steel, Tier I Ebony, Tier II Daedric, Tier III Dragonbone - and Ascended keeps it
-		const int i = std::clamp(a_tier, 0, 3);
+		// (Noah, Nov 27 workshop: one model per class weapon at every tier - the Ebony quarterstaff, the Daedric rapier)
+		const int i = c == 0 ? 1 : 2;
+		(void)a_tier;
 		auto* f = Lookup(src->id[i], src->plugin);
 		auto* s = f ? f->As<RE::TESObjectWEAP>() : nullptr;
 		if (!s) return false;
@@ -4310,8 +4319,11 @@ namespace coa::Classes
 			if (!p->AsActorState()->IsWeaponDrawn()) key = -1;
 			// (Noah: "when I change it to ice, my sword is still on fire") its enchantment's look was only set when the kit was synced:
 			// the moment the other hand's element changes, the blade is given its new look (taken off and on again)
+			// (Noah, Nov 27: "the class weapons like to switch automatically when I put them away and I'm holding more than 1 class
+			// weapon") putting it away made the key change (-1) and took the blade off and on again - which let the game pick the
+			// other class weapon for that hand. Only a change of element (while drawn) re-dresses it now
 			static int lastSs = -2;
-			if (cls == 3 && key != lastSs) {
+			if (cls == 3 && p->AsActorState()->IsWeaponDrawn() && key != lastSs) {
 				if (lastSs != -2) Kit::SyncWeapons(true);
 				lastSs = key;
 			}
