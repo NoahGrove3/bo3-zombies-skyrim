@@ -3197,6 +3197,27 @@ namespace coa::Classes
 		if (a_struck && Director::IsRoundUndead(a_struck) && !Director::IsBoss(a_struck)) g_pendingThrall.push_back({ a_struck->GetHandle(), 0.6f, a_level });
 	}
 	bool KitGiven(int a_cls) { return a_cls >= 0 && a_cls < 4 && g_kit[a_cls]; }
+	namespace { void SoulLook(RE::Actor* a_w, float a_secs); }
+	// (Nov 27: the Tablet's Soulrender and Lil' Atronach) an ally raised for a while from a base record - a spirit: the Soulcaller's
+	// blue ghost glow on it and its body faded
+	RE::TESNPC* RealBase(RE::Actor* a_a)
+	{
+		auto* base = a_a ? a_a->GetActorBase() : nullptr;
+		if (base && base->IsDynamicForm()) {   // (a temporary base made for one placed body: its real record, never that one)
+			base = nullptr;
+			if (auto* lc = a_a->extraList.GetByType<RE::ExtraLeveledCreature>()) {
+				for (auto* b : { lc->originalBase, lc->templateBase }) if (auto* n = b ? b->As<RE::TESNPC>() : nullptr; n && !n->IsDynamicForm()) { base = n; break; }
+			}
+		}
+		return base;
+	}
+	RE::Actor* RaiseFor(RE::TESNPC* a_base, const RE::NiPoint3& a_at, float a_seconds, float a_health, int a_cap, bool a_spirit)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* a = RaiseAlly(p, a_base, a_at, a_seconds, a_health, a_cap);
+		if (a && a_spirit) SoulLook(a, a_seconds), a->SetAlpha(0.55f);
+		return a;
+	}
 	// ---- (Noah: "remove everything from the Ranger class ... and replace it with the Alchemist class") the Alchemist ----
 	// Its flasks are hand spells: each cast lobs a tumbling flask (our projectile, carrying nothing) along where you aim, a
 	// little up so it arcs; where it comes down - a body, the ground, a wall - it bursts (FlaskBurst). The damage is the class

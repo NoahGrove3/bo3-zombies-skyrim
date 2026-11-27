@@ -956,20 +956,20 @@ def paper_tex(name, seed=0):
     return D, N, G
 
 
-def codex():
+def grimoire(name, cover, brass, ribbon, ink, seed):
     """(The Unwritten Codex - Noah: "an actual spell book in hand", "one handed", "it needs to look and feel strong") a
     great old grimoire held open on the palm: boards of black-red leather worn through to the wood at the corners, brass
     corner-guards and a brass sigil on its back board, its clasp hanging loose; pages of foxed vellum written with the
     Codex's glyphs and a circle drawn on the right-hand page; a red ribbon hanging from its spine. Its pages turn on their
     own; its ink burns ember-bright; glyphs lift off it and a spell circle turns in the air before it."""
-    lD, lN = leather_tex('w_codex_cover', (58, 22, 20), seed=840)
-    tool_ = knot(845, 4)   # (the boards tooled with knotwork, pressed dark into the leather)
-    cv = np.asarray(Image.open(g.WORK / 'w_codex_cover_d.dds.png').convert('RGB'), np.float32)
-    lD = save(cv * (1 - 0.45 * tool_[..., None]), 'w_codex_cover_d.dds')
-    bD, bN = metal_tex('w_codex_brass', (160, 122, 62), dark=0.7, etch=knot(846, 5), seed=841)
-    pD, pN, pG = paper_tex('w_codex_page', seed=842)
-    eD, eN = wood_tex('w_codex_edge', (196, 176, 140), grey=0.2, cracks=0.0, seed=843)   # (the page block's edge: fine lines)
-    rD, rN = cloth_tex('w_codex_ribbon', (140, 26, 24), seed=844)
+    lD, lN = leather_tex(f'w_{name}_cover', cover, seed=seed)
+    tool_ = knot(seed + 5, 4)   # (the boards tooled with knotwork, pressed dark into the leather)
+    cv = np.asarray(Image.open(g.WORK / f'w_{name}_cover_d.dds.png').convert('RGB'), np.float32)
+    lD = save(cv * (1 - 0.45 * tool_[..., None]), f'w_{name}_cover_d.dds')
+    bD, bN = metal_tex(f'w_{name}_brass', brass, dark=0.7, etch=knot(seed + 6, 5), seed=seed + 1)
+    pD, pN, pG = paper_tex(f'w_{name}_page', seed=seed + 2)
+    eD, eN = wood_tex(f'w_{name}_edge', (196, 176, 140), grey=0.2, cracks=0.0, seed=seed + 3)   # (the page block's edge: fine lines)
+    rD, rN = cloth_tex(f'w_{name}_ribbon', ribbon, seed=seed + 4)
     M = Mesh()
     a = math.radians(14)
     sp = np.array([0.3, -4.9, 4.4])           # (the spine, on the palm)
@@ -1014,7 +1014,7 @@ def codex():
     # its effects: the ember-lit ink's halo, glyphs rising off the pages, the spell circle turning before it
     fx = Fx()
     face = sp + np.array([0, -2.0, zc - sp[2]])
-    fx.card('BookGlow', FX['glow'], tuple(face), 9.0, '1,0.6,0.3,0.35', 1.0)
+    fx.card('BookGlow', FX['glow'], tuple(face), 9.0, f'{ink[0]},{ink[1]},{ink[2]},0.35', 1.0)
     rise = []
     nu = 20
     V_, N_, UV_, F_, A_ = [], [], [], [], []
@@ -1029,7 +1029,7 @@ def codex():
         for j in range(nu):
             a0 = i * (nu + 1) + j; b0 = a0 + 1; c0 = a0 + nu + 1; d0 = c0 + 1
             F_ += [(a0, c0, b0), (b0, c0, d0)]
-    fx.mesh(f'Glyphs tex={FX["motes"]} color=1,0.7,0.4,0.9 scale=1.8 blend=add vscroll=-5 uscroll=1.5', V_, N_, UV_, F_, A_)
+    fx.mesh(f'Glyphs tex={FX["motes"]} color={ink[0]},{min(1, ink[1] + 0.1):.2f},{min(1, ink[2] + 0.1):.2f},0.9 scale=1.8 blend=add vscroll=-5 uscroll=1.5', V_, N_, UV_, F_, A_)
     for k, (R0, R1, yy, us, al) in enumerate(((5.6, 7.4, -9.5, 2.5, 0.85), (3.6, 4.6, -9.7, -3.5, 0.7))):
         V_, N_, UV_, F_ = [], [], [], []
         nu = 64
@@ -1040,17 +1040,31 @@ def codex():
         for j in range(nu):
             a0 = j; b0 = j + 1; c0 = j + nu + 1; d0 = c0 + 1
             F_ += [(a0, b0, c0), (b0, d0, c0), (a0, c0, b0), (b0, c0, d0)]
-        fx.mesh(f'SpellCircle{k} tex=CurseOfAlduin\\priests\\moro_runeband.dds color=1,0.65,0.35,{al} scale=2.6 blend=add uscroll={us}', V_, N_, UV_, F_)
+        fx.mesh(f'SpellCircle{k} tex=CurseOfAlduin\\priests\\moro_runeband.dds color={ink[0]},{ink[1]},{ink[2]},{al} scale=2.6 blend=add uscroll={us}', V_, N_, UV_, F_)
     mats = {'cover': f'diffuse={lD} normal={lN} spec=0.17 gloss=10 alpha=0 doublesided=0',
             'brass': f'diffuse={bD} normal={bN} spec=0.65 gloss=30 alpha=0 doublesided=0',
-            'vellum': f'diffuse={pD} normal={pN} glow={pG} emit=1,0.65,0.35 emitmult=1.6 spec=0.15 gloss=8 alpha=0 doublesided=0',
-            'leaf': f'diffuse={pD} normal={pN} glow={pG} emit=1,0.65,0.35 emitmult=1.6 spec=0.15 gloss=8 alpha=0 doublesided=1',
+            'vellum': f'diffuse={pD} normal={pN} glow={pG} emit={ink[0]},{ink[1]},{ink[2]} emitmult=1.6 spec=0.15 gloss=8 alpha=0 doublesided=0',
+            'leaf': f'diffuse={pD} normal={pN} glow={pG} emit={ink[0]},{ink[1]},{ink[2]} emitmult=1.6 spec=0.15 gloss=8 alpha=0 doublesided=1',
             'edge': f'diffuse={eD} normal={eN} spec=0.15 gloss=8 alpha=0 doublesided=0',
             'ribbon': f'diffuse={rD} normal={rN} spec=0.15 gloss=8 alpha=0 doublesided=0'}
-    write_hand(M, 'codex', mats, fx.L, [f'flip Page {sp[0]:.3f} {sp[1] + 0.0:.3f} 0 0 0 -1 168 4.2', 'pulse Vellum 1.0 2.6 2.1', 'pulse Page 1.0 2.6 2.1'])
+    write_hand(M, name, mats, fx.L, [f'flip Page {sp[0]:.3f} {sp[1] + 0.0:.3f} 0 0 0 -1 168 4.2', 'pulse Vellum 1.0 2.6 2.1', 'pulse Page 1.0 2.6 2.1'])
 
 
-WEAPONS.update({'rattlebone': rattlebone, 'whisperwood': whisperwood, 'codex': codex})
+
+
+def codex():
+    """(The Unwritten Codex) the grimoire in black-red leather and brass, its ink ember-bright"""
+    grimoire('codex', (58, 22, 20), (160, 122, 62), (140, 26, 24), (1, 0.65, 0.35), 840)
+
+
+def apocrypha():
+    """(Nov 27 - the Grasp of Apocrypha, Noah's pick: "A Black Book of Hermaeus Mora, open in your hand") the same great book
+    held open on the palm, made one of Hermaeus Mora's: boards of near-black green leather, fittings of tarnished green bronze,
+    a ribbon dark as ink, its glyphs and its turning circle in Apocrypha's sickly green"""
+    grimoire('apocrypha', (18, 26, 20), (70, 92, 60), (24, 40, 30), (0.45, 1, 0.55), 860)
+
+
+WEAPONS.update({'rattlebone': rattlebone, 'whisperwood': whisperwood, 'codex': codex, 'apocrypha': apocrypha})
 # (Noah: "they look like paper thin rings instead of real hand wraps or elemental brass knuckles") the fist weapons are
 # gloves on the hands' own bones now: tools/tabletgloves.py. stormknuckles() and emberclaw() above are kept only as the
 # first try; nothing builds them

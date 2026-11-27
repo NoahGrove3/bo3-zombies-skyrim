@@ -1663,8 +1663,8 @@ namespace coa::gen
 		SpellcraftDef{ "barrowhorn", "Horn of the Dragon Priests", 0xFFC45C, 0xFFF3D6, 8, 3, 1600.0f, 60.0f, 560.0f, 1, 0.0f, 5, 0.0f, 6, 13, "The War-Host Charges", 1600.0f, 110.0f, "A war-cry that hurls the dead back in a wave. Charged: the old war-host of the barrows charges down the line in front of you.", 0xC6E, 0xC6F },
 	} };
 	inline constexpr std::uint32_t kArtIceShell = 0xBC0, kArtRoots = 0xBC1, kArtBurn = 0xBC2, kArtPoison = 0xBC3, kArtPortal = 0xCB2, kArtPortalBig = 0xCB5;  // status looks on the struck
-	struct TabletWeapon { std::string_view id, label; bool battered; int type, uses, rarity; bool pool; std::uint32_t form, show, gloves; std::string_view lookPlugin; std::uint32_t look, left; };  // look: another mod's weapon it wears (left: its left-hand twin)  // type: 0 fists 1 mace 2 dagger 3 battleaxe 4 bow 5 staff 6 greatsword 7 book 8 scythe
-	inline constexpr std::array<TabletWeapon, 14> kTabletWeapons{ {
+	struct TabletWeapon { std::string_view id, label; bool battered; int type, uses, rarity; bool pool; std::uint32_t form, show, gloves; std::string_view lookPlugin; std::uint32_t look, left; };  // look: another mod's weapon it wears (left: its left-hand twin)  // type: 0 fists 1 mace 2 dagger 3 battleaxe 4 bow 5 staff 6 greatsword 7 book 8 scythe 9 throw 10 shield 11 warhammer 12 sword
+	inline constexpr std::array<TabletWeapon, 25> kTabletWeapons{ {
 		TabletWeapon{ "stormtalons", "Stormtalons", false, 2, 100, 1, true, 0xEE5, 0xEE0, 0x000, "NewArmoury.esp", 0x19AAAA, 0x19AAE0 },
 		TabletWeapon{ "gravebell", "Gravebell Mace", false, 1, 100, 0, true, 0xEBE, 0xEB5, 0x000, "", 0x0, 0x0 },
 		TabletWeapon{ "talons", "Talons of Woe", true, 2, 30, 0, false, 0xEE6, 0xEE1, 0x000, "NewArmoury.esp", 0x19AAB2, 0x19AAEE },
@@ -1679,6 +1679,17 @@ namespace coa::gen
 		TabletWeapon{ "bonereaper", "Bonereaper", true, 8, 30, 0, false, 0xEF1, 0xEED, 0x000, "", 0x0, 0x0 },
 		TabletWeapon{ "wyrmtooth", "Wyrmtooth Scythe", false, 8, 100, 0, false, 0xEF2, 0xEEE, 0x000, "", 0x0, 0x0 },
 		TabletWeapon{ "bloodmoon", "Bloodmoon Scythe", true, 8, 30, 0, false, 0xEF3, 0xEEF, 0x000, "", 0x0, 0x0 },
+		TabletWeapon{ "fushammer", "Voice of the Mountain", true, 11, 30, 2, true, 0x40B, 0x400, 0x000, "Dragonborn.esm", 0x01CDB3, 0x0 },
+		TabletWeapon{ "soulrender", "Soulrender", true, 1, 30, 2, true, 0x40C, 0x401, 0x000, "Skyrim.esm", 0x0139B8, 0x0 },
+		TabletWeapon{ "chaurus", "Chaurus Fang", false, 12, 100, 0, true, 0x40D, 0x402, 0x000, "Skyrim.esm", 0x02E6D1, 0x0 },
+		TabletWeapon{ "bound", "Mace of the Bound", false, 1, 60, 1, true, 0x40E, 0x403, 0x000, "Skyrim.esm", 0x0233E3, 0x0 },
+		TabletWeapon{ "giantclub", "Giant's Toe Club", false, 11, 100, 0, true, 0x40F, 0x404, 0x000, "Skyrim.esm", 0x0CDEC9, 0x0 },
+		TabletWeapon{ "spriggan", "Spriggan's Heartroot", false, 1, 100, 0, true, 0x410, 0x405, 0x000, "Skyrim.esm", 0x0139A0, 0x0 },
+		TabletWeapon{ "apocrypha", "Grasp of Apocrypha", true, 7, 30, 2, true, 0x414, 0x406, 0x000, "", 0x0, 0x0 },
+		TabletWeapon{ "sweetroll", "Sweetroll of the Damned", false, 9, 5, 1, true, 0x411, 0x407, 0x000, "", 0x0, 0x0 },
+		TabletWeapon{ "atronach", "Lil' Atronach", false, 9, 3, 1, true, 0x412, 0x408, 0x000, "", 0x0, 0x0 },
+		TabletWeapon{ "eggsac", "Frostbite Egg Sac", false, 9, 4, 0, true, 0x413, 0x409, 0x000, "", 0x0, 0x0 },
+		TabletWeapon{ "wardshield", "Dragonguard Ward-Shield", false, 10, 100, 0, true, 0x416, 0x40A, 0x000, "", 0x0, 0x0 },
 	} };
 	inline constexpr std::uint32_t kTabletArrow = 0xEC9;
 	inline constexpr std::array<std::pair<std::string_view, std::uint32_t>, 10> kScytheFirst{ { { "CurseOfAlduin\\reapers\\forsworn.nif", 0xF1C }, { "CurseOfAlduin\\reapers\\falmer.nif", 0xF1D }, { "CurseOfAlduin\\reapers\\dwarven.nif", 0xF1E }, { "CurseOfAlduin\\scythes\\glass.nif", 0xF1F }, { "CurseOfAlduin\\reapers\\dragonpriest.nif", 0xF20 }, { "CurseOfAlduin\\reapers\\silver.nif", 0xF21 }, { "CurseOfAlduin\\reapers\\Skeleton.nif", 0xF22 }, { "CurseOfAlduin\\reapers\\dragonTeeth.nif", 0xF23 }, { "CurseOfAlduin\\reapers\\vampire.nif", 0xF24 }, { "CurseOfAlduin\\reapers\\daedric.nif", 0xF25 } } };  // (each scythe model: its first-person STAT, the item menu's view)

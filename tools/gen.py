@@ -312,11 +312,11 @@ o.append(f'\tinline constexpr std::uint32_t kArtIceShell = 0x{IDS[("ARTO", "fx_i
 EL8 = ['fire', 'frost', 'shock', 'poison', 'disease', 'sun', 'blood', 'arcane']
 SCID = [r['id'] for r in S['spellcraft']['rows']]
 TBW = S['tablet']['rows']
-o.append('\tstruct TabletWeapon { std::string_view id, label; bool battered; int type, uses, rarity; bool pool; std::uint32_t form, show, gloves; std::string_view lookPlugin; std::uint32_t look, left; };  // look: another mod\'s weapon it wears (left: its left-hand twin)  // type: 0 fists 1 mace 2 dagger 3 battleaxe 4 bow 5 staff 6 greatsword 7 book 8 scythe')
-_TBT = ['fists', 'mace', 'dagger', 'battleaxe', 'bow', 'staff', 'greatsword', 'book', 'scythe']
+o.append('\tstruct TabletWeapon { std::string_view id, label; bool battered; int type, uses, rarity; bool pool; std::uint32_t form, show, gloves; std::string_view lookPlugin; std::uint32_t look, left; };  // look: another mod\'s weapon it wears (left: its left-hand twin)  // type: 0 fists 1 mace 2 dagger 3 battleaxe 4 bow 5 staff 6 greatsword 7 book 8 scythe 9 throw 10 shield 11 warhammer 12 sword')
+_TBT = ['fists', 'mace', 'dagger', 'battleaxe', 'bow', 'staff', 'greatsword', 'book', 'scythe', 'throw', 'shield', 'warhammer', 'sword']
 o.append(f'\tinline constexpr std::array<TabletWeapon, {len(TBW)}> kTabletWeapons{{ {{')
 for w in TBW:
-    form = IDS[('SPEL' if w['type'] == 'book' else 'WEAP', 'tab_' + w['id'])]
+    form = IDS[('SPEL' if w['type'] == 'book' else 'ARMO' if w['type'] == 'shield' else 'WEAP', 'tab_' + w['id'])]
     show = IDS.get(('STAT', 'tabshow_' + w['id']), 0)
     gloves = IDS.get(('ARMO', 'tabglove_' + w['id']), 0)
     lk = w.get('look', {})

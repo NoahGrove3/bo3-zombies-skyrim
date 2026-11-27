@@ -20,6 +20,8 @@ namespace coa
 		float        g_sinceSprint = 99;    // seconds since you were last sprinting (the crouch may land a frame after the sprint ends)
 		bool         g_sneakBefore = false; // sneaking as of the last frame (the crouch key's own toggle lands before we hear it)
 		RE::NiPoint3 g_slideDir{};
+		RE::NiPoint3 g_shove{};   // (Nov 27: the Ward-Shield's charge) carried along the ground at this speed while g_shoveT lasts
+		float        g_shoveT = 0.0f;
 		float        g_carry = 0;   // horizontal speed carried into a jump from a slide (units/s)
 		bool         g_wasAir = false;
 		bool         g_gmst = false;
@@ -2435,6 +2437,7 @@ namespace coa
 		else if (a_tag == "attackstop" || a_tag == "attackstart") g_power = false;
 	}
 	bool Dodging() { return g_dodgeT >= 0.0f && g_dodgeT < 0.6f; }
+	void Shove(const RE::NiPoint3& a_vel, float a_seconds) { g_shove = a_vel, g_shoveT = a_seconds; }
 		bool Gliding() { return g_hadDragon || g_dive; }
 		void OnStick(const RE::ThumbstickEvent* a_event)
 		{
@@ -3260,6 +3263,10 @@ namespace coa
 				const float t = 1.0f - g_slide / gen::kSlideSeconds;
 				const float speed = g_slideSpeed * (1.0f - 0.4f * t * t);
 				SetVel(cc, { g_slideDir.x * speed, g_slideDir.y * speed, std::min(v.z, 0.0f) });
+			}
+			if (g_shoveT > 0.0f) {   // (a shield charge: driven straight ahead)
+				g_shoveT -= a_delta;
+				if (cc && !air) SetVel(cc, { g_shove.x, g_shove.y, std::min(v.z, 0.0f) });
 			}
 
 			// ---- momentum: whatever speed you leave the ground with (run, sprint or slide), you keep in the air

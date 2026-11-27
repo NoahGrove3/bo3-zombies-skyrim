@@ -710,6 +710,7 @@ namespace coa
 					static int told = 0;
 					if (summon && told < 6) ++told, logger::info("classes: a summon's kill ({}, killer {})", dying->GetName(), killer ? killer->GetName() : "none");
 					if (mine || summon) Classes::OnKill(summon, dying, killer);
+					Tablet::OnDeath(dying, mine);   // (Nov 27: the Chaurus Fang's acid, the Bound's shadowfire, the Soulrender's souls, FUS RO DAH's count)
 				}
 				if (!dying || !Director::IsRoundUndead(dying)) {
 					return RE::BSEventNotifyControl::kContinue;

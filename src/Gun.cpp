@@ -74,6 +74,7 @@ namespace coa
 					std::string t(a_e->tag.c_str());
 					std::transform(t.begin(), t.end(), t.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
 					Movement::OnSwingTag(t);
+					Tablet::OnSwingTag(t);   // (the Ward-Shield's power bash)
 					if (t == "weaponswing") {
 						g_weaponSwing = true;
 						MeleeSwing(false);
@@ -1762,7 +1763,7 @@ namespace coa
 		void PoseFlaskHand(RE::PlayerCharacter* a_player, float a_delta)
 		{
 			for (const bool L : { false, true }) {
-				const bool want = Classes::FlaskInHand(L) && !Movement::Gliding();
+				const bool want = (Classes::FlaskInHand(L) || Tablet::ThrowInHand(L)) && !Movement::Gliding();   // (and the Tablet's throwables)
 				float& w = g_holdW[L ? 1 : 0];
 				w = std::clamp(w + (want ? 1.0f : -1.0f) * a_delta * 5.0f, 0.0f, 1.0f);
 				if (w <= 0.001f) continue;
@@ -3773,6 +3774,10 @@ namespace coa
 				if (Classes::JavelinInHand(left) && up) {   // (let go: a charged throw flies; a tap was only the jab)
 					Classes::JavelinButton(left, false);
 					return false;
+				}
+				if (Tablet::ThrowInHand(left)) {   // (Nov 27: the Tablet's Sweetroll, Lil' Atronach, the Egg Sac - thrown like a flask)
+					if (down) Tablet::ThrowPress(left);
+					return true;
 				}
 				if (Classes::FlaskInHand(left)) {
 					if (down) Classes::FlaskAttack(left);

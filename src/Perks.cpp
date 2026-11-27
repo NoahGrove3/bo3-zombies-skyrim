@@ -292,6 +292,7 @@ namespace coa
 					auto*       lh = player->GetEquippedObject(true);
 					const bool  shield = lh && lh->Is(RE::FormType::Armor);
 					guard = shield ? 0.2f : 0.5f;
+					if (shield && Tablet::IsTablet(lh)) guard = 0.0f, Tablet::OnWardBlock();   // (the Dragonguard Ward-Shield: nothing gets through from the front; each blow a use)
 					if (!Live(gen::kPerk_spellguard)) av->DamageActorValue(RE::ActorValue::kStamina, shield ? 12.0f : 18.0f);  // (Spellguard Ale: blocking costs none)
 					static int told = 0;
 					if (told++ < 5) logger::info("hurt: blocked with {} - {:.0f}% of the blow taken", shield ? "a shield" : "a weapon", guard * 100.0f);

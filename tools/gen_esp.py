@@ -5,7 +5,7 @@ import json, struct, pathlib
 from esp_ids import ROOT, sheets, assign, PLUGIN, MASTERS, dressing, blasts, CONJURE
 S = sheets(); IDS, NEXT = assign(S, write=True)
 SELF = len(MASTERS) << 24
-T = {n: json.load(open(ROOT / 'tools/templates' / (n + '.json'))) for n in ['npc_necro_tmpl', 'weap_draugr_gs', 'mgef', 'alch', 'weap_crossbow', 'weap_dwarven', 'acti', 'sndr_ui', 'sndr_3d', 'ligh', 'weap_staff', 'arma_skin', 'armo_skin', 'npc_draugr', 'proj_bullet', 'spel_firebolt', 'mgef_firebolt', 'weap_longbow', 'ammo_iron', 'proj_arrow', 'weap_daedricdagger', 'efsh_enchfire', 'mgef_enchfire', 'ench_fire05', 'weap_madness', 'stat_madness1st', 'efsh_enchpurple', 'efsh_ghostwolf', 'npc_mihailzombie', 'weap_daedricmace', 'mgef_summon', 'spel_conjure']}
+T = {n: json.load(open(ROOT / 'tools/templates' / (n + '.json'))) for n in ['npc_necro_tmpl', 'weap_draugr_gs', 'mgef', 'alch', 'weap_crossbow', 'weap_dwarven', 'acti', 'sndr_ui', 'sndr_3d', 'ligh', 'weap_staff', 'arma_skin', 'armo_skin', 'npc_draugr', 'proj_bullet', 'spel_firebolt', 'mgef_firebolt', 'weap_longbow', 'ammo_iron', 'proj_arrow', 'weap_daedricdagger', 'efsh_enchfire', 'mgef_enchfire', 'ench_fire05', 'weap_madness', 'stat_madness1st', 'efsh_enchpurple', 'efsh_ghostwolf', 'npc_mihailzombie', 'weap_daedricmace', 'mgef_summon', 'spel_conjure', 'armo_bladesshield']}
 def tsub(t, name): return bytes.fromhex(dict(T[t]['subs'])[name])
 def z(s): return s.encode('cp1252') + b'\0'
 def sub(name, data):
@@ -256,7 +256,10 @@ for _town, (pk, plabel, pmodel, pkind, pdmg, ptext) in PRIEST_WEAPONS.items():
 # hand weapon (punches, nothing in the hand); the staffs on the staff's record (their casts are ours); the Codex a hand
 # spell (its casts are ours, src/Tablet.cpp); the bows' arrows are their uses. Lost if you fall.
 TB_KIND = dict(PW_KIND, mace=('weap_daedricmace', 4, 0.9, 1.0, 14.0, (0x01E714, 0x08F958)), fists=('weap_daedricdagger', 0, 1.0, 0.7, 1.0, (0x01E712,)),
-               staff=('weap_staff', 8, 1.0, 1.0, 8.0, (0x01E716, 0x08F958)))
+               staff=('weap_staff', 8, 1.0, 1.0, 8.0, (0x01E716, 0x08F958)),
+               # (Nov 27: the Sweetroll, Lil' Atronach, the Egg Sac) held like the Alchemist's flasks and thrown underhand
+               # (src/Tablet.cpp ThrowPress): a dagger's record that never strikes
+               throw=('weap_daedricdagger', 2, 1.0, 0.7, 0.5, (0x01E713,)))
 # the donated staffs' enchantment: fire and forget, on yourself (nothing launched natively), a staff's, free - only so Skyrim
 # plays its staff cast; what it casts is ours (src/Tablet.cpp: the Lanternwick's orb, the Wandering Star)
 cast_mgef('tabstaffcast', 'Donated Staff', 1)
@@ -289,7 +292,20 @@ for name, hx in T['weap_staff']['subs']:
     if name == 'MODL': _sc.append(sub('EAMT', struct.pack('<H', 0)))
 recs['WEAP'].append(record('WEAP', fid('WEAP', 'soulcaller'), _sc))
 for w in S['tablet']['rows']:
-    if w['type'] == 'book': continue
+    if w['type'] == 'shield':   # (Nov 27) the Dragonguard Ward-Shield: Skyrim's Blades shield (its record's own data and armature), ours by name
+        subs = []
+        for name, hx in T['armo_bladesshield']['subs']:
+            b = bytes.fromhex(hx)
+            if name == 'EDID': b = z('COA_Tablet_' + w['id'])
+            elif name == 'FULL': b = z(w['label'])
+            elif name in ('MO2T', 'BIDS', 'BAMT'): continue
+            elif name == 'DESC': b = z(w['power'] + ' Wears with use; lost if you fall.')
+            elif name == 'KSIZ': b = struct.pack('<I', 1)
+            elif name == 'KWDA': b = struct.pack('<I', 0x0965B2)   # (ArmorShield only: not for sale)
+            subs.append(sub(name, b))
+        recs['ARMO'].append(record('ARMO', fid('ARMO', 'tab_' + w['id']), subs))
+for w in S['tablet']['rows']:
+    if w['type'] in ('book', 'shield'): continue
     tmpl, anim, spd, reach, wt, kws = TB_KIND[w['type']]
     desc = w['power'] + ' Wears with use; lost if you fall.'   # (Noah, 2026-11-12: "short and to the point")
     subs = []
@@ -310,7 +326,7 @@ for w in S['tablet']['rows']:
         elif name == 'WNAM':
             if not (w.get('model') and not w.get('look')): continue
             b = struct.pack('<I', fid('STAT', '1st_tab_' + w['id']))   # (its first-person model: the item menu shows it by this)
-        elif name == 'DATA': b = struct.pack('<IfH', 0, wt, 20)
+        elif name == 'DATA': b = struct.pack('<IfH', 0, wt, 0 if w['type'] == 'throw' else 20)
         elif name == 'DNAM':
             if w['type'] not in ('bow', 'staff'): b[0] = anim; struct.pack_into('<ff', b, 4, spd, reach)
         subs.append(sub(name, bytes(b)))
@@ -1875,7 +1891,7 @@ def _written_ids(d):
             if d[o:o + 4] == b'GRUP': walk(o + 24, o + size); o += size
             else: got.append((d[o:o + 4].decode('latin1'), struct.unpack_from('<I', d, o + 12)[0])); o += 24 + size
     hs, = struct.unpack_from('<I', d, 4); walk(24 + hs, len(d)); return got
-# (a light plugin's records must be 0x800-0xFFF: past it they wrap onto other ids in game - tools/esp_ids.py fills the gaps first)
+# (a light plugin's records must be 0x000-0xFFF (header 1.71; 0x800 up before it): past it they wrap onto other ids in game - tools/esp_ids.py fills the gaps first)
 _bad = [(t, hex(f)) for t, f in _written_ids(out) if (f >> 24) == len(MASTERS) and (f & 0xFFFFFF) > 0xFFF]
 if _bad: raise SystemExit(f'{len(_bad)} records past the light plugin\'s 0xFFF: {_bad[:8]}')
 (ROOT / 'data' / PLUGIN).write_bytes(out)

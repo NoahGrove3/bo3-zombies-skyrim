@@ -49,8 +49,9 @@ def assign(S=None, write=False):
     store = json.load(open(IDFILE)) if IDFILE.exists() else {"about": "", "ids": {}}
     frozen = {k: int(v, 16) for k, v in store['ids'].items()}
     # (a light plugin holds ids 0x800-0xFFF only: new rows take the free ids there first - ids of records never written are
-    # parked from 0x2000 up, out of the way)
-    free = sorted(set(range(0x800, 0x1000)) - set(frozen.values()))
+    # parked from 0x2000 up, out of the way) (Nov 27: 0x800-0xFFF full - the plugin's header is 1.71, so Skyrim 1.6.1130 and
+    # later read its light records from 0x000 too: the next ones from 0x400)
+    free = sorted(set(range(0x800, 0x1000)) - set(frozen.values())) + sorted(set(range(0x400, 0x800)) - set(frozen.values()))
     nxt = max([v for v in frozen.values() if v < 0x2000], default=0x7FF) + 1
     ids = {}
     wanted = [('MGEF', p['id']) for p in S['perks']['rows']] + [('ACTI', o['id']) for o in S['objects']['rows']] + \
@@ -115,7 +116,8 @@ def echo_ids(S):
     # (Noah: the Tablet of Mysteries) its donated weapons: a weapon each (the Codex: a hand spell and its effect), the bows'
     # arrows, and the model shown rising out of the tablet
     TB = S.get('tablet', {}).get('rows', [])
-    ids += [('WEAP', 'tab_' + w['id']) for w in TB if w['type'] != 'book'] + [(k, 'tab_' + w['id']) for w in TB if w['type'] == 'book' for k in ('SPEL', 'MGEF')]
+    ids += [('WEAP', 'tab_' + w['id']) for w in TB if w['type'] not in ('book', 'shield')] + [(k, 'tab_' + w['id']) for w in TB if w['type'] == 'book' for k in ('SPEL', 'MGEF')]
+    ids += [('ARMO', 'tab_' + w['id']) for w in TB if w['type'] == 'shield']   # (Nov 27: the Dragonguard Ward-Shield - a shield, worn in the left hand)
     ids += [('AMMO', 'tab_arrow'), ('PROJ', 'tab_arrow')]
     ids += [('MGEF', 'tabstaffcast'), ('ENCH', 'tabstaff')]
     ids += [('ENCH', 'carianwand')]   # (Noah: Destruction's wands - their cast is ours, src/Classes.cpp WandCast)   # (the donated staffs' casts: ours, src/Tablet.cpp)
@@ -207,7 +209,7 @@ def dressing(S):
     # (Noah: "The scythes still don't have an inventory model same goes for the gravebell mace") the item menu shows a weapon by its
     # first-person model: the donated weapons wearing their own model, and every scythe, get one (the same model)
     for w in S['tablet']['rows']:
-        if w['type'] != 'book' and w.get('model') and not w.get('look'):
+        if w['type'] not in ('book', 'shield') and w.get('model') and not w.get('look'):
             records[('STAT', '1st_tab_' + w['id'])] = {'model': w['model'], 'color': '', 'radius': 0}
     for n in SCYTHES:
         records[('STAT', '1st_scythe_' + n.lower())] = {'model': scythe_model(n), 'color': '', 'radius': 0}

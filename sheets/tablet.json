@@ -1,6 +1,6 @@
 {
  "sheet": "tablet",
- "about": "(Noah) the Tablet of Mysteries' donated weapons (docs/TABLET_OF_MYSTERIES.md): worn = one tier above your class sword, battered = two; uses = hits / arrows / casts before it breaks; lost if you fall. model: the weapon's own (tools/tabletweapons.py; the fists have none - they are gloves, tools/tabletgloves.py); show: the model that rises out of the tablet's pool; gloves: the fists' gloves (first-person and third-person models). (Nov 27: Noah's lineup - seven cut from the pool (kept as forms so old saves load), rarity Rare/Epic/Legendary, rarer rolls less often: 60/30/10.)",
+ "about": "(Noah) the Tablet of Mysteries' donated weapons (docs/TABLET_OF_MYSTERIES.md): worn = one tier above your class sword, battered = two; uses = hits / arrows / casts before it breaks; lost if you fall. model: the weapon's own (tools/tabletweapons.py; the fists have none - they are gloves, tools/tabletgloves.py); show: the model that rises out of the tablet's pool; gloves: the fists' gloves (first-person and third-person models). (Nov 27: Noah's lineup - seven cut from the pool (kept as forms so old saves load), rarity Rare/Epic/Legendary, rarer rolls less often: 60/30/10.) (Nov 27, build 3: eleven more of his picks - Rare 100 uses, Epic 60, Legendary 30; the throwables by their throws; the Ward-Shield in the left hand, its blocked blows its uses.)",
  "columns": [
   "id",
   "label",
@@ -262,6 +262,195 @@
    "gloves": [],
    "rarity": "rare",
    "pool": false
+  },
+  {
+   "id": "fushammer",
+   "label": "Voice of the Mountain",
+   "grade": "battered",
+   "type": "warhammer",
+   "uses": 30,
+   "model": "DLC02\\Weapons\\Nordic\\NordicWarhammer.nif",
+   "power": "A Nordic warhammer. Every hit staggers the dead. Heavy: FUS - a roaring cone that knocks down the dead before you. Every 20 kills it charges FUS RO DAH: the next heavy hurls every one of the dead 12 m ahead off their feet.",
+   "owner": "Carved with a Word Wall's dragon-script by a Greybeard who came down the mountain once.",
+   "look": {
+    "plugin": "Dragonborn.esm",
+    "id": "0x01CDB3"
+   },
+   "verify": [],
+   "show": "DLC02\\Weapons\\Nordic\\NordicWarhammer.nif",
+   "gloves": [],
+   "rarity": "legendary",
+   "pool": true
+  },
+  {
+   "id": "soulrender",
+   "label": "Soulrender",
+   "grade": "battered",
+   "type": "mace",
+   "uses": 30,
+   "model": "Weapons\\Daedric\\DaedricMace.nif",
+   "power": "A Daedric mace with a cracked soul gem for a head. Every kill traps a soul (10 fill it). Heavy with a full gem: 3 spectral warriors rise and fight beside you for 12 s.",
+   "owner": "Its gem was cracked by the last soul it could not hold.",
+   "look": {
+    "plugin": "Skyrim.esm",
+    "id": "0x0139B8"
+   },
+   "verify": [],
+   "show": "Weapons\\Daedric\\DaedricMace.nif",
+   "gloves": [],
+   "rarity": "legendary",
+   "pool": true
+  },
+  {
+   "id": "chaurus",
+   "label": "Chaurus Fang",
+   "grade": "worn",
+   "type": "sword",
+   "uses": 100,
+   "model": "Weapons\\Falmer\\FalmerLongSword.nif",
+   "power": "A Falmer sword dripping chaurus venom. Hits poison the dead. Heavy: a spray of venom in a cone. The poisoned burst into acid when they die, poisoning the ones beside them.",
+   "owner": "Taken from a Falmer warlord deep under Blackreach.",
+   "look": {
+    "plugin": "Skyrim.esm",
+    "id": "0x02E6D1"
+   },
+   "verify": [],
+   "show": "Weapons\\Falmer\\FalmerLongSword.nif",
+   "gloves": [],
+   "rarity": "rare",
+   "pool": true
+  },
+  {
+   "id": "bound",
+   "label": "Mace of the Bound",
+   "grade": "worn",
+   "type": "mace",
+   "uses": 60,
+   "model": "Weapons\\MaceOfMolagBal\\TestMaceOfMolagBal.nif",
+   "power": "Molag Bal's spiked mace. Hits brand the dead violet. Heavy: a slam that brands every one of the dead within 6 m. A branded one that dies bursts into shadowfire.",
+   "owner": "Molag Bal lends it to anyone who will chain the dead for him.",
+   "look": {
+    "plugin": "Skyrim.esm",
+    "id": "0x0233E3"
+   },
+   "verify": [],
+   "show": "Weapons\\MaceOfMolagBal\\TestMaceOfMolagBal.nif",
+   "gloves": [],
+   "rarity": "epic",
+   "pool": true
+  },
+  {
+   "id": "giantclub",
+   "label": "Giant's Toe Club",
+   "grade": "worn",
+   "type": "warhammer",
+   "uses": 100,
+   "model": "Weapons\\Giant\\GiantClub.nif",
+   "power": "A giant's club. Every hit sends one of the dead flying into the sky. Heavy: a ground stomp that knocks down every one of the dead within 8 m.",
+   "owner": "A giant left it by his mammoths and never came back for it.",
+   "look": {
+    "plugin": "Skyrim.esm",
+    "id": "0x0CDEC9"
+   },
+   "verify": [],
+   "show": "Weapons\\Giant\\GiantClub.nif",
+   "gloves": [],
+   "rarity": "rare",
+   "pool": true
+  },
+  {
+   "id": "spriggan",
+   "label": "Spriggan's Heartroot",
+   "grade": "worn",
+   "type": "mace",
+   "uses": 100,
+   "model": "Weapons\\Elven\\ElvenMace.nif",
+   "power": "A mace of spriggan heartwood. Hits heal you a little. Heavy: roots burst from the ground and hold every one of the dead within 6 m for 4 s.",
+   "owner": "Cut from the heart of a spriggan matron in the Reach.",
+   "look": {
+    "plugin": "Skyrim.esm",
+    "id": "0x0139A0"
+   },
+   "verify": [],
+   "show": "Weapons\\Elven\\ElvenMace.nif",
+   "gloves": [],
+   "rarity": "rare",
+   "pool": true
+  },
+  {
+   "id": "apocrypha",
+   "label": "Grasp of Apocrypha",
+   "grade": "battered",
+   "type": "book",
+   "uses": 30,
+   "model": "CurseOfAlduin\\tablet\\apocrypha_r.nif",
+   "power": "A Black Book of Hermaeus Mora. Each cast lashes a tentacle up at the one you aim at; every 5th cast a ring of tentacles drags the dead within 6 m under for 5 s.",
+   "owner": "Hermaeus Mora wants to know how the Curse ends.",
+   "verify": [],
+   "show": "CurseOfAlduin\\tablet\\apocrypha_r.nif",
+   "gloves": [],
+   "rarity": "legendary",
+   "pool": true
+  },
+  {
+   "id": "sweetroll",
+   "label": "Sweetroll of the Damned",
+   "grade": "worn",
+   "type": "throw",
+   "uses": 5,
+   "model": "Clutter\\Ingredients\\SweetRoll01.nif",
+   "power": "Thrown: it sings a little Nord tune and every one of the dead nearby runs to it. After 6 s it explodes in a fireball. 5 throws.",
+   "owner": "Someone always steals it first.",
+   "verify": [],
+   "show": "Clutter\\Ingredients\\SweetRoll01.nif",
+   "gloves": [],
+   "rarity": "epic",
+   "pool": true
+  },
+  {
+   "id": "atronach",
+   "label": "Lil' Atronach",
+   "grade": "worn",
+   "type": "throw",
+   "uses": 3,
+   "model": "Clutter\\SoulGem\\SoulGemPetty01.nif",
+   "power": "Thrown: a knee-high Flame Atronach pops out and spins, blasting the dead around it with fire for 10 s. 3 throws.",
+   "owner": "A conjurer's pet, still warm.",
+   "verify": [],
+   "show": "Clutter\\SoulGem\\SoulGemPetty01.nif",
+   "gloves": [],
+   "rarity": "epic",
+   "pool": true
+  },
+  {
+   "id": "eggsac",
+   "label": "Frostbite Egg Sac",
+   "grade": "worn",
+   "type": "throw",
+   "uses": 4,
+   "model": "Clutter\\Ingredients\\SpiderEgg01.nif",
+   "power": "Thrown: it bursts into webs that hold the dead for 6 s while spiderlings bite them. Webbed ones take double damage. 4 throws.",
+   "owner": "From a frostbite spider's nest under Riverwood.",
+   "verify": [],
+   "show": "Clutter\\Ingredients\\SpiderEgg01.nif",
+   "gloves": [],
+   "rarity": "rare",
+   "pool": true
+  },
+  {
+   "id": "wardshield",
+   "label": "Dragonguard Ward-Shield",
+   "grade": "worn",
+   "type": "shield",
+   "uses": 100,
+   "model": "Weapons\\Blades\\BladesShield.nif",
+   "power": "A Blades' shield with a ward in its face, worn in your left hand. Blocking: the dead can't hurt you from the front (each blow a use). Power bash: a shield charge that flings the dead in your path.",
+   "owner": "Carried by the last Dragonguard at Sky Haven Temple.",
+   "verify": [],
+   "show": "Weapons\\Blades\\BladesShield.nif",
+   "gloves": [],
+   "rarity": "rare",
+   "pool": true
   }
  ]
 }

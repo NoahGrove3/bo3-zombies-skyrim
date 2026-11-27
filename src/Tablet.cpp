@@ -57,6 +57,17 @@ namespace coa::Tablet
 		float g_reelNext = 0.0f;
 		bool  g_reelGlow = false;
 		std::vector<int> g_reelOrder;
+		// (Noah, Nov 27 - his pick for the roll, "The Wheel": "The weapons circle the Tablet on a ring of runes, spinning fast and
+		// easing to a stop with the won one in front; it floats in to you") six of the weapons riding a ring of runes round the
+		// tablet at its pool's height (the won one among them), the ring spun and eased to a stop with it at the front
+		std::vector<RE::ObjectRefHandle> g_wheel;
+		std::vector<int> g_wheelW;
+		std::vector<bool> g_wheelGlow;
+		RE::ObjectRefHandle g_wheelRunes;
+		float g_wheelTot = 0.0f;    // how far it turns in the roll (radians): whole turns, so the won one ends in front
+		float g_wheelOff = 0.0f;    // (the skull's roll: it stops anywhere)
+		constexpr int   kWheelN = 6;
+		constexpr float kWheelR = 62.0f;   // (tools/tabletwheel.py: the rune band 54-70 round the slab, 28 half-wide)
 		int   g_held = -1;          // the donated weapon you carry (kTabletWeapons), -1 none
 		int   g_uses = 0;           // its uses left
 		int   g_paid = 0;           // the last spin's price (the skull gives it back)
@@ -134,6 +145,7 @@ namespace coa::Tablet
 			const std::string nm = fmt::format("{} ({}%)", d.label, pct);
 			if (auto* w = f->As<RE::TESObjectWEAP>()) w->fullName = nm;
 			else if (auto* sp = f->As<RE::SpellItem>()) sp->fullName = nm;
+			else if (auto* ar = f->As<RE::TESObjectARMO>()) ar->fullName = nm;   // (the Ward-Shield)
 			// (Noah: "It should be Cinderclaws Left, not Daedric Claws Left") the claws' other hand under the same name
 			if (auto* l = a_w == g_held ? LeftOf(a_w) : nullptr) {
 				if (!g_leftWas.contains(l->GetFormID())) g_leftWas[l->GetFormID()] = l->fullName.c_str();
@@ -206,6 +218,16 @@ namespace coa::Tablet
 			g_held = a_w, g_uses = d.uses;
 			Rename(a_w, g_uses);
 			auto* right = RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F42);
+			if (d.type == 10) {   // (Nov 27, Noah: the Ward-Shield - "Keep my right-hand weapon") only the left hand's thing goes back to the pack
+				if (auto* o = p->GetEquippedObject(true)) if (auto* b = o->As<RE::TESBoundObject>()) em->UnequipObject(p, b, nullptr, 1, nullptr, false, true, false, true);
+				if (auto* b = f->As<RE::TESBoundObject>()) {
+					Forms::Give(p, b, 1);
+					em->EquipObject(p, b, nullptr, 1, nullptr, false, false, false, true);
+				}
+				p->DrawWeaponMagicHands(true);
+				logger::info("tablet: {} taken ({} uses)", d.id, d.uses);
+				return;
+			}
 			for (const bool left : { false, true }) {   // whatever the hands held goes back to the pack
 				if (auto* o = p->GetEquippedObject(left)) {
 					// (a spell in hand is simply replaced by what is equipped over it)
@@ -217,7 +239,7 @@ namespace coa::Tablet
 				em->EquipSpell(p, sp, right);
 			} else if (auto* b = f->As<RE::TESBoundObject>()) {
 				Forms::Give(p, b, 1);
-				em->EquipObject(p, b, nullptr, 1, d.type == 4 || d.type == 3 || d.type == 6 || d.type == 8 ? nullptr : right, false, false, false, true);
+				em->EquipObject(p, b, nullptr, 1, d.type == 4 || d.type == 3 || d.type == 6 || d.type == 8 || d.type == 11 ? nullptr : right, false, false, false, true);
 				GiveLeft(p, a_w);
 				if (auto* gl = GlovesOf(a_w)) {   // (the fists: their gloves on)
 					if (auto* worn = p->GetWornArmor(RE::BGSBipedObjectForm::BipedObjectSlot::kHands); worn && worn != gl) g_prevGloves = worn->GetFormID();
@@ -237,9 +259,14 @@ namespace coa::Tablet
 		// (Noah: "an actual spell book in hand") the Codex open on your right palm while it is the spell in that hand, in the body
 		// you see and the other (tools/tabletweapons.py codex_r.nif, made in the hand bone's own frame)
 		RE::NiPointer<RE::NiAVObject> g_book[2];
+		std::string g_bookFor;   // (whose book it is: the Codex's, the Black Book of the Grasp of Apocrypha)
 		void TickBook(RE::PlayerCharacter* a_p)
 		{
 			bool on = false;
+			if (g_held >= 0 && gen::kTabletWeapons[g_held].type == 7 && g_bookFor != gen::kTabletWeapons[g_held].id) {
+				for (auto& bk : g_book) { if (bk && bk->parent) bk->parent->DetachChild2(bk.get()); bk.reset(); }
+				g_bookFor = gen::kTabletWeapons[g_held].id;
+			}
 			if (g_held >= 0 && gen::kTabletWeapons[g_held].type == 7) {
 				auto* f = FormOf(g_held);
 				on = f && a_p->GetEquippedObject(false) == f;
@@ -253,7 +280,7 @@ namespace coa::Tablet
 					if (bk && bk->parent) bk->parent->DetachChild2(bk.get());
 					continue;
 				}
-				if (!bk) bk = Gun::LoadModel("CurseOfAlduin\\tablet\\codex_r.nif");
+				if (!bk) bk = Gun::LoadModel(fmt::format("CurseOfAlduin\\tablet\\{}_r.nif", g_bookFor.empty() ? std::string("codex") : g_bookFor));
 				if (bk && bk->parent != node) {
 					if (bk->parent) bk->parent->DetachChild2(bk.get());
 					node->AttachChild(bk.get(), true);
@@ -292,8 +319,10 @@ namespace coa::Tablet
 		}
 		void ClearReel()
 		{
-			if (auto r = g_reel.get()) r->Disable(), r->SetDelete(true);
-			g_reel = {}, g_reelAt = -1, g_reelGlow = false;
+			for (auto& h : g_wheel) if (auto r = h.get()) r->Disable(), r->SetDelete(true);
+			g_wheel.clear(), g_wheelW.clear(), g_wheelGlow.clear();
+			Gun::RemoveModel(g_wheelRunes);
+			g_reel = {}, g_reelAt = -1, g_reelGlow = false;   // (g_reel: the one at the front now - one of the wheel's)
 		}
 		void ClearShow()
 		{
@@ -357,6 +386,18 @@ namespace coa::Tablet
 			{ "bonereaper", { 0, 1, 0, 0, 0, -1, -1, 0, 0 }, { -0.54f, 16.11f, 0.28f }, 87.0f, 41.5f },
 			{ "wyrmtooth", { 0, 1, 0, 0, 0, -1, -1, 0, 0 }, { -3.24f, 14.19f, 0.00f }, 94.0f, 64.0f },
 			{ "bloodmoon", { 0, 1, 0, 0, 0, -1, -1, 0, 0 }, { -6.07f, 10.59f, -0.00f }, 91.7f, 47.0f },
+			// (Nov 27: the eleven new ones, measured from Skyrim's own models and ours)
+			{ "fushammer", { 0, 1, 0, 0, 0, 1, 1, 0, 0 }, { -1.06f, -0.48f, 0.00f }, 83.1f, 25.2f },
+			{ "soulrender", { 0, 1, 0, 0, 0, 1, 1, 0, 0 }, { 0.02f, 12.99f, -0.05f }, 54.1f, 13.6f },
+			{ "chaurus", { 0, 1, 0, 0, 0, 1, 1, 0, 0 }, { -0.89f, 21.38f, 0.00f }, 65.2f, 10.1f },
+			{ "bound", { 0, 1, 0, 0, 0, 1, 1, 0, 0 }, { 0.46f, 17.29f, 0.58f }, 66.1f, 13.7f },
+			{ "giantclub", { 0, 1, 0, -1, 0, 0, 0, 0, 1 }, { -0.19f, 46.42f, 0.69f }, 132.2f, 35.3f },
+			{ "spriggan", { 0, 1, 0, 0, 0, 1, 1, 0, 0 }, { 0.00f, 11.22f, 0.00f }, 56.8f, 16.8f },
+			{ "apocrypha", { 1, 0, 0, 0, 1, 0, 0, 0, 1 }, { 0.05f, -6.05f, 2.45f }, 20.7f, 18.1f },
+			{ "sweetroll", { 1, 0, 0, 0, 1, 0, 0, 0, 1 }, { -0.30f, 0.03f, 7.68f }, 16.5f, 14.7f },
+			{ "atronach", { 1, 0, 0, 0, 1, 0, 0, 0, 1 }, { 1.37f, 0.03f, 0.38f }, 5.5f, 17.3f },
+			{ "eggsac", { 1, 0, 0, 0, 1, 0, 0, 0, 1 }, { -0.05f, 0.07f, 0.07f }, 8.7f, 11.0f },
+			{ "wardshield", { 1, 0, 0, 0, 0, 1, 0, -1, 0 }, { -0.15f, -0.15f, -4.70f }, 48.7f, 48.7f },
 		};
 		const Display* DisplayOf(int a_w)
 		{
@@ -400,41 +441,89 @@ namespace coa::Tablet
 				o->UpdateDownwardPass(u, 0);
 			}
 		}
-		// the reel: every weapon in turn, a little one turning in the pool in its rarity's glow - quick at first, slowing,
-		// and landing on the one won (the mask's roll: it runs out and the mask rises instead)
+		// its size on the wheel: each weapon about 46 long, none taller than 30 (six of them round a ring 62 out)
+		float WheelScale(int a_w)
+		{
+			const auto* d = DisplayOf(a_w);
+			if (!d) return 0.5f;
+			return std::clamp(std::min(46.0f / d->len, 30.0f / std::max(d->breadth, 1.0f)), 0.25f, 2.2f);
+		}
+		// a weapon a_r out from the slab's middle at the pool's height, a_ang round from the front (toward you), lying along the
+		// ring - side-on and level, as it is held on display - turned a_spin more about the upright, a_s its size
+		void PoseRing(RE::TESObjectREFR* a_r, RE::NiAVObject* a_body, int a_w, float a_ang, float a_rad, float a_z, float a_s, float a_spin)
+		{
+			const auto* d = DisplayOf(a_w);
+			const float bs = a_body->world.scale, s = a_s * bs;
+			const float c = std::cos(a_ang), sn = std::sin(a_ang);
+			const RE::NiPoint3 at = a_body->world * RE::NiPoint3{ sn * a_rad, -c * a_rad, kPoolZ + a_z };
+			RE::NiMatrix3 D, Z;
+			for (int i = 0; i < 3; ++i) for (int j = 0; j < 3; ++j) D.entry[i][j] = d ? d->m[i * 3 + j] : (i == j ? 1.0f : 0.0f);
+			const float t = a_ang + a_spin;
+			Z.entry[0][0] = std::cos(t), Z.entry[0][1] = -std::sin(t), Z.entry[0][2] = 0;
+			Z.entry[1][0] = std::sin(t), Z.entry[1][1] = std::cos(t), Z.entry[1][2] = 0;
+			Z.entry[2][0] = 0, Z.entry[2][1] = 0, Z.entry[2][2] = 1;
+			const RE::NiMatrix3 R = a_body->world.rotate * (Z * D);
+			const RE::NiPoint3 cc = d ? RE::NiPoint3{ d->c[0], d->c[1], d->c[2] } : RE::NiPoint3{};
+			const RE::NiPoint3 pos = at - R * (cc * s);
+			a_r->SetPosition(pos);
+			if (auto* o = a_r->Get3D()) {
+				o->local.rotate = R, o->local.translate = pos, o->local.scale = s;
+				RE::NiUpdateData u;
+				o->UpdateDownwardPass(u, 0);   // (only this model: see PoseDisplay)
+			}
+		}
+		// how far round the wheel has turned a_k of the way through the roll: fast at first, easing to a stop
+		float WheelTurn(float a_k)
+		{
+			const float u = std::clamp(a_k, 0.0f, 1.0f);
+			return (g_wheelTot + g_wheelOff) * (1.0f - (1.0f - u) * (1.0f - u) * (1.0f - u));
+		}
+		// the wheel through a roll: its weapons set out round the ring (the won one first), the ring of runes under them, all
+		// turned together and eased to a stop with the won one at the front; each in its own rarity's light, the one passing the
+		// front brightest
 		void TickReel(RE::TESObjectREFR* a_tab, RE::NiAVObject* a_body, float a_k, float a_delta)
 		{
-			if (g_phase != Phase::Rolling || a_k >= 0.97f) { ClearReel(); return; }
-			if (g_reelOrder.empty()) {
-				for (int i = 0; i < static_cast<int>(gen::kTabletWeapons.size()); ++i) g_reelOrder.push_back(i);
-				std::shuffle(g_reelOrder.begin(), g_reelOrder.end(), g_rng);
-			}
-			g_reelNext -= a_delta;
-			int want = g_reelAt;
-			if (g_reelAt < 0 || g_reelNext <= 0.0f) {
-				// (the last turns: the won weapon itself, so the reel lands on it)
-				const bool last = a_k > 0.78f && g_prize >= 0;
-				want = last ? g_prize : g_reelOrder[(g_reelStep++) % g_reelOrder.size()];
-				if (!last && want == g_reelAt) want = g_reelOrder[(g_reelStep++) % g_reelOrder.size()];
-				g_reelNext = last ? 99.0f : 0.09f + 0.32f * a_k * a_k;
-			}
-			if (want != g_reelAt) {
-				ClearReel();
-				auto* base = Forms::Ours(gen::kTabletWeapons[want].show) ? Forms::Ours(gen::kTabletWeapons[want].show)->As<RE::TESBoundObject>() : nullptr;
-				if (auto ref = base ? a_tab->PlaceObjectAtMe(base, false) : nullptr) {
-					ref->GetReferenceRuntimeData().refScale = static_cast<std::uint16_t>(std::lround(DisplayScale(want) * 100.0f));
-					g_reel = ref->CreateRefHandle(), g_reelAt = want;
+			(void)a_delta;
+			if (g_phase != Phase::Rolling) { ClearReel(); return; }
+			if (g_wheel.empty()) {
+				// (the won one first, then five more of the lineup at random - never the same one twice)
+				std::vector<int> pool;
+				for (int i = 0; i < static_cast<int>(gen::kTabletWeapons.size()); ++i) if (gen::kTabletWeapons[i].pool && i != g_prize) pool.push_back(i);
+				std::shuffle(pool.begin(), pool.end(), g_rng);
+				if (g_prize >= 0) g_wheelW.push_back(g_prize);
+				for (int i : pool) { if (static_cast<int>(g_wheelW.size()) >= kWheelN) break; g_wheelW.push_back(i); }
+				for (int w : g_wheelW) {
+					auto* base = Forms::Ours(gen::kTabletWeapons[w].show) ? Forms::Ours(gen::kTabletWeapons[w].show)->As<RE::TESBoundObject>() : nullptr;
+					auto ref = base ? a_tab->PlaceObjectAtMe(base, false) : nullptr;
+					g_wheel.push_back(ref ? ref->CreateRefHandle() : RE::ObjectRefHandle{});
+					g_wheelGlow.push_back(false);
 				}
+				g_wheelTot = 2.0f * RE::NI_PI * 3.0f;   // (three whole turns)
+				g_wheelOff = g_prize >= 0 ? 0.0f : std::uniform_real_distribution<float>(0.0f, 2.0f * RE::NI_PI)(g_rng);   // (the skull's: anywhere)
+				g_wheelRunes = Gun::PlaceModel("CurseOfAlduin\\tablet\\wheel_runes.nif", a_body->world * RE::NiPoint3{ 0, 0, kPoolZ - 16.0f });
 			}
-			auto r = g_reel.get();
-			if (!r) return;
-			// (Noah: "the larger weapons ... poke through the tablet") before its face, stood on end (a weapon's model lies along
-			// its length: tipped up, it turns about itself and never sweeps into the slab)
-			// over the slab's top: the first half second it rises out of it, then turns there, each weapon in turn
-			const float up = std::clamp(g_t / 0.45f, 0.0f, 1.0f);
-			PoseDisplay(r.get(), a_body, g_reelAt, 1.0f - (1.0f - up) * (1.0f - up), 0.0f);
-			Glow(r.get(), g_reelAt, g_reelGlow);
-			RarityLight(r.get(), g_reelAt, 0.75f);   // (each weapon rolling by in its own rarity's light)
+			const int n = static_cast<int>(g_wheel.size());
+			const float turn = WheelTurn(a_k);
+			// (the first half second the weapons come out of the ring's middle to it)
+			const float out = std::clamp(g_t / 0.5f, 0.0f, 1.0f), grow = 1.0f - (1.0f - out) * (1.0f - out);
+			int front = -1;
+			float bestC = -2.0f;
+			for (int i = 0; i < n; ++i) {
+				auto r = g_wheel[i].get();
+				if (!r) continue;
+				const float ang = 2.0f * RE::NI_PI * i / std::max(1, n) + turn;
+				PoseRing(r.get(), a_body, g_wheelW[i], ang, kWheelR * grow, 0.0f, WheelScale(g_wheelW[i]) * (0.3f + 0.7f * grow), 0.0f);
+				bool done = g_wheelGlow[i];
+				Glow(r.get(), g_wheelW[i], done);
+				g_wheelGlow[i] = done;
+				const float c = std::cos(ang);   // (1 at the front)
+				if (c > bestC) bestC = c, front = i;
+				RarityLight(r.get(), g_wheelW[i], 0.45f + 0.55f * std::max(0.0f, c));
+			}
+			if (front >= 0) g_reel = g_wheel[front], g_reelAt = g_wheelW[front];
+			// the ring of runes turns with them (its band laid level under them)
+			const float yaw = a_tab->GetAngleZ() + turn;
+			Gun::PoseModel(g_wheelRunes, a_body->world * RE::NiPoint3{ 0, 0, kPoolZ - 16.0f }, RE::NiPoint3{ std::sin(yaw), std::cos(yaw), 0.0f }, a_body->world.scale * (0.4f + 0.6f * grow));
 		}
 		// the won weapon's model rising out of the pool and turning there (placed in the world before the tablet's face)
 		void PoseShow(RE::TESObjectREFR* a_tab, float a_rise)
@@ -460,11 +549,12 @@ namespace coa::Tablet
 			if (!r) return;
 			if (mask) r->SetPosition(at);
 			else {
-				// (box style) it rises out of the top where the reel landed and hangs there turning; its last seconds it sinks
-				// back into the slab
+				// (the Wheel) it floats in to you off the ring's front, growing to its full size, and hangs there swaying a little;
+				// its last seconds it drifts back to the ring and fades into it
 				const float sink = std::clamp((g_t - (kOfferTime - kSinkTime)) / kSinkTime, 0.0f, 1.0f);
-				// (the won one sways a little as it floats - never far enough to swing into the slab)
-				PoseDisplay(r.get(), body, g_prize, std::max(0.0f, 1.0f - sink * 1.25f), 0.12f * std::sin(g_t * 0.9f));
+				const float in = std::clamp(g_t / 0.8f, 0.0f, 1.0f), e = (1.0f - (1.0f - in) * (1.0f - in)) * (1.0f - sink);
+				const float sz = WheelScale(g_prize) + (DisplayScale(g_prize) * 0.85f - WheelScale(g_prize)) * e;
+				PoseRing(r.get(), body, g_prize, 0.0f, kWheelR + 40.0f * e, 12.0f * e, sz * (1.0f - 0.9f * sink * sink), 0.12f * std::sin(g_t * 0.9f) * e);
 			}
 			// (the mask faces you out of the pool, turning a little; a weapon turns round)
 			if (mask) r->SetAngle({ 0.0f, 0.0f, a_tab->GetAngleZ() + RE::NI_PI + 0.35f * std::sin(g_clock * 1.7f) });
@@ -786,7 +876,7 @@ namespace coa::Tablet
 		g_paid = price;
 		g_ref = a_ref->CreateRefHandle();
 		g_phase = Phase::Rolling, g_t = 0.0f, g_bell = false;
-		ClearReel(), g_reelOrder.clear(), g_reelStep = 0, g_reelNext = 0.0f;
+		ClearReel(), g_reelOrder.clear(), g_reelStep = 0, g_reelNext = 0.0f, g_wheelTot = 0.0f;
 		// (Noah: after a random 4-8 rolls the skull can come: the essence back, and the tablet moves)
 		g_skull = g_rolls > g_moveAfter;
 		g_prize = g_skull ? -1 : Pick();
@@ -803,7 +893,7 @@ namespace coa::Tablet
 		auto* f = FormOf(g_held);
 		if (!f || f->GetFormID() != a_source || gen::kTabletWeapons[g_held].type == 4) return;
 		const int t = gen::kTabletWeapons[g_held].type;
-		if (t == 5 || t == 7) return;   // (casters: their casts count)
+		if (t == 5 || t == 7 || t == 9 || t == 10) return;   // (casters: their casts count; the throwables their throws, the Ward-Shield the blows it stops)
 		static auto last = std::chrono::steady_clock::time_point{};
 		const auto now = std::chrono::steady_clock::now();
 		if (now - last < std::chrono::milliseconds(150)) return;   // (one swing cutting several: one use)
@@ -920,11 +1010,69 @@ namespace coa::Tablet
 			}
 		}
 	}
+	// (Nov 27: the eleven new ones - Noah's picks) what they leave on the dead, each until its time (g_pclock)
+	namespace
+	{
+		std::unordered_map<RE::FormID, float> g_poison;   // (the Chaurus Fang: poisoned - they burst into acid when they die)
+		std::unordered_map<RE::FormID, float> g_brand;    // (the Mace of the Bound: branded - they burst into shadowfire)
+		std::unordered_map<RE::FormID, float> g_webbed;   // (the Egg Sac: webbed - they take double)
+		int   g_fusKills = 0;        // (Voice of the Mountain: kills toward FUS RO DAH)
+		bool  g_fusArmed = false;
+		std::vector<RE::TESNPC*> g_souls;   // (Soulrender: the souls in its gem - who they were)
+		float g_throwCool = 0, g_bashCool = 0, g_heavyCool = 0, g_bugs = 0;
+		constexpr int kSoulsFull = 10;   // (Noah: "10 kills, 3 warriors")
+		bool Marked(const std::unordered_map<RE::FormID, float>& a_m, RE::Actor* a_a)
+		{
+			const auto it = a_a ? a_m.find(a_a->GetFormID()) : a_m.end();
+			return it != a_m.end() && it->second > g_pclock;
+		}
+		void Mark(std::unordered_map<RE::FormID, float>& a_m, RE::Actor* a_a, float a_secs)
+		{
+			if (!a_a) return;
+			if (a_m.size() > 200) std::erase_if(a_m, [](const auto& e) { return e.second < g_pclock; });
+			a_m[a_a->GetFormID()] = g_pclock + a_secs;
+		}
+		// the dead within a_range ahead of a point, inside the cone whose half-angle has that cosine
+		std::vector<RE::Actor*> Cone(const RE::NiPoint3& a_from, const RE::NiPoint3& a_fwd, float a_range, float a_cos)
+		{
+			std::vector<RE::Actor*> out;
+			for (auto* f : Gun::FoesNear(a_from + a_fwd * (a_range * 0.5f), a_range)) {
+				if (!f || f->IsDead()) continue;
+				RE::NiPoint3 d = f->GetPosition() - a_from;
+				d.z = 0;
+				const float l = d.Length();
+				if (l > a_range) continue;
+				if (l > 40.0f && (d.x * a_fwd.x + d.y * a_fwd.y) / l < a_cos) continue;
+				out.push_back(f);
+			}
+			return out;
+		}
+		RE::NiPoint3 Fwd(RE::Actor* a)
+		{
+			const float z = a->GetAngleZ();
+			return { std::sin(z), std::cos(z), 0.0f };
+		}
+		// the Tablet weapon in your hands now (-1: none, or it is put away in the pack)
+		int InHand()
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* f = FormOf(g_held);
+			if (!p || !f) return -1;
+			return p->GetEquippedObject(false) == f || p->GetEquippedObject(true) == f ? g_held : -1;
+		}
+		void SpendUse()
+		{
+			if (g_held < 0 || Gun::TestKitOn()) return;   // (the test kit's: they never wear)
+			if (--g_uses <= 0) Break(); else Rename(g_held, g_uses);
+		}
+	}
 	float TakenMult(RE::Actor* a_actor)
 	{
 		if (!a_actor) return 1.0f;
 		const auto it = g_salt.find(a_actor->GetFormID());
-		return it != g_salt.end() && it->second > g_pclock ? 1.3f : 1.0f;
+		float m = it != g_salt.end() && it->second > g_pclock ? 1.3f : 1.0f;
+		if (Marked(g_webbed, a_actor)) m *= 2.0f;   // (Noah: "Webbed ones take double damage")
+		return m;
 	}
 	// a blow or an arrow of yours landed with the donated weapon in hand: its power
 	namespace
@@ -1171,6 +1319,36 @@ namespace coa::Tablet
 				const float mx = av->GetPermanentActorValue(RE::ActorValue::kHealth);
 				av->RestoreActorValue(RE::ActorValue::kHealth, mx * 0.02f);
 			}
+		// ---- (Nov 27, build 3: the eleven Noah added) each one's light; their heavies go off on the swing itself (OnSwing)
+		} else if (id == "fushammer") {   // (Voice of the Mountain) every hit staggers the dead back a step
+			Gun::Knock(a_target, 0.6f);
+			Gun::ElemBurst(3, Mid(a_target), 0.4f, 0.0f, 0.5f);
+		} else if (id == "soulrender") {   // (its kills fill the gem: OnDeath) a wisp of the soul it tears at
+			Gun::ElemBurst(6, Mid(a_target), 0.35f, 0.0f, 0.5f);
+		} else if (id == "chaurus") {   // (Chaurus Fang) hits poison the dead
+			Gun::Burn(a_target, S * 0.06f, 5.0f, 3);
+			Mark(g_poison, a_target, 6.0f);
+			Gun::Puddle(3, tp, 0.25f, 1.5f);
+		} else if (id == "bound") {   // (Mace of the Bound) hits brand the dead with a violet mark
+			Mark(g_brand, a_target, 8.0f);
+			if (auto* sh = Forms::Ours(gen::kSoulPurple) ? Forms::Ours(gen::kSoulPurple)->As<RE::TESEffectShader>() : nullptr) a_target->ApplyEffectShader(sh, 8.0f);
+			Gun::ElemBurst(6, Mid(a_target), 0.35f, 0.0f, 0.5f);
+		} else if (id == "giantclub") {   // (Giant's Toe Club) every hit sends the one struck flying into the sky
+			if (p) {
+				RE::NiPoint3 away = tp - p->GetPosition();
+				away.z = 0;
+				if (away.Length() > 1.0f) away.Unitize();
+				const RE::ActorHandle h = a_target->GetHandle();
+				const RE::NiPoint3 from = tp - away * 40.0f;
+				Tasks::Add([h, from] { if (auto t = h.get(); t && !t->IsDead()) Gun::Fling(t.get(), from, 34.0f); });
+			}
+			Gun::ElemBurst(3, Mid(a_target), 0.5f, 0.0f, 0.5f);
+		} else if (id == "spriggan") {   // (Spriggan's Heartroot) hits heal you a little
+			if (p) {
+				auto* av = p->AsActorValueOwner();
+				av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.015f);
+			}
+			Gun::Puddle(3, tp, 0.2f, 1.0f);
 		}
 	}
 	// a donated staff's or the Codex's cast: what it casts (the use is counted in OnCast)
@@ -1189,6 +1367,29 @@ namespace coa::Tablet
 			if (!t) { auto v = Gun::FoesNear(at, 600.0f); if (!v.empty()) t = v.front(); }
 			Gun::FxBlast("light", Gun::SwingFrom() + Gun::SwingDir() * 60.0f);
 			Chain(t, Gun::SwingFrom(), 8, S * 1.4f, 4);
+		} else if (id == "apocrypha") {   // (Nov 27, Noah: "Every cast, every 5th ring") a tentacle lashes up at the one you aim at;
+			// every fifth cast a ring of them bursts round you and drags the dead within 6 m under for 5 s
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (g_count % 5 == 0 && p) {
+				const RE::NiPoint3 me = p->GetPosition();
+				for (int k = 0; k < 8; ++k) {
+					const float a = 2.0f * RE::NI_PI * k / 8.0f;
+					Gun::FxBlast("tentacle", me + RE::NiPoint3{ std::cos(a) * 330.0f, std::sin(a) * 330.0f, 0.0f }, 0.06f * k);
+				}
+				Director::Web(me, 600.0f, 5.0f, 97.0f, false);
+				for (auto* o : Gun::FoesNear(me, 600.0f)) Gun::Burn(o, S * 0.3f, 5.0f, 3);
+				Hud::Banner("Hermaeus Mora drags them under", 1.5f);
+			} else {
+				RE::Actor* t = nullptr;
+				RE::NiPoint3 at = AimPoint(&t);
+				if (!t) { auto v = Gun::FoesNear(at, 300.0f); if (!v.empty()) t = v.front(), at = t->GetPosition(); }
+				Gun::FxBlast("tentacle", at);
+				if (t) {
+					Gun::HitShare(t, S * 1.6f);
+					Gun::Knock(t, 0.6f);
+				}
+				Director::Web(at, 140.0f, 1.5f, 97.0f, false);
+			}
 		} else if (id == "codex") {   // a random chapter; every tenth cast all four ("a chapter's end")
 			if (g_count % 10 == 0) {
 				Hud::Banner("THE CODEX'S CHAPTER ENDS", 2.0f);
@@ -1200,6 +1401,269 @@ namespace coa::Tablet
 				Chapter(c, S);
 			}
 		}
+	}
+	// ---- (Nov 27, build 3) the eleven new ones' heavies: on the swing itself, hit or miss
+	void OnSwing(bool a_power)
+	{
+		const int w = InHand();
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (w < 0 || !p || !a_power || g_heavyCool > 0.0f) return;
+		const std::string_view id = gen::kTabletWeapons[w].id;
+		const float S = Share();
+		const RE::NiPoint3 me = p->GetPosition(), fwd = Fwd(p);
+		Gun::FxScope fxs("tab_" + std::string(id) + "_heavy");
+		if (id == "fushammer") {
+			g_heavyCool = 0.6f;
+			if (g_fusArmed) {   // FUS RO DAH: every one of the dead 12 m ahead hurled off their feet (always more than a heavy)
+				g_fusArmed = false, g_fusKills = 0;
+				for (int k = 0; k < 4; ++k) Gun::FxBlast("shoutarea", me + fwd * (150.0f + 260.0f * k) + RE::NiPoint3{ 0, 0, 60.0f }, 0.06f * k);
+				Forms::PlayAt(gen::Sound::shout_roar, p);
+				for (auto* o : Cone(me, fwd, 1200.0f, 0.5f)) {
+					Gun::HitShare(o, S * 1.5f);
+					const RE::ActorHandle h = o->GetHandle();
+					const float d = o->GetPosition().GetDistance(me);
+					Tasks::Later(d / 2400.0f, [h, me] { if (auto t = h.get(); t && !t->IsDead()) Gun::Fling(t.get(), me, 40.0f); });
+				}
+				Hud::Banner("FUS RO DAH!", 1.5f);
+			} else {   // FUS: a short roaring cone (5 m) that knocks down the dead before you
+				Gun::FxBlast("shoutarea", me + fwd * 160.0f + RE::NiPoint3{ 0, 0, 60.0f });
+				for (auto* o : Cone(me, fwd, 500.0f, 0.6f)) {
+					Gun::HitShare(o, S * 0.8f);
+					const RE::ActorHandle h = o->GetHandle();
+					Tasks::Add([h, me] { if (auto t = h.get(); t && !t->IsDead()) Gun::Fling(t.get(), me, 12.0f); });
+				}
+			}
+		} else if (id == "soulrender") {   // with a full gem: three of its souls rise as spectral warriors beside you for 12 s
+			if (static_cast<int>(g_souls.size()) < kSoulsFull) return;
+			g_heavyCool = 1.0f;
+			const float hp = Director::RoundHealth() * gen::kRounds.hpScale * 2.5f;
+			for (int k = 0; k < 3; ++k) {
+				auto* base = g_souls[g_souls.size() - 1 - k];
+				const float a = p->GetAngleZ() + (k - 1) * 0.9f;
+				const RE::NiPoint3 at = me + RE::NiPoint3{ std::sin(a) * 170.0f, std::cos(a) * 170.0f, 0.0f };
+				Gun::FxBlast("dark", at + RE::NiPoint3{ 0, 0, 50.0f }, 0.1f * k);
+				Tasks::Later(0.25f + 0.1f * k, [base, at, hp] { Classes::RaiseFor(base, at, 12.0f, hp, 3, true); });
+			}
+			g_souls.clear();
+			Hud::Banner("The souls in Soulrender rise", 1.5f);
+		} else if (id == "chaurus") {   // a spray of venom in a cone
+			g_heavyCool = 0.6f;
+			Gun::FxBlast("spiderspit", me + fwd * 140.0f + RE::NiPoint3{ 0, 0, 70.0f });
+			Gun::FxBlast("poisongas", me + fwd * 260.0f);
+			for (auto* o : Cone(me, fwd, 450.0f, 0.6f)) {
+				Gun::Burn(o, S * 0.08f, 5.0f, 3);
+				Mark(g_poison, o, 6.0f);
+			}
+		} else if (id == "bound") {   // a slam that brands every one of the dead within 6 m
+			g_heavyCool = 0.8f;
+			Gun::FxBlast("giantslam", me);
+			Gun::Ring("purple", me, 40.0f, 600.0f, 0.6f);
+			Gun::PurpleFire(me, 0.6f, 0.0f, 0.8f);
+			auto* sh = Forms::Ours(gen::kSoulPurple) ? Forms::Ours(gen::kSoulPurple)->As<RE::TESEffectShader>() : nullptr;
+			for (auto* o : Gun::FoesNear(me, 600.0f)) {
+				Mark(g_brand, o, 8.0f);
+				if (sh) o->ApplyEffectShader(sh, 8.0f);
+			}
+		} else if (id == "giantclub") {   // a ground stomp that knocks down every one of the dead within 8 m
+			g_heavyCool = 0.8f;
+			Gun::FxBlast("giantslam", me);
+			Gun::Ring("white", me, 40.0f, 800.0f, 0.7f);
+			Gun::AreaHurt(me, 800.0f, S * 0.9f, "");
+			for (auto* o : Gun::FoesNear(me, 800.0f)) Gun::Knock(o, 1.0f);
+		} else if (id == "spriggan") {   // roots burst from the ground and hold every one of the dead within 6 m for 4 s
+			g_heavyCool = 0.8f;
+			Director::Web(me, 600.0f, 4.0f, 97.0f, false);
+			int n = 0;
+			for (auto* o : Gun::FoesNear(me, 600.0f)) if (n++ < 10) Gun::Puddle(3, o->GetPosition(), 0.45f, 4.0f);
+			Gun::Puddle(3, me, 1.2f, 4.0f);
+		}
+	}
+	// one of the dead fell: what the new ones leave on them goes off; your kills with one in hand counted
+	void OnDeath(RE::Actor* a_dying, bool a_mine)
+	{
+		if (!a_dying) return;
+		const RE::NiPoint3 at = a_dying->GetPosition();
+		const float S = Share();
+		if (Marked(g_poison, a_dying)) {   // (the Chaurus Fang) the poisoned burst into acid, poisoning the ones beside them - a chain
+			g_poison.erase(a_dying->GetFormID());
+			Gun::FxScope fxs("tab_chaurus_hit");
+			Gun::Puddle(3, at, 0.7f, 3.0f);
+			Gun::FxBlast("poisongas", at);
+			for (auto* o : Others(a_dying, at, 260.0f, 6)) {
+				Gun::Burn(o, S * 0.06f, 5.0f, 3);
+				Mark(g_poison, o, 6.0f);
+			}
+		}
+		if (Marked(g_brand, a_dying)) {   // (the Mace of the Bound) a branded one that dies bursts into violet shadowfire
+			g_brand.erase(a_dying->GetFormID());
+			Gun::FxScope fxs("tab_bound_hit");
+			Gun::PurpleFire(at, 0.9f, 0.0f, 1.2f);
+			Gun::AreaHurt(at + RE::NiPoint3{ 0, 0, 40.0f }, 280.0f, S * 0.6f, "");
+		}
+		g_webbed.erase(a_dying->GetFormID());
+		if (!a_mine) return;
+		const int w = InHand();
+		if (w < 0) return;
+		const std::string_view id = gen::kTabletWeapons[w].id;
+		if (id == "fushammer" && !g_fusArmed && ++g_fusKills >= 20) {
+			g_fusArmed = true;
+			Hud::Banner("Voice of the Mountain: FUS RO DAH is ready - your next heavy", 3.0f);
+		} else if (id == "soulrender" && static_cast<int>(g_souls.size()) < kSoulsFull) {
+			if (auto* base = Classes::RealBase(a_dying); base && !Director::IsBoss(a_dying)) {
+				g_souls.push_back(base);
+				Gun::ElemBurst(6, at + RE::NiPoint3{ 0, 0, 70.0f }, 0.5f, 0.0f, 0.6f);
+				if (static_cast<int>(g_souls.size()) == kSoulsFull) {
+					if (auto* p = RE::PlayerCharacter::GetSingleton()) Forms::PlayAt(gen::Sound::charge_ready, p);
+					Hud::Banner("Soulrender's gem is full - a heavy attack lets them out", 3.0f);
+				}
+			}
+		}
+	}
+	// (the Dragonguard Ward-Shield) a blow stopped on it from the front
+	void OnWardBlock()
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (p) Gun::ElemBurst(4, p->GetPosition() + Fwd(p) * 50.0f + RE::NiPoint3{ 0, 0, 90.0f }, 0.3f, 0.0f, 0.4f);
+		SpendUse();
+	}
+	// (its power bash) a shield charge: you are carried 6 m ahead and the dead in your path are flung aside
+	void OnSwingTag(std::string_view a_tag)
+	{
+		if (a_tag != "bashpowerstart" && !(a_tag == "bashrelease" && Gun::PlayerPowerAttack())) return;
+		const int w = InHand();
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (w < 0 || !p || gen::kTabletWeapons[w].type != 10 || g_bashCool > 0.0f) return;
+		g_bashCool = 1.5f;
+		const RE::NiPoint3 me = p->GetPosition(), fwd = Fwd(p);
+		const float S = Share();
+		Gun::FxScope fxs("tab_wardshield_heavy");
+		Movement::Shove(fwd * 950.0f, 0.45f);
+		Gun::ElemBurst(4, me + fwd * 60.0f + RE::NiPoint3{ 0, 0, 80.0f }, 0.8f, 0.0f, 0.6f);
+		for (auto* o : Cone(me, fwd, 650.0f, 0.75f)) {
+			const RE::ActorHandle h = o->GetHandle();
+			const float d = o->GetPosition().GetDistance(me);
+			Tasks::Later(std::max(0.0f, d - 80.0f) / 950.0f, [h, fwd, S] {
+				auto t = h.get();
+				auto* pl = RE::PlayerCharacter::GetSingleton();
+				if (!t || t->IsDead() || !pl) return;
+				Gun::HitShare(t.get(), S * 0.9f);
+				// (flung aside: away from your path, and on)
+				RE::NiPoint3 side = t->GetPosition() - pl->GetPosition();
+				side.z = 0;
+				const RE::NiPoint3 from = t->GetPosition() - (side.Length() > 1.0f ? side * (1.0f / side.Length()) : fwd) * 60.0f - fwd * 40.0f;
+				Gun::Fling(t.get(), from, 18.0f);
+				Gun::ElemBurst(4, t->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, 0.45f, 0.0f, 0.4f);
+			});
+		}
+	}
+	// ---- the throwables (the Sweetroll, Lil' Atronach, the Egg Sac): held like the Alchemist's flasks, thrown underhand
+	bool ThrowInHand(bool a_left)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* f = FormOf(g_held);
+		return p && f && gen::kTabletWeapons[g_held].type == 9 && p->AsActorState()->IsWeaponDrawn() && p->GetEquippedObject(a_left) == f;
+	}
+	namespace
+	{
+		const char* ThrowModel(std::string_view a_id)
+		{
+			if (a_id == "sweetroll") return "Clutter\\Ingredients\\SweetRoll01.nif";
+			if (a_id == "atronach") return "Clutter\\SoulGem\\SoulGemPetty01.nif";
+			return "Clutter\\Ingredients\\SpiderEgg01.nif";
+		}
+		// (the Sweetroll) where it lands it sits; every one of the dead nearby runs to it; after 6 s it explodes in a fireball
+		void Sweetroll(const RE::NiPoint3& a_at, float S)
+		{
+			auto h = Gun::PlaceModel(ThrowModel("sweetroll"), a_at);
+			Gun::PoseModel(h, a_at, {}, 1.4f);
+			if (auto r = h.get()) {
+				auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+				int n = 0;
+				for (auto* o : Gun::FoesNear(a_at, 1600.0f)) {
+					if (!vm || n++ >= 24) break;
+					const auto hd = vm->GetObjectHandlePolicy()->GetHandleForObject(o->GetFormType(), o);
+					RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> none;
+					vm->DispatchMethodCall(hd, "Actor", "PathToReference", RE::MakeFunctionArguments(static_cast<RE::TESObjectREFR*>(r.get()), 1.0f), none);
+				}
+			}
+			Gun::Motes(4, a_at, 0.3f, 6.0f);
+			Tasks::Later(6.0f, [h, a_at, S]() mutable {
+				Gun::RemoveModel(h);
+				Gun::FxScope fxs("tab_sweetroll_hit");
+				Gun::FxBlast("fireball", a_at + RE::NiPoint3{ 0, 0, 40.0f });
+				Gun::AreaHurt(a_at + RE::NiPoint3{ 0, 0, 40.0f }, 450.0f, S * 3.0f, "");
+				for (auto* o : Gun::FoesNear(a_at, 450.0f)) Gun::Burn(o, S * 0.15f, 4.0f, 0);
+			});
+		}
+		// (Lil' Atronach) a knee-high Flame Atronach pops out and blasts the dead round it with fire for 10 s
+		void Atronach(const RE::NiPoint3& a_at, float S)
+		{
+			Gun::FxBlast("atrofire", a_at + RE::NiPoint3{ 0, 0, 30.0f });
+			auto* base = RE::TESForm::LookupByID<RE::TESNPC>(0x000204C0);   // (Skyrim's Flame Atronach)
+			const float hp = Director::RoundHealth() * gen::kRounds.hpScale * 2.0f;
+			auto* a = base ? Classes::RaiseFor(base, a_at, 10.0f, hp, 4, false) : nullptr;
+			if (!a) return;
+			a->SetScale(0.45f);
+			const RE::ActorHandle h = a->GetHandle();
+			for (int k = 1; k <= 10; ++k) {   // (its spin: a burst of fire round it every second)
+				Tasks::Later(static_cast<float>(k), [h, S, k] {
+					auto t = h.get();
+					if (!t || t->IsDead() || t->IsDisabled()) return;
+					const RE::NiPoint3 at = t->GetPosition();
+					Gun::FxScope fxs("tab_atronach_hit");
+					Gun::ElemBurst(0, at + RE::NiPoint3{ 0, 0, 40.0f }, 0.6f, 0.0f, 0.5f);
+					Gun::AreaHurt(at + RE::NiPoint3{ 0, 0, 40.0f }, 300.0f, S * 0.5f, "");
+					if (k == 10) Gun::FxBlast("atrofire", at + RE::NiPoint3{ 0, 0, 30.0f });   // (it dances when it's done)
+				});
+			}
+		}
+		// (the Egg Sac) it bursts into webs that hold the dead for 6 s while spiderlings bite them; the webbed take double
+		void EggSac(const RE::NiPoint3& a_at, float S)
+		{
+			Gun::FxBlast("spiderspit", a_at + RE::NiPoint3{ 0, 0, 30.0f });
+			Gun::Puddle(3, a_at, 0.9f, 6.0f);
+			Director::Web(a_at, 350.0f, 6.0f, 97.0f, false);
+			for (auto* o : Gun::FoesNear(a_at, 350.0f)) {
+				Mark(g_webbed, o, 6.0f);
+				Gun::Burn(o, S * 0.08f, 6.0f, 3);
+			}
+		}
+		void ThrowRelease(bool a_left)
+		{
+			const int w = g_held;
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* cam = RE::PlayerCamera::GetSingleton();
+			if (w < 0 || !p || !cam || !cam->cameraRoot || gen::kTabletWeapons[w].type != 9) return;
+			const std::string id(gen::kTabletWeapons[w].id);
+			const auto& cw = cam->cameraRoot->world;
+			RE::NiPoint3 dir{ cw.rotate.entry[0][1], cw.rotate.entry[1][1], cw.rotate.entry[2][1] };
+			dir.Unitize();
+			RE::NiPoint3 from = cw.translate + dir * 45.0f + RE::NiPoint3{ 0.0f, 0.0f, -14.0f }, aim = dir;
+			// (out of the hand that threw it - in third person at the crosshair's point ahead, as the flasks fly)
+			if (auto* root = p->Get3D(cam->IsInFirstPerson())) {
+				if (auto* hand = root->GetObjectByName(a_left ? "NPC L Hand [LHnd]" : "NPC R Hand [RHnd]"); hand && hand->world.translate.GetDistance(p->GetPosition()) < 250.0f) {
+					from = hand->world.translate + dir * 10.0f;
+					if (!cam->IsInFirstPerson()) {
+						aim = (cw.translate + dir * 1800.0f) - from;
+						if (aim.Length() > 1e-3f) aim.Unitize(); else aim = dir;
+					}
+				}
+			}
+			const float S = Share();
+			Gun::FxScope fxs("tab_" + id + "_hit");
+			Gun::Lob(ThrowModel(id), from, aim * 1500.0f + RE::NiPoint3{ 0.0f, 0.0f, 260.0f }, id == "eggsac" ? 1.6f : 1.3f, [id, S](const RE::NiPoint3& land) {
+				if (id == "sweetroll") Sweetroll(land, S);
+				else if (id == "atronach") Atronach(land, S);
+				else EggSac(land, S);
+			}, 8.0f, 900.0f);
+			SpendUse();
+		}
+	}
+	void ThrowPress(bool a_left)
+	{
+		if (Gun::Throwing() || g_throwCool > 0.0f || !ThrowInHand(a_left)) return;
+		g_throwCool = 1.0f;
+		Gun::StartThrow(a_left, [a_left]() { ThrowRelease(a_left); });
 	}
 	// (Noah: "on death") falling takes it
 	void OnFell()
@@ -1411,6 +1875,7 @@ namespace coa::Tablet
 		TickStarWand(p, a_delta);
 		g_pclock += a_delta;
 		g_slamCool -= a_delta, g_eclipseCool -= a_delta, g_splitCool -= a_delta;
+		g_throwCool -= a_delta, g_bashCool -= a_delta, g_heavyCool -= a_delta;
 		if (g_salt.size() > 64) std::erase_if(g_salt, [](const auto& e) { return e.second < g_pclock; });
 		Night();
 		// where it stands: Riverwood first (Noah: "it should start at riverwood"), freed or not
@@ -1459,6 +1924,11 @@ namespace coa::Tablet
 		if (ref && ref->Is3DLoaded() && ref->GetPosition().GetDistance(p->GetPosition()) < 6000.0f) Animate(ref, a_delta);
 		TickLamp(ref, a_delta);
 		TickBook(p);
+		// (Spriggan's Heartroot: "Swarms of glowing insects circle it") motes of light round your hands while it's drawn
+		if (const int w = InHand(); w >= 0 && gen::kTabletWeapons[w].id == "spriggan" && p->AsActorState()->IsWeaponDrawn() && (g_bugs -= a_delta) <= 0.0f) {
+			g_bugs = 0.7f;
+			Gun::Motes(4, p->GetPosition() + Fwd(p) * 40.0f + RE::NiPoint3{ 0, 0, 90.0f }, 0.18f, 1.2f);
+		}
 		// (Noah: the test kit has every donated weapon) whichever of them you equip is the one carried - its power, the Codex
 		// on your palm, the fists' gloves - at its full uses, never wearing
 		if (Gun::TestKitOn() && !ItemMenusOpen()) {

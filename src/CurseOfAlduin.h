@@ -425,6 +425,8 @@ namespace coa
 		void             LearnSpell(RE::SpellItem* a_sp);  // taught and kept with your class (it goes with it when you switch)
 		void             QueueThrall(RE::Actor* a_struck, int a_level);  // should it fall now, it rises as your thrall
 		bool             KitGiven(int a_cls);         // that class's starting kit has been handed over
+		RE::TESNPC*      RealBase(RE::Actor* a_a);    // the record a body was placed from (never a temporary one made for it)
+		RE::Actor*       RaiseFor(RE::TESNPC* a_base, const RE::NiPoint3& a_at, float a_seconds, float a_health, int a_cap, bool a_spirit);   // an ally for a while (a_spirit: a ghost of light)
 		RE::TESObjectWEAP* Riftblade();
 		RE::TESBoundObject* FlaskItem(int a_el);  // the Alchemist's flasks, items in the pack (0 fire 1 frost 2 shock 3 acid 4 holy water 5 bloodbloom 6 the Philosopher's Flask)
 		void               GiveFlask(int a_el);   // put in your pack
@@ -943,6 +945,13 @@ namespace coa
 		bool  IsTabletSpell(const RE::TESForm* a_f);   // its spell (a staff's enchantment, the Codex)?
 		float Share();                                 // its blow's share of the night's health: one or two tiers over your sword
 		float Wear();                                  // its uses left 0..1 (-1: none carried)
+		// (Nov 27: the eleven new ones)
+		void  OnSwing(bool a_power);                   // any swing of the weapon in hand (hit or miss): the heavies' powers
+		void  OnDeath(RE::Actor* a_dying, bool a_mine);   // one of the dead fell (the Chaurus Fang's acid, the Bound's shadowfire, kills counted)
+		void  OnWardBlock();                           // a blow stopped on the Ward-Shield (a use)
+		void  OnSwingTag(std::string_view a_tag);      // the animation graph's tags (the Ward-Shield's power bash)
+		bool  ThrowInHand(bool a_left);                // a Tablet throwable drawn in that hand (the Sweetroll, Lil' Atronach, the Egg Sac)
+		void  ThrowPress(bool a_left);                 // its attack: thrown underhand
 	}
 
 	namespace Shops
@@ -1017,6 +1026,7 @@ namespace coa
 	namespace Movement
 	{
 		bool Dodging();  // a dodge roll under way
+		void Shove(const RE::NiPoint3& a_vel, float a_seconds);  // you carried along the ground at that speed for a while (a shield charge)
 		float FovKick();  // (Noah's BO3 movement) degrees the view widens now: sprinting, sliding, the jump out of a slide
 		bool  PowerSwing();   // a power attack under way (the light swing's speed boost is held off)
 		void  OnSwingTag(std::string_view a_tag);   // the animation graph's attack tags
