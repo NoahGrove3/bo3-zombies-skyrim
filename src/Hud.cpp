@@ -4657,15 +4657,15 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// the embers: each born low, rising and drifting on the wind, swaying, its glow flickering and cooling from white-gold to deep
 			// red as it climbs; a few big soft ones near the eye, out of focus
 			{
-				struct Ember { float x, y, vy, vx, sway, ph, r, life, age; bool near; };
+				struct Ember { float x, y, vy, vx, sway, ph, r, life, age; bool nearEye;   // ('near' is a Windows macro) };
 				static std::vector<Ember> em;
 				static std::mt19937 rng{ 1127 };
 				std::uniform_real_distribution<float> U(0, 1);
 				auto born = [&](Ember& e, bool a_first) {
-					e.near = U(rng) < 0.08f;
+					e.nearEye = U(rng) < 0.08f;
 					e.x = U(rng) * 1.1f - 0.05f, e.y = a_first ? U(rng) * 1.1f : 1.02f + 0.05f * U(rng);
-					e.vy = (0.035f + 0.07f * U(rng)) * (e.near ? 1.6f : 1.0f), e.vx = 0.006f + 0.02f * U(rng);
-					e.sway = 0.004f + 0.01f * U(rng), e.ph = U(rng) * 6.28f, e.r = e.near ? 3.0f + 4.0f * U(rng) : 0.5f + 1.3f * U(rng) * U(rng);
+					e.vy = (0.035f + 0.07f * U(rng)) * (e.nearEye ? 1.6f : 1.0f), e.vx = 0.006f + 0.02f * U(rng);
+					e.sway = 0.004f + 0.01f * U(rng), e.ph = U(rng) * 6.28f, e.r = e.nearEye ? 3.0f + 4.0f * U(rng) : 0.5f + 1.3f * U(rng) * U(rng);
 					e.life = 6.0f + 9.0f * U(rng), e.age = a_first ? U(rng) * e.life : 0.0f;
 				};
 				if (em.empty()) { em.resize(220); for (auto& e : em) born(e, true); }
@@ -4682,7 +4682,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const float c = std::clamp(k * 1.4f, 0.0f, 1.0f);
 					const int R = 255, G = static_cast<int>(220 - 150 * c), B = static_cast<int>(140 - 120 * c);
 					const float r = e.r * u * 0.16f * (1.0f - 0.35f * k);
-					if (e.near) {   // (out of focus: a soft disc)
+					if (e.nearEye) {   // (out of focus: a soft disc)
 						fg->AddCircleFilled(p, r * 2.4f, IM_COL32(R, G, B, static_cast<int>(26 * a)), 20);
 						fg->AddCircleFilled(p, r * 1.3f, IM_COL32(R, G, B, static_cast<int>(40 * a)), 20);
 						continue;
