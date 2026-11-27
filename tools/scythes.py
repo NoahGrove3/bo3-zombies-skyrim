@@ -366,6 +366,10 @@ def game():
         import throwdagger; throwdagger.WORK.mkdir(parents=True, exist_ok=True)
         rename_root(nif, 'Scythe' + k[0].upper() + k[1:])
         subprocess.run([str(TOOLS / 'addprn'), str(nif), str(nif), 'WeaponBack'], check=True)
+        # (Noah, 2026-11-26 night: still "inside out ... I could see through the scythe" - patches of the bent blades wound the
+        # other way, and the poles cut from their axes left open) every piece wound one way and facing out, the open ones
+        # double-sided (tools/modelconv/orientfix.cpp)
+        subprocess.run([str(TOOLS / 'orientfix'), str(nif), str(nif)], check=True)
         print(nif.name, nif.stat().st_size // 1024, 'KB', [g[0] for g in M.groups])
 
 
