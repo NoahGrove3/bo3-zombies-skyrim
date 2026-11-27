@@ -89,7 +89,8 @@ jobs:
           Copy-Item assets\meshes\logo_empty.nif "$stage\Data\Meshes\Interface\Logo\logo01ae.nif"
           Copy-Item README.md "$stage\CurseOfAlduin-README.md"
           Copy-Item third_party\address-library\CREDITS.md "$stage\CurseOfAlduin-ADDRESS-LIBRARY-CREDITS.md"
-          python tools/zipdir.py "$stage" "dist\CurseOfAlduin-$v.zip"
+          python tools/zipdir.py "$stage" "dist\CurseOfAlduin-$v.zip" --skip Data/Textures/
+          python tools/zipdir.py "$stage" "dist\CurseOfAlduin-$v-textures.zip" --under Data/Textures/   # (each release file under GitHub's 2 GB)
           python tools/zipdir.py build "dist\CurseOfAlduin-$v-pdb.zip" --only CurseOfAlduin.pdb
       - uses: actions/upload-artifact@v4
         continue-on-error: true   # (the release below is what we install; artifacts only add to the storage quota)
