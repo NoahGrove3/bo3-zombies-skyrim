@@ -72,7 +72,7 @@ function paintBadge() {   // (the Now tab's count: what's left to test, whicheve
 }
 // ---------------------------------------------------------------- the header and the sections
 $('#installed').innerHTML = `Installed on your PC<br><b>Build ${esc(BUILD)}</b> &middot; ${esc(D.installed.label)} &middot; ${esc(D.installed.date)}`;
-const SECTIONS = ['now', 'systems', 'weapons', 'ui', 'release', 'history'];
+const SECTIONS = ['now', 'systems', 'weapons', 'ui', 'lore', 'release', 'history'];
 const drawn = {};
 function route() {
   let s = (location.hash || '').replace('#', '');
@@ -225,10 +225,11 @@ function drawWeapons() {
   paintWeapons(true);
 }
 const VIEWS = [];
+let COMPARE = false;   // (the old flat art shown instead of the 3D look, to compare)
 function clearViews() { stopSound(); while (VIEWS.length) { const v = VIEWS.pop(); try { GL.remove(v); } catch (e) {} } }
 function view3d(cv, key, o = {}) {
   if (!GL.ok || !key) return null;
-  const v = weaponView(cv); VIEWS.push(v); v.spin = !!o.spin; v.gain = o.gain == null ? 1 : o.gain;
+  const v = weaponView(cv); VIEWS.push(v); v.spin = !!o.spin; v.gain = o.gain == null ? 1 : o.gain; v.vol = o.vol !== false; v.compare = COMPARE;
   v.show(key, o.look || 'o1', 'own').then(() => { if (v.fx) v.fx.g.visible = !o.bare; if (o.layer) v.layer(o.layer, o.layerGain || 0.7); });
   cv.__v = v; return v;
 }
@@ -261,8 +262,10 @@ function paintWeapons(full) {
   if (full) clearViews();
   if (wTab === 'classes') {
     if (full) {
-      box.innerHTML = `<p class="hint">Each class keeps one model through every tier; the tiers make its look stronger (I faint, II a glowing edge, III full, Legendary all of it plus a second look). Pick the model, then a look for each tier: every option turns a full 360&deg; so you can check it never looks flat or like an outline. Drag to turn, scroll to zoom.</p>
+      box.innerHTML = `<p class="hint">Each class keeps one model through every tier; the tiers make its look stronger (I faint, II a glowing edge, III full, Legendary all of it plus a second look). The looks are now made on the model itself: the steel glows through its own surface, every particle leaves a real point of the blade or the heads, and the light round it is a 3D volume, so no angle shows a flat card or an outline. The models wear Skyrim's own textures and normal maps. Drag to turn, scroll to zoom.</p>
+<label class="cmp"><input type="checkbox" id="cmpold"> Compare with the old flat art (what the game draws today)</label>
 <div class="chips" id="clsch">${D.classes.map((c, i) => `<button class="chip" data-cls="${c.id}" aria-pressed="${i === 0}">${esc(c.name)}</button>`).join('')}</div><div id="clsbody"></div>`;
+      $('#cmpold').onchange = e => { COMPARE = e.target.checked; VIEWS.forEach(v => v.setCompare && v.setCompare(COMPARE)); };
       $('#clsch').onclick = e => { const b = e.target.closest('.chip'); if (!b) return; $$('#clsch .chip').forEach(x => x.setAttribute('aria-pressed', String(x === b))); drawClass(b.dataset.cls); };
       drawClass(D.classes[0].id);
     } else paintClass();
@@ -319,12 +322,70 @@ function paintClass(rebuildTiers) {
 <div class="wgrid">${opts[t].map(o => `<article class="wcard" data-opt="${optKey(o)}"><canvas aria-label="${esc(lookName(c, o))} at ${tn}, turning model"></canvas><div class="wb"><h4>${esc(lookName(c, o))}</h4>
 <p>${esc(o.layer ? 'Your Tier III look with this one layered over it.' : o.blaze ? 'Your Tier III look at its brightest.' : (c.looks.find(l => l.id === o.look) || {}).desc || '')}</p>
 <div class="row"><button class="btn pass" data-tier="${t}" data-opt="${optKey(o)}" data-o='${esc(JSON.stringify(o))}' aria-pressed="false">Pick for ${tn}</button></div></div></article>`).join('')}</div></div>`).join('')
-      + `<textarea rows="2" data-note="tiers" placeholder="Anything about the tier looks (optional)" aria-label="Note on the tier looks" style="margin-top:12px"></textarea><span class="saved" data-sv="tiers"></span>`;
+      + `<textarea rows="2" data-note="tiers" placeholder="Anything about the tier looks (optional)" aria-label="Note on the tier looks" style="margin-top:12px"></textarea><span class="saved" data-sv="tiers"></span><div id="abil"></div>`;
     for (const [t, , g] of TIERS) $$(`.tierrow[data-t="${t}"] .wcard`, tiers).forEach((a, i) => { const o = opts[t][i];
       view3d($('canvas', a), key, { look: o.look, gain: o.blaze ? 1.6 : g, layer: o.layer || null, layerGain: 0.75, spin: true }); });
+    drawAbil(c, key, (picks.t3 && picks.t3.look) || 'o1');
   }
+  paintAbil(c);
   for (const [t] of TIERS) $$(`.tierrow[data-t="${t}"] .wcard`, tiers).forEach(a => { const on = !!(picks[t] && optKey(picks[t]) === a.dataset.opt); a.dataset.picked = String(on); const b = $('button', a); b.setAttribute('aria-pressed', String(on)); });
   const tn = $('[data-note="tiers"]', tiers); if (tn && document.activeElement !== tn) tn.value = picks.note || '';
+}
+
+// ---- the class weapon's abilities, built from its element's kit, shown in action (you swinging at the dead)
+const ROLE_N = { impact: 'Impact', burst: 'Burst', ground: 'Ground', above: 'From above' };
+const ABVIEWS = {};
+function abilEl(c) { const a = D.abil[c.id], p = DB.get('abil', c.id) || {}; return a.els.includes(p.el) ? p.el : a.els[0]; }
+function drawAbil(c, key, look) {
+  const a = D.abil[c.id], box = $('#abil'); if (!box || !a) return;
+  const el = abilEl(c), kit = D.kits.find(k => k.id === el);
+  const optsFor = roles => roles.flatMap(r => kit.parts.find(p => p.id === r).opts.map(o => ({ v: r + ':' + o.id, n: (r === 'impact' ? '' : ROLE_N[r] + ': ') + o.label, about: o.about })));
+  box.innerHTML = `<h3 class="sub">3. Its abilities</h3><p class="hint">Made here, from the ${esc(kit.name)} kit: you (a Nord in the ${esc(c.name)}'s set, holding this model in your Tier III look) strike the night's own dead, and they react the way the game makes them. Click an option to watch it, then Use it. Your kit's own pick for that part is marked.</p>
+${a.els.length > 1 ? `<div class="chips" id="abel">${a.els.map(e => { const k = D.kits.find(x => x.id === e); return `<button class="chip" data-abel="${e}" aria-pressed="${e === el}"><span class="dot" style="background:${k.col}"></span>${esc(k.name)}</button>`; }).join('')}<span class="muted" style="align-self:center">The rapier follows the spell in your other hand: one ability per element.</span></div>` : ''}
+<div class="abgrid">${['light', 'heavy'].map(w => { const ab = a[w]; return `<div class="abcol" data-ab="${w}"><div class="classhead"><h4 style="font-size:18px">${w === 'light' ? 'Light attack' : 'Heavy attack'}</h4><span>${esc(ab.what)}</span></div>
+<canvas aria-label="${w} attack, playing"></canvas>
+<div class="chips abopts">${optsFor(ab.roles).map(o => `<button class="chip" data-abo="${o.v}" title="${esc(o.about)}">${esc(o.n)}<span class="kitmark" data-km="${o.v}"></span></button>`).join('')}</div>
+<p class="muted abnow"></p><div class="row"><button class="btn pass" data-abuse="${w}" aria-pressed="false">Use this</button><span class="saved" data-sv="ab_${w}"></span></div></div>`; }).join('')}</div>
+<textarea rows="2" data-note="abil" placeholder="Anything about the ${esc(c.name)}'s abilities (optional)" aria-label="Note on the ${esc(c.name)} abilities" style="margin-top:12px"></textarea><span class="saved" data-sv="abil"></span>`;
+  for (const w of ['light', 'heavy']) {
+    const col = $(`.abcol[data-ab="${w}"]`, box), cv = $('canvas', col);
+    if (!GL.ok) continue;
+    const v = actionView(cv); VIEWS.push(v); ABVIEWS[w] = v; v.setPlayer(c.id, key, look);
+    const p = DB.get('abil', c.id) || {}, saved = (p[el] || {})[w], first = saved || (a[w].roles[0] + ':' + kit.parts.find(x => x.id === a[w].roles[0]).opts[0].id);
+    playAbil(c, w, first);
+  }
+  box.onclick = async e => {
+    const eb = e.target.closest('button[data-abel]');
+    if (eb) { const prev = DB.get('abil', c.id) || {}; await saveTo('abil', c.id, Object.assign({}, prev, { el: eb.dataset.abel }), $('[data-sv="abil"]', box)); VIEWS.filter(v => v.cv.closest('#abil')).forEach(v => { GL.remove(v); VIEWS.splice(VIEWS.indexOf(v), 1); }); drawAbil(c, key, look); return; }
+    const ob = e.target.closest('button[data-abo]');
+    if (ob) { playAbil(c, ob.closest('.abcol').dataset.ab, ob.dataset.abo); return; }
+    const ub = e.target.closest('button[data-abuse]');
+    if (ub) { const w = ub.dataset.abuse, colEl = ub.closest('.abcol'), cur = colEl.dataset.playing, prev = DB.get('abil', c.id) || {}, elp = Object.assign({}, prev[el] || {});
+      elp[w] = elp[w] === cur ? '' : cur; await saveTo('abil', c.id, Object.assign({}, prev, { [el]: elp }), $(`[data-sv="ab_${w}"]`, box)); paintAbil(c); }
+  };
+  box.onchange = async e => { if (e.target.dataset.note !== 'abil') return; const prev = DB.get('abil', c.id) || {}; await saveTo('abil', c.id, Object.assign({}, prev, { note: e.target.value.slice(0, 2000) }), $('[data-sv="abil"]', box)); };
+  paintAbil(c);
+}
+function playAbil(c, w, val) {
+  const a = D.abil[c.id], el = abilEl(c), [role, opt] = val.split(':'), box = $('#abil'); if (!box) return;
+  const col = $(`.abcol[data-ab="${w}"]`, box); col.dataset.playing = val;
+  $$('button[data-abo]', col).forEach(b => b.dataset.on = String(b.dataset.abo === val));
+  const kit = D.kits.find(k => k.id === el), o = kit.parts.find(p => p.id === role).opts.find(x => x.id === opt);
+  $('.abnow', col).textContent = (ROLE_N[role] + ': ' + o.label + ' - ' + o.about);
+  const v = ABVIEWS[w]; if (v) v.ability({ el, act: a[w].act, cast: !!a[w].cast, role, opt });
+  paintAbil(c);
+}
+function paintAbil(c) {
+  const box = $('#abil'); if (!box || !D.abil[c.id]) return;
+  const el = abilEl(c), p = DB.get('abil', c.id) || {}, kp = DB.get('kits', el) || {};
+  for (const w of ['light', 'heavy']) {
+    const col = $(`.abcol[data-ab="${w}"]`, box); if (!col) continue;
+    const saved = (p[el] || {})[w];
+    $$('button[data-abo]', col).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.abo === saved)));
+    $$('[data-km]', col).forEach(m => { const [r, o] = m.dataset.km.split(':'); m.textContent = kp['p_' + r] === o ? ' (kit pick)' : ''; });
+    const ub = $('button[data-abuse]', col), on = saved && saved === col.dataset.playing; ub.setAttribute('aria-pressed', String(!!on)); ub.textContent = on ? 'In use' : 'Use this';
+  }
+  const ta = $('[data-note="abil"]', box); if (ta && document.activeElement !== ta) ta.value = p.note || '';
 }
 
 // ---- element kits: Skyrim's own effects played live, Skyrim's own sounds played on a click
@@ -334,7 +395,7 @@ function playSound(mp3) { stopSound(); AUD = new Audio('snd/' + mp3); AUD.volume
 const prettySnd = n => n.replace(/^coa:/, 'Curse: ').replace(/^WB_/, '').replace(/_Sound_|_Sound$|Sound_/g, ' ').replace(/SFX$|SD$|LPM?S?D?$|2D/g, '').replace(/_/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/\s+/g, ' ').trim();
 function drawKits() {
   const box = $('#wbody');
-  box.innerHTML = `<p class="hint">Why effects felt like a mess before: they were picked part by part, so a purple bolt could burn red and leave purple smoke. Now each element has one kit, made of Skyrim's own 3D effects and sounds, and everything of that element is built from it. Pick one option for each part, and the sounds; the weapons' abilities and tier looks are then built from your kits.</p>
+  box.innerHTML = `<p class="hint">Each element has one kit, and everything of that element (weapon abilities, tier looks, spells, flasks) is built from it. These are the Curse's own effects, made fully in 3D: fire, smoke, mist and light are real volumes you can see into from any side, sparks and embers are thousands of particles, lightning is a branching bolt struck again every few frames, ice and stone are real 3D crystals and rocks. In the game they play from 4K textures baked from these same shaders, with a 2K option in the MCM for weaker PCs (your pick). Drag to turn round each one, scroll to zoom. Pick one design for each part, and the sounds.</p>
 <div class="chips" id="kitch">${D.kits.map(k => `<button class="chip" data-k="${k.id}" aria-pressed="${k.id === kitEl}" style="--kc:${k.col}"><span class="dot" style="background:${k.col}"></span>${esc(k.name)}<span class="kn" data-kn="${k.id}"></span></button>`).join('')}</div><div id="kitbody"></div>`;
   $('#kitch').onclick = e => { const b = e.target.closest('.chip'); if (!b) return; kitEl = b.dataset.k; $$('#kitch .chip').forEach(x => x.setAttribute('aria-pressed', String(x === b))); drawKit(); };
   drawKit();
@@ -344,12 +405,12 @@ function drawKit() {
   const k = D.kits.find(x => x.id === kitEl), box = $('#kitbody');
   box.innerHTML = `<div class="kithead" style="--c:${k.col}"><h4>${esc(k.name)}</h4><p>${esc(k.about)}</p></div>
 ${k.parts.map(p => `<h3 class="sub">${esc(p.name)} <span class="muted" style="text-transform:none;letter-spacing:0;font:400 13px Inter,sans-serif">${esc(p.about)}</span></h3>
-<div class="wgrid">${p.opts.map(o => `<article class="wcard" data-part="${p.id}" data-o="${o.id}"><canvas aria-label="${esc(o.label)}, playing"></canvas><div class="wb"><h4>${esc(o.label.replace(/^[^:]+: /, ''))}</h4><span class="lbl">${esc(o.label.split(':')[0])}</span>
+<div class="wgrid">${p.opts.map(o => `<article class="wcard" data-part="${p.id}" data-o="${o.id}"><canvas aria-label="${esc(o.label)}, playing"></canvas><div class="wb"><h4>${esc(o.label)}</h4><p>${esc(o.about)}</p>
 <div class="row"><button class="btn pass" data-kpick="${p.id}" data-o="${o.id}" aria-pressed="false">Pick</button></div></div></article>`).join('')}</div>`).join('')}
 <h3 class="sub">Sounds</h3>
 <div class="sndgrid">${k.sounds.map(s => `<div class="sndcol"><b>${esc(s.name)}</b>${s.opts.map(o => `<div class="snd" data-sp="${s.id}" data-o="${o.id}"><button class="play" data-mp3="${esc(o.mp3)}" aria-label="Play ${esc(prettySnd(o.id))}">&#9654;</button><span>${esc(prettySnd(o.id))}<small>${esc(o.src)}</small></span><button class="btn pass" data-spick="${s.id}" data-o="${o.id}" aria-pressed="false">Pick</button></div>`).join('')}</div>`).join('')}</div>
 <textarea rows="2" data-note="kit" placeholder="Anything about the ${esc(k.name)} kit (optional)" aria-label="Note on the ${esc(k.name)} kit" style="margin-top:14px"></textarea><span class="saved" data-sv="kit"></span>`;
-  $$('.wcard[data-part]', box).forEach(a => { const p = k.parts.find(x => x.id === a.dataset.part), o = p.opts.find(x => x.id === a.dataset.o); kitView3d($('canvas', a), o); });
+  $$('.wcard[data-part]', box).forEach(a => kitView3d($('canvas', a), k.id, a.dataset.part, a.dataset.o));
   box.onclick = async e => {
     const pl = e.target.closest('button.play'); if (pl) { playSound(pl.dataset.mp3); return; }
     const b = e.target.closest('button[data-kpick],button[data-spick]'); if (!b) return;
@@ -367,71 +428,77 @@ function paintKits() {
   const ta = $('[data-note="kit"]', box); if (ta && document.activeElement !== ta) ta.value = p.note || '';
   D.kits.forEach(x => { const q = DB.get('kits', x.id) || {}, n = x.parts.filter(pp => q['p_' + pp.id]).length + x.sounds.filter(s => q['s_' + s.id]).length, tot = x.parts.length + x.sounds.length, el = $(`[data-kn="${x.id}"]`); if (el) el.textContent = n ? ` ${n}/${tot}` : ''; });
 }
-function kitView3d(cv, o) {
+// (one kit part, played on the night ground among three of the dead for scale, turning slowly)
+function kitView3d(cv, el, role, opt) {
   if (!GL.ok) return;
-  const scene = new THREE.Scene(); scene.background = new THREE.Color(0x070a12); scene.fog = new THREE.FogExp2(0x070a12, 0.0005);
-  const cam = new THREE.PerspectiveCamera(40, GL.W / GL.H, 5, 8000);
-  scene.add(new THREE.HemisphereLight(0x5a6a90, 0x0c0a08, 0.28));
-  const moon = new THREE.DirectionalLight(0xbcd0ff, 0.32); moon.position.set(-600, 900, 500); scene.add(moon);
-  const gm = new THREE.Mesh(new THREE.CircleGeometry(2200, 48), new THREE.MeshStandardMaterial({ color: 0x14120f, roughness: 1 })); gm.rotation.x = -Math.PI / 2; scene.add(gm);
-  for (const [x, z, h] of [[-150, -90, 150], [140, -120, 165], [40, 160, 140]]) {   // (three of the dead standing round it, for scale: a man is ~130 units)
-    const g = new THREE.Group(), m = new THREE.MeshStandardMaterial({ color: 0x2a2620, roughness: 0.9 });
-    const body = new THREE.Mesh(new THREE.CylinderGeometry(14, 18, h * 0.62, 10), m); body.position.y = h * 0.42; g.add(body);
-    const head = new THREE.Mesh(new THREE.SphereGeometry(11, 12, 10), m); head.position.y = h * 0.82; g.add(head);
-    g.position.set(x, 0, z); scene.add(g);
+  const v = fxStage(cv, { az: .6 + Math.random() * .5, el: role === 'above' ? .28 : .34, r: role === 'impact' ? 430 : role === 'above' ? 900 : 700, ty: role === 'above' ? 150 : role === 'impact' ? 50 : 40 });
+  for (const [x, z] of [[-170, -110], [150, -140], [60, 190]]) {
+    const i = VIEWS.length + x;
+    zomData(ZOM_KEYS[Math.abs(i) % ZOM_KEYS.length]).then(([sk, body]) => { const zz = makeZombie(sk, body, Math.random()); v.scene.add(zz.holder); const info = { home: new THREE.Vector3(x, 0, z), from: new THREE.Vector3(0, 0, 0), face: Math.atan2(x, z) }; zPose(zz, [], 0, info); v.zs = (v.zs || []).concat([[zz, info]]); }).catch(() => {});
   }
-  const light = new THREE.PointLight(0xffffff, 1.6, 700, 2); light.position.set(0, 80, 0); scene.add(light);
-  const v = { cv, scene, cam, ready: false, visible: false, bloom: 1.1 };
-  const tgt = new THREE.Vector3(0, 70, 0); let az = 0.6, el = 0.3, r = 330, drag = null;
-  const place = () => { cam.position.set(tgt.x + r * Math.cos(el) * Math.sin(az), tgt.y + r * Math.sin(el), tgt.z + r * Math.cos(el) * Math.cos(az)); cam.lookAt(tgt); cam.updateMatrixWorld(); };
-  cv.style.cursor = 'grab'; cv.style.touchAction = 'pan-y';
-  cv.addEventListener('pointerdown', e => { drag = { x: e.clientX, y: e.clientY, az, el }; cv.setPointerCapture(e.pointerId); });
-  cv.addEventListener('pointermove', e => { if (!drag) return; az = drag.az - (e.clientX - drag.x) * 0.008; el = Math.max(0.05, Math.min(1.4, drag.el + (e.clientY - drag.y) * 0.006)); place(); });
-  const up = () => { drag = null; }; cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
-  cv.addEventListener('wheel', e => { e.preventDefault(); r = Math.max(150, Math.min(1400, r * Math.exp(e.deltaY * 0.0012))); place(); }, { passive: false });
-  place();
-  let RD = null, st = null, t0 = 0, last = -1, dur = 2;
-  const make = () => { st = realPart(RD[o.model], { all: RD }, mulberry(o.model.length * 97 + 7)); st.root.position.set(0, o.ground ? 1 : 70, 0); st.root.scale.setScalar(o.s * 1.4); st.root.traverse(x => x.layers.enable(1)); scene.add(st.root); dur = Math.min(4.5, Math.max(1.4, st.dur + 0.6)); last = -1; };
-  realData().then(d => { RD = d; if (!RD[o.model]) return; make(); v.ready = true; }).catch(() => {});
-  v.tick = t => {
-    if (!st) return;
-    if (!drag) { az += 0.003; place(); }
-    if (!t0) t0 = t;
-    const tt = (t - t0) % (dur + 0.5);
-    if (tt < last) { scene.remove(st.root); make(); }
-    for (let t1 = Math.max(0, last); t1 < tt - 1e-6;) { const t2 = Math.min(tt, t1 + 1 / 30); realStep(st, t2, t2 - t1, cam); t1 = t2; }
-    last = tt;
-    light.intensity = tt < 0.6 ? 2.2 * (1 - tt / 0.6) + 0.3 : 0.3;
-  };
-  VIEWS.push(GL.add(v));
+  v.play(makeEffect(el, role, opt, { at: [0, 0, 0], seed: 3 + role.length }));
+  const base = v.tick; v.tick = t => { base(t); for (const [zz, info] of (v.zs || [])) zPose(zz, [], t, info); };
+  VIEWS.push(v);
 }
-function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 
-// ---- the Tablet: today's weapons (your keep/cut marks) and the new ones to choose from
+// ---- the Tablet: its lineup by rarity, its roll, new weapons to choose from, today's marks
+const RCOL = { rare: '#3d8bff', epic: '#a34bff', legendary: '#ffb52e' }, RNAME = { rare: 'Rare', epic: 'Epic', legendary: 'Legendary' };
+let rollRar = 'epic';
+function tabLineup() {
+  const kept = D.tablet.filter(w => (DB.get('tablet', w.id) || {}).choice === 'keep').map(w => ({ id: w.id, name: w.name, kind: w.kind, does: w.does, src: 'kept' }));
+  const added = D.tabnew.concat(D.tabnew2).filter(w => (DB.get('tabnew', w.id) || {}).choice === 'add').map(w => ({ id: w.id, name: w.name, kind: w.kind, does: [w.light, w.heavy !== '-' ? 'Heavy: ' + w.heavy : '', w.special].filter(Boolean).join(' '), src: 'added', el: w.el }));
+  return kept.concat(added);
+}
+const rarOf = id => ((DB.get('tabrar', 'all') || {})[id]) || D.rarity[id] || 'rare';
 function drawTablet() {
+  clearViews();
   const box = $('#wbody');
-  const kept = D.tablet.filter(w => (DB.get('tablet', w.id) || {}).choice === 'keep'), cut = D.tablet.filter(w => (DB.get('tablet', w.id) || {}).choice === 'cut');
-  box.innerHTML = `<p class="hint">The Tablet is the Curse's Mystery Box. You kept ${kept.length} of today's weapons and cut ${cut.length}. Here are 12 new ones to choose from - each a Skyrim weapon with a BO3 Zombies-style power, built from Skyrim's own meshes on its element's kit. Add the ones you want; aim for about 8.</p>
-<h3 class="sub">New weapons to choose from</h3>
-<div class="wgrid">${D.tabnew.map(w => { const k = D.kits.find(x => x.id === w.el); return `<article class="wcard tnew" data-tn="${w.id}" style="--c:${k ? k.col : '#888'}"><div class="tnhead"><span class="dot" style="background:${k ? k.col : '#888'}"></span><span class="lbl">${esc(k ? k.name : w.el)} &middot; ${esc(w.kind)}</span></div><div class="wb"><h4>${esc(w.name)}</h4>
+  const newCard = w => { const k = D.kits.find(x => x.id === w.el), r = D.rarity[w.id] || 'rare'; return `<article class="wcard tnew" data-tn="${w.id}" style="--c:${k ? k.col : '#888'}"><div class="tnhead"><span class="dot" style="background:${k ? k.col : '#888'}"></span><span class="lbl">${esc(k ? k.name : w.el)} &middot; ${esc(w.kind)}</span><span class="rar" style="--r:${RCOL[r]}">${RNAME[r]}</span></div><div class="wb"><h4>${esc(w.name)}</h4>
 <p><b>Light:</b> ${esc(w.light)}</p>${w.heavy && w.heavy !== '-' ? `<p><b>Heavy:</b> ${esc(w.heavy)}</p>` : ''}<p><b>Special:</b> ${esc(w.special)}</p>
 <p class="muted" style="font-size:12.5px">Made from: ${esc(w.base)}. BO3: ${esc(w.bo3)}.</p>
 <div class="row"><button class="btn pass" data-tnc="add" aria-pressed="false">Add it</button><button class="btn skip" data-tnc="maybe" aria-pressed="false">Maybe</button><button class="btn fail" data-tnc="no" aria-pressed="false">No</button></div>
-<textarea rows="1" placeholder="What to change (optional)" aria-label="Note on ${esc(w.name)}"></textarea><span class="saved"></span></div></article>`; }).join('')}</div>
+<textarea rows="1" placeholder="What to change (optional)" aria-label="Note on ${esc(w.name)}"></textarea><span class="saved"></span></div></article>`; };
+  box.innerHTML = `<p class="hint">The Tablet is the Curse's Mystery Box. Its weapons now come in three rarities by how strong their abilities are: <b style="color:${RCOL.rare}">Rare</b>, <b style="color:${RCOL.epic}">Epic</b> and <b style="color:${RCOL.legendary}">Legendary</b>, and rarer ones roll less often (your pick). Their uses get rebalanced once you finalize the lineup.</p>
+<h3 class="sub">1. The lineup, by rarity</h3>
+<p class="hint">Your kept weapons and the ones you added. I sorted them by strength; move any with its R / E / L buttons.</p>
+<div class="rargrid" id="rargrid"></div>
+<div class="odds" id="odds"><b>How often each rolls</b>${['rare', 'epic', 'legendary'].map(r => `<label style="--r:${RCOL[r]}">${RNAME[r]} <input type="range" min="0" max="100" step="1" data-odds="${r}"><output data-oo="${r}"></output></label>`).join('')}<span class="muted" id="oddsum"></span><span class="saved" data-sv="odds"></span></div>
+<h3 class="sub">2. The roll</h3>
+<p class="hint">Four ways for the Tablet to roll, on the Tablet itself with its weapons. See each in every rarity's colour, then pick one.</p>
+<div class="chips" id="rollrar">${['rare', 'epic', 'legendary'].map(r => `<button class="chip" data-rr="${r}" aria-pressed="${r === rollRar}"><span class="dot" style="background:${RCOL[r]}"></span>${RNAME[r]} win</button>`).join('')}</div>
+<div class="wgrid">${D.rolls.map(r => `<article class="wcard" data-roll="${r.id}"><canvas aria-label="${esc(r.name)}, playing"></canvas><div class="wb"><h4>${esc(r.name)}</h4><p>${esc(r.about)}</p><div class="row"><button class="btn pass" data-rpick="${r.id}" aria-pressed="false">Pick this roll</button></div></div></article>`).join('')}</div>
+<textarea rows="1" data-note="roll" placeholder="Anything about the roll (optional)" aria-label="Note on the roll" style="margin-top:10px"></textarea><span class="saved" data-sv="roll"></span>
+<h3 class="sub">3. More new weapons to choose from</h3>
+<p class="hint">12 more, made from Skyrim's own weapons and lore with a BO3 Zombies power each; none like the five you said no to. My suggested rarity is on each.</p>
+<div class="wgrid">${D.tabnew2.map(newCard).join('')}</div>
 <div class="status-line" id="tnsum"></div>
-<h3 class="sub">Today's weapons: your marks</h3>
+<h3 class="sub">4. The ones you already added</h3>
+<div class="wgrid">${D.tabnew.filter(w => (DB.get('tabnew', w.id) || {}).choice === 'add').map(newCard).join('')}</div>
+<details class="more"><summary>The ones you said no to, and today's weapons you cut</summary><div class="wgrid">${D.tabnew.filter(w => (DB.get('tabnew', w.id) || {}).choice !== 'add').map(newCard).join('')}</div></details>
+<h3 class="sub">5. Today's weapons: your marks</h3>
 <div class="wgrid">${D.tablet.map(w => `<article class="wcard" data-tb="${w.id}">${w.key ? '<canvas aria-label="' + esc(w.name) + ', turnable 3D model"></canvas>' : '<div class="noview">No preview</div>'}<div class="wb"><h4>${esc(w.name)}</h4><span class="lbl">${esc(w.kind)}</span><p>${esc(w.does)}</p>
 <div class="row"><button class="btn pass" data-tc="keep" aria-pressed="false">Keep</button><button class="btn skip" data-tc="rework" aria-pressed="false">Rework</button><button class="btn fail" data-tc="cut" aria-pressed="false">Cut</button></div>
 <textarea rows="1" placeholder="Why, or what to change (optional)" aria-label="Note on ${esc(w.name)}"></textarea><span class="saved"></span></div></article>`).join('')}</div>
 <h3 class="sub">Your own ideas</h3><div data-tb="_ideas"><textarea rows="3" placeholder="Any weapon you'd like in the Tablet: what it is and what it does" aria-label="Ideas for new Tablet weapons"></textarea><span class="saved"></span></div>`;
   $$('.wcard[data-tb]', box).forEach(a => { const w = D.tablet.find(x => x.id === a.dataset.tb); if (w.key) view3d($('canvas', a), w.key, { gain: 0.8 }); });
+  if (GL.ok) $$('.wcard[data-roll]', box).forEach(a => { const v = rollView($('canvas', a), a.dataset.roll); v.setRarity(rollRar); VIEWS.push(v); a.__v = v; });
   box.onclick = async e => {
     const b = e.target.closest('button[data-tc]');
     if (b) { const card = b.closest('[data-tb]'), prev = DB.get('tablet', card.dataset.tb) || {}; await saveTo('tablet', card.dataset.tb, { choice: prev.choice === b.dataset.tc ? '' : b.dataset.tc, note: $('textarea', card).value.slice(0, 2000) }, $('.saved', card)); paintTablet(); return; }
     const n = e.target.closest('button[data-tnc]');
-    if (n) { const card = n.closest('[data-tn]'), prev = DB.get('tabnew', card.dataset.tn) || {}; await saveTo('tabnew', card.dataset.tn, { choice: prev.choice === n.dataset.tnc ? '' : n.dataset.tnc, note: $('textarea', card).value.slice(0, 2000) }, $('.saved', card)); paintTablet(); }
+    if (n) { const card = n.closest('[data-tn]'), prev = DB.get('tabnew', card.dataset.tn) || {}; await saveTo('tabnew', card.dataset.tn, { choice: prev.choice === n.dataset.tnc ? '' : n.dataset.tnc, note: $('textarea', card).value.slice(0, 2000) }, $('.saved', card)); paintTablet(); return; }
+    const rr = e.target.closest('button[data-rr]');
+    if (rr) { rollRar = rr.dataset.rr; $$('#rollrar .chip').forEach(c => c.setAttribute('aria-pressed', String(c === rr))); $$('.wcard[data-roll]', box).forEach(a => a.__v && a.__v.setRarity(rollRar)); return; }
+    const rp = e.target.closest('button[data-rpick]');
+    if (rp) { const prev = DB.get('tabroll', 'pick') || {}; await saveTo('tabroll', 'pick', Object.assign({}, prev, { pick: prev.pick === rp.dataset.rpick ? '' : rp.dataset.rpick }), $('[data-sv="roll"]', box)); paintTablet(); return; }
+    const mv = e.target.closest('button[data-mv]');
+    if (mv) { const prev = DB.get('tabrar', 'all') || {}; await saveTo('tabrar', 'all', Object.assign({}, prev, { [mv.dataset.id]: mv.dataset.mv }), $('[data-sv="odds"]', box)); paintTablet(); }
   };
+  box.oninput = e => { const r = e.target.dataset.odds; if (!r) return; $(`[data-oo="${r}"]`, box).textContent = e.target.value + '%'; };
   box.onchange = async e => {
+    const r = e.target.dataset.odds;
+    if (r) { const prev = DB.get('tabrar', 'odds') || Object.assign({}, D.odds); await saveTo('tabrar', 'odds', Object.assign({}, prev, { [r]: +e.target.value }), $('[data-sv="odds"]', box)); paintTablet(); return; }
+    if (e.target.dataset.note === 'roll') { const prev = DB.get('tabroll', 'pick') || {}; await saveTo('tabroll', 'pick', Object.assign({}, prev, { note: e.target.value.slice(0, 2000) }), $('[data-sv="roll"]', box)); return; }
     if (e.target.tagName !== 'TEXTAREA') return;
     const tb = e.target.closest('[data-tb]'), tn = e.target.closest('[data-tn]');
     if (tb) { const prev = DB.get('tablet', tb.dataset.tb) || {}; await saveTo('tablet', tb.dataset.tb, { choice: prev.choice || '', note: e.target.value.slice(0, 2000) }, $('.saved', tb)); }
@@ -443,9 +510,18 @@ function paintTablet() {
   const box = $('#wbody'); if (!box || wTab !== 'tablet') return;
   $$('[data-tb]', box).forEach(card => { const p = DB.get('tablet', card.dataset.tb) || {}; $$('button[data-tc]', card).forEach(b => b.setAttribute('aria-pressed', String(p.choice === b.dataset.tc))); const ta = $('textarea', card); if (document.activeElement !== ta) ta.value = p.note || ''; });
   let add = 0, maybe = 0;
-  $$('[data-tn]', box).forEach(card => { const p = DB.get('tabnew', card.dataset.tn) || {}; $$('button[data-tnc]', card).forEach(b => b.setAttribute('aria-pressed', String(p.choice === b.dataset.tnc))); card.dataset.picked = String(p.choice === 'add'); if (p.choice === 'add') add++; if (p.choice === 'maybe') maybe++; const ta = $('textarea', card); if (document.activeElement !== ta) ta.value = p.note || ''; });
-  const kept = D.tablet.filter(w => (DB.get('tablet', w.id) || {}).choice === 'keep').length;
-  const s = $('#tnsum'); if (s) s.textContent = `${add} added, ${maybe} maybe. With the ${kept} you kept, the Tablet would hold ${kept + add} weapons.`;
+  $$('[data-tn]', box).forEach(card => { const p = DB.get('tabnew', card.dataset.tn) || {}; $$('button[data-tnc]', card).forEach(b => b.setAttribute('aria-pressed', String(p.choice === b.dataset.tnc))); card.dataset.picked = String(p.choice === 'add'); const ta = $('textarea', card); if (document.activeElement !== ta) ta.value = p.note || ''; });
+  D.tabnew2.forEach(w => { const c = (DB.get('tabnew', w.id) || {}).choice; if (c === 'add') add++; if (c === 'maybe') maybe++; });
+  const line = tabLineup();
+  const s = $('#tnsum'); if (s) s.textContent = `${add} of these added, ${maybe} maybe. The Tablet holds ${line.length} weapons now.`;
+  const rg = $('#rargrid');
+  if (rg) rg.innerHTML = ['rare', 'epic', 'legendary'].map(r => `<div class="rarcol" style="--r:${RCOL[r]}"><h4>${RNAME[r]} <span>${line.filter(w => rarOf(w.id) === r).length}</span></h4>${line.filter(w => rarOf(w.id) === r).map(w => `<div class="rarw"><b>${esc(w.name)}</b><span class="muted">${esc(w.kind)}${w.src === 'added' ? ' &middot; added' : ''}</span>
+<div class="rarmv">${['rare', 'epic', 'legendary'].map(x => `<button class="rb" data-mv="${x}" data-id="${w.id}" aria-pressed="${x === r}" style="--r:${RCOL[x]}" title="Make it ${RNAME[x]}">${RNAME[x][0]}</button>`).join('')}</div></div>`).join('') || '<p class="empty">None</p>'}</div>`).join('');
+  const odds = DB.get('tabrar', 'odds') || D.odds;
+  $$('[data-odds]', box).forEach(i => { if (document.activeElement !== i) i.value = odds[i.dataset.odds]; $(`[data-oo="${i.dataset.odds}"]`, box).textContent = odds[i.dataset.odds] + '%'; });
+  const tot = odds.rare + odds.epic + odds.legendary, os = $('#oddsum'); if (os) os.textContent = tot === 100 ? '' : `(they add up to ${tot}%; I'll scale them to 100%)`;
+  const rp = (DB.get('tabroll', 'pick') || {}); $$('button[data-rpick]', box).forEach(b => { const on = rp.pick === b.dataset.rpick; b.setAttribute('aria-pressed', String(on)); b.textContent = on ? 'Your pick' : 'Pick this roll'; b.closest('.wcard').dataset.picked = String(on); });
+  const rn = $('[data-note="roll"]', box); if (rn && document.activeElement !== rn) rn.value = rp.note || '';
 }
 
 // ================================================================ IN-GAME UI
@@ -453,19 +529,26 @@ let uTab = 'direction', uFilter = 'all';
 const DIRS = [
   { id: 'tally', L: 'A', name: 'Ember Tally', tag: 'BO3\'s layout and punch, in Skyrim\'s fire',
     pts: ['The night as glowing ember tally marks (BO3\'s chalk round counter, scratched like runes).', 'Cursed Essence big and gold bottom right, with +10s that pop up like BO3\'s points.', 'Your brews as a row of round glowing icons bottom left, like perk-a-colas.', 'Skyrim\'s thin compass and its own bars; everything else hidden until it matters.'] },
-  { id: 'stone', L: 'B', name: 'Dragon Stone', tag: 'Skyrim\'s carved stone and gold, BO3\'s places on the screen',
-    pts: ['Every readout on a small carved plate edged in gold, like Skyrim\'s Dragon-script stones.', 'The night in Cinzel numerals; the essence the same, bottom right.', 'Brews as gold-framed diamonds.', 'The richest look of the three; also the busiest.'] },
-  { id: 'edge', L: 'C', name: 'Edge Clean', tag: 'Today\'s quiet Edge UI, with BO3\'s colour only where it counts',
-    pts: ['Close to what is in the game now: thin type, no frames, lots of space.', 'BO3 shows only in the colours.', 'The calmest of the three; the least like Black Ops.'] },
+  { id: 'bone', L: 'D', name: 'Dragonbone', tag: 'The dragon cult\'s carved bone and the blood moon\'s crimson; BO3\'s ornament',
+    pts: ['Every readout on a small plaque of carved bone, its corners cut like a Dragon Priest\'s mask, a fine inner line.', 'The night\'s tally scratched in blood-red light; numbers and titles in Cinzel, the old Nordic inscription type.', 'Brews as bone-rimmed diamonds glowing their colour; Felldir\'s words in a calligraphic serif.', 'The most Skyrim of the three, and the most ornate: Shadows of Evil\'s art-deco ornament made Nordic.'] },
+  { id: 'glass', L: 'E', name: 'Echo Glass', tag: 'The Echo Altar\'s soul crystal: frosted dark glass with light running in its edges',
+    pts: ['Every panel is dark frosted glass that blurs the world behind it, a thin line of soul-light round its edge.', 'The night\'s tally drawn in cold blue-white light; clean modern type (Jost, the mod\'s own font).', 'Pale blue and violet - the colours of the altar crystal and BO3\'s Apothicon - with soft glows, nothing heavy.', 'The most modern and the cleanest; the most like a new game\'s HUD.'] },
 ];
 const dirNow = () => DIRS.find(d => d.id === ((DB.get('uidir', 'pick') || {}).pick || 'tally')) || DIRS[0];
-const UI_STATE_T = { in: 'In the game now (old look)', next: 'To be built in your direction', own: 'Skyrim\'s own: stays', removed: 'Removed' };
+const UI_STATE_T = { in: 'In the game now (old look)', next: 'To be built in your direction', own: 'Skyrim\'s own: stays', removed: 'Removed', keep: 'Kept as it is in your game (your note)', menu: 'Pick one of the two for this menu' };
+const RES = [['2560x1600', '16 / 10', '2560 x 1600 (16:10)'], ['1920x1080', '16 / 9', '1920 x 1080 (16:9)'], ['2560x1440', '16 / 9', '2560 x 1440 (16:9)'], ['3440x1440', '43 / 18', '3440 x 1440 (21:9)']];
+let uRes = '2560x1600', uPlay = true;
 function drawUI() {
   const el = $('section[data-s="ui"]');
   el.innerHTML = `<h2 class="sec">In-game UI</h2>
-<p class="lead">Every screen of the mod, aiming for the perfect blend of Skyrim and Black Ops 3 Zombies, drawn over real stills from your own game at your 2560&times;1600 screen, at true size. The direction you pick restyles every screen at once.</p>
+<p class="lead">Every screen of the mod, aiming for the perfect blend of Skyrim and Black Ops 3 Zombies, drawn over real stills from your own game. The direction you pick restyles every screen at once. Every box fades in and out with a soft gradient (playing here on a loop), and the whole UI fits any screen: pick a resolution to see it.</p>
+<div class="uctl"><div class="chips" id="ures">${RES.map(([k, , n]) => `<button class="chip" data-res="${k}" aria-pressed="${k === uRes}">${n}</button>`).join('')}</div><label class="cmp"><input type="checkbox" id="uplay" checked> Play the fades</label></div>
 <div class="chips" id="utabs">${[['direction', 'The direction'], ['screens', 'Every screen']].map(([k, n]) => `<button class="chip" data-u="${k}" aria-pressed="${k === uTab}">${n}</button>`).join('')}</div>
 <div id="ubody"></div><div class="zoom" id="uzoom" hidden><div class="zin"></div><button class="btn" id="uzclose">Close</button></div>`;
+  const applyRes = () => { const r = RES.find(x => x[0] === uRes); el.style.setProperty('--ar', r[1]); };
+  applyRes();
+  $('#ures').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; uRes = b.dataset.res; $$('#ures .chip').forEach(c => c.setAttribute('aria-pressed', String(c === b))); applyRes(); });
+  $('#uplay').addEventListener('change', e => { uPlay = e.target.checked; $$('.stage', el).forEach(st => st.classList.toggle('play', uPlay)); });
   $('#utabs').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; uTab = b.dataset.u; $$('#utabs .chip').forEach(c => c.setAttribute('aria-pressed', String(c === b))); paintUI(true); });
   el.addEventListener('click', e => {   // (a still at full width, to read it as you would on your screen)
     const s = e.target.closest('.stage'); if (s && !e.target.closest('#uzoom')) { $('#uzoom .zin').innerHTML = s.outerHTML; $('#uzoom').hidden = false; return; }
@@ -497,11 +580,13 @@ function paintUI(full) {
       box.innerHTML = `<p class="hint">Every screen in <b>${esc(d.name)}</b> (change it in The direction), on real stills of your game. Click a still to see it full width; Approve what's right, Change with a note what isn't.</p>
 <div class="chips" id="ufil">${[['all', `Everything (${all.length})`]].concat(UI_SCREENS.map(([g, gl, l]) => [g, `${gl} (${l.length})`])).map(([g, n]) => `<button class="chip" data-g="${g}" aria-pressed="${g === uFilter}">${esc(n)}</button>`).join('')}</div>
 <div class="ugrid">${all.map(x => `<article class="ucard" data-id="${x.id}" data-g="${x.g}">${uiStage(x.frame, d.L, x.draw(), x.extra)}<div class="wb"><h4>${esc(x.name)}</h4>${UI_STATE[x.id] ? `<span class="lbl">${UI_STATE_T[UI_STATE[x.id]]}</span>` : ''}<p>${esc(x.d)}</p>
-${UI_STATE[x.id] === 'own' ? '' : `<div class="row"><button class="btn pass" data-c="ok" aria-pressed="false">Approve</button><button class="btn skip" data-c="change" aria-pressed="false">Change</button><span class="saved"></span></div>
+${UI_STATE[x.id] === 'own' ? '' : UI_STATE[x.id] === 'menu' ? `<div class="row"><button class="btn pass" data-c="pick" aria-pressed="false">Use this one</button><button class="btn skip" data-c="change" aria-pressed="false">Change</button><span class="saved"></span></div>
+<textarea rows="1" placeholder="What to change (optional)" aria-label="Note on ${esc(x.name)}"></textarea>` : `<div class="row"><button class="btn pass" data-c="ok" aria-pressed="false">Approve</button><button class="btn skip" data-c="change" aria-pressed="false">Change</button><span class="saved"></span></div>
 <textarea rows="1" placeholder="What to change (optional)" aria-label="Note on ${esc(x.name)}"></textarea>`}</div></article>`).join('')}</div><div class="status-line" id="usum"></div>`;
       box.onclick = async e => {
         const f = e.target.closest('#ufil .chip'); if (f) { uFilter = f.dataset.g; $$('#ufil .chip').forEach(c => c.setAttribute('aria-pressed', String(c === f))); paintUI(false); return; }
         const b = e.target.closest('button[data-c]'); if (!b) return; const card = b.closest('.ucard'), prev = DB.get('uiscreens', card.dataset.id) || {};
+        if (b.dataset.c === 'pick' && prev.choice !== 'pick') { const other = Object.keys(MENU_PAIRS).find(k => k !== card.dataset.id && MENU_PAIRS[k] === MENU_PAIRS[card.dataset.id]); const po = DB.get('uiscreens', other) || {}; if (po.choice === 'pick') await saveTo('uiscreens', other, Object.assign({}, po, { choice: '' }), null); }
         await saveTo('uiscreens', card.dataset.id, { choice: prev.choice === b.dataset.c ? '' : b.dataset.c, note: $('textarea', card).value.slice(0, 2000), dir: d.id }, $('.saved', card)); paintUI(false); };
       box.onchange = async e => { if (e.target.tagName !== 'TEXTAREA') return; const card = e.target.closest('.ucard'), prev = DB.get('uiscreens', card.dataset.id) || {};
         await saveTo('uiscreens', card.dataset.id, { choice: prev.choice || '', note: e.target.value.slice(0, 2000), dir: d.id }, $('.saved', card)); };
@@ -510,10 +595,11 @@ ${UI_STATE[x.id] === 'own' ? '' : `<div class="row"><button class="btn pass" dat
     $$('.ucard', box).forEach(card => { const p = DB.get('uiscreens', card.dataset.id) || {};
       card.hidden = uFilter !== 'all' && card.dataset.g !== uFilter;
       $$('button[data-c]', card).forEach(b => b.setAttribute('aria-pressed', String(p.choice === b.dataset.c)));
-      if (p.choice === 'ok') ok++; if (p.choice === 'change') ch++;
+      if (p.choice === 'ok' || p.choice === 'pick') ok++; if (p.choice === 'change') ch++; card.dataset.picked = String(p.choice === 'pick');
       const ta = $('textarea', card); if (ta && document.activeElement !== ta) ta.value = p.note || ''; });
     $('#usum').textContent = `${all.length} screens in ${d.name}: ${ok} approved, ${ch} to change.`;
   }
+  $$('.stage', $('section[data-s="ui"]')).forEach(st => st.classList.toggle('play', uPlay));
 }
 
 // ================================================================ RELEASE: the road to Nexus, the mod stack, the design bible
@@ -540,8 +626,39 @@ function drawHistory() {
   el.innerHTML = `<h2 class="sec">History</h2>
 <p class="lead">Every build since Nov 24, newest first. The ones installed on your PC are marked; your test marks on this build are counted below.</p>
 <div class="stats" id="hstats"></div><h3 class="sub">Builds</h3>
+<h3 class="sub">Your notes, and what was done with them</h3>
+<p class="hint">Each time I build from your notes, they are cleared from their boxes and kept here with what I did, so the boxes are empty for your next round.</p>
+${(D.notelog || []).map(r => `<details class="more" open><summary>${esc(r.build)} &middot; ${r.notes.length} notes</summary><div class="nlog">${r.notes.map(n => `<div class="nrow"><span class="lbl">${esc(n.where.replace('/', ' > '))}</span><p class="q">"${esc(n.note)}"</p><p class="a">${esc(n.done)}</p></div>`).join('')}</div></details>`).join('')}
+<h3 class="sub">Builds</h3>
 <div class="hist">${D.builds.map(b => `<div class="hrow${D.installs[b.sha] ? ' inst' : ''}"><div><code>${esc(b.sha)}</code><div class="when">${esc(b.when)}</div>${D.installs[b.sha] ? '<span class="pill st-ready">Installed</span>' : ''}</div><p>${esc(b.what)}</p></div>`).join('')}</div>`;
   paintHistory();
+}
+
+// ================================================================ LORE: the story, the trials, the Easter eggs - read from the mod itself
+function drawLore() {
+  const el = $('section[data-s="lore"]');
+  const qa = list => list && list.length ? `<div class="qa">${list.map(x => `<details><summary>${esc(x.q)}</summary>${x.a.map(t => `<p>${esc(t)}</p>`).join('')}</details>`).join('')}</div>` : '';
+  el.innerHTML = `<h2 class="sec">Lore</h2>
+<p class="lead">The story of The Curse of Alduin, its trials and its hidden quests, as the mod tells it now: read from the game's own text and Felldir's ${D.lore.reduce((n, c) => n + (c.qa || []).reduce((m, x) => m + x.a.length, 0), 0)} lines. Approve a chapter, or mark what to change with a note - fixes where it contradicts Skyrim are welcome.</p>
+<nav class="lnav">${D.lore.map(c => `<a href="#lore" data-lj="${c.id}">${esc(c.title)}</a>`).join('')}</nav>
+${D.lore.map(c => `<article class="lchap" id="lore-${c.id}" data-lid="${c.id}"><h3>${esc(c.title)}</h3><p class="llead">${esc(c.lead)}</p>
+${(c.items || []).length ? `<div class="litems">${c.items.map(i => `<div class="litem"><b>${esc(i.t)}</b>${i.s ? `<span class="lbl">${esc(i.s)}</span>` : ''}<p>${esc(i.d)}</p></div>`).join('')}</div>` : ''}
+${(c.eggs || []).map(g => `<div class="legg"><h4>${esc(g.t)} <span class="lbl">${esc(g.cls)}</span></h4>${g.open ? `<p class="lopen">"${esc(g.open)}"</p>` : ''}<ol>${g.steps.map(st => `<li><b>${esc(st.t)}</b> - ${esc(st.d)}${st.hint ? `<small>Felldir: "${esc(st.hint)}"</small>` : ''}</li>`).join('')}</ol><p class="muted">Reward: ${esc(g.reward)}</p>${g.whispers.length ? `<details><summary>Felldir's whispers for it (${g.whispers.length})</summary>${g.whispers.map(w => `<p>${esc(w)}</p>`).join('')}</details>` : ''}</div>`).join('')}
+${c.qa && c.qa.length ? `<h4 class="lq">Felldir, asked</h4>${qa(c.qa)}` : ''}
+<div class="row"><button class="btn pass" data-lc="ok" aria-pressed="false">Approve</button><button class="btn skip" data-lc="change" aria-pressed="false">Change</button><span class="saved"></span></div>
+<textarea rows="2" placeholder="What to change in this chapter (optional)" aria-label="Note on ${esc(c.title)}"></textarea></article>`).join('')}`;
+  el.onclick = async e => {
+    const j = e.target.closest('[data-lj]'); if (j) { e.preventDefault(); $('#lore-' + j.dataset.lj).scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+    const b = e.target.closest('button[data-lc]'); if (!b) return; const card = b.closest('[data-lid]'), prev = DB.get('lore', card.dataset.lid) || {};
+    await saveTo('lore', card.dataset.lid, { choice: prev.choice === b.dataset.lc ? '' : b.dataset.lc, note: $('textarea', card).value.slice(0, 2000) }, $('.saved', card)); paintLore();
+  };
+  el.onchange = async e => { if (e.target.tagName !== 'TEXTAREA') return; const card = e.target.closest('[data-lid]'), prev = DB.get('lore', card.dataset.lid) || {};
+    await saveTo('lore', card.dataset.lid, { choice: prev.choice || '', note: e.target.value.slice(0, 2000) }, $('.saved', card)); };
+  paintLore();
+}
+function paintLore() {
+  if (!drawn.lore) return;
+  $$('[data-lid]').forEach(card => { const p = DB.get('lore', card.dataset.lid) || {}; $$('button[data-lc]', card).forEach(b => b.setAttribute('aria-pressed', String(p.choice === b.dataset.lc))); const ta = $('textarea', card); if (document.activeElement !== ta) ta.value = p.note || ''; });
 }
 function paintHistory() {
   if (!drawn.history) return;
@@ -549,7 +666,7 @@ function paintHistory() {
   $('#hstats').innerHTML = `<div class="stat"><b>${D.builds.length}</b><span>Builds</span></div><div class="stat"><b>${Object.keys(D.installs).length}</b><span>Installed</span></div><div class="stat green"><b>${marks.filter(m => m.r === 'pass').length}</b><span>Passed on ${esc(BUILD)}</span></div><div class="stat red"><b>${marks.filter(m => m.r === 'fail').length}</b><span>Failed on ${esc(BUILD)}</span></div>`;
 }
 
-const DRAW = { now: drawNow, systems: drawSystems, weapons: drawWeapons, ui: drawUI, release: drawRelease, history: drawHistory };
+const DRAW = { now: drawNow, systems: drawSystems, weapons: drawWeapons, ui: drawUI, lore: drawLore, release: drawRelease, history: drawHistory };
 // (everything marked anywhere repaints what shows it)
 DB.watch('marks', () => { paintBadge(); paintNow(); paintSystems(); paintHistory(); });
 DB.watch('groups', () => { paintBadge(); paintNow(); paintSystems(); });
@@ -559,6 +676,10 @@ DB.watch('tierlook', () => { if (drawn.weapons && wTab === 'classes') paintClass
 DB.watch('kits', () => { if (drawn.weapons && wTab === 'kits') paintKits(); });
 DB.watch('tabnew', () => { if (drawn.weapons && wTab === 'tablet') paintTablet(); });
 DB.watch('tablet', () => { if (drawn.weapons && wTab === 'tablet') paintTablet(); });
+DB.watch('tabrar', () => { if (drawn.weapons && wTab === 'tablet') paintTablet(); });
+DB.watch('tabroll', () => { if (drawn.weapons && wTab === 'tablet') paintTablet(); });
+DB.watch('lore', () => paintLore());
+DB.watch('abil', () => { if (drawn.weapons && wTab === 'classes' && curCls) paintAbil(D.classes.find(c => c.id === curCls)); });
 DB.watch('uidir', () => { if (drawn.ui) paintUI(false); });
 DB.watch('uiscreens', () => { if (drawn.ui && uTab === 'screens') paintUI(false); });
 paintBadge();

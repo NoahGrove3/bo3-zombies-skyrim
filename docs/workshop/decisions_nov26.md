@@ -17,3 +17,14 @@ From the 18:45 request:
 - **Tablet of Mysteries: redo the lineup in the workshop.** We propose keep / cut / new on our own models, each with a
   BO3-style ability, and Noah approves it item by item.
 - f696bbb installed 2026-11-27T00:51:25Z (stabilization build)
+
+## Nov 26 late (workshop round 2)
+- Summoner model: Daedric quarterstaff (was Dragonbone). Tier looks picked for all four classes.
+- Tablet: added Voice of the Mountain, Chaurus Fang, Soulrender, Mace of the Bound, Giant's Toe Club, Sweetroll of the Damned, Lil' Atronach; said no to Jester's Cane, Piston Lance, Aetherium Disc, Bloodbite, Whisper Edge.
+- Voice of the Mountain: light < heavy (5 m FUS) < special (12 m FUS RO DAH).
+- Tablet rarity: Rare blue / Epic purple / Legendary gold; rarer rolls less often. Uses rebalanced after the lineup is final. 12 more ideas and 4 roll animations to pick.
+- Element kits: 4K textures with a 2K option (MCM). Kits now our own volumetric 3D effects (vfx.js).
+- "Menu wheel" = the Tab menu. Inventory, Magic and Tab: recoloured vs remade, his pick.
+- UI fits 2560x1600, 1920x1080, 2560x1440, 3440x1440. Every box fades in/out with a gradient.
+- UI notes: tracked quests only under the night counter, altar trials only above the altar; uses ring beside the stamina bar; enemy health bars for all enemies in Skyrim; keep current Codex and New Character screens; altar menu new-or-keep and menu music are decisions in the workshop.
+- New Lore tab; co-op UI screens; directions: Ember Tally kept, Dragonbone and Echo Glass new (Dragon Stone, Edge Clean retired).

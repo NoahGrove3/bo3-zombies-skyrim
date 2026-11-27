@@ -5,7 +5,7 @@
 
 Each file: {"key", "scale" (the model root's own scale), "box", "shapes": [...], "looks": {look: [fx shapes]}, "gz": base64(gzip(binary))}.
 """
-import sys, json, base64, gzip, io, pathlib, subprocess, struct
+import re, sys, json, base64, gzip, io, pathlib, subprocess, struct
 import numpy as np
 from PIL import Image
 HERE = pathlib.Path(__file__).resolve().parent
@@ -110,10 +110,22 @@ def export(key):
     def idx(T, n): return np.asarray(T, dtype='<u2' if n < 65536 else '<u4')
     head = []
     texcache = {}
+    # (Noah, Nov 26: "make sure the weapon look effects are made on the actual weapon models so it feels accurate") the blood
+    # decals a weapon carries for the game's hit blood are hidden until it draws blood: never drawn as part of the weapon
+    model = [s for s in model if not re.search(r'blood|scabbard|^scb', (s['tex'] or '').split('\\')[-1] + ' ' + s['name'], re.I)]
+    allp = np.concatenate([np.array(s['v']) for s in model] + [np.array([v[:3] for v in sh['v']]) for lk in looks.values() for sh in lk if sh['v']])
+    lo, hi = allp.min(0) - 1, allp.max(0) + 1
+    span = np.maximum(hi - lo, 1e-3)
     for s in model:
         V = np.array(s['v']); U = np.array(s['uv']); T = np.array(s['t'])
         tp = find_tex(s['tex']) if s['tex'] else None
         m = {'k': 'm', 'n': len(V), 'nt': len(T), 'i32': len(V) >= 65536}
+        np_ = find_tex(s['tex'][:-4] + '_n.dds') if s['tex'] and s['kind'] != 'effect' else None
+        if np_:   # (its normal map too, the specular in its alpha as Skyrim keeps it: the steel's real relief and shine)
+            if np_ not in texcache:
+                im = Image.open(np_).convert('RGB'); im.thumbnail((768, 768)); b = io.BytesIO(); im.save(b, 'JPEG', quality=86)
+                texcache[np_] = 'data:image/jpeg;base64,' + base64.b64encode(b.getvalue()).decode()
+            m['nmap'] = texcache[np_]
         if s['kind'] == 'effect': m['glow'] = 1
         if tp:
             if tp not in texcache:
@@ -122,7 +134,7 @@ def export(key):
                         im = Image.open(tp).convert('RGBA'); im.thumbnail((256, 256)); b = io.BytesIO(); im.save(b, 'PNG', optimize=True)
                         texcache[tp] = 'data:image/png;base64,' + base64.b64encode(b.getvalue()).decode()
                     else:
-                        im = Image.open(tp).convert('RGB'); im.thumbnail((384, 384)); b = io.BytesIO(); im.save(b, 'JPEG', quality=78)
+                        im = Image.open(tp).convert('RGB'); im.thumbnail((768, 768)); b = io.BytesIO(); im.save(b, 'JPEG', quality=86)
                         texcache[tp] = 'data:image/jpeg;base64,' + base64.b64encode(b.getvalue()).decode()
                 except Exception: texcache[tp] = None
             if texcache[tp]: m['map'] = texcache[tp]

@@ -70,10 +70,16 @@ F('cb_marks', 'combat', 'No hit markers', 'done', 'No crosshair marks; the night
 F('cb_hitfeel', 'combat', 'Hit feel options', 'done', 'Removed as you asked ("Remove this").')
 
 # ---- class weapons
-F('cw_onemodel', 'classes', 'One model per class weapon', 'building', 'Your picks: the Dragon Priest scythe (Alchemist), the Dragonbone quarterstaff (Summoner), the Daedric wand (Destruction), the Daedric rapier (Spellsword) - each through every tier, the tiers changing its look only.')
-F('cw_tierlooks', 'classes', 'Tier looks: one look, stronger each tier', 'idea', 'Tier I faint, Tier II a glowing edge, Tier III a full aura and trail, Legendary all of it plus a signature effect. Built on the element kits.')
+F('cw_onemodel', 'classes', 'One model per class weapon', 'building', 'Your picks: the Dragon Priest scythe (Alchemist), the Daedric quarterstaff (Summoner, changed Nov 26 late), the Daedric wand (Destruction), the Daedric rapier (Spellsword) - each through every tier, the tiers changing its look only.')
+F('cw_tierlooks', 'classes', 'Tier looks: one look, stronger each tier', 'building', 'Your picks saved for all four. Now made in 3D on the model itself (its own surface glowing, particles born on it, a volume of light round each part) - never flat or an outline at any angle; the game gets the same from 4K baked textures with a 2K option.')
+F('ui_coop', 'hud', 'Co-op UI', 'idea', 'The party list, a friend down and lifting them, you down, names over the party, the scoreboard, a shared trial, joins and falls - in the workshop to approve.')
+F('ui_fades', 'hud', 'Every box fades in and out', 'idea', 'A soft gradient fade in and out on every pop-up box (your note); drawn by our HUD, so it goes in with the new direction.')
+F('ui_scale', 'hud', 'The UI fits any screen', 'idea', 'Sizes follow the screen\'s height, places the corners: 2560x1600, 1920x1080, 2560x1440 and 3440x1440 all previewed. Loading screens fill the screen on any shape.')
+F('ui_menus', 'hud', 'Inventory, Magic and Tab menus ours', 'idea', 'Recoloured (Untarnished UI\'s layout in our colours) or remade (our own pages): pick one of each in the workshop.')
+F('tb_rarity', 'tablet', 'Rarity: Rare, Epic, Legendary', 'idea', 'Each Tablet weapon is Rare (blue), Epic (purple) or Legendary (gold) by strength; rarer ones roll less often (60/30/10 to start, yours to set). Uses rebalanced once the lineup is final.')
+F('tb_roll', 'tablet', 'A new roll for the Tablet', 'idea', 'Four rolls to pick from in the workshop: The Reel, Pillar of Light, The Wheel, Soul Storm - each ending in the rarity\'s colour.')
 F('cw_ownmodels', 'classes', 'Our own models from Skyrim\'s meshes', 'idea', 'Each class weapon (and later the Tablet\'s) built from Skyrim, Dawnguard and Dragonborn parts: no mod needed for it.')
-F('cw_abilities', 'classes', 'Class weapon abilities rebuilt', 'idea', 'Every light and heavy ability redone on the new foundation (element kits, the Test Range).',
+F('cw_abilities', 'classes', 'Class weapon abilities rebuilt', 'building', 'Every light and heavy ability redone on the new foundation (element kits, the Test Range).',
   note='"They all look very poorly done ... redo the abilities and have a starting foundation".')
 F('cw_ults', 'classes', 'Ultimates and the kill meter removed', 'ready', 'The Tier III ultimates and their meter are gone (Tier III keeps its cards as before).',
   how='Tester\'s Kit: a class weapon at Tier III; kill 30 of the dead.', look='No meter above the perks, nothing extra on a heavy.', since=B)
@@ -227,8 +233,8 @@ TABLET = [
 # each: built from Skyrim's own meshes, an element from the kits, and a nod to a BO3 Zombies wonder weapon or box item
 TABLET_NEW = [
     dict(id='fushammer', name='Voice of the Mountain', kind='Nordic warhammer', el='wind', base='Skyrim\'s Nordic warhammer with a Word Wall\'s carved dragon-script round its head',
-         light='Every hit staggers the dead back a step.', heavy='The Unrelenting Force: a roaring cone that hurls every one of the dead in front of you.',
-         special='Every 20 kills the hammer charges a full FUS RO DAH: the next heavy clears the street.', bo3='The Thundergun'),
+         light='Every hit staggers the dead back a step.', heavy='FUS: a short roaring cone (5 m) that knocks down the dead in front of you.',
+         special='Every 20 kills it charges a full FUS RO DAH: the next heavy hurls every one of the dead 12 m ahead off their feet - always stronger than a heavy (your note: light < heavy < special).', bo3='The Thundergun'),
     dict(id='jester', name='The Jester\'s Cane', kind='Daedric staff', el='arcane', base='The Wabbajack\'s shape, reshaped as a twisted cane with a grinning head',
          light='Each bolt rolls a random fate: the dead shrink to knee height, turn into a cheese wheel that rolls off and bursts, fight each other, or pop in confetti fire.',
          heavy='A wide burst that gives every one of the dead around you its own random fate.', special='Sheogorath laughs now and then.', bo3='The Wave Gun and the Shrink Ray'),
@@ -256,6 +262,50 @@ TABLET_NEW = [
          light='Throw it: a knee-high Flame Atronach pops out and spins, blasting the dead around it with fire for 10 s.', heavy='-', special='It dances when it\'s done.', bo3='Li\'l Arnie'),
 ]
 
+# (Nov 26 late: "add the tablet suggested and give me more new ones") - 12 more, none like the five you said no to
+TABLET_NEW2 = [
+    dict(id='dagon', name='Razor of Dagon', kind='Daedric dagger', el='shadowfire', base='A Daedric dagger, its blade a sliver of Mehrunes Dagon\'s Razor',
+         light='Quick cuts; 1 in 8 hits slays one of the ordinary dead outright.', heavy='A rending slash that cuts every one of the dead in a 6 m line.', special='Slain ones split apart in violet fire.', bo3='Insta-Kill'),
+    dict(id='apocrypha', name='Grasp of Apocrypha', kind='Black Book (held)', el='poison', base='A Black Book of Hermaeus Mora, open in your hand',
+         light='A tentacle lashes up from the ground at the one you aim at.', heavy='A ring of tentacles bursts round you and drags the dead within 6 m under for 5 s.', special='The book whispers in Hermaeus Mora\'s voice.', bo3='Revelations\' Apothicon tentacles'),
+    dict(id='azura', name='Azura\'s Fallen Star', kind='Throwable (3 throws)', el='spirit', base='A shard of Azura\'s Star, dusk-light inside',
+         light='Throw it: it hangs in the air and pulls every one of the dead near it into a spinning knot, then bursts.', heavy='-', special='The ones it takes leave their souls as motes that drift to you.', bo3='The Gersh Device'),
+    dict(id='skyforge', name='Skyforge Thunder Maul', kind='Skyforge warhammer', el='shock', base='A Skyforge steel warhammer, its head ringed with copper and storm-glass',
+         light='Hits arc to 2 more of the dead.', heavy='Calls lightning down on up to 5 of the dead around you.', special='Thunder rolls over the city when it strikes.', bo3='The Storm Bow (Kimat\'s Bite)'),
+    dict(id='spriggan', name='Spriggan\'s Heartroot', kind='Living wood mace', el='earth', base='A gnarled mace of spriggan heartwood, its knot glowing green',
+         light='Hits heal you a little.', heavy='Roots burst from the ground and hold every one of the dead within 6 m for 4 s.', special='Swarms of glowing insects circle it.', bo3='Zetsubou\'s KT-4 and its plants'),
+    dict(id='eggsac', name='Frostbite Egg Sac', kind='Throwable (4 throws)', el='poison', base='A frostbite spider\'s egg sac, webbing trailing from it',
+         light='Throw it: it bursts into webs that stick the dead in place for 6 s while spiderlings bite them.', heavy='-', special='Webbed ones take double damage.', bo3='Widow\'s Wine'),
+    dict(id='tusk', name='Tusk of the Herd', kind='Mammoth-tusk spear', el='wind', base='A spear with a mammoth\'s tusk for a head, bound in hide',
+         light='Thrusts knock the dead down.', heavy='A stampede of ghostly mammoths tramples the street ahead.', special='The ground shakes as they pass.', bo3='The Thundergun\'s sweep, made Skyrim'),
+    dict(id='hagraven', name='Hagraven\'s Fetish', kind='Throwable (3 throws)', el='shadowfire', base='A hagraven\'s feathered fetish of bones and twine',
+         light='Throw it: it curses 3 of the dead - they turn and fight for you for 10 s.', heavy='-', special='They screech like hagravens while turned.', bo3='The GobbleGum "Turned"'),
+    dict(id='soulcairn', name='Soul Cairn Lantern', kind='Lantern flail', el='spirit', base='A Soul Cairn lantern on a chain, a trapped soul burning inside',
+         light='Hits draw a thread of soul light from the dead.', heavy='Opens a rift to the Soul Cairn: spirits drag the dead near it down.', special='The lantern brightens with every soul.', bo3='The Apothicon portals'),
+    dict(id='stalhrim', name='Stalhrim Shatter Axe', kind='Stalhrim war axe', el='frost', base='A Stalhrim war axe, deathly cold to hold',
+         light='Hits freeze the dead; a frozen one hit again shatters and freezes the ones beside it.', heavy='A cleave that freezes a cone in front of you.', special='Frost creeps over your gauntlet.', bo3='The Staff of Ice (Ull\'s Arrow)'),
+    dict(id='daedraheart', name='Daedra Heart Flail', kind='Flail', el='fire', base='A flail with a burning daedra heart for a head',
+         light='Hits burn.', heavy='Slams the heart down: a crack of magma runs ahead, burning a line of the dead.', special='The heart still beats.', bo3='The Staff of Fire (Kagutsuchi\'s Blood)'),
+    dict(id='wardshield', name='Dragonguard Ward-Shield', kind='Shield (left hand)', el='holy', base='A Blades\' dragonguard shield with a ward glowing in its face',
+         light='Hold it up: the dead can\'t hit you from the front.', heavy='A shield charge that flings the dead in your path.', special='It breaks after enough hits - the Tablet gives a fresh one.', bo3='The Rocket Shield'),
+]
+
+# rarity (Nov 26 late: "3 rarity weapons based on how strong their abilities are: Rare Blue, Purple Epic, Gold Legendary" -
+# rarer rolls less often, his pick). These are my suggestion; he moves any of them in the workshop.
+RARITY_DEFAULT = {
+    'stormtalons': 'epic', 'cinderclaws': 'rare', 'frostmourn': 'rare', 'lanternwick': 'epic', 'wyrmspine': 'rare', 'eclipse': 'epic',
+    'fushammer': 'legendary', 'soulrender': 'legendary', 'chaurus': 'rare', 'bound': 'epic', 'giantclub': 'rare', 'sweetroll': 'epic', 'atronach': 'epic',
+    'dagon': 'legendary', 'apocrypha': 'legendary', 'azura': 'epic', 'skyforge': 'epic', 'spriggan': 'rare', 'eggsac': 'rare', 'tusk': 'legendary',
+    'hagraven': 'epic', 'soulcairn': 'epic', 'stalhrim': 'rare', 'daedraheart': 'epic', 'wardshield': 'rare',
+}
+ODDS_DEFAULT = {'rare': 60, 'epic': 30, 'legendary': 10}
+ROLLS = [
+    dict(id='reel', name='The Reel', about='The design we have now, remade: the glyph ring grinds round, ghostly weapons flicker in the centre like a reel slowing down, and the won one rises out of the face in its rarity\'s light.'),
+    dict(id='pillar', name='Pillar of Light', about='BO3\'s box beam: a column of the rarity\'s light shoots into the sky from the Tablet; the weapons flick up inside it, faster then slower, and the won one hangs in the beam.'),
+    dict(id='wheel', name='The Wheel', about='The weapons circle the Tablet on a ring of runes, spinning fast and easing to a stop with the won one in front; it floats in to you.'),
+    dict(id='storm', name='Soul Storm', about='A vortex of souls rises off the Tablet with the weapons tumbling in it; the storm collapses into the won one with a burst of its rarity\'s colour.'),
+]
+
 # ------------------------------------------------------------------------------------------------ decisions waiting for Noah
 DECISIONS = [
     dict(id='immolate', sys='spells', q='What replaces Immolate (the Destruction fire spell at Tier III)?',
@@ -263,12 +313,65 @@ DECISIONS = [
                ('meteor', 'Meteor', 'A meteor called down where you aim (the look of Alduin\'s Bane\'s, smaller).'),
                ('flameWall', 'Wall of Flames', 'A burning wall laid along the ground ahead.'),
                ('inferno', 'Inferno Bolt', 'A slow, heavy fire bolt that bursts in a wide blast.')]),
+    dict(id='altarui', sys='hud', q='Your note on the Echo Altar menus: keep the altar menu you have in the game now, or use the new one (class painting, tab icons, every brew\'s icon - see In-game UI > Every screen > The Echo Altar)?',
+         opts=[('new', 'The new one', 'The class painting, the tab icons along the top, every brew with its own icon, in your direction.'),
+               ('keep', 'Keep my current altar menu', 'Leave the altar menu as it is in the game now.'),
+               ('mix', 'Mix them', 'Keep the current one, adding the class painting and the icons to it (say how in the note).')]),
+    dict(id='menumusic', sys='loading', q='Your note on the launch screen and main menu: which music should they play? (It starts with the launch screen and fades out when a game starts.)',
+         opts=[('dragonborn', 'Dragonborn (the main theme)', 'Skyrim\'s choir theme, the one from the trailer.'),
+               ('farhorizons', 'Far Horizons', 'Skyrim\'s quiet, longing exploration piece.'),
+               ('ancientstones', 'Ancient Stones', 'Skyrim\'s low, ominous ruin theme - the most like a curse.'),
+               ('sovngarde', 'Sovngarde', 'Skyrim\'s choir for the hall of the dead - fits the souls Alduin keeps from it.'),
+               ('own', 'Our own', 'A new piece for The Curse of Alduin (later, from your own pick of styles).')]),
     dict(id='bonereaper', sys='tablet', q='The Bonereaper\'s raise caused the round 20 crash (fixed now). Keep it in the Tablet?',
          opts=[('keep', 'Keep it', 'Fixed; it stays as it is until the lineup review.'),
                ('review', 'Decide in the lineup review', 'Keep, cut or rework it with the rest of the Tablet.'),
                ('cut', 'Cut it now', 'Take it out of the Tablet from the next build.')]),
 ]
 
+
+# ------------------------------------------------------------------------------------------------ the lore (Nov 26 late: "add one more tab in the workshop for
+# the story for CoA, the easter eggs, and trials - all of the lore essentially"): read from the mod itself, so it is what the game says
+def lore():
+    import re
+    gen = (ROOT / 'src' / 'Generated.h').read_text()
+    trials = re.findall(r'TrialDef\{ "(\w+)", "([^"]+)", "([^"]+)", "[^"]*", "([^"]+)"', gen)
+    vo = json.loads((ROOT / 'docs' / 'altarvo_lines.json').read_text())['lines']
+    def asks(group):
+        out = {}
+        for l in vo:
+            if l['group'] == group: out.setdefault(l['ask'], []).append(re.sub(r'\[[^\]]*\]\s*', '', l['text']))
+        return [dict(q=q, a=a) for q, a in out.items()]
+    eggs = json.loads((ROOT / 'sheets' / 'eggs.json').read_text())
+    mn = json.loads((ROOT / 'docs' / 'workshop' / 'modnow.json').read_text())
+    relics = next(items for t, items in mn['sections'] if 'Priest' in t)[:10]
+    whisper = eggs.get('whisper', {})
+    return [
+        dict(id='curse', title='The Curse', lead='At Helgen, Alduin shouted SLEN TIID VO - his raising shout - into the earth, and every grave in Skyrim heard it. His voice now hangs like a mist over the road to Sovngarde: the dead cannot pass, and every night it throws them back down to Skyrim as red beams of light. The Echo Altars the old Tongues raised in every city went dark; wake them, city by city, and the dead sleep again. The questline ends right before Skyrim\'s own fight with Alduin.',
+             qa=asks('The story so far')),
+        dict(id='felldir', title='Felldir the Old', lead='The voice in the altar\'s centre stone - one of the three ancient Tongues who cast Alduin out of time. He speaks only from a freed altar, and his story opens as more cities are freed (his name is kept secret until six altars are free).',
+             qa=asks('Who the voice is')),
+        dict(id='trials', title='The Echo Altars and their four trials', lead='The same four trials in every city, each with the city\'s own places, one after another, all at night, the party sharing them. The last seal calls the city\'s Dragon Priest out at once; his fall frees the city.',
+             items=[dict(t=n, s=sub, d=re.sub(r'\{n\}', 'a number of', d.replace('{city}', 'the city'))) for k, n, sub, d in trials]),
+        dict(id='cities', title='The cities and their Dragon Priests', lead='Ten cities, each with its altar, its trials\' places and its Dragon Priest. Each priest drops his own relic to every player when he falls.',
+             items=[dict(t=re.sub('<[^>]+>', '', r.split(':')[0]), d=re.sub('<[^>]+>', '', r.split(':', 1)[1]).strip()) for r in relics], qa=asks('This city')),
+        dict(id='classes', title='Your class and its wonder', lead='Each class has its own place in the story and its own wonder, earned by a hidden quest that Felldir whispers.',
+             qa=asks('Your class and wonder')),
+        dict(id='eggs', title='The hidden quests (Easter eggs)', lead=whisper.get('asleep', '') + ' Each wonder\'s quest has five steps, whispered by Felldir one at a time; the reward waits in the great hall of High Hrothgar.',
+             eggs=[dict(t=r['title'], cls=r['cls'], reward=r['rewardText'], open=r.get('open', ''), steps=[dict(t=st['title'], d=st['text'], hint=st.get('hint', '')) for st in r['steps']],
+                        whispers=[re.sub(r'\[[^\]]*\]\s*', '', l['text']) for l in vo if l['group'] == 'Whispers: ' + r['title']]) for r in eggs['rows']],
+             qa=asks('Whispers: cities') + asks('Whispers: signs') + asks('Whispers: reveals')),
+        dict(id='end', title='The dragons and the end', lead='Every 10th night a dragon; the three word-dragons and the Echo of Alduin are the hardest fights of all (35x, 40x, 45x and 80x health, tougher waves, enrage phases). Alduin\'s Bane waits in the Hall of the Awakened: a meteor on every light hit, a white tornado on a heavy. The Curse of Alduin ends right before Skyrim\'s own battle with Alduin.',
+             items=[dict(t='Dragons', d='A dragon comes every 10th night; its words teach the city\'s shout (Solitude\'s bards teach Tiny Terrors, Whiterun gives Dragon\'s Updraft).'),
+                    dict(t='The three word-dragons', d='The last three dragons, each guarding a word: the hardest fights before the end.'),
+                    dict(t='The Echo of Alduin', d='Alduin\'s own echo, the curse made flesh: 80 times the health of the dead, the last fight of the mod.'),
+                    dict(t='Alduin\'s Bane', d='The last weapon, from the Hall of the Awakened.')]),
+    ]
+
+
+# ------------------------------------------------------------------------------------------------ his notes, kept with the build they went into
+# (Noah, Nov 26 late: "clear my notes in the boxes for the build and save them in the build history so it's documented")
+NOTE_LOG = json.loads((HERE / 'notes_log.json').read_text()) if (HERE / 'notes_log.json').exists() else []
 
 # ------------------------------------------------------------------------------------------------ the design bible
 BIBLE = dict(
@@ -374,21 +477,55 @@ KIT_SOUNDS = {
 }
 
 
+# (Nov 26 late: "make the previews as good or close to what they would look like in the actual game ... 4k textures and hyper
+# realistic VFX made in 3D not flat or layered textures") - the Curse's own effects (vfx.js), each part three designs
+EL_WORDS = {   # noun, what erupts, what lingers, what falls
+    'fire': ('flame', 'flame geysers', 'flames', 'a meteor'), 'frost': ('ice', 'ice spikes', 'frost mist', 'an ice comet'),
+    'shock': ('lightning', 'lightning forks', 'static', 'a lightning strike'), 'shadowfire': ('violet-black flame', 'shadowfire geysers', 'shadowfire', 'a falling shadow-star'),
+    'holy': ('sunlight', 'pillars of light', 'sun-motes', 'a sunbeam'), 'poison': ('acid', 'acid geysers', 'poison fog', 'a falling acid globe'),
+    'arcane': ('magicka', 'arcane spires', 'magicka haze', 'a beam of magicka'), 'blood': ('blood', 'blood geysers', 'blood mist', 'a falling blood orb'),
+    'spirit': ('soul light', 'rising spirits', 'ghost mist', 'a beam of soul light'), 'earth': ('stone and dust', 'stone spikes', 'dust', 'a falling boulder'),
+    'wind': ('wind', 'whirlwinds', 'a dust storm', 'a falling gust'),
+}
+KIT_DESIGNS = {
+    'impact': [('core', 'Flare', 'A compact burst of {n} where it lands, sparks thrown out, a wisp left hanging.'),
+               ('spark', 'Splash', '{N} spraying off the hit in the direction of the blow.'),
+               ('drain', 'Drain', '{N} pulled into the one struck from all round, then a pop.')],
+    'burst': [('big', 'Explosion', 'A full blast of {n} rolling up into smoke, debris thrown, the ground scorched.'),
+              ('nova', 'Nova ring', 'A ring of {n} tearing outward along the ground from the heart of it.'),
+              ('spikes', 'Eruption', '{E} bursting up from the ground in a ring round you.')],
+    'ground': [('mist', 'Lingering', 'A low blanket of {m} rolling over the ground for a few seconds.'),
+               ('rune', 'Rune circle', 'A circle of runes burned into the ground, {n} rising off it.'),
+               ('wave', 'Spreading wave', 'A creeping ring of {m} running outward, leaving patches behind.')],
+    'above': [('sky', 'From the sky', '{F} comes down on the spot and bursts.'),
+              ('pillar', 'Pillar', 'A turning column of {n} pours down from the sky onto the spot.')],
+}
+
+
 def element_kits():
-    import sys
-    sys.path.insert(0, str(ROOT / 'tools'))
-    import realfx
     snd = json.loads((ROOT / 'docs' / 'workshop' / 'sounds.json').read_text())['sounds']
     out = []
     for eid, name, col, about in ELEMENTS + EXTRA_ELEMENTS:
-        th = realfx.PARTS[KIT_THEME[eid]]
-        parts = [dict(id=rid, name=rn, about=ra, opts=[dict(id=r, model=th[r]['model'], label=th[r]['label'], s=th[r]['s'], ground=r in ('mist', 'rune', 'wave', 'nova', 'pillar'))
-                                                          for r in roles if r in th]) for rid, rn, ra, roles in KIT_ROLES]
+        n, e, m, f = EL_WORDS[eid]
+        fill = lambda t: t.format(n=n, N=n[0].upper() + n[1:], E=e[0].upper() + e[1:], m=m, F=f[0].upper() + f[1:])
+        parts = [dict(id=rid, name=rn, about=ra, opts=[dict(id=i, label=l, about=fill(a)) for i, l, a in KIT_DESIGNS[rid]]) for rid, rn, ra, roles in KIT_ROLES]
         sounds = [dict(id=k, name={'cast': 'Cast', 'impact': 'Impact', 'burst': 'Burst'}[k],
-                       opts=[dict(id=n, name=n.replace('_', ' '), mp3=snd[n]['mp3'][0], src=snd[n].get('src', '')) for n in v if n in snd])
+                       opts=[dict(id=n_, name=n_.replace('_', ' '), mp3=snd[n_]['mp3'][0], src=snd[n_].get('src', '')) for n_ in v if n_ in snd])
                   for k, v in KIT_SOUNDS[eid].items()]
         out.append(dict(id=eid, name=name, col=col, about=about, theme=KIT_THEME[eid], parts=parts, sounds=sounds))
     return out
+
+# each class weapon's light and heavy, made from its element's kit on the weapon's own page
+CLASS_ABIL = {
+    'alchemist': dict(els=['shadowfire'], light=dict(act='swing', roles=['impact'], what='A scythe swing: shadowfire where the blade bites.'),
+                      heavy=dict(act='slam', roles=['burst', 'ground', 'above'], what='The scythe brought down: shadowfire bursting round the blow.')),
+    'summoner': dict(els=['holy', 'spirit'], light=dict(act='swing', roles=['impact'], what='A quarterstaff strike: radiant light on the hit.'),
+                     heavy=dict(act='slam', roles=['burst', 'ground', 'above'], what='Both heads driven down: radiance bursting from the ground.')),
+    'destruction': dict(els=['arcane'], light=dict(act='cast', cast=True, roles=['impact'], what='A glintstone bolt from the wand, bursting on the one it hits.'),
+                        heavy=dict(act='cast', cast=True, roles=['burst', 'ground', 'above'], what='A charged cast: the wand\'s magicka unleashed where you aim.')),
+    'spellsword': dict(els=['fire', 'frost', 'shock'], light=dict(act='swing', roles=['impact'], what='A rapier thrust carrying the spell in your other hand.'),
+                       heavy=dict(act='slam', roles=['burst', 'ground', 'above'], what='A spell-charged heavy: your other hand\'s element bursting from the blow.')),
+}
 
 EXTRA_ELEMENTS = [
     ('spirit', 'Spirit', '#dfe8ff', 'Ghost light, souls and the dead raised: pale, cold, whispering.'),
@@ -434,7 +571,7 @@ def main():
                 decisions=[dict(d, opts=[dict(id=a, name=b, about=c) for a, b, c in d['opts']]) for d in DECISIONS],
                 builds=builds(), installs=INSTALLS, bible=BIBLE,
                 elements=[dict(id=a, name=b, col=c, about=d) for a, b, c, d in ELEMENTS], kit=[dict(name=a, about=b) for a, b in KIT_PARTS],
-                classes=CLASSES, tablet=TABLET, tabnew=TABLET_NEW, kits=element_kits())
+                classes=CLASSES, tablet=TABLET, tabnew=TABLET_NEW, kits=element_kits(), abil=CLASS_ABIL, tabnew2=TABLET_NEW2, rarity=RARITY_DEFAULT, odds=ODDS_DEFAULT, rolls=ROLLS, lore=lore(), notelog=NOTE_LOG)
     for k in ('modstack', 'nexus', 'modnow'):
         data[k] = json.loads((ROOT / 'docs' / 'workshop' / f'{k}.json').read_text())
     (HERE / 'data.json').write_text(json.dumps(data, ensure_ascii=False, indent=1))

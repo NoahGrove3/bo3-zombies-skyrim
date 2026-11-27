@@ -1,0 +1,162 @@
+[
+ {
+  "build": "Workshop, Nov 26 late",
+  "date": "2026-11-26",
+  "notes": [
+   {
+    "when": "2026-11-27 03:31",
+    "where": "tabnew/fushammer",
+    "note": "Make the light attack through special scale properly so Heavy isnt too strong then the special would not be stronger than the heavy.",
+    "choice": "add",
+    "done": "Rewritten: light (stagger) < heavy (5 m FUS) < special (12 m FUS RO DAH)."
+   },
+   {
+    "when": "2026-11-27 03:10",
+    "where": "uiscreens/altarmenu",
+    "note": "Keep my current Echo Alter UI. or change this suggested UI so include the class images and Perk and tab Icons. The Echo Alter UI in the preview looks too bland.",
+    "choice": "change",
+    "done": "New altar menu drawn with the class painting, tab icons and every brew's icon; \"keep my current one\" is a choice under Now > Decisions."
+   },
+   {
+    "when": "2026-11-27 03:09",
+    "where": "uiscreens/armory",
+    "note": "Keep my current Echo Alter UI. or change this suggested UI so include the class images and Perk and tab Icons. The Echo Alter UI in the preview looks too bland.",
+    "choice": "change",
+    "done": "Same: Armory now has element icons and tier pips (new vs keep under Decisions)."
+   },
+   {
+    "when": "2026-11-27 03:14",
+    "where": "uiscreens/boot",
+    "note": "I like this but I want to change the menu music.",
+    "choice": "ok",
+    "done": "Menu music: a choice under Now > Decisions."
+   },
+   {
+    "when": "2026-11-27 03:11",
+    "where": "uiscreens/classpick",
+    "note": "Keep my current Echo Alter UI. or change this suggested UI so include the class images and Perk and tab Icons. The Echo Alter UI in the preview looks too bland.",
+    "choice": "change",
+    "done": "Class choice drawn on the Lore-Based Loading Screens paintings from your game."
+   },
+   {
+    "when": "2026-11-27 03:12",
+    "where": "uiscreens/codex",
+    "note": "keep my current UI for Codex book.",
+    "choice": "change",
+    "done": "Marked \"kept as it is in your game\"."
+   },
+   {
+    "when": "2026-11-27 03:05",
+    "where": "uiscreens/death",
+    "note": "make the transitions and visuals fade in and out smoothly.",
+    "choice": "ok",
+    "done": "Every box now fades in and out with a soft gradient (In-game UI > Play the fades)."
+   },
+   {
+    "when": "2026-11-27 02:44",
+    "where": "uiscreens/foehp",
+    "note": "can you make this change for all enemies in skyrim?",
+    "choice": "change",
+    "done": "Yes: bars over every wounded enemy in all of Skyrim, night or day."
+   },
+   {
+    "when": "2026-11-27 03:16",
+    "where": "uiscreens/loading",
+    "note": "can you make sure the loading screens cover the full display from my monitor and my laptop Resolutions.",
+    "choice": "ok",
+    "done": "Loading screens fill any screen shape (no letterbox); preview at 4 resolutions."
+   },
+   {
+    "when": "2026-11-27 03:14",
+    "where": "uiscreens/main",
+    "note": "I like this but I want to change the menu music.",
+    "choice": "change",
+    "done": "Menu music: a choice under Now > Decisions."
+   },
+   {
+    "when": "2026-11-27 03:09",
+    "where": "uiscreens/perkmenu",
+    "note": "Keep my current Echo Alter UI. or change this suggested UI so include the class images and Perk and tab Icons. The Echo Alter UI in the preview looks too bland.",
+    "choice": "change",
+    "done": "Same: every brew with its own icon from your game."
+   },
+   {
+    "when": "2026-11-27 02:36",
+    "where": "uiscreens/quests",
+    "note": "the tracked quests should only show under the night counter and for the echo alter quests it should only show above the echo alter.",
+    "choice": "change",
+    "done": "Tracked quests only under the night counter; the altar trial floats above the altar."
+   },
+   {
+    "when": "2026-11-27 03:15",
+    "where": "uiscreens/setup",
+    "note": "Keep the current UI for this.",
+    "choice": "change",
+    "done": "Marked \"kept as it is in your game\"."
+   },
+   {
+    "when": "2026-11-27 03:08",
+    "where": "uiscreens/talk",
+    "note": "Keep my current Echo Alter UI. or change this suggested UI so include the class images and Perk and tab Icons. The Echo Alter UI in the preview looks too bland.",
+    "choice": "change",
+    "done": "Same: Felldir's topics and his words."
+   },
+   {
+    "when": "2026-11-27 03:08",
+    "where": "uiscreens/thuum",
+    "note": "Keep my current Echo Alter UI. or change this suggested UI so include the class images and Perk and tab Icons. The Echo Alter UI in the preview looks too bland.",
+    "choice": "change",
+    "done": "Same: Thu'um tab with its icon and the words."
+   },
+   {
+    "when": "2026-11-27 03:08",
+    "where": "uiscreens/trialsmenu",
+    "note": "Keep my current Echo Alter UI. or change this suggested UI so include the class images and Perk and tab Icons. The Echo Alter UI in the preview looks too bland.",
+    "choice": "change",
+    "done": "Same: the four trials as a path."
+   },
+   {
+    "when": "2026-11-27 03:02",
+    "where": "uiscreens/weapon",
+    "note": "make this beside the stamina and stat bar box on the right side so it doesnt clip anything.",
+    "choice": "change",
+    "done": "The uses ring moved beside the stamina bar on the right."
+   },
+   {
+    "when": "2026-11-27 01:41",
+    "where": "cwpick/alchemist",
+    "note": "update the preview with how the dragon priest scythe actually looks in game (the blade connecting to the staff head) make sure the look animations are 360 so it doesnt look flat or like an outline at certain angles.",
+    "choice": "cls_dragonpriest_alch",
+    "done": "Dragon Priest scythe re-read from the game's model with its real textures and normal maps; looks rebuilt in 3D on the model (360)."
+   },
+   {
+    "when": "2026-11-27 01:41",
+    "where": "cwpick/destruction",
+    "note": "make sure the look animations are 360 so it doesnt look flat or like an outline at certain angles.",
+    "choice": "cls_daedricwand_carian",
+    "done": "Looks rebuilt in 3D on the wand itself (360), real textures."
+   },
+   {
+    "when": "2026-11-27 01:42",
+    "where": "cwpick/spellsword",
+    "note": "make sure the look animations are 360 so it doesnt look flat or like an outline at certain angles.",
+    "choice": "cls_daedricrapier_ss_none",
+    "done": "Looks rebuilt in 3D on the rapier itself (360), real textures; the blood decals and the scabbard removed from the preview."
+   },
+   {
+    "when": "2026-11-27 03:46",
+    "where": "cwpick/summoner",
+    "note": "make sure the look animations are 360 so it doesnt look flat or like an outline at certain angles.",
+    "choice": "cls_daedricstaff_radiant",
+    "done": "Picked the Daedric quarterstaff; looks on its two heads only, in 3D (360), real textures."
+   },
+   {
+    "when": "2026-11-27 01:44",
+    "where": "tablet/_ideas",
+    "note": "not too sure yet can you give me really good recommendations that perfectly feel like skyrim and bo3 zombies",
+    "choice": "",
+    "done": "12 more ideas added to the Tablet tab, sorted by rarity."
+   }
+  ]
+ }
+]

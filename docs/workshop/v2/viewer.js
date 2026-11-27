@@ -172,7 +172,8 @@ function weaponModel(d) {
     let m;
     if (s.map) {
       let t = MAPS[s.map]; if (!t) { t = MAPS[s.map] = new THREE.TextureLoader().load(s.map); t.encoding = THREE.sRGBEncoding; t.flipY = false; t.wrapS = t.wrapT = THREE.RepeatWrapping; }
-      m = new THREE.MeshStandardMaterial({ map: t, metalness: 0.55, roughness: 0.45, side: THREE.DoubleSide });
+      let nm = null; if (s.nmap) { nm = MAPS[s.nmap]; if (!nm) { nm = MAPS[s.nmap] = new THREE.TextureLoader().load(s.nmap); nm.flipY = false; nm.wrapS = nm.wrapT = THREE.RepeatWrapping; } }
+      m = new THREE.MeshStandardMaterial({ map: t, normalMap: nm, normalScale: new THREE.Vector2(1, -1), metalness: 0.6, roughness: 0.4, side: THREE.DoubleSide });
     } else m = new THREE.MeshStandardMaterial({ color: new THREE.Color(s.color).convertSRGBToLinear(), metalness: 0.65, roughness: 0.4, side: THREE.DoubleSide });
     if (s.glow) {   // (the model's own glow - a ghostly blade, a gem's light: drawn added, as the game's effect shader does)
       m = new THREE.MeshBasicMaterial({ map: m.map || null, color: m.map ? 0xffffff : new THREE.Color(s.color || '#ffffff'), transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
@@ -242,6 +243,7 @@ function weaponView(cv, onInfo) {
   cv.addEventListener('dblclick', () => { v.yaw = 0; v.pitch = 0; v.zoom = 1; placeCam(); });
   v.tick = t => {
     if (!v.fx) return;
+    if (v.aura) v.aura.tick(t, root); if (v.aura2) v.aura2.tick(t, root);
     // (Noah, Nov 26 night: "make sure the look animations are 360") a slow turntable, whole turns, unless you're turning it
     if (v.spin && !drag) { v.yaw += 0.008; placeCam(); }
     for (const [fx, gm] of [[v.fx, v.gain == null ? 1 : v.gain], [v.fx2, v.gain2 == null ? 1 : v.gain2]]) {
@@ -282,11 +284,16 @@ function weaponView(cv, onInfo) {
       // its length in game (the model's own scale, and the scythes' 25% more)
       const lens = v.model.pts.map(p => (p[0] - C[0]) * ax[0] + (p[1] - C[1]) * ax[1] + (p[2] - C[2]) * ax[2]);
       const sc = (d.scale || 1) * (SCYTHES.includes(keyName) ? 1.25 : 1);
-      v.lengthM = (Math.max(...lens) - Math.min(...lens)) * sc * 0.01428;
+      v.lengthM = (Math.max(...lens) - Math.min(...lens)) * sc * 0.01428; v.span = Math.max(...lens) - Math.min(...lens);
     }
     if (v.look !== look || !v.fx) {
       if (v.fx) root.remove(v.fx.g);
       v.fx = weaponFx(d, look); root.add(v.fx.g); v.look = look; v.col = null;
+      if (v.aura) { root.remove(v.aura); v.aura = null; }
+      if (v.vol && typeof weaponAura === 'function') {   // (the 3D look on the model itself; the game's old flat art hidden unless compared)
+        v.aura = weaponAura(d, v.fx.pts, Object.assign(lookStyle(d, look), { k: v.gain == null ? 1 : v.gain, span: v.span }));
+        root.add(v.aura); v.fx.g.visible = !!v.compare;
+      }
     }
     if (v.col !== col) {
       for (const { s, u } of v.fx.list) u.pal.value = (s.dark ? palD : pal)(col && col !== 'own' && s.pal === d.c1 ? col : s.pal);   // (your colour on the look's own colour; its second stays)
@@ -298,9 +305,33 @@ function weaponView(cv, onInfo) {
   // (a second look layered over the first: a Legendary tier)
   v.layer = (look2, gain2) => {
     if (v.fx2) { root.remove(v.fx2.g); v.fx2 = null; }
+    if (v.aura2) { root.remove(v.aura2); v.aura2 = null; }
     if (!look2 || !v.d) return;
     v.fx2 = weaponFx(v.d, look2); root.add(v.fx2.g); v.gain2 = gain2;
+    if (v.vol && typeof weaponAura === 'function') { v.aura2 = weaponAura(v.d, v.fx2.pts, Object.assign(lookStyle(v.d, look2), { k: gain2, span: v.span })); root.add(v.aura2); v.fx2.g.visible = !!v.compare; }
   };
+  v.setCompare = on => { v.compare = on; if (v.fx) v.fx.g.visible = on || !v.aura; if (v.fx2) v.fx2.g.visible = on || !v.aura2; if (v.aura) v.aura.visible = !on; if (v.aura2) v.aura2.visible = !on; };
   return GL.add(v);
 }
 
+
+// a look's 3D style, read from the art it replaces: its colours, and what its textures are (rising fire, smoke, an edge of heat,
+// runes, drops, embers, mist, streams, a halo, wisps, a sweeping band)
+const TEXSTYLE = { fire_rise0: { pk: 'ember', pn: 1.2, rise: 1.4, vol: 1, mem: .8 }, fire_rise1: { pk: 'ember', pn: 1.2, rise: 1.4, vol: 1, mem: .8 },
+  shade_strip: { pk: 'smoke', pn: .6, dark: true, vol: 1.3, mem: .6 }, molten_strip: { mem: 1.6, pn: .35 }, cracks: { mem: 1.3, pn: .3 }, sig_drops: { pk: 'mote', pn: 1, rise: .8 },
+  sig_embers: { pk: 'ember', pn: 1.4, rise: 1 }, sig_runes: { mem: 1.3, pn: .4, runes: true }, mist_strip0: { vol: 1.6, pn: .4, pk: 'mote' }, mist_strip1: { vol: 1.6, pn: .4, pk: 'mote' },
+  haze: { vol: 1.4, pn: .4 }, stream_strip: { pk: 'streak', pn: 1, rise: .3 }, ray_strip: { pk: 'streak', pn: .9, rise: .2 }, halo_shell: { vol: 1.5, pn: .5 },
+  wisp_strip: { pk: 'wisp', pn: .9 }, sk_wisps: { pk: 'wisp', pn: .8 }, sig_band: { mem: 1.5, pn: .3, sweep: true }, sk_enchfill: { mem: 1, pn: .5 }, sk_swirls: { pk: 'wisp', pn: .8 } };
+function lookStyle(d, look) {
+  const shapes = (d.fx && d.fx[look]) || [], pals = [], st = { pn: .5, mem: .8, vol: .3, rise: null, pk: null, dark: false };
+  for (const { s } of shapes) {
+    if (!pals.includes(s.pal)) pals.push(s.pal);
+    const t = TEXSTYLE[s.tex] || {};
+    for (const k of ['pn', 'mem', 'vol']) if (t[k] != null) st[k] = Math.max(st[k], t[k]);
+    if (t.rise != null) st.rise = Math.max(st.rise || 0, t.rise); if (t.pk && !st.pk) st.pk = t.pk; if (t.dark) st.dark = true; if (t.runes) st.runes = true; if (t.sweep) st.sweep = true;
+  }
+  const p1 = pals[0] || d.c1 || 'white', p2 = pals[1] || p1;
+  const el = LOOK_ELEM[p1] || LOOK_ELEM[d.c1] || 'arcane';
+  const h1 = COLS[p1] || p1, h2 = COLS[p2] || p2, c1 = new THREE.Color(h1), c2 = new THREE.Color(h2).lerp(new THREE.Color('#ffffff'), .55), c0 = new THREE.Color(h1).multiplyScalar(.18);
+  return Object.assign(st, { el, c0: '#' + c0.getHexString(), c1: '#' + c1.getHexString(), c2: '#' + c2.getHexString() });
+}

@@ -37,58 +37,129 @@ const UIP = {
   words: (w, n) => `<div class="c-words">${w.map((x, i) => `<b class="${i < n ? 'on' : ''}">${x}</b>`).join('')}</div>`,
   title: () => `<div class="c-title"><b>THE CURSE OF ALDUIN</b><i></i><small>PRESS ANY KEY</small></div>`,
   loadline: t => `<div class="c-load"><span>${t}</span><i></i></div>`,
+  // (Noah: "the tracked quests should only show under the night counter and for the echo altar quests it should only show above the echo altar")
+  altarq: (x, y, t, l, v) => `<div class="c-altarq" style="left:${x}%;top:${y}%"><b>${t}</b><span>${l}</span>${v != null ? `<i style="--v:${v * 100}%"></i>` : ''}</div>`,
+  // co-op (1-4 players): BO3's four colours - white, blue, yellow, green
+  team: list => `<div class="c-team">${list.map(([n, c, ess, hp, down]) => `<div class="tm${down ? ' down' : ''}" style="--pc:${c}"><b>${n}</b><em>${ess}</em><i style="--v:${hp * 100}%"></i></div>`).join('')}</div>`,
+  revive: (x, y, name, v) => `<div class="c-revive" style="left:${x}%;top:${y}%"><span class="ico"></span><b>${name} is down</b><i style="--v:${v * 100}%"></i></div>`,
+  bleed: (v, n) => `<div class="c-bleed"><b>YOU ARE DOWN</b><i style="--v:${v * 100}%"></i><span>${n}</span></div>`,
+  plate: (x, y, name, cls, c) => `<div class="c-plate" style="left:${x}%;top:${y}%;--pc:${c}"><b>${name}</b><small>${cls}</small></div>`,
+  score: (night, rows) => `<div class="c-score"><div class="sh"><b>NIGHT ${night}</b><span>ESSENCE</span><span>KILLS</span><span>DOWNS</span><span>REVIVES</span><span>HEADSHOTS</span></div>${rows.map(([n, c, cls, ...v]) => `<div class="sr" style="--pc:${c}"><b>${n}<small>${cls}</small></b>${v.map(x => `<span>${x}</span>`).join('')}</div>`).join('')}</div>`,
+  feed: lines => `<div class="c-feed">${lines.map(([c, t]) => `<span style="--pc:${c}">${t}</span>`).join('')}</div>`,
+  // the Echo Altar, rich (Noah: "include the class images and perk and tab icons - the preview looks too bland")
+  altar: (tab, body) => `<div class="c-altar"><div class="at">${ALTAR_TABS.map(([id, n, ico]) => `<span class="${id === tab ? 'on' : ''}">${ico}<b>${n}</b></span>`).join('')}</div><div class="ab">${body}</div></div>`,
+  // Skyrim's own menus, ours: recoloured (Untarnished UI's layout in the Curse's colours) or remade (our own pages)
+  inv: (mode, kind) => INV[kind](mode),
   mainmenu: () => `<div class="c-title menu"><b>THE CURSE OF ALDUIN</b><i></i>${['CONTINUE', 'NEW', 'LOAD', 'SETTINGS', 'QUIT'].map((x, i) => `<small class="${i === 0 ? 'on' : ''}">${x}</small>`).join('')}</div>`,
 };
 // the HUD of a night, as it stands (every night screen starts from it)
-const NIGHT_HUD = () => UIP.night(12, 3, 17) + UIP.quests([['LAY THE RESTLESS TO REST', 'Slay the risen in the altar\'s light  7 / 15', 0.47]]) + UIP.compass() + UIP.essence('12,480') + UIP.brews(4);
+const NIGHT_HUD = () => UIP.night(12, 3, 17) + UIP.quests([['BEFORE THE STORM', 'Talk to the Jarl of Whiterun']]) + UIP.compass() + UIP.essence('12,480') + UIP.brews(4);
 // [group id, group name, [[id, name, what it is, frame, draw]]] - frame: the real still behind it (frames/<name>.jpg)
 const UI_SCREENS = [
   ['hud', 'During a night', [
     ['night', 'Night counter', 'The night, its wave and the dead left, top left - BO3\'s round counter in the Curse\'s look.', 'night', () => NIGHT_HUD()],
-    ['quests', 'Quests and trials', 'Under the night counter: the trial (its task and count) and the quests you track.', 'trial', () => UIP.night(4, 1, 9) + UIP.quests([['LAY THE RESTLESS TO REST', 'Slay the risen in the altar\'s light  8 / 25', 0.32], ['BEFORE THE STORM', 'Talk to the Jarl of Whiterun']]) + UIP.compass() + UIP.essence('109,283') + UIP.brews(3)],
+    ['quests', 'Quests and trials', 'Your note: the quests you track sit only under the night counter; an Echo Altar trial shows only above its altar, in the world, where you see it.', 'trial', () => UIP.night(4, 1, 9) + UIP.quests([['BEFORE THE STORM', 'Talk to the Jarl of Whiterun']]) + UIP.altarq(50, 21, 'LAY THE RESTLESS TO REST', 'Slay the risen in the altar\'s light  8 / 25', 0.32) + UIP.compass() + UIP.essence('109,283') + UIP.brews(3)],
     ['compass', 'Compass', 'Top centre: the directions, the quest marker, the altars and the dead as dots.', 'night2', () => UIP.compass()],
     ['essence', 'Cursed Essence and kill pops', 'Bottom right: your essence; the essence each kill earns rises where it fell, like BO3\'s points.', 'night', () => UIP.essence('12,480', '+50') + UIP.kill(46, 44, '+10') + UIP.kill(58, 40, '+10') + UIP.kill(70, 56, '+20 HEADSHOT')],
     ['perks', 'Brews (perks)', 'The brews you\'ve drunk as a row of glowing icons, bottom left - BO3\'s perk-a-colas.', 'night', () => UIP.brews(5)],
     ['boss', 'Boss bar', 'Top centre under the compass: the boss\'s name and its long bar.', 'boss', () => UIP.compass() + UIP.boss('GRAHZAH, ALDUIN\'S GRAVE-WING', 0.62)],
-    ['foehp', 'Health over the dead', 'Small bars over the wounded near you; a name over the great ones.', 'night', () => UIP.foe(36, 36, 0.4) + UIP.foe(55, 30, 0.8, 'Minotaur Lord')],
+    ['foehp', 'Health over enemies', 'Your note, yes: small bars over every wounded enemy near you in all of Skyrim, night or day; a name over the great ones.', 'night', () => UIP.foe(36, 36, 0.4) + UIP.foe(55, 30, 0.8, 'Minotaur Lord')],
     ['hit', 'Getting hit', 'A red edge after a hit, and an arc toward a blow you can\'t see.', 'night2', () => UIP.hit()],
     ['marker', 'Prompts at the altar and the Tablet', 'What a held Activate does at one of ours: the Tablet, the altar.', 'altar', () => UIP.prompt('E', 'Hold to turn the Tablet', '1,500') + UIP.hold(0.45, '')],
     ['between', 'Before the night', 'Dusk: a 10 s count before the night; nothing between waves.', 'village', () => UIP.countdown(10) + UIP.essence('115,973') + UIP.compass()],
-    ['weapon', 'A Tablet weapon\'s uses', 'A donated weapon\'s uses left as a small ring beside the bars.', 'firstperson', () => UIP.rings([[0.66, 'USES 66']])],
+    ['weapon', 'A Tablet weapon\'s uses', 'Your note: beside the stamina bar on the right, clear of everything: the uses left as a small ring, in the weapon\'s rarity colour.', 'firstperson', () => UIP.rings([[0.66, 'USES 66']])],
   ]],
   ['pop', 'Pop-ups and words', [
     ['slain', 'Dragon Priest slain', 'The relic card: the priest\'s name and the relic you received.', 'boss', () => UIP.card('DRAGON PRIEST SLAIN', 'Vahlok the Jailor', 'Jailor\'s Keyhammer received')],
     ['subs', 'Subtitles', 'Felldir\'s words at his altar, centred low, his name small above.', 'altar', () => UIP.subs('FELLDIR THE OLD', 'The city is yours again. Ask, and I will answer.')],
-    ['death', 'Falling', 'The screen drains to grey; YOU FELL, the night you reached, and the bar to rise.', 'night', () => UIP.death(12, 431, 0.55), 'grey'],
+    ['death', 'Falling', 'Your note: it all fades in and out smoothly - the grey drains in over a second, the words rise in, and fade away again when you rise.', 'night', () => UIP.death(12, 431, 0.55), 'grey'],
     ['msg', 'Message boxes', 'Choices from the mod (the Tester\'s Kit): a short list of buttons.', 'altar2', () => UIP.dim() + UIP.msg('Tester\'s Kit', ['Weapons', 'The night', 'Stay alive', 'The dead', 'Close'])],
   ]],
   ['altar', 'The Echo Altar', [
-    ['altarmenu', 'The altar menu', 'Its sections down the left; the one open on the right.', 'altar', () => UIP.dim() + UIP.panel('WHITERUN &middot; ECHO ALTAR', [['Your Kit', '', 1], ['Armory'], ['Brews'], ['Thu\'um and dragon'], ['Trials'], ['Talk']], 'left') + UIP.panel('YOUR KIT', [['Radiant Quarterstaff', 'Tier II'], ['Summoner Set', 'Tier I'], ['Spells', '6'], ['Upgrade to Tier III', '8,000', 1]], 'right')],
-    ['armory', 'Armory and upgrades', 'Each item, its tier, the cost on the right; locked ones faint.', 'altar', () => UIP.dim() + UIP.panel('ARMORY', [['Fire Flask', 'Tier II'], ['Frost Flask', 'Tier I'], ['Shock Flask', 'locked']], 'mid')],
-    ['perkmenu', 'Brews', 'The brews you can buy: each its rune, what it does, its price.', 'altar', () => UIP.dim() + UIP.panel('BREWS', [['Troll\'s Hide Mead', '2,500', 1], ['Stormrunner Brew', '2,000'], ['Last Stand Ale', '1,500'], ['Dragonsblood Cider', '3,000']], 'mid')],
-    ['thuum', 'Thu\'um', 'The city\'s shout, its words lighting as you learn them.', 'altar2', () => UIP.dim() + UIP.text('THU\'UM', 'Unrelenting Force &middot; 2 of 3 words', 'mid') + UIP.words(['FUS', 'RO', 'DAH'], 2)],
-    ['trialsmenu', 'Trials', 'The four trials, the one to take next.', 'altar', () => UIP.dim() + UIP.panel('TRIALS', [['Lay the Restless to Rest', 'done'], ['The Stone\'s Whisper', 'next', 1], ['Hold the Light', ''], ['Break the Seals', '']], 'mid')],
-    ['talk', 'Talk', 'Felldir\'s four topics, each with how many you haven\'t asked (four questions at most each).', 'altar', () => UIP.dim() + UIP.panel('TALK', [['The Curse', '2 new', 1], ['The Dragon Priests', '1 new'], ['The cities'], ['Felldir']], 'mid')],
-    ['tablet', 'Tablet of Mysteries', 'Hold to turn: the weapon\'s name and its uses come up.', 'altar2', () => UIP.center('THE TABLET OF MYSTERIES', 'Stormtalons', 'Glass claws &middot; 100 uses')],
-    ['classpick', 'Choosing your class', 'Four columns: each class\'s weapon.', 'altar', () => UIP.dim() + UIP.classes([['Summoner', 'Radiant Quarterstaff'], ['Destruction', 'Carian Wand'], ['Alchemist', 'Shadowflame Scythe'], ['Spellsword', 'Spellbound Rapier']], 2)],
-    ['codex', 'The Codex', 'The book of the mod: chapters on the left, the page on the right.', 'altar2', () => UIP.dim() + UIP.panel('CODEX', [['I. The Curse'], ['II. The Nights', '', 1], ['III. The Classes'], ['IV. Waking an Altar']], 'left') + UIP.text('THE NIGHTS', 'Each night the dead come down red beams of light. Waves climb; every fifth night a boss.', 'right')],
+    ['altarmenu', 'The altar menu', 'Your note: the class painting, the tab icons along the top, every brew with its own icon. (Or keep your current altar menu: say so in the note.)', 'altar', () => UIP.dim() + UIP.altar('kit', ALTAR_BODY.kit())],
+    ['armory', 'Armory and upgrades', 'Each item with its element icon, its tier as pips, the cost on the right; locked ones faint.', 'altar', () => UIP.dim() + UIP.altar('armory', ALTAR_BODY.armory())],
+    ['perkmenu', 'Brews', 'Every brew with its own icon (the ones in your game), what it does, its price; the ones you have glow.', 'altar', () => UIP.dim() + UIP.altar('brews', ALTAR_BODY.brews())],
+    ['thuum', 'Thu\'um', 'The city\'s shout, its words lighting as you learn them, the dragon you face for the last one.', 'altar2', () => UIP.dim() + UIP.altar('thuum', ALTAR_BODY.thuum())],
+    ['trialsmenu', 'Trials', 'The four trials as a path, the one to take next lit, the party\'s progress.', 'altar', () => UIP.dim() + UIP.altar('trials', ALTAR_BODY.trials())],
+    ['talk', 'Talk', 'Felldir\'s topics, each with how many you haven\'t asked; his words open on the right.', 'altar', () => UIP.dim() + UIP.altar('talk', ALTAR_BODY.talk())],
+    ['tablet', 'Tablet of Mysteries', 'Hold to turn: the won weapon\'s name in its rarity colour and its uses come up.', 'altar2', () => UIP.center('THE TABLET OF MYSTERIES &middot; EPIC', 'Stormtalons', 'Glass claws &middot; 100 uses')],
+    ['classpick', 'Choosing your class', 'Each class on its painting (the ones in your game); the one you point at grows and shows its words.', 'altar', () => UIP.dim() + CLASSPICK()],
+    ['codex', 'The Codex', 'Your note: keep the current Codex book as it is in your game.', 'altar2', () => UIP.dim() + UIP.panel('CODEX', [['I. The Curse'], ['II. The Nights', '', 1], ['III. The Classes'], ['IV. Waking an Altar']], 'left') + UIP.text('THE NIGHTS', 'Each night the dead come down red beams of light. Waves climb; every fifth night a boss.', 'right')],
   ]],
   ['start', 'Starting the game', [
-    ['boot', 'Launch screen', 'The Alduin painting (the one the game shows at launch), the title, PRESS ANY KEY.', 'title', () => UIP.title()],
+    ['boot', 'Launch screen', 'The Alduin painting, the title, PRESS ANY KEY. Your note: new menu music - pick it under Menu music below.', 'title', () => UIP.title()],
     ['main', 'Main menu', 'Continue, New, Load, Settings, Quit under the title, on the Alduin painting.', 'title', () => UIP.mainmenu()],
-    ['setup', 'New character', 'After the creator: your Helgen companion and Survival Mode.', 'racemenu', () => UIP.dim() + UIP.panel('A NEW LIFE', [['Ralof', '', 1], ['Hadvar'], ['Survival Mode', 'On']], 'mid')],
-    ['loading', 'Loading screens', 'One of the 123 fitting screens (here the Draugr); a line of lore, a thin progress line.', 'loadscreen', () => UIP.loadline('The souls Alduin holds are restless. Free a city and its dead sleep.')],
+    ['setup', 'New character', 'Your note: keep the current screen as it is.', 'racemenu', () => UIP.dim() + UIP.panel('A NEW LIFE', [['Ralof', '', 1], ['Hadvar'], ['Survival Mode', 'On']], 'mid')],
+    ['loading', 'Loading screens', 'Your note: the painting always covers the whole screen on your monitor and your laptop (any shape of screen: it fills, never letterboxed). A line of lore, a thin progress line.', 'loadscreen', () => UIP.loadline('The souls Alduin holds are restless. Free a city and its dead sleep.')],
   ]],
-  ['skyrim', 'Skyrim\'s own menus', [
-    ['inv', 'Inventory', 'Skyrim\'s own (Edge UI), as it is in your game: kept.', 'inventory', () => ''],
-    ['magic', 'Magic', 'Skyrim\'s own (Edge UI): kept.', 'magic', () => ''],
-    ['tween', 'Menu wheel', 'Skyrim\'s own (Edge UI): kept.', 'tween', () => ''],
+  ['coop', 'Co-op (1-4 players)', [
+    ['co_team', 'The party', 'Bottom right above your essence: each player\'s name in their colour (BO3\'s white, blue, yellow, green), their essence and health.', 'night', () => NIGHT_HUD() + UIP.team([['Noah', '#f2efe6', '12,480', .9], ['Shane', '#5aa7ff', '9,215', .55], ['Kade', '#f2d14a', '14,030', .3, 1], ['Mira', '#5fd16a', '6,870', 1]])],
+    ['co_down', 'A friend is down', 'Over their body: a bleed-out ring and their name; hold Activate near them to lift them. Off-screen, a mark on the compass.', 'night2', () => UIP.compass() + UIP.revive(52, 42, 'Kade', .62) + UIP.prompt('E', 'Hold to lift Kade') + UIP.hold(.35, '')],
+    ['co_bleed', 'You are down', 'The screen drains to grey and red at the edges; the ring is how long you have left; your friends\' marks show where they are.', 'night', () => UIP.bleed(.4, 'Shane is coming - 14 m'), 'grey'],
+    ['co_plates', 'Names over the party', 'Each player\'s name and class over their head, in their colour; fades out past 40 m.', 'village', () => UIP.plate(38, 40, 'Shane', 'Summoner', '#5aa7ff') + UIP.plate(63, 46, 'Mira', 'Spellsword', '#5fd16a')],
+    ['co_score', 'The scoreboard', 'Hold Tab (or Back): BO3\'s scoreboard - each player\'s essence, kills, downs, revives and headshots for this game.', 'night2', () => UIP.dim() + UIP.score(12, [['Noah', '#f2efe6', 'Destruction', '12,480', 431, 2, 5, 88], ['Shane', '#5aa7ff', 'Summoner', '9,215', 302, 4, 3, 41], ['Kade', '#f2d14a', 'Alchemist', '14,030', 455, 1, 6, 102], ['Mira', '#5fd16a', 'Spellsword', '6,870', 210, 3, 1, 37]])],
+    ['co_trial', 'A shared trial', 'Above the altar: the trial\'s count for the whole party, and who helped.', 'trial', () => UIP.altarq(50, 21, 'LAY THE RESTLESS TO REST', 'The party: 18 / 25  &middot;  Noah 7  Shane 5  Kade 4  Mira 2', .72)],
+    ['co_feed', 'Joins and falls', 'Top right, small, fading on its own: who joined, who fell, who was lifted.', 'village', () => UIP.feed([['#5aa7ff', 'Shane joined the night'], ['#f2d14a', 'Kade fell'], ['#f2efe6', 'Noah lifted Kade']])],
+  ]],
+  ['skyrim', 'Skyrim\'s menus, ours', [
+    ['inv_re', 'Inventory: recoloured', 'Untarnished UI\'s layout as you have it, in the Curse\'s colours and type.', 'night2', () => UIP.inv('re', 'items'), 'blur'],
+    ['inv_new', 'Inventory: remade', 'Our own page: categories along the top, the item large on the right with its stats and rarity, the list cleaner.', 'night2', () => UIP.inv('new', 'items'), 'blur'],
+    ['mag_re', 'Magic: recoloured', 'Untarnished UI\'s magic list in the Curse\'s colours, each spell its element icon.', 'firstperson', () => UIP.inv('re', 'magic'), 'blur'],
+    ['mag_new', 'Magic: remade', 'Our own: schools as tabs, spells as rows with their element, the spell large on the right with its cost and what it does.', 'firstperson', () => UIP.inv('new', 'magic'), 'blur'],
+    ['tab_re', 'Tab menu: recoloured', 'Skyrim\'s Tab menu (Items, Magic, Quests, Map, Level up) in the Curse\'s colours.', 'tween', () => UIP.inv('re', 'tab')],
+    ['tab_new', 'Tab menu: remade', 'Our own: four carved medallions round you, the night and your essence above, your class below.', 'village', () => UIP.inv('new', 'tab')],
   ]],
 ];
 // where each stands: in the game now (in its old look), kept, next (to be built in the picked direction), Skyrim's own
 const UI_STATE = { night: 'next', quests: 'next', compass: 'next', essence: 'next', perks: 'next', boss: 'next', foehp: 'next', hit: 'in', marker: 'next', between: 'in',
   weapon: 'next', slain: 'next', subs: 'in', death: 'next', msg: 'next', altarmenu: 'next', armory: 'next', perkmenu: 'next', thuum: 'next', trialsmenu: 'next', talk: 'next',
-  tablet: 'next', classpick: 'next', codex: 'next', boot: 'in', main: 'in', setup: 'next', loading: 'in', inv: 'own', magic: 'own', tween: 'own' };
-function uiStage(frame, dir, inner, extra) {
-  return `<div class="stage d${dir}${extra ? ' ' + extra : ''}" style="background-image:url('frames/${frame}.jpg')">${inner}</div>`;
+  tablet: 'next', classpick: 'next', codex: 'keep', boot: 'in', main: 'in', setup: 'keep', loading: 'in',
+  co_team: 'next', co_down: 'next', co_bleed: 'next', co_plates: 'next', co_score: 'next', co_trial: 'next', co_feed: 'next',
+  inv_re: 'menu', inv_new: 'menu', mag_re: 'menu', mag_new: 'menu', tab_re: 'menu', tab_new: 'menu' };
+// the two ways for each of Skyrim's menus (pick one of each pair)
+const MENU_PAIRS = { inv_re: 'inv', inv_new: 'inv', mag_re: 'mag', mag_new: 'mag', tab_re: 'tab', tab_new: 'tab' };
+function uiStage(frame, dir, inner, extra) {   // (D and E are built on A's places: the same screen, a new look)
+  const cls = dir === 'A' ? 'dA' : 'dA d' + dir;
+  return `<div class="stage ${cls}${extra ? ' ' + extra : ''}"><div class="bg" style="background-image:url('frames/${frame}.jpg')"></div>${inner}</div>`;
 }
+// ---- the Echo Altar's own art: tab icons, the class painting, every brew's icon
+const ico = d => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}"/></svg>`;
+const ALTAR_TABS = [
+  ['kit', 'Your Kit', ico('M12 2l7 3v6c0 5-3.5 9-7 11-3.5-2-7-6-7-11V5z M12 6v12 M8 10h8')],
+  ['armory', 'Armory', ico('M5 19L19 5 M15 5h4v4 M5 15l4 4 M3 21l3-3 M9 9l-4-4 M5 5v3 M5 5h3')],
+  ['brews', 'Brews', ico('M9 3h6 M10 3v5l-4 8a3 3 0 003 5h6a3 3 0 003-5l-4-8V3 M7.5 14h9')],
+  ['thuum', 'Thu\'um', ico('M4 12c3-6 6-6 8 0s5 6 8 0 M4 7c3-4 6-4 8 0 M12 17c2 4 5 4 8 0')],
+  ['trials', 'Trials', ico('M12 3a9 9 0 110 18 9 9 0 010-18z M12 7v5l3 3 M3 12h2 M19 12h2')],
+  ['talk', 'Talk', ico('M4 5h16v10H9l-5 4z M8 9h8 M8 12h5')],
+];
+const ART = n => `art/${n}`;
+const BREWS = [['trollshide', 'Troll\'s Hide Mead', '+50 health', '3,000', 1], ['stormrunner', 'Stormrunner Brew', 'Run faster, sprint longer', '3,000', 1], ['laststand', 'Last Stand Ale', 'Fight on the ground when you fall', '3,000', 1],
+  ['quickrevive', 'Quick Revive Draught', 'Lift a friend twice as fast', '3,000'], ['dragonsblood', 'Dragonsblood Cider', 'Shouts recover faster', '3,000'], ['manafont', 'Mana Font Draught', 'Magicka flows back faster', '3,000'],
+  ['bladesong', 'Bladesong Mead', 'Faster swings', '3,000'], ['spellguard', 'Spellguard Ale', 'Less harm from magic', '3,000']];
+const ALTAR_BODY = {
+  kit: () => `<div class="akit"><div class="apaint" style="background-image:url('${ART('cls_magicschooldestruction.jpg')}')"><b>DESTRUCTION</b><small>Tier II &middot; Battle-mage</small></div>
+    <div class="alist"><div class="arow on"><img src="${ART('el_arcane.png')}" alt=""><span>Carian Wand<small>Glintstone Mist &middot; Tier II</small></span><em>Upgrade &middot; 8,000</em></div>
+    <div class="arow"><img src="${ART('el_fire.png')}" alt=""><span>Destruction Set<small>Arch-Mage\'s robes &middot; Tier I</small></span><em>Claim</em></div>
+    <div class="arow"><img src="${ART('el_shock.png')}" alt=""><span>Spells<small>6 learned &middot; 2 to claim</small></span><em>Open</em></div>
+    <div class="abrews">${BREWS.filter(b => b[4]).map(b => `<img src="${ART(b[0] + '.png')}" alt="${b[1]}" title="${b[1]}">`).join('')}<small>Your brews</small></div></div></div>`,
+  armory: () => `<div class="alist wide">${[['el_fire', 'Fire Flask', 3, '4,000'], ['el_frost', 'Frost Flask', 2, '3,000'], ['el_shock', 'Shock Flask', 1, '2,000', 1], ['el_poison', 'Acid Flask', 0, 'locked'], ['el_sun', 'Holy Water', 0, 'locked']].map(([i, n, t, c, on]) => `<div class="arow${on ? ' on' : ''}${c === 'locked' ? ' lock' : ''}"><img src="${ART(i + '.png')}" alt=""><span>${n}<small class="pips">${[1, 2, 3].map(k => `<i class="${k <= t ? 'f' : ''}"></i>`).join('')}</small></span><em>${c}</em></div>`).join('')}</div>`,
+  brews: () => `<div class="agrid">${BREWS.map(([id, n, d, c, have], i) => `<div class="abrew${have ? ' have' : ''}${i === 3 ? ' on' : ''}"><img src="${ART(id + '.png')}" alt=""><b>${n}</b><span>${d}</span><em>${have ? 'Drunk' : c}</em></div>`).join('')}</div>`,
+  thuum: () => `<div class="athu"><b>UNRELENTING FORCE</b><small>Whiterun &middot; 2 of 3 words</small><div class="c-words" style="position:static;transform:none;justify-content:center;margin-top:calc(1.6 * var(--u))">${['FUS', 'RO', 'DAH'].map((w, i) => `<b class="${i < 2 ? 'on' : ''}">${w}</b>`).join('')}</div><p>The last word: slay the dragon that comes on night 15.</p></div>`,
+  trials: () => `<div class="apath">${[['Lay the Restless to Rest', 'done'], ['The Stone\'s Whisper', 'next'], ['Repeat the Echo', ''], ['Break the Priest\'s Seals', '']].map(([n, st], i) => `<div class="ast ${st}"><span>${['I', 'II', 'III', 'IV'][i]}</span><b>${n}</b><small>${st === 'done' ? 'Done' : st === 'next' ? 'Next - tonight' : 'Locked'}</small></div>`).join('<i></i>')}</div>`,
+  talk: () => `<div class="atalk"><div class="alist">${[['The story so far', '2 new', 1], ['This city', '1 new'], ['Your path', ''], ['Who are you?', '']].map(([n, c, on]) => `<div class="arow${on ? ' on' : ''}"><span>${n}</span><em>${c}</em></div>`).join('')}</div><p class="aq">"Alduin feeds on the dead of Skyrim. Each city you free takes a mouthful back from him."<small>FELLDIR THE OLD</small></p></div>`,
+};
+const CLASSPICK = () => `<div class="c-classart">${[['cls_magicconjurer.jpg', 'Summoner', 'Radiant Quarterstaff'], ['cls_magicschooldestruction.jpg', 'Destruction', 'Carian Wand'], ['cls_skillalchemyalchemist.jpg', 'Alchemist', 'Shadowflame Scythe'], ['cls_magicbattlemage.jpg', 'Spellsword', 'Spellbound Rapier']].map(([p, n, w], i) => `<div class="${i === 2 ? 'on' : ''}" style="background-image:url('${ART(p)}')"><b>${n}</b><span>${w}</span></div>`).join('')}</div><div class="c-classhead"><b>CHOOSE YOUR PATH</b><small>Each player picks their own path.</small></div>`;
+// ---- Skyrim's menus: recoloured (Untarnished UI's layout) or remade (ours)
+const SPELLS = [['el_fire', 'Fireball', 'Adept', '45'], ['el_frost', 'Ice Spike', 'Apprentice', '27'], ['el_shock', 'Chain Lightning', 'Adept', '52'], ['el_arcane', 'Arcane Cascade', 'Apprentice', '20'], ['el_sun', 'Searing Grasp', 'Expert', '45/s'], ['el_poison', 'Acid Spray', 'Adept', '38']];
+const ITEMS = [['Carian Wand', 'Wand', '24', 'Epic'], ['Destruction Set: Robes', 'Robes', '', ''], ['Stormtalons', 'Tablet &middot; 66 uses', '31', 'Epic'], ['Fire Flask', 'Flask', '3', ''], ['Sweetroll', 'Food', '', ''], ['Troll\'s Hide Mead', 'Brew', '', '']];
+const INV = {
+  items: m => m === 're'
+    ? `<div class="m-re"><div class="mh"><b>ALL</b><span>FILTER</span><span>SETTINGS</span></div><div class="mcol"><span>NAME</span><span>TYPE</span><span>DMG</span><span>VALUE</span></div>${ITEMS.map((r, i) => `<div class="mrow${i === 2 ? ' on' : ''}"><span>${r[0]}</span><span>${r[1]}</span><span>${r[2]}</span><span>${r[3]}</span></div>`).join('')}<div class="mcard"><b>STORMTALONS</b><span>Every 3rd hit chains lightning to 2 more.</span></div></div>`
+    : `<div class="m-new"><div class="mtabs">${['ALL', 'WEAPONS', 'APPAREL', 'FLASKS', 'BREWS', 'MISC'].map((t, i) => `<span class="${i === 1 ? 'on' : ''}">${t}</span>`).join('')}</div><div class="mlist">${ITEMS.slice(0, 4).map((r, i) => `<div class="mrow${i === 2 ? ' on' : ''}"><i class="${r[3] ? 'r-' + r[3].toLowerCase() : ''}"></i><span>${r[0]}<small>${r[1]}</small></span><em>${r[2]}</em></div>`).join('')}</div><div class="mdet"><small class="r-epic">EPIC &middot; TABLET OF MYSTERIES</small><b>Stormtalons</b><div class="mstats"><span>Damage<b>31</b></span><span>Uses<b>66</b></span><span>Element<b>Shock</b></span></div><p>Every 3rd hit chains lightning to 2 more of the dead. Heavy: a lightning stun.</p><div class="muse"><i style="--v:66%"></i></div></div></div>`,
+  magic: m => m === 're'
+    ? `<div class="m-re"><div class="mh"><b>DESTRUCTION</b><span>FILTER</span><span>SETTINGS</span></div><div class="mcol"><span>NAME</span><span>LEVEL</span><span>COST</span></div>${SPELLS.map((r, i) => `<div class="mrow${i === 2 ? ' on' : ''}"><span><img src="${ART(r[0] + '.png')}" alt="">${r[1]}</span><span>${r[2]}</span><span>${r[3]}</span></div>`).join('')}<div class="mcard"><b>CHAIN LIGHTNING</b><span>Lightning that leaps to 2 more of the dead.</span></div></div>`
+    : `<div class="m-new"><div class="mtabs">${['ALL', 'DESTRUCTION', 'CONJURATION', 'RESTORATION', 'POWERS', 'SHOUTS'].map((t, i) => `<span class="${i === 1 ? 'on' : ''}">${t}</span>`).join('')}</div><div class="mlist">${SPELLS.map((r, i) => `<div class="mrow${i === 2 ? ' on' : ''}"><img src="${ART(r[0] + '.png')}" alt=""><span>${r[1]}<small>${r[2]}</small></span><em>${r[3]}</em></div>`).join('')}</div><div class="mdet"><small>DESTRUCTION &middot; ADEPT</small><b>Chain Lightning</b><div class="mstats"><span>Magicka<b>52</b></span><span>Damage<b>40</b></span><span>Leaps<b>2</b></span></div><p>Lightning that strikes one of the dead and leaps to 2 more.</p></div></div>`,
+  tab: m => m === 're'
+    ? `<div class="m-tabre"><div class="mlvl">LEVEL 24 <i style="--v:62%"></i><span>Night 12 &middot; Whiterun</span></div><div class="mitems">${['ITEMS', 'MAGIC', 'QUESTS', 'MAP', 'LEVEL UP'].map((t, i) => `<span class="${i === 0 ? 'on' : ''}">${t}</span>`).join('')}</div></div>`
+    : `<div class="m-tabnew"><div class="mtop"><b>NIGHT 12</b><span>12,480 CURSED ESSENCE</span></div>${[['ITEMS', 'M6 8h12l-1 12H7z M9 8a3 3 0 016 0'], ['MAGIC', 'M12 3c3 4 5 7 5 10a5 5 0 01-10 0c0-3 2-6 5-10z'], ['QUESTS', 'M6 4h10l2 3v13H6z M9 9h6 M9 13h6'], ['MAP', 'M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z M9 4v14 M15 6v14']].map(([t, d], i) => `<div class="medal m${i}${i === 0 ? ' on' : ''}"><svg viewBox="0 0 24 24"><path d="${d}"/></svg><b>${t}</b></div>`).join('')}<div class="mbot">DESTRUCTION &middot; LEVEL 24<i style="--v:62%"></i></div></div>`,
+};

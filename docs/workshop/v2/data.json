@@ -224,7 +224,7 @@
    "sys": "classes",
    "t": "One model per class weapon",
    "st": "building",
-   "what": "Your picks: the Dragon Priest scythe (Alchemist), the Dragonbone quarterstaff (Summoner), the Daedric wand (Destruction), the Daedric rapier (Spellsword) - each through every tier, the tiers changing its look only.",
+   "what": "Your picks: the Dragon Priest scythe (Alchemist), the Daedric quarterstaff (Summoner, changed Nov 26 late), the Daedric wand (Destruction), the Daedric rapier (Spellsword) - each through every tier, the tiers changing its look only.",
    "how": "",
    "look": "",
    "note": "",
@@ -234,8 +234,74 @@
    "id": "cw_tierlooks",
    "sys": "classes",
    "t": "Tier looks: one look, stronger each tier",
+   "st": "building",
+   "what": "Your picks saved for all four. Now made in 3D on the model itself (its own surface glowing, particles born on it, a volume of light round each part) - never flat or an outline at any angle; the game gets the same from 4K baked textures with a 2K option.",
+   "how": "",
+   "look": "",
+   "note": "",
+   "since": ""
+  },
+  {
+   "id": "ui_coop",
+   "sys": "hud",
+   "t": "Co-op UI",
    "st": "idea",
-   "what": "Tier I faint, Tier II a glowing edge, Tier III a full aura and trail, Legendary all of it plus a signature effect. Built on the element kits.",
+   "what": "The party list, a friend down and lifting them, you down, names over the party, the scoreboard, a shared trial, joins and falls - in the workshop to approve.",
+   "how": "",
+   "look": "",
+   "note": "",
+   "since": ""
+  },
+  {
+   "id": "ui_fades",
+   "sys": "hud",
+   "t": "Every box fades in and out",
+   "st": "idea",
+   "what": "A soft gradient fade in and out on every pop-up box (your note); drawn by our HUD, so it goes in with the new direction.",
+   "how": "",
+   "look": "",
+   "note": "",
+   "since": ""
+  },
+  {
+   "id": "ui_scale",
+   "sys": "hud",
+   "t": "The UI fits any screen",
+   "st": "idea",
+   "what": "Sizes follow the screen's height, places the corners: 2560x1600, 1920x1080, 2560x1440 and 3440x1440 all previewed. Loading screens fill the screen on any shape.",
+   "how": "",
+   "look": "",
+   "note": "",
+   "since": ""
+  },
+  {
+   "id": "ui_menus",
+   "sys": "hud",
+   "t": "Inventory, Magic and Tab menus ours",
+   "st": "idea",
+   "what": "Recoloured (Untarnished UI's layout in our colours) or remade (our own pages): pick one of each in the workshop.",
+   "how": "",
+   "look": "",
+   "note": "",
+   "since": ""
+  },
+  {
+   "id": "tb_rarity",
+   "sys": "tablet",
+   "t": "Rarity: Rare, Epic, Legendary",
+   "st": "idea",
+   "what": "Each Tablet weapon is Rare (blue), Epic (purple) or Legendary (gold) by strength; rarer ones roll less often (60/30/10 to start, yours to set). Uses rebalanced once the lineup is final.",
+   "how": "",
+   "look": "",
+   "note": "",
+   "since": ""
+  },
+  {
+   "id": "tb_roll",
+   "sys": "tablet",
+   "t": "A new roll for the Tablet",
+   "st": "idea",
+   "what": "Four rolls to pick from in the workshop: The Reel, Pillar of Light, The Wheel, Soul Storm - each ending in the rarity's colour.",
    "how": "",
    "look": "",
    "note": "",
@@ -256,7 +322,7 @@
    "id": "cw_abilities",
    "sys": "classes",
    "t": "Class weapon abilities rebuilt",
-   "st": "idea",
+   "st": "building",
    "what": "Every light and heavy ability redone on the new foundation (element kits, the Test Range).",
    "how": "",
    "look": "",
@@ -843,6 +909,60 @@
    ]
   },
   {
+   "id": "altarui",
+   "sys": "hud",
+   "q": "Your note on the Echo Altar menus: keep the altar menu you have in the game now, or use the new one (class painting, tab icons, every brew's icon - see In-game UI > Every screen > The Echo Altar)?",
+   "opts": [
+    {
+     "id": "new",
+     "name": "The new one",
+     "about": "The class painting, the tab icons along the top, every brew with its own icon, in your direction."
+    },
+    {
+     "id": "keep",
+     "name": "Keep my current altar menu",
+     "about": "Leave the altar menu as it is in the game now."
+    },
+    {
+     "id": "mix",
+     "name": "Mix them",
+     "about": "Keep the current one, adding the class painting and the icons to it (say how in the note)."
+    }
+   ]
+  },
+  {
+   "id": "menumusic",
+   "sys": "loading",
+   "q": "Your note on the launch screen and main menu: which music should they play? (It starts with the launch screen and fades out when a game starts.)",
+   "opts": [
+    {
+     "id": "dragonborn",
+     "name": "Dragonborn (the main theme)",
+     "about": "Skyrim's choir theme, the one from the trailer."
+    },
+    {
+     "id": "farhorizons",
+     "name": "Far Horizons",
+     "about": "Skyrim's quiet, longing exploration piece."
+    },
+    {
+     "id": "ancientstones",
+     "name": "Ancient Stones",
+     "about": "Skyrim's low, ominous ruin theme - the most like a curse."
+    },
+    {
+     "id": "sovngarde",
+     "name": "Sovngarde",
+     "about": "Skyrim's choir for the hall of the dead - fits the souls Alduin keeps from it."
+    },
+    {
+     "id": "own",
+     "name": "Our own",
+     "about": "A new piece for The Curse of Alduin (later, from your own pick of styles)."
+    }
+   ]
+  },
+  {
    "id": "bonereaper",
    "sys": "tablet",
    "q": "The Bonereaper's raise caused the round 20 crash (fixed now). Keep it in the Tablet?",
@@ -995,41 +1115,6 @@
    "sha": "c34b333",
    "when": "2026-11-24 23:41",
    "what": "Looks remade: rising Flame, real-lightning Storm, softer Mist, new Frost/Shadow/Radiance/Spirit; Ascended keeps Tier III's model"
-  },
-  {
-   "sha": "9b02d0d",
-   "when": "2026-11-24 22:59",
-   "what": "Live workshop previews: weapons in every look, packed small for the review doc"
-  },
-  {
-   "sha": "c9a3c8f",
-   "when": "2026-11-24 22:34",
-   "what": "Blade effects run guard to tip, smoother lightning, Carian Wand mist, class voices out"
-  },
-  {
-   "sha": "d0bdc53",
-   "when": "2026-11-24 22:06",
-   "what": "Preview renders for the per-build review doc; nifworld prints UVs"
-  },
-  {
-   "sha": "c2db1a3",
-   "when": "2026-11-24 21:50",
-   "what": "White-fireball souls, smooth altar ring fill, cut-plugin and dead-code cleanup"
-  },
-  {
-   "sha": "35fb293",
-   "when": "2026-11-24 21:28",
-   "what": "Javelin throw: the javelin itself laid along your aim when cocked and thrown (the wrist aimed too)"
-  },
-  {
-   "sha": "28d29f7",
-   "when": "2026-11-24 21:19",
-   "what": "Regenerate the plugin and the guide for Hold the Light"
-  },
-  {
-   "sha": "f64b181",
-   "when": "2026-11-24 21:17",
-   "what": "Trials: Hold the Light replaces Repeat the Echo; souls are blue spirit flames in the world; the altar's ring is real light on the ground"
   }
  ],
  "installs": {
@@ -1571,8 +1656,8 @@
    "el": "wind",
    "base": "Skyrim's Nordic warhammer with a Word Wall's carved dragon-script round its head",
    "light": "Every hit staggers the dead back a step.",
-   "heavy": "The Unrelenting Force: a roaring cone that hurls every one of the dead in front of you.",
-   "special": "Every 20 kills the hammer charges a full FUS RO DAH: the next heavy clears the street.",
+   "heavy": "FUS: a short roaring cone (5 m) that knocks down the dead in front of you.",
+   "special": "Every 20 kills it charges a full FUS RO DAH: the next heavy hurls every one of the dead 12 m ahead off their feet - always stronger than a heavy (your note: light < heavy < special).",
    "bo3": "The Thundergun"
   },
   {
@@ -1712,24 +1797,18 @@
      "opts": [
       {
        "id": "core",
-       "model": "effects\\impacteffects\\fxdragonfireimpactactor.nif",
-       "label": "Skyrim: dragonfire impact",
-       "s": 0.9,
-       "ground": false
+       "label": "Flare",
+       "about": "A compact burst of flame where it lands, sparks thrown out, a wisp left hanging."
       },
       {
        "id": "spark",
-       "model": "effects\\impacteffects\\fireballimpact01.nif",
-       "label": "Skyrim: fireball impact",
-       "s": 0.6,
-       "ground": false
+       "label": "Splash",
+       "about": "Flame spraying off the hit in the direction of the blow."
       },
       {
        "id": "drain",
-       "model": "magic\\absorbredimpact01.nif",
-       "label": "Skyrim: Absorb impact",
-       "s": 1.0,
-       "ground": false
+       "label": "Drain",
+       "about": "Flame pulled into the one struck from all round, then a pop."
       }
      ]
     },
@@ -1740,24 +1819,18 @@
      "opts": [
       {
        "id": "big",
-       "model": "apocnew\\destructionfire_explosion_ballofire.nif",
-       "label": "Apocalypse: Ball of Fire explosion",
-       "s": 0.8,
-       "ground": false
+       "label": "Explosion",
+       "about": "A full blast of flame rolling up into smoke, debris thrown, the ground scorched."
       },
       {
        "id": "nova",
-       "model": "apocnew\\destructionhellfire_explosion.nif",
-       "label": "Apocalypse: Hellfire explosion",
-       "s": 0.8,
-       "ground": true
+       "label": "Nova ring",
+       "about": "A ring of flame tearing outward along the ground from the heart of it."
       },
       {
        "id": "spikes",
-       "model": "apocnew\\destructionfire_explosion_pyroclasm.nif",
-       "label": "Apocalypse: Pyroclasm eruption",
-       "s": 0.6,
-       "ground": false
+       "label": "Eruption",
+       "about": "Flame geysers bursting up from the ground in a ring round you."
       }
      ]
     },
@@ -1768,24 +1841,18 @@
      "opts": [
       {
        "id": "mist",
-       "model": "apocnew\\destructionfire_explosion_carbonize.nif",
-       "label": "Apocalypse: Carbonize ash burst",
-       "s": 0.8,
-       "ground": true
+       "label": "Lingering",
+       "about": "A low blanket of flames rolling over the ground for a few seconds."
       },
       {
        "id": "rune",
-       "model": "apocnew\\alterationchaos_explosion_rune.nif",
-       "label": "Apocalypse: Chaos rune burst",
-       "s": 0.8,
-       "ground": true
+       "label": "Rune circle",
+       "about": "A circle of runes burned into the ground, flame rising off it."
       },
       {
        "id": "wave",
-       "model": "magic\\shoutareaexplosionwarm.nif",
-       "label": "Skyrim: warm shout wave",
-       "s": 0.6,
-       "ground": true
+       "label": "Spreading wave",
+       "about": "A creeping ring of flames running outward, leaving patches behind."
       }
      ]
     },
@@ -1796,17 +1863,13 @@
      "opts": [
       {
        "id": "sky",
-       "model": "effects\\impacteffects\\fxdragonfireimpact.nif",
-       "label": "Skyrim: dragonfire blast",
-       "s": 0.5,
-       "ground": false
+       "label": "From the sky",
+       "about": "A meteor comes down on the spot and bursts."
       },
       {
        "id": "pillar",
-       "model": "effects\\mgmagicfirepillarsmall.nif",
-       "label": "Skyrim: College fire pillar (small)",
-       "s": 0.55,
-       "ground": true
+       "label": "Pillar",
+       "about": "A turning column of flame pours down from the sky onto the spot."
       }
      ]
     }
@@ -1900,24 +1963,18 @@
      "opts": [
       {
        "id": "core",
-       "model": "magic\\icicleimpactactor01.nif",
-       "label": "Skyrim: Ice Spike impact",
-       "s": 1.0,
-       "ground": false
+       "label": "Flare",
+       "about": "A compact burst of ice where it lands, sparks thrown out, a wisp left hanging."
       },
       {
        "id": "spark",
-       "model": "effects\\impacteffects\\impactfrost01.nif",
-       "label": "Skyrim: frost impact",
-       "s": 1.0,
-       "ground": false
+       "label": "Splash",
+       "about": "Ice spraying off the hit in the direction of the blow."
       },
       {
        "id": "drain",
-       "model": "apocnew\\destructionfrost_impact_howlingblast.nif",
-       "label": "Apocalypse: Howling Blast impact",
-       "s": 1.0,
-       "ground": false
+       "label": "Drain",
+       "about": "Ice pulled into the one struck from all round, then a pop."
       }
      ]
     },
@@ -1928,24 +1985,18 @@
      "opts": [
       {
        "id": "big",
-       "model": "magic\\explosionfrost01.nif",
-       "label": "Skyrim: frost explosion",
-       "s": 1.0,
-       "ground": false
+       "label": "Explosion",
+       "about": "A full blast of ice rolling up into smoke, debris thrown, the ground scorched."
       },
       {
        "id": "nova",
-       "model": "apocnew\\destructionfrost_explosion_frostnova.nif",
-       "label": "Apocalypse: Frost Nova",
-       "s": 0.8,
-       "ground": true
+       "label": "Nova ring",
+       "about": "A ring of ice tearing outward along the ground from the heart of it."
       },
       {
        "id": "spikes",
-       "model": "magic\\magicespikevolleyexplosion.nif",
-       "label": "Skyrim: Ice Spike volley shards",
-       "s": 0.6,
-       "ground": false
+       "label": "Eruption",
+       "about": "Ice spikes bursting up from the ground in a ring round you."
       }
      ]
     },
@@ -1956,24 +2007,18 @@
      "opts": [
       {
        "id": "mist",
-       "model": "effects\\fxicewraithdeathexplosion.nif",
-       "label": "Skyrim: ice wraith shatter",
-       "s": 0.7,
-       "ground": true
+       "label": "Lingering",
+       "about": "A low blanket of frost mist rolling over the ground for a few seconds."
       },
       {
        "id": "rune",
-       "model": "magic\\impactfrosticestorm.nif",
-       "label": "Skyrim: Ice Storm impact",
-       "s": 0.7,
-       "ground": true
+       "label": "Rune circle",
+       "about": "A circle of runes burned into the ground, ice rising off it."
       },
       {
        "id": "wave",
-       "model": "magic\\shoutareaexplosion01.nif",
-       "label": "Skyrim: shout wave",
-       "s": 0.6,
-       "ground": true
+       "label": "Spreading wave",
+       "about": "A creeping ring of frost mist running outward, leaving patches behind."
       }
      ]
     },
@@ -1984,17 +2029,13 @@
      "opts": [
       {
        "id": "sky",
-       "model": "effects\\impacteffects\\dragonfrostshoutimpact.nif",
-       "label": "Skyrim: Frost Breath impact",
-       "s": 0.8,
-       "ground": false
+       "label": "From the sky",
+       "about": "An ice comet comes down on the spot and bursts."
       },
       {
        "id": "pillar",
-       "model": "apocnew\\destructionfrost_explosion_shivers.nif",
-       "label": "Apocalypse: Shivers explosion",
-       "s": 0.8,
-       "ground": true
+       "label": "Pillar",
+       "about": "A turning column of ice pours down from the sky onto the spot."
       }
      ]
     }
@@ -2088,24 +2129,18 @@
      "opts": [
       {
        "id": "core",
-       "model": "magic\\impactshock02explo.nif",
-       "label": "Skyrim: Thunderbolt impact",
-       "s": 1.0,
-       "ground": false
+       "label": "Flare",
+       "about": "A compact burst of lightning where it lands, sparks thrown out, a wisp left hanging."
       },
       {
        "id": "spark",
-       "model": "magic\\impactshock03.nif",
-       "label": "Skyrim: spark impact",
-       "s": 1.0,
-       "ground": false
+       "label": "Splash",
+       "about": "Lightning spraying off the hit in the direction of the blow."
       },
       {
        "id": "drain",
-       "model": "magic\\impactshock02.nif",
-       "label": "Skyrim: Lightning Bolt impact",
-       "s": 1.0,
-       "ground": false
+       "label": "Drain",
+       "about": "Lightning pulled into the one struck from all round, then a pop."
       }
      ]
     },
@@ -2116,24 +2151,18 @@
      "opts": [
       {
        "id": "big",
-       "model": "magic\\explosionshockmass01.nif",
-       "label": "Skyrim: Chain Lightning burst",
-       "s": 0.9,
-       "ground": false
+       "label": "Explosion",
+       "about": "A full blast of lightning rolling up into smoke, debris thrown, the ground scorched."
       },
       {
        "id": "nova",
-       "model": "apocnew\\destructionshock_explosion_thundernova.nif",
-       "label": "Apocalypse: Thunder Nova",
-       "s": 0.7,
-       "ground": true
+       "label": "Nova ring",
+       "about": "A ring of lightning tearing outward along the ground from the heart of it."
       },
       {
        "id": "spikes",
-       "model": "magic\\explosionatronachstormattack.nif",
-       "label": "Skyrim: storm atronach blast",
-       "s": 0.8,
-       "ground": false
+       "label": "Eruption",
+       "about": "Lightning forks bursting up from the ground in a ring round you."
       }
      ]
     },
@@ -2144,24 +2173,18 @@
      "opts": [
       {
        "id": "mist",
-       "model": "apocnew\\destructionshock_explosion_discharge.nif",
-       "label": "Apocalypse: Discharge",
-       "s": 1.0,
-       "ground": true
+       "label": "Lingering",
+       "about": "A low blanket of static rolling over the ground for a few seconds."
       },
       {
        "id": "rune",
-       "model": "magus\\mysticism\\explosionshockmass01.nif",
-       "label": "Mysticism: mass shock burst",
-       "s": 0.8,
-       "ground": true
+       "label": "Rune circle",
+       "about": "A circle of runes burned into the ground, lightning rising off it."
       },
       {
        "id": "wave",
-       "model": "magic\\shoutareaexplosion01.nif",
-       "label": "Skyrim: shout wave",
-       "s": 0.6,
-       "ground": true
+       "label": "Spreading wave",
+       "about": "A creeping ring of static running outward, leaving patches behind."
       }
      ]
     },
@@ -2172,17 +2195,13 @@
      "opts": [
       {
        "id": "sky",
-       "model": "apocnew\\destructionshock_impact_fingerofthemountain.nif",
-       "label": "Apocalypse: Finger of the Mountain strike",
-       "s": 1.0,
-       "ground": false
+       "label": "From the sky",
+       "about": "A lightning strike comes down on the spot and bursts."
       },
       {
        "id": "pillar",
-       "model": "apocnew\\destructionshock_explosion_fingerofthemountain.nif",
-       "label": "Apocalypse: Finger of the Mountain",
-       "s": 0.7,
-       "ground": true
+       "label": "Pillar",
+       "about": "A turning column of lightning pours down from the sky onto the spot."
       }
      ]
     }
@@ -2276,24 +2295,18 @@
      "opts": [
       {
        "id": "core",
-       "model": "magic\\explosionilusiondark01.nif",
-       "label": "Skyrim: dark Illusion burst",
-       "s": 1.0,
-       "ground": false
+       "label": "Flare",
+       "about": "A compact burst of violet-black flame where it lands, sparks thrown out, a wisp left hanging."
       },
       {
        "id": "spark",
-       "model": "magic\\illusionimpact01.nif",
-       "label": "Skyrim: Illusion impact",
-       "s": 1.0,
-       "ground": false
+       "label": "Splash",
+       "about": "Violet-black flame spraying off the hit in the direction of the blow."
       },
       {
        "id": "drain",
-       "model": "magic\\absorbblueimpact01.nif",
-       "label": "Skyrim: Absorb Magicka impact",
-       "s": 1.0,
-       "ground": false
+       "label": "Drain",
+       "about": "Violet-black flame pulled into the one struck from all round, then a pop."
       }
      ]
     },
@@ -2304,24 +2317,18 @@
      "opts": [
       {
        "id": "big",
-       "model": "apocnew\\illusionnightmare_explosion.nif",
-       "label": "Apocalypse: Nightmare explosion",
-       "s": 0.9,
-       "ground": false
+       "label": "Explosion",
+       "about": "A full blast of violet-black flame rolling up into smoke, debris thrown, the ground scorched."
       },
       {
        "id": "nova",
-       "model": "apocnew\\illusionblue_explosion_manavoid.nif",
-       "label": "Apocalypse: Mana Void",
-       "s": 0.8,
-       "ground": true
+       "label": "Nova ring",
+       "about": "A ring of violet-black flame tearing outward along the ground from the heart of it."
       },
       {
        "id": "spikes",
-       "model": "apocnew\\illusionnightmare_explosion_illusorypyre.nif",
-       "label": "Apocalypse: Illusory Pyre",
-       "s": 0.8,
-       "ground": false
+       "label": "Eruption",
+       "about": "Shadowfire geysers bursting up from the ground in a ring round you."
       }
      ]
     },
@@ -2332,24 +2339,18 @@
      "opts": [
       {
        "id": "mist",
-       "model": "apocnew\\illusionshadow_explosion.nif",
-       "label": "Apocalypse: Shadow explosion",
-       "s": 0.9,
-       "ground": true
+       "label": "Lingering",
+       "about": "A low blanket of shadowfire rolling over the ground for a few seconds."
       },
       {
        "id": "rune",
-       "model": "apocnew\\alterationchaos_explosion_rune.nif",
-       "label": "Apocalypse: Chaos rune burst",
-       "s": 0.8,
-       "ground": true
+       "label": "Rune circle",
+       "about": "A circle of runes burned into the ground, violet-black flame rising off it."
       },
       {
        "id": "wave",
-       "model": "apocnew\\illusionempathy_explosion_screamofpain.nif",
-       "label": "Apocalypse: Scream of Pain",
-       "s": 0.8,
-       "ground": true
+       "label": "Spreading wave",
+       "about": "A creeping ring of shadowfire running outward, leaving patches behind."
       }
      ]
     },
@@ -2360,17 +2361,13 @@
      "opts": [
       {
        "id": "sky",
-       "model": "dlc01\\magic\\dlc01_soulrendimpact01.nif",
-       "label": "Dawnguard: Soul Rend impact",
-       "s": 1.0,
-       "ground": false
+       "label": "From the sky",
+       "about": "A falling shadow-star comes down on the spot and bursts."
       },
       {
        "id": "pillar",
-       "model": "dlc02\\effects\\miraakteleportoutexplosion.nif",
-       "label": "Dragonborn: Miraak's vanishing",
-       "s": 0.8,
-       "ground": true
+       "label": "Pillar",
+       "about": "A turning column of violet-black flame pours down from the sky onto the spot."
       }
      ]
     }
@@ -2464,24 +2461,18 @@
      "opts": [
       {
        "id": "core",
-       "model": "dlc01\\magic\\dlc1impactsunfirespell.nif",
-       "label": "Dawnguard: Sun Fire impact",
-       "s": 1.0,
-       "ground": false
+       "label": "Flare",
+       "about": "A compact burst of sunlight where it lands, sparks thrown out, a wisp left hanging."
       },
       {
        "id": "spark",
-       "model": "magic\\impactlightspell.nif",
-       "label": "Skyrim: Magelight impact",
-       "s": 1.0,
-       "ground": false
+       "label": "Splash",
+       "about": "Sunlight spraying off the hit in the direction of the blow."
       },
       {
        "id": "drain",
-       "model": "magus\\mysticism\\impactsunbeamspell.nif",
-       "label": "Mysticism: sunbeam impact",
-       "s": 1.0,
-       "ground": false
+       "label": "Drain",
+       "about": "Sunlight pulled into the one struck from all round, then a pop."
       }
      ]
     },
@@ -2492,24 +2483,18 @@
      "opts": [
       {
        "id": "big",
-       "model": "magus\\mysticism\\sunbeamexplosion01.nif",
-       "label": "Mysticism: sunbeam explosion",
-       "s": 1.0,
-       "ground": false
+       "label": "Explosion",
+       "about": "A full blast of sunlight rolling up into smoke, debris thrown, the ground scorched."
       },
       {
        "id": "nova",
-       "model": "magus\\mysticism\\explosionturnundead01.nif",
-       "label": "Mysticism: turn undead nova",
-       "s": 0.9,
-       "ground": true
+       "label": "Nova ring",
+       "about": "A ring of sunlight tearing outward along the ground from the heart of it."
       },
       {
        "id": "spikes",
-       "model": "magic\\turnundeadmassexplosion.nif",
-       "label": "Skyrim: Repel Undead blast",
-       "s": 0.8,
-       "ground": false
+       "label": "Eruption",
+       "about": "Pillars of light bursting up from the ground in a ring round you."
       }
      ]
     },
@@ -2520,24 +2505,18 @@
      "opts": [
       {
        "id": "mist",
-       "model": "magus\\mysticism\\sunlightexplosion01.nif",
-       "label": "Mysticism: sunlight burst",
-       "s": 0.9,
-       "ground": true
+       "label": "Lingering",
+       "about": "A low blanket of sun-motes rolling over the ground for a few seconds."
       },
       {
        "id": "rune",
-       "model": "magic\\turnunimpact01.nif",
-       "label": "Skyrim: Turn Undead impact",
-       "s": 1.0,
-       "ground": true
+       "label": "Rune circle",
+       "about": "A circle of runes burned into the ground, sunlight rising off it."
       },
       {
        "id": "wave",
-       "model": "dlc01\\magic\\dlc1sunburstfx01.nif",
-       "label": "Dawnguard: sunburst",
-       "s": 0.5,
-       "ground": true
+       "label": "Spreading wave",
+       "about": "A creeping ring of sun-motes running outward, leaving patches behind."
       }
      ]
     },
@@ -2548,17 +2527,13 @@
      "opts": [
       {
        "id": "sky",
-       "model": "dlc01\\effects\\dlc1aurielsskyboltexplosion01.nif",
-       "label": "Dawnguard: Auriel's Bow sky bolt",
-       "s": 0.4,
-       "ground": false
+       "label": "From the sky",
+       "about": "A sunbeam comes down on the spot and bursts."
       },
       {
        "id": "pillar",
-       "model": "dlc01\\magic\\dlc1aurielsunbeam01.nif",
-       "label": "Dawnguard: Auriel's sunbeam",
-       "s": 0.6,
-       "ground": true
+       "label": "Pillar",
+       "about": "A turning column of sunlight pours down from the sky onto the spot."
       }
      ]
     }
@@ -2652,24 +2627,18 @@
      "opts": [
       {
        "id": "core",
-       "model": "magus\\mysticism\\poisonexplosion01.nif",
-       "label": "Mysticism: poison explosion",
-       "s": 1.0,
-       "ground": false
+       "label": "Flare",
+       "about": "A compact burst of acid where it lands, sparks thrown out, a wisp left hanging."
       },
       {
        "id": "spark",
-       "model": "effects\\impacteffects\\magpoisonsprayimpact.nif",
-       "label": "Skyrim: poison spray impact",
-       "s": 1.0,
-       "ground": false
+       "label": "Splash",
+       "about": "Acid spraying off the hit in the direction of the blow."
       },
       {
        "id": "drain",
-       "model": "magic\\absorbgreenimpact01.nif",
-       "label": "Skyrim: green Absorb impact",
-       "s": 1.0,
-       "ground": false
+       "label": "Drain",
+       "about": "Acid pulled into the one struck from all round, then a pop."
       }
      ]
     },
@@ -2680,24 +2649,18 @@
      "opts": [
       {
        "id": "big",
-       "model": "magus\\mysticism\\poisonmassexplosion01.nif",
-       "label": "Mysticism: mass poison explosion",
-       "s": 0.9,
-       "ground": false
+       "label": "Explosion",
+       "about": "A full blast of acid rolling up into smoke, debris thrown, the ground scorched."
       },
       {
        "id": "nova",
-       "model": "magus\\mysticism\\rustmassexplosion01.nif",
-       "label": "Mysticism: corrosion wave",
-       "s": 0.9,
-       "ground": true
+       "label": "Nova ring",
+       "about": "A ring of acid tearing outward along the ground from the heart of it."
       },
       {
        "id": "spikes",
-       "model": "magus\\mysticism\\poisonexplosion02.nif",
-       "label": "Mysticism: poison splash",
-       "s": 1.0,
-       "ground": false
+       "label": "Eruption",
+       "about": "Acid geysers bursting up from the ground in a ring round you."
       }
      ]
     },
@@ -2708,24 +2671,18 @@
      "opts": [
       {
        "id": "mist",
-       "model": "dlc02\\effects\\poisongasexplosion.nif",
-       "label": "Dragonborn: poison gas cloud",
-       "s": 0.6,
-       "ground": true
+       "label": "Lingering",
+       "about": "A low blanket of poison fog rolling over the ground for a few seconds."
       },
       {
        "id": "rune",
-       "model": "magus\\mysticism\\poisonimpactfx01.nif",
-       "label": "Mysticism: poison impact",
-       "s": 1.0,
-       "ground": true
+       "label": "Rune circle",
+       "about": "A circle of runes burned into the ground, acid rising off it."
       },
       {
        "id": "wave",
-       "model": "magic\\shoutareaexplosionsmall01.nif",
-       "label": "Skyrim: small shout wave",
-       "s": 0.6,
-       "ground": true
+       "label": "Spreading wave",
+       "about": "A creeping ring of poison fog running outward, leaving patches behind."
       }
      ]
     },
@@ -2736,17 +2693,13 @@
      "opts": [
       {
        "id": "sky",
-       "model": "effects\\fxgastrapblast.nif",
-       "label": "Skyrim: gas trap blast",
-       "s": 0.8,
-       "ground": false
+       "label": "From the sky",
+       "about": "A falling acid globe comes down on the spot and bursts."
       },
       {
        "id": "pillar",
-       "model": "magus\\mysticism\\poisonexplosion03.nif",
-       "label": "Mysticism: poison eruption",
-       "s": 1.0,
-       "ground": true
+       "label": "Pillar",
+       "about": "A turning column of acid pours down from the sky onto the spot."
       }
      ]
     }
@@ -2840,24 +2793,18 @@
      "opts": [
       {
        "id": "core",
-       "model": "apocnew\\illusionblue_explosion.nif",
-       "label": "Apocalypse: arcane orb burst",
-       "s": 0.8,
-       "ground": false
+       "label": "Flare",
+       "about": "A compact burst of magicka where it lands, sparks thrown out, a wisp left hanging."
       },
       {
        "id": "spark",
-       "model": "magic\\absorbblueimpact01.nif",
-       "label": "Skyrim: Absorb Magicka impact",
-       "s": 1.0,
-       "ground": false
+       "label": "Splash",
+       "about": "Magicka spraying off the hit in the direction of the blow."
       },
       {
        "id": "drain",
-       "model": "apocnew\\restorationarcane_impact.nif",
-       "label": "Apocalypse: arcane impact",
-       "s": 1.0,
-       "ground": false
+       "label": "Drain",
+       "about": "Magicka pulled into the one struck from all round, then a pop."
       }
      ]
     },
@@ -2868,24 +2815,18 @@
      "opts": [
       {
        "id": "big",
-       "model": "apocnew\\restorationarcane_explosion_lunartide.nif",
-       "label": "Apocalypse: Lunar Tide",
-       "s": 0.8,
-       "ground": false
+       "label": "Explosion",
+       "about": "A full blast of magicka rolling up into smoke, debris thrown, the ground scorched."
       },
       {
        "id": "nova",
-       "model": "apocnew\\illusionblue_explosion_manavoid.nif",
-       "label": "Apocalypse: Mana Void",
-       "s": 0.8,
-       "ground": true
+       "label": "Nova ring",
+       "about": "A ring of magicka tearing outward along the ground from the heart of it."
       },
       {
        "id": "spikes",
-       "model": "magic\\alterposimpact01.nif",
-       "label": "Skyrim: Alteration impact",
-       "s": 1.2,
-       "ground": false
+       "label": "Eruption",
+       "about": "Arcane spires bursting up from the ground in a ring round you."
       }
      ]
     },
@@ -2896,24 +2837,18 @@
      "opts": [
       {
        "id": "mist",
-       "model": "apocnew\\alterationmyst_explosion.nif",
-       "label": "Apocalypse: Mysticism burst",
-       "s": 0.9,
-       "ground": true
+       "label": "Lingering",
+       "about": "A low blanket of magicka haze rolling over the ground for a few seconds."
       },
       {
        "id": "rune",
-       "model": "apocnew\\alterationmyst_explosion.nif",
-       "label": "Apocalypse: Mysticism burst",
-       "s": 0.9,
-       "ground": true
+       "label": "Rune circle",
+       "about": "A circle of runes burned into the ground, magicka rising off it."
       },
       {
        "id": "wave",
-       "model": "apocnew\\alterationalt_explosion.nif",
-       "label": "Apocalypse: Alteration wave",
-       "s": 0.8,
-       "ground": true
+       "label": "Spreading wave",
+       "about": "A creeping ring of magicka haze running outward, leaving patches behind."
       }
      ]
     },
@@ -2924,17 +2859,13 @@
      "opts": [
       {
        "id": "sky",
-       "model": "magic\\impactmg07staffofmagnus.nif",
-       "label": "Skyrim: Staff of Magnus impact",
-       "s": 1.0,
-       "ground": false
+       "label": "From the sky",
+       "about": "A beam of magicka comes down on the spot and bursts."
       },
       {
        "id": "pillar",
-       "model": "dlc02\\effects\\dlc2constellationexplosion.nif",
-       "label": "Dragonborn: constellation burst",
-       "s": 0.7,
-       "ground": true
+       "label": "Pillar",
+       "about": "A turning column of magicka pours down from the sky onto the spot."
       }
      ]
     }
@@ -3028,24 +2959,18 @@
      "opts": [
       {
        "id": "core",
-       "model": "apocnew\\restorationblood_explosion.nif",
-       "label": "Apocalypse: blood explosion",
-       "s": 0.8,
-       "ground": false
+       "label": "Flare",
+       "about": "A compact burst of blood where it lands, sparks thrown out, a wisp left hanging."
       },
       {
        "id": "spark",
-       "model": "effects\\impacteffects\\bloodspraylargemist01.nif",
-       "label": "Skyrim: blood mist spray",
-       "s": 0.9,
-       "ground": false
+       "label": "Splash",
+       "about": "Blood spraying off the hit in the direction of the blow."
       },
       {
        "id": "drain",
-       "model": "dlc01\\magic\\dlc1vampiredrainimpact.nif",
-       "label": "Dawnguard: Vampiric Drain impact",
-       "s": 1.0,
-       "ground": false
+       "label": "Drain",
+       "about": "Blood pulled into the one struck from all round, then a pop."
       }
      ]
     },
@@ -3056,24 +2981,18 @@
      "opts": [
       {
        "id": "big",
-       "model": "dlc01\\effects\\dlc1bloodexplosion500.nif",
-       "label": "Dawnguard: blood explosion",
-       "s": 0.5,
-       "ground": false
+       "label": "Explosion",
+       "about": "A full blast of blood rolling up into smoke, debris thrown, the ground scorched."
       },
       {
        "id": "nova",
-       "model": "sacrosanct\\blood_explosion_shockwave.nif",
-       "label": "Sacrosanct: blood shockwave",
-       "s": 0.8,
-       "ground": true
+       "label": "Nova ring",
+       "about": "A ring of blood tearing outward along the ground from the heart of it."
       },
       {
        "id": "spikes",
-       "model": "apocnew\\restorationblood_explosion_rune.nif",
-       "label": "Apocalypse: blood rune burst",
-       "s": 0.8,
-       "ground": false
+       "label": "Eruption",
+       "about": "Blood geysers bursting up from the ground in a ring round you."
       }
      ]
     },
@@ -3084,24 +3003,18 @@
      "opts": [
       {
        "id": "mist",
-       "model": "dlc01\\magic\\dlc1vampireabsorbexplosion.nif",
-       "label": "Dawnguard: Vampiric Drain burst",
-       "s": 0.5,
-       "ground": true
+       "label": "Lingering",
+       "about": "A low blanket of blood mist rolling over the ground for a few seconds."
       },
       {
        "id": "rune",
-       "model": "apocnew\\restorationblood_explosion_rune.nif",
-       "label": "Apocalypse: blood rune burst",
-       "s": 0.8,
-       "ground": true
+       "label": "Rune circle",
+       "about": "A circle of runes burned into the ground, blood rising off it."
       },
       {
        "id": "wave",
-       "model": "sacrosanct\\blood_explosion_shockwave.nif",
-       "label": "Sacrosanct: blood shockwave",
-       "s": 0.8,
-       "ground": true
+       "label": "Spreading wave",
+       "about": "A creeping ring of blood mist running outward, leaving patches behind."
       }
      ]
     },
@@ -3112,17 +3025,13 @@
      "opts": [
       {
        "id": "sky",
-       "model": "effects\\impacteffects\\bloodsprayalduinimpact.nif",
-       "label": "Skyrim: Alduin's blood spray",
-       "s": 0.8,
-       "ground": false
+       "label": "From the sky",
+       "about": "A falling blood orb comes down on the spot and bursts."
       },
       {
        "id": "pillar",
-       "model": "dlc01\\magic\\dlc1vampchangeexplosion.nif",
-       "label": "Dawnguard: Vampire Lord change",
-       "s": 0.6,
-       "ground": true
+       "label": "Pillar",
+       "about": "A turning column of blood pours down from the sky onto the spot."
       }
      ]
     }
@@ -3216,24 +3125,18 @@
      "opts": [
       {
        "id": "core",
-       "model": "effects\\impacteffects\\fxghostimpact.nif",
-       "label": "Skyrim: ghost impact",
-       "s": 1.2,
-       "ground": false
+       "label": "Flare",
+       "about": "A compact burst of soul light where it lands, sparks thrown out, a wisp left hanging."
       },
       {
        "id": "spark",
-       "model": "magic\\paralyzeimpact01.nif",
-       "label": "Skyrim: Paralyze impact",
-       "s": 1.0,
-       "ground": false
+       "label": "Splash",
+       "about": "Soul light spraying off the hit in the direction of the blow."
       },
       {
        "id": "drain",
-       "model": "magic\\absorbgreenimpact01.nif",
-       "label": "Skyrim: green Absorb impact",
-       "s": 1.0,
-       "ground": false
+       "label": "Drain",
+       "about": "Soul light pulled into the one struck from all round, then a pop."
       }
      ]
     },
@@ -3244,24 +3147,18 @@
      "opts": [
       {
        "id": "big",
-       "model": "apocnew\\restorationnecro_explosion_lifesfinale.nif",
-       "label": "Apocalypse: Life's Finale",
-       "s": 0.8,
-       "ground": false
+       "label": "Explosion",
+       "about": "A full blast of soul light rolling up into smoke, debris thrown, the ground scorched."
       },
       {
        "id": "nova",
-       "model": "apocnew\\restorationnecro_explosion.nif",
-       "label": "Apocalypse: necromantic burst",
-       "s": 0.9,
-       "ground": true
+       "label": "Nova ring",
+       "about": "A ring of soul light tearing outward along the ground from the heart of it."
       },
       {
        "id": "spikes",
-       "model": "magic\\reanimateimpact01.nif",
-       "label": "Skyrim: Reanimate impact",
-       "s": 1.2,
-       "ground": false
+       "label": "Eruption",
+       "about": "Rising spirits bursting up from the ground in a ring round you."
       }
      ]
     },
@@ -3272,24 +3169,18 @@
      "opts": [
       {
        "id": "mist",
-       "model": "effects\\fxwaterfallmistblastlite.nif",
-       "label": "Skyrim: waterfall mist blast",
-       "s": 0.7,
-       "ground": true
+       "label": "Lingering",
+       "about": "A low blanket of ghost mist rolling over the ground for a few seconds."
       },
       {
        "id": "rune",
-       "model": "apocnew\\conjurationsummon_explosion.nif",
-       "label": "Apocalypse: summoning burst",
-       "s": 0.9,
-       "ground": true
+       "label": "Rune circle",
+       "about": "A circle of runes burned into the ground, soul light rising off it."
       },
       {
        "id": "wave",
-       "model": "magic\\shoutareaexplosionsmall01.nif",
-       "label": "Skyrim: small shout wave",
-       "s": 0.6,
-       "ground": true
+       "label": "Spreading wave",
+       "about": "A creeping ring of ghost mist running outward, leaving patches behind."
       }
      ]
     },
@@ -3300,17 +3191,13 @@
      "opts": [
       {
        "id": "sky",
-       "model": "magic\\explosionillusionlight01.nif",
-       "label": "Skyrim: Illusion light burst",
-       "s": 1.0,
-       "ground": false
+       "label": "From the sky",
+       "about": "A beam of soul light comes down on the spot and bursts."
       },
       {
        "id": "pillar",
-       "model": "apocnew\\conjurationsummon_explosion.nif",
-       "label": "Apocalypse: summoning burst",
-       "s": 0.9,
-       "ground": true
+       "label": "Pillar",
+       "about": "A turning column of soul light pours down from the sky onto the spot."
       }
      ]
     }
@@ -3404,24 +3291,18 @@
      "opts": [
       {
        "id": "core",
-       "model": "effects\\fxdustburstmed.nif",
-       "label": "Skyrim: dust burst",
-       "s": 1.0,
-       "ground": false
+       "label": "Flare",
+       "about": "A compact burst of stone and dust where it lands, sparks thrown out, a wisp left hanging."
       },
       {
        "id": "spark",
-       "model": "effects\\impacteffects\\fxmetalsparkimpactblunt.nif",
-       "label": "Skyrim: blunt spark impact",
-       "s": 1.2,
-       "ground": false
+       "label": "Splash",
+       "about": "Stone and dust spraying off the hit in the direction of the blow."
       },
       {
        "id": "drain",
-       "model": "magic\\absorbgreenimpact01.nif",
-       "label": "Skyrim: green Absorb impact",
-       "s": 0.8,
-       "ground": false
+       "label": "Drain",
+       "about": "Stone and dust pulled into the one struck from all round, then a pop."
       }
      ]
     },
@@ -3432,24 +3313,18 @@
      "opts": [
       {
        "id": "big",
-       "model": "apocnew\\alterationearth_explosion_massive.nif",
-       "label": "Apocalypse: massive earth explosion",
-       "s": 0.7,
-       "ground": false
+       "label": "Explosion",
+       "about": "A full blast of stone and dust rolling up into smoke, debris thrown, the ground scorched."
       },
       {
        "id": "nova",
-       "model": "effects\\impacteffects\\fxdragontailstompdust.nif",
-       "label": "Skyrim: dragon's tail stomp",
-       "s": 0.6,
-       "ground": true
+       "label": "Nova ring",
+       "about": "A ring of stone and dust tearing outward along the ground from the heart of it."
       },
       {
        "id": "spikes",
-       "model": "apocnew\\alterationearth_explosion_talonsofnirn.nif",
-       "label": "Apocalypse: Talons of Nirn (earth spikes)",
-       "s": 0.8,
-       "ground": false
+       "label": "Eruption",
+       "about": "Stone spikes bursting up from the ground in a ring round you."
       }
      ]
     },
@@ -3460,24 +3335,18 @@
      "opts": [
       {
        "id": "mist",
-       "model": "effects\\fxdustburstsm.nif",
-       "label": "Skyrim: dust puff",
-       "s": 1.2,
-       "ground": true
+       "label": "Lingering",
+       "about": "A low blanket of dust rolling over the ground for a few seconds."
       },
       {
        "id": "rune",
-       "model": "apocnew\\alterationearth_impact.nif",
-       "label": "Apocalypse: earth impact",
-       "s": 1.0,
-       "ground": true
+       "label": "Rune circle",
+       "about": "A circle of runes burned into the ground, stone and dust rising off it."
       },
       {
        "id": "wave",
-       "model": "effects\\impacteffects\\fxdragontailstompdust.nif",
-       "label": "Skyrim: dragon's tail stomp",
-       "s": 0.5,
-       "ground": true
+       "label": "Spreading wave",
+       "about": "A creeping ring of dust running outward, leaving patches behind."
       }
      ]
     },
@@ -3488,17 +3357,13 @@
      "opts": [
       {
        "id": "sky",
-       "model": "effects\\impacteffects\\fxdragonlandingimpact.nif",
-       "label": "Skyrim: dragon's landing",
-       "s": 0.5,
-       "ground": false
+       "label": "From the sky",
+       "about": "A falling boulder comes down on the spot and bursts."
       },
       {
        "id": "pillar",
-       "model": "apocnew\\alterationearth_explosion_grindstone.nif",
-       "label": "Apocalypse: Grindstone",
-       "s": 0.8,
-       "ground": true
+       "label": "Pillar",
+       "about": "A turning column of stone and dust pours down from the sky onto the spot."
       }
      ]
     }
@@ -3592,24 +3457,18 @@
      "opts": [
       {
        "id": "core",
-       "model": "magic\\shoutareaexplosionsmall01.nif",
-       "label": "Skyrim: Unrelenting Force (small)",
-       "s": 0.7,
-       "ground": false
+       "label": "Flare",
+       "about": "A compact burst of wind where it lands, sparks thrown out, a wisp left hanging."
       },
       {
        "id": "spark",
-       "model": "effects\\fxwaterfallmistblastlite.nif",
-       "label": "Skyrim: waterfall mist blast",
-       "s": 0.5,
-       "ground": false
+       "label": "Splash",
+       "about": "Wind spraying off the hit in the direction of the blow."
       },
       {
        "id": "drain",
-       "model": "magic\\throwvoiceimpact.nif",
-       "label": "Skyrim: Throw Voice impact",
-       "s": 1.0,
-       "ground": false
+       "label": "Drain",
+       "about": "Wind pulled into the one struck from all round, then a pop."
       }
      ]
     },
@@ -3620,24 +3479,18 @@
      "opts": [
       {
        "id": "big",
-       "model": "magic\\shoutareaexplosion01.nif",
-       "label": "Skyrim: Unrelenting Force wave",
-       "s": 0.7,
-       "ground": false
+       "label": "Explosion",
+       "about": "A full blast of wind rolling up into smoke, debris thrown, the ground scorched."
       },
       {
        "id": "nova",
-       "model": "apocnew\\alterationalt_explosion_battletide.nif",
-       "label": "Apocalypse: Battletide",
-       "s": 0.9,
-       "ground": true
+       "label": "Nova ring",
+       "about": "A ring of wind tearing outward along the ground from the heart of it."
       },
       {
        "id": "spikes",
-       "model": "magic\\shoutareaexplosion01.nif",
-       "label": "Skyrim: Unrelenting Force wave",
-       "s": 0.9,
-       "ground": false
+       "label": "Eruption",
+       "about": "Whirlwinds bursting up from the ground in a ring round you."
       }
      ]
     },
@@ -3648,24 +3501,18 @@
      "opts": [
       {
        "id": "mist",
-       "model": "effects\\fxwaterfallmistblast.nif",
-       "label": "Skyrim: waterfall mist",
-       "s": 0.5,
-       "ground": true
+       "label": "Lingering",
+       "about": "A low blanket of a dust storm rolling over the ground for a few seconds."
       },
       {
        "id": "rune",
-       "model": "apocnew\\alterationalt_explosion.nif",
-       "label": "Apocalypse: Alteration wave",
-       "s": 0.8,
-       "ground": true
+       "label": "Rune circle",
+       "about": "A circle of runes burned into the ground, wind rising off it."
       },
       {
        "id": "wave",
-       "model": "magic\\shoutareaexplosion01.nif",
-       "label": "Skyrim: Unrelenting Force wave",
-       "s": 0.6,
-       "ground": true
+       "label": "Spreading wave",
+       "about": "A creeping ring of a dust storm running outward, leaving patches behind."
       }
      ]
     },
@@ -3676,17 +3523,13 @@
      "opts": [
       {
        "id": "sky",
-       "model": "magic\\explosionatronachstormattack.nif",
-       "label": "Skyrim: storm atronach blast",
-       "s": 0.7,
-       "ground": false
+       "label": "From the sky",
+       "about": "A falling gust comes down on the spot and bursts."
       },
       {
        "id": "pillar",
-       "model": "apocnew\\alterationalt_explosion_battletide.nif",
-       "label": "Apocalypse: Battletide",
-       "s": 0.8,
-       "ground": true
+       "label": "Pillar",
+       "about": "A turning column of wind pours down from the sky onto the spot."
       }
      ]
     }
@@ -3763,6 +3606,1427 @@
        "src": "Apocalypse"
       }
      ]
+    }
+   ]
+  }
+ ],
+ "abil": {
+  "alchemist": {
+   "els": [
+    "shadowfire"
+   ],
+   "light": {
+    "act": "swing",
+    "roles": [
+     "impact"
+    ],
+    "what": "A scythe swing: shadowfire where the blade bites."
+   },
+   "heavy": {
+    "act": "slam",
+    "roles": [
+     "burst",
+     "ground",
+     "above"
+    ],
+    "what": "The scythe brought down: shadowfire bursting round the blow."
+   }
+  },
+  "summoner": {
+   "els": [
+    "holy",
+    "spirit"
+   ],
+   "light": {
+    "act": "swing",
+    "roles": [
+     "impact"
+    ],
+    "what": "A quarterstaff strike: radiant light on the hit."
+   },
+   "heavy": {
+    "act": "slam",
+    "roles": [
+     "burst",
+     "ground",
+     "above"
+    ],
+    "what": "Both heads driven down: radiance bursting from the ground."
+   }
+  },
+  "destruction": {
+   "els": [
+    "arcane"
+   ],
+   "light": {
+    "act": "cast",
+    "cast": true,
+    "roles": [
+     "impact"
+    ],
+    "what": "A glintstone bolt from the wand, bursting on the one it hits."
+   },
+   "heavy": {
+    "act": "cast",
+    "cast": true,
+    "roles": [
+     "burst",
+     "ground",
+     "above"
+    ],
+    "what": "A charged cast: the wand's magicka unleashed where you aim."
+   }
+  },
+  "spellsword": {
+   "els": [
+    "fire",
+    "frost",
+    "shock"
+   ],
+   "light": {
+    "act": "swing",
+    "roles": [
+     "impact"
+    ],
+    "what": "A rapier thrust carrying the spell in your other hand."
+   },
+   "heavy": {
+    "act": "slam",
+    "roles": [
+     "burst",
+     "ground",
+     "above"
+    ],
+    "what": "A spell-charged heavy: your other hand's element bursting from the blow."
+   }
+  }
+ },
+ "tabnew2": [
+  {
+   "id": "dagon",
+   "name": "Razor of Dagon",
+   "kind": "Daedric dagger",
+   "el": "shadowfire",
+   "base": "A Daedric dagger, its blade a sliver of Mehrunes Dagon's Razor",
+   "light": "Quick cuts; 1 in 8 hits slays one of the ordinary dead outright.",
+   "heavy": "A rending slash that cuts every one of the dead in a 6 m line.",
+   "special": "Slain ones split apart in violet fire.",
+   "bo3": "Insta-Kill"
+  },
+  {
+   "id": "apocrypha",
+   "name": "Grasp of Apocrypha",
+   "kind": "Black Book (held)",
+   "el": "poison",
+   "base": "A Black Book of Hermaeus Mora, open in your hand",
+   "light": "A tentacle lashes up from the ground at the one you aim at.",
+   "heavy": "A ring of tentacles bursts round you and drags the dead within 6 m under for 5 s.",
+   "special": "The book whispers in Hermaeus Mora's voice.",
+   "bo3": "Revelations' Apothicon tentacles"
+  },
+  {
+   "id": "azura",
+   "name": "Azura's Fallen Star",
+   "kind": "Throwable (3 throws)",
+   "el": "spirit",
+   "base": "A shard of Azura's Star, dusk-light inside",
+   "light": "Throw it: it hangs in the air and pulls every one of the dead near it into a spinning knot, then bursts.",
+   "heavy": "-",
+   "special": "The ones it takes leave their souls as motes that drift to you.",
+   "bo3": "The Gersh Device"
+  },
+  {
+   "id": "skyforge",
+   "name": "Skyforge Thunder Maul",
+   "kind": "Skyforge warhammer",
+   "el": "shock",
+   "base": "A Skyforge steel warhammer, its head ringed with copper and storm-glass",
+   "light": "Hits arc to 2 more of the dead.",
+   "heavy": "Calls lightning down on up to 5 of the dead around you.",
+   "special": "Thunder rolls over the city when it strikes.",
+   "bo3": "The Storm Bow (Kimat's Bite)"
+  },
+  {
+   "id": "spriggan",
+   "name": "Spriggan's Heartroot",
+   "kind": "Living wood mace",
+   "el": "earth",
+   "base": "A gnarled mace of spriggan heartwood, its knot glowing green",
+   "light": "Hits heal you a little.",
+   "heavy": "Roots burst from the ground and hold every one of the dead within 6 m for 4 s.",
+   "special": "Swarms of glowing insects circle it.",
+   "bo3": "Zetsubou's KT-4 and its plants"
+  },
+  {
+   "id": "eggsac",
+   "name": "Frostbite Egg Sac",
+   "kind": "Throwable (4 throws)",
+   "el": "poison",
+   "base": "A frostbite spider's egg sac, webbing trailing from it",
+   "light": "Throw it: it bursts into webs that stick the dead in place for 6 s while spiderlings bite them.",
+   "heavy": "-",
+   "special": "Webbed ones take double damage.",
+   "bo3": "Widow's Wine"
+  },
+  {
+   "id": "tusk",
+   "name": "Tusk of the Herd",
+   "kind": "Mammoth-tusk spear",
+   "el": "wind",
+   "base": "A spear with a mammoth's tusk for a head, bound in hide",
+   "light": "Thrusts knock the dead down.",
+   "heavy": "A stampede of ghostly mammoths tramples the street ahead.",
+   "special": "The ground shakes as they pass.",
+   "bo3": "The Thundergun's sweep, made Skyrim"
+  },
+  {
+   "id": "hagraven",
+   "name": "Hagraven's Fetish",
+   "kind": "Throwable (3 throws)",
+   "el": "shadowfire",
+   "base": "A hagraven's feathered fetish of bones and twine",
+   "light": "Throw it: it curses 3 of the dead - they turn and fight for you for 10 s.",
+   "heavy": "-",
+   "special": "They screech like hagravens while turned.",
+   "bo3": "The GobbleGum \"Turned\""
+  },
+  {
+   "id": "soulcairn",
+   "name": "Soul Cairn Lantern",
+   "kind": "Lantern flail",
+   "el": "spirit",
+   "base": "A Soul Cairn lantern on a chain, a trapped soul burning inside",
+   "light": "Hits draw a thread of soul light from the dead.",
+   "heavy": "Opens a rift to the Soul Cairn: spirits drag the dead near it down.",
+   "special": "The lantern brightens with every soul.",
+   "bo3": "The Apothicon portals"
+  },
+  {
+   "id": "stalhrim",
+   "name": "Stalhrim Shatter Axe",
+   "kind": "Stalhrim war axe",
+   "el": "frost",
+   "base": "A Stalhrim war axe, deathly cold to hold",
+   "light": "Hits freeze the dead; a frozen one hit again shatters and freezes the ones beside it.",
+   "heavy": "A cleave that freezes a cone in front of you.",
+   "special": "Frost creeps over your gauntlet.",
+   "bo3": "The Staff of Ice (Ull's Arrow)"
+  },
+  {
+   "id": "daedraheart",
+   "name": "Daedra Heart Flail",
+   "kind": "Flail",
+   "el": "fire",
+   "base": "A flail with a burning daedra heart for a head",
+   "light": "Hits burn.",
+   "heavy": "Slams the heart down: a crack of magma runs ahead, burning a line of the dead.",
+   "special": "The heart still beats.",
+   "bo3": "The Staff of Fire (Kagutsuchi's Blood)"
+  },
+  {
+   "id": "wardshield",
+   "name": "Dragonguard Ward-Shield",
+   "kind": "Shield (left hand)",
+   "el": "holy",
+   "base": "A Blades' dragonguard shield with a ward glowing in its face",
+   "light": "Hold it up: the dead can't hit you from the front.",
+   "heavy": "A shield charge that flings the dead in your path.",
+   "special": "It breaks after enough hits - the Tablet gives a fresh one.",
+   "bo3": "The Rocket Shield"
+  }
+ ],
+ "rarity": {
+  "stormtalons": "epic",
+  "cinderclaws": "rare",
+  "frostmourn": "rare",
+  "lanternwick": "epic",
+  "wyrmspine": "rare",
+  "eclipse": "epic",
+  "fushammer": "legendary",
+  "soulrender": "legendary",
+  "chaurus": "rare",
+  "bound": "epic",
+  "giantclub": "rare",
+  "sweetroll": "epic",
+  "atronach": "epic",
+  "dagon": "legendary",
+  "apocrypha": "legendary",
+  "azura": "epic",
+  "skyforge": "epic",
+  "spriggan": "rare",
+  "eggsac": "rare",
+  "tusk": "legendary",
+  "hagraven": "epic",
+  "soulcairn": "epic",
+  "stalhrim": "rare",
+  "daedraheart": "epic",
+  "wardshield": "rare"
+ },
+ "odds": {
+  "rare": 60,
+  "epic": 30,
+  "legendary": 10
+ },
+ "rolls": [
+  {
+   "id": "reel",
+   "name": "The Reel",
+   "about": "The design we have now, remade: the glyph ring grinds round, ghostly weapons flicker in the centre like a reel slowing down, and the won one rises out of the face in its rarity's light."
+  },
+  {
+   "id": "pillar",
+   "name": "Pillar of Light",
+   "about": "BO3's box beam: a column of the rarity's light shoots into the sky from the Tablet; the weapons flick up inside it, faster then slower, and the won one hangs in the beam."
+  },
+  {
+   "id": "wheel",
+   "name": "The Wheel",
+   "about": "The weapons circle the Tablet on a ring of runes, spinning fast and easing to a stop with the won one in front; it floats in to you."
+  },
+  {
+   "id": "storm",
+   "name": "Soul Storm",
+   "about": "A vortex of souls rises off the Tablet with the weapons tumbling in it; the storm collapses into the won one with a burst of its rarity's colour."
+  }
+ ],
+ "lore": [
+  {
+   "id": "curse",
+   "title": "The Curse",
+   "lead": "At Helgen, Alduin shouted SLEN TIID VO - his raising shout - into the earth, and every grave in Skyrim heard it. His voice now hangs like a mist over the road to Sovngarde: the dead cannot pass, and every night it throws them back down to Skyrim as red beams of light. The Echo Altars the old Tongues raised in every city went dark; wake them, city by city, and the dead sleep again. The questline ends right before Skyrim's own fight with Alduin.",
+   "qa": [
+    {
+     "q": "What has happened to Skyrim?",
+     "a": [
+      "Helgen burned. The World-Eater flew north over the smoke... and as he flew, he shouted into the earth.",
+      "Three words. SLEN... TIID... VO. Flesh. Time. Undo. The shout he raises his dragons with.",
+      "But this time it fell on every grave in Skyrim. And every grave heard it."
+     ]
+    },
+    {
+     "q": "Why do the dead come back?",
+     "a": [
+      "His shout hangs like a mist over every road the dead walk. Shor's hall, Arkay's mercy, whatever waits for them... none of them can pass it.",
+      "They try, every night. The mist turns them back... and his voice throws them down to Skyrim again, as red light out of the sky."
+     ]
+    },
+    {
+     "q": "What are the red beams in the sky?",
+     "a": [
+      "The dead, falling. Turned back from Sovngarde, and thrown down wherever his voice is strongest.",
+      "The red lightning is worse. That is how the strong ones come... the ones his voice holds tightest."
+     ]
+    },
+    {
+     "q": "What are these altars?",
+     "a": [
+      "Echo Altars. The old Tongues raised one in every hold, long before your Empire, to answer a dragon's voice with their own.",
+      "When the World-Eater shouted, they went dark. Wake one, and its city's dead will sleep again."
+     ]
+    },
+    {
+     "q": "How do I wake an altar?",
+     "a": [
+      "...four trials... at night... the dead... the stone will show you...",
+      "...one city at a time... and then I will be clearer..."
+     ]
+    },
+    {
+     "q": "Why can I do this?",
+     "a": [
+      "You have a dragon's soul in a mortal's body. When you kill one of the dead, the stone hears it the way it hears a shout.",
+      "The Tongues would have given anything to be what you are. Do not waste it."
+     ]
+    },
+    {
+     "q": "What is the Cursed Essence?",
+     "a": [
+      "What is left of his shout in the dead. When they fall, it comes out of them... and it comes to you.",
+      "The stone can make it into steel, and spells, and brews. Spend it. It does no good in your pocket."
+     ]
+    },
+    {
+     "q": "What happens if I fall?",
+     "a": [
+      "The dead will drag you down. If anyone stands with you, they can lift you again. If no one does... the night ends without you.",
+      "Do not let it. I have lost enough people to the dark."
+     ]
+    },
+    {
+     "q": "What is the Tablet of Mysteries?",
+     "a": [
+      "An old thing, and a strange one. The Tongues left weapons with it that they did not want to keep.",
+      "Feed it the essence, and it will give you one. It does not tell you which. Neither will I."
+     ]
+    },
+    {
+     "q": "Why do the cities teach me shouts?",
+     "a": [
+      "Every freed city remembers a little of the Voice. They teach it to the one who freed them.",
+      "Use them. A shout is a weapon the dead cannot answer."
+     ]
+    },
+    {
+     "q": "What has changed?",
+     "a": [
+      "Two stones awake, and their voices carry to each other. That is how you hear me now.",
+      "Every stone you wake makes the mist thinner. Not gone... but thinner."
+     ]
+    },
+    {
+     "q": "Why one city at a time?",
+     "a": [
+      "Each altar answers for its own hold. The dead of Whiterun do not care that Riverwood sleeps.",
+      "And each city has its keeper. A priest who swore an oath to the World-Eater... and remembers it."
+     ]
+    },
+    {
+     "q": "Who are the Dragon Priests?",
+     "a": [
+      "Men who served the dragons when the dragons ruled. They wore masks of the dragons' faces, and took the dragons' power.",
+      "When the shout came, every one of them woke with his oath still in his mouth. They keep the altars dark for their master.",
+      "Break a city's seals, and its priest must come out to face you."
+     ]
+    },
+    {
+     "q": "Are we close?",
+     "a": [
+      "Four stones. Five. The mist trembles when the sixth wakes... I can feel it already.",
+      "At six... I will be able to tell you who I am. And something old will begin to stir."
+     ]
+    },
+    {
+     "q": "What stirs at six altars?",
+     "a": [
+      "The wonders. Four weapons, one for each path, hidden when the Tongues still walked. They sleep no longer.",
+      "Each waits for the one who walks its path. But none of them will simply be found. Each must be earned.",
+      "When yours is won, the Greybeards will call you to the mountain. The wonder waits beneath their hall."
+     ]
+    },
+    {
+     "q": "What do the Greybeards have to do with this?",
+     "a": [
+      "High Hrothgar sits on the Throat of the World. Where the Tongues cast the World-Eater out of time.",
+      "Beneath it is a room the Greybeards guard and do not speak of. The wonders are kept there, until they are won."
+     ]
+    },
+    {
+     "q": "What is the echo on the summit?",
+     "a": [
+      "When we cast him out of time, his voice did not all go with him. Part of it stayed behind, caught on the summit where we broke him.",
+      "It has circled there since, waiting. Now that he is back in the world, it answers him... and it is louder than ever.",
+      "He flies where he likes. The echo cannot leave the mountain. That is why you can reach it... and why breaking it breaks his hold on the dead."
+     ]
+    },
+    {
+     "q": "Every altar is awake. Is it over?",
+     "a": [
+      "Every stone sings again. Listen... all of Skyrim answering at once. I have not heard that in a very long time.",
+      "But the World-Eater's voice is not gone. It lingers in the wild places... and in the echo he left on the summit.",
+      "The cities are safe. The rest of Skyrim is not. Not yet."
+     ]
+    },
+    {
+     "q": "The wonders are won. What now?",
+     "a": [
+      "Now the words wake. Each of the three words of his shout was carried by a dragon. They are flying again.",
+      "SLEN in the Reach. TIID under Labyrinthian. VO on the peak of Mount Anthor. Silence all three.",
+      "Each will come at night, with a siege of the dead before it. And each one gives back what it stole."
+     ]
+    },
+    {
+     "q": "Tell me of SLEN.",
+     "a": [
+      "Slenvahrin. The Flesh-Wyrm. It circles the cult's old shrine in the Reach, and the barrow-dead around it grow new flesh.",
+      "Kill it, and the strength the World-Eater poured into the dead will run in you instead."
+     ]
+    },
+    {
+     "q": "Tell me of TIID.",
+     "a": [
+      "Tiidrah. The Time-Wyrm. It sleeps under Labyrinthian, where the cult laid its dead by the thousand.",
+      "It gives the dead back the years the grave took. Take them from it... and the time is yours."
+     ]
+    },
+    {
+     "q": "Tell me of VO.",
+     "a": [
+      "Vonahlok. The Undoing. It keeps the last word, on the frozen peak of Mount Anthor.",
+      "Where it flies, death itself comes undone. It is the oldest of the three... and the angriest."
+     ]
+    },
+    {
+     "q": "Slenvahrin is dead.",
+     "a": [
+      "I felt it fall. SLEN is silent... the dead in the Reach are only bones again. You are stronger for it."
+     ]
+    },
+    {
+     "q": "Tiidrah is dead.",
+     "a": [
+      "TIID is silent. The time the dead stole is yours now. Spend it better than they did."
+     ]
+    },
+    {
+     "q": "Vonahlok is dead.",
+     "a": [
+      "The Undoing has undone its last. I never thought I would hear VO go quiet."
+     ]
+    },
+    {
+     "q": "What is left?",
+     "a": [
+      "Only their maker. On the summit of the Throat of the World, where we cast him out of time, his echo still circles.",
+      "It is not the World-Eater himself. Only the shape his voice left in the sky. It is enough to kill you.",
+      "Break it... and the curse breaks with it. Every grave in Skyrim will be quiet."
+     ]
+    },
+    {
+     "q": "How do I beat the Echo?",
+     "a": [
+      "Bring everything you have earned. The wonder. The words you took from the three. And anyone who will stand with you.",
+      "It will call the dead of all Skyrim to the summit. Do not let them pull you away from it."
+     ]
+    },
+    {
+     "q": "Is it over?",
+     "a": [
+      "Here, it is. The echo is broken, and Skyrim's dead are sleeping again. The nights are only nights.",
+      "But the World-Eater himself still lives. Without his echo, he has nowhere left to hide... but Sovngarde.",
+      "He will go there to feed on the souls of the dead. That is where the last fight waits for you."
+     ]
+    },
+    {
+     "q": "What is the Hall of the Awakened?",
+     "a": [
+      "A room beneath High Hrothgar that opened when the echo broke. The Tongues built it for whoever ended this.",
+      "It is yours now. Go and see it."
+     ]
+    }
+   ]
+  },
+  {
+   "id": "felldir",
+   "title": "Felldir the Old",
+   "lead": "The voice in the altar's centre stone - one of the three ancient Tongues who cast Alduin out of time. He speaks only from a freed altar, and his story opens as more cities are freed (his name is kept secret until six altars are free).",
+   "qa": [
+    {
+     "q": "Who are you?",
+     "a": [
+      "...someone who has waited... too long... wake another stone...",
+      "Someone who was here when these stones were raised. That is all I can give you... for now.",
+      "My name is in the mist with everything else. Wake more stones, and it will come back to me."
+     ]
+    },
+    {
+     "q": "Where are you?",
+     "a": [
+      "Far. Behind the mist he left across the road to Sovngarde. I speak through the stones because I cannot speak any other way."
+     ]
+    },
+    {
+     "q": "How old are these stones?",
+     "a": [
+      "Older than your Empire. Older than the first Nord kings. They were raised while dragons still ruled the sky.",
+      "We raised them in secret, in the dark, where the dragons' priests would not see."
+     ]
+    },
+    {
+     "q": "Who raised the stones?",
+     "a": [
+      "The three of us. The first who learned the Voice... and turned it on our masters.",
+      "One fell at the summit, before the end. One I have not seen since. And I... I am still here."
+     ]
+    },
+    {
+     "q": "Who fell at the summit?",
+     "a": [
+      "A warrior with a golden hilt. She was the bravest of us. She went at him first, and he took her first.",
+      "I watched her fall. I did not stop. That is what she would have wanted."
+     ]
+    },
+    {
+     "q": "And the other one?",
+     "a": [
+      "A warrior with one eye, who saw more than most with two. After the summit... I lost him in the mist.",
+      "Perhaps he is in Sovngarde, waiting for the road to open. I hope so."
+     ]
+    },
+    {
+     "q": "What is your name?",
+     "a": [
+      "Six stones are free... and I remember. I am Felldir. Felldir the Old.",
+      "It has been a very long time since anyone asked me that."
+     ]
+    },
+    {
+     "q": "What did you do at the summit?",
+     "a": [
+      "I read the Elder Scroll. The others held him in the sky, and I read it... and the World-Eater was cast out of time.",
+      "We thought it was the end. We were young. We did not know that time has a way of giving things back."
+     ]
+    },
+    {
+     "q": "Why are you still here?",
+     "a": [
+      "I lived a long life after the summit, and died old, and took the road to Sovngarde. When he shouted at Helgen, the mist fell over it... with me still on it.",
+      "I cannot go forward, and I will not go back. So I wait... and I speak through the stones we raised."
+     ]
+    },
+    {
+     "q": "Have you been alone all this time?",
+     "a": [
+      "The dead pass me in the mist. They cannot see the way. Neither can I. We are all lost together.",
+      "Then you came. The first living voice I have heard in a very long time."
+     ]
+    },
+    {
+     "q": "What was Alduin like?",
+     "a": [
+      "Proud. Patient. He did not hate us. You do not hate the grass you walk on.",
+      "That is what frightened me most. Not his anger... his certainty."
+     ]
+    },
+    {
+     "q": "Did you know there would be a Dragonborn?",
+     "a": [
+      "We hoped. The Scroll told us he would come back. It did not tell us who would be waiting when he did.",
+      "I am glad it was you."
+     ]
+    },
+    {
+     "q": "Who are the Greybeards to you?",
+     "a": [
+      "They came after us. They took the Voice and made it quiet, and climbed the mountain to keep it safe.",
+      "We used it to fight. They use it to listen. Perhaps they are wiser than we were."
+     ]
+    },
+    {
+     "q": "Do you hate the dragons?",
+     "a": [
+      "I did. For a long time. Then I was dead for longer than I was ever alive, and hate is hard to carry that far.",
+      "Now I only want them to stop. That is not the same thing."
+     ]
+    },
+    {
+     "q": "What do the dead want?",
+     "a": [
+      "To go home. Nothing more. They are not cruel... they are lost, and the World-Eater's voice is all they can hear.",
+      "When you put them down, you are not killing them. You are showing them the way."
+     ]
+    },
+    {
+     "q": "What will happen to you now?",
+     "a": [
+      "I go back into the mist, to wait with the others. A golden hilt... and one eye. They are there. I can feel them.",
+      "When you come to Sovngarde, we will be waiting. Three old voices, ready to shout beside you one more time.",
+      "Thank you, Dragonborn. Until Sovngarde."
+     ]
+    }
+   ]
+  },
+  {
+   "id": "trials",
+   "title": "The Echo Altars and their four trials",
+   "lead": "The same four trials in every city, each with the city's own places, one after another, all at night, the party sharing them. The last seal calls the city's Dragon Priest out at once; his fall frees the city.",
+   "items": [
+    {
+     "t": "Lay the Restless to Rest",
+     "s": "Slay the risen in the altar's light",
+     "d": "Alduin's mist bars the road to Sovngarde, and the dead of the city have nowhere to go. Put them down within the light of the city's Echo Altar and their souls rise through the mist at last. Lay a number of of the risen to rest in the altar's light."
+    },
+    {
+     "t": "The Stone's Whisper",
+     "s": "Find the place the altar's voice names",
+     "d": "At night a voice speaks from the Echo Altar of the city, and it speaks in riddles. Find the place it names, and hold it against the dead: slay a number of of the risen there."
+    },
+    {
+     "t": "Hold the Light",
+     "s": "Stand in the altar's light until it closes",
+     "d": "When the Tongues first woke their altars, the light had to be held while Alduin's dead came for it. At night, step into the light of the Echo Altar of the city: it begins to draw in toward the stone, and every one of the risen in the city comes for you. Stay inside the ring until it closes on the stone. Step out and the light falters and slips back."
+    },
+    {
+     "t": "Break the Priest's Seals",
+     "s": "Shatter the Dragon Priest's three seals",
+     "d": "The Dragon Priest who holds the altar of the city silent has bound it with three seals of dragon script, set at the city's great places and each kept by one of his chosen. Kill each guard and strike its seal. When the last one breaks, the priest comes out to meet you."
+    }
+   ]
+  },
+  {
+   "id": "cities",
+   "title": "The cities and their Dragon Priests",
+   "lead": "Ten cities, each with its altar, its trials' places and its Dragon Priest. Each priest drops his own relic to every player when he falls.",
+   "items": [
+    {
+     "t": "Jailor's Keyhammer (Vahlok, Riverwood)",
+     "d": "Hits shackle the dead in place. Heavy: chains yank the nearby dead together."
+    },
+    {
+     "t": "Mistblade (Nahkriin, Whiterun)",
+     "d": "Hits blind the dead: they slow and hit weaker. Heavy: a fog where they wander lost."
+    },
+    {
+     "t": "Windcutter (Volsung, Solitude)",
+     "d": "Light: a gust that staggers the dead 8 m ahead. Heavy: a 12 m cone that knocks them down."
+    },
+    {
+     "t": "Glacier Greatsword (Zahkriisos, Windhelm)",
+     "d": "Hits freeze the dead until they die. Heavy: shatters every frozen one around you."
+    },
+    {
+     "t": "Storm Blade (Otar, Markarth)",
+     "d": "Hits chain lightning to 2 more of the dead. Heavy: lightning arcs to all around you."
+    },
+    {
+     "t": "Sacrifice Knife (Rahgot, Riften)",
+     "d": "Hits poison, spreading to the next of the dead. Heavy: every poisoned one bursts."
+    },
+    {
+     "t": "Grief Blade (Krosis, Falkreath)",
+     "d": "Hits heal you 1%. Heavy: a wail that weakens the dead around you."
+    },
+    {
+     "t": "Sealbreaker (Hevnoraak, Morthal)",
+     "d": "Hits shatter armour. Heavy: a shockwave that staggers all around you."
+    },
+    {
+     "t": "Nightcaller's Scythe (Vokun, Dawnstar)",
+     "d": "Hits put the dead to sleep. Heavy: a nightmare fog that slows them."
+    },
+    {
+     "t": "Arcane Maul (Morokei, Winterhold)",
+     "d": "Hits burst with magic. Heavy: a magicka shockwave that refills your magicka."
+    }
+   ],
+   "qa": [
+    {
+     "q": "Is Riverwood safe now?",
+     "a": [
+      "The mill wheel turns, and no red light falls over the barrow. Listen... it is a quiet valley again.",
+      "This was the first stone you woke. I will remember that."
+     ]
+    },
+    {
+     "q": "What was Riverwood like in your time?",
+     "a": [
+      "When we raised this stone, there was no town here. Only the river, and a dragon's nest on the mountain above it."
+     ]
+    },
+    {
+     "q": "Is Whiterun safe now?",
+     "a": [
+      "The Gildergreen is quiet. The plains are only grass again.",
+      "Nahkriin's gate has one less keeper. The road to Sovngarde is a little clearer for it."
+     ]
+    },
+    {
+     "q": "What was Whiterun like in your time?",
+     "a": [
+      "The dragon in Dragonsreach was not the first caged on that hill. The first was there in our time. We heard it screaming for a year."
+     ]
+    },
+    {
+     "q": "Is Solitude safe now?",
+     "a": [
+      "The arch over the sea is quiet. The bards can sing of the dead again, instead of to them.",
+      "Solitude will tell this story for a hundred years. They will get it wrong. Let them."
+     ]
+    },
+    {
+     "q": "What was Solitude like in your time?",
+     "a": [
+      "There were Tongues who lived on these cliffs, and taught their students to shout across the water. The sea still remembers the sound."
+     ]
+    },
+    {
+     "q": "Is Windhelm safe now?",
+     "a": [
+      "The candle still burns, and nothing comes to it but the living.",
+      "Windhelm has buried enough of its own. It can rest now."
+     ]
+    },
+    {
+     "q": "What was Windhelm like in your time?",
+     "a": [
+      "Ysgramor's people built over the stone without knowing it was here. It has listened to every king of Windhelm since."
+     ]
+    },
+    {
+     "q": "Is Markarth safe now?",
+     "a": [
+      "The stone city is still. Even the Reach's oldest dead have gone back to sleep.",
+      "Otar is gone. I will not mourn him. Neither did his cult."
+     ]
+    },
+    {
+     "q": "What was Markarth like in your time?",
+     "a": [
+      "The deep elves had a stone of their own, under the cliff. Ours answered it once. Nothing answers from down there now."
+     ]
+    },
+    {
+     "q": "Is Riften safe now?",
+     "a": [
+      "The canal is only water again. The thieves can go back to stealing from the living.",
+      "Rahgot's followers died for him twice. Let them stay dead this time."
+     ]
+    },
+    {
+     "q": "What was Riften like in your time?",
+     "a": [
+      "The lake here was a holy place to Mara before there was a city. We raised the stone where her pilgrims rested."
+     ]
+    },
+    {
+     "q": "Is Falkreath safe now?",
+     "a": [
+      "The rows are quiet. Falkreath can bury its dead and leave them buried.",
+      "Krosis grieved for a thousand years. I hope he has stopped."
+     ]
+    },
+    {
+     "q": "What was Falkreath like in your time?",
+     "a": [
+      "Even in our time, people came here to bury their dead. Some places are made for grief."
+     ]
+    },
+    {
+     "q": "Is Morthal safe now?",
+     "a": [
+      "The fog is only fog again. Morthal can sleep with its doors unbarred.",
+      "Hevnoraak's servants were right to seal him. You finished what they started."
+     ]
+    },
+    {
+     "q": "What was Morthal like in your time?",
+     "a": [
+      "The marsh swallowed the first stone we raised here. This is the second. We were careful where we put it."
+     ]
+    },
+    {
+     "q": "Is Dawnstar safe now?",
+     "a": [
+      "The harbour is frozen and still. Tonight, Dawnstar will sleep without dreaming.",
+      "The nightmares are over here. For once, the dreamers will wake rested."
+     ]
+    },
+    {
+     "q": "What was Dawnstar like in your time?",
+     "a": [
+      "There was a shrine in the hills here to a god of dreams. We built the stone well away from it. We were right to."
+     ]
+    },
+    {
+     "q": "Is Winterhold safe now?",
+     "a": [
+      "The storm has passed. The bridge to the College is only a bridge again.",
+      "Morokei is gone, and the College will claim the credit. Let it."
+     ]
+    },
+    {
+     "q": "What was Winterhold like in your time?",
+     "a": [
+      "This stone once stood in a great city. The sea took the city. The stone held on. So did the College."
+     ]
+    }
+   ]
+  },
+  {
+   "id": "classes",
+   "title": "Your class and its wonder",
+   "lead": "Each class has its own place in the story and its own wonder, earned by a hidden quest that Felldir whispers.",
+   "qa": [
+    {
+     "q": "What are the four paths?",
+     "a": [
+      "The stone offers four ways to fight the dead. The Tongues walked all of them, once.",
+      "The Summoner, who calls the dead's own kind to fight them. The Destruction mage, who burns them where they stand.",
+      "The Alchemist, who bottles every element and pours it out. The Spellsword, steel in one hand and a spell in the other.",
+      "Choose at the stone. Choosing again later costs dearly, so choose well."
+     ]
+    },
+    {
+     "q": "Can I change my path?",
+     "a": [
+      "The stone will let you. It will cost you fifty thousand of the essence the dead leave behind.",
+      "Your kit stays your own. But your path's powers stay with the path."
+     ]
+    },
+    {
+     "q": "What do you see in me?",
+     "a": [
+      "You call things to fight for you, and they come. The Tongues had a word for people like you. It was not a kind word.",
+      "But it was a useful one. The dead fear what does not fear them.",
+      "Fire. Frost. Storm. You do not ask the dead to sleep. You make them.",
+      "The Tongues had mages like you. The dragons learned to fear them... for a while.",
+      "You bottle what the rest of us fear. Fire in glass, frost in glass... even, one day, the curse itself.",
+      "The Tongues never trusted alchemists. They trusted their potions well enough.",
+      "Steel in one hand, a spell in the other. You fight the way the first Tongues fought, before they had the Voice.",
+      "You get closer to the dead than anyone should. They feel it."
+     ]
+    },
+    {
+     "q": "Teach me of the Summoner's craft.",
+     "a": [
+      "Let your servants hold the line. You are the one who must not fall. Without you, they go back where they came from.",
+      "The more you call, the thinner you are spread. Be wise about it."
+     ]
+    },
+    {
+     "q": "Is there a wonder for my path?",
+     "a": [
+      "There is. The Soulcaller's Staff. But it sleeps, and it will not wake until six stones are free.",
+      "There is. The Wyrmspine Javelin. But it sleeps, and it will not wake until six stones are free.",
+      "There is. The Mutagen Staff. But it sleeps, and it will not wake until six stones are free.",
+      "There is. The Dragon Slayer. But it sleeps, and it will not wake until six stones are free."
+     ]
+    },
+    {
+     "q": "Where does my path lead?",
+     "a": [
+      "Listen... the ghost-cats that guarded the Tongues still prowl. Their souls are scattered. Gather them.",
+      "Follow them quietly at night, near a freed stone. They fear the hunter. They will come to a patient one.",
+      "A god's eye fell to Nirn, and the curse buried its light. The Eye of Magnus... its pieces are falling again.",
+      "When a star crosses the sky above you at night, strike it down. That is where the path begins.",
+      "Every element can be bottled. Brew the Elixir of Aetherius... and the Mutagen Staff will answer you.",
+      "One of the dead burns brighter than the rest. Break it with glass... and catch what falls.",
+      "A slayer once swore an oath and broke his blade on the World-Eater's scales. The pieces are scattered.",
+      "Take up his oath. Where the World-Eater first returned, a broken blade waits for a hand. Begin there."
+     ]
+    },
+    {
+     "q": "My wonder is won.",
+     "a": [
+      "The Soulcaller's Staff. Every soul it takes is one the dead will never get back.",
+      "At twenty souls the pride answers. They remember who freed them.",
+      "The Wyrmspine Javelin. Carved from a dragon's spine, and it remembers the sky.",
+      "Throw it hard. It wants to fly again.",
+      "The Mutagen Staff. Six vials of the world's elements, poured through one orb.",
+      "The Elixir of Aetherius was only ever a story. You made it true.",
+      "The Dragon Slayer. Every blow carries the spell in your other hand.",
+      "The slayer's oath is kept. He would have been glad of you."
+     ]
+    },
+    {
+     "q": "Did the Tongues fight like me?",
+     "a": [
+      "One of us could call the wolves down from the mountain with a word. They followed her to the summit. None of them came back.",
+      "Our fire-callers burned the dragons' priests out of their towers. The dragons answered in kind. Fire was cheap in those days.",
+      "We had a healer who brewed in a skull, because it was the only bowl she had. She kept more of us alive than the Voice did.",
+      "Before the Voice, we had steel and a little magic, and we fought dragons with that. Most of us died. The ones who lived taught the rest."
+     ]
+    },
+    {
+     "q": "Teach me of the Destruction mage's craft.",
+     "a": [
+      "Your power is in your magicka, and your magicka runs out. Never let the dead catch you empty.",
+      "Each element has its use. Fire for the crowd. Frost to slow them. Storm for whatever is still standing."
+     ]
+    },
+    {
+     "q": "Teach me of the Alchemist's craft.",
+     "a": [
+      "Your flasks are your strength. Know which element the dead fear, and give them that one.",
+      "Never stand still to brew. The dead do not wait for anything to cool."
+     ]
+    },
+    {
+     "q": "Teach me of the Spellsword's craft.",
+     "a": [
+      "Your blade carries your spell. Choose the spell before you choose the fight.",
+      "Get close, and stay close. A Spellsword at the edge of a fight is only half of one."
+     ]
+    },
+    {
+     "q": "What of my companions?",
+     "a": [
+      "Each of you walks a path of your own. Together, you are what the Tongues were. Stay together.",
+      "If one of you falls, the rest of you lift them. The dead do not take prisoners."
+     ]
+    }
+   ]
+  },
+  {
+   "id": "eggs",
+   "title": "The hidden quests (Easter eggs)",
+   "lead": "The wonders still sleep. Free more cities, and they will stir. Each wonder's quest has five steps, whispered by Felldir one at a time; the reward waits in the great hall of High Hrothgar.",
+   "eggs": [
+    {
+     "t": "The Ghost Pride",
+     "cls": "summoner",
+     "reward": "The Greybeards call you to High Hrothgar: the Soulcaller's Staff waits in the great hall.",
+     "open": "Listen... the ghost-cats that guarded the Tongues still prowl. Gather their scattered souls, and the Soulcaller's Staff will answer you.",
+     "steps": [
+      {
+       "t": "The Shy Pride",
+       "d": "Calm the three spirit sabre cats roaming within 200 m of the altar at night - sneak up on each",
+       "hint": "Three spirit cats stalk the edges of this city by moonlight. They fear the hunter. Come to them quietly."
+      },
+      {
+       "t": "The Hunt",
+       "d": "The hunt: 30 of the dead slain by your summons at night, a spirit cat at your side",
+       "hint": "A pride must hunt. Let your servants kill thirty of the dead tonight, and keep the spirit at your side alive."
+      },
+      {
+       "t": "The Roaring Stones",
+       "d": "Touch the four roaring stones in the order you heard them",
+       "hint": "Four stones remember the pride's roar. Listen to the order they call, then answer them."
+      },
+      {
+       "t": "The Den",
+       "d": "Hold the altar against the dead without striking a blow yourself - only your summons may kill",
+       "hint": "Stand at this altar while the dead come. Lift no blade. Let only what you call do the killing."
+      },
+      {
+       "t": "The Bone-Caller",
+       "d": "Break the Bone-Caller's three soul-chains, then kill him",
+       "hint": "The Bone-Caller chains the Old King's soul. Break the chains, then break him."
+      }
+     ],
+     "whispers": [
+      "Listen... the ghost-cats that guarded the Tongues still prowl. Gather their scattered souls, and the Soulcaller's Staff will answer you.",
+      "Three spirit cats stalk the edges of this city by moonlight. They fear the hunter. Come to them quietly.",
+      "Three souls pad behind you now.",
+      "A pride must hunt. Let your servants kill thirty of the dead tonight, and keep the spirit at your side alive.",
+      "The pride has tasted the hunt.",
+      "Four stones remember the pride's roar. Listen to the order they call, then answer them.",
+      "The roar is whole again.",
+      "Stand at this altar while the dead come. Lift no blade. Let only what you call do the killing.",
+      "The den is ready.",
+      "The Bone-Caller chains the Old King's soul. Break the chains, then break him.",
+      "The Old King runs free.",
+      "The pride is whole. The Greybeards are calling. The Soulcaller's Staff waits at High Hrothgar."
+     ]
+    },
+    {
+     "t": "The Eye of Magnus",
+     "cls": "destruction",
+     "reward": "The Greybeards call you to High Hrothgar: the Wyrmspine Javelin waits in the great hall.",
+     "open": "A god's eye fell to Nirn, and the curse buried its light. Wake its fire, frost and storm, and the Wyrmspine Javelin is yours to claim.",
+     "steps": [
+      {
+       "t": "The Three Seals",
+       "d": "Open the ember, rime and storm seals, each with a spell of its element, within 20 seconds of the first",
+       "hint": "Three seals sleep near this altar: ember, rime and storm. Strike each with its own element, before the first goes dark again."
+      },
+      {
+       "t": "Falling Stars",
+       "d": "Catch five falling pieces of the Eye at night within 60 seconds",
+       "hint": "Pieces of the Eye are falling tonight. Catch five before they burn out."
+      },
+      {
+       "t": "The Prism",
+       "d": "Strike the four light-stones in order: fire, frost, storm, then sun",
+       "hint": "Four stones, four colours. Ember before frost, frost before storm, and storm before the sun. Strike them so."
+      },
+      {
+       "t": "Fire, Frost and Storm",
+       "d": "40 of the dead slain with Destruction at night - at least 10 each by fire, frost and storm",
+       "hint": "Burn forty of the dead tonight. Fire, frost and storm... the Eye hungers for all three."
+      },
+      {
+       "t": "The Great Anomaly",
+       "d": "Unmake the Great Anomaly - strike it only with an element it isn't wearing",
+       "hint": "The Great Anomaly wears every element in turn. Strike it with what it fears, never with what it wears."
+      }
+     ],
+     "whispers": [
+      "A god's eye fell to Nirn, and the curse buried its light. Wake its fire, frost and storm, and the Wyrmspine Javelin is yours to claim.",
+      "Three seals sleep near this altar: ember, rime and storm. Strike each with its own element, before the first goes dark again.",
+      "The seals are open.",
+      "Pieces of the Eye are falling tonight. Catch five before they burn out.",
+      "The light is gathered.",
+      "Four stones, four colours. Ember before frost, frost before storm, and storm before the sun. Strike them so.",
+      "The prism shines.",
+      "Burn forty of the dead tonight. Fire, frost and storm... the Eye hungers for all three.",
+      "The Eye is kindled.",
+      "The Great Anomaly wears every element in turn. Strike it with what it fears, never with what it wears.",
+      "The Anomaly is unmade.",
+      "The Eye sees again. The Greybeards are calling. The Wyrmspine Javelin waits at High Hrothgar."
+     ]
+    },
+    {
+     "t": "The Elixir of Aetherius",
+     "cls": "ranger",
+     "reward": "The Greybeards call you to High Hrothgar: the Mutagen Staff waits in the great hall.",
+     "open": "Every element can be bottled... even the curse. Brew the Elixir of Aetherius, and the Mutagen Staff will be yours.",
+     "steps": [
+      {
+       "t": "The Wrapped Dead",
+       "d": "Kill the six element-wrapped dead at night, each with a flask of its own element, and take their essences",
+       "hint": "Six of the dead rise tonight, each wrapped in an element. Answer each with its own flask, and take what falls."
+      },
+      {
+       "t": "Before Dawn",
+       "d": "Carry the essences to the altar before dawn",
+       "hint": "A crucible needs an altar's fire. Bring the essences here before dawn."
+      },
+      {
+       "t": "The Formula",
+       "d": "Light the four braziers with your flasks in the order they flicker",
+       "hint": "Four braziers flicker a formula. Copy it with your flasks, in the order they burn."
+      },
+      {
+       "t": "The Steady Hand",
+       "d": "Hold the altar against the dead without being hurt",
+       "hint": "The brew must not be shaken. Hold this altar against the dead, and do not bleed."
+      },
+      {
+       "t": "The Matriarch",
+       "d": "Bring down the Matriarch - never the same element twice in a row",
+       "hint": "The Matriarch drinks whatever strikes her. Never feed her the same element twice."
+      }
+     ],
+     "whispers": [
+      "Every element can be bottled... even the curse. Brew the Elixir of Aetherius, and the Mutagen Staff will be yours.",
+      "Six of the dead rise tonight, each wrapped in an element. Answer each with its own flask, and take what falls.",
+      "Six essences. Carry them carefully.",
+      "A crucible needs an altar's fire. Bring the essences here before dawn.",
+      "The crucible is lit.",
+      "Four braziers flicker a formula. Copy it with your flasks, in the order they burn.",
+      "The formula holds.",
+      "The brew must not be shaken. Hold this altar against the dead, and do not bleed.",
+      "The Elixir is settling.",
+      "The Matriarch drinks whatever strikes her. Never feed her the same element twice.",
+      "The Matriarch is spent.",
+      "The Elixir is brewed. The Greybeards are calling. The Mutagen Staff waits at High Hrothgar."
+     ]
+    },
+    {
+     "t": "The Slayer's Oath",
+     "cls": "spellsword",
+     "reward": "The Greybeards call you to High Hrothgar: the Dragon Slayer waits in the great hall.",
+     "open": "A slayer swore an oath and broke his blade on Alduin's scales. Take up his oath, and the Dragon Slayer will be yours.",
+     "steps": [
+      {
+       "t": "The Hallowed Ground",
+       "d": "Feed the hallowed ground: 30 of the dead slain on it at night",
+       "hint": "The ground near this altar is hallowed. Feed it thirty of the dead, slain where it glows."
+      },
+      {
+       "t": "The Blade-Shards",
+       "d": "Gather the five blade-shards at night - each guardian rises as you near",
+       "hint": "Five shards of the old blade lie scattered tonight. Their guardians wake when you come near."
+      },
+      {
+       "t": "The Singing Runes",
+       "d": "Strike the four rune-stones with steel in the order they sing",
+       "hint": "Four rune-stones sing in turn. Strike them with steel, in the order they sing."
+      },
+      {
+       "t": "The Oath in Steel",
+       "d": "40 of the dead slain with your blade at night, a spell ready in your other hand",
+       "hint": "Swear the oath in steel. Forty of the dead by your blade, a spell ready in your other hand."
+      },
+      {
+       "t": "Thorgar the Skulltaker",
+       "d": "Defeat Thorgar the Skulltaker with the blade alone - magic won't touch him",
+       "hint": "Thorgar the Skulltaker holds the hilt. Magic will not touch him. Face him with the blade alone."
+      }
+     ],
+     "whispers": [
+      "A slayer swore an oath and broke his blade on Alduin's scales. Take up his oath, and the Dragon Slayer will be yours.",
+      "The ground near this altar is hallowed. Feed it thirty of the dead, slain where it glows.",
+      "The ground is fed.",
+      "Five shards of the old blade lie scattered tonight. Their guardians wake when you come near.",
+      "The blade is gathered.",
+      "Four rune-stones sing in turn. Strike them with steel, in the order they sing.",
+      "The runes remember the blade.",
+      "Swear the oath in steel. Forty of the dead by your blade, a spell ready in your other hand.",
+      "The oath is sworn.",
+      "Thorgar the Skulltaker holds the hilt. Magic will not touch him. Face him with the blade alone.",
+      "The hilt is yours.",
+      "The blade is whole. The Greybeards are calling. The Dragon Slayer waits at High Hrothgar."
+     ]
+    }
+   ],
+   "qa": [
+    {
+     "q": "Riverwood",
+     "a": [
+      "...where the mill wheel turns beside the river, over the hill from where the dragon first broke the sky."
+     ]
+    },
+    {
+     "q": "Whiterun",
+     "a": [
+      "...beneath the hall built on a dragon's cage, where the golden tree grows."
+     ]
+    },
+    {
+     "q": "Solitude",
+     "a": [
+      "...where the great arch spans the sea, and the bards keep their songs."
+     ]
+    },
+    {
+     "q": "Windhelm",
+     "a": [
+      "...in the oldest city of stone, where the snow never leaves the palace of kings."
+     ]
+    },
+    {
+     "q": "Markarth",
+     "a": [
+      "...in the city the deep elves carved, where the cliffs bleed silver."
+     ]
+    },
+    {
+     "q": "Riften",
+     "a": [
+      "...where the canals run beneath a city of thieves and honey."
+     ]
+    },
+    {
+     "q": "Falkreath",
+     "a": [
+      "...among the graves in the pines, where the dead outnumber the living."
+     ]
+    },
+    {
+     "q": "Morthal",
+     "a": [
+      "...in the marsh town, where the mist hides what walks."
+     ]
+    },
+    {
+     "q": "Dawnstar",
+     "a": [
+      "...on the cold northern shore, where the dreamers cannot sleep."
+     ]
+    },
+    {
+     "q": "Winterhold",
+     "a": [
+      "...where the city fell into the sea, and the college stands alone."
+     ]
+    },
+    {
+     "q": "pride",
+     "a": [
+      "A lone spirit walks the night. Follow it softly... and see where it leads."
+     ]
+    },
+    {
+     "q": "eye",
+     "a": [
+      "When a star crosses the sky above you... strike it down."
+     ]
+    },
+    {
+     "q": "stone",
+     "a": [
+      "One of the dead burns brighter than the rest. Break it with glass, and catch what falls."
+     ]
+    },
+    {
+     "q": "oath",
+     "a": [
+      "Where the World-Eater first returned, a broken blade waits for a hand."
+     ]
+    },
+    {
+     "q": "2 altars freed",
+     "a": [
+      "Two stones wake... so you can hear me. These altars were old before your Empire was born. They were raised while dragons still ruled the sky."
+     ]
+    },
+    {
+     "q": "4 altars freed",
+     "a": [
+      "We raised them, the three of us... the first who learned the Voice and turned it on its masters. One fell at the summit. One I have not seen since. And I... I am still here."
+     ]
+    },
+    {
+     "q": "6 altars freed",
+     "a": [
+      "Six stones are free... you may hear my name. I am Felldir the Old. I read the Scroll that cast Alduin out of time, and I wait for you behind his mist. The wonders stir... watch the night."
+     ]
+    }
+   ]
+  },
+  {
+   "id": "end",
+   "title": "The dragons and the end",
+   "lead": "Every 10th night a dragon; the three word-dragons and the Echo of Alduin are the hardest fights of all (35x, 40x, 45x and 80x health, tougher waves, enrage phases). Alduin's Bane waits in the Hall of the Awakened: a meteor on every light hit, a white tornado on a heavy. The Curse of Alduin ends right before Skyrim's own battle with Alduin.",
+   "items": [
+    {
+     "t": "Dragons",
+     "d": "A dragon comes every 10th night; its words teach the city's shout (Solitude's bards teach Tiny Terrors, Whiterun gives Dragon's Updraft)."
+    },
+    {
+     "t": "The three word-dragons",
+     "d": "The last three dragons, each guarding a word: the hardest fights before the end."
+    },
+    {
+     "t": "The Echo of Alduin",
+     "d": "Alduin's own echo, the curse made flesh: 80 times the health of the dead, the last fight of the mod."
+    },
+    {
+     "t": "Alduin's Bane",
+     "d": "The last weapon, from the Hall of the Awakened."
+    }
+   ]
+  }
+ ],
+ "notelog": [
+  {
+   "build": "Workshop, Nov 26 late",
+   "date": "2026-11-26",
+   "notes": [
+    {
+     "when": "2026-11-27 03:31",
+     "where": "tabnew/fushammer",
+     "note": "Make the light attack through special scale properly so Heavy isnt too strong then the special would not be stronger than the heavy.",
+     "choice": "add",
+     "done": "Rewritten: light (stagger) < heavy (5 m FUS) < special (12 m FUS RO DAH)."
+    },
+    {
+     "when": "2026-11-27 03:10",
+     "where": "uiscreens/altarmenu",
+     "note": "Keep my current Echo Alter UI. or change this suggested UI so include the class images and Perk and tab Icons. The Echo Alter UI in the preview looks too bland.",
+     "choice": "change",
+     "done": "New altar menu drawn with the class painting, tab icons and every brew's icon; \"keep my current one\" is a choice under Now > Decisions."
+    },
+    {
+     "when": "2026-11-27 03:09",
+     "where": "uiscreens/armory",
+     "note": "Keep my current Echo Alter UI. or change this suggested UI so include the class images and Perk and tab Icons. The Echo Alter UI in the preview looks too bland.",
+     "choice": "change",
+     "done": "Same: Armory now has element icons and tier pips (new vs keep under Decisions)."
+    },
+    {
+     "when": "2026-11-27 03:14",
+     "where": "uiscreens/boot",
+     "note": "I like this but I want to change the menu music.",
+     "choice": "ok",
+     "done": "Menu music: a choice under Now > Decisions."
+    },
+    {
+     "when": "2026-11-27 03:11",
+     "where": "uiscreens/classpick",
+     "note": "Keep my current Echo Alter UI. or change this suggested UI so include the class images and Perk and tab Icons. The Echo Alter UI in the preview looks too bland.",
+     "choice": "change",
+     "done": "Class choice drawn on the Lore-Based Loading Screens paintings from your game."
+    },
+    {
+     "when": "2026-11-27 03:12",
+     "where": "uiscreens/codex",
+     "note": "keep my current UI for Codex book.",
+     "choice": "change",
+     "done": "Marked \"kept as it is in your game\"."
+    },
+    {
+     "when": "2026-11-27 03:05",
+     "where": "uiscreens/death",
+     "note": "make the transitions and visuals fade in and out smoothly.",
+     "choice": "ok",
+     "done": "Every box now fades in and out with a soft gradient (In-game UI > Play the fades)."
+    },
+    {
+     "when": "2026-11-27 02:44",
+     "where": "uiscreens/foehp",
+     "note": "can you make this change for all enemies in skyrim?",
+     "choice": "change",
+     "done": "Yes: bars over every wounded enemy in all of Skyrim, night or day."
+    },
+    {
+     "when": "2026-11-27 03:16",
+     "where": "uiscreens/loading",
+     "note": "can you make sure the loading screens cover the full display from my monitor and my laptop Resolutions.",
+     "choice": "ok",
+     "done": "Loading screens fill any screen shape (no letterbox); preview at 4 resolutions."
+    },
+    {
+     "when": "2026-11-27 03:14",
+     "where": "uiscreens/main",
+     "note": "I like this but I want to change the menu music.",
+     "choice": "change",
+     "done": "Menu music: a choice under Now > Decisions."
+    },
+    {
+     "when": "2026-11-27 03:09",
+     "where": "uiscreens/perkmenu",
+     "note": "Keep my current Echo Alter UI. or change this suggested UI so include the class images and Perk and tab Icons. The Echo Alter UI in the preview looks too bland.",
+     "choice": "change",
+     "done": "Same: every brew with its own icon from your game."
+    },
+    {
+     "when": "2026-11-27 02:36",
+     "where": "uiscreens/quests",
+     "note": "the tracked quests should only show under the night counter and for the echo alter quests it should only show above the echo alter.",
+     "choice": "change",
+     "done": "Tracked quests only under the night counter; the altar trial floats above the altar."
+    },
+    {
+     "when": "2026-11-27 03:15",
+     "where": "uiscreens/setup",
+     "note": "Keep the current UI for this.",
+     "choice": "change",
+     "done": "Marked \"kept as it is in your game\"."
+    },
+    {
+     "when": "2026-11-27 03:08",
+     "where": "uiscreens/talk",
+     "note": "Keep my current Echo Alter UI. or change this suggested UI so include the class images and Perk and tab Icons. The Echo Alter UI in the preview looks too bland.",
+     "choice": "change",
+     "done": "Same: Felldir's topics and his words."
+    },
+    {
+     "when": "2026-11-27 03:08",
+     "where": "uiscreens/thuum",
+     "note": "Keep my current Echo Alter UI. or change this suggested UI so include the class images and Perk and tab Icons. The Echo Alter UI in the preview looks too bland.",
+     "choice": "change",
+     "done": "Same: Thu'um tab with its icon and the words."
+    },
+    {
+     "when": "2026-11-27 03:08",
+     "where": "uiscreens/trialsmenu",
+     "note": "Keep my current Echo Alter UI. or change this suggested UI so include the class images and Perk and tab Icons. The Echo Alter UI in the preview looks too bland.",
+     "choice": "change",
+     "done": "Same: the four trials as a path."
+    },
+    {
+     "when": "2026-11-27 03:02",
+     "where": "uiscreens/weapon",
+     "note": "make this beside the stamina and stat bar box on the right side so it doesnt clip anything.",
+     "choice": "change",
+     "done": "The uses ring moved beside the stamina bar on the right."
+    },
+    {
+     "when": "2026-11-27 01:41",
+     "where": "cwpick/alchemist",
+     "note": "update the preview with how the dragon priest scythe actually looks in game (the blade connecting to the staff head) make sure the look animations are 360 so it doesnt look flat or like an outline at certain angles.",
+     "choice": "cls_dragonpriest_alch",
+     "done": "Dragon Priest scythe re-read from the game's model with its real textures and normal maps; looks rebuilt in 3D on the model (360)."
+    },
+    {
+     "when": "2026-11-27 01:41",
+     "where": "cwpick/destruction",
+     "note": "make sure the look animations are 360 so it doesnt look flat or like an outline at certain angles.",
+     "choice": "cls_daedricwand_carian",
+     "done": "Looks rebuilt in 3D on the wand itself (360), real textures."
+    },
+    {
+     "when": "2026-11-27 01:42",
+     "where": "cwpick/spellsword",
+     "note": "make sure the look animations are 360 so it doesnt look flat or like an outline at certain angles.",
+     "choice": "cls_daedricrapier_ss_none",
+     "done": "Looks rebuilt in 3D on the rapier itself (360), real textures; the blood decals and the scabbard removed from the preview."
+    },
+    {
+     "when": "2026-11-27 03:46",
+     "where": "cwpick/summoner",
+     "note": "make sure the look animations are 360 so it doesnt look flat or like an outline at certain angles.",
+     "choice": "cls_daedricstaff_radiant",
+     "done": "Picked the Daedric quarterstaff; looks on its two heads only, in 3D (360), real textures."
+    },
+    {
+     "when": "2026-11-27 01:44",
+     "where": "tablet/_ideas",
+     "note": "not too sure yet can you give me really good recommendations that perfectly feel like skyrim and bo3 zombies",
+     "choice": "",
+     "done": "12 more ideas added to the Tablet tab, sorted by rarity."
     }
    ]
   }

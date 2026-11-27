@@ -2,7 +2,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Cinzel:wght@500;700&family=Inter:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Cinzel:wght@500;700&family=Inter:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Jost:wght@300;400;500&display=swap">
 <style>
 :root {
   --bg: #0d0b0a; --bg2: #14110e; --panel: #1b1713; --panel2: #221d18; --line: #3a3128; --line2: #4c4034;
@@ -241,6 +241,37 @@ textarea:focus { outline: 2px solid var(--ember); outline-offset: 1px; }
 .zoom .zin { width: min(100%, 1600px); }
 .stage { cursor: zoom-in; }
 .zoom .stage { cursor: default; }
+/* ---- Nov 26 late: abilities in action, rarity, rolls, notes kept, lore */
+.cmp { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); margin: 0 0 12px; cursor: pointer; }
+.abgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 14px; }
+.abcol { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: grid; gap: 10px; min-width: 0; }
+.abcol canvas { width: 100%; aspect-ratio: 2 / 1; display: block; border-radius: 8px; background: #05070a; }
+.abopts { margin: 0; } .abopts .chip[data-on="true"] { outline: 2px solid var(--ember); outline-offset: 1px; } .abopts .chip[aria-pressed="true"] { background: var(--gold-soft); border-color: var(--gold); }
+.kitmark { color: var(--gold); font-size: 11px; } .abnow { font-size: 13px; margin: 0; }
+.rar { margin-left: auto; font: 700 11px 'Barlow Condensed', sans-serif; letter-spacing: .14em; text-transform: uppercase; color: var(--r); border: 1px solid var(--r); padding: 1px 7px; border-radius: 999px; }
+.rargrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 12px; }
+.rarcol { background: var(--panel); border: 1px solid var(--line); border-top: 3px solid var(--r); border-radius: 12px; padding: 12px; display: grid; gap: 8px; align-content: start; }
+.rarcol h4 { margin: 0; font: 700 18px 'Barlow Condensed', sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--r); } .rarcol h4 span { color: var(--muted); font-size: 14px; }
+.rarw { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; align-items: center; padding: 6px 8px; background: var(--panel2); border-radius: 8px; } .rarw .muted { grid-column: 1; font-size: 12px; }
+.rarmv { grid-row: 1 / span 2; grid-column: 2; display: flex; gap: 4px; }
+.rb { width: 26px; height: 26px; border-radius: 6px; border: 1px solid var(--line2); background: transparent; color: var(--muted); font: 700 12px Inter, sans-serif; cursor: pointer; } .rb[aria-pressed="true"] { background: var(--r); border-color: var(--r); color: #111; }
+.odds { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin: 12px 0 4px; padding: 10px 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; font-size: 14px; }
+.odds label { display: inline-flex; align-items: center; gap: 8px; color: var(--r); font-weight: 600; } .odds input { accent-color: var(--r); width: 120px; } .odds output { color: var(--fg); min-width: 3ch; }
+.uctl { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; } .uctl .chips { margin: 0; } .uctl .cmp { margin: 0; }
+.nlog { display: grid; gap: 8px; margin-top: 8px; } .nrow { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.nrow .q { margin: 4px 0; font-style: italic; } .nrow .a { margin: 0; color: var(--green); font-size: 14px; } .nrow .a::before { content: "Done: "; font-weight: 600; }
+.lnav { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 18px; } .lnav a { padding: 5px 10px; border: 1px solid var(--line); border-radius: 999px; text-decoration: none; font-size: 13px; color: var(--fg); background: var(--panel); }
+.lchap { max-width: 880px; padding: 18px 0 22px; border-top: 1px solid var(--line); display: grid; gap: 12px; scroll-margin-top: 70px; }
+.lchap h3 { margin: 0; font: 700 26px 'Barlow Condensed', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--gold); }
+.llead { margin: 0; font: 17px/1.65 'Cormorant Garamond', Georgia, serif; color: var(--fg); max-width: 68ch; }
+.litems { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 10px; }
+.litem { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: grid; gap: 4px; } .litem p { margin: 0; font-size: 14px; color: var(--muted); }
+.legg { background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--ember); border-radius: 10px; padding: 12px 14px; }
+.legg h4 { margin: 0 0 6px; font: 700 19px 'Barlow Condensed', sans-serif; letter-spacing: .05em; text-transform: uppercase; } .legg ol { margin: 6px 0; padding-left: 20px; display: grid; gap: 6px; font-size: 14px; }
+.legg small { display: block; color: var(--muted); font-style: italic; } .lopen { font: italic 16px/1.5 'Cormorant Garamond', Georgia, serif; margin: 0 0 6px; color: var(--fg); }
+.lq { margin: 4px 0 0; font: 700 14px 'Barlow Condensed', sans-serif; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+.qa { display: grid; gap: 4px; } .qa details, .legg details { background: var(--panel2); border-radius: 8px; padding: 6px 10px; } .qa summary, .legg summary { cursor: pointer; font-weight: 600; }
+.qa p, .legg details p { margin: 6px 0 0; font: 16px/1.55 'Cormorant Garamond', Georgia, serif; }
 __UICSS__
 .u-stage { aspect-ratio: 16 / 9; width: 100%; }
 </style>
@@ -254,6 +285,7 @@ __UICSS__
   <a href="#systems" data-s="systems">Systems</a>
   <a href="#weapons" data-s="weapons">Weapons &amp; effects</a>
   <a href="#ui" data-s="ui">In-game UI</a>
+  <a href="#lore" data-s="lore">Lore</a>
   <a href="#release" data-s="release">Release</a>
   <a href="#history" data-s="history">History</a>
 </div></nav>
@@ -262,12 +294,16 @@ __UICSS__
   <section data-s="systems"></section>
   <section data-s="weapons"></section>
   <section data-s="ui"></section>
+  <section data-s="lore"></section>
   <section data-s="release"></section>
   <section data-s="history"></section>
 </main>
 <script type="application/json" id="wsdata">__DATA__</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>__VIEWER__</script>
+<script>__VFX__</script>
+<script>__ZOMBIES__</script>
+<script>__ACTION__</script>
 <script>__REAL__</script>
 <script>__UISCREENS__</script>
 <script>__APP__</script>
