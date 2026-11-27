@@ -219,7 +219,7 @@ function drawWeapons() {
   const el = $('section[data-s="weapons"]');
   el.innerHTML = `<h2 class="sec">Weapons &amp; effects</h2>
 <p class="lead">The foundation for every weapon and effect. <b>Element kits</b> set how each element looks and sounds, once; each <b>class weapon</b> then gets its four tier looks on the model you picked; the <b>Tablet</b> gets its new lineup. Abilities are built per weapon from its element's kit next.</p>
-<div class="chips" id="wtabs">${[['classes', 'Class weapons'], ['wonders', 'Wonders'], ['armour', 'Armour looks'], ['kits', 'Element kits'], ['tablet', 'Tablet lineup'], ['clips', 'Test Range clips']].map(([k, n]) => `<button class="chip" data-w="${k}" aria-pressed="${k === wTab}">${n}</button>`).join('')}</div>
+<div class="chips" id="wtabs">${[['classes', 'Class weapons'], ['wonders', 'Wonders'], ['armour', 'Armour looks'], ['flasks', 'Flasks'], ['kits', 'Element kits'], ['tablet', 'Tablet lineup'], ['clips', 'Test Range clips']].map(([k, n]) => `<button class="chip" data-w="${k}" aria-pressed="${k === wTab}">${n}</button>`).join('')}</div>
 <div id="wbody"></div>`;
   $('#wtabs').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; wTab = b.dataset.w; $$('#wtabs .chip').forEach(c => c.setAttribute('aria-pressed', String(c === b))); paintWeapons(true); });
   paintWeapons(true);
@@ -269,6 +269,8 @@ function paintWeapons(full) {
       $('#clsch').onclick = e => { const b = e.target.closest('.chip'); if (!b) return; $$('#clsch .chip').forEach(x => x.setAttribute('aria-pressed', String(x === b))); drawClass(b.dataset.cls); };
       drawClass(D.classes[0].id);
     } else paintClass();
+  } else if (wTab === 'flasks') {
+    if (full) drawFlasks(); else paintFlasks();
   } else if (wTab === 'armour') {
     if (full) drawArmour(); else paintArmour();
   } else if (wTab === 'wonders') {
@@ -390,33 +392,141 @@ function paintAbil(c) {
 
 // ---- the wonders (Nov 27: "the wonders aren't in the weapon & effects"): each on its own model in its look, and what its description
 // says it does played out: you in the class's set holding it, against the dead
+let curWd = 'soulcaller', wdSig = '';
+const WD_STR = [['subtle', 'Subtle', .6, 'The look faint on it: there, but quiet.'], ['full', 'Full', 1, 'The look at its full strength.'], ['blaze', 'Blazing', 1.5, 'The look at its brightest.']];
+const wdEl = w => { const p = DB.get('wonders', w.id) || {}; return (w.els || [w.el]).includes(p.el) ? p.el : w.el; };
 function drawWonders() {
   const box = $('#wbody');
-  box.innerHTML = `<p class="hint">Each class's wonder (and Alduin's Bane, the last weapon) on its own model in its look, with what its description says it does played out beat by beat. Drag to turn, scroll to zoom. Approve each, or tell me what to change.</p>
-<div class="wonders">${D.wonders.map(w => { const k = D.kits.find(x => x.id === w.el) || {}; return `<article class="wonder" data-wd="${w.id}" style="--c:${k.col || '#c9a24a'}">
-<div class="classhead"><h4>${esc(w.name)}</h4><span>${esc(w.who)}</span></div>
-<p>${esc(w.text)}</p>
-<div class="wdgrid"><div class="wdmodel"><canvas aria-label="${esc(w.name)}, turning model"></canvas><span class="muted">The model, in its look</span></div>
-<div class="wdact"><div class="cvw"><canvas aria-label="${esc(w.name)} in action"></canvas></div><div class="chips">${w.moves.map(([n], i) => `<button class="chip" data-wm="${i}" aria-pressed="${i === 0}">${esc(n)}</button>`).join('')}</div></div></div>
-<div class="row"><button class="btn pass" data-wc="ok" aria-pressed="false">Approve</button><button class="btn skip" data-wc="change" aria-pressed="false">Change</button><span class="saved"></span></div>
-<textarea rows="2" placeholder="What to change (optional)" aria-label="Note on ${esc(w.name)}"></textarea></article>`; }).join('')}</div>`;
-  for (const w of D.wonders) {
-    const a = $(`[data-wd="${w.id}"]`, box), [cm, ca] = $$('canvas', a);
-    view3d(cm, w.key, { spin: true, look: w.look });
-    if (GL.ok) { const v = actionView(ca); VIEWS.push(v); a.__v = v; v.setPlayer(w.cls, w.key, w.look); v.script(w.moves[0][1], w.el); }
-  }
+  box.innerHTML = `<p class="hint">Each class's wonder, and Alduin's Bane. Like the class weapons: pick its look on its own model, how strong the look is (or a second look over it), and a design for each of its moves, each played in action as its description says. The first design of each move is what it does today. (Summoned spirits are drawn here as a figure of light; in the game each is the creature it names.) Drag to turn, scroll to zoom.</p>
+<div class="chips" id="wdch">${D.wonders.map(w => `<button class="chip" data-wdc="${w.id}" aria-pressed="${w.id === curWd}">${esc(w.name)}</button>`).join('')}</div><div id="wdbody"></div>`;
+  $('#wdch').onclick = e => { const b = e.target.closest('.chip'); if (!b) return; curWd = b.dataset.wdc; $$('#wdch .chip').forEach(x => x.setAttribute('aria-pressed', String(x === b))); drawWonder(); };
+  drawWonder();
+}
+function drawWonder() {
+  clearViews(); wdSig = '';
+  const w = D.wonders.find(x => x.id === curWd), box = $('#wdbody');
+  box.innerHTML = `<div class="classblock"><div class="classhead"><h4>${esc(w.name)}</h4><span>${esc(w.who)}</span></div><p class="lead" style="margin:6px 0 0">${esc(w.text)}</p>
+<h3 class="sub">1. Its look</h3>
+<div class="wgrid">${w.looks.map(l => `<article class="wcard" data-wl="${l.id}"><canvas aria-label="${esc(l.name)} on the ${esc(w.name)}, turning"></canvas><div class="wb"><h4>${esc(l.name)}</h4><p>${esc(l.desc)}</p><div class="row"><button class="btn pass" data-wlpick="${l.id}" aria-pressed="false">Pick this look</button></div></div></article>`).join('')}</div>
+<div id="wdstr"></div><div id="wdmoves"></div>
+<div class="row" style="margin-top:14px"><button class="btn pass" data-wc="ok" aria-pressed="false">Approve the ${esc(w.name)}</button><button class="btn skip" data-wc="change" aria-pressed="false">Change it</button><span class="saved" data-sv="wd"></span></div>
+<textarea rows="2" data-note="wd" placeholder="Anything about the ${esc(w.name)} (optional)" aria-label="Note on the ${esc(w.name)}" style="margin-top:8px"></textarea></div>`;
+  $$('.wcard[data-wl]', box).forEach(a => view3d($('canvas', a), w.key, { look: a.dataset.wl, spin: true }));
+  drawWdMoves(w);
+  const save = async (row, sv) => { const prev = DB.get('wonders', w.id) || {}; await saveTo('wonders', w.id, Object.assign({}, prev, row), $(`[data-sv="${sv || 'wd'}"]`, box)); paintWonders(); };
   box.onclick = async e => {
-    const m = e.target.closest('button[data-wm]');
-    if (m) { const a = m.closest('[data-wd]'), w = D.wonders.find(x => x.id === a.dataset.wd); $$('button[data-wm]', a).forEach(b => b.setAttribute('aria-pressed', String(b === m))); if (a.__v) a.__v.script(w.moves[+m.dataset.wm][1], w.el); return; }
-    const b = e.target.closest('button[data-wc]');
-    if (b) { const a = b.closest('[data-wd]'), prev = DB.get('wonders', a.dataset.wd) || {}; await saveTo('wonders', a.dataset.wd, { choice: prev.choice === b.dataset.wc ? '' : b.dataset.wc, note: $('textarea', a).value.slice(0, 2000) }, $('.saved', a)); paintWonders(); }
+    const lp = e.target.closest('button[data-wlpick]'); if (lp) { const p = DB.get('wonders', w.id) || {}; await save({ look: p.look === lp.dataset.wlpick ? '' : lp.dataset.wlpick, str: '' }); return; }
+    const sp = e.target.closest('button[data-wstr]'); if (sp) { const p = DB.get('wonders', w.id) || {}; await save({ str: p.str === sp.dataset.wstr ? '' : sp.dataset.wstr }); return; }
+    const eb = e.target.closest('button[data-wdel]'); if (eb) { await save({ el: eb.dataset.wdel }); drawWdMoves(w); return; }
+    const ob = e.target.closest('button[data-wmv]'); if (ob) { playWd(w, ob.closest('.abcol').dataset.ab, ob.dataset.wmv); return; }
+    const ub = e.target.closest('button[data-wuse]'); if (ub) { const sl = ub.dataset.wuse, cur = ub.closest('.abcol').dataset.playing, p = DB.get('wonders', w.id) || {}; await save({ ['mv_' + sl]: p['mv_' + sl] === cur ? '' : cur }, 'wd_' + sl); return; }
+    const cb = e.target.closest('button[data-wc]'); if (cb) { const p = DB.get('wonders', w.id) || {}; await save({ choice: p.choice === cb.dataset.wc ? '' : cb.dataset.wc }); }
   };
-  box.onchange = async e => { const a = e.target.closest('[data-wd]'); if (!a || e.target.tagName !== 'TEXTAREA') return; const prev = DB.get('wonders', a.dataset.wd) || {}; await saveTo('wonders', a.dataset.wd, { choice: prev.choice || '', note: e.target.value.slice(0, 2000) }, $('.saved', a)); };
+  box.onchange = async e => { if (e.target.dataset.note === 'wd') await save({ note: e.target.value.slice(0, 2000) }); };
+  paintWonders();
+}
+const WDVIEWS = {};
+function drawWdMoves(w) {
+  const box = $('#wdmoves'); if (!box) return;
+  VIEWS.filter(v => v.cv.closest('#wdmoves')).forEach(v => { GL.remove(v); VIEWS.splice(VIEWS.indexOf(v), 1); });
+  const el = wdEl(w), p = DB.get('wonders', w.id) || {};
+  box.innerHTML = `<h3 class="sub">3. Its moves</h3><p class="hint">Click a design to watch it, then Use it. The first is what it does today.</p>
+${(w.els || []).length > 1 ? `<div class="chips">${w.els.map(e => { const k = D.kits.find(x => x.id === e); return `<button class="chip" data-wdel="${e}" aria-pressed="${e === el}"><span class="dot" style="background:${k.col}"></span>${esc(k.name)}</button>`; }).join('')}<span class="muted" style="align-self:center">It bursts in your other hand's element: see it in each.</span></div>` : ''}
+<div class="abgrid">${w.slots.map(([sl, sn, opts]) => `<div class="abcol" data-ab="${sl}"><div class="classhead"><h4 style="font-size:18px">${esc(sn)}</h4></div>
+<div class="cvw"><canvas aria-label="${esc(sn)}, playing"></canvas></div>
+<div class="mvopts">${opts.map(([id, n, what]) => `<button class="mvopt" data-wmv="${id}"><b>${esc(n)}</b><span>${esc(what)}</span></button>`).join('')}</div>
+<div class="row"><button class="btn pass" data-wuse="${sl}" aria-pressed="false">Use this</button><span class="saved" data-sv="wd_${sl}"></span></div></div>`).join('')}</div>`;
+  for (const [sl, , opts] of w.slots) {
+    const cv = $(`.abcol[data-ab="${sl}"] canvas`, box);
+    if (GL.ok) { const v = actionView(cv); VIEWS.push(v); WDVIEWS[sl] = v; v.setPlayer(w.cls, w.key, p.look || w.look); }
+    playWd(w, sl, p['mv_' + sl] || opts[0][0]);
+  }
+}
+function playWd(w, sl, id) {
+  const col = $(`#wdmoves .abcol[data-ab="${sl}"]`); if (!col) return;
+  const opts = w.slots.find(x => x[0] === sl)[2], o = opts.find(x => x[0] === id) || opts[0];
+  col.dataset.playing = o[0]; $$('button[data-wmv]', col).forEach(b => b.dataset.on = String(b.dataset.wmv === o[0]));
+  const v = WDVIEWS[sl]; if (v) v.script(o[3], wdEl(w));
   paintWonders();
 }
 function paintWonders() {
-  const box = $('#wbody'); if (!box || wTab !== 'wonders') return;
-  $$('[data-wd]', box).forEach(a => { const p = DB.get('wonders', a.dataset.wd) || {}; $$('button[data-wc]', a).forEach(b => b.setAttribute('aria-pressed', String(p.choice === b.dataset.wc))); const ta = $('textarea', a); if (document.activeElement !== ta) ta.value = p.note || ''; });
+  const box = $('#wdbody'); if (!box || wTab !== 'wonders') return;
+  const w = D.wonders.find(x => x.id === curWd), p = DB.get('wonders', w.id) || {};
+  $$('.wcard[data-wl]', box).forEach(a => { const on = p.look === a.dataset.wl; a.dataset.picked = String(on); const b = $('button', a); b.setAttribute('aria-pressed', String(on)); b.textContent = on ? 'Your pick' : 'Pick this look'; });
+  const st = $('#wdstr', box), sig = w.id + '|' + (p.look || '');
+  if (sig !== wdSig) {
+    wdSig = sig;
+    VIEWS.filter(v => v.cv.closest('#wdstr')).forEach(v => { GL.remove(v); VIEWS.splice(VIEWS.indexOf(v), 1); });
+    if (!p.look) st.innerHTML = `<h3 class="sub">2. How strong, or a second look</h3><p class="empty">Pick its look first: it shows here at each strength, and with each other look over it.</p>`;
+    else {
+      const L = w.looks.find(x => x.id === p.look), opts = [...WD_STR.map(([id, n, g, d]) => ({ id, n: L.name + ': ' + n, d, g })), ...w.looks.filter(x => x.id !== p.look).map(x => ({ id: 'layer:' + x.id, n: L.name + ' + ' + x.name, d: 'Your look with ' + x.name + ' laid over it.', g: 1, layer: x.id }))];
+      st.innerHTML = `<h3 class="sub">2. How strong, or a second look</h3><div class="wgrid">${opts.map(o => `<article class="wcard" data-ws="${o.id}"><canvas aria-label="${esc(o.n)}, turning"></canvas><div class="wb"><h4>${esc(o.n)}</h4><p>${esc(o.d)}</p><div class="row"><button class="btn pass" data-wstr="${o.id}" aria-pressed="false">Pick this</button></div></div></article>`).join('')}</div>`;
+      opts.forEach(o => view3d($(`[data-ws="${o.id}"] canvas`, st), w.key, { look: p.look, gain: o.g, layer: o.layer || null, layerGain: .75, spin: true }));
+      Object.values(WDVIEWS).forEach(v => v.setPlayer && v.setPlayer(w.cls, w.key, p.look));
+    }
+  }
+  $$('[data-ws]', st).forEach(a => { const on = p.str === a.dataset.ws; a.dataset.picked = String(on); $('button', a).setAttribute('aria-pressed', String(on)); });
+  for (const [sl] of w.slots) {
+    const col = $(`.abcol[data-ab="${sl}"]`, box); if (!col) continue;
+    const saved = p['mv_' + sl];
+    $$('button[data-wmv]', col).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.wmv === saved)));
+    const ub = $('button[data-wuse]', col), on = saved && saved === col.dataset.playing; ub.setAttribute('aria-pressed', String(!!on)); ub.textContent = on ? 'In use' : 'Use this';
+  }
+  $$('button[data-wc]', box).forEach(b => b.setAttribute('aria-pressed', String(p.choice === b.dataset.wc)));
+  const ta = $('[data-note="wd"]', box); if (ta && document.activeElement !== ta) ta.value = p.note || '';
+}
+
+// ---- the flasks (Nov 27: "I dont see the flasks ... edit their look like swirling glowing potion liquid and the element on the cork as
+// well as their impact effects ... the explosion size for the flasks needs to be much less")
+let curFlask = 'fire', FV = null, FA = null;
+const flaskPick = id => Object.assign({ liquid: 'swirl', cork: 'wisp', impact: 'shatter', size: .45 }, DB.get('flasks', id) || {});
+function drawFlasks() {
+  clearViews();
+  const box = $('#wbody');
+  box.innerHTML = `<p class="hint">The Alchemist's flasks, on their own models from the mod: the liquid drawn as a glowing potion moving in the glass, the cork carrying its element if you like, and the impact when it lands, at the size you set (today's blast is the 100% mark; you said it's too big). Pick for each flask, or set one and use it for all.</p>
+<div class="chips" id="flch">${FLASKS.map(f => { const k = D.kits.find(x => x.id === f.el) || {}; return `<button class="chip" data-fl="${f.id}" aria-pressed="${f.id === curFlask}"><span class="dot" style="background:${k.col || '#c9a24a'}"></span>${esc(f.name)}</button>`; }).join('')}</div>
+<div id="flbody"></div>`;
+  $('#flch').onclick = e => { const b = e.target.closest('.chip'); if (!b) return; curFlask = b.dataset.fl; $$('#flch .chip').forEach(x => x.setAttribute('aria-pressed', String(x === b))); drawFlask(); };
+  drawFlask();
+}
+function drawFlask() {
+  clearViews();
+  const f = FLASKS.find(x => x.id === curFlask), box = $('#flbody'), p = flaskPick(f.id);
+  const opts = (list, key) => `<div class="chips" data-fo="${key}">${list.map(o => `<button class="chip" data-v="${o.id}" title="${esc(o.about)}">${esc(o.name)}</button>`).join('')}</div><p class="muted fabout" data-fa="${key}"></p>`;
+  box.innerHTML = `<div class="classhead"><h4>${esc(f.name)}</h4><span>${esc(f.what)}</span></div>
+<div class="flgrid"><div class="flcol"><canvas class="flcv" aria-label="${esc(f.name)}, turning"></canvas>
+<h4>The liquid</h4>${opts(FLASK_LIQUID, 'liquid')}<h4>The cork</h4>${opts(FLASK_CORK, 'cork')}</div>
+<div class="flcol"><div class="cvw"><canvas class="flact" aria-label="${esc(f.name)} thrown, its impact"></canvas></div>
+<h4>The impact</h4>${opts(FLASK_IMPACT, 'impact')}
+<label class="flsize">Size <input type="range" min="15" max="100" step="5" data-fsize> <output data-fso></output><span class="muted">(today's: 100%)</span></label></div></div>
+<div class="row"><button class="btn" data-fall>Use these picks for every flask</button><span class="saved" data-sv="flask"></span></div>
+<textarea rows="2" data-note="flask" placeholder="Anything about the ${esc(f.name)} (optional)" aria-label="Note on the ${esc(f.name)}" style="margin-top:10px"></textarea>`;
+  if (GL.ok) { FV = flaskView($('.flcv', box), f); VIEWS.push(FV); FA = actionView($('.flact', box)); VIEWS.push(FA); FA.setPlayer('alchemist', '', ''); }
+  const save = async row => { const prev = DB.get('flasks', f.id) || {}; await saveTo('flasks', f.id, Object.assign({}, prev, row), $('[data-sv="flask"]', box)); paintFlasks(true); };
+  box.onclick = async e => {
+    const c = e.target.closest('[data-fo] .chip'); if (c) { await save({ [c.parentElement.dataset.fo]: c.dataset.v }); return; }
+    if (e.target.closest('[data-fall]')) { const p = flaskPick(f.id), row = { liquid: p.liquid, cork: p.cork, impact: p.impact, size: p.size };
+      try { for (const x of FLASKS) await DB.set('flasks', x.id, Object.assign({}, DB.get('flasks', x.id) || {}, row)); savedMsg($('[data-sv="flask"]', box)); } catch (er) { savedMsg($('[data-sv="flask"]', box), er); } }
+  };
+  box.oninput = e => { if (e.target.dataset.fsize != null) $('[data-fso]', box).textContent = e.target.value + '%'; };
+  box.onchange = async e => {
+    if (e.target.dataset.fsize != null) { await save({ size: +e.target.value / 100 }); return; }
+    if (e.target.dataset.note === 'flask') await save({ note: e.target.value.slice(0, 2000) });
+  };
+  paintFlasks(true);
+}
+let flSig = '';
+function paintFlasks(replay) {
+  const box = $('#flbody'); if (!box || wTab !== 'flasks') return;
+  const f = FLASKS.find(x => x.id === curFlask), p = flaskPick(f.id);
+  for (const [key, list] of [['liquid', FLASK_LIQUID], ['cork', FLASK_CORK], ['impact', FLASK_IMPACT]]) {
+    $$(`[data-fo="${key}"] .chip`, box).forEach(c => c.setAttribute('aria-pressed', String(c.dataset.v === p[key])));
+    const o = list.find(x => x.id === p[key]); $(`[data-fa="${key}"]`, box).textContent = o ? o.about : '';
+  }
+  const r = $('[data-fsize]', box); if (document.activeElement !== r) r.value = Math.round(p.size * 100); $('[data-fso]', box).textContent = Math.round(p.size * 100) + '%';
+  const ta = $('[data-note="flask"]', box); if (document.activeElement !== ta) ta.value = p.note || '';
+  const sig = f.id + JSON.stringify([p.liquid, p.cork, p.impact, p.size]);
+  if (sig !== flSig || replay === true) { flSig = sig; if (FV) FV.set(p.liquid, p.cork); if (FA) FA.script(flaskScript(f, p.impact, p.size), f.el); }
 }
 
 // ---- the armour sets' looks (Nov 27: "the armor effects should also be in the doc for me to choose from like the weapon looks")
@@ -810,6 +920,7 @@ DB.watch('tablet', () => { if (drawn.weapons && wTab === 'tablet') paintTablet()
 DB.watch('tabrar', () => { if (drawn.weapons && wTab === 'tablet') paintTablet(); });
 DB.watch('tabroll', () => { if (drawn.weapons && wTab === 'tablet') paintTablet(); });
 DB.watch('lore', () => paintLore());
+DB.watch('flasks', () => { if (drawn.weapons && wTab === 'flasks') paintFlasks(); });
 DB.watch('armourlook', () => { if (drawn.weapons && wTab === 'armour') paintArmour(); });
 DB.watch('wonders', () => { if (drawn.weapons && wTab === 'wonders') paintWonders(); });
 DB.watch('abil', () => { if (drawn.weapons && wTab === 'classes' && curCls) paintAbil(D.classes.find(c => c.id === curCls)); });

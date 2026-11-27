@@ -37,6 +37,27 @@
     "note": "in the In Game UI tab can you add where i can change my cursor design for my map inventory and overall UI navigation like at the main menu",
     "choice": "",
     "done": "In-game UI has a Cursor tab: Skyrim's own and five of ours, each playing on the main menu, the inventory and the map, glowing over what it can pick and clicking. The one you pick replaces Skyrim's cursor in every menu."
+   },
+   {
+    "when": "2026-11-27 01:43",
+    "where": "chat/flasks",
+    "note": "I also dont see the flasks in the Workshop doc either I would like to be able to edit their look like swirling glowing potion liquid and the element on the cork as well as their impact effects. I also think the explosion size for the flasks needs to be much less its a bit overwhelming currently.",
+    "choice": "",
+    "done": "Weapons & effects has a Flasks tab: all seven flasks on their own models, the liquid as a glowing potion (calm, swirling or boiling), the cork plain or carrying its element (a wisp, a flame or a rune seal), and the impact (four kinds) thrown in action with a size slider; today's blast is the 100% mark and every flask starts at 45%."
+   },
+   {
+    "when": "2026-11-27 01:47",
+    "where": "chat/wonders",
+    "note": "the wonders tab looks poorly made it needs to look and have the more customizable options like the class weapons tab",
+    "choice": "",
+    "done": "Wonders remade like the class weapons: pick a wonder, then 1. its look (its five looks on its model), 2. how strong (subtle, full, blazing) or a second look over it, 3. each of its moves with three designs (the first is today's) in action, the javelin in each element; approve or change, with a note."
+   },
+   {
+    "when": "2026-11-27 01:48",
+    "where": "chat/stretch",
+    "note": "and make sure the weapons preview isnt stretched",
+    "choice": "",
+    "done": "Every 3D preview is now cut to its own frame's shape instead of squeezed into it, and the weapons are fitted to what the frame shows."
    }
   ]
  },

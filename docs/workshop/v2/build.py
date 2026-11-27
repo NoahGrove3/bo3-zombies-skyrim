@@ -9,9 +9,9 @@ data = json.loads((HERE / 'data.json').read_text())
 page = (HERE / 'index.html').read_text()
 page = page.replace('__UICSS__', (HERE / 'ui.css').read_text()).replace('__REAL__', (HERE / 'real.js').read_text())
 page = page.replace('__DATA__', json.dumps(data, ensure_ascii=False).replace('<', '\\u003c'))
-page = page.replace('__VIEWER__', (HERE / 'viewer.js').read_text()).replace('__VFX__', (HERE / 'vfx.js').read_text()).replace('__ZOMBIES__', (HERE / 'zombies.js').read_text()).replace('__ACTION__', (HERE / 'action.js').read_text() + '\n' + (HERE / 'tablet.js').read_text() + '\n' + (HERE / 'armour.js').read_text()).replace('__UISCREENS__', (HERE / 'uiscreens.js').read_text()).replace('__APP__', (HERE / 'app.js').read_text())
+page = page.replace('__VIEWER__', (HERE / 'viewer.js').read_text()).replace('__VFX__', (HERE / 'vfx.js').read_text()).replace('__ZOMBIES__', (HERE / 'zombies.js').read_text()).replace('__ACTION__', (HERE / 'action.js').read_text() + '\n' + (HERE / 'tablet.js').read_text() + '\n' + (HERE / 'armour.js').read_text() + '\n' + (HERE / 'flasks.js').read_text()).replace('__UISCREENS__', (HERE / 'uiscreens.js').read_text()).replace('__APP__', (HERE / 'app.js').read_text())
 (out / 'index.html').write_text(page)
-keys = [m['key'] for c in data['classes'] for m in c['cands']] + [w['key'] for w in data['tablet'] if w['key']] + [w['key'] for w in data['wonders']] + ['tablet']
+keys = [m['key'] for c in data['classes'] for m in c['cands']] + [w['key'] for w in data['tablet'] if w['key']] + [w['key'] for w in data['wonders']] + ['flask_' + e for e in ('fire', 'frost', 'shock', 'poison', 'sun', 'blood', 'philosopher')] + ['tablet']
 FRESH = HERE.parent.parent.parent / 'build' / 'preview' / 'live'   # (re-exported from the game's models now: tools/preview/export_live.py)
 (out / 'live').mkdir(exist_ok=True)
 texs = set()

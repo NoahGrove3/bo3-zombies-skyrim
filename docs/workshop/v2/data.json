@@ -550,6 +550,17 @@
    "since": ""
   },
   {
+   "id": "cw_flasklook",
+   "sys": "classes",
+   "t": "The flasks' look and smaller bursts",
+   "st": "idea",
+   "what": "Pick in Weapons & effects > Flasks: the potion's liquid, the cork's element and the impact, and its size (today's blast is too big: every flask starts at 45%).",
+   "how": "",
+   "look": "",
+   "note": "",
+   "since": ""
+  },
+  {
    "id": "ui_cursor",
    "sys": "hud",
    "t": "Our own cursor in every menu",
@@ -4984,6 +4995,27 @@
      "note": "in the In Game UI tab can you add where i can change my cursor design for my map inventory and overall UI navigation like at the main menu",
      "choice": "",
      "done": "In-game UI has a Cursor tab: Skyrim's own and five of ours, each playing on the main menu, the inventory and the map, glowing over what it can pick and clicking. The one you pick replaces Skyrim's cursor in every menu."
+    },
+    {
+     "when": "2026-11-27 01:43",
+     "where": "chat/flasks",
+     "note": "I also dont see the flasks in the Workshop doc either I would like to be able to edit their look like swirling glowing potion liquid and the element on the cork as well as their impact effects. I also think the explosion size for the flasks needs to be much less its a bit overwhelming currently.",
+     "choice": "",
+     "done": "Weapons & effects has a Flasks tab: all seven flasks on their own models, the liquid as a glowing potion (calm, swirling or boiling), the cork plain or carrying its element (a wisp, a flame or a rune seal), and the impact (four kinds) thrown in action with a size slider; today's blast is the 100% mark and every flask starts at 45%."
+    },
+    {
+     "when": "2026-11-27 01:47",
+     "where": "chat/wonders",
+     "note": "the wonders tab looks poorly made it needs to look and have the more customizable options like the class weapons tab",
+     "choice": "",
+     "done": "Wonders remade like the class weapons: pick a wonder, then 1. its look (its five looks on its model), 2. how strong (subtle, full, blazing) or a second look over it, 3. each of its moves with three designs (the first is today's) in action, the javelin in each element; approve or change, with a note."
+    },
+    {
+     "when": "2026-11-27 01:48",
+     "where": "chat/stretch",
+     "note": "and make sure the weapons preview isnt stretched",
+     "choice": "",
+     "done": "Every 3D preview is now cut to its own frame's shape instead of squeezed into it, and the weapons are fitted to what the frame shows."
     }
    ]
   },
@@ -7950,488 +7982,1721 @@
   {
    "id": "soulcaller",
    "key": "soulcaller",
-   "look": "o2",
    "cls": "summoner",
    "name": "Soulcaller's Staff",
    "el": "spirit",
+   "look": "o2",
    "who": "Summoner's wonder (The Ghost Pride)",
    "text": "Hold to cast: each of the dead the beam kills gives a soul. Every 20 souls: a spectral sabre cat for 45 s (max 3).",
-   "moves": [
+   "slots": [
     [
+     "hold",
      "Hold: the soul beam",
      [
-      {
-       "k": "act",
-       "a": "hold",
-       "t": 0.2,
-       "d": 2.3
-      },
-      {
-       "k": "beam",
-       "t": 0.3,
-       "d": 2.2,
-       "to": "t0",
-       "el": "spirit"
-      },
-      {
-       "k": "react",
-       "t": 0.4,
-       "who": "t0",
-       "r": "drain"
-      },
-      {
-       "k": "react",
-       "t": 1.6,
-       "who": "t0",
-       "r": "die"
-      },
-      {
-       "k": "motes",
-       "t": 1.65,
-       "from": "t0",
-       "to": "me",
-       "d": 0.6,
-       "el": "spirit"
-      }
+      [
+       "soulbeam",
+       "Soul Beam (today)",
+       "A beam of soul-light from the staff's head; each of the dead it kills gives you a soul.",
+       [
+        {
+         "k": "act",
+         "a": "hold",
+         "t": 0.2,
+         "d": 2.3
+        },
+        {
+         "k": "beam",
+         "t": 0.3,
+         "d": 2.2,
+         "to": "t0"
+        },
+        {
+         "k": "react",
+         "t": 0.4,
+         "who": "t0",
+         "r": "drain"
+        },
+        {
+         "k": "react",
+         "t": 1.6,
+         "who": "t0",
+         "r": "die"
+        },
+        {
+         "k": "motes",
+         "t": 1.65,
+         "from": "t0",
+         "to": "me",
+         "d": 0.6
+        }
+       ]
+      ],
+      [
+       "soulchain",
+       "Soul Chain",
+       "The beam leaps from the one it holds to two more; every kill on the chain gives a soul.",
+       [
+        {
+         "k": "act",
+         "a": "hold",
+         "t": 0.2,
+         "d": 2.3
+        },
+        {
+         "k": "beam",
+         "t": 0.3,
+         "d": 2.2,
+         "to": "t0",
+         "fork": [
+          "t1",
+          "t4"
+         ]
+        },
+        {
+         "k": "react",
+         "t": 0.4,
+         "who": "t0",
+         "r": "drain"
+        },
+        {
+         "k": "react",
+         "t": 0.5,
+         "who": "t1",
+         "r": "drain"
+        },
+        {
+         "k": "react",
+         "t": 0.5,
+         "who": "t4",
+         "r": "drain"
+        },
+        {
+         "k": "react",
+         "t": 1.7,
+         "who": "t1",
+         "r": "die"
+        },
+        {
+         "k": "motes",
+         "t": 1.75,
+         "from": "t1",
+         "to": "me",
+         "d": 0.6
+        },
+        {
+         "k": "react",
+         "t": 2.1,
+         "who": "t0",
+         "r": "die"
+        }
+       ]
+      ],
+      [
+       "harvest",
+       "Soul Harvest",
+       "The beam tears souls out of every one of the dead near the one it holds, streaming back to you.",
+       [
+        {
+         "k": "act",
+         "a": "hold",
+         "t": 0.2,
+         "d": 2.3
+        },
+        {
+         "k": "beam",
+         "t": 0.3,
+         "d": 2.2,
+         "to": "t0"
+        },
+        {
+         "k": "react",
+         "t": 0.5,
+         "who": "near:300@t0",
+         "r": "drain"
+        },
+        {
+         "k": "motes",
+         "t": 0.8,
+         "from": "t0",
+         "to": "me",
+         "d": 1.4
+        },
+        {
+         "k": "motes",
+         "t": 1.0,
+         "from": "t4",
+         "to": "me",
+         "d": 1.2
+        },
+        {
+         "k": "react",
+         "t": 2.2,
+         "who": "near:300@t0",
+         "r": "die"
+        }
+       ]
+      ]
      ]
     ],
     [
-     "Every 20 souls: the spectral cat",
+     "souls",
+     "Every 20 souls",
      [
-      {
-       "k": "fx",
-       "t": 0.2,
-       "role": "burst",
-       "opt": "nova",
-       "at": "me",
-       "size": 0.6,
-       "el": "spirit"
-      },
-      {
-       "k": "ghost",
-       "t": 0.4,
-       "d": 2.4,
-       "at": [
-        -80,
-        60
-       ],
-       "face": "t0",
-       "swings": [
-        0.8,
-        1.4,
-        2.0
-       ],
-       "el": "spirit"
-      },
-      {
-       "k": "react",
-       "t": 1.3,
-       "who": "t0",
-       "r": "die"
-      },
-      {
-       "k": "react",
-       "t": 1.9,
-       "who": "t4",
-       "r": "die"
-      }
+      [
+       "cat",
+       "Spectral sabre cat (today)",
+       "A spectral sabre cat leaps out of the light and hunts for 45 s (up to 3).",
+       [
+        {
+         "k": "fx",
+         "t": 0.2,
+         "role": "burst",
+         "opt": "nova",
+         "at": "me",
+         "size": 0.6
+        },
+        {
+         "k": "ghost",
+         "t": 0.4,
+         "d": 2.4,
+         "at": [
+          -80,
+          60
+         ],
+         "face": "t0",
+         "swings": [
+          0.8,
+          1.4,
+          2.0
+         ]
+        },
+        {
+         "k": "react",
+         "t": 1.3,
+         "who": "t0",
+         "r": "die"
+        },
+        {
+         "k": "react",
+         "t": 1.9,
+         "who": "t4",
+         "r": "die"
+        }
+       ]
+      ],
+      [
+       "pack",
+       "Spectral wolf pack",
+       "Two spectral wolves instead of one cat: faster, weaker, they bring the dead down together.",
+       [
+        {
+         "k": "fx",
+         "t": 0.2,
+         "role": "burst",
+         "opt": "nova",
+         "at": "me",
+         "size": 0.6
+        },
+        {
+         "k": "ghost",
+         "t": 0.4,
+         "d": 2.2,
+         "at": [
+          -60,
+          40
+         ],
+         "face": "t0",
+         "swings": [
+          0.7,
+          1.2
+         ]
+        },
+        {
+         "k": "ghost",
+         "t": 0.55,
+         "d": 2.2,
+         "at": [
+          -90,
+          -80
+         ],
+         "face": "t4",
+         "swings": [
+          0.8,
+          1.3
+         ]
+        },
+        {
+         "k": "react",
+         "t": 1.2,
+         "who": "t0",
+         "r": "die"
+        },
+        {
+         "k": "react",
+         "t": 1.4,
+         "who": "t4",
+         "r": "die"
+        }
+       ]
+      ],
+      [
+       "storm",
+       "Soul storm",
+       "The souls burst out of you as a storm of spirits that circle you and strike the dead that come close.",
+       [
+        {
+         "k": "fx",
+         "t": 0.2,
+         "role": "burst",
+         "opt": "big",
+         "at": "me",
+         "size": 0.5
+        },
+        {
+         "k": "orbit",
+         "t": 0.3,
+         "d": 2.3,
+         "n": 5
+        },
+        {
+         "k": "bolt",
+         "t": 0.9,
+         "to": "t4",
+         "d": 0.3,
+         "curve": false,
+         "hit": {
+          "role": "impact",
+          "opt": "core",
+          "size": 0.6
+         },
+         "from": "me",
+         "size": 0.5
+        },
+        {
+         "k": "bolt",
+         "t": 1.3,
+         "to": "t0",
+         "d": 0.3,
+         "curve": false,
+         "hit": {
+          "role": "impact",
+          "opt": "core",
+          "size": 0.6
+         },
+         "from": "me",
+         "size": 0.5
+        },
+        {
+         "k": "bolt",
+         "t": 1.7,
+         "to": "t2",
+         "d": 0.35,
+         "curve": false,
+         "hit": {
+          "role": "impact",
+          "opt": "core",
+          "size": 0.6
+         },
+         "from": "me",
+         "size": 0.5
+        },
+        {
+         "k": "react",
+         "t": 1.2,
+         "who": "t4",
+         "r": "die"
+        },
+        {
+         "k": "react",
+         "t": 1.6,
+         "who": "t0",
+         "r": "die"
+        },
+        {
+         "k": "react",
+         "t": 2.05,
+         "who": "t2",
+         "r": "die"
+        }
+       ]
+      ]
      ]
     ]
+   ],
+   "looks": [
+    {
+     "id": "o1",
+     "name": "Soul Wisps",
+     "desc": "Pale violet souls drifting up off the glass head."
+    },
+    {
+     "id": "o2",
+     "name": "Soul Gem Glow",
+     "desc": "The glass head lit from within like a filled soul gem."
+    },
+    {
+     "id": "o3",
+     "name": "Spectral Mist",
+     "desc": "A cold violet mist rolling off the head."
+    },
+    {
+     "id": "o4",
+     "name": "Conjurer's Runes",
+     "desc": "Summoning runes circling the head, bright and slow."
+    },
+    {
+     "id": "o5",
+     "name": "Soul Fire",
+     "desc": "Violet fire licking up the glass head."
+    }
    ]
   },
   {
    "id": "javelin",
    "key": "javelin",
-   "look": "o5",
    "cls": "destruction",
    "name": "Wyrmspine Javelin",
    "el": "fire",
+   "els": [
+    "fire",
+    "frost",
+    "shock"
+   ],
+   "look": "o5",
    "who": "Destruction's wonder (The Eye of Magnus)",
    "text": "Hold attack to charge, let go to throw: it bursts in your other hand's element, bigger the longer you held. A kill sends it on to the next enemy; then it flies back to you.",
-   "moves": [
+   "slots": [
     [
+     "throw",
      "Hold, then throw",
      [
-      {
-       "k": "act",
-       "a": "hold",
-       "t": 0.2,
-       "d": 0.9
-      },
-      {
-       "k": "fx",
-       "t": 0.3,
-       "role": "impact",
-       "opt": "drain",
-       "at": "me",
-       "size": 0.5
-      },
-      {
-       "k": "act",
-       "a": "throw",
-       "t": 1.1
-      },
-      {
-       "k": "bolt",
-       "t": 1.15,
-       "to": "t0",
-       "d": 0.35,
-       "curve": false,
-       "hit": null,
-       "from": "hand",
-       "size": 1.0,
-       "model": "javelin"
-      },
-      {
-       "k": "fx",
-       "t": 1.5,
-       "role": "burst",
-       "opt": "big",
-       "at": "t0",
-       "size": 0.7
-      },
-      {
-       "k": "react",
-       "t": 1.55,
-       "who": "t0",
-       "r": "die"
-      },
-      {
-       "k": "bolt",
-       "t": 1.7,
-       "to": "t1",
-       "d": 0.4,
-       "curve": true,
-       "hit": null,
-       "from": "t0",
-       "size": 0.8,
-       "model": "javelin"
-      },
-      {
-       "k": "fx",
-       "t": 2.1,
-       "role": "impact",
-       "opt": "spark",
-       "at": "t1",
-       "size": 0.8
-      },
-      {
-       "k": "react",
-       "t": 2.1,
-       "who": "t1",
-       "r": "die"
-      },
-      {
-       "k": "bolt",
-       "t": 2.3,
-       "to": "me",
-       "d": 0.5,
-       "curve": true,
-       "hit": null,
-       "from": "t1",
-       "size": 0.6,
-       "model": "javelin"
-      }
+      [
+       "bounce",
+       "Bursting throw (today)",
+       "It bursts in your other hand's element where it lands; a kill sends it on to the next of the dead.",
+       [
+        {
+         "k": "act",
+         "a": "hold",
+         "t": 0.2,
+         "d": 0.9
+        },
+        {
+         "k": "fx",
+         "t": 0.3,
+         "role": "impact",
+         "opt": "drain",
+         "at": "me",
+         "size": 0.5
+        },
+        {
+         "k": "act",
+         "a": "throw",
+         "t": 1.1
+        },
+        {
+         "k": "bolt",
+         "t": 1.15,
+         "to": "t0",
+         "d": 0.35,
+         "curve": false,
+         "hit": null,
+         "from": "hand",
+         "size": 1.0,
+         "model": "javelin",
+         "len": 150
+        },
+        {
+         "k": "fx",
+         "t": 1.5,
+         "role": "burst",
+         "opt": "big",
+         "at": "t0",
+         "size": 0.7
+        },
+        {
+         "k": "react",
+         "t": 1.55,
+         "who": "t0",
+         "r": "die"
+        },
+        {
+         "k": "bolt",
+         "t": 1.7,
+         "to": "t1",
+         "d": 0.4,
+         "curve": true,
+         "hit": null,
+         "from": "t0",
+         "size": 0.8,
+         "model": "javelin",
+         "len": 150
+        },
+        {
+         "k": "fx",
+         "t": 2.1,
+         "role": "impact",
+         "opt": "spark",
+         "at": "t1",
+         "size": 0.8
+        },
+        {
+         "k": "react",
+         "t": 2.1,
+         "who": "t1",
+         "r": "die"
+        }
+       ]
+      ],
+      [
+       "pierce",
+       "Piercing throw",
+       "It flies straight through every one of the dead in a line, a trail of its element behind it.",
+       [
+        {
+         "k": "act",
+         "a": "hold",
+         "t": 0.2,
+         "d": 0.9
+        },
+        {
+         "k": "fx",
+         "t": 0.3,
+         "role": "impact",
+         "opt": "drain",
+         "at": "me",
+         "size": 0.5
+        },
+        {
+         "k": "act",
+         "a": "throw",
+         "t": 1.1
+        },
+        {
+         "k": "bolt",
+         "t": 1.15,
+         "to": "t1",
+         "d": 0.5,
+         "curve": false,
+         "hit": null,
+         "from": "hand",
+         "size": 1.0,
+         "model": "javelin",
+         "len": 150
+        },
+        {
+         "k": "react",
+         "t": 1.35,
+         "who": "line",
+         "r": "die"
+        },
+        {
+         "k": "fx",
+         "t": 1.65,
+         "role": "ground",
+         "opt": "wave",
+         "at": "t1",
+         "size": 0.7
+        }
+       ]
+      ],
+      [
+       "impale",
+       "Impaling throw",
+       "It pins the first of the dead to the ground and the element erupts round it a moment later.",
+       [
+        {
+         "k": "act",
+         "a": "hold",
+         "t": 0.2,
+         "d": 0.9
+        },
+        {
+         "k": "fx",
+         "t": 0.3,
+         "role": "impact",
+         "opt": "drain",
+         "at": "me",
+         "size": 0.5
+        },
+        {
+         "k": "act",
+         "a": "throw",
+         "t": 1.1
+        },
+        {
+         "k": "bolt",
+         "t": 1.15,
+         "to": "t0",
+         "d": 0.35,
+         "curve": false,
+         "hit": null,
+         "from": "hand",
+         "size": 1.0,
+         "model": "javelin",
+         "len": 150
+        },
+        {
+         "k": "react",
+         "t": 1.5,
+         "who": "t0",
+         "r": "freeze"
+        },
+        {
+         "k": "mark",
+         "t": 1.5,
+         "at": "t0",
+         "d": 0.9
+        },
+        {
+         "k": "fx",
+         "t": 2.3,
+         "role": "burst",
+         "opt": "spikes",
+         "at": "t0",
+         "size": 0.8
+        },
+        {
+         "k": "react",
+         "t": 2.35,
+         "who": "near:300@t0",
+         "r": "die"
+        }
+       ]
+      ]
+     ]
+    ],
+    [
+     "back",
+     "Its return",
+     [
+      [
+       "fly",
+       "Flies back (today)",
+       "It flies back to your hand.",
+       [
+        {
+         "k": "bolt",
+         "t": 0.3,
+         "to": "t0",
+         "d": 0.01,
+         "curve": false,
+         "hit": null,
+         "from": "t0",
+         "size": 0.6,
+         "model": "javelin",
+         "len": 150
+        },
+        {
+         "k": "bolt",
+         "t": 0.4,
+         "to": "me",
+         "d": 0.6,
+         "curve": true,
+         "hit": null,
+         "from": "t0",
+         "size": 0.8,
+         "model": "javelin",
+         "len": 150
+        },
+        {
+         "k": "act",
+         "a": "cast",
+         "t": 1.0
+        }
+       ]
+      ],
+      [
+       "cleave",
+       "Cleaving return",
+       "On its way back it cuts through the dead between it and you.",
+       [
+        {
+         "k": "bolt",
+         "t": 0.4,
+         "to": "me",
+         "d": 0.6,
+         "curve": false,
+         "hit": null,
+         "from": "t1",
+         "size": 0.8,
+         "model": "javelin",
+         "len": 150
+        },
+        {
+         "k": "react",
+         "t": 0.6,
+         "who": "line",
+         "r": "die"
+        },
+        {
+         "k": "act",
+         "a": "cast",
+         "t": 1.0
+        }
+       ]
+      ],
+      [
+       "storm",
+       "Storm return",
+       "Lightning follows it back, striking the dead it passes.",
+       [
+        {
+         "k": "bolt",
+         "t": 0.4,
+         "to": "me",
+         "d": 0.7,
+         "curve": true,
+         "hit": null,
+         "from": "t0",
+         "size": 0.8,
+         "model": "javelin",
+         "len": 150
+        },
+        {
+         "k": "arc",
+         "t": 0.5,
+         "from": "t0",
+         "to": "t4",
+         "d": 0.3
+        },
+        {
+         "k": "arc",
+         "t": 0.7,
+         "from": "t4",
+         "to": "t2",
+         "d": 0.3
+        },
+        {
+         "k": "react",
+         "t": 0.55,
+         "who": "t4",
+         "r": "shock"
+        },
+        {
+         "k": "react",
+         "t": 0.75,
+         "who": "t2",
+         "r": "shock"
+        },
+        {
+         "k": "act",
+         "a": "cast",
+         "t": 1.1
+        }
+       ]
+      ]
      ]
     ]
+   ],
+   "looks": [
+    {
+     "id": "o1",
+     "name": "Wyrm Ember",
+     "desc": "The bone head glowing orange, embers trailing back down the shaft."
+    },
+    {
+     "id": "o2",
+     "name": "Dragon Runes",
+     "desc": "The runes down the head burning bright."
+    },
+    {
+     "id": "o3",
+     "name": "Comet Head",
+     "desc": "A bright head with a long trail streaming back off it."
+    },
+    {
+     "id": "o4",
+     "name": "Elemental Edge",
+     "desc": "A thin line of light along the head's edges, the colour of its element."
+    },
+    {
+     "id": "o5",
+     "name": "Dragonfire",
+     "desc": "Fire rolling off the head toward the point."
+    }
    ]
   },
   {
    "id": "mutagen",
    "key": "flaskweap_philosopher",
-   "look": "o1",
    "cls": "alchemist",
    "name": "Mutagen Staff",
    "el": "poison",
+   "look": "o1",
    "who": "Alchemist's wonder (The Elixir of Aetherius)",
    "text": "Hold block: throws a flask every 0.5 s, cycling the six elements. Power attack: throws the next flask. And its normal staff attacks.",
-   "moves": [
+   "slots": [
     [
+     "block",
      "Hold block: the flasks",
      [
-      {
-       "k": "act",
-       "a": "throw",
-       "t": 0.2
-      },
-      {
-       "k": "bolt",
-       "t": 0.25,
-       "to": "t0",
-       "d": 0.5,
-       "curve": true,
-       "hit": {
-        "role": "burst",
-        "opt": "big",
-        "size": 0.5
-       },
-       "from": "hand",
-       "size": 0.5,
-       "el": "fire"
-      },
-      {
-       "k": "act",
-       "a": "throw",
-       "t": 0.7
-      },
-      {
-       "k": "bolt",
-       "t": 0.75,
-       "to": "t4",
-       "d": 0.5,
-       "curve": true,
-       "hit": {
-        "role": "burst",
-        "opt": "nova",
-        "size": 0.5
-       },
-       "from": "hand",
-       "size": 0.5,
-       "el": "frost"
-      },
-      {
-       "k": "act",
-       "a": "throw",
-       "t": 1.2
-      },
-      {
-       "k": "bolt",
-       "t": 1.25,
-       "to": "t2",
-       "d": 0.5,
-       "curve": true,
-       "hit": {
-        "role": "impact",
-        "opt": "spark",
-        "size": 0.7
-       },
-       "from": "hand",
-       "size": 0.5,
-       "el": "shock"
-      },
-      {
-       "k": "act",
-       "a": "throw",
-       "t": 1.7
-      },
-      {
-       "k": "bolt",
-       "t": 1.75,
-       "to": "t1",
-       "d": 0.5,
-       "curve": true,
-       "hit": {
-        "role": "ground",
-        "opt": "rune",
-        "size": 0.5
-       },
-       "from": "hand",
-       "size": 0.5,
-       "el": "poison"
-      },
-      {
-       "k": "react",
-       "t": 0.75,
-       "who": "t0",
-       "r": "burn"
-      },
-      {
-       "k": "react",
-       "t": 1.25,
-       "who": "t4",
-       "r": "freeze"
-      },
-      {
-       "k": "react",
-       "t": 1.75,
-       "who": "t2",
-       "r": "shock"
-      },
-      {
-       "k": "react",
-       "t": 2.25,
-       "who": "t1",
-       "r": "poison"
-      }
+      [
+       "six",
+       "Six elements (today)",
+       "A flask every 0.5 s, each the next of the six elements.",
+       [
+        {
+         "k": "act",
+         "a": "throw",
+         "t": 0.2
+        },
+        {
+         "k": "bolt",
+         "t": 0.25,
+         "to": "t0",
+         "d": 0.5,
+         "curve": true,
+         "hit": {
+          "role": "burst",
+          "opt": "big",
+          "size": 0.5
+         },
+         "from": "hand",
+         "size": 0.5,
+         "el": "fire"
+        },
+        {
+         "k": "act",
+         "a": "throw",
+         "t": 0.7
+        },
+        {
+         "k": "bolt",
+         "t": 0.75,
+         "to": "t4",
+         "d": 0.5,
+         "curve": true,
+         "hit": {
+          "role": "burst",
+          "opt": "nova",
+          "size": 0.5
+         },
+         "from": "hand",
+         "size": 0.5,
+         "el": "frost"
+        },
+        {
+         "k": "act",
+         "a": "throw",
+         "t": 1.2
+        },
+        {
+         "k": "bolt",
+         "t": 1.25,
+         "to": "t2",
+         "d": 0.5,
+         "curve": true,
+         "hit": {
+          "role": "impact",
+          "opt": "spark",
+          "size": 0.7
+         },
+         "from": "hand",
+         "size": 0.5,
+         "el": "shock"
+        },
+        {
+         "k": "act",
+         "a": "throw",
+         "t": 1.7
+        },
+        {
+         "k": "bolt",
+         "t": 1.75,
+         "to": "t1",
+         "d": 0.5,
+         "curve": true,
+         "hit": {
+          "role": "ground",
+          "opt": "rune",
+          "size": 0.5
+         },
+         "from": "hand",
+         "size": 0.5,
+         "el": "poison"
+        },
+        {
+         "k": "react",
+         "t": 0.75,
+         "who": "t0",
+         "r": "burn"
+        },
+        {
+         "k": "react",
+         "t": 1.25,
+         "who": "t4",
+         "r": "freeze"
+        },
+        {
+         "k": "react",
+         "t": 1.75,
+         "who": "t2",
+         "r": "shock"
+        },
+        {
+         "k": "react",
+         "t": 2.25,
+         "who": "t1",
+         "r": "poison"
+        }
+       ]
+      ],
+      [
+       "volley",
+       "Volley",
+       "Every second, three flasks at once in a fan, the same element, cycling.",
+       [
+        {
+         "k": "act",
+         "a": "throw",
+         "t": 0.2
+        },
+        {
+         "k": "bolt",
+         "t": 0.25,
+         "to": "t0",
+         "d": 0.5,
+         "curve": true,
+         "hit": {
+          "role": "burst",
+          "opt": "big",
+          "size": 0.45
+         },
+         "from": "hand",
+         "size": 0.5,
+         "el": "fire"
+        },
+        {
+         "k": "bolt",
+         "t": 0.25,
+         "to": "t4",
+         "d": 0.5,
+         "curve": true,
+         "hit": {
+          "role": "burst",
+          "opt": "big",
+          "size": 0.45
+         },
+         "from": "hand",
+         "size": 0.5,
+         "el": "fire"
+        },
+        {
+         "k": "bolt",
+         "t": 0.25,
+         "to": "t2",
+         "d": 0.55,
+         "curve": true,
+         "hit": {
+          "role": "burst",
+          "opt": "big",
+          "size": 0.45
+         },
+         "from": "hand",
+         "size": 0.5,
+         "el": "fire"
+        },
+        {
+         "k": "react",
+         "t": 0.75,
+         "who": "t0",
+         "r": "burn"
+        },
+        {
+         "k": "react",
+         "t": 0.75,
+         "who": "t4",
+         "r": "burn"
+        },
+        {
+         "k": "react",
+         "t": 0.8,
+         "who": "t2",
+         "r": "burn"
+        },
+        {
+         "k": "act",
+         "a": "throw",
+         "t": 1.2
+        },
+        {
+         "k": "bolt",
+         "t": 1.25,
+         "to": "t0",
+         "d": 0.5,
+         "curve": true,
+         "hit": {
+          "role": "burst",
+          "opt": "nova",
+          "size": 0.45
+         },
+         "from": "hand",
+         "size": 0.5,
+         "el": "frost"
+        },
+        {
+         "k": "bolt",
+         "t": 1.25,
+         "to": "t1",
+         "d": 0.5,
+         "curve": true,
+         "hit": {
+          "role": "burst",
+          "opt": "nova",
+          "size": 0.45
+         },
+         "from": "hand",
+         "size": 0.5,
+         "el": "frost"
+        },
+        {
+         "k": "bolt",
+         "t": 1.25,
+         "to": "t3",
+         "d": 0.55,
+         "curve": true,
+         "hit": {
+          "role": "burst",
+          "opt": "nova",
+          "size": 0.45
+         },
+         "from": "hand",
+         "size": 0.5,
+         "el": "frost"
+        },
+        {
+         "k": "react",
+         "t": 1.75,
+         "who": "t0",
+         "r": "freeze"
+        },
+        {
+         "k": "react",
+         "t": 1.75,
+         "who": "t1",
+         "r": "freeze"
+        },
+        {
+         "k": "react",
+         "t": 1.8,
+         "who": "t3",
+         "r": "freeze"
+        }
+       ]
+      ],
+      [
+       "mortar",
+       "Mortar",
+       "One big flask every 1.5 s, lobbed high, bursting wide where it lands.",
+       [
+        {
+         "k": "act",
+         "a": "throw",
+         "t": 0.2
+        },
+        {
+         "k": "bolt",
+         "t": 0.25,
+         "to": "t0",
+         "d": 0.8,
+         "curve": true,
+         "hit": {
+          "role": "burst",
+          "opt": "big",
+          "size": 1.0
+         },
+         "from": "hand",
+         "size": 0.8,
+         "el": "poison"
+        },
+        {
+         "k": "react",
+         "t": 1.1,
+         "who": "near:320@t0",
+         "r": "poison"
+        },
+        {
+         "k": "react",
+         "t": 1.9,
+         "who": "t0",
+         "r": "die"
+        }
+       ]
+      ]
      ]
     ],
     [
-     "A staff strike",
+     "strike",
+     "Its staff strike",
      [
-      {
-       "k": "act",
-       "a": "swing",
-       "t": 0.2
-      },
-      {
-       "k": "fx",
-       "t": 0.32,
-       "role": "impact",
-       "opt": "core",
-       "at": "t0",
-       "size": 0.6
-      },
-      {
-       "k": "react",
-       "t": 0.34,
-       "who": "t0",
-       "r": "stagger"
-      }
+      [
+       "strike",
+       "Staff strike (today)",
+       "The staff's normal strike: the dead stagger.",
+       [
+        {
+         "k": "act",
+         "a": "swing",
+         "t": 0.2
+        },
+        {
+         "k": "fx",
+         "t": 0.32,
+         "role": "impact",
+         "opt": "core",
+         "at": "t0",
+         "size": 0.6
+        },
+        {
+         "k": "react",
+         "t": 0.34,
+         "who": "t0",
+         "r": "stagger"
+        }
+       ]
+      ],
+      [
+       "mutate",
+       "Mutating strike",
+       "Each strike marks the dead with a mutation that bursts a second later in the last flask's element.",
+       [
+        {
+         "k": "act",
+         "a": "swing",
+         "t": 0.2
+        },
+        {
+         "k": "fx",
+         "t": 0.32,
+         "role": "impact",
+         "opt": "core",
+         "at": "t0",
+         "size": 0.5
+        },
+        {
+         "k": "mark",
+         "t": 0.35,
+         "at": "t0",
+         "d": 1.0
+        },
+        {
+         "k": "fx",
+         "t": 1.35,
+         "role": "burst",
+         "opt": "big",
+         "at": "t0",
+         "size": 0.6
+        },
+        {
+         "k": "react",
+         "t": 1.4,
+         "who": "near:240@t0",
+         "r": "poison"
+        }
+       ]
+      ],
+      [
+       "splash",
+       "Acid splash",
+       "Each strike splashes acid off the staff's head over the dead in front of you.",
+       [
+        {
+         "k": "act",
+         "a": "swing",
+         "t": 0.2
+        },
+        {
+         "k": "fx",
+         "t": 0.32,
+         "role": "impact",
+         "opt": "spark",
+         "at": "t0",
+         "size": 0.9
+        },
+        {
+         "k": "react",
+         "t": 0.36,
+         "who": "near:220@t0",
+         "r": "poison"
+        }
+       ]
+      ]
      ]
     ]
+   ],
+   "looks": [
+    {
+     "id": "o1",
+     "name": "Living Mutagen",
+     "desc": "Green-violet light swirling in the glass head, bubbling up the brass."
+    },
+    {
+     "id": "o2",
+     "name": "Six Vials",
+     "desc": "The six elements chasing each other round the head in turn."
+    },
+    {
+     "id": "o3",
+     "name": "Alembic Smoke",
+     "desc": "Coloured smoke curling off the head like a flask left on the fire."
+    },
+    {
+     "id": "o4",
+     "name": "Transmutation Runes",
+     "desc": "Alchemical sigils lit along the brass, pulsing slowly."
+    },
+    {
+     "id": "o5",
+     "name": "Volatile Core",
+     "desc": "The head glowing hot from inside, cracks of green light flaring."
+    }
    ]
   },
   {
    "id": "slayer",
    "key": "cls_dragonslayer_slayer",
-   "look": "o3",
    "cls": "spellsword",
    "name": "Dragon Slayer",
-   "el": "fire",
+   "el": "holy",
+   "look": "o3",
    "who": "Spellsword's wonder (The Slayer's Oath)",
    "text": "Light: a golden fireball, 2x damage to dragons. Heavy: 5 s of golden fireballs on the dead within 20 m.",
-   "moves": [
+   "slots": [
     [
-     "Light: a golden fireball",
+     "light",
+     "Light attack",
      [
-      {
-       "k": "act",
-       "a": "swing",
-       "t": 0.2
-      },
-      {
-       "k": "bolt",
-       "t": 0.3,
-       "to": "t0",
-       "d": 0.35,
-       "curve": false,
-       "hit": {
-        "role": "burst",
-        "opt": "big",
-        "size": 0.6
-       },
-       "from": "hand",
-       "size": 0.8,
-       "el": "holy"
-      },
-      {
-       "k": "react",
-       "t": 0.66,
-       "who": "t0",
-       "r": "die"
-      }
+      [
+       "fireball",
+       "Golden fireball (today)",
+       "Each swing looses a golden fireball; twice the damage to dragons.",
+       [
+        {
+         "k": "act",
+         "a": "swing",
+         "t": 0.2
+        },
+        {
+         "k": "bolt",
+         "t": 0.3,
+         "to": "t0",
+         "d": 0.35,
+         "curve": false,
+         "hit": {
+          "role": "burst",
+          "opt": "big",
+          "size": 0.6
+         },
+         "from": "hand",
+         "size": 0.8
+        },
+        {
+         "k": "react",
+         "t": 0.66,
+         "who": "t0",
+         "r": "die"
+        }
+       ]
+      ],
+      [
+       "wave",
+       "Golden wave",
+       "Each swing sends a crescent of golden fire along the ground through the dead in front of you.",
+       [
+        {
+         "k": "act",
+         "a": "swing",
+         "t": 0.2
+        },
+        {
+         "k": "fx",
+         "t": 0.35,
+         "role": "ground",
+         "opt": "wave",
+         "at": "front",
+         "size": 0.9
+        },
+        {
+         "k": "react",
+         "t": 0.5,
+         "who": "line",
+         "r": "burn"
+        },
+        {
+         "k": "react",
+         "t": 0.9,
+         "who": "t0",
+         "r": "die"
+        }
+       ]
+      ],
+      [
+       "brand",
+       "Dragonbane brand",
+       "Hits brand the dead in gold; the third brand on one bursts in golden fire.",
+       [
+        {
+         "k": "act",
+         "a": "swing",
+         "t": 0.2
+        },
+        {
+         "k": "fx",
+         "t": 0.32,
+         "role": "impact",
+         "opt": "core",
+         "at": "t0",
+         "size": 0.5
+        },
+        {
+         "k": "act",
+         "a": "swing",
+         "t": 0.6
+        },
+        {
+         "k": "fx",
+         "t": 0.72,
+         "role": "impact",
+         "opt": "core",
+         "at": "t0",
+         "size": 0.5
+        },
+        {
+         "k": "act",
+         "a": "swing",
+         "t": 1.0
+        },
+        {
+         "k": "mark",
+         "t": 1.1,
+         "at": "t0",
+         "d": 0.6
+        },
+        {
+         "k": "fx",
+         "t": 1.15,
+         "role": "burst",
+         "opt": "big",
+         "at": "t0",
+         "size": 0.8
+        },
+        {
+         "k": "react",
+         "t": 1.2,
+         "who": "near:260@t0",
+         "r": "die"
+        }
+       ]
+      ]
      ]
     ],
     [
-     "Heavy: 5 s of golden fireballs",
+     "heavy",
+     "Heavy attack",
      [
-      {
-       "k": "act",
-       "a": "slam",
-       "t": 0.2
-      },
-      {
-       "k": "rain",
-       "t": 0.4,
-       "n": 14,
-       "d": 2.2,
-       "at": "t0",
-       "R": 260,
-       "size": 0.7,
-       "hit": {
-        "role": "burst",
-        "opt": "big",
-        "size": 0.45
-       },
-       "el": "holy"
-      },
-      {
-       "k": "react",
-       "t": 1.0,
-       "who": "near:300@t0",
-       "r": "burn"
-      },
-      {
-       "k": "react",
-       "t": 2.3,
-       "who": "near:300@t0",
-       "r": "die"
-      }
+      [
+       "rain",
+       "Golden rain (today)",
+       "5 s of golden fireballs falling on the dead within 20 m.",
+       [
+        {
+         "k": "act",
+         "a": "slam",
+         "t": 0.2
+        },
+        {
+         "k": "rain",
+         "t": 0.4,
+         "n": 14,
+         "d": 2.2,
+         "at": "t0",
+         "R": 260,
+         "size": 0.7,
+         "hit": {
+          "role": "burst",
+          "opt": "big",
+          "size": 0.45
+         }
+        },
+        {
+         "k": "react",
+         "t": 1.0,
+         "who": "near:300@t0",
+         "r": "burn"
+        },
+        {
+         "k": "react",
+         "t": 2.3,
+         "who": "near:300@t0",
+         "r": "die"
+        }
+       ]
+      ],
+      [
+       "sovngarde",
+       "Light of Sovngarde",
+       "A pillar of golden light falls where you strike and the dead in it burn away.",
+       [
+        {
+         "k": "act",
+         "a": "slam",
+         "t": 0.2
+        },
+        {
+         "k": "fx",
+         "t": 0.42,
+         "role": "above",
+         "opt": "pillar",
+         "at": "t0",
+         "size": 1.1
+        },
+        {
+         "k": "react",
+         "t": 0.6,
+         "who": "near:300@t0",
+         "r": "burn"
+        },
+        {
+         "k": "react",
+         "t": 1.6,
+         "who": "near:300@t0",
+         "r": "die"
+        }
+       ]
+      ],
+      [
+       "dragon",
+       "Spectral dragon",
+       "A spectral dragon's breath of golden fire sweeps across the dead in front of you.",
+       [
+        {
+         "k": "act",
+         "a": "slam",
+         "t": 0.2
+        },
+        {
+         "k": "beam",
+         "t": 0.4,
+         "d": 1.4,
+         "to": "t1"
+        },
+        {
+         "k": "react",
+         "t": 0.6,
+         "who": "line",
+         "r": "burn"
+        },
+        {
+         "k": "react",
+         "t": 1.6,
+         "who": "line",
+         "r": "die"
+        },
+        {
+         "k": "fx",
+         "t": 0.5,
+         "role": "ground",
+         "opt": "mist",
+         "at": "t0",
+         "size": 0.9
+        }
+       ]
+      ]
      ]
     ]
+   ],
+   "looks": [
+    {
+     "id": "o1",
+     "name": "Slayer's Runes",
+     "desc": "The Dragon Slayer's runes burning gold under a soft golden mist."
+    },
+    {
+     "id": "o2",
+     "name": "Dragonbane",
+     "desc": "Gold light in the bone and a bright edge, steady and proud."
+    },
+    {
+     "id": "o3",
+     "name": "Golden Mist",
+     "desc": "Gold mist pouring off the blade."
+    },
+    {
+     "id": "o4",
+     "name": "Dragonfire Runes",
+     "desc": "The Slayer's runes burning orange-gold, embers lifting off them."
+    },
+    {
+     "id": "o5",
+     "name": "Sovngarde Light",
+     "desc": "A clean golden halo round the blade, bright and calm."
+    }
    ]
   },
   {
    "id": "bane",
    "key": "fang",
-   "look": "o2",
    "cls": "summoner",
    "name": "Alduin's Bane",
    "el": "fire",
+   "look": "o2",
    "who": "The last weapon (the Hall of the Awakened)",
    "text": "Light: a large meteor falls on each of the dead you hit. Heavy: a bright white tornado for 5 s that flings the dead away.",
-   "moves": [
+   "slots": [
     [
-     "Light: a meteor on each hit",
+     "light",
+     "Light attack",
      [
-      {
-       "k": "act",
-       "a": "swing",
-       "t": 0.2
-      },
-      {
-       "k": "react",
-       "t": 0.34,
-       "who": "t0",
-       "r": "flinch"
-      },
-      {
-       "k": "fx",
-       "t": 0.4,
-       "role": "above",
-       "opt": "sky",
-       "at": "t0",
-       "size": 1
-      },
-      {
-       "k": "react",
-       "t": 1.0,
-       "who": "near:300@t0",
-       "r": "die"
-      }
+      [
+       "meteor",
+       "Meteor on each hit (today)",
+       "A large meteor falls on each of the dead you hit.",
+       [
+        {
+         "k": "act",
+         "a": "swing",
+         "t": 0.2
+        },
+        {
+         "k": "react",
+         "t": 0.34,
+         "who": "t0",
+         "r": "flinch"
+        },
+        {
+         "k": "fx",
+         "t": 0.4,
+         "role": "above",
+         "opt": "sky",
+         "at": "t0",
+         "size": 1
+        },
+        {
+         "k": "react",
+         "t": 1.0,
+         "who": "near:300@t0",
+         "r": "die"
+        }
+       ]
+      ],
+      [
+       "shout",
+       "World-Eater's breath",
+       "Each swing breathes a short cone of Alduin's fire through the dead in front of you.",
+       [
+        {
+         "k": "act",
+         "a": "swing",
+         "t": 0.2
+        },
+        {
+         "k": "beam",
+         "t": 0.3,
+         "d": 0.6,
+         "to": "t0"
+        },
+        {
+         "k": "react",
+         "t": 0.4,
+         "who": "near:200@t0",
+         "r": "burn"
+        },
+        {
+         "k": "react",
+         "t": 1.0,
+         "who": "t0",
+         "r": "die"
+        }
+       ]
+      ],
+      [
+       "ash",
+       "Ash of Helgen",
+       "Hits burn the dead to ash that falls and smoulders, spreading to those next to them.",
+       [
+        {
+         "k": "act",
+         "a": "swing",
+         "t": 0.2
+        },
+        {
+         "k": "fx",
+         "t": 0.32,
+         "role": "impact",
+         "opt": "drain",
+         "at": "t0",
+         "size": 0.7
+        },
+        {
+         "k": "react",
+         "t": 0.4,
+         "who": "t0",
+         "r": "burn"
+        },
+        {
+         "k": "fx",
+         "t": 0.9,
+         "role": "ground",
+         "opt": "mist",
+         "at": "t0",
+         "size": 0.8
+        },
+        {
+         "k": "react",
+         "t": 1.1,
+         "who": "near:240@t0",
+         "r": "burn"
+        },
+        {
+         "k": "react",
+         "t": 1.6,
+         "who": "t0",
+         "r": "die"
+        }
+       ]
+      ]
      ]
     ],
     [
-     "Heavy: the white tornado",
+     "heavy",
+     "Heavy attack",
      [
-      {
-       "k": "act",
-       "a": "slam",
-       "t": 0.2
-      },
-      {
-       "k": "fx",
-       "t": 0.4,
-       "role": "above",
-       "opt": "pillar",
-       "at": "front",
-       "size": 1.2,
-       "el": "wind"
-      },
-      {
-       "k": "react",
-       "t": 0.7,
-       "who": "near:420@front",
-       "r": "fling"
-      },
-      {
-       "k": "react",
-       "t": 1.6,
-       "who": "all",
-       "r": "stagger"
-      }
+      [
+       "tornado",
+       "White tornado (today)",
+       "A bright white tornado for 5 s that flings the dead away.",
+       [
+        {
+         "k": "act",
+         "a": "slam",
+         "t": 0.2
+        },
+        {
+         "k": "fx",
+         "t": 0.4,
+         "role": "above",
+         "opt": "pillar",
+         "at": "front",
+         "size": 1.2,
+         "el": "wind"
+        },
+        {
+         "k": "react",
+         "t": 0.7,
+         "who": "near:420@front",
+         "r": "fling"
+        },
+        {
+         "k": "react",
+         "t": 1.6,
+         "who": "all",
+         "r": "stagger"
+        }
+       ]
+      ],
+      [
+       "firestorm",
+       "Firestorm",
+       "A ring of Alduin's fire bursts out round you and the ground burns.",
+       [
+        {
+         "k": "act",
+         "a": "slam",
+         "t": 0.2
+        },
+        {
+         "k": "fx",
+         "t": 0.4,
+         "role": "burst",
+         "opt": "nova",
+         "at": "me",
+         "size": 1.3
+        },
+        {
+         "k": "fx",
+         "t": 0.6,
+         "role": "ground",
+         "opt": "wave",
+         "at": "me",
+         "size": 1.1
+        },
+        {
+         "k": "react",
+         "t": 0.6,
+         "who": "near:420@me",
+         "r": "burn"
+        },
+        {
+         "k": "react",
+         "t": 1.5,
+         "who": "near:420@me",
+         "r": "die"
+        }
+       ]
+      ],
+      [
+       "timewound",
+       "Time-Wound",
+       "Time stops round the blade: the dead freeze where they stand, then shatter.",
+       [
+        {
+         "k": "act",
+         "a": "slam",
+         "t": 0.2
+        },
+        {
+         "k": "fx",
+         "t": 0.4,
+         "role": "burst",
+         "opt": "nova",
+         "at": "front",
+         "size": 1.1,
+         "el": "arcane"
+        },
+        {
+         "k": "react",
+         "t": 0.5,
+         "who": "all",
+         "r": "freeze"
+        },
+        {
+         "k": "react",
+         "t": 1.7,
+         "who": "all",
+         "r": "shatter"
+        }
+       ]
+      ]
      ]
     ]
+   ],
+   "looks": [
+    {
+     "id": "o1",
+     "name": "World-Eater's Fire",
+     "desc": "Orange fire under a dark smoke, embers rising through it, Alduin's own."
+    },
+    {
+     "id": "o2",
+     "name": "Time-Wound",
+     "desc": "A deep orange light in the bone, rippling slowly, the world's end held in it."
+    },
+    {
+     "id": "o3",
+     "name": "Black Dragon",
+     "desc": "Dark smoke pouring off the blade, orange burning only at its rim."
+    },
+    {
+     "id": "o4",
+     "name": "Words of Power",
+     "desc": "The Thu'um's own words burning down the blade, one after another."
+    },
+    {
+     "id": "o5",
+     "name": "Ash of Helgen",
+     "desc": "Ash and embers falling off the blade, the world burning behind it."
+    }
    ]
   }
  ],

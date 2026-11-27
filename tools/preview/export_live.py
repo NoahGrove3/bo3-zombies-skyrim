@@ -185,7 +185,7 @@ def export_model(key, rel):
     buf, head, cache = io.BytesIO(), [], {}
     for s in model:
         V = np.array(s['v']); U = np.array(s['uv']); T = np.array(s['t'])
-        m = {'k': 'm', 'n': len(V), 'nt': len(T), 'i32': len(V) >= 65536}
+        m = {'k': 'm', 'n': len(V), 'nt': len(T), 'i32': len(V) >= 65536, 'name': s['name'], 'tex': (s['tex'] or '').split('\\')[-1]}
         if s['kind'] == 'effect': m['glow'] = 1
         tp = find_tex(s['tex']) if s['tex'] else None
         if tp and tp not in cache:

@@ -50,8 +50,10 @@ const GL = (function () {
     blurM.uniforms.t.value = rt.c.texture; blurM.uniforms.dir.value.set(0, 3.0 / (H / 4)); pass(blurM, rt.d);
     addM.uniforms.a.value = rt.a.texture; addM.uniforms.c.value = rt.d.texture; addM.uniforms.k.value = v.bloom == null ? 1 : v.bloom;
     quad.material = addM; R.setRenderTarget(null); R.render(quad, qcam);
-    const ctx = v.ctx || (v.ctx = v.cv.getContext('2d'));
-    ctx.drawImage(glc, 0, 0, v.cv.width, v.cv.height);
+    // (Nov 27: "make sure the weapons preview isnt stretched") the picture is cut to the canvas's own shape, never squeezed into it
+    const ctx = v.ctx || (v.ctx = v.cv.getContext('2d')), a = v.aspect || W / H;
+    const sw = a < W / H ? H * a : W, sh = a < W / H ? H : W / a;
+    ctx.drawImage(glc, (W - sw) / 2, (H - sh) / 2, sw, sh, 0, 0, v.cv.width, v.cv.height);
   }
   const io = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => { const v = e.target.__view; if (v) v.visible = e.isIntersecting; }), { rootMargin: '80px' }) : null;
   let last = 0; const t0 = performance.now();
@@ -64,13 +66,20 @@ const GL = (function () {
     for (const v of views) {
       if (!v.visible || !v.ready || document.hidden) continue;
       if (++n > 10) break;
+      fit(v);
       try { v.tick(t); draw(v); } catch (e) { console.error(e); v.ready = false; }
     }
+  }
+  function fit(v) {   // the canvas's shape as the page lays it out (its bitmap made that shape too)
+    const r = v.cv.getBoundingClientRect(); if (!r.width || !r.height) return;
+    const a = r.width / r.height; if (v.aspect && Math.abs(a - v.aspect) < .02) return;
+    v.aspect = a; v.cv.width = a >= W / H ? W : Math.round(H * a); v.cv.height = a >= W / H ? Math.round(W / a) : H; v.ctx = null;
+    if (v.refit) v.refit();
   }
   if (ok) requestAnimationFrame(loop);
   return {
     ok, W, H,
-    add(v) { v.cv.width = W; v.cv.height = H; v.cv.__view = v; views.add(v); if (io) io.observe(v.cv); else v.visible = true; return v; },
+    add(v) { v.cv.width = W; v.cv.height = H; v.cv.__view = v; views.add(v); fit(v); if (io) io.observe(v.cv); else v.visible = true; return v; },
     remove(v) { views.delete(v); if (io) io.unobserve(v.cv); },
     drawNow(v, t) { v.tick(t); draw(v); },
     renderer: R,
@@ -278,7 +287,8 @@ function weaponView(cv, onInfo) {
       pivot.rotation.set(0, 0, 0); tilt.rotation.set(0.32, -0.22, 0.18); pivot.updateMatrixWorld(true);
       const box = new THREE.Box3().setFromObject(v.model.g), sz = box.getSize(new THREE.Vector3()), mid = box.getCenter(new THREE.Vector3());
       const tn = Math.tan(THREE.MathUtils.degToRad(11));
-      const dist = Math.max(sz.x * 1.06 / (2 * tn * (GL.W / GL.H)), sz.y * 1.16 / (2 * tn)) + sz.z;
+      const A = v.aspect || GL.W / GL.H, vk = Math.min(1, (GL.W / GL.H) / A);   // (fitted to what the canvas shows of the picture)
+      const dist = Math.max(sz.x * 1.06 / (2 * tn * Math.min(A, GL.W / GL.H)), sz.y * 1.16 / (2 * tn * vk)) + sz.z;
       v.mid.copy(mid); v.dist = dist; placeCam();
       key.position.set(mid.x - 60, mid.y + 120, mid.z + 140); rim.position.set(mid.x + 80, mid.y + 40, mid.z - 160);
       // its length in game (the model's own scale, and the scythes' 25% more)

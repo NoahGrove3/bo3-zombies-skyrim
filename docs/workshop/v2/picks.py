@@ -72,7 +72,20 @@ def say(col, id, v):   # one row in words: (where, what)
         al = {'sheen': 'Sheen', 'wisps': 'Rising wisps', 'embers': 'Embers', 'runes': 'Rune circle', 'mantle': 'Mantle'}
         t4 = v.get('t4') or ''; t4 = 'at its brightest' if t4 == 'blaze' else ('+ ' + al.get(t4[6:], t4[6:])) if t4 else 'not picked'
         return f'{CLS[id]["name"]}: armour look', f'{al.get(v.get("look"), v.get("look") or "not picked")}; Legendary {t4}'
-    if col == 'wonders': return f'Wonder: {next((w["name"] for w in D["wonders"] if w["id"] == id), id)}', WORD.get(v.get('choice'), v.get('choice') or 'mark cleared')
+    if col == 'flasks':
+        nm = {'fire': 'Fire Flask', 'frost': 'Frost Flask', 'shock': 'Shock Flask', 'poison': 'Acid Flask', 'sun': 'Holy Water', 'blood': 'Voidglass Flask', 'philosopher': 'Philosopher\'s Flask'}
+        return nm.get(id, id), f"liquid {v.get('liquid', '-')}; cork {v.get('cork', '-')}; impact {v.get('impact', '-')} at {round(100 * v['size']) if 'size' in v else '-'}%"
+    if col == 'wonders':
+        w = next((x for x in D['wonders'] if x['id'] == id), None)
+        if not w: return None
+        ln = {l['id']: l['name'] for l in w['looks']}; parts = []
+        if v.get('look'): parts.append('look ' + ln.get(v['look'], v['look']))
+        if v.get('str'): parts.append('strength ' + (('+ ' + ln.get(v['str'][6:], v['str'][6:])) if v['str'].startswith('layer:') else v['str']))
+        if v.get('el'): parts.append('element ' + KIT.get(v['el'], {}).get('name', v['el']))
+        for sl, sn, opts in w['slots']:
+            if v.get('mv_' + sl): parts.append(sn + ': ' + next((o[1] for o in opts if o[0] == v['mv_' + sl]), v['mv_' + sl]))
+        if v.get('choice'): parts.append(WORD.get(v['choice'], v['choice']))
+        return f'Wonder: {w["name"]}', '; '.join(parts) or 'mark cleared'
     return None
 
 
