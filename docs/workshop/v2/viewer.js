@@ -242,14 +242,19 @@ function weaponView(cv, onInfo) {
   cv.addEventListener('dblclick', () => { v.yaw = 0; v.pitch = 0; v.zoom = 1; placeCam(); });
   v.tick = t => {
     if (!v.fx) return;
-    for (const { s, u } of v.fx.list) {
-      if (s.vscroll && !s.flip) u.off.value.set(0, -(t / s.vscroll) % 1);
-      if (s.flip) setCell(u, s.flip, s.fps, t, s.phase, true);
-      let g = s.scale; if (s.pulse) { const [per, lo, hi] = s.pulse; g *= lo + (hi - lo) * (0.5 - 0.5 * Math.cos(2 * Math.PI * ((t + (s.phase || 0)) / per))); }
-      u.gain.value = g;
+    // (Noah, Nov 26 night: "make sure the look animations are 360") a slow turntable, whole turns, unless you're turning it
+    if (v.spin && !drag) { v.yaw += 0.008; placeCam(); }
+    for (const [fx, gm] of [[v.fx, v.gain == null ? 1 : v.gain], [v.fx2, v.gain2 == null ? 1 : v.gain2]]) {
+      if (!fx) continue;
+      for (const { s, u } of fx.list) {
+        if (s.vscroll && !s.flip) u.off.value.set(0, -(t / s.vscroll) % 1);
+        if (s.flip) setCell(u, s.flip, s.fps, t, s.phase, true);
+        let g = s.scale; if (s.pulse) { const [per, lo, hi] = s.pulse; g *= lo + (hi - lo) * (0.5 - 0.5 * Math.cos(2 * Math.PI * ((t + (s.phase || 0)) / per))); }
+        u.gain.value = g * gm;
+      }
+      const pq = new THREE.Quaternion();
+      for (const b of fx.bbs) { b.parent.getWorldQuaternion(pq); b.quaternion.copy(pq.invert().multiply(cam.quaternion)); }
     }
-    const pq = new THREE.Quaternion();
-    for (const b of v.fx.bbs) { b.parent.getWorldQuaternion(pq); b.quaternion.copy(pq.invert().multiply(cam.quaternion)); }
   };
   v.show = async (keyName, look, col) => {
     const sameKey = v.key === keyName;
@@ -289,6 +294,12 @@ function weaponView(cv, onInfo) {
     }
     v.ready = true;
     onInfo && onInfo({ length: v.lengthM });
+  };
+  // (a second look layered over the first: a Legendary tier)
+  v.layer = (look2, gain2) => {
+    if (v.fx2) { root.remove(v.fx2.g); v.fx2 = null; }
+    if (!look2 || !v.d) return;
+    v.fx2 = weaponFx(v.d, look2); root.add(v.fx2.g); v.gain2 = gain2;
   };
   return GL.add(v);
 }

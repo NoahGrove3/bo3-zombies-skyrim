@@ -223,8 +223,8 @@
    "id": "cw_onemodel",
    "sys": "classes",
    "t": "One model per class weapon",
-   "st": "idea",
-   "what": "Your Nov 26 decision: each class keeps one model through every tier; the tiers change its look only (stronger each tier, like Pack-a-Punch). You pick the model in Weapons & effects.",
+   "st": "building",
+   "what": "Your picks: the Dragon Priest scythe (Alchemist), the Dragonbone quarterstaff (Summoner), the Daedric wand (Destruction), the Daedric rapier (Spellsword) - each through every tier, the tiers changing its look only.",
    "how": "",
    "look": "",
    "note": "",
@@ -365,9 +365,9 @@
   {
    "id": "sp_immolate",
    "sys": "spells",
-   "t": "Replace Immolate in the pool",
-   "st": "idea",
-   "what": "You asked to replace Immolate (Destruction, fire Tier III). Pick its replacement in Decisions.",
+   "t": "Fire Storm replaces Immolate",
+   "st": "building",
+   "what": "Your pick (Decisions): Skyrim's Fire Storm takes Immolate's place in the Destruction fire spells, in the next build.",
    "how": "",
    "look": "",
    "note": "\"I want to replace the immolate from the spell pool\".",
@@ -475,9 +475,9 @@
   {
    "id": "tb_bonereaper",
    "sys": "tablet",
-   "t": "Bonereaper",
+   "t": "Eight Tablet weapons cut",
    "st": "building",
-   "what": "Its raise was the likely cause of the round 20 crash (fixed). You said it can be replaced if it was the cause: it goes into the lineup review.",
+   "what": "Your marks: Bloodmoon, Bonereaper, Gravebell, Riverstone, Silver Reaping, Talons of Woe, the Wandering Star and Wyrmtooth leave the Tablet; the new ones you add take their place.",
    "how": "",
    "look": "",
    "note": "",
@@ -1030,16 +1030,6 @@
    "sha": "f64b181",
    "when": "2026-11-24 21:17",
    "what": "Trials: Hold the Light replaces Repeat the Echo; souls are blue spirit flames in the world; the altar's ring is real light on the ground"
-  },
-  {
-   "sha": "dec31f3",
-   "when": "2026-11-24 21:09",
-   "what": "Javelin seen in the hand, tap jabs and hold throws, a human overhand throw, trails you can follow; Wandering Star's tip; Mutagen Staff in the hands"
-  },
-  {
-   "sha": "07d6c6f",
-   "when": "2026-11-24 21:04",
-   "what": "Weapon effects: whole blade, no outline lines, scythes the right way round, claws lined up and in both hands"
   }
  ],
  "installs": {
@@ -1250,6 +1240,7 @@
  "classes": [
   {
    "id": "alchemist",
+   "lk": "alch",
    "name": "Alchemist",
    "weapon": "Shadowflame Scythe",
    "now": "Forsworn at Tier I, Falmer II, Dwarven III, Dragon Priest Legendary",
@@ -1274,10 +1265,38 @@
      "name": "Dragon Priest scythe",
      "src": "Built from a Dragon Priest staff and dagger (ours)"
     }
+   ],
+   "looks": [
+    {
+     "id": "o1",
+     "name": "Shadowflame",
+     "desc": "Violet-black fire rising up the scythe's blade."
+    },
+    {
+     "id": "o2",
+     "name": "Alchemist's Smoke",
+     "desc": "Dark violet smoke boiling off the blade like a spilled flask."
+    },
+    {
+     "id": "o3",
+     "name": "Transmuted Edge",
+     "desc": "A violet line of heat along the blade, the steel glowing as if being changed."
+    },
+    {
+     "id": "o4",
+     "name": "Bubbling Brew",
+     "desc": "Violet light bubbling up the blade like a potion on the boil."
+    },
+    {
+     "id": "o5",
+     "name": "Shadow Runes",
+     "desc": "Alchemical sigils burning dark violet down the blade."
+    }
    ]
   },
   {
    "id": "summoner",
+   "lk": "radiant",
    "name": "Summoner",
    "weapon": "Radiant Quarterstaff",
    "now": "Steel, Ebony, Daedric, Dragonbone by tier (Animated Armoury)",
@@ -1302,10 +1321,38 @@
      "name": "Dragonbone quarterstaff",
      "src": "Animated Armoury - to be rebuilt from Skyrim's meshes"
     }
+   ],
+   "looks": [
+    {
+     "id": "o1",
+     "name": "Radiant Heads",
+     "desc": "Gold light glowing in both heads' cracks, bright at their edges."
+    },
+    {
+     "id": "o2",
+     "name": "Sunfire",
+     "desc": "Golden flames rising off both heads."
+    },
+    {
+     "id": "o3",
+     "name": "Dawn Halo",
+     "desc": "A halo of sunlight round each head, rays standing off it."
+    },
+    {
+     "id": "o4",
+     "name": "Sun Runes",
+     "desc": "Sun runes circling the staff's heads, gold and bright."
+    },
+    {
+     "id": "o5",
+     "name": "Solar Flare",
+     "desc": "Rays bursting off the heads in slow flares."
+    }
    ]
   },
   {
    "id": "destruction",
+   "lk": "carian",
    "name": "Destruction",
    "weapon": "Carian Wand",
    "now": "Steel, Stalhrim, Glass, Daedric by tier (Fulcimentum)",
@@ -1330,10 +1377,38 @@
      "name": "Daedric wand",
      "src": "Fulcimentum - to be rebuilt from Skyrim's meshes"
     }
+   ],
+   "looks": [
+    {
+     "id": "o1",
+     "name": "Glintstone Mist",
+     "desc": "Soft purple mist over the whole wand, glinting faintly."
+    },
+    {
+     "id": "o2",
+     "name": "Starlight",
+     "desc": "Blue-violet starlight running along the wand and gathering at its tip."
+    },
+    {
+     "id": "o3",
+     "name": "Sorcery",
+     "desc": "Runes glowing along the wand's length."
+    },
+    {
+     "id": "o4",
+     "name": "Glintstone Shards",
+     "desc": "Tiny bright shards of glintstone sparkling along the wand."
+    },
+    {
+     "id": "o5",
+     "name": "Comet Tail",
+     "desc": "A long blue trail streaming off the tip like a comet."
+    }
    ]
   },
   {
    "id": "spellsword",
+   "lk": "ss_none",
    "name": "Spellsword",
    "weapon": "Spellbound Rapier",
    "now": "Steel, Ebony, Daedric, Dragonbone by tier (Animated Armoury)",
@@ -1357,6 +1432,33 @@
      "key": "cls_dragonbonerapier_ss_none",
      "name": "Dragonbone rapier",
      "src": "Animated Armoury - to be rebuilt from Skyrim's meshes"
+    }
+   ],
+   "looks": [
+    {
+     "id": "o1",
+     "name": "Bare Blade",
+     "desc": "A thin white line of light along the rapier's edge, nothing more."
+    },
+    {
+     "id": "o2",
+     "name": "Spellbound",
+     "desc": "A faint blue enchantment glow over the steel, waiting for a spell."
+    },
+    {
+     "id": "o3",
+     "name": "Duelist's Gleam",
+     "desc": "A bright gleam sweeping along the blade now and then."
+    },
+    {
+     "id": "o4",
+     "name": "Mirror Steel",
+     "desc": "Polished steel with a bright sheen sweeping up it now and then."
+    },
+    {
+     "id": "o5",
+     "name": "Fencer's Runes",
+     "desc": "Fine runes etched down the blade, faintly lit."
     }
    ]
   }
@@ -1459,6 +1561,2210 @@
    "name": "Bloodmoon Scythe",
    "kind": "Scythe - battered",
    "does": "Hits drain blood to heal you. Heavy: drains everything it touches."
+  }
+ ],
+ "tabnew": [
+  {
+   "id": "fushammer",
+   "name": "Voice of the Mountain",
+   "kind": "Nordic warhammer",
+   "el": "wind",
+   "base": "Skyrim's Nordic warhammer with a Word Wall's carved dragon-script round its head",
+   "light": "Every hit staggers the dead back a step.",
+   "heavy": "The Unrelenting Force: a roaring cone that hurls every one of the dead in front of you.",
+   "special": "Every 20 kills the hammer charges a full FUS RO DAH: the next heavy clears the street.",
+   "bo3": "The Thundergun"
+  },
+  {
+   "id": "jester",
+   "name": "The Jester's Cane",
+   "kind": "Daedric staff",
+   "el": "arcane",
+   "base": "The Wabbajack's shape, reshaped as a twisted cane with a grinning head",
+   "light": "Each bolt rolls a random fate: the dead shrink to knee height, turn into a cheese wheel that rolls off and bursts, fight each other, or pop in confetti fire.",
+   "heavy": "A wide burst that gives every one of the dead around you its own random fate.",
+   "special": "Sheogorath laughs now and then.",
+   "bo3": "The Wave Gun and the Shrink Ray"
+  },
+  {
+   "id": "soulrender",
+   "name": "Soulrender",
+   "kind": "Daedric mace",
+   "el": "spirit",
+   "base": "A Daedric mace whose head is a cracked black soul gem",
+   "light": "Every kill traps a soul: the gem fills and glows brighter.",
+   "heavy": "With a full gem: a soul storm - the trapped souls rise as spectral warriors and fight beside you for 12 s.",
+   "special": "The gem hums when it is full.",
+   "bo3": "The Wrath of the Ancients (its charged shots)"
+  },
+  {
+   "id": "chaurus",
+   "name": "Chaurus Fang",
+   "kind": "Falmer sword",
+   "el": "poison",
+   "base": "A Falmer sword edged with chaurus chitin and dripping venom",
+   "light": "Hits poison the dead.",
+   "heavy": "A spray of venom in a cone.",
+   "special": "The poisoned dead burst into acid when they die, poisoning the ones beside them - a chain through a crowd.",
+   "bo3": "The Apothicon Servant's chain kills"
+  },
+  {
+   "id": "piston",
+   "name": "Dwemer Piston Lance",
+   "kind": "Dwarven spear",
+   "el": "earth",
+   "base": "A Dwarven spear on a Centurion's piston, steam venting from its joints",
+   "light": "Thrusts with a hiss of steam that staggers.",
+   "heavy": "The piston fires: a spike punches through a line of the dead and pins them to the ground for 4 s.",
+   "special": "Steam bursts from it on every heavy.",
+   "bo3": "The Ragnarok DG-4 (pinning the horde)"
+  },
+  {
+   "id": "bound",
+   "name": "Mace of the Bound",
+   "kind": "Daedric mace",
+   "el": "shadowfire",
+   "base": "The Mace of Molag Bal's spiked head on a Daedric haft",
+   "light": "Hits brand the dead with a violet mark.",
+   "heavy": "A slam that brands every one of the dead within 6 m.",
+   "special": "A branded one that dies bursts into violet shadowfire, burning the dead around it.",
+   "bo3": "The Kraken / the Thundergun's mass kills"
+  },
+  {
+   "id": "aetherium",
+   "name": "Aetherium Disc Blade",
+   "kind": "Dwemer glaive",
+   "el": "arcane",
+   "base": "Dwemer metal round a glowing Aetherium core, a round blade",
+   "light": "A spinning slash.",
+   "heavy": "Thrown: the blade hovers ahead of you and spins through the dead for 5 s before flying back.",
+   "special": "Its core lights the dead it cuts in blue.",
+   "bo3": "The Apothicon Sword's spinning attack"
+  },
+  {
+   "id": "bloodbite",
+   "name": "Harkon's Bloodbite",
+   "kind": "Vampire dagger",
+   "el": "blood",
+   "base": "A vampire's curved dagger with a blood-red gem",
+   "light": "Fast stabs that drain a little health.",
+   "heavy": "A cloud of bats bursts from you and tears at the dead around you for 4 s.",
+   "special": "Kills leave blood orbs that heal you when you walk through them.",
+   "bo3": "The Vril device's life drain"
+  },
+  {
+   "id": "whisper",
+   "name": "Whisper Edge",
+   "kind": "Ebony sword",
+   "el": "shadowfire",
+   "base": "An Ebony sword wrapped in shadow, like the Ebony Blade",
+   "light": "Kills make you unseen for 2 s: the dead lose you.",
+   "heavy": "Shadow step: you blink 8 m forward through the dead, cutting every one you pass.",
+   "special": "The blade whispers when it kills.",
+   "bo3": "Who's Who and the Apothicon Sword's lunge"
+  },
+  {
+   "id": "giantclub",
+   "name": "Giant's Toe Club",
+   "kind": "Giant's club",
+   "el": "earth",
+   "base": "A giant's club, a mammoth toe bound to its head",
+   "light": "Every hit sends one of the dead flying into the sky.",
+   "heavy": "A ground stomp that knocks down every one of the dead within 8 m.",
+   "special": "Yes - the famous giant launch.",
+   "bo3": "The Ragnarok DG-4's slam"
+  },
+  {
+   "id": "sweetroll",
+   "name": "Sweetroll of the Damned",
+   "kind": "Throwable (5 throws)",
+   "el": "fire",
+   "base": "A sweetroll with a lit fuse in it",
+   "light": "Throw it: it sings a little Nord tune, and every one of the dead nearby runs to it.",
+   "heavy": "-",
+   "special": "After 6 s it explodes in a fireball. Someone always steals it first.",
+   "bo3": "The Monkey Bomb"
+  },
+  {
+   "id": "atronach",
+   "name": "Lil' Atronach",
+   "kind": "Throwable (3 throws)",
+   "el": "fire",
+   "base": "A soul gem holding a tiny Flame Atronach",
+   "light": "Throw it: a knee-high Flame Atronach pops out and spins, blasting the dead around it with fire for 10 s.",
+   "heavy": "-",
+   "special": "It dances when it's done.",
+   "bo3": "Li'l Arnie"
+  }
+ ],
+ "kits": [
+  {
+   "id": "fire",
+   "name": "Fire",
+   "col": "#ff7a2e",
+   "about": "Skyrim's fire spells and Dragonfire: real flames, embers, scorch.",
+   "theme": "fire",
+   "parts": [
+    {
+     "id": "impact",
+     "name": "Impact",
+     "about": "One hit landing.",
+     "opts": [
+      {
+       "id": "core",
+       "model": "effects\\impacteffects\\fxdragonfireimpactactor.nif",
+       "label": "Skyrim: dragonfire impact",
+       "s": 0.9,
+       "ground": false
+      },
+      {
+       "id": "spark",
+       "model": "effects\\impacteffects\\fireballimpact01.nif",
+       "label": "Skyrim: fireball impact",
+       "s": 0.6,
+       "ground": false
+      },
+      {
+       "id": "drain",
+       "model": "magic\\absorbredimpact01.nif",
+       "label": "Skyrim: Absorb impact",
+       "s": 1.0,
+       "ground": false
+      }
+     ]
+    },
+    {
+     "id": "burst",
+     "name": "Burst",
+     "about": "A heavy or an explosion.",
+     "opts": [
+      {
+       "id": "big",
+       "model": "apocnew\\destructionfire_explosion_ballofire.nif",
+       "label": "Apocalypse: Ball of Fire explosion",
+       "s": 0.8,
+       "ground": false
+      },
+      {
+       "id": "nova",
+       "model": "apocnew\\destructionhellfire_explosion.nif",
+       "label": "Apocalypse: Hellfire explosion",
+       "s": 0.8,
+       "ground": true
+      },
+      {
+       "id": "spikes",
+       "model": "apocnew\\destructionfire_explosion_pyroclasm.nif",
+       "label": "Apocalypse: Pyroclasm eruption",
+       "s": 0.6,
+       "ground": false
+      }
+     ]
+    },
+    {
+     "id": "ground",
+     "name": "Ground",
+     "about": "What lingers where it struck.",
+     "opts": [
+      {
+       "id": "mist",
+       "model": "apocnew\\destructionfire_explosion_carbonize.nif",
+       "label": "Apocalypse: Carbonize ash burst",
+       "s": 0.8,
+       "ground": true
+      },
+      {
+       "id": "rune",
+       "model": "apocnew\\alterationchaos_explosion_rune.nif",
+       "label": "Apocalypse: Chaos rune burst",
+       "s": 0.8,
+       "ground": true
+      },
+      {
+       "id": "wave",
+       "model": "magic\\shoutareaexplosionwarm.nif",
+       "label": "Skyrim: warm shout wave",
+       "s": 0.6,
+       "ground": true
+      }
+     ]
+    },
+    {
+     "id": "above",
+     "name": "From above",
+     "about": "A strike from the sky.",
+     "opts": [
+      {
+       "id": "sky",
+       "model": "effects\\impacteffects\\fxdragonfireimpact.nif",
+       "label": "Skyrim: dragonfire blast",
+       "s": 0.5,
+       "ground": false
+      },
+      {
+       "id": "pillar",
+       "model": "effects\\mgmagicfirepillarsmall.nif",
+       "label": "Skyrim: College fire pillar (small)",
+       "s": 0.55,
+       "ground": true
+      }
+     ]
+    }
+   ],
+   "sounds": [
+    {
+     "id": "cast",
+     "name": "Cast",
+     "opts": [
+      {
+       "id": "WB_DestructionFire_Sound_Release_1",
+       "name": "WB DestructionFire Sound Release 1",
+       "mp3": "voc_shout_projectile_firebreath_01.mp3",
+       "src": "Apocalypse"
+      },
+      {
+       "id": "WB_DestructionFire_Sound_Release_Emberbolt",
+       "name": "WB DestructionFire Sound Release Emberbolt",
+       "mp3": "mgk_firebolt_03_fire.mp3",
+       "src": "Apocalypse"
+      },
+      {
+       "id": "MAGFireboltFire2DSD",
+       "name": "MAGFireboltFire2DSD",
+       "mp3": "mag_firebolt_fire_2d.mp3",
+       "src": "Skyrim"
+      }
+     ]
+    },
+    {
+     "id": "impact",
+     "name": "Impact",
+     "opts": [
+      {
+       "id": "MAGFireboltImpactSD",
+       "name": "MAGFireboltImpactSD",
+       "mp3": "mgk_firebolt_impact_01.mp3",
+       "src": "Skyrim"
+      },
+      {
+       "id": "WB_DestructionFire_Sound_Impact_Fwoosh",
+       "name": "WB DestructionFire Sound Impact Fwoosh",
+       "mp3": "voc_shout_projectile_firebreath_01.mp3",
+       "src": "Apocalypse"
+      },
+      {
+       "id": "WB_DestructionFire_Sound_Impact_Immolation",
+       "name": "WB DestructionFire Sound Impact Immolation",
+       "mp3": "fx_explosion_firestorm_near_02.mp3",
+       "src": "Apocalypse"
+      }
+     ]
+    },
+    {
+     "id": "burst",
+     "name": "Burst",
+     "opts": [
+      {
+       "id": "MAGDestructionFireballExplosion",
+       "name": "MAGDestructionFireballExplosion",
+       "mp3": "mag_destruction_fireball_explosion_01.mp3",
+       "src": "Skyrim"
+      },
+      {
+       "id": "MAGDestructionFireStormExplosion",
+       "name": "MAGDestructionFireStormExplosion",
+       "mp3": "mag_destruction_firestorm_impact.mp3",
+       "src": "Skyrim"
+      },
+      {
+       "id": "WB_DestructionFire_Sound_Explosion_FlashFireball",
+       "name": "WB DestructionFire Sound Explosion FlashFireball",
+       "mp3": "mag_destruction_fireball_explosion_01.mp3",
+       "src": "Apocalypse"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "frost",
+   "name": "Frost",
+   "col": "#9fd6ff",
+   "about": "Ice spikes, frost mist, rime on the dead; shatter bursts.",
+   "theme": "frost",
+   "parts": [
+    {
+     "id": "impact",
+     "name": "Impact",
+     "about": "One hit landing.",
+     "opts": [
+      {
+       "id": "core",
+       "model": "magic\\icicleimpactactor01.nif",
+       "label": "Skyrim: Ice Spike impact",
+       "s": 1.0,
+       "ground": false
+      },
+      {
+       "id": "spark",
+       "model": "effects\\impacteffects\\impactfrost01.nif",
+       "label": "Skyrim: frost impact",
+       "s": 1.0,
+       "ground": false
+      },
+      {
+       "id": "drain",
+       "model": "apocnew\\destructionfrost_impact_howlingblast.nif",
+       "label": "Apocalypse: Howling Blast impact",
+       "s": 1.0,
+       "ground": false
+      }
+     ]
+    },
+    {
+     "id": "burst",
+     "name": "Burst",
+     "about": "A heavy or an explosion.",
+     "opts": [
+      {
+       "id": "big",
+       "model": "magic\\explosionfrost01.nif",
+       "label": "Skyrim: frost explosion",
+       "s": 1.0,
+       "ground": false
+      },
+      {
+       "id": "nova",
+       "model": "apocnew\\destructionfrost_explosion_frostnova.nif",
+       "label": "Apocalypse: Frost Nova",
+       "s": 0.8,
+       "ground": true
+      },
+      {
+       "id": "spikes",
+       "model": "magic\\magicespikevolleyexplosion.nif",
+       "label": "Skyrim: Ice Spike volley shards",
+       "s": 0.6,
+       "ground": false
+      }
+     ]
+    },
+    {
+     "id": "ground",
+     "name": "Ground",
+     "about": "What lingers where it struck.",
+     "opts": [
+      {
+       "id": "mist",
+       "model": "effects\\fxicewraithdeathexplosion.nif",
+       "label": "Skyrim: ice wraith shatter",
+       "s": 0.7,
+       "ground": true
+      },
+      {
+       "id": "rune",
+       "model": "magic\\impactfrosticestorm.nif",
+       "label": "Skyrim: Ice Storm impact",
+       "s": 0.7,
+       "ground": true
+      },
+      {
+       "id": "wave",
+       "model": "magic\\shoutareaexplosion01.nif",
+       "label": "Skyrim: shout wave",
+       "s": 0.6,
+       "ground": true
+      }
+     ]
+    },
+    {
+     "id": "above",
+     "name": "From above",
+     "about": "A strike from the sky.",
+     "opts": [
+      {
+       "id": "sky",
+       "model": "effects\\impacteffects\\dragonfrostshoutimpact.nif",
+       "label": "Skyrim: Frost Breath impact",
+       "s": 0.8,
+       "ground": false
+      },
+      {
+       "id": "pillar",
+       "model": "apocnew\\destructionfrost_explosion_shivers.nif",
+       "label": "Apocalypse: Shivers explosion",
+       "s": 0.8,
+       "ground": true
+      }
+     ]
+    }
+   ],
+   "sounds": [
+    {
+     "id": "cast",
+     "name": "Cast",
+     "opts": [
+      {
+       "id": "MAGIcicleFireSD",
+       "name": "MAGIcicleFireSD",
+       "mp3": "mag_icicle_fire.mp3",
+       "src": "Skyrim"
+      },
+      {
+       "id": "WB_DestructionFrost_Release_1_Sound_Tiny",
+       "name": "WB DestructionFrost Release 1 Sound Tiny",
+       "mp3": "wpn_impact_blade_ice_01.mp3",
+       "src": "Apocalypse"
+      },
+      {
+       "id": "MAGFrostBiteFireLPMSD",
+       "name": "MAGFrostBiteFireLPMSD",
+       "mp3": "mag_frostbite_fire_lpm.mp3",
+       "src": "Skyrim"
+      }
+     ]
+    },
+    {
+     "id": "impact",
+     "name": "Impact",
+     "opts": [
+      {
+       "id": "MAGIcicleImpactBreakSD",
+       "name": "MAGIcicleImpactBreakSD",
+       "mp3": "mag_icicle_impactbreak.mp3",
+       "src": "Skyrim"
+      },
+      {
+       "id": "MAGFrostBiteImpactSD",
+       "name": "MAGFrostBiteImpactSD",
+       "mp3": "mag_frostbite_impact_03.mp3",
+       "src": "Skyrim"
+      },
+      {
+       "id": "WB_DestructionFrost_Sound_Impact_Crystalize",
+       "name": "WB DestructionFrost Sound Impact Crystalize",
+       "mp3": "npc_atronachfrost_death_01.mp3",
+       "src": "Apocalypse"
+      }
+     ]
+    },
+    {
+     "id": "burst",
+     "name": "Burst",
+     "opts": [
+      {
+       "id": "FXExplosionIceSD",
+       "name": "FXExplosionIceSD",
+       "mp3": "fx_explosion_ice_01.mp3",
+       "src": "Skyrim"
+      },
+      {
+       "id": "WB_DestructionFrost_Sound_Explosion_Shatter",
+       "name": "WB DestructionFrost Sound Explosion Shatter",
+       "mp3": "mag_destruction_forstbitedragon_explosion_01.mp3",
+       "src": "Apocalypse"
+      },
+      {
+       "id": "WB_DestructionFrost_Sound_Explosion_Cryoblast",
+       "name": "WB DestructionFrost Sound Explosion Cryoblast",
+       "mp3": "mag_destruction_forstbitedragon_explosion_01.mp3",
+       "src": "Apocalypse"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "shock",
+   "name": "Shock",
+   "col": "#b9a8ff",
+   "about": "Real branching lightning, sparks, a static crackle on the dead.",
+   "theme": "shock",
+   "parts": [
+    {
+     "id": "impact",
+     "name": "Impact",
+     "about": "One hit landing.",
+     "opts": [
+      {
+       "id": "core",
+       "model": "magic\\impactshock02explo.nif",
+       "label": "Skyrim: Thunderbolt impact",
+       "s": 1.0,
+       "ground": false
+      },
+      {
+       "id": "spark",
+       "model": "magic\\impactshock03.nif",
+       "label": "Skyrim: spark impact",
+       "s": 1.0,
+       "ground": false
+      },
+      {
+       "id": "drain",
+       "model": "magic\\impactshock02.nif",
+       "label": "Skyrim: Lightning Bolt impact",
+       "s": 1.0,
+       "ground": false
+      }
+     ]
+    },
+    {
+     "id": "burst",
+     "name": "Burst",
+     "about": "A heavy or an explosion.",
+     "opts": [
+      {
+       "id": "big",
+       "model": "magic\\explosionshockmass01.nif",
+       "label": "Skyrim: Chain Lightning burst",
+       "s": 0.9,
+       "ground": false
+      },
+      {
+       "id": "nova",
+       "model": "apocnew\\destructionshock_explosion_thundernova.nif",
+       "label": "Apocalypse: Thunder Nova",
+       "s": 0.7,
+       "ground": true
+      },
+      {
+       "id": "spikes",
+       "model": "magic\\explosionatronachstormattack.nif",
+       "label": "Skyrim: storm atronach blast",
+       "s": 0.8,
+       "ground": false
+      }
+     ]
+    },
+    {
+     "id": "ground",
+     "name": "Ground",
+     "about": "What lingers where it struck.",
+     "opts": [
+      {
+       "id": "mist",
+       "model": "apocnew\\destructionshock_explosion_discharge.nif",
+       "label": "Apocalypse: Discharge",
+       "s": 1.0,
+       "ground": true
+      },
+      {
+       "id": "rune",
+       "model": "magus\\mysticism\\explosionshockmass01.nif",
+       "label": "Mysticism: mass shock burst",
+       "s": 0.8,
+       "ground": true
+      },
+      {
+       "id": "wave",
+       "model": "magic\\shoutareaexplosion01.nif",
+       "label": "Skyrim: shout wave",
+       "s": 0.6,
+       "ground": true
+      }
+     ]
+    },
+    {
+     "id": "above",
+     "name": "From above",
+     "about": "A strike from the sky.",
+     "opts": [
+      {
+       "id": "sky",
+       "model": "apocnew\\destructionshock_impact_fingerofthemountain.nif",
+       "label": "Apocalypse: Finger of the Mountain strike",
+       "s": 1.0,
+       "ground": false
+      },
+      {
+       "id": "pillar",
+       "model": "apocnew\\destructionshock_explosion_fingerofthemountain.nif",
+       "label": "Apocalypse: Finger of the Mountain",
+       "s": 0.7,
+       "ground": true
+      }
+     ]
+    }
+   ],
+   "sounds": [
+    {
+     "id": "cast",
+     "name": "Cast",
+     "opts": [
+      {
+       "id": "MAGShockFFFireSD",
+       "name": "MAGShockFFFireSD",
+       "mp3": "mag_shock_ff_fire_01.mp3",
+       "src": "Skyrim"
+      },
+      {
+       "id": "WB_DestructionShock_Sound_Release_JoyBuzzer_2",
+       "name": "WB DestructionShock Sound Release JoyBuzzer 2",
+       "mp3": "npc_witchlight_attack_02.mp3",
+       "src": "Apocalypse"
+      },
+      {
+       "id": "MAGShockConcentrationFireLPMSD",
+       "name": "MAGShockConcentrationFireLPMSD",
+       "mp3": "mag_shock_concentration_fire_lpm.mp3",
+       "src": "Skyrim"
+      }
+     ]
+    },
+    {
+     "id": "impact",
+     "name": "Impact",
+     "opts": [
+      {
+       "id": "MAGShockImpactSD",
+       "name": "MAGShockImpactSD",
+       "mp3": "mag_shock_impact_03.mp3",
+       "src": "Skyrim"
+      },
+      {
+       "id": "MAGRuneImpactSD",
+       "name": "MAGRuneImpactSD",
+       "mp3": "mag_rune_impact.mp3",
+       "src": "Skyrim"
+      },
+      {
+       "id": "WB_DestructionShock_Sound_Explosion_Thunderball",
+       "name": "WB DestructionShock Sound Explosion Thunderball",
+       "mp3": "voc_shout_fx_unrelentingforce_b_01.mp3",
+       "src": "Apocalypse"
+      }
+     ]
+    },
+    {
+     "id": "burst",
+     "name": "Burst",
+     "opts": [
+      {
+       "id": "WB_DestructionShock_Sound_Explosion_LightningStrike_2C",
+       "name": "WB DestructionShock Sound Explosion LightningStrike 2C",
+       "mp3": "voc_shout_fx_unrelentingforce_c_01.mp3",
+       "src": "Apocalypse"
+      },
+      {
+       "id": "WB_DestructionShock_Sound_Explosion_ShockNova",
+       "name": "WB DestructionShock Sound Explosion ShockNova",
+       "mp3": "voc_shout_fx_unrelentingforce_b_01.mp3",
+       "src": "Apocalypse"
+      },
+      {
+       "id": "VOCShoutImpactStormCallNearSD",
+       "name": "VOCShoutImpactStormCallNearSD",
+       "mp3": "voc_shout_impact_stormcall_near_01.mp3",
+       "src": "Skyrim"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "shadowfire",
+   "name": "Shadowfire",
+   "col": "#9a3bff",
+   "about": "Violet-black flame that burns violet all the way through (the Shadowflame Scythe).",
+   "theme": "shadow",
+   "parts": [
+    {
+     "id": "impact",
+     "name": "Impact",
+     "about": "One hit landing.",
+     "opts": [
+      {
+       "id": "core",
+       "model": "magic\\explosionilusiondark01.nif",
+       "label": "Skyrim: dark Illusion burst",
+       "s": 1.0,
+       "ground": false
+      },
+      {
+       "id": "spark",
+       "model": "magic\\illusionimpact01.nif",
+       "label": "Skyrim: Illusion impact",
+       "s": 1.0,
+       "ground": false
+      },
+      {
+       "id": "drain",
+       "model": "magic\\absorbblueimpact01.nif",
+       "label": "Skyrim: Absorb Magicka impact",
+       "s": 1.0,
+       "ground": false
+      }
+     ]
+    },
+    {
+     "id": "burst",
+     "name": "Burst",
+     "about": "A heavy or an explosion.",
+     "opts": [
+      {
+       "id": "big",
+       "model": "apocnew\\illusionnightmare_explosion.nif",
+       "label": "Apocalypse: Nightmare explosion",
+       "s": 0.9,
+       "ground": false
+      },
+      {
+       "id": "nova",
+       "model": "apocnew\\illusionblue_explosion_manavoid.nif",
+       "label": "Apocalypse: Mana Void",
+       "s": 0.8,
+       "ground": true
+      },
+      {
+       "id": "spikes",
+       "model": "apocnew\\illusionnightmare_explosion_illusorypyre.nif",
+       "label": "Apocalypse: Illusory Pyre",
+       "s": 0.8,
+       "ground": false
+      }
+     ]
+    },
+    {
+     "id": "ground",
+     "name": "Ground",
+     "about": "What lingers where it struck.",
+     "opts": [
+      {
+       "id": "mist",
+       "model": "apocnew\\illusionshadow_explosion.nif",
+       "label": "Apocalypse: Shadow explosion",
+       "s": 0.9,
+       "ground": true
+      },
+      {
+       "id": "rune",
+       "model": "apocnew\\alterationchaos_explosion_rune.nif",
+       "label": "Apocalypse: Chaos rune burst",
+       "s": 0.8,
+       "ground": true
+      },
+      {
+       "id": "wave",
+       "model": "apocnew\\illusionempathy_explosion_screamofpain.nif",
+       "label": "Apocalypse: Scream of Pain",
+       "s": 0.8,
+       "ground": true
+      }
+     ]
+    },
+    {
+     "id": "above",
+     "name": "From above",
+     "about": "A strike from the sky.",
+     "opts": [
+      {
+       "id": "sky",
+       "model": "dlc01\\magic\\dlc01_soulrendimpact01.nif",
+       "label": "Dawnguard: Soul Rend impact",
+       "s": 1.0,
+       "ground": false
+      },
+      {
+       "id": "pillar",
+       "model": "dlc02\\effects\\miraakteleportoutexplosion.nif",
+       "label": "Dragonborn: Miraak's vanishing",
+       "s": 0.8,
+       "ground": true
+      }
+     ]
+    }
+   ],
+   "sounds": [
+    {
+     "id": "cast",
+     "name": "Cast",
+     "opts": [
+      {
+       "id": "WB_IllusionNightmare_Sound_Release",
+       "name": "WB IllusionNightmare Sound Release",
+       "mp3": "npc_wisp_attack_01.mp3",
+       "src": "Apocalypse"
+      },
+      {
+       "id": "WB_IllusionShadow_Sound_Release_Buff",
+       "name": "WB IllusionShadow Sound Release Buff",
+       "mp3": "qst_da02_boethiah_impact_01.mp3",
+       "src": "Apocalypse"
+      },
+      {
+       "id": "MAGIllusionFireLPM",
+       "name": "MAGIllusionFireLPM",
+       "mp3": "mag_illusion_fire_lpm.mp3",
+       "src": "Skyrim"
+      }
+     ]
+    },
+    {
+     "id": "impact",
+     "name": "Impact",
+     "opts": [
+      {
+       "id": "WB_IllusionShadow_Sound_Explosion_Vanish",
+       "name": "WB IllusionShadow Sound Explosion Vanish",
+       "mp3": "qst_tg05_transition_01.mp3",
+       "src": "Apocalypse"
+      },
+      {
+       "id": "WB_IllusionNightmare_Sound_Explosion_EnergyBall",
+       "name": "WB IllusionNightmare Sound Explosion EnergyBall",
+       "mp3": "fx_explosion_catapult_near_01.mp3",
+       "src": "Apocalypse"
+      },
+      {
+       "id": "MAGNightCloakBatsHitLPM",
+       "name": "MAGNightCloakBatsHitLPM",
+       "mp3": "mag_night_cloak_bats_hit_01_lpm.mp3",
+       "src": "Dawnguard"
+      }
+     ]
+    },
+    {
+     "id": "burst",
+     "name": "Burst",
+     "opts": [
+      {
+       "id": "WB_IllusionNightmare_Sound_Explosion_PaleMoon_Howl",
+       "name": "WB IllusionNightmare Sound Explosion PaleMoon Howl",
+       "mp3": "npc_wolf_howl_01.mp3",
+       "src": "Apocalypse"
+      },
+      {
+       "id": "WB_Illusion_Sound_Explosion_Subsonic",
+       "name": "WB Illusion Sound Explosion Subsonic",
+       "mp3": "fx_explosion_catapult_01_2d.mp3",
+       "src": "Apocalypse"
+      },
+      {
+       "id": "WB_AlterationChaos_Sound_Explosion_Plasma",
+       "name": "WB AlterationChaos Sound Explosion Plasma",
+       "mp3": "fx_explosion_catapult_near_01.mp3",
+       "src": "Apocalypse"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "holy",
+   "name": "Holy and sun",
+   "col": "#ffd56a",
+   "about": "Dawnguard's sunlight: beams from the sky, warm bursts, motes; never flat streaks.",
+   "theme": "sun",
+   "parts": [
+    {
+     "id": "impact",
+     "name": "Impact",
+     "about": "One hit landing.",
+     "opts": [
+      {
+       "id": "core",
+       "model": "dlc01\\magic\\dlc1impactsunfirespell.nif",
+       "label": "Dawnguard: Sun Fire impact",
+       "s": 1.0,
+       "ground": false
+      },
+      {
+       "id": "spark",
+       "model": "magic\\impactlightspell.nif",
+       "label": "Skyrim: Magelight impact",
+       "s": 1.0,
+       "ground": false
+      },
+      {
+       "id": "drain",
+       "model": "magus\\mysticism\\impactsunbeamspell.nif",
+       "label": "Mysticism: sunbeam impact",
+       "s": 1.0,
+       "ground": false
+      }
+     ]
+    },
+    {
+     "id": "burst",
+     "name": "Burst",
+     "about": "A heavy or an explosion.",
+     "opts": [
+      {
+       "id": "big",
+       "model": "magus\\mysticism\\sunbeamexplosion01.nif",
+       "label": "Mysticism: sunbeam explosion",
+       "s": 1.0,
+       "ground": false
+      },
+      {
+       "id": "nova",
+       "model": "magus\\mysticism\\explosionturnundead01.nif",
+       "label": "Mysticism: turn undead nova",
+       "s": 0.9,
+       "ground": true
+      },
+      {
+       "id": "spikes",
+       "model": "magic\\turnundeadmassexplosion.nif",
+       "label": "Skyrim: Repel Undead blast",
+       "s": 0.8,
+       "ground": false
+      }
+     ]
+    },
+    {
+     "id": "ground",
+     "name": "Ground",
+     "about": "What lingers where it struck.",
+     "opts": [
+      {
+       "id": "mist",
+       "model": "magus\\mysticism\\sunlightexplosion01.nif",
+       "label": "Mysticism: sunlight burst",
+       "s": 0.9,
+       "ground": true
+      },
+      {
+       "id": "rune",
+       "model": "magic\\turnunimpact01.nif",
+       "label": "Skyrim: Turn Undead impact",
+       "s": 1.0,
+       "ground": true
+      },
+      {
+       "id": "wave",
+       "model": "dlc01\\magic\\dlc1sunburstfx01.nif",
+       "label": "Dawnguard: sunburst",
+       "s": 0.5,
+       "ground": true
+      }
+     ]
+    },
+    {
+     "id": "above",
+     "name": "From above",
+     "about": "A strike from the sky.",
+     "opts": [
+      {
+       "id": "sky",
+       "model": "dlc01\\effects\\dlc1aurielsskyboltexplosion01.nif",
+       "label": "Dawnguard: Auriel's Bow sky bolt",
+       "s": 0.4,
+       "ground": false
+      },
+      {
+       "id": "pillar",
+       "model": "dlc01\\magic\\dlc1aurielsunbeam01.nif",
+       "label": "Dawnguard: Auriel's sunbeam",
+       "s": 0.6,
+       "ground": true
+      }
+     ]
+    }
+   ],
+   "sounds": [
+    {
+     "id": "cast",
+     "name": "Cast",
+     "opts": [
+      {
+       "id": "MAGLightFireSD",
+       "name": "MAGLightFireSD",
+       "mp3": "mag_light_fire.mp3",
+       "src": "Skyrim"
+      },
+      {
+       "id": "MAGRestorationTurnUndeadFire2DSD",
+       "name": "MAGRestorationTurnUndeadFire2DSD",
+       "mp3": "mag_restoration_turnundead_fire_2d.mp3",
+       "src": "Skyrim"
+      },
+      {
+       "id": "WB_AlterationAlt_Sound_Release_IgniteLight",
+       "name": "WB AlterationAlt Sound Release IgniteLight",
+       "mp3": "mag_light_fire.mp3",
+       "src": "Apocalypse"
+      }
+     ]
+    },
+    {
+     "id": "impact",
+     "name": "Impact",
+     "opts": [
+      {
+       "id": "MAGAurielShieldBlastA",
+       "name": "MAGAurielShieldBlastA",
+       "mp3": "mag_auriel_shielf_blast_a_01.mp3",
+       "src": "Dawnguard"
+      },
+      {
+       "id": "MAGRestorationFFFireSD",
+       "name": "MAGRestorationFFFireSD",
+       "mp3": "mag_restoration_ff_fire.mp3",
+       "src": "Skyrim"
+      },
+      {
+       "id": "WB_RestorationHeal_Sound_Release_MassiveTwinkles",
+       "name": "WB RestorationHeal Sound Release MassiveTwinkles",
+       "mp3": "qst_t02_lovers_ascending.mp3",
+       "src": "Apocalypse"
+      }
+     ]
+    },
+    {
+     "id": "burst",
+     "name": "Burst",
+     "opts": [
+      {
+       "id": "FXExplosionAurielsSunNear",
+       "name": "FXExplosionAurielsSunNear",
+       "mp3": "fx_explosion_aurielssun_near_01.mp3",
+       "src": "Dawnguard"
+      },
+      {
+       "id": "FXExplosionAurielBowHarkon",
+       "name": "FXExplosionAurielBowHarkon",
+       "mp3": "fx_explosion_auriel_bow_harkon_01.mp3",
+       "src": "Dawnguard"
+      },
+      {
+       "id": "WB_Restoration_Sound_Explosion_SubsonicEnergy",
+       "name": "WB Restoration Sound Explosion SubsonicEnergy",
+       "mp3": "fx_explosion_catapult_01_2d.mp3",
+       "src": "Apocalypse"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "poison",
+   "name": "Poison and acid",
+   "col": "#9be03a",
+   "about": "Bubbling green, dripping, a lingering cloud low on the ground.",
+   "theme": "poison",
+   "parts": [
+    {
+     "id": "impact",
+     "name": "Impact",
+     "about": "One hit landing.",
+     "opts": [
+      {
+       "id": "core",
+       "model": "magus\\mysticism\\poisonexplosion01.nif",
+       "label": "Mysticism: poison explosion",
+       "s": 1.0,
+       "ground": false
+      },
+      {
+       "id": "spark",
+       "model": "effects\\impacteffects\\magpoisonsprayimpact.nif",
+       "label": "Skyrim: poison spray impact",
+       "s": 1.0,
+       "ground": false
+      },
+      {
+       "id": "drain",
+       "model": "magic\\absorbgreenimpact01.nif",
+       "label": "Skyrim: green Absorb impact",
+       "s": 1.0,
+       "ground": false
+      }
+     ]
+    },
+    {
+     "id": "burst",
+     "name": "Burst",
+     "about": "A heavy or an explosion.",
+     "opts": [
+      {
+       "id": "big",
+       "model": "magus\\mysticism\\poisonmassexplosion01.nif",
+       "label": "Mysticism: mass poison explosion",
+       "s": 0.9,
+       "ground": false
+      },
+      {
+       "id": "nova",
+       "model": "magus\\mysticism\\rustmassexplosion01.nif",
+       "label": "Mysticism: corrosion wave",
+       "s": 0.9,
+       "ground": true
+      },
+      {
+       "id": "spikes",
+       "model": "magus\\mysticism\\poisonexplosion02.nif",
+       "label": "Mysticism: poison splash",
+       "s": 1.0,
+       "ground": false
+      }
+     ]
+    },
+    {
+     "id": "ground",
+     "name": "Ground",
+     "about": "What lingers where it struck.",
+     "opts": [
+      {
+       "id": "mist",
+       "model": "dlc02\\effects\\poisongasexplosion.nif",
+       "label": "Dragonborn: poison gas cloud",
+       "s": 0.6,
+       "ground": true
+      },
+      {
+       "id": "rune",
+       "model": "magus\\mysticism\\poisonimpactfx01.nif",
+       "label": "Mysticism: poison impact",
+       "s": 1.0,
+       "ground": true
+      },
+      {
+       "id": "wave",
+       "model": "magic\\shoutareaexplosionsmall01.nif",
+       "label": "Skyrim: small shout wave",
+       "s": 0.6,
+       "ground": true
+      }
+     ]
+    },
+    {
+     "id": "above",
+     "name": "From above",
+     "about": "A strike from the sky.",
+     "opts": [
+      {
+       "id": "sky",
+       "model": "effects\\fxgastrapblast.nif",
+       "label": "Skyrim: gas trap blast",
+       "s": 0.8,
+       "ground": false
+      },
+      {
+       "id": "pillar",
+       "model": "magus\\mysticism\\poisonexplosion03.nif",
+       "label": "Mysticism: poison eruption",
+       "s": 1.0,
+       "ground": true
+      }
+     ]
+    }
+   ],
+   "sounds": [
+    {
+     "id": "cast",
+     "name": "Cast",
+     "opts": [
+      {
+       "id": "MAG_PoisonReleaseSFX",
+       "name": "MAG PoisonReleaseSFX",
+       "mp3": "modpoisonfire.mp3",
+       "src": "Mysticism"
+      },
+      {
+       "id": "TRPHarvestBloomReleasePoison",
+       "name": "TRPHarvestBloomReleasePoison",
+       "mp3": "trp_harvest_bloom_release_poison_01.mp3",
+       "src": "Dawnguard"
+      },
+      {
+       "id": "MAG_PoisonFireLoopSFX",
+       "name": "MAG PoisonFireLoopSFX",
+       "mp3": "modpoisonfireloop.mp3",
+       "src": "Mysticism"
+      }
+     ]
+    },
+    {
+     "id": "impact",
+     "name": "Impact",
+     "opts": [
+      {
+       "id": "MAG_PoisonImpactSFX",
+       "name": "MAG PoisonImpactSFX",
+       "mp3": "modpoisonimpact02.mp3",
+       "src": "Mysticism"
+      },
+      {
+       "id": "WB_AlterationEarth_Sound_Impact",
+       "name": "WB AlterationEarth Sound Impact",
+       "mp3": "phy_boulder_large_boulder_h_01.mp3",
+       "src": "Apocalypse"
+      },
+      {
+       "id": "coa:flesh_hit_2",
+       "name": "coa:flesh hit 2",
+       "mp3": "coa_flesh_hit_2.mp3",
+       "src": "ours"
+      }
+     ]
+    },
+    {
+     "id": "burst",
+     "name": "Burst",
+     "opts": [
+      {
+       "id": "MAG_PoisonExplosionSFX",
+       "name": "MAG PoisonExplosionSFX",
+       "mp3": "modpoisonexplosion01.mp3",
+       "src": "Mysticism"
+      },
+      {
+       "id": "MAG_PoisonRitualExplosionSFX",
+       "name": "MAG PoisonRitualExplosionSFX",
+       "mp3": "modpoisonexplosionritual.mp3",
+       "src": "Mysticism"
+      },
+      {
+       "id": "WB_ConjurationDetonate_Sound_Explosion_Blast",
+       "name": "WB ConjurationDetonate Sound Explosion Blast",
+       "mp3": "mag_destruction_firestorm_impact.mp3",
+       "src": "Apocalypse"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "arcane",
+   "name": "Arcane",
+   "col": "#8fb4ff",
+   "about": "Magicka itself: runes, blue-white light, a soft hum.",
+   "theme": "arcane",
+   "parts": [
+    {
+     "id": "impact",
+     "name": "Impact",
+     "about": "One hit landing.",
+     "opts": [
+      {
+       "id": "core",
+       "model": "apocnew\\illusionblue_explosion.nif",
+       "label": "Apocalypse: arcane orb burst",
+       "s": 0.8,
+       "ground": false
+      },
+      {
+       "id": "spark",
+       "model": "magic\\absorbblueimpact01.nif",
+       "label": "Skyrim: Absorb Magicka impact",
+       "s": 1.0,
+       "ground": false
+      },
+      {
+       "id": "drain",
+       "model": "apocnew\\restorationarcane_impact.nif",
+       "label": "Apocalypse: arcane impact",
+       "s": 1.0,
+       "ground": false
+      }
+     ]
+    },
+    {
+     "id": "burst",
+     "name": "Burst",
+     "about": "A heavy or an explosion.",
+     "opts": [
+      {
+       "id": "big",
+       "model": "apocnew\\restorationarcane_explosion_lunartide.nif",
+       "label": "Apocalypse: Lunar Tide",
+       "s": 0.8,
+       "ground": false
+      },
+      {
+       "id": "nova",
+       "model": "apocnew\\illusionblue_explosion_manavoid.nif",
+       "label": "Apocalypse: Mana Void",
+       "s": 0.8,
+       "ground": true
+      },
+      {
+       "id": "spikes",
+       "model": "magic\\alterposimpact01.nif",
+       "label": "Skyrim: Alteration impact",
+       "s": 1.2,
+       "ground": false
+      }
+     ]
+    },
+    {
+     "id": "ground",
+     "name": "Ground",
+     "about": "What lingers where it struck.",
+     "opts": [
+      {
+       "id": "mist",
+       "model": "apocnew\\alterationmyst_explosion.nif",
+       "label": "Apocalypse: Mysticism burst",
+       "s": 0.9,
+       "ground": true
+      },
+      {
+       "id": "rune",
+       "model": "apocnew\\alterationmyst_explosion.nif",
+       "label": "Apocalypse: Mysticism burst",
+       "s": 0.9,
+       "ground": true
+      },
+      {
+       "id": "wave",
+       "model": "apocnew\\alterationalt_explosion.nif",
+       "label": "Apocalypse: Alteration wave",
+       "s": 0.8,
+       "ground": true
+      }
+     ]
+    },
+    {
+     "id": "above",
+     "name": "From above",
+     "about": "A strike from the sky.",
+     "opts": [
+      {
+       "id": "sky",
+       "model": "magic\\impactmg07staffofmagnus.nif",
+       "label": "Skyrim: Staff of Magnus impact",
+       "s": 1.0,
+       "ground": false
+      },
+      {
+       "id": "pillar",
+       "model": "dlc02\\effects\\dlc2constellationexplosion.nif",
+       "label": "Dragonborn: constellation burst",
+       "s": 0.7,
+       "ground": true
+      }
+     ]
+    }
+   ],
+   "sounds": [
+    {
+     "id": "cast",
+     "name": "Cast",
+     "opts": [
+      {
+       "id": "WB_DestructionGold_Sound_Release_MagicMissile",
+       "name": "WB DestructionGold Sound Release MagicMissile",
+       "mp3": "mag_firebolt_fire_2d.mp3",
+       "src": "Apocalypse"
+      },
+      {
+       "id": "MAGAlterationReleaseSD",
+       "name": "MAGAlterationReleaseSD",
+       "mp3": "mag_alteration_release.mp3",
+       "src": "Skyrim"
+      },
+      {
+       "id": "WB_AlterationMetamagic_Sound_Release",
+       "name": "WB AlterationMetamagic Sound Release",
+       "mp3": "qst_ms06_potema_initial_flee_start_01.mp3",
+       "src": "Apocalypse"
+      }
+     ]
+    },
+    {
+     "id": "impact",
+     "name": "Impact",
+     "opts": [
+      {
+       "id": "MAGAetherialShieldImpact",
+       "name": "MAGAetherialShieldImpact",
+       "mp3": "mag_aetherialshield_impact.mp3",
+       "src": "Dawnguard"
+      },
+      {
+       "id": "WB_DestructionCantrip_Sound_Explosion_ArcaneBurst",
+       "name": "WB DestructionCantrip Sound Explosion ArcaneBurst",
+       "mp3": "qst_alduindeath_explosion_a_2d.mp3",
+       "src": "Apocalypse"
+      },
+      {
+       "id": "WB_AlterationTelekinesis_Sound_Explosion_GlassJaw",
+       "name": "WB AlterationTelekinesis Sound Explosion GlassJaw",
+       "mp3": "drs_bone_falmer_gate_open_01.mp3",
+       "src": "Apocalypse"
+      }
+     ]
+    },
+    {
+     "id": "burst",
+     "name": "Burst",
+     "opts": [
+      {
+       "id": "WB_AlterationTelekinesis_Sound_Explosion_Bwoom",
+       "name": "WB AlterationTelekinesis Sound Explosion Bwoom",
+       "mp3": "fx_explosion_catapult_01_2d.mp3",
+       "src": "Apocalypse"
+      },
+      {
+       "id": "MAGPowerSerpentStoneExplosion",
+       "name": "MAGPowerSerpentStoneExplosion",
+       "mp3": "mag_serpentstone_explosion_01.mp3",
+       "src": "Skyrim"
+      },
+      {
+       "id": "WB_Restoration_Sound_Explosion_LowSwish",
+       "name": "WB Restoration Sound Explosion LowSwish",
+       "mp3": "qst_alduindeath_explosion_b_2d.mp3",
+       "src": "Apocalypse"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "blood",
+   "name": "Blood",
+   "col": "#c0182a",
+   "about": "Vampiric drain, blood mist and spray.",
+   "theme": "blood",
+   "parts": [
+    {
+     "id": "impact",
+     "name": "Impact",
+     "about": "One hit landing.",
+     "opts": [
+      {
+       "id": "core",
+       "model": "apocnew\\restorationblood_explosion.nif",
+       "label": "Apocalypse: blood explosion",
+       "s": 0.8,
+       "ground": false
+      },
+      {
+       "id": "spark",
+       "model": "effects\\impacteffects\\bloodspraylargemist01.nif",
+       "label": "Skyrim: blood mist spray",
+       "s": 0.9,
+       "ground": false
+      },
+      {
+       "id": "drain",
+       "model": "dlc01\\magic\\dlc1vampiredrainimpact.nif",
+       "label": "Dawnguard: Vampiric Drain impact",
+       "s": 1.0,
+       "ground": false
+      }
+     ]
+    },
+    {
+     "id": "burst",
+     "name": "Burst",
+     "about": "A heavy or an explosion.",
+     "opts": [
+      {
+       "id": "big",
+       "model": "dlc01\\effects\\dlc1bloodexplosion500.nif",
+       "label": "Dawnguard: blood explosion",
+       "s": 0.5,
+       "ground": false
+      },
+      {
+       "id": "nova",
+       "model": "sacrosanct\\blood_explosion_shockwave.nif",
+       "label": "Sacrosanct: blood shockwave",
+       "s": 0.8,
+       "ground": true
+      },
+      {
+       "id": "spikes",
+       "model": "apocnew\\restorationblood_explosion_rune.nif",
+       "label": "Apocalypse: blood rune burst",
+       "s": 0.8,
+       "ground": false
+      }
+     ]
+    },
+    {
+     "id": "ground",
+     "name": "Ground",
+     "about": "What lingers where it struck.",
+     "opts": [
+      {
+       "id": "mist",
+       "model": "dlc01\\magic\\dlc1vampireabsorbexplosion.nif",
+       "label": "Dawnguard: Vampiric Drain burst",
+       "s": 0.5,
+       "ground": true
+      },
+      {
+       "id": "rune",
+       "model": "apocnew\\restorationblood_explosion_rune.nif",
+       "label": "Apocalypse: blood rune burst",
+       "s": 0.8,
+       "ground": true
+      },
+      {
+       "id": "wave",
+       "model": "sacrosanct\\blood_explosion_shockwave.nif",
+       "label": "Sacrosanct: blood shockwave",
+       "s": 0.8,
+       "ground": true
+      }
+     ]
+    },
+    {
+     "id": "above",
+     "name": "From above",
+     "about": "A strike from the sky.",
+     "opts": [
+      {
+       "id": "sky",
+       "model": "effects\\impacteffects\\bloodsprayalduinimpact.nif",
+       "label": "Skyrim: Alduin's blood spray",
+       "s": 0.8,
+       "ground": false
+      },
+      {
+       "id": "pillar",
+       "model": "dlc01\\magic\\dlc1vampchangeexplosion.nif",
+       "label": "Dawnguard: Vampire Lord change",
+       "s": 0.6,
+       "ground": true
+      }
+     ]
+    }
+   ],
+   "sounds": [
+    {
+     "id": "cast",
+     "name": "Cast",
+     "opts": [
+      {
+       "id": "WB_RestorationBlood_Sound_Release_Big",
+       "name": "WB RestorationBlood Sound Release Big",
+       "mp3": "mag_vampire_sunlight_02.mp3",
+       "src": "Apocalypse"
+      },
+      {
+       "id": "MAGAlterationVampireDrainRelease",
+       "name": "MAGAlterationVampireDrainRelease",
+       "mp3": "mag_alteration_vampiredrainrelease_01.mp3",
+       "src": "Dawnguard"
+      },
+      {
+       "id": "WB_RestorationBlood_Sound_Release_OrcishHealing",
+       "name": "WB RestorationBlood Sound Release OrcishHealing",
+       "mp3": "mag_powerracial_berserker_fire_2d.mp3",
+       "src": "Apocalypse"
+      }
+     ]
+    },
+    {
+     "id": "impact",
+     "name": "Impact",
+     "opts": [
+      {
+       "id": "MAGAlterationVampireDrainOnHit",
+       "name": "MAGAlterationVampireDrainOnHit",
+       "mp3": "mag_alteration_vampiredrain_onhit_01.mp3",
+       "src": "Dawnguard"
+      },
+      {
+       "id": "coa:flesh_hit_1",
+       "name": "coa:flesh hit 1",
+       "mp3": "coa_flesh_hit_1.mp3",
+       "src": "ours"
+      },
+      {
+       "id": "WPNImpactBladeVsFleshSD",
+       "name": "WPNImpactBladeVsFleshSD",
+       "mp3": "wpn_impact_blade_flesh_03.mp3",
+       "src": "Skyrim"
+      }
+     ]
+    },
+    {
+     "id": "burst",
+     "name": "Burst",
+     "opts": [
+      {
+       "id": "WB_RestorationNecro_Sound_Explosion_Undead",
+       "name": "WB RestorationNecro Sound Explosion Undead",
+       "mp3": "mag_restoration_baneofthedead_explosion.mp3",
+       "src": "Apocalypse"
+      },
+      {
+       "id": "WB_ConjurationDetonate_Sound_Explosion_Blast",
+       "name": "WB ConjurationDetonate Sound Explosion Blast",
+       "mp3": "mag_destruction_firestorm_impact.mp3",
+       "src": "Apocalypse"
+      },
+      {
+       "id": "WB_RestorationBlood_Sound_Release_Big",
+       "name": "WB RestorationBlood Sound Release Big",
+       "mp3": "mag_vampire_sunlight_02.mp3",
+       "src": "Apocalypse"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "spirit",
+   "name": "Spirit",
+   "col": "#dfe8ff",
+   "about": "Ghost light, souls and the dead raised: pale, cold, whispering.",
+   "theme": "spirit",
+   "parts": [
+    {
+     "id": "impact",
+     "name": "Impact",
+     "about": "One hit landing.",
+     "opts": [
+      {
+       "id": "core",
+       "model": "effects\\impacteffects\\fxghostimpact.nif",
+       "label": "Skyrim: ghost impact",
+       "s": 1.2,
+       "ground": false
+      },
+      {
+       "id": "spark",
+       "model": "magic\\paralyzeimpact01.nif",
+       "label": "Skyrim: Paralyze impact",
+       "s": 1.0,
+       "ground": false
+      },
+      {
+       "id": "drain",
+       "model": "magic\\absorbgreenimpact01.nif",
+       "label": "Skyrim: green Absorb impact",
+       "s": 1.0,
+       "ground": false
+      }
+     ]
+    },
+    {
+     "id": "burst",
+     "name": "Burst",
+     "about": "A heavy or an explosion.",
+     "opts": [
+      {
+       "id": "big",
+       "model": "apocnew\\restorationnecro_explosion_lifesfinale.nif",
+       "label": "Apocalypse: Life's Finale",
+       "s": 0.8,
+       "ground": false
+      },
+      {
+       "id": "nova",
+       "model": "apocnew\\restorationnecro_explosion.nif",
+       "label": "Apocalypse: necromantic burst",
+       "s": 0.9,
+       "ground": true
+      },
+      {
+       "id": "spikes",
+       "model": "magic\\reanimateimpact01.nif",
+       "label": "Skyrim: Reanimate impact",
+       "s": 1.2,
+       "ground": false
+      }
+     ]
+    },
+    {
+     "id": "ground",
+     "name": "Ground",
+     "about": "What lingers where it struck.",
+     "opts": [
+      {
+       "id": "mist",
+       "model": "effects\\fxwaterfallmistblastlite.nif",
+       "label": "Skyrim: waterfall mist blast",
+       "s": 0.7,
+       "ground": true
+      },
+      {
+       "id": "rune",
+       "model": "apocnew\\conjurationsummon_explosion.nif",
+       "label": "Apocalypse: summoning burst",
+       "s": 0.9,
+       "ground": true
+      },
+      {
+       "id": "wave",
+       "model": "magic\\shoutareaexplosionsmall01.nif",
+       "label": "Skyrim: small shout wave",
+       "s": 0.6,
+       "ground": true
+      }
+     ]
+    },
+    {
+     "id": "above",
+     "name": "From above",
+     "about": "A strike from the sky.",
+     "opts": [
+      {
+       "id": "sky",
+       "model": "magic\\explosionillusionlight01.nif",
+       "label": "Skyrim: Illusion light burst",
+       "s": 1.0,
+       "ground": false
+      },
+      {
+       "id": "pillar",
+       "model": "apocnew\\conjurationsummon_explosion.nif",
+       "label": "Apocalypse: summoning burst",
+       "s": 0.9,
+       "ground": true
+      }
+     ]
+    }
+   ],
+   "sounds": [
+    {
+     "id": "cast",
+     "name": "Cast",
+     "opts": [
+      {
+       "id": "WB_ConjurationBanish_Sound_Release_Hiss",
+       "name": "WB ConjurationBanish Sound Release Hiss",
+       "mp3": "qst_halldir_cairn_fade.mp3",
+       "src": "Apocalypse"
+      },
+      {
+       "id": "MAGConjureFireSD",
+       "name": "MAGConjureFireSD",
+       "mp3": "mag_conjure_fire.mp3",
+       "src": "Skyrim"
+      },
+      {
+       "id": "NPCWispConsciousLP",
+       "name": "NPCWispConsciousLP",
+       "mp3": "npc_wisp_conscious_lp.mp3",
+       "src": "Skyrim"
+      }
+     ]
+    },
+    {
+     "id": "impact",
+     "name": "Impact",
+     "opts": [
+      {
+       "id": "WB_ConjurationGhosts_Sound_Impact_Wail",
+       "name": "WB ConjurationGhosts Sound Impact Wail",
+       "mp3": "mag_powerracial_histskin_01_2d.mp3",
+       "src": "Apocalypse"
+      },
+      {
+       "id": "MAGConjureImpactSD",
+       "name": "MAGConjureImpactSD",
+       "mp3": "mag_conjure_impact_01.mp3",
+       "src": "Skyrim"
+      },
+      {
+       "id": "WB_ConjurationSpirit_Sound_Explosion_Whoom",
+       "name": "WB ConjurationSpirit Sound Explosion Whoom",
+       "mp3": "qst_da02_bubble_activate_01.mp3",
+       "src": "Apocalypse"
+      }
+     ]
+    },
+    {
+     "id": "burst",
+     "name": "Burst",
+     "opts": [
+      {
+       "id": "WB_ConjurationCommand_Sound_Explosion_EtherealCall",
+       "name": "WB ConjurationCommand Sound Explosion EtherealCall",
+       "mp3": "mag_powerracial_woodelfcommandanimal_fire_2d.mp3",
+       "src": "Apocalypse"
+      },
+      {
+       "id": "QSTAlduinDeathSoulsASD",
+       "name": "QSTAlduinDeathSoulsASD",
+       "mp3": "qst_alduindeath_souls_a.mp3",
+       "src": "Skyrim"
+      },
+      {
+       "id": "WB_RestorationNecro_Sound_Explosion_Undead",
+       "name": "WB RestorationNecro Sound Explosion Undead",
+       "mp3": "mag_restoration_baneofthedead_explosion.mp3",
+       "src": "Apocalypse"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "earth",
+   "name": "Earth",
+   "col": "#b08a5a",
+   "about": "Stone and dust: the ground split, rocks thrown up, a heavy thud.",
+   "theme": "earth",
+   "parts": [
+    {
+     "id": "impact",
+     "name": "Impact",
+     "about": "One hit landing.",
+     "opts": [
+      {
+       "id": "core",
+       "model": "effects\\fxdustburstmed.nif",
+       "label": "Skyrim: dust burst",
+       "s": 1.0,
+       "ground": false
+      },
+      {
+       "id": "spark",
+       "model": "effects\\impacteffects\\fxmetalsparkimpactblunt.nif",
+       "label": "Skyrim: blunt spark impact",
+       "s": 1.2,
+       "ground": false
+      },
+      {
+       "id": "drain",
+       "model": "magic\\absorbgreenimpact01.nif",
+       "label": "Skyrim: green Absorb impact",
+       "s": 0.8,
+       "ground": false
+      }
+     ]
+    },
+    {
+     "id": "burst",
+     "name": "Burst",
+     "about": "A heavy or an explosion.",
+     "opts": [
+      {
+       "id": "big",
+       "model": "apocnew\\alterationearth_explosion_massive.nif",
+       "label": "Apocalypse: massive earth explosion",
+       "s": 0.7,
+       "ground": false
+      },
+      {
+       "id": "nova",
+       "model": "effects\\impacteffects\\fxdragontailstompdust.nif",
+       "label": "Skyrim: dragon's tail stomp",
+       "s": 0.6,
+       "ground": true
+      },
+      {
+       "id": "spikes",
+       "model": "apocnew\\alterationearth_explosion_talonsofnirn.nif",
+       "label": "Apocalypse: Talons of Nirn (earth spikes)",
+       "s": 0.8,
+       "ground": false
+      }
+     ]
+    },
+    {
+     "id": "ground",
+     "name": "Ground",
+     "about": "What lingers where it struck.",
+     "opts": [
+      {
+       "id": "mist",
+       "model": "effects\\fxdustburstsm.nif",
+       "label": "Skyrim: dust puff",
+       "s": 1.2,
+       "ground": true
+      },
+      {
+       "id": "rune",
+       "model": "apocnew\\alterationearth_impact.nif",
+       "label": "Apocalypse: earth impact",
+       "s": 1.0,
+       "ground": true
+      },
+      {
+       "id": "wave",
+       "model": "effects\\impacteffects\\fxdragontailstompdust.nif",
+       "label": "Skyrim: dragon's tail stomp",
+       "s": 0.5,
+       "ground": true
+      }
+     ]
+    },
+    {
+     "id": "above",
+     "name": "From above",
+     "about": "A strike from the sky.",
+     "opts": [
+      {
+       "id": "sky",
+       "model": "effects\\impacteffects\\fxdragonlandingimpact.nif",
+       "label": "Skyrim: dragon's landing",
+       "s": 0.5,
+       "ground": false
+      },
+      {
+       "id": "pillar",
+       "model": "apocnew\\alterationearth_explosion_grindstone.nif",
+       "label": "Apocalypse: Grindstone",
+       "s": 0.8,
+       "ground": true
+      }
+     ]
+    }
+   ],
+   "sounds": [
+    {
+     "id": "cast",
+     "name": "Cast",
+     "opts": [
+      {
+       "id": "WB_AlterationEarth_Sound_Release",
+       "name": "WB AlterationEarth Sound Release",
+       "mp3": "trp_rockfall_release_01.mp3",
+       "src": "Apocalypse"
+      },
+      {
+       "id": "WB_AlterationBaleful_Sound_Release_ArmorCrush",
+       "name": "WB AlterationBaleful Sound Release ArmorCrush",
+       "mp3": "qst_da09_lightbeamon_01.mp3",
+       "src": "Apocalypse"
+      },
+      {
+       "id": "WPNSwing2Hand",
+       "name": "WPNSwing2Hand",
+       "mp3": "fx_swing_blade2hand_01.mp3",
+       "src": "Skyrim"
+      }
+     ]
+    },
+    {
+     "id": "impact",
+     "name": "Impact",
+     "opts": [
+      {
+       "id": "WB_AlterationEarth_Sound_Impact",
+       "name": "WB AlterationEarth Sound Impact",
+       "mp3": "phy_boulder_large_boulder_h_01.mp3",
+       "src": "Apocalypse"
+      },
+      {
+       "id": "WB_AlterationBaleful_Sound_Impact_Rumble",
+       "name": "WB AlterationBaleful Sound Impact Rumble",
+       "mp3": "npc_atronachfrost_attackpower_impact_01.mp3",
+       "src": "Apocalypse"
+      },
+      {
+       "id": "WPNImpactCrGiantClubVsFlesh",
+       "name": "WPNImpactCrGiantClubVsFlesh",
+       "mp3": "wpn_impact_crgiantclub_flesh_01.mp3",
+       "src": "Skyrim"
+      }
+     ]
+    },
+    {
+     "id": "burst",
+     "name": "Burst",
+     "opts": [
+      {
+       "id": "WB_AlterationEarth_Sound_Explosion_TalonsOfNirn",
+       "name": "WB AlterationEarth Sound Explosion TalonsOfNirn",
+       "mp3": "amb_rumbleshake_01.mp3",
+       "src": "Apocalypse"
+      },
+      {
+       "id": "WB_ConjurationDetonate_Sound_Explosion_Blast",
+       "name": "WB ConjurationDetonate Sound Explosion Blast",
+       "mp3": "mag_destruction_firestorm_impact.mp3",
+       "src": "Apocalypse"
+      },
+      {
+       "id": "MAGPowerSerpentStoneImpact",
+       "name": "MAGPowerSerpentStoneImpact",
+       "mp3": "mag_serpentstone_impact_01.mp3",
+       "src": "Skyrim"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "wind",
+   "name": "Wind and Thu'um",
+   "col": "#cfe3f2",
+   "about": "The Voice: shouts, gusts and shockwaves that throw the dead.",
+   "theme": "wind",
+   "parts": [
+    {
+     "id": "impact",
+     "name": "Impact",
+     "about": "One hit landing.",
+     "opts": [
+      {
+       "id": "core",
+       "model": "magic\\shoutareaexplosionsmall01.nif",
+       "label": "Skyrim: Unrelenting Force (small)",
+       "s": 0.7,
+       "ground": false
+      },
+      {
+       "id": "spark",
+       "model": "effects\\fxwaterfallmistblastlite.nif",
+       "label": "Skyrim: waterfall mist blast",
+       "s": 0.5,
+       "ground": false
+      },
+      {
+       "id": "drain",
+       "model": "magic\\throwvoiceimpact.nif",
+       "label": "Skyrim: Throw Voice impact",
+       "s": 1.0,
+       "ground": false
+      }
+     ]
+    },
+    {
+     "id": "burst",
+     "name": "Burst",
+     "about": "A heavy or an explosion.",
+     "opts": [
+      {
+       "id": "big",
+       "model": "magic\\shoutareaexplosion01.nif",
+       "label": "Skyrim: Unrelenting Force wave",
+       "s": 0.7,
+       "ground": false
+      },
+      {
+       "id": "nova",
+       "model": "apocnew\\alterationalt_explosion_battletide.nif",
+       "label": "Apocalypse: Battletide",
+       "s": 0.9,
+       "ground": true
+      },
+      {
+       "id": "spikes",
+       "model": "magic\\shoutareaexplosion01.nif",
+       "label": "Skyrim: Unrelenting Force wave",
+       "s": 0.9,
+       "ground": false
+      }
+     ]
+    },
+    {
+     "id": "ground",
+     "name": "Ground",
+     "about": "What lingers where it struck.",
+     "opts": [
+      {
+       "id": "mist",
+       "model": "effects\\fxwaterfallmistblast.nif",
+       "label": "Skyrim: waterfall mist",
+       "s": 0.5,
+       "ground": true
+      },
+      {
+       "id": "rune",
+       "model": "apocnew\\alterationalt_explosion.nif",
+       "label": "Apocalypse: Alteration wave",
+       "s": 0.8,
+       "ground": true
+      },
+      {
+       "id": "wave",
+       "model": "magic\\shoutareaexplosion01.nif",
+       "label": "Skyrim: Unrelenting Force wave",
+       "s": 0.6,
+       "ground": true
+      }
+     ]
+    },
+    {
+     "id": "above",
+     "name": "From above",
+     "about": "A strike from the sky.",
+     "opts": [
+      {
+       "id": "sky",
+       "model": "magic\\explosionatronachstormattack.nif",
+       "label": "Skyrim: storm atronach blast",
+       "s": 0.7,
+       "ground": false
+      },
+      {
+       "id": "pillar",
+       "model": "apocnew\\alterationalt_explosion_battletide.nif",
+       "label": "Apocalypse: Battletide",
+       "s": 0.8,
+       "ground": true
+      }
+     ]
+    }
+   ],
+   "sounds": [
+    {
+     "id": "cast",
+     "name": "Cast",
+     "opts": [
+      {
+       "id": "VOCShoutFXSprintFireSD",
+       "name": "VOCShoutFXSprintFireSD",
+       "mp3": "mag_shout_sprint_fire.mp3",
+       "src": "Skyrim"
+      },
+      {
+       "id": "MAGWhirlwindLP",
+       "name": "MAGWhirlwindLP",
+       "mp3": "mag_whirlwind_lp.mp3",
+       "src": "Dragonborn"
+      },
+      {
+       "id": "coa:sp_cold_whoosh",
+       "name": "coa:sp cold whoosh",
+       "mp3": "coa_sp_cold_whoosh.mp3",
+       "src": "ours"
+      }
+     ]
+    },
+    {
+     "id": "impact",
+     "name": "Impact",
+     "opts": [
+      {
+       "id": "VOCShoutImpactPushSD",
+       "name": "VOCShoutImpactPushSD",
+       "mp3": "voc_shoutpower_impact_push_03.mp3",
+       "src": "Skyrim"
+      },
+      {
+       "id": "WB_DestructionFrost_Sound_Explosion_HighWinds",
+       "name": "WB DestructionFrost Sound Explosion HighWinds",
+       "mp3": "voc_shout_fx_frostbreath_c_01.mp3",
+       "src": "Apocalypse"
+      },
+      {
+       "id": "WB_Illusion_Sound_Explosion_Subsonic",
+       "name": "WB Illusion Sound Explosion Subsonic",
+       "mp3": "fx_explosion_catapult_01_2d.mp3",
+       "src": "Apocalypse"
+      }
+     ]
+    },
+    {
+     "id": "burst",
+     "name": "Burst",
+     "opts": [
+      {
+       "id": "VOCShoutImpactPushImpactDragonSD",
+       "name": "VOCShoutImpactPushImpactDragonSD",
+       "mp3": "mag_shoutpush_impact_dragon_01.mp3",
+       "src": "Skyrim"
+      },
+      {
+       "id": "WB_AlterationTelekinesis_Sound_Explosion_Bwoom",
+       "name": "WB AlterationTelekinesis Sound Explosion Bwoom",
+       "mp3": "fx_explosion_catapult_01_2d.mp3",
+       "src": "Apocalypse"
+      },
+      {
+       "id": "WB_DestructionFrost_Sound_Explosion_HighWinds",
+       "name": "WB DestructionFrost Sound Explosion HighWinds",
+       "mp3": "voc_shout_fx_frostbreath_c_01.mp3",
+       "src": "Apocalypse"
+      }
+     ]
+    }
+   ]
   }
  ],
  "modstack": {

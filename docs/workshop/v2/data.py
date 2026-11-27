@@ -70,7 +70,7 @@ F('cb_marks', 'combat', 'No hit markers', 'done', 'No crosshair marks; the night
 F('cb_hitfeel', 'combat', 'Hit feel options', 'done', 'Removed as you asked ("Remove this").')
 
 # ---- class weapons
-F('cw_onemodel', 'classes', 'One model per class weapon', 'idea', 'Your Nov 26 decision: each class keeps one model through every tier; the tiers change its look only (stronger each tier, like Pack-a-Punch). You pick the model in Weapons & effects.')
+F('cw_onemodel', 'classes', 'One model per class weapon', 'building', 'Your picks: the Dragon Priest scythe (Alchemist), the Dragonbone quarterstaff (Summoner), the Daedric wand (Destruction), the Daedric rapier (Spellsword) - each through every tier, the tiers changing its look only.')
 F('cw_tierlooks', 'classes', 'Tier looks: one look, stronger each tier', 'idea', 'Tier I faint, Tier II a glowing edge, Tier III a full aura and trail, Legendary all of it plus a signature effect. Built on the element kits.')
 F('cw_ownmodels', 'classes', 'Our own models from Skyrim\'s meshes', 'idea', 'Each class weapon (and later the Tablet\'s) built from Skyrim, Dawnguard and Dragonborn parts: no mod needed for it.')
 F('cw_abilities', 'classes', 'Class weapon abilities rebuilt', 'idea', 'Every light and heavy ability redone on the new foundation (element kits, the Test Range).',
@@ -90,7 +90,7 @@ F('cw_radiant', 'classes', 'Radiant Quarterstaff heavy pillar', 'building', 'Par
 
 # ---- class spells
 F('sp_own', 'spells', 'Class spells play their own effects', 'done', 'Each spell plays its mod\'s own impact, nothing of ours over it.', since='9b0de93')
-F('sp_immolate', 'spells', 'Replace Immolate in the pool', 'idea', 'You asked to replace Immolate (Destruction, fire Tier III). Pick its replacement in Decisions.', note='"I want to replace the immolate from the spell pool".')
+F('sp_immolate', 'spells', 'Fire Storm replaces Immolate', 'building', 'Your pick (Decisions): Skyrim\'s Fire Storm takes Immolate\'s place in the Destruction fire spells, in the next build.', note='"I want to replace the immolate from the spell pool".')
 
 # ---- flasks
 F('fl_fire', 'flasks', 'Fire Flask bursts in flames', 'ready', 'Dragonfire\'s impact and a ball-of-fire burst: flames, not a flat explosion.',
@@ -111,7 +111,7 @@ F('tb_storm', 'tablet', 'Stormtalons: lightning, not ice', 'ready', 'The heavy h
   how='Stormtalons: heavy hits, and three light hits in a row.', look='Lightning on the heavy and on every 3rd hit; no ice anywhere.', since=B)
 F('tb_woe', 'tablet', 'Talons of Woe show their effect', 'ready', 'Its hit effect was drawn at a fraction of its size inside the body; now full size (Vampiric Drain, a blood burst and mist).',
   how='Talons of Woe: light and heavy hits.', look='A red blood burst and mist on every hit, bigger on the heavy.', since=B)
-F('tb_bonereaper', 'tablet', 'Bonereaper', 'building', 'Its raise was the likely cause of the round 20 crash (fixed). You said it can be replaced if it was the cause: it goes into the lineup review.')
+F('tb_bonereaper', 'tablet', 'Eight Tablet weapons cut', 'building', 'Your marks: Bloodmoon, Bonereaper, Gravebell, Riverstone, Silver Reaping, Talons of Woe, the Wandering Star and Wyrmtooth leave the Tablet; the new ones you add take their place.')
 
 # ---- wonders
 F('wd_javhand', 'wonders', 'Javelin held palm to you', 'ready', 'The hand turned so the palm faces you while charging and throwing; the charge effect over your head removed.',
@@ -181,22 +181,22 @@ F('st_r20', 'stability', 'Round 20 crash', 'ready', 'The game fell 0.6 s after a
 
 # ------------------------------------------------------------------------------------------------ the class weapons: one model each (his pick)
 CLASSES = [
-    dict(id='alchemist', name='Alchemist', weapon='Shadowflame Scythe', now='Forsworn at Tier I, Falmer II, Dwarven III, Dragon Priest Legendary',
+    dict(id='alchemist', lk='alch', name='Alchemist', weapon='Shadowflame Scythe', now='Forsworn at Tier I, Falmer II, Dwarven III, Dragon Priest Legendary',
          cands=[dict(key='cls_forsworn_alch', name='Forsworn scythe', src='Built from Skyrim\'s Forsworn axe and sword (ours)'),
                 dict(key='cls_falmer_alch', name='Falmer scythe', src='Built from Skyrim\'s Falmer axe and longsword (ours)'),
                 dict(key='cls_dwarven_alch', name='Dwarven scythe', src='Built from Skyrim\'s Dwarven battleaxe and greatsword (ours)'),
                 dict(key='cls_dragonpriest_alch', name='Dragon Priest scythe', src='Built from a Dragon Priest staff and dagger (ours)')]),
-    dict(id='summoner', name='Summoner', weapon='Radiant Quarterstaff', now='Steel, Ebony, Daedric, Dragonbone by tier (Animated Armoury)',
+    dict(id='summoner', lk='radiant', name='Summoner', weapon='Radiant Quarterstaff', now='Steel, Ebony, Daedric, Dragonbone by tier (Animated Armoury)',
          cands=[dict(key='cls_steelstaff_radiant', name='Steel quarterstaff', src='Animated Armoury - to be rebuilt from Skyrim\'s meshes'),
                 dict(key='cls_ebonystaff_radiant', name='Ebony quarterstaff', src='Animated Armoury - to be rebuilt from Skyrim\'s meshes'),
                 dict(key='cls_daedricstaff_radiant', name='Daedric quarterstaff', src='Animated Armoury - to be rebuilt from Skyrim\'s meshes'),
                 dict(key='cls_dragonbonestaff_radiant', name='Dragonbone quarterstaff', src='Animated Armoury - to be rebuilt from Skyrim\'s meshes')]),
-    dict(id='destruction', name='Destruction', weapon='Carian Wand', now='Steel, Stalhrim, Glass, Daedric by tier (Fulcimentum)',
+    dict(id='destruction', lk='carian', name='Destruction', weapon='Carian Wand', now='Steel, Stalhrim, Glass, Daedric by tier (Fulcimentum)',
          cands=[dict(key='cls_steelwand_carian', name='Steel wand', src='Fulcimentum - to be rebuilt from Skyrim\'s meshes'),
                 dict(key='cls_stahlrimwand_carian', name='Stalhrim wand', src='Fulcimentum - to be rebuilt from Skyrim\'s meshes'),
                 dict(key='cls_glasswand_carian', name='Glass wand', src='Fulcimentum - to be rebuilt from Skyrim\'s meshes'),
                 dict(key='cls_daedricwand_carian', name='Daedric wand', src='Fulcimentum - to be rebuilt from Skyrim\'s meshes')]),
-    dict(id='spellsword', name='Spellsword', weapon='Spellbound Rapier', now='Steel, Ebony, Daedric, Dragonbone by tier (Animated Armoury)',
+    dict(id='spellsword', lk='ss_none', name='Spellsword', weapon='Spellbound Rapier', now='Steel, Ebony, Daedric, Dragonbone by tier (Animated Armoury)',
          cands=[dict(key='cls_steelrapier_ss_none', name='Steel rapier', src='Animated Armoury - to be rebuilt from Skyrim\'s meshes'),
                 dict(key='cls_ebonyrapier_ss_none', name='Ebony rapier', src='Animated Armoury - to be rebuilt from Skyrim\'s meshes'),
                 dict(key='cls_daedricrapier_ss_none', name='Daedric rapier', src='Animated Armoury - to be rebuilt from Skyrim\'s meshes'),
@@ -219,6 +219,41 @@ TABLET = [
     dict(id='wanderstar', key='', name='The Wandering Star', kind='Wand - battered', does='Hold to cast a gold star every 0.5 s that bounces to up to 4 of the dead.'),
     dict(id='bonereaper', key='tab_bonereaper', name='Bonereaper', kind='Scythe - battered', does='1 kill in 4 rises to fight for you for 20 s. (Its raise caused the round 20 crash - fixed.)'),
     dict(id='bloodmoon', key='tab_bloodmoon', name='Bloodmoon Scythe', kind='Scythe - battered', does='Hits drain blood to heal you. Heavy: drains everything it touches.'),
+]
+
+
+# ------------------------------------------------------------------------------------------------ new Tablet weapons to choose from (Nov 26 night)
+# (Noah: "give me new weapon ideas in the tablet lineup ... that really depict Skyrim and Black Ops 3 zombies" - 12 to choose from)
+# each: built from Skyrim's own meshes, an element from the kits, and a nod to a BO3 Zombies wonder weapon or box item
+TABLET_NEW = [
+    dict(id='fushammer', name='Voice of the Mountain', kind='Nordic warhammer', el='wind', base='Skyrim\'s Nordic warhammer with a Word Wall\'s carved dragon-script round its head',
+         light='Every hit staggers the dead back a step.', heavy='The Unrelenting Force: a roaring cone that hurls every one of the dead in front of you.',
+         special='Every 20 kills the hammer charges a full FUS RO DAH: the next heavy clears the street.', bo3='The Thundergun'),
+    dict(id='jester', name='The Jester\'s Cane', kind='Daedric staff', el='arcane', base='The Wabbajack\'s shape, reshaped as a twisted cane with a grinning head',
+         light='Each bolt rolls a random fate: the dead shrink to knee height, turn into a cheese wheel that rolls off and bursts, fight each other, or pop in confetti fire.',
+         heavy='A wide burst that gives every one of the dead around you its own random fate.', special='Sheogorath laughs now and then.', bo3='The Wave Gun and the Shrink Ray'),
+    dict(id='soulrender', name='Soulrender', kind='Daedric mace', el='spirit', base='A Daedric mace whose head is a cracked black soul gem',
+         light='Every kill traps a soul: the gem fills and glows brighter.', heavy='With a full gem: a soul storm - the trapped souls rise as spectral warriors and fight beside you for 12 s.',
+         special='The gem hums when it is full.', bo3='The Wrath of the Ancients (its charged shots)'),
+    dict(id='chaurus', name='Chaurus Fang', kind='Falmer sword', el='poison', base='A Falmer sword edged with chaurus chitin and dripping venom',
+         light='Hits poison the dead.', heavy='A spray of venom in a cone.', special='The poisoned dead burst into acid when they die, poisoning the ones beside them - a chain through a crowd.', bo3='The Apothicon Servant\'s chain kills'),
+    dict(id='piston', name='Dwemer Piston Lance', kind='Dwarven spear', el='earth', base='A Dwarven spear on a Centurion\'s piston, steam venting from its joints',
+         light='Thrusts with a hiss of steam that staggers.', heavy='The piston fires: a spike punches through a line of the dead and pins them to the ground for 4 s.',
+         special='Steam bursts from it on every heavy.', bo3='The Ragnarok DG-4 (pinning the horde)'),
+    dict(id='bound', name='Mace of the Bound', kind='Daedric mace', el='shadowfire', base='The Mace of Molag Bal\'s spiked head on a Daedric haft',
+         light='Hits brand the dead with a violet mark.', heavy='A slam that brands every one of the dead within 6 m.', special='A branded one that dies bursts into violet shadowfire, burning the dead around it.', bo3='The Kraken / the Thundergun\'s mass kills'),
+    dict(id='aetherium', name='Aetherium Disc Blade', kind='Dwemer glaive', el='arcane', base='Dwemer metal round a glowing Aetherium core, a round blade',
+         light='A spinning slash.', heavy='Thrown: the blade hovers ahead of you and spins through the dead for 5 s before flying back.', special='Its core lights the dead it cuts in blue.', bo3='The Apothicon Sword\'s spinning attack'),
+    dict(id='bloodbite', name='Harkon\'s Bloodbite', kind='Vampire dagger', el='blood', base='A vampire\'s curved dagger with a blood-red gem',
+         light='Fast stabs that drain a little health.', heavy='A cloud of bats bursts from you and tears at the dead around you for 4 s.', special='Kills leave blood orbs that heal you when you walk through them.', bo3='The Vril device\'s life drain'),
+    dict(id='whisper', name='Whisper Edge', kind='Ebony sword', el='shadowfire', base='An Ebony sword wrapped in shadow, like the Ebony Blade',
+         light='Kills make you unseen for 2 s: the dead lose you.', heavy='Shadow step: you blink 8 m forward through the dead, cutting every one you pass.', special='The blade whispers when it kills.', bo3='Who\'s Who and the Apothicon Sword\'s lunge'),
+    dict(id='giantclub', name='Giant\'s Toe Club', kind='Giant\'s club', el='earth', base='A giant\'s club, a mammoth toe bound to its head',
+         light='Every hit sends one of the dead flying into the sky.', heavy='A ground stomp that knocks down every one of the dead within 8 m.', special='Yes - the famous giant launch.', bo3='The Ragnarok DG-4\'s slam'),
+    dict(id='sweetroll', name='Sweetroll of the Damned', kind='Throwable (5 throws)', el='fire', base='A sweetroll with a lit fuse in it',
+         light='Throw it: it sings a little Nord tune, and every one of the dead nearby runs to it.', heavy='-', special='After 6 s it explodes in a fireball. Someone always steals it first.', bo3='The Monkey Bomb'),
+    dict(id='atronach', name='Lil\' Atronach', kind='Throwable (3 throws)', el='fire', base='A soul gem holding a tiny Flame Atronach',
+         light='Throw it: a knee-high Flame Atronach pops out and spins, blasting the dead around it with fire for 10 s.', heavy='-', special='It dances when it\'s done.', bo3='Li\'l Arnie'),
 ]
 
 # ------------------------------------------------------------------------------------------------ decisions waiting for Noah
@@ -292,6 +327,75 @@ KIT_PARTS = [
     ('Sounds', 'Cast, travel, impact, linger - one set per element.'),
 ]
 
+
+# ------------------------------------------------------------------------------------------------ the element kits (Nov 26 night: "go ahead and make the element kits")
+# each element: Skyrim's own 3D effects (Skyrim, Dawnguard, Dragonborn, Apocalypse, Mysticism - read from Noah's game by
+# tools/realpreview.py) offered for each part of the kit, and Skyrim's own sounds for its cast, impact and burst
+KIT_THEME = {'fire': 'fire', 'frost': 'frost', 'shock': 'shock', 'shadowfire': 'shadow', 'holy': 'sun', 'poison': 'poison', 'arcane': 'arcane',
+             'blood': 'blood', 'spirit': 'spirit', 'earth': 'earth', 'wind': 'wind'}
+KIT_ROLES = [('impact', 'Impact', 'One hit landing.', ['core', 'spark', 'drain']),
+             ('burst', 'Burst', 'A heavy or an explosion.', ['big', 'nova', 'spikes']),
+             ('ground', 'Ground', 'What lingers where it struck.', ['mist', 'rune', 'wave']),
+             ('above', 'From above', 'A strike from the sky.', ['sky', 'pillar'])]
+KIT_SOUNDS = {
+    'fire': {'cast': ['WB_DestructionFire_Sound_Release_1', 'WB_DestructionFire_Sound_Release_Emberbolt', 'MAGFireboltFire2DSD'],
+             'impact': ['MAGFireboltImpactSD', 'WB_DestructionFire_Sound_Impact_Fwoosh', 'WB_DestructionFire_Sound_Impact_Immolation'],
+             'burst': ['MAGDestructionFireballExplosion', 'MAGDestructionFireStormExplosion', 'WB_DestructionFire_Sound_Explosion_FlashFireball']},
+    'frost': {'cast': ['MAGIcicleFireSD', 'WB_DestructionFrost_Release_1_Sound_Tiny', 'MAGFrostBiteFireLPMSD'],
+              'impact': ['MAGIcicleImpactBreakSD', 'MAGFrostBiteImpactSD', 'WB_DestructionFrost_Sound_Impact_Crystalize'],
+              'burst': ['FXExplosionIceSD', 'WB_DestructionFrost_Sound_Explosion_Shatter', 'WB_DestructionFrost_Sound_Explosion_Cryoblast']},
+    'shock': {'cast': ['MAGShockFFFireSD', 'WB_DestructionShock_Sound_Release_JoyBuzzer_2', 'MAGShockConcentrationFireLPMSD'],
+              'impact': ['MAGShockImpactSD', 'MAGRuneImpactSD', 'WB_DestructionShock_Sound_Explosion_Thunderball'],
+              'burst': ['WB_DestructionShock_Sound_Explosion_LightningStrike_2C', 'WB_DestructionShock_Sound_Explosion_ShockNova', 'VOCShoutImpactStormCallNearSD']},
+    'shadowfire': {'cast': ['WB_IllusionNightmare_Sound_Release', 'WB_IllusionShadow_Sound_Release_Buff', 'MAGIllusionFireLPM'],
+                   'impact': ['WB_IllusionShadow_Sound_Explosion_Vanish', 'WB_IllusionNightmare_Sound_Explosion_EnergyBall', 'MAGNightCloakBatsHitLPM'],
+                   'burst': ['WB_IllusionNightmare_Sound_Explosion_PaleMoon_Howl', 'WB_Illusion_Sound_Explosion_Subsonic', 'WB_AlterationChaos_Sound_Explosion_Plasma']},
+    'holy': {'cast': ['MAGLightFireSD', 'MAGRestorationTurnUndeadFire2DSD', 'WB_AlterationAlt_Sound_Release_IgniteLight'],
+             'impact': ['MAGAurielShieldBlastA', 'MAGRestorationFFFireSD', 'WB_RestorationHeal_Sound_Release_MassiveTwinkles'],
+             'burst': ['FXExplosionAurielsSunNear', 'FXExplosionAurielBowHarkon', 'WB_Restoration_Sound_Explosion_SubsonicEnergy']},
+    'poison': {'cast': ['MAG_PoisonReleaseSFX', 'TRPHarvestBloomReleasePoison', 'MAG_PoisonFireLoopSFX'],
+               'impact': ['MAG_PoisonImpactSFX', 'WB_AlterationEarth_Sound_Impact', 'coa:flesh_hit_2'],
+               'burst': ['MAG_PoisonExplosionSFX', 'MAG_PoisonRitualExplosionSFX', 'WB_ConjurationDetonate_Sound_Explosion_Blast']},
+    'arcane': {'cast': ['WB_DestructionGold_Sound_Release_MagicMissile', 'MAGAlterationReleaseSD', 'WB_AlterationMetamagic_Sound_Release'],
+               'impact': ['MAGAetherialShieldImpact', 'WB_DestructionCantrip_Sound_Explosion_ArcaneBurst', 'WB_AlterationTelekinesis_Sound_Explosion_GlassJaw'],
+               'burst': ['WB_AlterationTelekinesis_Sound_Explosion_Bwoom', 'MAGPowerSerpentStoneExplosion', 'WB_Restoration_Sound_Explosion_LowSwish']},
+    'blood': {'cast': ['WB_RestorationBlood_Sound_Release_Big', 'MAGAlterationVampireDrainRelease', 'WB_RestorationBlood_Sound_Release_OrcishHealing'],
+              'impact': ['MAGAlterationVampireDrainOnHit', 'coa:flesh_hit_1', 'WPNImpactBladeVsFleshSD'],
+              'burst': ['WB_RestorationNecro_Sound_Explosion_Undead', 'WB_ConjurationDetonate_Sound_Explosion_Blast', 'WB_RestorationBlood_Sound_Release_Big']},
+    'spirit': {'cast': ['WB_ConjurationBanish_Sound_Release_Hiss', 'MAGConjureFireSD', 'NPCWispConsciousLP'],
+               'impact': ['WB_ConjurationGhosts_Sound_Impact_Wail', 'MAGConjureImpactSD', 'WB_ConjurationSpirit_Sound_Explosion_Whoom'],
+               'burst': ['WB_ConjurationCommand_Sound_Explosion_EtherealCall', 'QSTAlduinDeathSoulsASD', 'WB_RestorationNecro_Sound_Explosion_Undead']},
+    'earth': {'cast': ['WB_AlterationEarth_Sound_Release', 'WB_AlterationBaleful_Sound_Release_ArmorCrush', 'WPNSwing2Hand'],
+              'impact': ['WB_AlterationEarth_Sound_Impact', 'WB_AlterationBaleful_Sound_Impact_Rumble', 'WPNImpactCrGiantClubVsFlesh'],
+              'burst': ['WB_AlterationEarth_Sound_Explosion_TalonsOfNirn', 'WB_ConjurationDetonate_Sound_Explosion_Blast', 'MAGPowerSerpentStoneImpact']},
+    'wind': {'cast': ['VOCShoutFXSprintFireSD', 'MAGWhirlwindLP', 'coa:sp_cold_whoosh'],
+             'impact': ['VOCShoutImpactPushSD', 'WB_DestructionFrost_Sound_Explosion_HighWinds', 'WB_Illusion_Sound_Explosion_Subsonic'],
+             'burst': ['VOCShoutImpactPushImpactDragonSD', 'WB_AlterationTelekinesis_Sound_Explosion_Bwoom', 'WB_DestructionFrost_Sound_Explosion_HighWinds']},
+}
+
+
+def element_kits():
+    import sys
+    sys.path.insert(0, str(ROOT / 'tools'))
+    import realfx
+    snd = json.loads((ROOT / 'docs' / 'workshop' / 'sounds.json').read_text())['sounds']
+    out = []
+    for eid, name, col, about in ELEMENTS + EXTRA_ELEMENTS:
+        th = realfx.PARTS[KIT_THEME[eid]]
+        parts = [dict(id=rid, name=rn, about=ra, opts=[dict(id=r, model=th[r]['model'], label=th[r]['label'], s=th[r]['s'], ground=r in ('mist', 'rune', 'wave', 'nova', 'pillar'))
+                                                          for r in roles if r in th]) for rid, rn, ra, roles in KIT_ROLES]
+        sounds = [dict(id=k, name={'cast': 'Cast', 'impact': 'Impact', 'burst': 'Burst'}[k],
+                       opts=[dict(id=n, name=n.replace('_', ' '), mp3=snd[n]['mp3'][0], src=snd[n].get('src', '')) for n in v if n in snd])
+                  for k, v in KIT_SOUNDS[eid].items()]
+        out.append(dict(id=eid, name=name, col=col, about=about, theme=KIT_THEME[eid], parts=parts, sounds=sounds))
+    return out
+
+EXTRA_ELEMENTS = [
+    ('spirit', 'Spirit', '#dfe8ff', 'Ghost light, souls and the dead raised: pale, cold, whispering.'),
+    ('earth', 'Earth', '#b08a5a', 'Stone and dust: the ground split, rocks thrown up, a heavy thud.'),
+    ('wind', 'Wind and Thu\'um', '#cfe3f2', 'The Voice: shouts, gusts and shockwaves that throw the dead.'),
+]
+
 # ------------------------------------------------------------------------------------------------ the builds (history)
 def builds():
     out = []
@@ -308,7 +412,17 @@ INSTALLS = {   # (each build installed on Noah's PC, and when)
 }
 
 
+def class_looks():
+    import sys
+    sys.path.insert(0, str(ROOT / 'tools'))
+    import weaponlooks
+    for c in CLASSES:
+        v = weaponlooks.W[c['lk']]
+        c['looks'] = [dict(id=f'o{i + 1}', name=x['name'], desc=x['desc']) for i, x in enumerate(v[1])]
+
+
 def main():
+    class_looks()
     ids = [f['id'] for f in FEATURES]
     assert len(ids) == len(set(ids)), 'duplicate feature ids'
     sys_ids = {s[0] for s in SYSTEMS}
@@ -320,7 +434,7 @@ def main():
                 decisions=[dict(d, opts=[dict(id=a, name=b, about=c) for a, b, c in d['opts']]) for d in DECISIONS],
                 builds=builds(), installs=INSTALLS, bible=BIBLE,
                 elements=[dict(id=a, name=b, col=c, about=d) for a, b, c, d in ELEMENTS], kit=[dict(name=a, about=b) for a, b in KIT_PARTS],
-                classes=CLASSES, tablet=TABLET)
+                classes=CLASSES, tablet=TABLET, tabnew=TABLET_NEW, kits=element_kits())
     for k in ('modstack', 'nexus', 'modnow'):
         data[k] = json.loads((ROOT / 'docs' / 'workshop' / f'{k}.json').read_text())
     (HERE / 'data.json').write_text(json.dumps(data, ensure_ascii=False, indent=1))

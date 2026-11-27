@@ -180,69 +180,6 @@ textarea:focus { outline: 2px solid var(--ember); outline-offset: 1px; }
 .ucard h4 { margin: 0; font: 700 17px/1.15 'Barlow Condensed', sans-serif; letter-spacing: .05em; text-transform: uppercase; }
 .ucard p { margin: 0; font-size: 13px; color: var(--muted); }
 
-/* ---- a HUD direction, drawn (16:9, the colours of the game itself, the same in both themes) */
-.hud { position: relative; aspect-ratio: 16 / 9; overflow: hidden; color: #efe7d8; font-family: 'Barlow Condensed', sans-serif; container-type: inline-size;
-  background: radial-gradient(ellipse 70% 60% at 60% 38%, #4a5466 0%, #252a34 48%, #0b0d11 100%); }
-.hud .sky { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10,12,16,0) 55%, rgba(10,12,16,.55) 100%), radial-gradient(ellipse 40% 30% at 70% 30%, rgba(190,40,30,.25), transparent 70%); }
-.hud .figs { position: absolute; left: 30%; right: 18%; bottom: 18%; height: 34%; display: flex; align-items: end; justify-content: space-around; opacity: .55; }
-.hud .figs span { width: 4.5%; height: 70%; background: linear-gradient(#20242c, #0c0e12); border-radius: 40% 40% 10% 10%; }
-.hud .figs span:nth-child(2n) { height: 88%; } .hud .figs span:nth-child(3n) { height: 60%; }
-.hud .weap { display: none; position: absolute; right: 16%; bottom: -6%; width: 22%; height: 46%; border-right: 1.2cqw solid #6b6458; border-radius: 0 0 0 100%; transform: rotate(-18deg); opacity: .9; }
-/* A: Ember Tally */
-.dA .tally { position: absolute; left: 3.4%; top: 5%; display: grid; gap: .3cqw; }
-.dA .tally small { font-size: 1.25cqw; letter-spacing: .42em; color: #d7c7ad; font-weight: 600; }
-.dA .tally svg { width: 19cqw; height: 9cqw; filter: drop-shadow(0 0 .7cqw rgba(232,90,40,.8)); }
-.dA .tally .w { font-size: 1.4cqw; color: #d9cbb4; letter-spacing: .1em; }
-.dA .q { position: absolute; left: 3.4%; top: 36%; width: 26%; display: grid; gap: .2cqw; }
-.dA .q b { font-size: 1.45cqw; letter-spacing: .14em; color: #f2dfb6; font-weight: 700; }
-.dA .q span { font-size: 1.3cqw; color: #cdbfa8; font-family: Inter, sans-serif; }
-.dA .q i { display: block; height: .3cqw; background: rgba(255,255,255,.14); } .dA .q i::after { content: ""; display: block; height: 100%; width: 47%; background: #e8703f; }
-.dA .comp { position: absolute; left: 32%; right: 32%; top: 3.4%; border-bottom: 1px solid rgba(239,231,216,.45); display: flex; justify-content: space-between; font-size: 1.35cqw; letter-spacing: .2em; padding-bottom: .3cqw; }
-.dA .comp em { color: #e8703f; font-style: normal; }
-.dA .pts { position: absolute; right: 3.4%; bottom: 6%; text-align: right; display: grid; justify-items: end; }
-.dA .pts small { font-size: 1.1cqw; letter-spacing: .34em; color: #d7c7ad; }
-.dA .pts b { font-size: 4.4cqw; line-height: 1; color: #f1c86e; text-shadow: 0 0 1.2cqw rgba(241,170,70,.5); font-weight: 700; }
-.dA .pts .pop { position: absolute; right: 0; bottom: 100%; font-size: 1.8cqw; color: #ffd98a; font-weight: 700; }
-.dA .brews { position: absolute; left: 3.4%; bottom: 6%; display: flex; gap: .8cqw; }
-.dA .brews span { width: 3cqw; height: 3cqw; border-radius: 50%; display: grid; place-items: center; font-size: 1.4cqw; color: #fff; box-shadow: 0 0 0 .2cqw rgba(0,0,0,.5), 0 0 .8cqw var(--bc); background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--bc) 85%, #fff), var(--bc) 60%, #000 140%); }
-.dA .bars { position: absolute; left: 36%; right: 36%; bottom: 5%; display: grid; gap: .35cqw; }
-.dA .bars i { display: block; height: .45cqw; background: rgba(255,255,255,.12); } .dA .bars i::after { content: ""; display: block; height: 100%; width: var(--v); background: var(--c); }
-/* B: Dragon Stone */
-.dB { background: radial-gradient(ellipse 70% 60% at 60% 38%, #4f4a40 0%, #29251f 50%, #0d0b09 100%); }
-.dB .plate { position: absolute; padding: .9cqw 1.4cqw; background: linear-gradient(180deg, rgba(40,34,26,.82), rgba(18,15,11,.82)); border: .18cqw solid #8d7442; box-shadow: inset 0 0 0 .3cqw rgba(0,0,0,.5), inset 0 0 0 .45cqw rgba(214,178,106,.35); }
-.dB .night { left: 3%; top: 5%; text-align: center; font-family: Cinzel, serif; }
-.dB .night small { display: block; font-size: 1.1cqw; letter-spacing: .4em; color: #d6b26a; }
-.dB .night b { display: block; font-size: 5.2cqw; line-height: 1; color: #f0dcae; font-weight: 700; text-shadow: 0 0 1cqw rgba(214,178,106,.4); }
-.dB .night span { font-size: 1.2cqw; color: #cbb991; font-family: 'Barlow Condensed', sans-serif; letter-spacing: .1em; }
-.dB .q { left: 3%; top: 36%; width: 25%; font-size: 1.3cqw; color: #e5d6b4; }
-.dB .q b { display: block; font-family: Cinzel, serif; font-size: 1.35cqw; color: #f0dcae; letter-spacing: .06em; }
-.dB .comp { position: absolute; left: 30%; right: 30%; top: 3%; height: 3.4cqw; display: flex; align-items: center; justify-content: space-between; padding: 0 2cqw; font-family: Cinzel, serif; font-size: 1.3cqw; color: #e8d7ad; border-top: .15cqw solid #8d7442; border-bottom: .15cqw solid #8d7442; background: linear-gradient(90deg, transparent, rgba(20,16,12,.7) 15%, rgba(20,16,12,.7) 85%, transparent); }
-.dB .comp em { font-style: normal; color: #e05a3a; }
-.dB .pts { right: 3%; bottom: 6%; text-align: right; font-family: Cinzel, serif; }
-.dB .pts small { display: block; font-size: 1cqw; letter-spacing: .3em; color: #d6b26a; }
-.dB .pts b { font-size: 3.6cqw; color: #f0dcae; line-height: 1; }
-.dB .brews { position: absolute; left: 3%; bottom: 6%; display: flex; gap: .7cqw; }
-.dB .brews span { width: 3cqw; height: 3cqw; transform: rotate(45deg); border: .18cqw solid #8d7442; background: rgba(18,15,11,.85); display: grid; place-items: center; }
-.dB .brews span i { transform: rotate(-45deg); font-style: normal; font-size: 1.4cqw; color: var(--bc); }
-.dB .bars { position: absolute; left: 34%; right: 34%; bottom: 5%; display: grid; gap: .4cqw; }
-.dB .bars i { display: block; height: .7cqw; border: .12cqw solid #8d7442; background: rgba(0,0,0,.5); } .dB .bars i::after { content: ""; display: block; height: 100%; width: var(--v); background: var(--c); }
-/* C: Edge Clean */
-.dC .night { position: absolute; left: 3.4%; top: 5%; display: grid; line-height: 1; }
-.dC .night small { font-size: 1.1cqw; letter-spacing: .4em; color: #c9c3b6; font-family: Inter, sans-serif; }
-.dC .night b { font-size: 4.2cqw; font-weight: 500; font-family: Inter, sans-serif; }
-.dC .night span { font-size: 1.2cqw; color: #c9c3b6; margin-top: .5cqw; font-family: Inter, sans-serif; }
-.dC .q { position: absolute; left: 3.4%; top: 28%; width: 26%; font-family: Inter, sans-serif; font-size: 1.2cqw; color: #d8d2c4; display: grid; gap: .2cqw; }
-.dC .q b { font-weight: 600; letter-spacing: .06em; font-size: 1.15cqw; }
-.dC .comp { position: absolute; left: 32%; right: 32%; top: 3.4%; border-bottom: 1px solid rgba(255,255,255,.4); display: flex; justify-content: space-between; font: 1.2cqw Inter, sans-serif; padding-bottom: .3cqw; }
-.dC .comp em { font-style: normal; color: #c9a86a; }
-.dC .pts { position: absolute; left: 3.4%; bottom: 6%; display: grid; font-family: Inter, sans-serif; }
-.dC .pts small { font-size: 1cqw; letter-spacing: .3em; color: #b8b4a8; }
-.dC .pts b { font-size: 2.6cqw; font-weight: 500; }
-.dC .brews { position: absolute; right: 3.4%; bottom: 6%; display: flex; gap: .6cqw; }
-.dC .brews span { width: 2.2cqw; height: 2.2cqw; border: 1px solid rgba(201,168,106,.7); display: grid; place-items: center; font-size: 1.1cqw; color: #c9a86a; }
-.dC .bars { position: absolute; left: 30%; right: 30%; bottom: 5%; display: grid; gap: .3cqw; }
-.dC .bars i { display: block; height: .3cqw; background: rgba(255,255,255,.12); } .dC .bars i::after { content: ""; display: block; height: 100%; width: var(--v); background: var(--c); }
-
 /* ---- release and history */
 .rgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
 .rbox { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
@@ -281,7 +218,30 @@ textarea:focus { outline: 2px solid var(--ember); outline-offset: 1px; }
   .hrow { grid-template-columns: 1fr; }
   .installed { text-align: left; }
 }
-__UMOCK__
+
+/* ---- tiers, kits, sounds, new Tablet weapons, the full-width still */
+.tierrow { margin-bottom: 18px; }
+.kithead { border-left: 3px solid var(--c); padding: 4px 0 4px 14px; margin: 6px 0 4px; }
+.kithead h4 { margin: 0; font: 700 26px/1.1 Cinzel, serif; color: var(--c); }
+.kithead p { margin: 4px 0 0; color: var(--muted); }
+.chip .dot, .tnhead .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: 0; box-shadow: 0 0 6px currentColor; }
+.chip .kn { color: var(--ember); margin-left: 4px; }
+.sndgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
+.sndcol { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; gap: 8px; align-content: start; }
+.sndcol > b { font: 700 16px/1 'Barlow Condensed', sans-serif; letter-spacing: .12em; text-transform: uppercase; }
+.snd { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; font-size: 14px; min-width: 0; }
+.snd span { min-width: 0; overflow-wrap: anywhere; } .snd small { display: block; color: var(--faint); font-size: 12px; }
+.snd .play { cursor: pointer; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line2); background: var(--panel2); color: var(--ember); font-size: 12px; }
+.snd .play:hover { border-color: var(--ember); }
+.snd .btn { padding: 6px 10px; font-size: 12px; }
+.tnew { border-top: 3px solid var(--c); }
+.tnhead { padding: 10px 14px 0; display: flex; align-items: center; }
+.tnew p b { color: var(--fg); font-weight: 600; }
+.zoom { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.88); display: grid; place-items: center; padding: 16px; gap: 10px; align-content: center; }
+.zoom .zin { width: min(100%, 1600px); }
+.stage { cursor: zoom-in; }
+.zoom .stage { cursor: default; }
+__UICSS__
 .u-stage { aspect-ratio: 16 / 9; width: 100%; }
 </style>
 
@@ -308,5 +268,6 @@ __UMOCK__
 <script type="application/json" id="wsdata">__DATA__</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>__VIEWER__</script>
+<script>__REAL__</script>
 <script>__UISCREENS__</script>
 <script>__APP__</script>
