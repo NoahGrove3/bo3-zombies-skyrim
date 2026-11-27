@@ -153,15 +153,7 @@ namespace coa::Picks
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (!p) return;
 		if (const char* k = HeldWeaponKey()) Card(k, "draw", p->GetPosition());
-		// (Noah, Nov 26 doc) the held weapon's lore card, bottom right - a new weapon at once, the same one again after a while
-		static std::string lastT;
-		static auto        lastAt = std::chrono::steady_clock::time_point{};
-		std::string        t, x;
-		const auto         now = std::chrono::steady_clock::now();
-		if (Classes::HeldCard(t, x) && (t != lastT || now - lastAt > std::chrono::seconds(90))) {
-			Hud::WeaponCard(t, x, 7.0f);
-			lastT = t, lastAt = now;
-		}
+		// (Noah, Nov 26 night: the held weapon's card - "I actually want to remove this") no card
 	}
 	// (Noah, Nov 26 evening: The dead, "Burn to ash") a kill by fire - a fire effect on it as it dies - burns, falls, and a moment on
 	// crumbles to Skyrim's own pile of glowing ash (the body hidden under it; its loot through the ash, as the glider's fire leaves)
@@ -187,6 +179,11 @@ namespace coa::Picks
 				a->extraList.Add(new RE::ExtraAshPileRef(ash->CreateRefHandle()));
 				if (auto* r3 = a->Get3D()) r3->SetAppCulled(true);
 				if (kFireAshSnd.id) PlayOne(kFireAshSnd, a->GetPosition(), 0.6f);
+				// (Nov 26 night: "The ash piles need to disappear after 5s on the floor") the pile and the body under it, 5 s on
+				Tasks::Later(5.0f, [hp = ash->CreateRefHandle(), hb = a->GetHandle()] {
+					if (auto r = hp.get()) r->Disable(), r->SetDelete(true);
+					if (auto b = hb.get()) b->Disable(), b->SetDelete(true);
+				});
 			}
 		});
 	}
@@ -329,6 +326,23 @@ namespace coa::Picks
 			for (auto& h : pl->highActorHandles) {
 				auto a = h.get();
 				if (!a || a->IsDead() || !a->HasKeywordString("ActorTypeDragon")) continue;
+				// (Noah, Nov 26 night: "The dragons get stuck flying in the air") one aloft past 20 s is told it may not fly for
+				// 12 s - it lands and fights on the ground - then may again
+				{
+					static std::unordered_map<RE::FormID, float> aloft, grounded;
+					auto* st = a->AsActorState();
+					const RE::FormID id = a->GetFormID();
+					if (st) {
+						if (grounded.contains(id)) {
+							if ((grounded[id] -= 0.5f) <= 0) { st->actorState2.allowFlying = 1; grounded.erase(id); }
+						} else if (st->IsFlying()) {
+							if ((aloft[id] += 0.5f) > 20.0f) {
+								st->actorState2.allowFlying = 0; grounded[id] = 12.0f; aloft.erase(id);
+								logger::info("dragons: {} kept from flying for 12 s - it lands", a->GetName());
+							}
+						} else aloft.erase(id);
+					}
+				}
 				const auto rs = a->GetReferenceRuntimeData().refScale;
 				if (rs < 100) continue;
 				a->SetScale(rs / 100.0f * kDragonScale);

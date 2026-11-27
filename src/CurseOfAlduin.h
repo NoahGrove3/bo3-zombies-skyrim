@@ -935,6 +935,7 @@ namespace coa
 		void  OnCast(RE::FormID a_spell);              // your cast (staffs and the Codex: a use)
 		void  OnFell();                                // (lost if you fall)
 		void  DevKit();                                // (the test kit) every donated weapon, at its full uses and never wearing
+		void  PairClaw(RE::FormID a_right);            // a claw put in the right hand: its left-hand twin in the other (the kit's too)
 		void  OnStrike(RE::Actor* a_target, RE::FormID a_source, bool a_power, bool a_arrow);   // its power on a blow or an arrow
 		float TakenMult(RE::Actor* a_actor);           // (the Saltrice Sickle's salt: 30% more taken)
 		bool  IsTablet(const RE::TESForm* a_w);        // the donated weapon you carry?

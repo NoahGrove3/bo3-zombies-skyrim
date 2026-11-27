@@ -1487,6 +1487,12 @@ namespace coa
 						SKSE::GetTaskInterface()->AddTask([] { Classes::DressUnder(); });
 					}
 				}
+				if (a_event && a_event->equipped && a_event->actor && a_event->actor->IsPlayerRef()) {
+					if (auto* w = RE::TESForm::LookupByID<RE::TESObjectWEAP>(a_event->baseObject); w && w->IsHandToHandMelee()) {
+						const RE::FormID wid = w->GetFormID();
+						Tasks::Later(0.25f, [wid] { Tablet::PairClaw(wid); });
+					}
+				}
 				if (!a_event || !a_event->equipped || s_mine.load() || !a_event->actor || !a_event->actor->IsPlayerRef()) {
 					return RE::BSEventNotifyControl::kContinue;
 				}

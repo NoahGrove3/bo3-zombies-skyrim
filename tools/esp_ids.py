@@ -185,7 +185,7 @@ def dressing(S):
         sc_ids = {r['id'] for r in S['spellcraft']['rows']} if 'spellcraft' in S else set()
         records[('STAT', 'show_' + w['id'])] = {'model': f"CurseOfAlduin\\fx\\{w['id']}_icon.nif" if w['id'] in sc_ids else w['standinModel'], 'color': '', 'radius': 0}  # the roll shows the spell's logo
     for _e in ('fire', 'frost', 'shock', 'poison', 'sun', 'blood', 'philosopher'):   # (Noah: the flasks held in the hand)
-        records[('STAT', '1st_flask_' + _e)] = {'model': 'CurseOfAlduin\\alchemist\\mutagen_staff_qs.nif' if _e == 'philosopher' else 'CurseOfAlduin\\alchemist\\flask_' + _e + '_held.nif', 'color': '', 'radius': 0}
+        records[('STAT', '1st_flask_' + _e)] = {'model': 'CurseOfAlduin\\alchemist\\mutagen_staff_qs_1st.nif' if _e == 'philosopher' else 'CurseOfAlduin\\alchemist\\flask_' + _e + '_held.nif', 'color': '', 'radius': 0}
     for _t, (_k, _n, _m, _kind, _d, _x) in PRIEST_WEAPONS.items():   # (the Dragon Priests' weapons, held)
         records[('STAT', '1st_priest_' + _k)] = {'model': PRIEST_FIRST.get(_k, _m if '\\' in _m else 'CurseOfAlduin\\priests\\' + _m + '.nif'), 'color': '', 'radius': 0}
     records[('STAT', '1st_javelin')] = {'model': 'CurseOfAlduin\\wyrmspine\\wyrmspine.nif', 'color': '', 'radius': 0}   # (Noah, 2026-11-21) the Wyrmspine Javelin

@@ -2523,7 +2523,14 @@ namespace coa
 					}
 				}
 			}
-			// (the slide is gone: crouch is Skyrim's crouch again)
+			// (Noah, Nov 26 night: SkyParkour's slide "only lets me slide right after a sprint start ... and I can't jump out of it to
+			// carry my momentum") ours again: crouch while sprinting - any time in the sprint, the omni-sprint too - slides, and a
+			// jump out of it keeps the speed. SkyParkour's crouch slide is switched off in its ini
+			if (ev == ue->sneak && g_slide <= 0 && !Riding()) {
+				auto* st0 = player->AsActorState();
+				const bool sprinting = (st0 && st0->IsSprinting()) || g_omni > 0.5f;
+				if (sprinting && st0 && !st0->IsSneaking()) g_wantSlide = true;
+			}
 			if (ev == ue->jump && g_slide > 0) {
 				g_wantJumpCarry = true;
 			}
@@ -3309,7 +3316,7 @@ namespace coa
 				const bool  moving = mv.x * mv.x + mv.y * mv.y > 0.09f;
 				auto*       av = player->AsActorValueOwner();
 				const float stam = av->GetActorValue(RE::ActorValue::kStamina);
-				const bool  omni = g_sprintKey && moving && !sprint && !air && cam && cam->IsInFirstPerson() && !st->IsSneaking() && stam > 1.0f && !Riding() && g_slide <= 0;
+				const bool  omni = g_sprintKey && moving && !sprint && !air && cam && !st->IsSneaking()   /* (Nov 26 night: "Third person too") */ && stam > 1.0f && !Riding() && g_slide <= 0;
 				g_omni += ((omni ? 1.0f : 0.0f) - g_omni) * std::min(1.0f, a_delta * 8.0f);
 				if (g_omni > 0.01f) {
 					want += g_omni * ((100.0f + gen::kRunBoost) * 0.45f + gen::kSprintBoost);  // (Skyrim's sprint is about 1.45x its run)

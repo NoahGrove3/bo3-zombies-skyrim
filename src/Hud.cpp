@@ -1888,26 +1888,26 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const bool   waveOn = s.nightActive && s.waves > 0 && s.sanctuary.empty();
 				const bool   ev = s.nightActive && s.nightEvent >= 0 && s.nightEvent < static_cast<int>(gen::kEvents.size());
 				const float  flash = std::clamp(roundFlash, 0.0f, 1.0f);
-				const ImVec2 p{ 36 * k, 30 * k };
+				const ImVec2 p{ 40 * k, 32 * k };   // (Nov 26 night: "make it larger as well as the quests under it")
 				const std::string lab = s.nightActive ? "N I G H T" : "N I G H T S   S U R V I V E D";
 				const std::string num = std::to_string(s.round);
 				const std::string sub = waveOn && s.waveRest <= 0 ? fmt::format("Wave {} / {}  \xC2\xB7  {} left", s.wave, s.waves, std::max(0, s.waveLeft)) : waveOn ? fmt::format("Wave {} / {}", std::min(s.wave + 1, s.waves), s.waves) : std::string();
 				const std::string evLab = ev ? Upper(std::string(gen::kEvents[s.nightEvent].label)) : std::string();
-				const float numPx = 30 * k, numW = Measure(g_num, numPx, num).x;
-				const float w = std::max({ Measure(g_body, 9 * k, lab).x, numW + (ev ? 12 * k + Measure(g_body, 9 * k, evLab).x : 0.0f), Measure(g_body, 11 * k, sub).x });
-				const float foot = p.y + 12 * k + numPx + (sub.empty() ? 4 : 18) * k + (s.waveTheme.empty() || !waveOn ? 0 : 16) * k;
+				const float numPx = 42 * k, numW = Measure(g_num, numPx, num).x;
+				const float w = std::max({ Measure(g_body, 12 * k, lab).x, numW + (ev ? 12 * k + Measure(g_body, 12 * k, evLab).x : 0.0f), Measure(g_body, 15 * k, sub).x });
+				const float foot = p.y + 16 * k + numPx + (sub.empty() ? 4 : 24) * k + (s.waveTheme.empty() || !waveOn ? 0 : 20) * k;
 				leftFoot = foot;
 				dl->AddRectFilledMultiColor({ 0, 0 }, { p.x + w + 60 * k, foot + 10 * k }, IM_COL32(0, 0, 0, 80), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 50));
-				Txt(dl, g_body, 9 * k, p, IM_COL32(184, 180, 168, 230), lab, 1 * k, IM_COL32(0, 0, 0, 200));
+				Txt(dl, g_body, 12 * k, p, IM_COL32(184, 180, 168, 230), lab, 1 * k, IM_COL32(0, 0, 0, 200));
 				const ImU32 nc = flash > 0 ? IM_COL32(255, static_cast<int>(235 - 60 * flash), static_cast<int>(225 - 120 * flash), 255) : IM_COL32(236, 235, 230, 255);
-				Txt(dl, g_num, numPx, { p.x - 1 * k, p.y + 11 * k }, nc, num, 1.2f * k, IM_COL32(0, 0, 0, 200));
+				Txt(dl, g_num, numPx, { p.x - 1 * k, p.y + 15 * k }, nc, num, 1.2f * k, IM_COL32(0, 0, 0, 200));
 				if (ev) {
 					const auto  t = gen::kEvents[s.nightEvent].tint;
 					const ImU32 c = IM_COL32(std::min(255, static_cast<int>(((t >> 24) & 0xFF) * 1.6f) + 60), std::min(255, static_cast<int>(((t >> 16) & 0xFF) * 1.6f) + 60), std::min(255, static_cast<int>(((t >> 8) & 0xFF) * 1.6f) + 60), 255);
-					Txt(dl, g_body, 9 * k, { p.x + numW + 12 * k, p.y + 11 * k + numPx * 0.42f }, c, evLab, 1 * k, IM_COL32(0, 0, 0, 200));
+					Txt(dl, g_body, 12 * k, { p.x + numW + 14 * k, p.y + 15 * k + numPx * 0.42f }, c, evLab, 1 * k, IM_COL32(0, 0, 0, 200));
 				}
-				if (!sub.empty()) Txt(dl, g_body, 11 * k, { p.x, p.y + 13 * k + numPx }, IM_COL32(201, 197, 186, 235), sub, 1 * k, IM_COL32(0, 0, 0, 200));
-				if (waveOn && !s.waveTheme.empty()) Txt(dl, g_body, 10 * k, { p.x, p.y + 29 * k + numPx }, s.waveThemeColor ? s.waveThemeColor : IM_COL32(255, 90, 60, 255), Upper(s.waveTheme), 1 * k, IM_COL32(0, 0, 0, 200));
+				if (!sub.empty()) Txt(dl, g_body, 15 * k, { p.x, p.y + 18 * k + numPx }, IM_COL32(201, 197, 186, 235), sub, 1 * k, IM_COL32(0, 0, 0, 200));
+				if (waveOn && !s.waveTheme.empty()) Txt(dl, g_body, 13 * k, { p.x, p.y + 40 * k + numPx }, s.waveThemeColor ? s.waveThemeColor : IM_COL32(255, 90, 60, 255), Upper(s.waveTheme), 1 * k, IM_COL32(0, 0, 0, 200));
 			}
 			if (!Hud::kEdgeHud && s.round > 0) {
 				const ImVec2 p{ 40 * k, 20 * k };
@@ -2660,7 +2660,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// its clock, a thin bar, the riddle), then each quest chosen in the journal with its open goals - Skyrim's and ours alike
 			if (Hud::kEdgeHud && !s.perkMenu && (!s.questTitle.empty() || !s.tracked.empty())) {
 				// (Noah, Nov 26 doc: "make the box smaller to match the night adjustment") smaller type, narrower
-				const float x = 36 * k, maxW = std::min(330 * k, size.x * 0.24f), Q = 0.78f;
+				const float x = 40 * k, maxW = std::min(430 * k, size.x * 0.28f), Q = 1.0f;   // (Nov 26 night: larger again, easier to read)
 				float y = std::max(leftFoot + 12 * k, 30 * k);
 				auto wrap = [&](ImFont* f, float px, const std::string& str, float w) {
 					std::vector<std::string> rows(1);
@@ -6386,12 +6386,17 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// until the world is in, then faded off; loading screens inside a game stay the Compendium's he picked
 			static int loadCover = 0;   // 0 off, 1 up, 2 fading off
 			static std::chrono::steady_clock::time_point loadStart{}, loadFade{}, loadIn{};
-			if (wasOnMain && !onMainMenu && coverPhase == 0) {
+			// (Nov 26 night: "Loading in a save still shows the loading screens from the mod" - the main menu stays open under
+			// Skyrim's loading screen until the save is in, so the cover goes up the moment loading starts with it open)
+			auto* uiL = RE::UI::GetSingleton();
+			const bool loadingNow = uiL && uiL->IsMenuOpen(RE::LoadingMenu::MENU_NAME);
+			if (((onMainMenu && loadingNow) || (wasOnMain && !onMainMenu)) && coverPhase == 0 && loadCover == 0) {
 				loadCover = 1, loadStart = tCover, loadIn = {};
 				logger::info("hud: a saved game from the main menu - our loading screen up");
 			}
 			wasOnMain = onMainMenu;
-			if (onMainMenu) coverPhase = 0, loadCover = 0;
+			if (onMainMenu && !loadingNow) coverPhase = 0, loadCover = 0;
+			else if (onMainMenu) coverPhase = 0;
 			if (loadCover == 1) {
 				auto* ui0 = RE::UI::GetSingleton();
 				const bool loading = ui0 && ui0->IsMenuOpen(RE::LoadingMenu::MENU_NAME);

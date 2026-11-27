@@ -967,10 +967,18 @@ namespace coa::Tablet
 		++g_count;
 		if (id == "stormtalons") {   // every 3rd hit jumps lightning to 2 more; a heavy hit stuns the one struck
 			if (g_count % 3 == 0) for (auto* o : Others(a_target, tp, 420.0f, 2)) { Gun::LightningArc(Mid(a_target), Mid(o), 0.0f); Gun::HitShare(o, S * 0.6f); }
-			if (a_power) { Gun::Freeze(a_target, 1.5f); Gun::ElemBurst(2, Mid(a_target), 0.6f, 0.0f, 0.6f); }
+			// (Noah, Nov 26: "Stormtalons give ice instead of lightning") the heavy hit's stun held still with no frost on it -
+			// it was Freeze, which coats the one struck in ice - and a shock burst with an arc to the ground
+			if (a_power) {
+				Director::Web(a_target->GetPosition(), 45.0f, 1.5f, 97.0f, false);
+				Gun::ElemBurst(2, Mid(a_target), 0.8f, 0.0f, 0.6f);
+				Gun::LightningArc(Mid(a_target) + RE::NiPoint3{ 0, 0, 90.0f }, Mid(a_target), 0.0f);
+			}
 		} else if (id == "talons") {   // the bleed runs twice as deep in the dead; each kill heals you a little
 			Gun::Burn(a_target, S * 0.08f, 4.0f, -1);
-			Gun::ElemBurst(11, Mid(a_target), 0.4f, 0.0f, 0.5f);
+			// (Noah, Nov 26: "Talons of Woe have no effects") its burst was drawn at 0.4 of a 0.17 model - a speck inside the
+			// body: full size now, and the workshop's Blood Mist pick (Vampiric Drain, blood explosion, mist) in fxmap.ini
+			Gun::ElemBurst(11, Mid(a_target), a_power ? 1.25f : 1.0f, 0.0f, 0.6f);
 			if (a_target->IsDead() || a_target->AsActorValueOwner()->GetActorValue(RE::ActorValue::kHealth) <= 0) {
 				if (auto* av = p ? p->AsActorValueOwner() : nullptr) av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.03f);
 			}
@@ -1202,6 +1210,7 @@ namespace coa::Tablet
 			Rename(i, gen::kTabletWeapons[i].uses);
 			if (auto* sp = f->As<RE::SpellItem>()) { if (!p->HasSpell(sp)) p->AddSpell(sp); }
 			else if (auto* b = f->As<RE::TESBoundObject>(); b && p->GetItemCount(b) <= 0) p->AddObjectToContainer(b, nullptr, 1, nullptr);
+			if (auto* l = LeftOf(i); l && p->GetItemCount(l) <= 0) p->AddObjectToContainer(l, nullptr, 1, nullptr);   // (and its left-hand twin)
 			++n;
 		}
 		// (no bows any more: an older kit's arrows taken back)
@@ -1209,6 +1218,21 @@ namespace coa::Tablet
 			p->RemoveItem(ar, p->GetItemCount(ar), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
 		}
 		logger::info("testkit: the Tablet's {} donated weapons", n);
+	}
+	// (Noah, Nov 26: "the Tester's Kit gives only one claw") a claw equipped from the pack - the kit's, or one put away and taken
+	// out again - brings its left-hand twin into the other hand, as the tablet's own hand-over does
+	void PairClaw(RE::FormID a_right)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (!p) return;
+		for (int i = 0; i < static_cast<int>(gen::kTabletWeapons.size()); ++i) {
+			auto* f = FormOf(i);
+			auto* l = LeftOf(i);
+			if (!f || !l || f->GetFormID() != a_right) continue;
+			if (p->GetEquippedObject(false) != f || p->GetEquippedObject(true) == l) return;
+			GiveLeft(p, i);
+			return;
+		}
 	}
 	bool IsTablet(const RE::TESForm* a_w) { return a_w && g_held >= 0 && FormOf(g_held) == a_w; }
 	bool IsTabletSpell(const RE::TESForm* a_f)

@@ -426,8 +426,8 @@ namespace coa::Picks
 	inline constexpr bool kHeadMarks = false;  // a headshot's tick and white flash
 	inline constexpr bool kLastKillSlow = true;  // the night's last kill in slow motion
 	inline constexpr bool kHeavyThrows = true;  // a power attack's kill throws the body
-	inline constexpr bool kSoulTorn = true;   // a kill by shadow, spirit or arcane: the soul rises out of the body
-	inline constexpr Snd kSoulTornSnd = { "Skyrim.esm", 0x10E0D6, 1.000f, 0.00f, -1 };
+	inline constexpr bool kSoulTorn = false;   // a kill by shadow, spirit or arcane: the soul rises out of the body
+	inline constexpr Snd kSoulTornSnd = { "Skyrim.esm", 0, 0.0f, 0.0f, -1 };
 	inline constexpr bool kFireAsh = true;   // a kill by fire: the body to a pile of ash
 	inline constexpr Snd kFireAshSnd = { "Apocalypse - Magic of Skyrim.esp", 0x000D6D, 1.000f, 0.00f, -1 };
 	inline constexpr CardSnd kTrialSnd[] = {

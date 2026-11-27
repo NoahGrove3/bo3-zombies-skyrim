@@ -600,7 +600,6 @@ namespace coa::Classes
 	void SlayerKill();
 	void OnKill(bool a_bySummon, RE::Actor* a_dying, RE::Actor* a_killer)
 	{
-		if (!a_bySummon) LadderKill(a_killer);   // (the ladder's kill meter)
 		Picks::FireAsh(a_dying);   // (his fire death: to ash)
 		// (the class guide: the Summoner alone lent the party nothing) a Summoner in your party: each of your kills heals you 2%
 		if (g_class.load() != coffer::kSummoner && Kit::PartyHas(coffer::kSummoner)) {
@@ -867,7 +866,7 @@ namespace coa::Classes
 	std::string WonderLineNow();
 	void Tick()
 	{
-		Hud::SetUltimate(UltimateFill());   // (the ladder's meter, above the perks)
+		Hud::SetUltimate(-1.0f);   // (Noah, Nov 26 night: "I want to remove the ultimates" - no meter)
 		static auto last = std::chrono::steady_clock::now();
 		if (std::chrono::steady_clock::now() - last < std::chrono::seconds(1)) return;
 		last = std::chrono::steady_clock::now();
@@ -1696,7 +1695,7 @@ namespace coa::Classes
 			if ((g_jav.glow -= a_delta) <= 0) {
 				const float c = g_jav.charge / 1.5f;
 				g_jav.glow = 0.28f;
-				Gun::ElemBurst(g_jav.el, JavHand(p, g_jav.left) + RE::NiPoint3{ 0, 0, 30.0f }, 0.15f + 0.35f * c, 0.0f, 0.3f);
+				(void)c;   // (Nov 26 night: "Remove the charge element effect that sits above the players head")
 			}
 			static bool full = false;
 			if (g_jav.charge >= 1.5f && !full) { full = true; Gun::BlastSound("runeshock", p->GetPosition(), 0.4f); }
@@ -2589,7 +2588,6 @@ namespace coa::Classes
 		if (!p || !w) return;
 		const int t = std::max(0, Kit::TierOfWeapon(w));
 		// (the ladder) the wand's heavy is its held cast: at Tier III with the meter full, the cast lets Starfall go first
-		if (t >= 3 && TryUltimate()) return;
 		static int turn = 0, casts = 0, last = -1;
 		++casts;
 		// (Noah: "instead of it firing a great bolt every third cast, it should be every other cast. And it should shoot randomly
@@ -3876,13 +3874,13 @@ namespace coa::Classes
 		// (Noah, 2026-11-12: "update all the weapons descriptions so they are short and to the point")
 		inline const Card kCards[] = {
 			{ "Radiant Quarterstaff", "The Summoner's quarterstaff of white sunlight.",
-				{ "Tier I: light attacks throw sun balls.", "Tier II: heavy attacks call a sunbeam on your target.", "Tier III: a great sunbeam. Fill the meter (25 kills) and a heavy attack calls the Aetherial Host: three wolves of light for 15 s." } },
+				{ "Tier I: light attacks throw sun balls.", "Tier II: heavy attacks call a sunbeam on your target.", "Tier III: heavy attacks call a great sunbeam." } },
 			{ "Carian Wand", "The Battle-mage's wand. Hold to cast a bolt every 0.5 s, cycling fire, lightning and ice.",
-				{ "Tier I: bolts every 0.5 s.", "Tier II: every 2nd bolt is a great bolt that pierces.", "Tier III: great bolts with a volley either side. Fill the meter (25 kills) and your next cast brings Starfall: twelve great bolts rain down ahead." } },
+				{ "Tier I: bolts every 0.5 s.", "Tier II: every 2nd bolt is a great bolt that pierces.", "Tier III: every 2nd bolt is a great bolt with a volley either side." } },
 			{ "Shadowflame Scythe", "The Alchemist's scythe. Sheathe it to bring your flasks to hand.",
-				{ "Tier I: light attacks fire burning shadowflame bolts.", "Tier II: heavy attacks raise a purple fire tornado.", "Tier III: a great purple fire tornado. Fill the meter (25 kills) and a heavy attack brings Soul Harvest: every dead within 12 m has its soul torn out." } },
+				{ "Tier I: light attacks fire burning shadowflame bolts.", "Tier II: heavy attacks raise a purple fire tornado.", "Tier III: heavy attacks raise a great purple fire tornado." } },
 			{ "Spellbound Rapier", "The Spellsword's blade. It takes the element of the spell in your other hand.",
-				{ "Tier I: light attacks fire bolts of that element.", "Tier II: heavy attacks raise a tornado that casts your spell on all it hits.", "Tier III: a great tornado. Fill the meter (25 kills) and a heavy attack looses the Spell Lance: your element pierces everything in a line." } },
+				{ "Tier I: light attacks fire bolts of that element.", "Tier II: heavy attacks raise a tornado that casts your spell on all it hits.", "Tier III: heavy attacks raise a great tornado." } },
 			// (Noah, 2026-11-21: the descriptions approved) Skyrim's own staff, its card in our words
 			{ "Wyrmspine Javelin", "The Battle-mage's wonder. Light attack jabs. Hold attack to charge, let go to throw: it bursts in your other hand's element, bigger the longer you held. A kill sends it on to the next enemy; then it flies back to you.", {} },
 		};
@@ -4138,7 +4136,6 @@ namespace coa::Classes
 		const int asc = AscOf(w);
 		g_ascK = AscSize(asc);
 		const float pw = UpgradeMult(t) * (0.7f + 0.3f * Arcana::Power()) * AscDmg(asc);
-		if (a_power && t >= 3 && TryUltimate()) return;   // (the ladder's Tier III: a heavy with the meter full fires the ultimate)
 		const RE::NiPoint3 dir = Gun::SwingDir();
 		const RE::NiPoint3 me = p->GetPosition();
 		const int key = LookKey(cls);

@@ -1661,6 +1661,17 @@ namespace coa
 					RE::NiPoint3 ax = cur.Cross(want);
 					const float sn = ax.Length(), cs = std::clamp(cur.Dot(want), -1.0f, 1.0f);
 					if (sn > 1e-4f) TurnBone(hd, AxisAngle(ax * (1.0f / sn), std::atan2(sn, cs) * w));
+					// (Noah, Nov 26 night: "my players hands should be holding it palm facing towards the player not away") the hand
+					// rolled about the javelin's line so its palm (the hand bone's -Y) turns back toward you
+					const auto& H = hd->world.rotate;
+					RE::NiPoint3 palm{ -H.entry[0][1], -H.entry[1][1], -H.entry[2][1] };
+					const RE::NiPoint3 toYou = f * -1.0f;
+					auto flat = [&](RE::NiPoint3 v) { return nrm(v - want * v.Dot(want)); };
+					const RE::NiPoint3 pa = flat(palm), pb = flat(toYou);
+					if (pa.Length() > 0.5f && pb.Length() > 0.5f) {
+						const float ang = std::atan2(pa.Cross(pb).Dot(want), std::clamp(pa.Dot(pb), -1.0f, 1.0f));
+						TurnBone(hd, AxisAngle(want, ang * w));
+					}
 				}
 			}
 			// the javelin in that hand: hidden from the release (it is in the air) until it is back

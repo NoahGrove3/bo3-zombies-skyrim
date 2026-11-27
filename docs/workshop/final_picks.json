@@ -1202,8 +1202,8 @@
   "shadow": {
    "id": "shadow",
    "name": "Killed by shadow, spirit and arcane",
-   "opt": "a3",
-   "optName": "Soul torn out"
+   "opt": "a1",
+   "optName": "As it is now"
   },
   "shock": {
    "id": "shock",

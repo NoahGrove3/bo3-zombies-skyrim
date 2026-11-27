@@ -170,6 +170,9 @@ namespace coa::Loot
 					} else if (auto* owner = AshOwner(t.get())) {
 						target = owner;
 					}
+					// (Noah, Nov 26 night: "remove the inventory boxes when looking at an enemies corpse or ash pile only for the
+					// night enemies") the night's dead - and their ash - list nothing
+					if (auto* ta = target ? target->As<RE::Actor>() : nullptr; ta && Director::IsRoundUndead(ta)) target = nullptr;
 				}
 			}
 		}

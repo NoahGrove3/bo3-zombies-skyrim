@@ -1735,7 +1735,7 @@ namespace coa::Eggs
 		Audio::Voice(std::nullopt);   // (the line being said stops for the one asked for)
 	}
 
-	int Speaking() { return g_sayCard >= 0 || !g_say.empty() ? (g_say.empty() ? g_sayCard : g_say.front().card) : -1; }
+	int Speaking() { return g_sayCard >= 0 ? g_sayCard : (g_say.empty() ? -1 : g_say.front().card); }   // (the line being said first, then the one waiting)
 
 	// ---- (Noah, 2026-11-24: "give the echo alter a lot more voice lines that players can interact with like talking with npcs,
 	// having a list of things to say that changes as the mod's story progresses") the altar's Talk: four topics, each a list of
@@ -1859,12 +1859,18 @@ namespace coa::Eggs
 
 	std::vector<TalkRow> TalkRows(int a_town, int a_topic)
 	{
-		std::vector<TalkRow> out;
+		// (Noah, Nov 26: "there's way too many dialogue options when an Echo Altar is unlocked") four at most a topic: what you
+		// haven't asked first, in the story's order, the rest of the four from what you have
+		constexpr std::size_t kMax = 4;
+		std::vector<TalkRow> fresh, heard;
 		for (int i = 0; i < static_cast<int>(gen::kTalkPrompts.size()); ++i) {
 			const auto& p = gen::kTalkPrompts[i];
 			if (p.topic != a_topic || !Gate(p.gate, a_town)) continue;
-			out.push_back({ i, std::string(p.ask), TalkHeard(i) });
+			(TalkHeard(i) ? heard : fresh).push_back({ i, std::string(p.ask), TalkHeard(i) });
 		}
+		std::vector<TalkRow> out;
+		for (auto& r : fresh) if (out.size() < kMax) out.push_back(std::move(r));
+		for (auto& r : heard) if (out.size() < kMax) out.push_back(std::move(r));
 		return out;
 	}
 	int TalkNew(int a_town, int a_topic)
@@ -1888,6 +1894,18 @@ namespace coa::Eggs
 	void TalkAsk(int a_town, int a_prompt)
 	{
 		if (a_prompt < 0 || a_prompt >= static_cast<int>(gen::kTalkPrompts.size())) return;
+		// (Noah, Nov 26: "the Echo Altar's voice sometimes cuts out" - the log: each row asked cut the answer before it off) an
+		// answer being said is let finish, and the one asked next waits behind it (only the latest asked waits: asking again
+		// replaces it); the same row asked again while it is said does nothing
+		if (const int now = Speaking(); now >= 0) {
+			if (now == kTalkCard + a_prompt) return;
+			std::erase_if(g_say, [now](const Said& l) { return l.card != now; });
+			g_talkVisit = a_town;
+			SetTalkHeard(a_prompt);
+			SayTalk(a_prompt, true);
+			logger::info("talk: asked \"{}\" (after the answer being said)", gen::kTalkPrompts[a_prompt].ask);
+			return;
+		}
 		Interrupt();
 		g_talkVisit = a_town;
 		SetTalkHeard(a_prompt);
