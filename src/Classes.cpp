@@ -3421,11 +3421,14 @@ namespace coa::Classes
 			// (Noah, Nov 27 final - the flasks: "the explosion size for the flasks needs to be much less its a bit overwhelming";
 			// his pick, the Ring impact at 50%) the element's burst at half its old size, and a low ring of it running out along the
 			// ground to the edge of what it catches
+			// (Noah, Nov 27 test: "the fire flask explosion is way too big ... the flasks visual effects needs to be the same size as the area
+			// of damage being dealt"; the bursts flickered, showed only from some angles and paused every 3 s) his pick as the preview plays
+			// it - the Ring (burst: nova) in the flask's element, baked (tools/fxbake.py) - its ring running out exactly to the edge of what
+			// the flask catches, facing you from every side, once from its start
 			{
-				static constexpr const char* kRing[7] = { "fire", "frost", "shock", "gold", "sun", "purple", "gold" };
-				const int e = std::clamp(a_el, 0, 6);
-				Gun::ElemBurst(kFlaskBurst[e], a_at + RE::NiPoint3{ 0, 0, 10.0f }, std::clamp(a_size * 0.5f, 0.3f, 0.8f), 0.0f, 0.6f);
-				Gun::Ring(kRing[e], a_at, 20.0f, std::max(120.0f, a_radius * 0.9f), 0.5f);
+				static constexpr const char* kBaked[7] = { "flask_fire", "flask_frost", "flask_shock", "flask_poison", "flask_sun", "flask_blood", "flask_sun" };
+				(void)a_size, (void)kFlaskBurst;
+				Gun::BakedAt(kBaked[std::clamp(a_el, 0, 6)], a_at, std::max(60.0f, a_radius) / 125.0f);   // (the ring's own reach in the workshop: 125 at 50%)
 			}
 			// (Noah: "each flask to have its own impact sound effect, depending on the element") the bottle breaking and its element
 			// let loose (tools/alchsfx.py hits)
@@ -3614,9 +3617,11 @@ namespace coa::Classes
 				const int   el = f.el;
 				switch (el) {
 				case 0: {  // Fire: "Firestorm burst" - "Ring of fire outward": Skyrim's Fire Storm ring spreading out once (fxmap.ini flask_firestorm)
-					Gun::QueueFx("CurseOfAlduin\\fx\\flask_firestorm.nif", a_at, 0.6f, 0.0f, 2.5f, false);
-					Gun::BlastSound("fireball", a_at, 0.9f);
+					// (Noah, Nov 27: "The fire flask blast size is massive ... like an expanding dome") its ring the preview's, baked, out to
+					// exactly what it burns
 					const float rr = r * 1.8f;
+					Gun::BakedAt("flask_fire", a_at, rr / 125.0f, 0.1f);
+					Gun::BlastSound("fireball", a_at, 0.9f);
 					Tasks::Later(0.25f, [a_at, rr, share, whole]() {
 						Gun::AreaHurt(a_at, rr, 1.2f * share, "");
 						for (auto* fo : NearFoes(a_at, rr, 20)) Gun::Burn(fo, whole * 0.04f, 3.0f);
@@ -3624,9 +3629,9 @@ namespace coa::Classes
 					break;
 				}
 				case 1: {  // Frost: "Frost Nova instead" - "Slowed, not frozen": Apocalypse's Frost Nova, the dead at half speed for 5 s
-					Gun::QueueFx("CurseOfAlduin\\fx\\flask_frostnova.nif", a_at, 0.6f, 0.0f, 2.0f, false);
-					Gun::BlastSound("icevolley", a_at, 0.9f);
 					const float rr = r * 1.6f;
+					Gun::BakedAt("flask_frost", a_at, rr / 125.0f, 0.1f);   // (the preview's ring, to what it slows)
+					Gun::BlastSound("icevolley", a_at, 0.9f);
 					Gun::AreaHurt(a_at, rr, 0.8f * share, "");
 					for (auto* fo : NearFoes(a_at, rr, 20)) {
 						if (fo->IsDead()) continue;
@@ -3667,7 +3672,7 @@ namespace coa::Classes
 				}
 				case 5: {  // Voidglass: "Pull + Lunar Tide" - once the pull ends, a Lunar Tide ring blasts them back out
 					Tasks::Later(1.6f, [a_at, r, share]() {
-						Gun::QueueFx("CurseOfAlduin\\fx\\flask_lunartide.nif", a_at, 0.6f, 0.0f, 2.0f, false);
+						Gun::BakedAt("flask_blood", a_at, r * 1.5f / 125.0f);   // (the preview's ring, to what it throws back)
 						Gun::BlastSound("lightmassive", a_at, 0.8f);
 						Gun::AreaHurt(a_at, r * 1.5f, 1.0f * share, "");
 						for (auto* fo : NearFoes(a_at, r * 1.5f, 20)) Gun::Knock(fo, 0.9f);
@@ -3955,16 +3960,24 @@ namespace coa::Classes
 		struct Card { const char* name; const char* base; const char* tier[3]; };
 		// (Noah, 2026-11-12: "update all the weapons descriptions so they are short and to the point")
 		inline const Card kCards[] = {
-			{ "Radiant Quarterstaff", "The Summoner's quarterstaff of white sunlight.",
-				{ "Tier I: light attacks throw sun balls.", "Tier II: heavy attacks call a sunbeam on your target.", "Tier III: heavy attacks call a great sunbeam." } },
-			{ "Carian Wand", "The Battle-mage's wand. Hold to cast a bolt every 0.5 s, cycling fire, lightning and ice.",
-				{ "Tier I: bolts every 0.5 s.", "Tier II: every 2nd bolt is a great bolt that pierces.", "Tier III: every 2nd bolt is a great bolt with a volley either side." } },
-			{ "Shadowflame Scythe", "The Alchemist's scythe. Sheathe it to bring your flasks to hand.",
-				{ "Tier I: light attacks fire burning shadowflame bolts.", "Tier II: heavy attacks raise a purple fire tornado.", "Tier III: heavy attacks raise a great purple fire tornado." } },
-			{ "Spellbound Rapier", "The Spellsword's blade. It takes the element of the spell in your other hand.",
-				{ "Tier I: light attacks fire bolts of that element.", "Tier II: heavy attacks raise a tornado that casts your spell on all it hits.", "Tier III: heavy attacks raise a great tornado." } },
+			// (Noah, Nov 27 test of 3edd0b7: "All the weapons descriptions needs to be updated with the changes too") each class's own
+			// moves, as they unlock: Light at Tier I, Heavy at Tier II, Special at Tier III (his pick)
+			{ "Radiant Quarterstaff", "The Summoner's Ebony quarterstaff. Its moves wake as it is upgraded.",
+				{ "Tier I - Radiant Strike: each strike flares with sunlight that sears the dead and staggers them.", "Tier II - Pillar of Dawn: your heavy attack calls a pillar of sunlight down on the one ahead.",
+				  "Tier III - Ancestor's Guard: every 20 kills, a warrior of light rises where the 20th fell and fights beside you for 12 s." } },
+			{ "Carian Wand", "Destruction's Daedric wand. Tap attack: a glintstone bolt that bends toward the nearest of the dead (one every 0.5 s).",
+				{ "Tier I - Glintstone Bolt: the bolts strike harder.", "Tier II - Arcane Ray: hold attack for a beam from the tip, wider and hotter the longer you hold; it drains magicka.",
+				  "Tier III - Starfall: every 25th bolt, twelve great bolts rain down in front of you." } },
+			{ "Shadowflame Scythe", "The Alchemist's Dragon Priest scythe. Sheathe it to bring your flasks to hand.",
+				{ "Tier I - Reaping Arc: each sweep cuts every one of the dead in front of you and sets them smouldering in shadowfire (it stacks three deep).",
+				  "Tier II - Shadowfire Eruption: your heavy attack drives the blade down and geysers of shadowfire burst up round you.",
+				  "Tier III - Philosopher's Edge: every 10th kill, your next kill bursts into Cursed Essence (+150) and shadowfire." } },
+			{ "Spellbound Rapier", "The Spellsword's Daedric rapier. Its moves follow the spell in your other hand.",
+				{ "Tier I - Spellthrust: each thrust that lands carries the spell - fire burns, frost slows, shock arcs to one more.",
+				  "Tier II - Spell Pillar: your heavy attack pours a pillar of your element down on the one ahead.",
+				  "Tier III - Elemental Wake: your kills leave a patch of your element for 4 s that hurts the dead crossing it." } },
 			// (Noah, 2026-11-21: the descriptions approved) Skyrim's own staff, its card in our words
-			{ "Wyrmspine Javelin", "The Battle-mage's wonder. Light attack jabs. Hold attack to charge, let go to throw: it bursts in your other hand's element, bigger the longer you held. A kill sends it on to the next enemy; then it flies back to you.", {} },
+			{ "Wyrmspine Javelin", "The Battle-mage's wonder, carried on your back like a staff. Hold attack to charge it overhand, let go to throw: it bursts in your other hand's element, bigger the longer you held. A kill sends it on to the next enemy; then it flies back to you.", {} },
 		};
 	}
 	// (Noah, Nov 26 doc: "only the Lore Cards to show players what the weapon theyre holding does") the card of the weapon in
@@ -3978,9 +3991,10 @@ namespace coa::Classes
 		for (const auto& k : kCards) {
 			if (nm.rfind(k.name, 0) != 0) continue;
 			const std::string rest = nm.substr(std::strlen(k.name));
-			const int t = rest == " III" ? 3 : rest == " II" ? 2 : rest == " I" ? 1 : 0;
+			const int t = rest.rfind(" III", 0) == 0 || rest.find("Ascend") != std::string::npos ? 3 : rest.rfind(" II", 0) == 0 ? 2 : rest.rfind(" I", 0) == 0 ? 1 : 0;
 			a_title = nm;
-			a_text = t == 0 ? std::string(k.base) : std::string(k.base) + " " + k.tier[t - 1];
+			a_text = k.base;   // (every move unlocked so far: a tier keeps the ones before it)
+			for (int i = 0; i < t && i < 3; ++i) if (k.tier[i]) a_text += std::string("\n") + k.tier[i];
 			return true;
 		}
 		return false;
@@ -4019,8 +4033,9 @@ namespace coa::Classes
 		for (const auto& k : kCards) if (nm.rfind(k.name, 0) == 0) { c = &k; break; }
 		if (c) {
 			const std::string rest = nm.substr(std::strlen(c->name));
-			const int t = rest == " III" ? 3 : rest == " II" ? 2 : rest == " I" ? 1 : 0;
-			want = t == 0 ? std::string(c->base) : std::string(c->base) + " " + c->tier[t - 1];
+			const int t = rest.rfind(" III", 0) == 0 || rest.find("Ascend") != std::string::npos ? 3 : rest.rfind(" II", 0) == 0 ? 2 : rest.rfind(" I", 0) == 0 ? 1 : 0;
+			want = c->base;   // (Noah, Nov 27: every move unlocked so far - a tier keeps the ones before it)
+			for (int i = 0; i < t && i < 3; ++i) if (c->tier[i]) want += std::string(" ") + c->tier[i];
 		}
 		for (int e = 0; !c && e < 6; ++e) if (nm == kFlasks[e].name) {
 			c = &kFlasks[e];
@@ -4790,6 +4805,18 @@ namespace coa::Classes
 		{
 			SoulLook(a_c, a_secs);
 			a_c->SetAlpha(kCatAlpha);
+			// (Noah, Nov 27 test: "the cats blue holographic effect is only visible from certain angles other angles it looks like the
+			// normal cat textures" - the ghost glow is a rim, bright only edge-on) the body itself lit blue from within, from every side
+			if (auto* root = a_c->Get3D()) {
+				RE::BSVisit::TraverseScenegraphGeometries(root, [](RE::BSGeometry* g) {
+					auto* lp = netimmerse_cast<RE::BSLightingShaderProperty*>(g->GetGeometryRuntimeData().shaderProperty.get());
+					if (!lp || !lp->emissiveColor) return RE::BSVisit::BSVisitControl::kContinue;
+					lp->flags.set(RE::BSShaderProperty::EShaderPropertyFlag::kOwnEmit);
+					*lp->emissiveColor = RE::NiColor{ 0.35f, 0.62f, 1.0f };
+					lp->emissiveMult = 1.3f;
+					return RE::BSVisit::BSVisitControl::kContinue;
+				});
+			}
 		}
 		// the eyes: a small blue flame in each socket, hung on the head's bone so it turns with the head. Where the sockets are
 		// is said in the cat's own terms - ahead of the head bone, above it, to each side, at a sabre cat's size - and turned
@@ -4882,7 +4909,9 @@ namespace coa::Classes
 			++g_soulPending;
 			// (Noah, Nov 27 final: "the spectral cat should spawn from skyrims purple portals") Skyrim's own conjuring portal opens
 			// first, and the cat steps out of it as it turns
-			Gun::QueueFx("CurseOfAlduin\\fx\\soul_portal.nif", at, 1.3f, 0.0f, 0.0f, false);
+			// (Noah, Nov 27 test: "no purple spawn portal for the cat" - set off as a burst with no lifetime, it was gone the frame it came)
+			// laid on the ground for 2.5 s with its own animation set going
+			Gun::QueueFx("CurseOfAlduin\\fx\\soul_portal.nif", at, 1.3f, 0.0f, 2.5f, true);
 			Tasks::Later(0.7f, [base, at, hp, dmg] {
 				g_soulPending = std::max(0, g_soulPending - 1);
 				auto* pc = RE::PlayerCharacter::GetSingleton();
@@ -4934,8 +4963,13 @@ namespace coa::Classes
 			}
 			auto* c = p->GetMagicCaster(RE::MagicSystem::CastingSource::kRightHand);
 			const bool inHand = p->GetEquippedObject(false) == sc && p->AsActorState()->IsWeaponDrawn();
+			// (Noah, Nov 27 test: "No mana usage" - the held beam is a concentration cast, whose caster stands in states past "casting")
+			// any state of the staff's own cast but idle, ready or let go counts
+			const auto cst = c ? c->state.get() : RE::MagicCaster::State::kNone;
 			const bool casting = inHand && c && c->currentSpell && c->currentSpell == sc->formEnchanting &&
-			                     (c->state.get() == RE::MagicCaster::State::kCasting || c->state.get() == RE::MagicCaster::State::kCharging);
+			                     (cst == RE::MagicCaster::State::kCasting || cst == RE::MagicCaster::State::kCharging || cst == RE::MagicCaster::State::kUnk07 ||
+			                      cst == RE::MagicCaster::State::kUnk04 || cst == RE::MagicCaster::State::kUnk02 || cst == RE::MagicCaster::State::kUnk01);
+			if (inHand && c && c->currentSpell == sc->formEnchanting) if (static int said = 0; said++ < 6) logger::info("soulcaller: its cast in state {}", static_cast<int>(cst));
 			{
 				std::scoped_lock l(Hud::Lock());
 				auto& h = Hud::Edit();

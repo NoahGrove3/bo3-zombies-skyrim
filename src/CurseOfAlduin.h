@@ -859,6 +859,11 @@ namespace coa
 		std::vector<RE::Actor*> LineHurt(const RE::NiPoint3& a_from, const RE::NiPoint3& a_to, float a_radius, float a_share);   // every one of the dead along a line struck (share of one's health); those struck
 		bool                  SkyBeam(const RE::NiPoint3& a_at, float a_secs, bool a_white = false);   // Mysticism's Sunbeam down out of the sky onto a point (false: not installed - the sunlit pillar instead)
 		void                  FxBlastSized(std::string_view a_name, const RE::NiPoint3& a_at, float a_scale);   // one of Skyrim's explosions at a size
+		// (Noah, Nov 27: the preview's effects exactly in the game) one of the workshop's own effects, baked (tools/fxbake.py): played once at a
+		// point, facing you; a_k the game's units for one of the workshop's (kBakedScale its everyday size)
+		inline constexpr float kBakedScale = 2.1f;
+		bool                  BakedAt(std::string_view a_name, const RE::NiPoint3& a_at, float a_k = kBakedScale, float a_delay = 0.0f);
+		float                 BakedHalfWidth(std::string_view a_name);   // (the workshop's units: to size one to a reach)
 		void                  QueueFx(std::string a_path, const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life, bool a_flat);   // one of our effect models (or its effects-map stand-ins) set off at a point   // a cyclone of an element carried along the ground (FireCyclone's, any look)
 		void                  FireCyclone(const RE::NiPoint3& a_from, const RE::NiPoint3& a_fwd, float a_dist, float a_life, float a_share, std::function<void(RE::Actor*)> a_touch, std::function<void(const RE::NiPoint3&)> a_burst);  // a tornado of violet fire carried along the ground
 		void                  RedStrike(const RE::NiPoint3& a_at);                 // (elites and bosses arrive) a blood-red bolt of lightning onto the ground

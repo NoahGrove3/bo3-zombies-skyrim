@@ -18,27 +18,26 @@ W = 15.0         # each ribbon's width
 
 
 def main():
+    # (Noah, Nov 27 test of 3edd0b7: the armour effect "does not look how it does in the preview" - flat ribbons, seen edge-on from the
+    # side) the preview's embers: bright motes shed all round the set, drifting up and winking out - each a camera-facing card of the
+    # looping mote flipbook (tools/weaponfx.py aura), so they are the same from every side; their light fades at the feet and over the head
     WORK.mkdir(parents=True, exist_ok=True)
     rows = [f'out {OUT}']
-    for i in range(N):
-        a = i / N * 2 * math.pi + 0.3 * math.sin(i * 1.7)
-        r = R * (0.85 + 0.3 * ((i * 37) % 10) / 10)
-        cx, cy = math.cos(a) * r, math.sin(a) * r
-        tx, ty = -math.sin(a), math.cos(a)            # (each faces out from you)
-        sc = 1.2 + 0.15 * (i % 3)
-        rows.append(f'shape embers{i} tex=CurseOfAlduin\\wfx\\sig_embers.dds color=1,1,1,1 scale={sc:.2f} blend=add '
-                    f'palette=CurseOfAlduin\\fx\\pal_fire.dds vscroll={0.22 + 0.06 * (i % 4):.2f}')
-        steps = 6
-        for s in range(steps + 1):
-            k = s / steps
-            z = H0 + (H1 - H0) * k
-            al = math.sin(math.pi * k) ** 1.5   # (faded at the feet and over the head)
-            for side in (-1, 1):
-                x, y = cx + tx * W / 2 * side, cy + ty * W / 2 * side
-                rows.append(f'v {x:.2f} {y:.2f} {z:.2f} {0.0 if side < 0 else 1.0} {k * 2.2 + i * 0.37:.3f} 1 1 1 {al:.3f}')
-        for s in range(steps):
-            b = s * 2
-            rows += [f't {b} {b + 1} {b + 3}', f't {b} {b + 3} {b + 2}']
+    import random
+    rnd = random.Random(1127)
+    for i in range(34):
+        a = rnd.random() * 2 * math.pi
+        r = R * (0.7 + 0.5 * rnd.random())
+        z = H0 + 12 + (H1 - H0 - 20) * rnd.random()
+        k = (z - H0) / (H1 - H0)
+        al = max(0.15, math.sin(math.pi * k) ** 1.2)
+        h = 30.0 * (0.8 + 0.4 * rnd.random())
+        rows.append(f'shape embers{i} tex=CurseOfAlduin\\wfx\\aura_motes_rise.dds color=1,1,1,1 scale=1.6 blend=add '
+                    f'palette=CurseOfAlduin\\fx\\pal_fire.dds billboard=2 flip=8x8 fps=26 phase={rnd.random() * 2.4:.2f} '
+                    f'at={math.cos(a) * r:.2f},{math.sin(a) * r:.2f},{z:.2f}')
+        for X, Y, u, v in ((-h / 2, h / 2, 0, 0), (h / 2, h / 2, 1 / 8, 0), (h / 2, -h / 2, 1 / 8, 1 / 8), (-h / 2, -h / 2, 0, 1 / 8)):
+            rows.append(f'v {X:.2f} {Y + h * 0.3:.2f} 0 {u} {v} 1 1 1 {al:.3f}')
+        rows += ['t 0 1 2', 't 0 2 3']
     jf = WORK / 'embers.job'
     jf.write_text('\n'.join(rows) + '\n')
     r = subprocess.run([str(TOOLS / 'fxwrite'), str(jf)], capture_output=True, text=True)

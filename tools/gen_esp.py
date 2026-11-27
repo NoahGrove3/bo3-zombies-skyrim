@@ -987,16 +987,23 @@ for key, fill, edge in (('tabletgreen', (40, 110, 255), (150, 200, 255)), ('tabl
 # light round you in your class's colour: the membrane's edge lit, its fill all but clear (src/Classes.cpp TickArmour)
 for key, fill, edge in (('sun', (255, 190, 70), (255, 230, 150)), ('violet', (130, 60, 255), (200, 160, 255)), ('purple', (150, 40, 220), (220, 130, 255)),
                         ('fire', (255, 110, 30), (255, 190, 110)), ('frost', (80, 170, 255), (190, 230, 255)), ('shock', (120, 120, 255), (200, 210, 255))):
+    # (Noah, Nov 27 test of 3edd0b7: the Sheen "looks poor" next to the preview's - light flowing slowly over the cloth and steel, brightest
+    # at its edges) its fill our own flowing noise (tools/weaponfx.py aura), drifting up and across, stronger, breathing a little; its
+    # edge brighter
     d = bytearray(tsub('efsh_enchpurple', 'DATA'))
     d[0] |= 0x08
-    struct.pack_into('<f', d, 0x20, 1.3)
-    struct.pack_into('<f', d, 0x24, 0.04)
+    struct.pack_into('<f', d, 0x20, 2.2)     # (the fill's lasting strength)
+    struct.pack_into('<f', d, 0x24, 0.18)    # (its breath)
+    struct.pack_into('<f', d, 0x28, 0.55)
+    struct.pack_into('<f', d, 0x2C, 0.04)    # (the noise drifting across)
+    struct.pack_into('<f', d, 0x30, -0.11)   # (and up)
+    struct.pack_into('<f', d, 0x48, 2.4)     # (the edge's lasting strength)
     d[0x10:0x13] = bytes(fill)
     d[0x38:0x3B] = bytes(edge)
     subs = [sub('EDID', z('COA_ArmourSheen_' + key))]
     for name, hx in T['efsh_enchpurple']['subs']:
         if name == 'EDID': continue
-        subs.append(sub(name, bytes(d) if name == 'DATA' else bytes.fromhex(hx)))
+        subs.append(sub(name, bytes(d) if name == 'DATA' else z('CurseOfAlduin\\wfx\\aura_noise.dds') if name == 'ICON' else bytes.fromhex(hx)))
     recs['EFSH'].append(record('EFSH', fid('EFSH', 'sheen_' + key), subs))
 
 # (Noah: "shadowflame ... should set enemies on fire with purple flames") Shadowflame on its victim: Skyrim's enchantment fire

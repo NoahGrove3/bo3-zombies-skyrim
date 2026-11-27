@@ -685,7 +685,7 @@ def fit_part(key, V, T, band, look, col):
     # the shell: a coarse grid of quads over both faces, each corner's lift the steel's thickness there, its alpha how near
     # the edge it lies
     dist = ndimage.distance_transform_edt(mask) * res
-    return dict(key=key, look=look, col=col, gain=GAIN.get(key, 1.0), c=c, e1=e1, e2=e2, e3=e3, lo=lo, res=res, mask=mask, depth=depth, dist=dist,
+    return dict(key=key, look=look, col=col, gain=GAIN.get(key, 1.0), c=c, e1=e1, e2=e2, e3=e3, lo=lo, res=res, mask=mask, depth=depth, dist=dist, V3=V, T3=T,
                 edges=edges, grip=grip, A=A, rA=rA, span=span, small=span0 <= 30)
 
 
@@ -751,6 +751,7 @@ def art(key):
             F2 = dict(F, look=lk)
             if li: F2['gain'] = F.get('gain', 1.0) * 0.75
             stats.append(art_part(F2, rows, rng, (f'p{pi}_' if len(Fs) > 1 else '') + (f'l{li}_' if li else '')))
+        aura(F, rows, rng, f'p{pi}_')
     jf = WORK / f'{key}.job'
     jf.write_text('\n'.join(rows) + '\n')
     r = subprocess.run([str(TOOLS / 'fxwrite'), str(jf)], capture_output=True, text=True)
@@ -770,6 +771,117 @@ def look_of(key, look):
     strips = [dict(S(e['tex'], e['w'], e['wc'], e['per'], e['rep'], e['gain'] * (1.0 if e['dark'] else 1.35), e['along'], e['flip'], e['fps'], e['blend'], e['dark']), col=e['col']) for e in o['edges']]
     shells = [dict(Sh(f['tex'], f['how'], f['tile'], f['gain'] * (1.0 if f['dark'] else 1.7), f['flip'], f['fps'], f['scroll'], f['pulse'], f['blend'], f['dark']), col=f['col']) for f in o['faces']]
     return dict(strips=strips, shells=shells, motes=('drift', 0.0), c2=WL.COLS2[sk][1])
+
+
+# ---------------------------------------------------------------- the aura (Noah, Nov 27 test of 3edd0b7: "The look changes on the class weapons
+# when upgraded but ... It's the low quality 2D effects"; "The soul callers staff looks 2D making it look flat from certain angles"; "I want the
+# preview effects in this workshop to be exactly how it shows in game if not better") what the workshop's preview lays over the strips
+# (docs/workshop/v2/vfx.js weaponAura), made for the game: a skin of light on the steel's own triangles - pushed a hair off them along
+# their normals, a slow noise flowing through it in the look's colours, brightest where you see it edge-on - so the steel itself glows
+# from every side; the look's particles rising off the surface from points spread over it (camera-facing cards of a looping flipbook of
+# motes - never edge-on); and a soft volume of its light round it.
+LOOK_ELEM = {'shadow': 'shadowfire', 'purple': 'shadowfire', 'gold': 'holy', 'white': 'holy', 'blue': 'arcane', 'carian': 'arcane', 'iceblue': 'frost',
+             'orange': 'fire', 'red': 'fire', 'green': 'poison', 'poison': 'poison', 'drain': 'arcane', 'moon': 'spirit', 'fear': 'blood', 'ss_none': 'fire',
+             'arcane': 'arcane', 'shockv': 'shock'}
+ELEM_MOTE = {'fire': 'rise', 'shadowfire': 'rise', 'holy': 'drift', 'arcane': 'drift', 'spirit': 'drift', 'frost': 'fall', 'poison': 'fall', 'blood': 'fall',
+             'shock': 'spark'}
+
+
+def aura_textures():
+    """the skin's flowing noise, the motes' looping flipbooks (rise, drift, fall, spark) and the soft glow"""
+    TEX.mkdir(parents=True, exist_ok=True)
+    n = fbm(512, 512, 6, 6, 4242, oct=5)
+    n = (n - n.min()) / (np.ptp(n) + 1e-9)
+    w = smooth(0.30, 0.95, n) ** 1.3
+    save_tex(grey(w, np.clip(w * 1.2, 0, 1)), 'aura_noise', long_side=1024, detail=False)
+    yy, xx = np.mgrid[0:256, 0:256]; r = np.hypot(xx - 127.5, yy - 127.5) / 128
+    g = np.clip(1 - r, 0, 1) ** 2.2
+    save_tex(grey(g, g), 'aura_glow', long_side=256, detail=False)
+    C = 256; F = 64; cols = rows = 8
+    for kind in ('rise', 'drift', 'fall', 'spark'):
+        rng = np.random.default_rng(sum(map(ord, kind)))
+        M = 16 if kind != 'spark' else 10
+        ph = rng.random(M); x0 = (rng.random(M) - 0.5) * 0.3; sp = 0.75 + 0.5 * rng.random(M); sw = rng.random(M) * 6.3; sz = 0.6 + 0.8 * rng.random(M)
+        atlas = np.zeros((rows * C, cols * C, 2))
+        Y, X = np.mgrid[0:C, 0:C].astype(float); X = X / C - 0.5; Y = 0.5 - Y / C   # (cell coordinates, y up)
+        for f in range(F):
+            img = np.zeros((C, C)); t = f / F
+            for i in range(M):
+                a = (t + ph[i]) % 1.0
+                if kind == 'rise': px, py, rr = x0[i] + 0.06 * np.sin(sw[i] + a * 6), -0.38 + 0.85 * a * sp[i] * 0.85, 0.018 * sz[i] * (1 - 0.5 * a)
+                elif kind == 'drift': px, py, rr = x0[i] * 1.6 + 0.08 * np.sin(sw[i] + a * 5), -0.3 + 0.55 * a * sp[i] * 0.7, 0.022 * sz[i]
+                elif kind == 'fall': px, py, rr = x0[i] * 1.4 + 0.04 * np.sin(sw[i] + a * 4), 0.2 - 0.6 * a * sp[i] * 0.7, 0.02 * sz[i]
+                else: px, py, rr = x0[i] + (rng.random() - 0.5) * 0.0, -0.3 + 0.9 * a, 0.012 * sz[i]
+                fade = np.sin(np.pi * a) ** 1.5
+                if kind == 'spark':   # (a short streak upward)
+                    d = np.hypot((X - px) / 1.0, (Y - py) / 4.0)
+                else: d = np.hypot(X - px, Y - py)
+                img += fade * (np.exp(-(d / rr) ** 2) + 0.35 * np.exp(-(d / (rr * 3)) ** 2))
+            img = np.clip(img, 0, 1)
+            cy, cx = divmod(f, cols)
+            atlas[cy * C:(cy + 1) * C, cx * C:(cx + 1) * C, 0] = img
+        save_tex(grey(atlas[..., 0], np.clip(atlas[..., 0] * 1.4, 0, 1)), f'aura_motes_{kind}', long_side=2048, detail=False)
+    print('aura textures written')
+
+
+def aura(F, rows, rng, pre):
+    V, T = F.get('V3'), F.get('T3')
+    if V is None or T is None or not len(T): return
+    col = F['col'].split('+')[0]
+    el = LOOK_ELEM.get(col, 'arcane'); mk = ELEM_MOTE.get(el, 'drift')
+    G = F.get('gain', 1.0)
+    used = np.unique(T)
+    P = V[used]
+    span = float(np.ptp(P, axis=0).max())
+    # each vertex's normal: its triangles' area-weighted faces
+    Nv = np.zeros_like(V)
+    fn = np.cross(V[T[:, 1]] - V[T[:, 0]], V[T[:, 2]] - V[T[:, 0]])
+    for k in range(3): np.add.at(Nv, T[:, k], fn)
+    Nv /= np.linalg.norm(Nv, axis=1, keepdims=True) + 1e-9
+    remap = -np.ones(len(V), int); remap[used] = np.arange(len(used))
+    TT = remap[T]
+    thick = max(0.04, span * 0.004)
+    flow = 4.0 if el in ('fire', 'shadowfire') else 8.0
+    for nm, off, extra, sc in (('mem', thick, f' vscroll={flow:.1f}', 1.15), ('rim', thick * 1.6, ' rim=1', 0.8)):
+        rows.append(f'shape {pre}aura_{nm} tex={GT}aura_noise.dds color=1,1,1,1 scale={sc * G:.2f} blend=add palette={GT}pal_{col}.dds{extra}')
+        Q = P + Nv[used] * off
+        for q, nrm in zip(Q, Nv[used]):
+            u = (q[0] + q[2]) / span * 3.0; v = q[1] / span * 3.0
+            rows.append(f'v {q[0]:.3f} {q[1]:.3f} {q[2]:.3f} {u:.4f} {v:.4f} 1 1 1 0.9')
+            rows.append(f'n {nrm[0]:.4f} {nrm[1]:.4f} {nrm[2]:.4f}')
+        for t in TT: rows.append(f't {t[0]} {t[1]} {t[2]}')
+    # each part of the look on its own - a quarterstaff's two heads, never the shaft between them (the workshop's groups: the triangles
+    # along the look's longest line, split where a gap opens)
+    cen = V[T].mean(1)
+    ax = int(np.argmax(np.ptp(cen, axis=0))); ext = float(np.ptp(cen[:, ax])) + 1e-6
+    order = np.argsort(cen[:, ax]); grp = np.zeros(len(T), int); g = 0
+    for i in range(1, len(order)):
+        if cen[order[i], ax] - cen[order[i - 1], ax] > ext * 0.08: g += 1
+        grp[order[i]] = g
+    area = np.linalg.norm(fn, axis=1) * 0.5
+    for gi in range(g + 1):
+        sel = np.where(grp == gi)[0]
+        if len(sel) < 6: continue
+        Pg = V[np.unique(T[sel])]; gspan = float(np.ptp(Pg, axis=0).max()) + 1e-6
+        cum = np.cumsum(area[sel]); total = cum[-1]
+        # the motes: cards spread over the surface by area, each a little off it, each its own phase
+        nc = int(np.clip(6 + gspan * 0.4, 8, 22))
+        h = max(1.6, gspan * 0.3)
+        for i in range(nc):
+            ti = sel[int(np.searchsorted(cum, rng.random() * total))]; a, b = rng.random(), rng.random()
+            if a + b > 1: a, b = 1 - a, 1 - b
+            p = V[T[ti, 0]] + (V[T[ti, 1]] - V[T[ti, 0]]) * a + (V[T[ti, 2]] - V[T[ti, 0]]) * b + fn[ti] / (np.linalg.norm(fn[ti]) + 1e-9) * thick * 2
+            rows.append(f'shape {pre}aura_g{gi}m{i} tex={GT}aura_motes_{mk}.dds color=1,1,1,1 scale={1.6 * G:.2f} blend=add palette={GT}pal_{col}.dds billboard=2 '
+                        f'flip=8x8 fps=28 phase={rng.random() * 2.3:.2f} at={p[0]:.2f},{p[1]:.2f},{p[2]:.2f}')
+            for X, Y, u, v in ((-h / 2, h / 2, 0, 0), (h / 2, h / 2, 1 / 8, 0), (h / 2, -h / 2, 1 / 8, 1 / 8), (-h / 2, -h / 2, 0, 1 / 8)):
+                rows.append(f'v {X:.3f} {Y + (h * 0.3 if mk == "rise" else 0):.3f} 0 {u} {v} 1 1 1 1')
+            rows += ['t 0 1 2', 't 0 2 3']
+        # the soft volume of its light round this part, breathing
+        c = Pg.mean(0); r = gspan * 0.6
+        rows.append(f'shape {pre}aura_glow{gi} tex={GT}aura_glow.dds color=1,1,1,1 scale={0.55 * G:.2f} blend=add palette={GT}pal_{col}.dds billboard=2 pulse=2.6,0.75,1.15 at={c[0]:.2f},{c[1]:.2f},{c[2]:.2f}')
+        for X, Y, u, v in ((-r, r, 0, 0), (r, r, 1, 0), (r, -r, 1, 1), (-r, -r, 0, 1)):
+            rows.append(f'v {X:.3f} {Y:.3f} 0 {u} {v} 1 1 1 0.45')
+        rows += ['t 0 1 2', 't 0 2 3']
 
 
 def art_part(F, rows, rng, pre):
@@ -946,6 +1058,7 @@ def preview(key):
 if __name__ == '__main__':
     cmd = sys.argv[1] if len(sys.argv) > 1 else ''
     if cmd == 'textures': textures()
+    elif cmd == 'aura': aura_textures()
     elif cmd == 'arts':
         for k in (sys.argv[2:] or list(ALL)): art(k)
         if not sys.argv[2:]:   # (the class weapons' arts by model and look key, for src/WeaponFx.cpp: tools/gen.py reads it)

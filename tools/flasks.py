@@ -242,7 +242,9 @@ def flask_mesh(el):
     # (Noah: "lets go back to holding the flask snout but make the bottles snout longer so it fits in the players hands
     # better") the neck drawn out: everything above the shoulder lifted, the plain neck just above it stretched to bridge
     # the gap - the fist closes round a neck long enough to hold, the cork and its wrap riding up on top
-    y0, y1, dy = 12.45 * S, 13.5 * S, 4.2 * S
+    # (Noah, Nov 27: "Are you able to make the flask models snout longer so it fits in the players hands better?" - his pick, 1.5x as
+    # long) the neck from the shoulder to the lip half again as long (it was the plain 1.05 and the 4.2 lift: now 7.9 in all)
+    y0, y1, dy = 12.45 * S, 13.5 * S, 6.83 * S
     def lift(y): return np.where(y <= y0, y, np.where(y >= y1, y + dy, y0 + (y - y0) * (1 + dy / (y1 - y0))))
     for g in M.groups: g[2][:, 1] = lift(g[2][:, 1])
     anchors = {k: ((v[0], float(lift(np.array([v[1]]))[0]), v[2]) if isinstance(v, tuple) else v) for k, v in anchors.items()}
@@ -475,7 +477,7 @@ def build(el, tex):
         V = np.vstack(Vs); F = np.vstack(Fs)
         y0, y1 = V[:, 1].min(), V[:, 1].max()
         L.append(f'shape swirl tex=CurseOfAlduin\\wfx\\sk_swirls.dds color=1,1,1,1 scale={1.5 if el != "frost" else 1.3} blend=add '
-                 f'palette=CurseOfAlduin\\wfx\\pal_{SWIRL_PAL[el]}.dds vscroll=0.30 parent=FlaskSpin')
+                 f'palette=CurseOfAlduin\\wfx\\pal_{SWIRL_PAL[el]}.dds vscroll=6.0 parent=FlaskSpin')
         for x, y, z in V:
             u = (math.atan2(z, x) / (2 * math.pi) + 0.5) * 2.0 + (y - y0) / max(0.01, y1 - y0) * 0.6   # (the bands wound round it, rising)
             L.append(f'v {x:.3f} {y:.3f} {z:.3f} {u:.4f} {(y - y0) / max(0.01, y1 - y0) * 1.2:.4f} 1 1 1 0.85')
@@ -484,6 +486,9 @@ def build(el, tex):
     r = subprocess.run([str(TOOLS / 'fxwrite'), str(WORK / 'fx.job')], capture_output=True, text=True)
     if r.returncode or 'no node' in r.stderr: print(r.stdout, r.stderr); raise SystemExit('fxwrite failed')
     subprocess.run([rootname_exe(), str(nif), 'AlchemistFlask'], check=True)
+    # (Noah, Nov 27: the swirling potion "only visible from certain angles") the glass writes no depth: the light inside is never hidden
+    # behind it from one side (tools/modelconv/glassz.cpp)
+    subprocess.run(['/home/claude/tools/glassz', str(nif)], check=True, capture_output=True)
     if HELD:  # (held, it is a weapon: without a Prn - its sheath node - Skyrim never hangs it in the hand; tools/modelconv/addprn.cpp)
         subprocess.run(['/home/claude/tools/addprn', str(nif), str(nif), 'WeaponDagger'], check=True)
     lo, hi = M.bounds()

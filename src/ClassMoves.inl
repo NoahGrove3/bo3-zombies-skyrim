@@ -38,7 +38,7 @@ int SsEl()
 	default: return 0;
 	}
 }
-int SsBurst(int a_el) { static constexpr int k[5] = { 0, 1, 2, 4, 6 }; return k[std::clamp(a_el, 0, 4)]; }   // (Gun::ElemBurst)
+[[maybe_unused]] int SsBurst(int a_el) { static constexpr int k[5] = { 0, 1, 2, 4, 6 }; return k[std::clamp(a_el, 0, 4)]; }   // (Gun::ElemBurst)
 RE::SpellItem* SsSpell()
 {
 	const int i = Arcana::Hands()[0] >= 0 ? Arcana::Hands()[0] : BladeSpell();
@@ -76,16 +76,19 @@ void MovesHit(RE::Actor* a_target, RE::TESForm* a_src, bool a_power)
 	if (cls < 0 || cls == 1) return;
 	if (MoveTier(a_src) < kLightTier) return;
 	const float pw = MovePw(a_src);
-	const RE::NiPoint3 at = a_target->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f };
+	[[maybe_unused]] const RE::NiPoint3 at = a_target->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f };
 	if (cls == 0 && !a_power) {
 		// Radiant Strike: each strike flares with sunlight that sears the dead and blinds them for a moment
-		Gun::ElemBurst(4, at, 0.35f, 0.0f, 0.5f);
+		// (Noah, Nov 27: "I want the preview effects in this workshop to be exactly how it shows in game") the preview's own impact,
+		// baked (tools/fxbake.py): holy, impact core
+		Gun::BakedAt("impact_holy", a_target->GetPosition() + RE::NiPoint3{ 0, 0, -10.0f });
 		Gun::Burn(a_target, MoveWhole() * 0.035f * pw, 3.0f, -1);
 		Gun::Knock(a_target, 0.25f);
 	} else if (cls == 3 && !a_power) {
 		// Spellthrust: each thrust carries the spell in your other hand - fire burns, frost slows, shock arcs to one more
 		const int el = SsEl();
-		Gun::ElemBurst(SsBurst(el), at, 0.3f, 0.0f, 0.4f);
+		static constexpr const char* kImp[5] = { "impact_fire", "impact_frost", "impact_shock", "impact_holy", "impact_arcane" };
+		Gun::BakedAt(kImp[std::clamp(el, 0, 4)], a_target->GetPosition() + RE::NiPoint3{ 0, 0, -10.0f });
 		SsTouch(a_target, el, pw, true);
 	}
 }
@@ -105,7 +108,7 @@ void MovesKill(RE::Actor* a_dying, RE::TESForm* a_src)
 		// Philosopher's Edge: every 10th kill transmutes - the next of the dead you kill bursts into Cursed Essence and shadowfire
 		if (g_philArmed) {
 			g_philArmed = false;
-			Gun::ElemBurst(9, at + RE::NiPoint3{ 0, 0, 60.0f }, 1.1f, 0.0f, 0.9f);
+			Gun::BakedAt("spikes_shadowfire", at, Gun::kBakedScale * 0.8f);
 			Gun::BlastSound("fireball", at, 0.8f);
 			Gun::AreaHurt(at, 280.0f, 0.5f * pw, "");
 			for (auto* f : NearFoes(at, 280.0f, 16)) Shadowburn(f, std::clamp(Kit::TierOfWeapon(a_src), 0, 3));
@@ -183,7 +186,7 @@ void MovesSwing(int a_cls, bool a_power, RE::TESForm* a_w)
 			Tasks::Later(delay, [h = f->GetHandle(), t, pw, share] {
 				auto a = h.get();
 				if (!a || a->IsDead()) return;
-				Gun::ElemBurst(9, a->GetPosition() + RE::NiPoint3{ 0, 0, 80.0f }, 0.45f + 0.06f * t, 0.0f, 0.5f);
+				Gun::BakedAt("impact_shadowfire", a->GetPosition() + RE::NiPoint3{ 0, 0, -10.0f }, Gun::kBakedScale * (1.0f + 0.06f * static_cast<float>(t)));   // (his pick: impact core)
 				Gun::AreaHurt(a->GetPosition(), 1.0f, share, "");
 				if (a->IsDead()) { CorpseBurn(a.get()); return; }
 				Shadowburn(a.get(), t);
@@ -201,11 +204,8 @@ void MovesSwing(int a_cls, bool a_power, RE::TESForm* a_w)
 		// Shadowfire Eruption: the blade driven into the ground - geysers of shadowfire burst up in a ring round you
 		const float r = 230.0f * AscSize(AscOf(a_w));
 		Gun::BlastSound("fireball", me, 0.9f);
-		for (int i = 0; i < 8; ++i) {
-			const float an = static_cast<float>(i) * 0.7854f;
-			Gun::ElemBurst(9, me + RE::NiPoint3{ std::cos(an) * r, std::sin(an) * r, 30.0f }, 0.75f + 0.1f * t, 0.04f * static_cast<float>(i), 0.8f);
-		}
-		Gun::Ring("purple", me, 40.0f, r + 120.0f, 0.6f);
+		// (his pick, the preview's burst: spikes) the eruption as the workshop plays it, its ring of geysers the reach of the blow
+		Gun::BakedAt("spikes_shadowfire", me, (r + 60.0f) / 135.0f);
 		Tasks::Later(0.25f, [me, r, pw, t] {
 			Gun::AreaHurt(me, r + 120.0f, 0.45f * pw, "");
 			for (auto* f : NearFoes(me, r + 120.0f, 20)) { Shadowburn(f, t); Gun::Knock(f, 0.6f); }
@@ -221,8 +221,9 @@ void MovesSwing(int a_cls, bool a_power, RE::TESForm* a_w)
 			const float d = f->GetPosition().GetDistance(me);
 			if (d < best) best = d, at = f->GetPosition();
 		}
-		static constexpr const char* kPillar[5] = { "fire", "frost", "shock", "sun", "arcane" };
-		Gun::QueueFx(std::string("CurseOfAlduin\\fx\\pillar_") + kPillar[el] + ".nif", at, 1.0f + 0.15f * t, 0.0f, 2.0f, false);
+		// (Noah, Nov 27: the heavy "looks very poor in game but looks fantastic in the workshop preview") the preview's own pillar, baked
+		static constexpr const char* kPillar[5] = { "pillar_fire", "pillar_frost", "pillar_shock", "pillar_holy", "pillar_arcane" };
+		Gun::BakedAt(kPillar[el], at, Gun::kBakedScale * (1.0f + 0.1f * static_cast<float>(t - 2)));
 		// (Noah, Nov 27: "casting 2 beams instead of one") the pillar alone - no bolts of our own laid down beside it
 		static constexpr const char* kSnd[5] = { "fireball", "frost", "runeshock", "lightmassive", "shockmass" };
 		Gun::BlastSound(kSnd[el], at, 0.9f);
@@ -234,9 +235,21 @@ void MovesSwing(int a_cls, bool a_power, RE::TESForm* a_w)
 		return;
 	}
 	if (a_cls == 0) {
-		// Pillar of Dawn: both heads driven down - a pillar of sunlight pours onto the spot (the staff's own sun pillar)
-		const int key = LookKey(0);
-		ClassCyclone(0, key, t, pw, nullptr, me, Gun::SwingDir());
+		// Pillar of Dawn: both heads driven down - a pillar of sunlight pours onto the one ahead (Noah, Nov 27: "the Summoner class is still
+		// using the old ... attacks" - the preview's own holy pillar, baked, in place of the old sunbeam)
+		RE::NiPoint3 at = me + fwd * 170.0f;
+		float best = 1e9f;
+		for (auto* f : NearFoes(me + fwd * 150.0f, 280.0f, 12)) {
+			const float d = f->GetPosition().GetDistance(me);
+			if (d < best) best = d, at = f->GetPosition();
+		}
+		Gun::BakedAt("pillar_holy", at, Gun::kBakedScale * (1.0f + 0.1f * static_cast<float>(t - 2)));
+		Gun::BlastSound("lightmassive", at, 0.9f);
+		const float r = 280.0f + 40.0f * static_cast<float>(t - 2);
+		Tasks::Later(0.35f, [at, r, pw] {
+			Gun::AreaHurt(at, r, 0.45f * pw, "");
+			for (auto* f : NearFoes(at, r, 20)) { Gun::Burn(f, MoveWhole() * 0.04f * pw, 3.0f, -1); Gun::Knock(f, 0.6f); }
+		});
 	}
 }
 
@@ -253,7 +266,7 @@ void Starfall(RE::PlayerCharacter* a_p, float a_pw)
 		const RE::NiPoint3 at = c + RE::NiPoint3{ std::cos(an) * rr, std::sin(an) * rr, 0.0f };
 		Tasks::Later(0.12f * static_cast<float>(i), [at, a_pw] {
 			Gun::Lob(ArcModel(1), at + RE::NiPoint3{ 120.0f, -160.0f, 1600.0f }, RE::NiPoint3{ -300.0f, 400.0f, -3600.0f }, 2.2f, [a_pw](const RE::NiPoint3& hit) {
-				Gun::ElemBurst(6, hit + RE::NiPoint3{ 0, 0, 30.0f }, 0.6f, 0.0f, 0.6f);
+				Gun::BakedAt("impact_arcane", hit, Gun::kBakedScale * 1.6f);
 				Gun::BlastSound("shockmass", hit, 0.5f);
 				Gun::AreaHurt(hit, 190.0f, 0.35f * a_pw, "");
 				for (auto* f : NearFoes(hit, 190.0f, 8)) Gun::Knock(f, 0.4f);

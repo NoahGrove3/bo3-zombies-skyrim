@@ -1117,7 +1117,7 @@ namespace coa
 							if (moved > 45.0f) {
 								static int said = 0;
 								if (said++ < 40) logger::info("hit probe: {} moved {:.0f} in 0.12 s after your {} (ragdoll {}, staggered {}, dead {})", a->GetName(), moved, heavyHit ? "heavy" : "blow",
-									a->IsInRagdollState(), a->AsActorState()->actorState2.staggered != 0, a->IsDead());
+									a->IsInRagdollState(), a->AsActorState()->IsStaggered(), a->IsDead());
 							}
 						});
 					}

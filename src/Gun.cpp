@@ -1,6 +1,7 @@
 #include "CurseOfAlduin.h"
 #include "WorkshopPicks.h"
 #include "CofferSpells.h"
+#include "BakedFx.h"
 #include <sstream>
 
 // The arsenal (sheet: weapons). Wands are staff-type weapons with a free concentration enchantment; tomes and
@@ -2143,6 +2144,7 @@ namespace coa
 			}
 			std::erase_if(g_eb, [](const EBurst& b) { return b.t >= 1.0e9f; });
 		}
+#include "Baked.inl"
 		// (Noah: "change the belt lantern to a small golden orb that sits just above my head and lights up my surroundings within
 		// 15 meters ... animated circulating and showing light beams, visually lighting up my surroundings") the Light Orb:
 		// its model (tools/lightorb.py) hung in the scene a little over your head, drifting round in a slow circle and bobbing,
@@ -4418,6 +4420,7 @@ namespace coa
 			TickWells(a_delta);
 			Spellcraft::Tick(a_delta);
 			TickEBursts(a_delta);
+			TickBaked(a_delta);
 			TickLobs(a_delta);
 			TickGrows(a_delta);
 			TickCyclones(a_delta);

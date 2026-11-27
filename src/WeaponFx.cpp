@@ -131,6 +131,10 @@ namespace coa::WeaponFx
 					H.Detach();
 					host->AttachChild(H.obj.get(), true);
 					H.obj->local = RE::NiTransform{};
+					// (Noah, Nov 27 test: "The mutagen staff effect is not properly on the staffs orb it's lower") the Mutagen Staff's
+					// first-person model sits 14 units further up its own length than the one its look was fitted to (set lower in the
+					// hand): its look moved up with it
+					if (v == 1 && H.path.find("flaskweap_philosopher") != std::string::npos) H.obj->local.translate = { 0.0f, 14.0f, 0.0f };
 					RE::NiUpdateData ud;
 					H.obj->Update(ud);
 				}

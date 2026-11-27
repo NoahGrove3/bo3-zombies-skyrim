@@ -5,6 +5,11 @@
   "art": "CurseOfAlduin\\wfx\\cls_steelstaff_radiant.nif"
  },
  {
+  "model": "weapons\\newarmoury\\quarterstaffs\\steelstaff.nif",
+  "key": 11,
+  "art": "CurseOfAlduin\\wfx\\cls_steelstaff_radiant_L.nif"
+ },
+ {
   "model": "weapons\\newarmoury\\quarterstaffs\\ebonystaff.nif",
   "key": 2,
   "art": "CurseOfAlduin\\wfx\\cls_ebonystaff_radiant.nif"
@@ -20,9 +25,19 @@
   "art": "CurseOfAlduin\\wfx\\cls_daedricstaff_radiant.nif"
  },
  {
+  "model": "weapons\\newarmoury\\quarterstaffs\\daedricstaff.nif",
+  "key": 11,
+  "art": "CurseOfAlduin\\wfx\\cls_daedricstaff_radiant_L.nif"
+ },
+ {
   "model": "weapons\\newarmoury\\quarterstaffs\\dragonbonestaff.nif",
   "key": 2,
   "art": "CurseOfAlduin\\wfx\\cls_dragonbonestaff_radiant.nif"
+ },
+ {
+  "model": "weapons\\newarmoury\\quarterstaffs\\dragonbonestaff.nif",
+  "key": 11,
+  "art": "CurseOfAlduin\\wfx\\cls_dragonbonestaff_radiant_L.nif"
  },
  {
   "model": "sss\\steelwand.nif",
@@ -30,14 +45,29 @@
   "art": "CurseOfAlduin\\wfx\\cls_steelwand_carian.nif"
  },
  {
+  "model": "sss\\steelwand.nif",
+  "key": 10,
+  "art": "CurseOfAlduin\\wfx\\cls_steelwand_carian1.nif"
+ },
+ {
   "model": "sss\\stahlrimwand.nif",
   "key": 1,
   "art": "CurseOfAlduin\\wfx\\cls_stahlrimwand_carian.nif"
  },
  {
+  "model": "sss\\stahlrimwand.nif",
+  "key": 10,
+  "art": "CurseOfAlduin\\wfx\\cls_stahlrimwand_carian1.nif"
+ },
+ {
   "model": "sss\\glasswand.nif",
   "key": 1,
   "art": "CurseOfAlduin\\wfx\\cls_glasswand_carian.nif"
+ },
+ {
+  "model": "sss\\glasswand.nif",
+  "key": 10,
+  "art": "CurseOfAlduin\\wfx\\cls_glasswand_carian1.nif"
  },
  {
   "model": "sss\\daedricwand.nif",
@@ -100,6 +130,36 @@
   "art": "CurseOfAlduin\\wfx\\cls_steelrapier_ss_blood.nif"
  },
  {
+  "model": "weapons\\newarmoury\\rapier\\steelrapier.nif",
+  "key": 12,
+  "art": "CurseOfAlduin\\wfx\\cls_steelrapier_ss_none_L.nif"
+ },
+ {
+  "model": "weapons\\newarmoury\\rapier\\steelrapier.nif",
+  "key": 13,
+  "art": "CurseOfAlduin\\wfx\\cls_steelrapier_ss_fire_L.nif"
+ },
+ {
+  "model": "weapons\\newarmoury\\rapier\\steelrapier.nif",
+  "key": 14,
+  "art": "CurseOfAlduin\\wfx\\cls_steelrapier_ss_frost_L.nif"
+ },
+ {
+  "model": "weapons\\newarmoury\\rapier\\steelrapier.nif",
+  "key": 15,
+  "art": "CurseOfAlduin\\wfx\\cls_steelrapier_ss_shock_L.nif"
+ },
+ {
+  "model": "weapons\\newarmoury\\rapier\\steelrapier.nif",
+  "key": 16,
+  "art": "CurseOfAlduin\\wfx\\cls_steelrapier_ss_sun_L.nif"
+ },
+ {
+  "model": "weapons\\newarmoury\\rapier\\steelrapier.nif",
+  "key": 17,
+  "art": "CurseOfAlduin\\wfx\\cls_steelrapier_ss_blood_L.nif"
+ },
+ {
   "model": "weapons\\newarmoury\\rapier\\ebonyrapier.nif",
   "key": 3,
   "art": "CurseOfAlduin\\wfx\\cls_ebonyrapier_ss_none.nif"
@@ -128,6 +188,36 @@
   "model": "weapons\\newarmoury\\rapier\\ebonyrapier.nif",
   "key": 8,
   "art": "CurseOfAlduin\\wfx\\cls_ebonyrapier_ss_blood.nif"
+ },
+ {
+  "model": "weapons\\newarmoury\\rapier\\ebonyrapier.nif",
+  "key": 12,
+  "art": "CurseOfAlduin\\wfx\\cls_ebonyrapier_ss_none_L.nif"
+ },
+ {
+  "model": "weapons\\newarmoury\\rapier\\ebonyrapier.nif",
+  "key": 13,
+  "art": "CurseOfAlduin\\wfx\\cls_ebonyrapier_ss_fire_L.nif"
+ },
+ {
+  "model": "weapons\\newarmoury\\rapier\\ebonyrapier.nif",
+  "key": 14,
+  "art": "CurseOfAlduin\\wfx\\cls_ebonyrapier_ss_frost_L.nif"
+ },
+ {
+  "model": "weapons\\newarmoury\\rapier\\ebonyrapier.nif",
+  "key": 15,
+  "art": "CurseOfAlduin\\wfx\\cls_ebonyrapier_ss_shock_L.nif"
+ },
+ {
+  "model": "weapons\\newarmoury\\rapier\\ebonyrapier.nif",
+  "key": 16,
+  "art": "CurseOfAlduin\\wfx\\cls_ebonyrapier_ss_sun_L.nif"
+ },
+ {
+  "model": "weapons\\newarmoury\\rapier\\ebonyrapier.nif",
+  "key": 17,
+  "art": "CurseOfAlduin\\wfx\\cls_ebonyrapier_ss_blood_L.nif"
  },
  {
   "model": "weapons\\newarmoury\\rapier\\daedricrapier.nif",
@@ -218,6 +308,36 @@
   "model": "weapons\\newarmoury\\rapier\\dragonbonerapier.nif",
   "key": 8,
   "art": "CurseOfAlduin\\wfx\\cls_dragonbonerapier_ss_blood.nif"
+ },
+ {
+  "model": "weapons\\newarmoury\\rapier\\dragonbonerapier.nif",
+  "key": 12,
+  "art": "CurseOfAlduin\\wfx\\cls_dragonbonerapier_ss_none_L.nif"
+ },
+ {
+  "model": "weapons\\newarmoury\\rapier\\dragonbonerapier.nif",
+  "key": 13,
+  "art": "CurseOfAlduin\\wfx\\cls_dragonbonerapier_ss_fire_L.nif"
+ },
+ {
+  "model": "weapons\\newarmoury\\rapier\\dragonbonerapier.nif",
+  "key": 14,
+  "art": "CurseOfAlduin\\wfx\\cls_dragonbonerapier_ss_frost_L.nif"
+ },
+ {
+  "model": "weapons\\newarmoury\\rapier\\dragonbonerapier.nif",
+  "key": 15,
+  "art": "CurseOfAlduin\\wfx\\cls_dragonbonerapier_ss_shock_L.nif"
+ },
+ {
+  "model": "weapons\\newarmoury\\rapier\\dragonbonerapier.nif",
+  "key": 16,
+  "art": "CurseOfAlduin\\wfx\\cls_dragonbonerapier_ss_sun_L.nif"
+ },
+ {
+  "model": "weapons\\newarmoury\\rapier\\dragonbonerapier.nif",
+  "key": 17,
+  "art": "CurseOfAlduin\\wfx\\cls_dragonbonerapier_ss_blood_L.nif"
  },
  {
   "model": "curseofalduin\\slayer\\dragonslayer.nif",

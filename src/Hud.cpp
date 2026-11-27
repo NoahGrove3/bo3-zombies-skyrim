@@ -4000,6 +4000,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					if (!lo.empty() && lo[0] == '$') lo = lo.substr(1);
 					std::transform(lo.begin(), lo.end(), lo.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
 					if (lo == "new" || lo.rfind("new ", 0) == 0) g_menuNewAt = g_menuNewPressed = std::chrono::steady_clock::now();
+					else g_menuNewAt = g_menuNewPressed = {};   // (Noah, Nov 27: Continue after a NEW let go showed the new game's "ROAD TO RIVERWOOD")
 					logger::info("menu: '{}' pressed (Skyrim's list)", t.GetString());
 				}
 			}
@@ -4311,6 +4312,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					std::string lo = txt;
 					std::transform(lo.begin(), lo.end(), lo.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
 					if (lo == "new" || lo.rfind("new ", 0) == 0) g_menuNewAt = std::chrono::steady_clock::now();
+					// (Noah, Nov 27: Continue showed "THE ROAD TO RIVERWOOD" - NEW had been the choice a moment before) another word chosen
+					// after it: NEW no longer counts
+					else g_menuNewAt = {};
 				}
 			}
 			// Skyrim's own list leaves the screen (it keeps working for keys and pad)
@@ -4347,6 +4351,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					if (!lo.empty() && lo[0] == '$') lo = lo.substr(1);
 					std::transform(lo.begin(), lo.end(), lo.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
 					if (lo == "new" || lo.rfind("new ", 0) == 0) g_menuNewAt = g_menuNewPressed = std::chrono::steady_clock::now();
+					else g_menuNewAt = g_menuNewPressed = {};   // (Noah, Nov 27: Continue after a NEW let go showed the new game's "ROAD TO RIVERWOOD")
 					logger::info("menu: '{}' pressed", t.GetString());
 				}
 				RE::GFxValue arg(0.0);
@@ -4605,6 +4610,99 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			return true;
 		}
 
+		// (Noah, Nov 27 test: "it goes to our old menu instead of the new one we built, for the new menu I want to add an embers particle
+		// effect so it's not just a plain picture") the Ember Tally main menu as the workshop shows it: the Alduin painting (the launch's own)
+		// over the whole screen, breathing in slowly; embers rising off the bottom on the night's wind - glowing, flickering, cooling as they
+		// climb; the title in spaced capitals with its ember glow and the thin orange line under it. Skyrim's own words (Edge UI's) stand
+		// over it as before.
+		void TallyMenuScene(ImDrawList* fg, ImVec2 size, float now, float dt, float fade, float openT)
+		{
+			static ID3D11ShaderResourceView* pic = nullptr;
+			static ImVec2 picSize{ 2048, 2048 };
+			static bool tried = false;
+			if (!tried && g_device) {
+				tried = true;
+				ID3D11Resource* res = nullptr;
+				if (SUCCEEDED(DirectX::CreateDDSTextureFromFile(g_device, L"Data/Textures/loreloadscreens/DragonNamedAlduin03.dds", &res, &pic)) && res) {
+					if (ID3D11Texture2D* tex = nullptr; SUCCEEDED(res->QueryInterface(__uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&tex))) && tex) {
+						D3D11_TEXTURE2D_DESC td{};
+						tex->GetDesc(&td);
+						picSize = { static_cast<float>(td.Width), static_cast<float>(td.Height) };
+						tex->Release();
+					}
+				}
+				if (res) res->Release();
+				logger::info("hud: the Ember Tally main menu - painting {}", pic != nullptr);
+			}
+			const float W = size.x, H = size.y, u = TU(size);
+			fg->AddRectFilled({ 0, 0 }, size, IM_COL32(0, 0, 0, 255));
+			if (pic) {   // (the painting is the middle 2048 x 1152 of its texture, cropped to the screen's shape - never letterboxed)
+				const float v0 = 448.0f / 2048.0f, v1 = 1600.0f / 2048.0f, picAsp = picSize.x / (picSize.y * (v1 - v0)), asp = W / H;
+				float u0 = 0, u1 = 1, a0 = v0, a1 = v1;
+				if (asp > picAsp) { const float keep = (v1 - v0) * picAsp / asp; a0 = (v0 + v1 - keep) * 0.5f, a1 = a0 + keep; }
+				else { const float keep = asp / picAsp; u0 = (1 - keep) * 0.5f, u1 = u0 + keep; }
+				const float z = 0.012f + 0.012f * std::sin(now * 0.06f), du = (u1 - u0) * z * 0.5f, dv = (a1 - a0) * z * 0.5f;
+				fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(pic)), { 0, 0 }, size, { u0 + du, a0 + dv }, { u1 - du, a1 - dv }, IM_COL32(255, 255, 255, static_cast<int>(255 * fade)));
+			}
+			// the warm dark at the foot the embers rise out of, and the vignette
+			const ImU32 clear = IM_COL32(6, 3, 2, 0), dark = IM_COL32(6, 3, 2, 160), deep = IM_COL32(10, 4, 2, 215);
+			fg->AddRectFilledMultiColor({ 0, 0 }, { W * 0.2f, H }, dark, clear, clear, dark);
+			fg->AddRectFilledMultiColor({ W * 0.8f, 0 }, size, clear, dark, dark, clear);
+			fg->AddRectFilledMultiColor({ 0, 0 }, { W, H * 0.2f }, dark, dark, clear, clear);
+			fg->AddRectFilledMultiColor({ 0, H * 0.6f }, size, clear, clear, deep, deep);
+			{   // a low ember glow along the ground, breathing
+				const float br = 0.75f + 0.25f * std::sin(now * 0.9f);
+				fg->AddRectFilledMultiColor({ 0, H * 0.82f }, size, IM_COL32(255, 96, 30, 0), IM_COL32(255, 96, 30, 0), IM_COL32(255, 90, 28, static_cast<int>(46 * br * fade)), IM_COL32(255, 90, 28, static_cast<int>(46 * br * fade)));
+			}
+			// the embers: each born low, rising and drifting on the wind, swaying, its glow flickering and cooling from white-gold to deep
+			// red as it climbs; a few big soft ones near the eye, out of focus
+			{
+				struct Ember { float x, y, vy, vx, sway, ph, r, life, age; bool near; };
+				static std::vector<Ember> em;
+				static std::mt19937 rng{ 1127 };
+				std::uniform_real_distribution<float> U(0, 1);
+				auto born = [&](Ember& e, bool a_first) {
+					e.near = U(rng) < 0.08f;
+					e.x = U(rng) * 1.1f - 0.05f, e.y = a_first ? U(rng) * 1.1f : 1.02f + 0.05f * U(rng);
+					e.vy = (0.035f + 0.07f * U(rng)) * (e.near ? 1.6f : 1.0f), e.vx = 0.006f + 0.02f * U(rng);
+					e.sway = 0.004f + 0.01f * U(rng), e.ph = U(rng) * 6.28f, e.r = e.near ? 3.0f + 4.0f * U(rng) : 0.5f + 1.3f * U(rng) * U(rng);
+					e.life = 6.0f + 9.0f * U(rng), e.age = a_first ? U(rng) * e.life : 0.0f;
+				};
+				if (em.empty()) { em.resize(220); for (auto& e : em) born(e, true); }
+				for (auto& e : em) {
+					e.age += dt;
+					e.y -= e.vy * dt, e.x += (e.vx + 0.012f * std::sin(now * 0.3f)) * dt;
+					if (e.age > e.life || e.y < -0.05f || e.x > 1.08f) born(e, false);
+					const float k = e.age / e.life;   // (0 born, 1 gone)
+					const float in = std::clamp(e.age / 0.6f, 0.0f, 1.0f), out = 1.0f - std::clamp((k - 0.7f) / 0.3f, 0.0f, 1.0f);
+					const float flick = 0.65f + 0.35f * std::sin(now * (7.0f + 5.0f * std::fmod(e.ph, 1.0f)) + e.ph * 9.0f);
+					const float a = in * out * flick * fade;
+					const ImVec2 p{ (e.x + std::sin(now * 0.9f + e.ph) * e.sway) * W, e.y * H };
+					// white-gold when young, ember orange, then deep red as it cools
+					const float c = std::clamp(k * 1.4f, 0.0f, 1.0f);
+					const int R = 255, G = static_cast<int>(220 - 150 * c), B = static_cast<int>(140 - 120 * c);
+					const float r = e.r * u * 0.16f * (1.0f - 0.35f * k);
+					if (e.near) {   // (out of focus: a soft disc)
+						fg->AddCircleFilled(p, r * 2.4f, IM_COL32(R, G, B, static_cast<int>(26 * a)), 20);
+						fg->AddCircleFilled(p, r * 1.3f, IM_COL32(R, G, B, static_cast<int>(40 * a)), 20);
+						continue;
+					}
+					fg->AddCircleFilled(p, r * 4.0f, IM_COL32(R, G / 2, B / 3, static_cast<int>(30 * a)), 12);
+					fg->AddCircleFilled(p, r * 2.0f, IM_COL32(R, G, B, static_cast<int>(80 * a)), 12);
+					fg->AddCircleFilled(p, std::max(0.6f, r), IM_COL32(255, 245, 220, static_cast<int>(235 * a)), 8);
+				}
+			}
+			// the title: spaced capitals, ember-glowing, settling in; the thin orange line under it
+			{
+				const float in = std::clamp(openT / 1.6f, 0.0f, 1.0f), ease = 1.0f - (1.0f - in) * (1.0f - in);
+				const float y = H * 0.30f + (1.0f - ease) * 1.2f * u;
+				const float br = 0.85f + 0.15f * std::sin(now * 1.2f);
+				TTextC(fg, HFB(), 3.4f * u, W * 0.5f, y, Fade(kTInk, in), "THE CURSE OF ALDUIN", 0.28f, IM_COL32(232, 90, 40, static_cast<int>(140 * br * in)), 1.4f * u);
+				const float ly = y + 2.9f * u, hw = 11.0f * u * ease;
+				fg->AddRectFilledMultiColor({ W * 0.5f - hw, ly }, { W * 0.5f, ly + 0.1f * u + 1.0f }, IM_COL32(255, 122, 60, 0), Fade(kTAcc, in), Fade(kTAcc, in), IM_COL32(255, 122, 60, 0));
+				fg->AddRectFilledMultiColor({ W * 0.5f, ly }, { W * 0.5f + hw, ly + 0.1f * u + 1.0f }, Fade(kTAcc, in), IM_COL32(255, 122, 60, 0), IM_COL32(255, 122, 60, 0), Fade(kTAcc, in));
+			}
+		}
 		void DrawMenu(ImVec2 size, float now, bool click)
 		{
 			auto*       fg = ImGui::GetForegroundDrawList();
@@ -4648,6 +4746,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				return ImVec2{ o.x + px / 2560.0f * w, o.y + py / 1440.0f * h };
 			};
 			const ImU32 white = IM_COL32(255, 255, 255, static_cast<int>(255 * fade));
+			if (Hud::kTally) TallyMenuScene(fg, size, now, dt, fade, openT);
+			else {   // (the older menu's own painted scene, kept for the other UI directions)
 			if (!g_mSky && g_menuBg) {  // (the painting is missing: the old single picture)
 				fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_menuBg)), { (size.x - cw) / 2, (size.y - ch) / 2 }, { (size.x + cw) / 2, (size.y + ch) / 2 });
 			}
@@ -5150,6 +5250,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 			}
 
+			}   // (the older scene)
 			// a question (Start a new game?): the scene dims and one dark field sits exactly under Skyrim's own box, so its
 			// words and frame read as one panel
 			if (!kEdgeMenu) {
@@ -6503,6 +6604,20 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				loadCover = 1, loadStart = tCover, loadIn = {};
 				logger::info("hud: a saved game from the main menu - our loading screen up");
 			}
+			// (Noah, Nov 27 test: "Loading into a save just plays the randomized loading screens instead of the curse of Alduin one") a save
+			// loaded in a game too - from the Esc journal's Load, or after you fall - gets ours; a door's quick load stays as it is
+			{
+				static std::chrono::steady_clock::time_point journalAt{};
+				static bool wasLoading = false;
+				if (uiL && uiL->IsMenuOpen(RE::JournalMenu::MENU_NAME)) journalAt = tCover;
+				auto* pl = RE::PlayerCharacter::GetSingleton();
+				const bool fromJournal = journalAt.time_since_epoch().count() && secs(tCover - journalAt) < 2.5f;
+				if (loadingNow && !wasLoading && !onMainMenu && coverPhase == 0 && loadCover == 0 && (fromJournal || (pl && pl->IsDead()))) {
+					loadCover = 1, loadStart = tCover, loadIn = {};
+					logger::info("hud: a saved game loaded in a game ({}) - our loading screen up", fromJournal ? "the journal's Load" : "after a fall");
+				}
+				wasLoading = loadingNow;
+			}
 			wasOnMain = onMainMenu;
 			if (onMainMenu && !loadingNow) coverPhase = 0, loadCover = 0;
 			else if (onMainMenu) coverPhase = 0;
@@ -6791,7 +6906,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			if (g_loadCover > 0.0f && !coverPhase) {
 				const float u = g_loadCover;
-				DrawBootScreen(io.DisplaySize, u * u * (3.0f - 2.0f * u));
+				// (Noah, Nov 27: "The curse of Alduin loading screen on an existing save should say 'loading save' on the bottom right")
+				DrawBootScreen(io.DisplaySize, u * u * (3.0f - 2.0f * u), -1.0f, "LOADING SAVE");
 			}
 			// (the launch's loading screen, once Skyrim's data is in and our menu ready: faded off over it)
 			if (!g_bootDone && !bootScreen) {

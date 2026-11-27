@@ -301,13 +301,14 @@ namespace Props
 		if (!a_power) {
 			const float burn = FangBase() * BaneMult() * 0.45f;
 			if (!killed) Gun::Burn(a_z, burn, 4.0f, 0);
-			Gun::ElemBurst(0, at + RE::NiPoint3{ 0, 0, 60.0f }, 0.45f, 0.0f, 0.5f);
+			// (Noah, Nov 27 test: "It's still the old version of Alduin's bane") the preview's own fire impact, baked, in place of the old burst
+			Gun::BakedAt("impact_fire", at + RE::NiPoint3{ 0, 0, -10.0f }, Gun::kBakedScale * 1.2f);
 			Gun::Puddle(0, at, 0.6f, 3.0f);
 			Tasks::Later(0.6f, [at, burn, h = a_z->GetHandle()] {
 				for (auto* f : Foes(at, 240.0f)) {
 					if (!f || f->IsDead() || f == h.get().get()) continue;
 					Gun::Burn(f, burn * 0.6f, 3.0f, 0);
-					Gun::ElemBurst(0, f->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f }, 0.3f, 0.0f, 0.4f);
+					Gun::BakedAt("impact_fire", f->GetPosition() + RE::NiPoint3{ 0, 0, -10.0f }, Gun::kBakedScale * 0.8f);
 				}
 			});
 		}
