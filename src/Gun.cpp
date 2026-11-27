@@ -2709,12 +2709,13 @@ namespace coa
 			// (Noah, 2026-11-25: the Radiant Quarterstaff's "white" - fxmap.ini sun_*_white; Holy Water keeps the gold)
 			const float life = std::max(1.2f, a_secs);
 			Lob(a_white ? "CurseOfAlduin\\fx\\sun_bolt_white.nif" : "CurseOfAlduin\\fx\\sun_bolt.nif", a_at + RE::NiPoint3{ 0, 0, 1800.0f }, RE::NiPoint3{ 0, 0, -4200.0f }, 1.0f, [life, a_white](const RE::NiPoint3& at) {
-				QueueFx(a_white ? "CurseOfAlduin\\fx\\sun_burst_white.nif" : "CurseOfAlduin\\fx\\sun_burst.nif", at, 1.0f, 0.0f, 2.0f, false);
+				QueueFx(a_white ? "CurseOfAlduin\\fx\\sun_burst_white.nif" : "CurseOfAlduin\\fx\\sun_burst.nif", at, 1.0f, 0.0f, life, false);
 				CycloneSpec cs;
 				cs.model = a_white ? "CurseOfAlduin\\fx\\sun_pillar_white.nif" : "CurseOfAlduin\\fx\\sun_pillar.nif";
 				cs.from = at, cs.fwd = { 0, 1, 0 }, cs.dist = 0.0f, cs.life = life, cs.size = 1.0f, cs.fec = -1, cs.share = 0.0f, cs.noPull = true;
 				ElemCyclone(std::move(cs));
-				for (int k = 0; k < 3; ++k) QueueFx(a_white ? "CurseOfAlduin\\fx\\sun_motes_white.nif" : "CurseOfAlduin\\fx\\sun_motes.nif", at, 1.0f, 0.15f + 0.55f * static_cast<float>(k), 1.5f, false);
+				// (Noah: Holy Water left "a lingering hue after the beam disappears") the motes and the burst all gone with the beam
+				for (int k = 0; k < 3; ++k) { const float d = 0.15f + 0.3f * static_cast<float>(k); QueueFx(a_white ? "CurseOfAlduin\\fx\\sun_motes_white.nif" : "CurseOfAlduin\\fx\\sun_motes.nif", at, 1.0f, d, std::max(0.4f, life - d), false); }
 			}, 0.0f, 0.0f);
 			return true;
 		}

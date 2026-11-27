@@ -17,6 +17,8 @@ namespace coa
 		float        g_applied = 0;
 		float        g_slide = 0;
 		bool         g_wasSneaking = false;
+		float        g_sinceSprint = 99;    // seconds since you were last sprinting (the crouch may land a frame after the sprint ends)
+		bool         g_sneakBefore = false; // sneaking as of the last frame (the crouch key's own toggle lands before we hear it)
 		RE::NiPoint3 g_slideDir{};
 		float        g_carry = 0;   // horizontal speed carried into a jump from a slide (units/s)
 		bool         g_wasAir = false;
@@ -2526,10 +2528,13 @@ namespace coa
 			// (Noah, Nov 26 night: SkyParkour's slide "only lets me slide right after a sprint start ... and I can't jump out of it to
 			// carry my momentum") ours again: crouch while sprinting - any time in the sprint, the omni-sprint too - slides, and a
 			// jump out of it keeps the speed. SkyParkour's crouch slide is switched off in its ini
+			// (Noah, test of 3938d82: "now it wont slide at all and my sneak eye pops up while im standing") Skyrim takes the crouch
+			// key first: by the time we hear it the sprint has ended and you're already sneaking - so the slide never started, and
+			// the sneak it left behind stood you up still sneaking. What counts is how you were the frame before the press
 			if (ev == ue->sneak && g_slide <= 0 && !Riding()) {
 				auto* st0 = player->AsActorState();
-				const bool sprinting = (st0 && st0->IsSprinting()) || g_omni > 0.5f;
-				if (sprinting && st0 && !st0->IsSneaking()) g_wantSlide = true;
+				const bool sprinting = (st0 && st0->IsSprinting()) || g_omni > 0.5f || g_sinceSprint < 0.3f;
+				if (sprinting && st0 && !g_sneakBefore) g_wantSlide = true;
 			}
 			if (ev == ue->jump && g_slide > 0) {
 				g_wantJumpCarry = true;
@@ -3187,6 +3192,7 @@ namespace coa
 			auto*      st = player->AsActorState();
 			auto*      cc = player->GetCharController();
 			const bool sprint = st->IsSprinting();
+			g_sinceSprint = (sprint || g_omni > 0.5f) ? 0.0f : g_sinceSprint + a_delta;
 			Glider(player, a_delta);
 			LandUnstick(player, a_delta);
 			BondTick(player, a_delta);
@@ -3298,6 +3304,7 @@ namespace coa
 				player->NotifyAnimationGraph("SneakStop");
 				g_forcedSneak = false;
 			}
+			g_sneakBefore = st->IsSneaking() && !g_forcedSneak;
 
 			// ---- run/sprint speed, eased so switching sprint <-> run <-> strafe never jolts
 			// (Noah's BO3 movement, Nov 26 doc) the sprint winds up: its extra speed eases in over kSprintWindup (quick to drop)

@@ -29,6 +29,14 @@ namespace coa::Classes
 		std::uint8_t                                           g_guide = 0;    // (the guided first night) which of its cards have been shown (bits)
 		std::chrono::steady_clock::time_point                  g_closedAt{};
 		std::array<std::uint16_t, coffer::kLadders>            g_mastery{};  // kills made with each ladder's spell in hand (its summons' kills for the Summoner)
+		// (src/ClassMoves.inl: each class's own Light, Heavy and Special - Noah's Nov 27 picks)
+		void MovesHit(RE::Actor* a_target, RE::TESForm* a_src, bool a_power);
+		void MovesKill(RE::Actor* a_dying, RE::TESForm* a_src);
+		void MovesSwing(int a_cls, bool a_power, RE::TESForm* a_w);
+		void GlintBolt(RE::PlayerCharacter* a_p, RE::TESObjectWEAP* a_w);
+		void RayTick(RE::PlayerCharacter* a_p, RE::TESObjectWEAP* a_w, float a_dt);
+		void RayStop();
+		void MutagenStrike(RE::Actor* a_target, RE::TESForm* a_src, bool a_power);
 
 		RE::TESForm* Lookup(std::uint32_t a_id, std::string_view a_plugin)
 		{
@@ -601,6 +609,7 @@ namespace coa::Classes
 	void OnKill(bool a_bySummon, RE::Actor* a_dying, RE::Actor* a_killer)
 	{
 		Picks::FireAsh(a_dying);   // (his fire death: to ash)
+		if (a_dying && !a_bySummon) if (auto it = g_lastHit.find(a_dying->GetFormID()); it != g_lastHit.end()) MovesKill(a_dying, RE::TESForm::LookupByID(it->second));   // (the class Specials that count kills)
 		// (the class guide: the Summoner alone lent the party nothing) a Summoner in your party: each of your kills heals you 2%
 		if (g_class.load() != coffer::kSummoner && Kit::PartyHas(coffer::kSummoner)) {
 			if (auto* p = RE::PlayerCharacter::GetSingleton(); p && !p->IsDead()) {
@@ -1797,6 +1806,8 @@ namespace coa::Classes
 		if (a_power) g_powerHit.insert(a_target->GetFormID()); else g_powerHit.erase(a_target->GetFormID());
 		if (!Director::IsFoe(a_target) || a_target->IsDead()) return;
 		if (!src) return;
+		MovesHit(a_target, src, a_power);   // (the class weapons' own Light moves on contact: Radiant Strike, Spellthrust)
+		MutagenStrike(a_target, src, a_power);   // (the Mutagen Staff's Mutating Strike)
 		if (auto* w = src->As<RE::TESObjectWEAP>(); w && !w->IsBow() && !w->IsCrossbow() && !w->IsStaff()) Perks::OnMeleeHit();  // (Bladesong Mead)
 		(void)&MagnusHit;   // (the Staff of Magnus is Skyrim's own again: its beam's touch does only what Skyrim's does)
 		// (Noah: "the old weapon abilities ... would be fully replaced") the class swords' and the Dragon Slayer's work is done by
@@ -2723,67 +2734,33 @@ namespace coa::Classes
 			                     (c->state.get() == RE::MagicCaster::State::kCasting || c->state.get() == RE::MagicCaster::State::kCharging);
 			// (Noah: "Letting go of casting should stop the wand from casting and holding attack should start the casting") the
 			// attack button alone says: held, it casts; let go, it stops - Skyrim's own staff cast cut short with it
-			auto* lf = p->GetEquippedObject(true);
-			const bool ok = WandSpellOk(lf ? lf->As<RE::SpellItem>() : nullptr);
+			// (Noah, Nov 27 final - the wand's own moves, src/ClassMoves.inl: a tap looses a glintstone bolt, 0.5 s between shots;
+			// a hold channels the Arcane Ray, which costs magicka; every 25th bolt, Starfall) the wand is Destruction's own: no
+			// spell in the other hand is needed any more
+			const bool ok = Get() == coffer::kDestruction;
 			held = g_wandButton && ok;
 			if (static float told = 0; (told -= a_delta) <= 0 && g_wandButton && !ok) {
 				told = 4.0f;
-				Hud::Banner(Get() != coffer::kDestruction ? "Only a Destruction mage can fire the Carian Wand" :
-				                                            "The Carian Wand fires the Destruction spell in your other hand", 2.5f);
+				Hud::Banner("Only a Destruction mage can use the Carian Wand", 2.5f);
 			}
 			if (!held && casting && c) c->InterruptCast(false);
-			if (static float said = 0; g_wandButton && (said -= a_delta) <= 0) {
-				said = 1.0f;
-				logger::info("classes: the Carian Wand held - its cast {} (state {}, spell {:08X})", casting ? "plays" : "doesn't play",
-					c ? static_cast<int>(c->state.get()) : -1, c && c->currentSpell ? c->currentSpell->GetFormID() : 0);
-			}
 		}
-		// (Noah: "I can spam the wand ... so it only fires after holding the cast") the cast held 0.3 s before the first, and
-		// never two within half a second - tapping looses nothing
 		static float heldFor = 0.0f;
-		heldFor = held ? heldFor + a_delta : 0.0f;
+		static bool  wasHeld = false;
 		g_wandNext = std::max(0.0f, g_wandNext - a_delta);
-		if (held && heldFor >= 0.3f) {
-			if (g_wandNext <= 0.0f) {   // (Noah: "attack every half a second without being able to spam them. You have to hold them down")
+		if (held) {
+			heldFor += a_delta;
+			if (heldFor >= 0.3f) RayTick(p, w, a_delta);   // the hold: the beam
+		} else {
+			if (wasHeld && heldFor < 0.3f && g_wandNext <= 0.0f && inHand) {   // a tap: a bolt
 				g_wandNext = 0.5f;
-				WandKick(0);
-				// (Noah: "The spells should not be coming from the center of my screen") everything this cast looses starts at the tip
-				const RE::NiPoint3 tipAt = WandTip(p);
-				Gun::SetSwingFrom(&tipAt);
-				struct Clear { ~Clear() { Gun::SetSwingFrom(nullptr); } } clear;
-				// (Noah: "It's supposed to cast whatever spell I have on my left hand ... it shoots 1 per second without using
-				// mana") the spell in your left hand, loosed from the wand's tip, free; no spell there: the Carian bolts
-				auto* left = p->GetEquippedObject(true);
-				auto* sp = left ? left->As<RE::SpellItem>() : nullptr;
-				auto* c = p->GetMagicCaster(RE::MagicSystem::CastingSource::kRightHand);
-				if (sp && c && WandSpellOk(sp)) {
-					// (Noah: "the wand animation stops when I cast a spell on my other hand" - the left spell was cast through the
-					// right hand's own caster, cutting short the wand's held cast each time) an aimed spell is launched from the
-					// wand's tip itself, along your aim; any other through the instant caster - the right hand left to its cast
-					auto* mg = !sp->effects.empty() && sp->effects[0] ? sp->effects[0]->baseEffect : nullptr;
-					auto* proj = mg && sp->GetDelivery() == RE::MagicSystem::Delivery::kAimed ? mg->data.projectileBase : nullptr;
-					if (proj) {
-						const RE::NiPoint3 dir = Gun::SwingDir();
-						RE::Projectile::ProjectileRot rot{ -std::asin(std::clamp(dir.z, -1.0f, 1.0f)), std::atan2(dir.x, dir.y) };
-						RE::Projectile::LaunchData ld(proj, p, WandTip(p), rot);
-						ld.useOrigin = true, ld.autoAim = false, ld.spell = sp;
-						ld.castingSource = RE::MagicSystem::CastingSource::kRightHand;
-						RE::ProjectileHandle h;
-						RE::Projectile::Launch(&h, ld);
-						if (static int said = 0; said++ < 6) {
-							auto pr = h.get();
-							logger::info("classes: the wand's {} launched {:.0f} from its tip", sp->GetName(), pr ? pr->GetPosition().GetDistance(tipAt) : -1.0f);
-						}
-					} else if (auto* ic = p->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)) {
-						ic->CastSpellImmediate(sp, false, nullptr, 1.0f, false, 0.0f, p);
-					}
-					g_wandEcho = sp->GetFormID(), g_wandEchoAt = std::chrono::steady_clock::now();
-					OnCast(sp->GetFormID());   // (a spell of ours: its own cast, as if from the hand - Skyrim's own cast event for it, if any, ignored)
-					g_wandEchoArmed = true;
-					if (static int n = 0; n++ % 20 == 0) logger::info("classes: the Carian Wand looses {} (no magicka)", sp->GetName());
-				}   // (no Destruction spell in the other hand: nothing - the Carian bolts of its own are gone)
+				GlintBolt(p, w);
 			}
+			if (wasHeld) RayStop();
+			heldFor = 0.0f;
 		}
+		if (!inHand) RayStop();
+		wasHeld = held;
 		g_wandHeld = held;
 		WandOrb(0, WandTipY(w), inHand, held, a_delta);
 		// (Noah: "only allowed to hold one wand at a time") never in the left hand, never two in the pack
@@ -3324,7 +3301,7 @@ namespace coa::Classes
 			// (Noah, 2026-11-24: "Ascended just makes it do more damage. It shouldn't change the way the sword looks" - "Tier III gets
 			// the last") Steel, Stalhrim, Glass, then the Daedric wand from Tier III on; the Ebony wand is no longer worn
 			// (Noah, Nov 27 workshop: "one model per class weapon" - his pick, the Glass wand, at every tier; the tiers change its look only)
-			static constexpr std::uint32_t kWand[5] = { 0x000807, 0x000807, 0x000807, 0x000807, 0x000807 };
+			static constexpr std::uint32_t kWand[5] = { 0x000816, 0x000816, 0x000816, 0x000816, 0x000816 };   // (Nov 27 final: his pick changed to the Daedric wand)
 			auto* f = Lookup(kWand[std::clamp(a_tier, 0, 4)], "Fulcimentum - More Staves and Wands of Skyrim.esp");
 			auto* s = f ? f->As<RE::TESObjectWEAP>() : nullptr;
 			if (!s) return false;
@@ -3400,7 +3377,15 @@ namespace coa::Classes
 			// (the element's own spell blast: Skyrim's explosion for it - FxBlast below - or, for Holy Water, the effects map's sun)
 			// (Noah: flasks "way too big ... take up my whole screen"; "Burst only, no pool") the element's own spell impact (fxmap.ini
 			// burst_*): small by make - a whole Skyrim explosion keeps its flames' size however it's scaled
-			Gun::ElemBurst(kFlaskBurst[std::clamp(a_el, 0, 6)], a_at + RE::NiPoint3{ 0, 0, 10.0f }, std::clamp(a_size, 0.8f, 1.6f), 0.0f, 0.9f);
+			// (Noah, Nov 27 final - the flasks: "the explosion size for the flasks needs to be much less its a bit overwhelming";
+			// his pick, the Ring impact at 50%) the element's burst at half its old size, and a low ring of it running out along the
+			// ground to the edge of what it catches
+			{
+				static constexpr const char* kRing[7] = { "fire", "frost", "shock", "gold", "sun", "purple", "gold" };
+				const int e = std::clamp(a_el, 0, 6);
+				Gun::ElemBurst(kFlaskBurst[e], a_at + RE::NiPoint3{ 0, 0, 10.0f }, std::clamp(a_size * 0.5f, 0.3f, 0.8f), 0.0f, 0.6f);
+				Gun::Ring(kRing[e], a_at, 20.0f, std::max(120.0f, a_radius * 0.9f), 0.5f);
+			}
 			// (Noah: "each flask to have its own impact sound effect, depending on the element") the bottle breaking and its element
 			// let loose (tools/alchsfx.py hits)
 			// (Noah: "they sound really toony - use the spell sound effect that the potion is casting ... with a cork sound effect
@@ -3553,7 +3538,7 @@ namespace coa::Classes
 			const int   t = f.tier;
 			const float r = FlaskRadius(t) * (f.child ? 0.6f : 1.0f);
 			const float share = FlaskShare(t) * (f.child ? 0.5f : 1.0f);
-			Gun::QueueFx("CurseOfAlduin\\fx\\flask_glass.nif", a_at + RE::NiPoint3{ 0, 0, 10.0f }, f.child ? 0.5f : 0.8f, 0.0f, 1.0f, false);
+			Gun::QueueFx("CurseOfAlduin\\fx\\flask_glass.nif", a_at + RE::NiPoint3{ 0, 0, 10.0f }, f.child ? 0.35f : 0.5f, 0.0f, 1.0f, false);
 			for (auto* fo : NearFoes(a_at, r, 24)) Perks::Catalyze(fo);  // (Catalyst Philter: those it catches take more for a while)
 			FlaskBlast(f.el, t, a_at, (f.child ? 0.6f : 1.0f) * 1.0f * (r / 230.0f), share, r);
 			if (f.child) return;
@@ -3588,7 +3573,7 @@ namespace coa::Classes
 				const int   el = f.el;
 				switch (el) {
 				case 0: {  // Fire: "Firestorm burst" - "Ring of fire outward": Skyrim's Fire Storm ring spreading out once (fxmap.ini flask_firestorm)
-					Gun::QueueFx("CurseOfAlduin\\fx\\flask_firestorm.nif", a_at, 1.0f, 0.0f, 2.5f, false);
+					Gun::QueueFx("CurseOfAlduin\\fx\\flask_firestorm.nif", a_at, 0.6f, 0.0f, 2.5f, false);
 					Gun::BlastSound("fireball", a_at, 0.9f);
 					const float rr = r * 1.8f;
 					Tasks::Later(0.25f, [a_at, rr, share, whole]() {
@@ -3598,7 +3583,7 @@ namespace coa::Classes
 					break;
 				}
 				case 1: {  // Frost: "Frost Nova instead" - "Slowed, not frozen": Apocalypse's Frost Nova, the dead at half speed for 5 s
-					Gun::QueueFx("CurseOfAlduin\\fx\\flask_frostnova.nif", a_at, 1.0f, 0.0f, 2.0f, false);
+					Gun::QueueFx("CurseOfAlduin\\fx\\flask_frostnova.nif", a_at, 0.6f, 0.0f, 2.0f, false);
 					Gun::BlastSound("icevolley", a_at, 0.9f);
 					const float rr = r * 1.6f;
 					Gun::AreaHurt(a_at, rr, 0.8f * share, "");
@@ -3614,7 +3599,7 @@ namespace coa::Classes
 					for (int k = 0; k < 3; ++k) {
 						RE::NiPoint3 at = k < static_cast<int>(foes.size()) ? foes[k]->GetPosition() : a_at + RE::NiPoint3{ std::cos(k * 2.1f) * r * 0.7f, std::sin(k * 2.1f) * r * 0.7f, 0.0f };
 						Tasks::Later(0.25f * static_cast<float>(k), [at, share]() {
-							Gun::QueueFx("CurseOfAlduin\\fx\\flask_strike.nif", at, 1.0f, 0.0f, 1.5f, false);
+							Gun::QueueFx("CurseOfAlduin\\fx\\flask_strike.nif", at, 0.7f, 0.0f, 1.5f, false);
 							Gun::BlastSound("runeshock", at, 0.8f);
 							Gun::AreaHurt(at, 170.0f, 0.7f * share, "");
 						});
@@ -3641,7 +3626,7 @@ namespace coa::Classes
 				}
 				case 5: {  // Voidglass: "Pull + Lunar Tide" - once the pull ends, a Lunar Tide ring blasts them back out
 					Tasks::Later(1.6f, [a_at, r, share]() {
-						Gun::QueueFx("CurseOfAlduin\\fx\\flask_lunartide.nif", a_at, 1.0f, 0.0f, 2.0f, false);
+						Gun::QueueFx("CurseOfAlduin\\fx\\flask_lunartide.nif", a_at, 0.6f, 0.0f, 2.0f, false);
 						Gun::BlastSound("lightmassive", a_at, 0.8f);
 						Gun::AreaHurt(a_at, r * 1.5f, 1.0f * share, "");
 						for (auto* fo : NearFoes(a_at, r * 1.5f, 20)) Gun::Knock(fo, 0.9f);
@@ -4156,6 +4141,8 @@ namespace coa::Classes
 		const auto now = std::chrono::steady_clock::now();
 		if (now - last < std::chrono::milliseconds(200)) return;
 		last = now;
+		// (Noah, Nov 27 final: each class's own moves - src/ClassMoves.inl) the old arcs and cyclones give way to them
+		if (cls != 1) { MovesSwing(cls, a_power, w); return; }
 		const int t = std::clamp(Kit::TierOfWeapon(w), 0, 3);
 		if (t < 1) return;
 		const int asc = AscOf(w);
@@ -4821,7 +4808,10 @@ namespace coa::Classes
 			const float z = p->GetAngleZ();
 			const RE::NiPoint3 at = p->GetPosition() + RE::NiPoint3{ std::sin(z) * 170.0f, std::cos(z) * 170.0f, 0.0f };
 			++g_soulPending;
-			Tasks::Later(0.05f, [base, at, hp, dmg] {
+			// (Noah, Nov 27 final: "the spectral cat should spawn from skyrims purple portals") Skyrim's own conjuring portal opens
+			// first, and the cat steps out of it as it turns
+			Gun::QueueFx("CurseOfAlduin\\fx\\soul_portal.nif", at, 1.3f, 0.0f, 0.0f, false);
+			Tasks::Later(0.7f, [base, at, hp, dmg] {
 				g_soulPending = std::max(0, g_soulPending - 1);
 				auto* pc = RE::PlayerCharacter::GetSingleton();
 				if (!pc || pc->IsDead()) return;
@@ -4829,8 +4819,6 @@ namespace coa::Classes
 					c->SetScale(kCatScale);
 					c->AsActorValueOwner()->SetActorValue(RE::ActorValue::kAttackDamageMult, dmg);
 					g_soulWolves.push_back({ c->GetHandle(), 0.0f });
-					// (Noah, 2026-11-25: "Use skyrims summon portal") Skyrim's own conjuring portal where it comes (fxmap.ini soul_portal.nif)
-					Gun::QueueFx("CurseOfAlduin\\fx\\soul_portal.nif", at, 1.0f, 0.0f, 0.0f, false);
 					logger::info("summoner: a spectral sabre cat leaps out ({:.0f} health, bite x{:.2f}, {} out)", hp, dmg, g_soulWolves.size());
 				}
 			});
@@ -4883,6 +4871,17 @@ namespace coa::Classes
 			}
 			static float tick = 0;
 			if (casting) {
+				// (Noah, Nov 27 final: "the beam should cost mana") the beam drains magicka while it runs, and stops when there's none
+				if (auto* av = p->AsActorValueOwner(); av) {
+					const float cost = 12.0f * a_delta;
+					if (av->GetActorValue(RE::ActorValue::kMagicka) < cost + 0.5f) {
+						if (c) c->InterruptCast(false);
+						static auto told = std::chrono::steady_clock::now() - std::chrono::seconds(10);
+						if (std::chrono::steady_clock::now() - told > std::chrono::seconds(3)) { told = std::chrono::steady_clock::now(); Hud::Hint("Out of magicka", 1.5f); }
+						return;
+					}
+					av->DamageActorValue(RE::ActorValue::kMagicka, cost);
+				}
 				// a soul for each of the dead the beam touched that has died since (twenty make a cat)
 				for (auto it = g_soulTaken.begin(); it != g_soulTaken.end();) {
 					auto* f = RE::TESForm::LookupByID<RE::Actor>(*it);
@@ -4953,6 +4952,11 @@ namespace coa::Classes
 		g_eye = { a_ahead, a_up, a_side };
 		for (auto& [h, age] : g_soulWolves) if (auto w = h.get(); w && w->Get3D()) EyeFlames(w.get());
 		logger::info("summoner: eye flames now {:.1f} ahead, {:.1f} up, {:.1f} to each side", a_ahead, a_up, a_side);
+	}
+
+	namespace
+	{
+#include "ClassMoves.inl"
 	}
 
 	void TickAlchemy(float a_delta)

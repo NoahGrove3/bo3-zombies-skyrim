@@ -1999,6 +1999,17 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const float cx = size.x * 0.5f, y = size.y - 64 * k, hw = 360 * k, sw = 220 * k, h = 16 * k, sh = 10 * k, gap = 30 * k;
 				const float L = cx - hw / 2 - gap - sw - 26 * k, R = cx + hw / 2 + gap + sw + 26 * k;
 				const float low = hpFrac < 0.3f ? (0.5f + 0.5f * std::sin(now * 7.0f)) * (1.0f - hpFrac / 0.3f) : 0.0f;
+				// (Noah, Nov 27 workshop - the bars: "Hide when full, keep the current health magicka and stamina bars look") the plate
+				// as it is, faded out once all three bars have stood full for two seconds (and the shout is ready); back the moment
+				// any of them drops or a shout is spoken
+				static float barsA = 1.0f, fullFor = 0.0f;
+				{
+					const bool full = s.hp >= s.hpMax - 0.5f && (s.mpMax <= 0 || s.mp >= s.mpMax - 0.5f) && (s.spMax <= 0 || s.sp >= s.spMax - 0.5f) && ShoutCdShown(s.shoutCd) <= 0.001f;
+					fullFor = full ? fullFor + dt : 0.0f;
+					const float want = fullFor > 2.0f ? 0.0f : 1.0f;
+					barsA += (want - barsA) * std::min(1.0f, dt * (want > barsA ? 10.0f : 2.5f));
+				}
+				const int barsV0 = dl->VtxBuffer.Size;
 				// the plate: black iron with a bronze rim, points at both ends
 				{
 					const float t = y - 13 * k, b = y + h + 13 * k, m = (t + b) * 0.5f;
@@ -2110,6 +2121,13 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					};
 					// what is left of the cooldown is what is still lit, from the tips in: s in [1 - cd, 1] of each run
 					if (ShoutCdShown(s.shoutCd) > 0.001f) run(std::clamp(1.0f - ShoutCdShown(s.shoutCd), 0.0f, 1.0f), 1.0f, 0.9f);
+				}
+				if (barsA < 0.999f) {   // (everything the plate drew, faded together)
+					for (int i = barsV0; i < dl->VtxBuffer.Size; ++i) {
+						auto& c = dl->VtxBuffer[i].col;
+						const auto al = static_cast<ImU32>(static_cast<float>((c >> IM_COL32_A_SHIFT) & 0xFF) * barsA);
+						c = (c & ~IM_COL32_A_MASK) | (al << IM_COL32_A_SHIFT);
+					}
 				}
 				{  // (Noah: "move the perk icons to above my health bar, centered")
 				// perk row: sockets, the draughts in them; a new draught bursts in

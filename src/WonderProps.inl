@@ -296,15 +296,19 @@ namespace Props
 		// (Noah: "Each light attack hit landed on an enemy should call a meteor from the sky and land on where the enemy was
 		// struck" - "Meteor only", "Large") every light blow that lands calls one of the great meteors (the 20 souls' rain's size)
 		// down on the one struck, chasing it; where it lands the dead round it are struck hard (the heavy: BaneWind's tornado)
-		if (!a_power && !killed) {
-			Gun::MeteorAt(a_z, false, 1.2f, [](const RE::NiPoint3& hit) {
-				Gun::MeteorImpact(hit, false, 0.55f);   // (Noah, Nov 26: "the light attack meteors give a massive explosion and it's blinding")
-				g_zones.push_back({ 4, hit, 260.0f, 0.15f, 0.0f, FangBase() * BaneMult() * 1.5f, 0, false, 0 });
-			});
-		} else if (!a_power) {
-			Gun::Meteor(at, false, 1.2f, [](const RE::NiPoint3& hit) {   // (the one struck already dead: the meteor still falls where it stood)
-				Gun::MeteorImpact(hit, false, 0.55f);   // (Noah, Nov 26: "the light attack meteors give a massive explosion and it's blinding")
-				g_zones.push_back({ 4, hit, 260.0f, 0.15f, 0.0f, FangBase() * BaneMult() * 1.5f, 0, false, 0 });
+		// (Noah, Nov 27 final - Alduin's Bane, Light: "Ash of Helgen") hits burn the dead to ash: the one struck catches fire, a
+		// patch of embers smoulders under it, and a moment later the fire spreads to those next to it (the meteors are gone)
+		if (!a_power) {
+			const float burn = FangBase() * BaneMult() * 0.45f;
+			if (!killed) Gun::Burn(a_z, burn, 4.0f, 0);
+			Gun::ElemBurst(0, at + RE::NiPoint3{ 0, 0, 60.0f }, 0.45f, 0.0f, 0.5f);
+			Gun::Puddle(0, at, 0.6f, 3.0f);
+			Tasks::Later(0.6f, [at, burn, h = a_z->GetHandle()] {
+				for (auto* f : Foes(at, 240.0f)) {
+					if (!f || f->IsDead() || f == h.get().get()) continue;
+					Gun::Burn(f, burn * 0.6f, 3.0f, 0);
+					Gun::ElemBurst(0, f->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f }, 0.3f, 0.0f, 0.4f);
+				}
 			});
 		}
 	}
