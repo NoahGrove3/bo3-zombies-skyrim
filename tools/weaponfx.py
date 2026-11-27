@@ -66,17 +66,22 @@ WEAPONS = {
     'tab_bonereaper':    ('CurseOfAlduin\\reapers\\Skeleton.nif', ['Blade'], None, 'o1', 'green'),
     'tab_wyrmtooth':     ('CurseOfAlduin\\reapers\\dragonTeeth.nif', ['Blade'], None, 'o1', 'green'),
     'tab_bloodmoon':     ('CurseOfAlduin\\reapers\\vampire.nif', ['Blade'], None, 'o2', 'red'),
-    'fang':              ('Light Greatswords\\dragonbone\\LightGreatsword.nif', ['DragonboneGreatsword:0'], None, 'o2', 'orange'),   # (doc 5865977: o2)
+    'fang':              ('Light Greatswords\\dragonbone\\LightGreatsword.nif', ['DragonboneGreatsword:0'], None, 'o4+o1', 'orange'),   # (Nov 27 final: Words of Power + World-Eater's Fire)
     # (Noah, 2026-11-24: "both left and right claws ... carry the same effect") the claws' left-hand twins
     'tab_stormtalons_l': ('weapons\\NewArmoury\\Fists\\GlassClawLft.nif', ['GlassClawGlass1'], None, 'o1', 'blue'),
     'tab_talons_l':      ('weapons\\NewArmoury\\Fists\\DBClawLft.nif', ['DBClaw_MTL_B'], None, 'o1', 'red'),
     # (Noah, 2026-11-26: "Whole-weapon effects on the Mutagen Staff, the Soulcaller Staff and the javelin") their heads
     # (Noah, Nov 27: "the weapon look effect for the mutagen staff should be at the very top of the staff head where the orb is")
-    'flaskweap_philosopher': ('CurseOfAlduin\\alchemist\\mutagen_staff_qs.nif', ['Brass:1', 'Orbglass:4'], (70, 99), 'o1', 'poison'),
+    'flaskweap_philosopher': ('CurseOfAlduin\\alchemist\\mutagen_staff_qs.nif', ['Brass:1', 'Orbglass:4'], (70, 99), 'o4+o1', 'poison'),   # (Nov 27 final: Transmutation Runes + Living Mutagen)
     # (Noah, Nov 27: "the effect change on the mutagen staff where its on the head needs to also be done on the other staffs like the
     # soulcallers staff") the very top of its glass head only
-    'soulcaller':        ('SSS\\GlassStaff.nif', ['1stPersonGlassMace:0'], (47, 99), 'o2', 'white'),   # (doc WSKjuLEJ: o2 white)
-    'javelin':           ('CurseOfAlduin\\wyrmspine\\wyrmspine.nif', ['Dbone:1', 'Runes:0'], None, 'o5', 'orange'),   # (doc WSKjuLEJ: o5)
+    'soulcaller':        ('SSS\\GlassStaff.nif', ['1stPersonGlassMace:0'], (47, 99), 'o3+o5', 'white'),   # (Nov 27 final: Spectral Mist + Soul Fire)   # (doc WSKjuLEJ: o2 white)
+    'javelin':           ('CurseOfAlduin\\wyrmspine\\wyrmspine.nif', ['Dbone:1', 'Runes:0'], None, 'o4+o5', 'orange'),   # (Nov 27 final: Elemental Edge + Dragonfire)
+    # (Noah, Nov 27: "I want the javelins look effect to change depending on which element is being held in the other hand like the
+    # spellsword") its look in each element of the spell in your other hand (src/WeaponFx.cpp picks by it)
+    'javelin_fire':      ('CurseOfAlduin\\wyrmspine\\wyrmspine.nif', ['Dbone:1', 'Runes:0'], None, 'o4+o5', 'orange'),
+    'javelin_frost':     ('CurseOfAlduin\\wyrmspine\\wyrmspine.nif', ['Dbone:1', 'Runes:0'], None, 'o4+o5', 'iceblue'),
+    'javelin_shock':     ('CurseOfAlduin\\wyrmspine\\wyrmspine.nif', ['Dbone:1', 'Runes:0'], None, 'o4+o5', 'shockv'),
     'tab_cinderclaws_l': ('weapons\\NewArmoury\\Fists\\DaedricClawLft.nif', ['DaedricClaws_MTL_B'], None, 'o3', 'orange'),   # (its right hand's pick)
 }
 # (the claws: several blades fanned out - each its own outline in its own plane)
@@ -87,8 +92,14 @@ LEFT = {'tab_stormtalons_l', 'tab_talons_l', 'tab_cinderclaws_l'}
 
 # the class weapons: each takes another model at each tier (src/Classes.cpp AdoptTierLook), so each tier's model has its own
 # art; the Spellbound Rapier's look follows the element in your other hand (its BLADE_VIZ key: src/Classes.cpp LookKey)
-BV_KEYS = ['alch', 'carian', 'radiant', 'ss_none', 'ss_fire', 'ss_frost', 'ss_shock', 'ss_sun', 'ss_blood', 'slayer']
+BV_KEYS = ['alch', 'carian', 'radiant', 'ss_none', 'ss_fire', 'ss_frost', 'ss_shock', 'ss_sun', 'ss_blood', 'slayer',
+           'carian1', 'radiant_L', 'ss_none_L', 'ss_fire_L', 'ss_frost_L', 'ss_shock_L', 'ss_sun_L', 'ss_blood_L']   # (Nov 27 final: 10 Destruction's Tier I; 11-17 the Legendary layers: src/Classes.cpp HandLookKey)
 BV_PICK = {'alch': ('o3', 'shadow'), 'carian': ('o1', 'purple'), 'radiant': ('o1', 'gold'), 'ss_none': ('o1', 'white'), 'ss_fire': ('o2', 'orange'), 'ss_frost': ('o1', 'iceblue'), 'ss_shock': ('o1', 'iceblue'), 'ss_sun': ('o1', 'orange'), 'ss_blood': ('o1', 'blue'), 'slayer': ('o3', 'gold')}   # (Noah's picks, the workshop 2026-11-25, doc 8cd53a1; ss_fire and slayer changed in doc 5865977, 2026-11-26)
+# (Noah's final tier picks, Nov 27: Destruction Tier I Sorcery then Glintstone Mist; Legendary: the Summoner's + Dawn Halo, the
+# Spellsword's + Spellbound; the Alchemist and Destruction at their brightest - the tier's strength alone)
+BV_PICK.update({'carian1': ('o3', 'purple'), 'radiant_L': ('o1+o3', 'gold'), 'slayer': ('o4+o1', 'gold')})
+BV_PICK.update({k + '_L': (BV_PICK[k][0] + '+o2', BV_PICK[k][1]) for k in ['ss_none', 'ss_fire', 'ss_frost', 'ss_shock', 'ss_sun', 'ss_blood']})
+BV_PICK['ss_fire_L'] = ('o2+o1', BV_PICK['ss_fire'][1])   # (its own look is already Spellbound's: the bare blade's laid over it)
 CLASS_MODELS = {   # the look key(s), each model: its steel shapes and band
     # (Noah, 2026-11-25: "the weapon effects are at the ends of each side of the staff ... the weapon heads, not the handles") each
     # staff's two capped heads - where its detail is - and none of the plain shaft between
@@ -114,13 +125,13 @@ CLASS_MODELS = {   # the look key(s), each model: its steel shapes and band
 }
 CLASS = {}   # art key -> (model, shapes, band, look, colour, the look key, the model)
 for group, models in CLASS_MODELS.items():
-    keys = [k for k in BV_KEYS if k.startswith('ss_')] if group == 'ss' else [group]
+    keys = [k for k in BV_KEYS if k.startswith('ss_')] if group == 'ss' else [k for k in BV_KEYS if k == group or k in (group + '1', group + '_L')]
     for model, names, band in models:
         stem = model.split('\\')[-1][:-4].lower()
         for k in keys:
             look, col = BV_PICK[k]
             CLASS[f'cls_{stem}_{k}'] = (model, names, band, look, col, k)
-GAIN = {k: 0.6 for k in CLASS if k.endswith('_carian')}   # (a weapon's own intensity)
+GAIN = {k: 0.6 for k in CLASS if k.endswith('_carian') or k.endswith('_carian1')}   # (a weapon's own intensity)
 ALL = dict(WEAPONS)
 ALL.update({k: v[:5] for k, v in CLASS.items()})
 SSS = pathlib.Path('/tmp/sss/meshes')   # (Fulcimentum's wands, read out of its archive on Noah's install: tools/weaponfx.py notes)
@@ -734,7 +745,12 @@ def art(key):
     WORK.mkdir(parents=True, exist_ok=True); MESH.mkdir(parents=True, exist_ok=True)
     rows.append(f'out {MESH / (key + ".nif")}')
     rng = np.random.default_rng(abs(hash(key)) % 2 ** 31)
-    stats = [art_part(F, rows, rng, f'p{pi}_' if len(Fs) > 1 else '') for pi, F in enumerate(Fs)]
+    stats = []
+    for pi, F in enumerate(Fs):
+        for li, lk in enumerate(F['look'].split('+')):   # (Nov 27 final: a second look laid over the first)
+            F2 = dict(F, look=lk)
+            if li: F2['gain'] = F.get('gain', 1.0) * 0.75
+            stats.append(art_part(F2, rows, rng, (f'p{pi}_' if len(Fs) > 1 else '') + (f'l{li}_' if li else '')))
     jf = WORK / f'{key}.job'
     jf.write_text('\n'.join(rows) + '\n')
     r = subprocess.run([str(TOOLS / 'fxwrite'), str(jf)], capture_output=True, text=True)
@@ -933,10 +949,15 @@ if __name__ == '__main__':
     elif cmd == 'arts':
         for k in (sys.argv[2:] or list(ALL)): art(k)
         if not sys.argv[2:]:   # (the class weapons' arts by model and look key, for src/WeaponFx.cpp: tools/gen.py reads it)
-            rows = [{'model': v[0].lower(), 'key': BV_KEYS.index(v[5]), 'art': 'CurseOfAlduin\\wfx\\' + k + '.nif'} for k, v in CLASS.items()]
+            rows = [{'model': v[0].lower(), 'key': BV_KEYS.index(v[5]), 'art': 'CurseOfAlduin\\wfx\\' + k + '.nif'} for k, v in CLASS.items() if (MESH / (k + '.nif')).exists()]   # (only the arts made)
             # (the claws' left-hand twins: found by the model in the left hand, key -2)
             rows += [{'model': WEAPONS[k][0].lower(), 'key': -2, 'art': 'CurseOfAlduin\\wfx\\' + k + '.nif'} for k in sorted(LEFT)]
             (ROOT / 'data' / 'weaponfx_class.json').write_text(json.dumps(rows, indent=1) + '\n')
+    elif cmd == 'rows':   # (the class arts' table alone, from the arts already made)
+        rows = [{'model': v[0].lower(), 'key': BV_KEYS.index(v[5]), 'art': 'CurseOfAlduin\\wfx\\' + k + '.nif'} for k, v in CLASS.items() if (MESH / (k + '.nif')).exists()]
+        rows += [{'model': WEAPONS[k][0].lower(), 'key': -2, 'art': 'CurseOfAlduin\\wfx\\' + k + '.nif'} for k in sorted(LEFT)]
+        (ROOT / 'data' / 'weaponfx_class.json').write_text(json.dumps(rows, indent=1) + '\n')
+        print(len(rows), 'rows')
     elif cmd == 'preview':
         for k in sys.argv[2:]: preview(k)
     else: print(__doc__)

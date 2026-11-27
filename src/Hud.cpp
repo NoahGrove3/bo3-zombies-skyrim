@@ -3759,6 +3759,28 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		void DrawPingCursor(ImDrawList* a_dl, ImVec2 a_tip, float k, float a_now, bool a_always = false)
 		{
 			if (g_padLast && !a_always) return;  // (Noah: "hide the mouse cursor when I'm using a controller") it shows again with the mouse or keyboard
+			// (Noah, Nov 27 workshop - the cursor: his pick, the Rune Arrow) a Nordic arrowhead in dark iron with a gold edge and one rune
+			// cut in it, glowing - in every menu (Skyrim's own cursor stays hidden: this is drawn in its place)
+			{
+				const float S = 30.0f * k / 32.0f;   // (drawn from a 32-unit design, its point the hotspot)
+				auto P = [&](float x, float y) { return ImVec2{ a_tip.x + (x - 2.0f) * S, a_tip.y + (y - 2.0f) * S }; };
+				const ImVec2 head[4] = { P(2, 2), P(24, 12), P(14, 14.5f), P(11.5f, 25) };
+				const float  glow = 0.6f + 0.4f * std::sin(a_now * 2.4f);
+				// a soft shadow under it, the iron, its gold edge
+				ImVec2 sh[4];
+				for (int i = 0; i < 4; ++i) sh[i] = { head[i].x + 1.6f * k, head[i].y + 2.0f * k };
+				a_dl->AddConvexPolyFilled(sh, 4, IM_COL32(0, 0, 0, 110));
+				a_dl->AddConvexPolyFilled(head, 4, IM_COL32(43, 38, 32, 245));
+				a_dl->AddPolyline(head, 4, IM_COL32(232, 181, 74, 255), ImDrawFlags_Closed, 1.6f * k);
+				a_dl->AddLine(P(2, 2), P(14, 14.5f), IM_COL32(255, 230, 170, 90), 1.0f * k);   // (a lit ridge down its middle)
+				// the rune, glowing
+				const ImU32 rune = IM_COL32(255, 211, 110, static_cast<int>(255 * glow));
+				a_dl->AddLine(P(9, 8), P(12.5f, 15), Fade(rune, 0.35f), 4.0f * k);
+				a_dl->AddLine(P(10.8f, 11.4f), P(14, 9.6f), Fade(rune, 0.35f), 4.0f * k);
+				a_dl->AddLine(P(9, 8), P(12.5f, 15), rune, 1.5f * k);
+				a_dl->AddLine(P(10.8f, 11.4f), P(14, 9.6f), rune, 1.5f * k);
+				return;
+			}
 			if (g_cursorTex) {  // the Moonlit Spirit cursor (an animated Windows cursor: 8 frames played 0..7..0, 9/60 s each)
 				static constexpr int kSeq[16] = { 0, 1, 2, 3, 4, 5, 6, 7, 7, 6, 5, 4, 3, 2, 1, 0 };
 				const int   f = kSeq[static_cast<int>(a_now * 60.0f / 9.0f) % 16];

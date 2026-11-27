@@ -123,6 +123,8 @@ def echo_ids(S):
     ids += [('MGEF', 'wyrmcall')]   # (Noah: the Violet Wyrm made a summon spell: its cast's effect)
     ids += [('WEAP', 'wyrmhorn')]   # (Noah: the Horn of the Violet Wyrm - "Held in hand")   # (Noah: the Mutagen Gauntlet made a staff: its beam held as Skyrim's staff cast)
     ids += [('MGEF', 'wandhold')]   # (Noah: the Carian Wand pointed like a staff, its cast held - a bolt every 2 s)
+    # (Noah, Nov 27 final - the armour sets' looks: Sheen, Embers, Mantle) the embers' art and a sheen in each class's colour
+    ids += [('ARTO', 'armembers')] + [('EFSH', 'sheen_' + k) for k in ('sun', 'violet', 'purple', 'fire', 'frost', 'shock')]
     return ids
 def blasts():
     """Spell blasts: no-damage copies of Skyrim's explosions (tools/templates/expl/<name>.json)."""

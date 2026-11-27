@@ -10,6 +10,11 @@
   "art": "CurseOfAlduin\\wfx\\cls_ebonystaff_radiant.nif"
  },
  {
+  "model": "weapons\\newarmoury\\quarterstaffs\\ebonystaff.nif",
+  "key": 11,
+  "art": "CurseOfAlduin\\wfx\\cls_ebonystaff_radiant_L.nif"
+ },
+ {
   "model": "weapons\\newarmoury\\quarterstaffs\\daedricstaff.nif",
   "key": 2,
   "art": "CurseOfAlduin\\wfx\\cls_daedricstaff_radiant.nif"
@@ -38,6 +43,11 @@
   "model": "sss\\daedricwand.nif",
   "key": 1,
   "art": "CurseOfAlduin\\wfx\\cls_daedricwand_carian.nif"
+ },
+ {
+  "model": "sss\\daedricwand.nif",
+  "key": 10,
+  "art": "CurseOfAlduin\\wfx\\cls_daedricwand_carian1.nif"
  },
  {
   "model": "curseofalduin\\reapers\\forsworn.nif",
@@ -148,6 +158,36 @@
   "model": "weapons\\newarmoury\\rapier\\daedricrapier.nif",
   "key": 8,
   "art": "CurseOfAlduin\\wfx\\cls_daedricrapier_ss_blood.nif"
+ },
+ {
+  "model": "weapons\\newarmoury\\rapier\\daedricrapier.nif",
+  "key": 12,
+  "art": "CurseOfAlduin\\wfx\\cls_daedricrapier_ss_none_L.nif"
+ },
+ {
+  "model": "weapons\\newarmoury\\rapier\\daedricrapier.nif",
+  "key": 13,
+  "art": "CurseOfAlduin\\wfx\\cls_daedricrapier_ss_fire_L.nif"
+ },
+ {
+  "model": "weapons\\newarmoury\\rapier\\daedricrapier.nif",
+  "key": 14,
+  "art": "CurseOfAlduin\\wfx\\cls_daedricrapier_ss_frost_L.nif"
+ },
+ {
+  "model": "weapons\\newarmoury\\rapier\\daedricrapier.nif",
+  "key": 15,
+  "art": "CurseOfAlduin\\wfx\\cls_daedricrapier_ss_shock_L.nif"
+ },
+ {
+  "model": "weapons\\newarmoury\\rapier\\daedricrapier.nif",
+  "key": 16,
+  "art": "CurseOfAlduin\\wfx\\cls_daedricrapier_ss_sun_L.nif"
+ },
+ {
+  "model": "weapons\\newarmoury\\rapier\\daedricrapier.nif",
+  "key": 17,
+  "art": "CurseOfAlduin\\wfx\\cls_daedricrapier_ss_blood_L.nif"
  },
  {
   "model": "weapons\\newarmoury\\rapier\\dragonbonerapier.nif",

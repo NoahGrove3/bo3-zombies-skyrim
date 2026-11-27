@@ -2205,6 +2205,13 @@
   "GLOB:talk_heard_4": "0xdf3",
   "GLOB:talk_heard_5": "0xdf6",
   "MGEF:testerkit": "0xdf9",
-  "SPEL:testerkit": "0xdfc"
+  "SPEL:testerkit": "0xdfc",
+  "ARTO:armembers": "0xdff",
+  "EFSH:sheen_sun": "0xe02",
+  "EFSH:sheen_violet": "0xe05",
+  "EFSH:sheen_purple": "0xe08",
+  "EFSH:sheen_fire": "0xe0b",
+  "EFSH:sheen_frost": "0xe0e",
+  "EFSH:sheen_shock": "0xe11"
  }
 }

@@ -2836,24 +2836,38 @@ namespace coa::Classes
 
 	// every frame: the spells' costs, the summons, the flasks, the Staff of Magnus, cooldowns
 	// (Noah: "I can't see anything in first person") the armour aura's model, hidden every frame you look out of your own eyes
-	RE::NiPointer<RE::NiAVObject> g_auraNode;
-	// (Noah: "when I equip my armor set, it flashes the aura in the size that it was originally, and then it shrinks it") the
-	// aura laid on is looked for every frame until its model is in, and painted and drawn in the frame it appears
-	bool               g_auraWait = false;
-	int                g_auraTier = 0, g_auraCls = 0;
-	RE::NiAVObject*    g_auraPainted = nullptr;
-	int                g_auraPaintedAt = -1, g_auraPaintedCls = -1;
-	void PaintAuraModel(RE::NiAVObject* a_o, int a_cls, int a_tier)
+	// (Noah, Nov 27 final - the armour sets' looks, his picks: the Summoner Sheen (Legendary + Embers), Destruction Embers (+ Sheen),
+	// the Alchemist Mantle (+ Sheen), the Spellsword Sheen (+ Embers); each in the class's colour, stronger each tier) two arts hung
+	// on you - the Mantle (Auriel's sun aura, small and soft) and the Embers (tools/auraembers.py) - and the Sheen, a rim of light
+	// round you (an effect shader); the arts hidden whenever you look out of your own eyes
+	struct AuraArt
 	{
-		static constexpr const char* kPal[4] = { "violet", "fire", "poison", "blue" };
-		// (Noah: "make it a lot smaller ... just on the outside of the armor set, but not too big to where it limits your view in
-		// third person. It should be very subtle") a faint glow close to the body: its light a fifth to two fifths of the
-		// model's, the whole of it drawn in to 55%
-		Gun::PaintAura(a_o, kPal[std::clamp(a_cls, 0, 3)], 0.16f + 0.04f * a_tier);
-		a_o->local.scale = 0.55f;
+		std::uint32_t                 id = 0;
+		RE::NiPointer<RE::NiAVObject> node;
+		bool                          wait = false;
+		int                           tier = 0, cls = 0, key = 0;
+		RE::NiAVObject*               painted = nullptr;
+		int                           paintedAt = -1, paintedCls = -1, paintedKey = -1;
+	};
+	AuraArt g_auras[2]{ { gen::kArmAura }, { gen::kArmEmbers } };   // [0] the Mantle, [1] the Embers
+	// the class's colour: the Summoner's sun, Destruction's violet, the Alchemist's shadowfire, the Spellsword's element
+	int AuraColour(int a_cls);
+	void PaintAuraModel(int a_i, RE::NiAVObject* a_o, int a_cls, int a_tier)
+	{
+		static constexpr const char* kPal[6] = { "sun", "violet", "shadow", "fire", "frost", "shock" };
+		const int col = AuraColour(a_cls);
+		// (Noah: "make it a lot smaller ... just on the outside of the armor set ... very subtle") the Mantle a faint glow close to
+		// the body; the Embers brighter, each tier more
+		if (a_i == 0) {
+			Gun::PaintAura(a_o, kPal[col], 0.16f + 0.04f * a_tier);
+			a_o->local.scale = 0.55f;
+		} else {
+			Gun::PaintAura(a_o, kPal[col], 0.45f + 0.15f * a_tier);
+		}
 		RE::NiUpdateData ud;
 		a_o->Update(ud);
-		g_auraPainted = a_o, g_auraPaintedAt = a_tier, g_auraPaintedCls = a_cls;
+		auto& A = g_auras[a_i];
+		A.painted = a_o, A.paintedAt = a_tier, A.paintedCls = a_cls, A.paintedKey = col;
 	}
 	namespace
 	{
@@ -2894,21 +2908,24 @@ namespace coa::Classes
 	void TickFast(float a_delta)
 	{
 		TickOtherWands(a_delta);
-		if (g_auraWait) {
-			auto* p = RE::PlayerCharacter::GetSingleton();
-			auto* art = RE::TESDataHandler::GetSingleton()->LookupForm<RE::BGSArtObject>(gen::kArmAura, gen::kPlugin);
-			if (p && art) if (auto* pl = RE::ProcessLists::GetSingleton()) pl->ForEachModelEffect([&](RE::ModelReferenceEffect* e) {
-				if (e && e->artObject == art && e->target.get().get() == p && !e->finished) {
-					if (auto* o = e->artObject3D.get(); o && o != g_auraPainted) PaintAuraModel(o, g_auraCls, g_auraTier), g_auraNode = e->artObject3D, g_auraWait = false;
+		for (int i = 0; i < 2; ++i) {
+			auto& A = g_auras[i];
+			if (A.wait) {
+				auto* p = RE::PlayerCharacter::GetSingleton();
+				auto* art = RE::TESDataHandler::GetSingleton()->LookupForm<RE::BGSArtObject>(A.id, gen::kPlugin);
+				if (p && art) if (auto* pl = RE::ProcessLists::GetSingleton()) pl->ForEachModelEffect([&](RE::ModelReferenceEffect* e) {
+					if (e && e->artObject == art && e->target.get().get() == p && !e->finished) {
+						if (auto* o = e->artObject3D.get(); o && o != A.painted) PaintAuraModel(i, o, A.cls, A.tier), A.node = e->artObject3D, A.wait = false;
+					}
+					return RE::BSContainer::ForEachResult::kContinue;
+				});
+			}
+			if (auto* o = A.node.get()) {
+				const bool first = RE::PlayerCamera::GetSingleton() && RE::PlayerCamera::GetSingleton()->IsInFirstPerson();
+				if (first != o->GetFlags().any(RE::NiAVObject::Flag::kHidden)) {
+					if (first) o->GetFlags().set(RE::NiAVObject::Flag::kHidden);
+					else o->GetFlags().reset(RE::NiAVObject::Flag::kHidden);
 				}
-				return RE::BSContainer::ForEachResult::kContinue;
-			});
-		}
-		if (auto* o = g_auraNode.get()) {
-			const bool first = RE::PlayerCamera::GetSingleton() && RE::PlayerCamera::GetSingleton()->IsInFirstPerson();
-			if (first != o->GetFlags().any(RE::NiAVObject::Flag::kHidden)) {
-				if (first) o->GetFlags().set(RE::NiAVObject::Flag::kHidden);
-				else o->GetFlags().reset(RE::NiAVObject::Flag::kHidden);
 			}
 		}
 		// every other spell you know (heroes and armies, tomes, other mods' spells): its cost on the same curve,
@@ -3816,6 +3833,22 @@ namespace coa::Classes
 			logger::info("swords: the tier looks are our own fitted arts (no enchantment shader or art)");
 		}
 	}
+	int AuraColour(int a_cls)   // (the armour's looks) 0 sun, 1 violet, 2 shadowfire, 3 fire, 4 frost, 5 shock
+	{
+		switch (a_cls) {
+		case coffer::kSummoner: return 0;
+		case coffer::kDestruction: return 1;
+		case coffer::kAlchemist: return 2;
+		default:
+			switch (SpellswordElement()) {
+			case coffer::kFrost: return 4;
+			case coffer::kShock: return 5;
+			case coffer::kSun: return 0;
+			case coffer::kFire: return 3;
+			default: return 1;
+			}
+		}
+	}
 	int HandLookKey()
 	{
 		// (Noah, 2026-11-24) which of his picked looks the class weapon in your right hand wears (src/WeaponFx.cpp): its row in
@@ -3825,8 +3858,23 @@ namespace coa::Classes
 		if (!w) return -1;
 		if (w == Slayer()) return 9;
 		const int cls = SwordClass(w);
-		if (cls < 0 || Kit::TierOfWeapon(w) < 1) return -1;
-		return LookKey(cls);
+		const int t = Kit::TierOfWeapon(w);
+		if (cls < 0 || t < 1) return -1;
+		const int key = LookKey(cls);
+		// (Noah's final tier picks, Nov 27: tools/weaponfx.py BV_KEYS 10-17) Destruction's wand wears Sorcery at Tier I; at Legendary
+		// the Summoner's quarterstaff and the Spellsword's rapier wear their look with a second laid over it
+		if (cls == 1 && t <= 1) return 10;
+		if (t >= 4 && key == 2) return 11;
+		if (t >= 4 && key >= 3 && key <= 8) return key + 9;
+		return key;
+	}
+	int JavelinLook(const RE::TESForm* a_w, bool a_left)
+	{
+		// (Noah, Nov 27: "the javelins look effect to change depending on which element is being held in the other hand like the
+		// spellsword") its look in fire, frost or shock by the spell in its other hand (anything else: fire)
+		if (!a_w || a_w != Javelin()) return -1;
+		const int el = JavElement(a_left);
+		return el == 1 ? 1 : el == 2 ? 2 : 0;
 	}
 	RE::EnchantmentItem* BladeLook(const RE::TESObjectWEAP* a_w, int a_tier)
 	{
@@ -5228,24 +5276,49 @@ namespace coa::Classes
 			// (the Spellsword's cuirass is worn on slot 58, the body left bare under it)
 			for (auto slot : { RE::BGSBipedObjectForm::BipedObjectSlot::kBody, static_cast<RE::BGSBipedObjectForm::BipedObjectSlot>(1u << 28) })
 				if (auto* body = p->GetWornArmor(slot)) for (auto* a : SetForms(c, 0)) worn = worn || a == body;
-			auto* art = RE::TESDataHandler::GetSingleton()->LookupForm<RE::BGSArtObject>(gen::kArmAura, gen::kPlugin);
-			RE::ModelReferenceEffect* mine = nullptr;
-			if (art) if (auto* pl = RE::ProcessLists::GetSingleton()) pl->ForEachModelEffect([&](RE::ModelReferenceEffect* e) {
-				if (e && e->artObject == art && e->target.get().get() == p && !e->finished) mine = e;
-				return RE::BSContainer::ForEachResult::kContinue;
-			});
-			// (Noah: "I also want to remove the aura effect on the class armor") never laid on; one left from before is ended
-			const bool want = false && art && worn && at >= 1 && p->Is3DLoaded() && !p->IsDead();
-			g_auraNode = (mine && want) ? mine->artObject3D : nullptr;
-			if (!want) {
-				if (mine) mine->finished = true, mine->lifetime = 0.0f;
-			} else if (!mine) {
-				p->ApplyArtObject(art, -1.0f);
-				g_auraWait = true, g_auraTier = at, g_auraCls = c;   // (painted the frame its model is in: TickFast)
-			} else if (auto* o = mine->artObject3D.get(); o && (o != g_auraPainted || g_auraPaintedAt != at || g_auraPaintedCls != c)) {
-				if (o != g_auraPainted) PaintAuraModel(o, c, at);   // (one TickFast missed)
-				else mine->finished = true, mine->lifetime = 0.0f;  // (a new tier: laid on again fresh, painted at its strength)
-				if (static int said = 0; said++ < 6) logger::info("classes: the armour's aura - Auriel's sun aura in the class's colour, tier {}", at);
+			// (Noah, Nov 27 final - his picks, src above: AuraArt) which looks this class's set wears, the Legendary its second
+			const bool legend = at >= 4;
+			const bool on = worn && at >= 1 && p->Is3DLoaded() && !p->IsDead();
+			const bool wantArt[2] = { on && c == coffer::kAlchemist, on && (c == coffer::kDestruction || (legend && (c == coffer::kSummoner || c == coffer::kSpellsword))) };
+			const bool wantSheen = on && (c == coffer::kSummoner || c == coffer::kSpellsword || (legend && (c == coffer::kDestruction || c == coffer::kAlchemist)));
+			for (int i = 0; i < 2; ++i) {
+				auto& A = g_auras[i];
+				auto* art = RE::TESDataHandler::GetSingleton()->LookupForm<RE::BGSArtObject>(A.id, gen::kPlugin);
+				RE::ModelReferenceEffect* mine = nullptr;
+				if (art) if (auto* pl = RE::ProcessLists::GetSingleton()) pl->ForEachModelEffect([&](RE::ModelReferenceEffect* e) {
+					if (e && e->artObject == art && e->target.get().get() == p && !e->finished) mine = e;
+					return RE::BSContainer::ForEachResult::kContinue;
+				});
+				const bool want = art && wantArt[i];
+				A.node = (mine && want) ? mine->artObject3D : nullptr;
+				if (!want) {
+					if (mine) mine->finished = true, mine->lifetime = 0.0f;
+				} else if (!mine) {
+					p->ApplyArtObject(art, -1.0f);
+					A.wait = true, A.tier = at, A.cls = c;   // (painted the frame its model is in: TickFast)
+				} else if (auto* o = mine->artObject3D.get(); o && (o != A.painted || A.paintedAt != at || A.paintedCls != c || A.paintedKey != AuraColour(c))) {
+					if (o != A.painted) PaintAuraModel(i, o, c, at);   // (one TickFast missed)
+					else mine->finished = true, mine->lifetime = 0.0f;  // (a new tier or colour: laid on again fresh)
+					if (static int said = 0; said++ < 6) logger::info("classes: the armour's {} at tier {}", i == 0 ? "mantle" : "embers", at);
+				}
+			}
+			// the Sheen: the rim of light in the class's colour (one shader at a time; another colour, the old one ended)
+			{
+				auto* dh = RE::TESDataHandler::GetSingleton();
+				auto* want = wantSheen ? dh->LookupForm<RE::TESEffectShader>(gen::kArmSheen[AuraColour(c)], gen::kPlugin) : nullptr;
+				bool have = false;
+				if (auto* pl = RE::ProcessLists::GetSingleton()) pl->ForEachShaderEffect([&](RE::ShaderReferenceEffect* e) {
+					if (!e || e->finished || e->target.get().get() != p || !e->effectData) return RE::BSContainer::ForEachResult::kContinue;
+					for (auto id : gen::kArmSheen) {
+						auto* sh = dh->LookupForm<RE::TESEffectShader>(id, gen::kPlugin);
+						if (sh && e->effectData == sh) {
+							if (sh == want) have = true;
+							else e->finished = true, e->lifetime = 0.0f;
+						}
+					}
+					return RE::BSContainer::ForEachResult::kContinue;
+				});
+				if (want && !have) p->ApplyEffectShader(want, -1.0f);
 			}
 		}
 		// (the Gondorian set, Tier I) the Ranger's stride: 10% faster

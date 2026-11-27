@@ -114,17 +114,17 @@
    "sys": "movement",
    "t": "Slide from a sprint",
    "st": "ready",
-   "what": "Sprint for a moment, then crouch: a slide that tilts the view; jump out of it and keep the speed. Ours now (SkyParkour's slide is off).",
-   "how": "Sprint for two or three seconds, then crouch. Then slide again and jump while sliding.",
-   "look": "You slide at any point of a sprint (not only right after starting it). The jump carries the slide's speed forward.",
-   "note": "Last time: \"can't jump out of it to carry my momentum ... only lets me slide right after a sprint\".",
-   "since": "3938d82"
+   "what": "Crouch while sprinting (any time in it, the omni-sprint too): you slide, the view tilts, and a jump out of it keeps the speed. Fixed: Skyrim took the crouch key first, so the sprint had ended and you were sneaking before we heard it - no slide, and the sneak it left stood you up still sneaking. Now how you were a moment before the press is what counts.",
+   "how": "Sprint for two or three seconds, then crouch. Then slide again and jump while sliding. Stand still and crouch once, then stand.",
+   "look": "A slide every time from a sprint; after it you stand up and the sneak eye goes away. Crouching from a stand still sneaks normally.",
+   "note": "Last test (3938d82): \"now it wont slide at all and my sneak eye pops up while im standing\".",
+   "since": "7eb037f"
   },
   {
    "id": "mv_omni",
    "sys": "movement",
    "t": "Sprint in any direction",
-   "st": "ready",
+   "st": "done",
    "what": "Sprint sideways and backwards too, in first and third person (your pick: \"Third person too\").",
    "how": "Hold sprint and move sideways and back, in first person, then in third person.",
    "look": "Full sprint speed in every direction, both views.",
@@ -146,7 +146,7 @@
    "id": "cb_hitpause",
    "sys": "combat",
    "t": "No hit pause",
-   "st": "ready",
+   "st": "done",
    "what": "The hit pause is gone everywhere: ours was already 0, Precision's own pause is now off in its MCM settings.",
    "how": "Light and heavy hits on the dead with a sword and a greatsword.",
    "look": "No pause and no camera shake on any hit.",
@@ -157,7 +157,7 @@
    "id": "cb_soul",
    "sys": "combat",
    "t": "No soul torn out",
-   "st": "ready",
+   "st": "done",
    "what": "Shadow, spirit and arcane kills no longer tear the soul out (removed as you asked).",
    "how": "Kill the dead with the Shadowflame Scythe and the Soulcaller.",
    "look": "No white beam rising from the bodies.",
@@ -168,7 +168,7 @@
    "id": "cb_ash",
    "sys": "combat",
    "t": "Ash piles gone after 5 s",
-   "st": "ready",
+   "st": "done",
    "what": "Fire kills burn to ash; the ash pile and the body are cleared 5 s later.",
    "how": "Kill the dead with fire (a fire spell, the Fire Flask).",
    "look": "They burn to a pile of ash that disappears after about 5 seconds.",
@@ -224,7 +224,7 @@
    "sys": "classes",
    "t": "One model per class weapon",
    "st": "building",
-   "what": "Your picks: the Dragon Priest scythe (Alchemist), the Ebony quarterstaff (Summoner), the Glass wand (Destruction), the Daedric rapier (Spellsword) - in the game now; next, our own models from Skyrim's meshes - each through every tier, the tiers changing its look only.",
+   "what": "Your picks: the Dragon Priest scythe (Alchemist), the Ebony quarterstaff (Summoner), the Daedric wand (Destruction, changed from the Glass wand in your final picks), the Daedric rapier (Spellsword) - in the game; next, our own models from Skyrim's meshes.",
    "how": "",
    "look": "",
    "note": "",
@@ -246,11 +246,11 @@
    "sys": "classes",
    "t": "One model per class weapon, in game",
    "st": "ready",
-   "what": "The Dragon Priest scythe, the Glass wand, the Ebony quarterstaff and the Daedric rapier at every tier; your looks (Transmuted Edge, Glintstone Mist, Radiant Heads, Bare Blade) faint at Tier I and stronger each tier.",
+   "what": "The Dragon Priest scythe, the Daedric wand (your final pick), the Ebony quarterstaff and the Daedric rapier at every tier; your looks faint at Tier I and stronger each tier. (The wand's Tier I in Sorcery, your pick, comes with the looks build.)",
    "how": "Tester's Kit: each class weapon at Tier I, then III, then Legendary.",
-   "look": "The same model every tier; its glow faint at I, full at III, brightest at Legendary.",
+   "look": "The same model every tier, the wand now the Daedric one; its glow faint at I, full at III, brightest at Legendary.",
    "note": "",
-   "since": "3938d82"
+   "since": "7eb037f"
   },
   {
    "id": "nov27_tablet",
@@ -377,18 +377,62 @@
    "id": "cw_abilities",
    "sys": "classes",
    "t": "Each class's own moves",
-   "st": "building",
-   "what": "A Light, a Heavy and a Special only that class has, built from its element's kit and stronger each tier. Your picks: Destruction Glintstone Bolt (tap, 0.5 s between shots) / Arcane Ray (hold, costs magicka) / Starfall; Spellsword (shock) Spellthrust / Spell Pillar / Elemental Wake; Summoner Radiant Strike / Pillar of Dawn / Ancestor's Guard; the Alchemist still to pick. Next build.",
+   "st": "done",
+   "what": "In the game since 7eb037f: see the four tests below.",
    "how": "",
    "look": "",
-   "note": "\"They all look very poorly done ... redo the abilities and have a starting foundation\".",
-   "since": ""
+   "note": "",
+   "since": "7eb037f"
+  },
+  {
+   "id": "mv_summoner",
+   "sys": "classes",
+   "t": "Summoner: Radiant Strike, Pillar of Dawn, Ancestor's Guard",
+   "st": "ready",
+   "what": "Light: each strike of the quarterstaff flares with sunlight that sears the dead and staggers them for a moment. Heavy: a pillar of sunlight falls where you strike. Special: every 20 kills, a ghost of light rises from the 20th body out of a pillar of light and fights beside you for 12 s.",
+   "how": "Summoner, the quarterstaff at any tier: light hits, heavies, then 20 kills.",
+   "look": "A small sun-flare and burn on each hit; the white pillar on heavies; a see-through warrior rising out of light on the 20th kill.",
+   "note": "",
+   "since": "7eb037f"
+  },
+  {
+   "id": "mv_destruction",
+   "sys": "classes",
+   "t": "Destruction: Glintstone Bolt, Arcane Ray, Starfall",
+   "st": "ready",
+   "what": "The wand is Destruction's own now (no spell needed in the other hand). Tap attack: a glintstone bolt from the tip that bends a little toward the nearest of the dead, at most one every 0.5 s. Hold attack: the Arcane Ray from the tip, wider and hotter the longer you hold it, draining your magicka (it stops when you run out). Every 25th bolt: Starfall, twelve great bolts raining in front of you.",
+   "how": "Destruction, the wand: tap attack quickly several times; then hold it for a few seconds; then tap 25 bolts.",
+   "look": "Bolts no faster than every half second; the violet beam from the wand's tip with your magicka bar dropping; twelve bolts falling ahead on the 25th.",
+   "note": "",
+   "since": "7eb037f"
+  },
+  {
+   "id": "mv_alchemist",
+   "sys": "classes",
+   "t": "Alchemist: Reaping Arc, Shadowfire Eruption, Philosopher's Edge",
+   "st": "ready",
+   "what": "Light: a wide violet sweep through every one of the dead in front of you, setting them smouldering in shadowfire; the burn stacks with each sweep (up to three). Heavy: geysers of shadowfire burst up in a ring round you. Special: every 10th kill, your next kill bursts into Cursed Essence (+150) and shadowfire.",
+   "how": "Alchemist, the scythe: light swings into a crowd, a heavy among them, then 10 kills and one more.",
+   "look": "A wide sweep hitting several at once; eight violet bursts in a ring on the heavy; a hint on the 10th kill and a burst with an Essence count on the next.",
+   "note": "",
+   "since": "7eb037f"
+  },
+  {
+   "id": "mv_spellsword",
+   "sys": "classes",
+   "t": "Spellsword: Spellthrust, Spell Pillar, Elemental Wake",
+   "st": "ready",
+   "what": "All follow the spell in your other hand. Light: each thrust that lands carries it - fire burns, frost slows, shock arcs to one more of the dead. Heavy: a pillar of your element pours down on the one ahead. Special: your kills leave a patch of the element on the ground for 4 s that hurts the dead crossing it.",
+   "how": "Spellsword with fire, then frost, then shock in the other hand: thrusts, heavies, kills.",
+   "look": "Fire burns, frost slows, lightning jumping to a second; a pillar in the element on heavies; element patches where the dead fall.",
+   "note": "",
+   "since": "7eb037f"
   },
   {
    "id": "cw_ults",
    "sys": "classes",
    "t": "Ultimates and the kill meter removed",
-   "st": "ready",
+   "st": "done",
    "what": "The Tier III ultimates and their meter are gone (Tier III keeps its cards as before).",
    "how": "Tester's Kit: a class weapon at Tier III; kill 30 of the dead.",
    "look": "No meter above the perks, nothing extra on a heavy.",
@@ -399,7 +443,7 @@
    "id": "cw_card",
    "sys": "classes",
    "t": "Weapon card removed",
-   "st": "ready",
+   "st": "done",
    "what": "The held weapon's card bottom right is gone.",
    "how": "Draw any weapon.",
    "look": "Nothing drawn bottom right.",
@@ -421,7 +465,7 @@
    "id": "cw_scythes",
    "sys": "classes",
    "t": "Scythes solid (not inside out)",
-   "st": "ready",
+   "st": "done",
    "what": "All nine scythes: patches of the blades faced inward and the cut poles were open, so you saw their inside and through them. Every piece now faces out; open cuts drawn from both sides.",
    "how": "Tester's Kit: the Shadowflame Scythe at each tier, the four Tablet scythes; look at each from every side, close.",
    "look": "Solid from every side: no seeing the inside of the texture, no see-through.",
@@ -432,7 +476,7 @@
    "id": "cw_mutagen1p",
    "sys": "classes",
    "t": "Mutagen Staff in first person",
-   "st": "ready",
+   "st": "done",
    "what": "A first-person model of its own, set lower in the hand so your hand no longer passes through its head.",
    "how": "Alchemist with the Mutagen Staff: first person, idle and swinging.",
    "look": "Your hand on the shaft, the head well above it.",
@@ -498,7 +542,7 @@
    "id": "fl_fire",
    "sys": "flasks",
    "t": "Fire Flask bursts in flames",
-   "st": "ready",
+   "st": "done",
    "what": "Dragonfire's impact and a ball-of-fire burst: flames, not a flat explosion.",
    "how": "Throw the Fire Flask at the ground and at a group.",
    "look": "A burst of real flames.",
@@ -508,13 +552,13 @@
   {
    "id": "fl_holy",
    "sys": "flasks",
-   "t": "Holy Water without the golden streaks",
+   "t": "Holy Water leaves no glow behind",
    "st": "ready",
-   "what": "The flat golden wind streaks that stayed on the ground are gone.",
-   "how": "Throw Holy Water.",
-   "look": "Its sunbeam and burst; nothing flat and streaky left standing.",
-   "note": "\"golden wind streaky effect that's stagnant and looks 2D\".",
-   "since": "3938d82"
+   "what": "The golden light it casts is cut back and its motes and burst now end with the beam, so no golden hue stays after it.",
+   "how": "Throw Holy Water at Tier III (its sunbeam), then watch the ground after the beam is gone.",
+   "look": "The beam and burst, then nothing: no golden tint left on the ground or the dead.",
+   "note": "Last test (3938d82): \"there was a lingering hue after the beam disappears\".",
+   "since": "7eb037f"
   },
   {
    "id": "fl_rest",
@@ -551,25 +595,47 @@
   },
   {
    "id": "cw_flasklook",
-   "sys": "classes",
-   "t": "The flasks' look and smaller bursts",
-   "st": "idea",
-   "what": "Pick in Weapons & effects > Flasks: the potion's liquid, the cork's element and the impact, and its size (today's blast is too big: every flask starts at 45%).",
-   "how": "",
-   "look": "",
+   "sys": "flasks",
+   "t": "The flasks' swirling potions",
+   "st": "ready",
+   "what": "Your picks for all six: a skin of light over the potion with its swirls turning round and climbing through it, in the flask's colour, so the liquid moves in the glass; the element's wisp still curls off the cork.",
+   "how": "Hold each flask in your hand and look at it; throw one and watch it fly.",
+   "look": "The potion swirling inside the glass, in its element's colour; a wisp off the cork.",
    "note": "",
-   "since": ""
+   "since": "7eb037f"
+  },
+  {
+   "id": "fl_size",
+   "sys": "flasks",
+   "t": "Flask bursts half the size, with a ring",
+   "st": "ready",
+   "what": "Your pick: the Ring impact at 50%. Each flask's burst is half its old size, and a low ring of its element runs out along the ground to the edge of what it catches. The glass shatter and the Legendary bursts are smaller too.",
+   "how": "Throw each flask you have at a crowd, at its tier.",
+   "look": "A small burst and a ring spreading on the ground, not a screen-filling explosion.",
+   "note": "\"the explosion size for the flasks needs to be much less its a bit overwhelming currently\".",
+   "since": "7eb037f"
+  },
+  {
+   "id": "ui_bars",
+   "sys": "hud",
+   "t": "The bars hide when full",
+   "st": "ready",
+   "what": "Your health, magicka and stamina plate keeps its look, and fades out once all three have been full for two seconds (and your shout is ready); it comes back the moment any drops or you shout.",
+   "how": "Stand still with everything full; then take a hit, cast, sprint, shout.",
+   "look": "The plate fades away when full and returns the moment a bar drops.",
+   "note": "",
+   "since": "7eb037f"
   },
   {
    "id": "ui_cursor",
    "sys": "hud",
-   "t": "Our own cursor in every menu",
-   "st": "idea",
-   "what": "Pick it in In-game UI > Cursor: it replaces Skyrim's cursor at the main menu, the inventory, the magic menu, the map, the altar and the Codex.",
-   "how": "",
-   "look": "",
+   "t": "The Rune Arrow cursor",
+   "st": "ready",
+   "what": "Your pick: a Nordic arrowhead in dark iron with a gold edge and one rune cut in it, glowing - in every menu (it replaces the cursor drawn there before).",
+   "how": "Open the main menu, the inventory, the map and the altar with the mouse.",
+   "look": "The iron arrowhead with its gold edge and a slowly glowing rune, its point exactly where you click.",
    "note": "",
-   "since": ""
+   "since": "7eb037f"
   },
   {
    "id": "tb_lineup",
@@ -629,24 +695,68 @@
   {
    "id": "wd_bane",
    "sys": "wonders",
-   "t": "Alduin's Bane light meteors",
+   "t": "Alduin's Bane: Ash of Helgen",
    "st": "ready",
-   "what": "Smaller impacts: no white flash and no firestorm stacked on each meteor.",
-   "how": "Light hits on the dead with Alduin's Bane.",
-   "look": "A meteor on each hit with a fiery impact that doesn't blind you.",
-   "note": "\"a massive explosion and it's blinding\".",
-   "since": "3938d82"
+   "what": "Your pick for its Light: each hit sets the one struck burning, a patch of embers smoulders under it, and a moment later the fire spreads to those beside it (the meteors are gone). Its Heavy is still the white tornado.",
+   "how": "Light hits on a crowd with Alduin's Bane; then a heavy.",
+   "look": "Fire on the one hit and embers under it, then the ones next to it catch; the heavy's white tornado as before.",
+   "note": "",
+   "since": "7eb037f"
   },
   {
    "id": "wd_javlook",
    "sys": "wonders",
    "t": "The javelin's look follows your other hand",
-   "st": "idea",
-   "what": "Like the Spellsword's rapier: its look in the element of the spell in your other hand (fire, frost or shock); pick a look for each in Weapons & effects > Wonders.",
-   "how": "",
-   "look": "",
+   "st": "ready",
+   "what": "Your pick, Elemental Edge with Dragonfire over it, now in the element of the spell in your other hand: fire orange, frost ice-blue, shock violet-blue.",
+   "how": "Hold the javelin with a fire spell in your other hand, then frost, then shock.",
+   "look": "Its look changes colour with the spell in your other hand.",
    "note": "",
-   "since": ""
+   "since": "7eb037f"
+  },
+  {
+   "id": "wd_looks",
+   "sys": "wonders",
+   "t": "The wonders' looks, each with its second",
+   "st": "ready",
+   "what": "Your picks: the Soulcaller Spectral Mist + Soul Fire; the Mutagen Staff Transmutation Runes + Living Mutagen (on its orb); the Dragon Slayer Dragonfire Runes + Slayer's Runes; Alduin's Bane Words of Power + World-Eater's Fire.",
+   "how": "Draw each wonder and look at it.",
+   "look": "Each in your picked look with the second laid over it.",
+   "note": "",
+   "since": "7eb037f"
+  },
+  {
+   "id": "cw_layers",
+   "sys": "classes",
+   "t": "Tier looks: Destruction's Tier I, the Legendary layers",
+   "st": "ready",
+   "what": "Your tier picks: the Destruction wand in Sorcery at Tier I, then Glintstone Mist; at Legendary (Ascend) the Summoner's quarterstaff adds Dawn Halo and the Spellsword's rapier adds Spellbound over its look; the Alchemist and Destruction at their brightest.",
+   "how": "Tester's Kit: the wand at Tier I then II; the quarterstaff and rapier at Tier III then Ascend.",
+   "look": "The wand's look changes from Tier I to II; the quarterstaff and rapier gain a second look at Ascend.",
+   "note": "",
+   "since": "7eb037f"
+  },
+  {
+   "id": "wd_soulmana",
+   "sys": "wonders",
+   "t": "Soulcaller: the beam costs magicka; cats out of the portal",
+   "st": "ready",
+   "what": "Its held beam now drains your magicka (it stops when there's none left). Each spectral sabre cat comes out of Skyrim's purple conjuring portal: the portal opens, and the cat steps out of it.",
+   "how": "Hold the Soulcaller's beam on the dead; let your magicka run out; take 20 souls.",
+   "look": "Your magicka dropping while it runs; the purple portal, then the cat out of it.",
+   "note": "\"the spectral cat should spawn from skyrims purple portals. and the beam should cost mana.\"",
+   "since": "7eb037f"
+  },
+  {
+   "id": "wd_mutagenstrike",
+   "sys": "wonders",
+   "t": "Mutagen Staff: Mutating Strike",
+   "st": "ready",
+   "what": "Your pick for its staff strike: each strike marks the one struck, and a second later the mark bursts as the next flask's element in turn - fire, frost, shock, acid, holy water, voidglass - like the block's flasks.",
+   "how": "Strike the dead several times with the Mutagen Staff.",
+   "look": "A burst a second after each strike, a different element each time, cycling through all six.",
+   "note": "\"got the mutating strike make it cycle through the flask effects like the block does.\"",
+   "since": "7eb037f"
   },
   {
    "id": "wd_soulcaller",
@@ -696,12 +806,12 @@
    "id": "ar_looks",
    "sys": "armour",
    "t": "Each set's own look",
-   "st": "idea",
-   "what": "Pick it in Weapons & effects > Armour looks: one of five looks on the set itself, in the class's colour, stronger each tier (today: one faint glow, the same for every class).",
-   "how": "",
-   "look": "",
+   "st": "ready",
+   "what": "Your picks, once the set is upgraded and worn: the Summoner a Sheen (a rim of light round you, sun-gold), Destruction Embers (ribbons of violet embers rising round you), the Alchemist a Mantle (a soft column of shadowfire light), the Spellsword a Sheen in its element's colour. At Legendary each adds its second: the Summoner and the Spellsword the Embers, Destruction and the Alchemist the Sheen. Hidden in first person (the Sheen's rim may show on your arms).",
+   "how": "Tester's Kit: each class's set at Tier I, then III, then Ascend (Legendary); look in third person.",
+   "look": "Faint at Tier I, stronger each tier; the second look joining at Legendary; nothing blocking your view in first person.",
    "note": "",
-   "since": ""
+   "since": "7eb037f"
   },
   {
    "id": "ar_inv",
@@ -1074,6 +1184,11 @@
   }
  ],
  "builds": [
+  {
+   "sha": "7eb037f",
+   "when": "2026-11-27 02:32",
+   "what": "Each class's own moves (Noah's Nov 27 picks): Summoner Radiant Strike / Pillar of Dawn / Ancestor's Guard; Destruction's wand a tap Glintstone Bolt (0.5 s), a held Arcane Ray that costs magicka, Starfall every 25th bolt; Alchemist Reaping Arc / Shadowfire Eruption / Philosopher's Edge; Spellsword Spellthrust / Spell Pillar / Elemental Wake. The Destruction wand is the Daedric wand. Wonders: the So"
+  },
   {
    "sha": "3938d82",
    "when": "2026-11-27 00:51",
@@ -4969,6 +5084,61 @@
  ],
  "notelog": [
   {
+   "build": "Your final picks, Nov 27 (build 7eb037f)",
+   "date": "2026-11-27",
+   "notes": [
+    {
+     "when": "2026-11-27 02:15",
+     "where": "wonders/mutagen",
+     "note": "got the mutating strike make it cycle through the flask effects like the block does.",
+     "choice": "change",
+     "done": "Built: each strike's mutation bursts a second later as the next flask's element in turn (fire, frost, shock, acid, holy water, voidglass)."
+    },
+    {
+     "when": "2026-11-27 02:15",
+     "where": "wonders/soulcaller",
+     "note": "the spectral cat should spawn from skyrims purple portals. and the beam should cost mana.",
+     "choice": "change",
+     "done": "Built: the beam drains magicka while it runs and stops when there's none; Skyrim's purple conjuring portal opens first and the cat steps out of it."
+    },
+    {
+     "when": "2026-11-27 02:15",
+     "where": "flasks/philosopher",
+     "note": "philosphers flask is old and was removed a while ago.",
+     "choice": "",
+     "done": "The Philosopher's Flask is gone from the Flasks tab."
+    },
+    {
+     "when": "2026-11-27 02:21",
+     "where": "chat/alchemist moves",
+     "note": "(asked) Reaping Arc, Shadowfire Eruption, Philosopher's Edge",
+     "choice": "",
+     "done": "Built as the Alchemist's Light, Heavy and Special."
+    },
+    {
+     "when": "2026-11-27 02:21",
+     "where": "chat/bars",
+     "note": "(asked, the bars marked Change) Hide when full, keep the current health magika and stamina bars look",
+     "choice": "",
+     "done": "Built: the plate keeps its look and fades out once all three bars have been full for two seconds; it comes back when any drops or you shout."
+    },
+    {
+     "when": "2026-11-27 01:30",
+     "where": "test/mv_slide",
+     "note": "(failed) now it wont slide at all and my sneak eye pops up while im standing.",
+     "choice": "fail",
+     "done": "Fixed: Skyrim took the crouch first, so the sprint had already ended and you were sneaking; now how you were a moment before the press counts, and the slide stands you up after."
+    },
+    {
+     "when": "2026-11-27 01:52",
+     "where": "test/fl_holy",
+     "note": "(failed) there was a lingering hue after the beam disappears",
+     "choice": "fail",
+     "done": "Fixed: its light cut back, and its motes and burst end with the beam."
+    }
+   ]
+  },
+  {
    "build": "Workshop, Nov 27 (wonders and moves)",
    "date": "2026-11-27",
    "notes": [
@@ -5027,20 +5197,6 @@
      "note": "and make sure the weapons preview isnt stretched",
      "choice": "",
      "done": "Every 3D preview is now cut to its own frame's shape instead of squeezed into it, and the weapons are fitted to what the frame shows."
-    },
-    {
-     "when": "2026-11-27 01:52",
-     "where": "test/fl_holy",
-     "note": "(failed) there was a lingering hue after the beam disappears",
-     "choice": "fail",
-     "done": "Queued for the next game build: Holy Water's light cleared with its beam."
-    },
-    {
-     "when": "2026-11-27 01:30",
-     "where": "test/mv_slide",
-     "note": "(failed) now it wont slide at all and my sneak eye pops up while im standing.",
-     "choice": "fail",
-     "done": "Queued for the next game build: the slide fixed, and no sneak eye while standing."
     },
     {
      "when": "2026-11-27 01:58",
@@ -5332,44 +5488,88 @@
  ],
  "picklog": [
   {
-   "round": "Workshop, Nov 27 (this round)",
+   "round": "Your final picks, Nov 27 (build 7eb037f)",
    "date": "2026-11-27",
    "changed": [
     {
-     "where": "Destruction: moves",
-     "pick": "light: Glintstone Bolt; heavy: Arcane Ray; special: Starfall"
+     "where": "Alchemist: armour look",
+     "pick": "Mantle; Legendary + Sheen"
     },
     {
-     "where": "Spellsword: moves",
-     "pick": "element Shock; light: Spellthrust; heavy: Spell Pillar; special: Elemental Wake"
+     "where": "Destruction: armour look",
+     "pick": "Embers; Legendary + Sheen"
     },
     {
-     "where": "Summoner: moves",
-     "pick": "element Holy and sun; light: Radiant Strike; heavy: Pillar of Dawn; special: Ancestor's Guard"
+     "where": "Spellsword: armour look",
+     "pick": "Sheen; Legendary + Embers"
     },
     {
-     "where": "Decision: Your note on the Echo Altar menus: keep the altar menu you have in the game now, or use the new one (class painting, tab icons, every brew's icon - see In-game UI > Every screen > The Echo Altar)?",
-     "pick": "The new one"
+     "where": "Summoner: armour look",
+     "pick": "Sheen; Legendary + Embers"
     },
     {
-     "where": "Wind and Thu'um kit",
-     "pick": "Impact Drain; Burst Explosion; Ground Rune circle; From above From the sky; Cast sound MAGWhirlwindLP; Impact sound VOCShoutImpactPushSD; Burst sound VOCShoutImpactPushImpactDragonSD"
+     "where": "Destruction: model",
+     "pick": "Daedric wand"
     },
     {
-     "where": "UI: Choosing your class",
-     "pick": "mark cleared"
+     "where": "Voidglass Flask",
+     "pick": "liquid swirl; cork wisp; impact nova at 50%"
     },
     {
-     "where": "UI: The scoreboard",
-     "pick": "mark cleared"
+     "where": "Fire Flask",
+     "pick": "liquid swirl; cork wisp; impact nova at 50%"
     },
     {
-     "where": "UI: The Codex",
-     "pick": "mark cleared"
+     "where": "Frost Flask",
+     "pick": "liquid swirl; cork wisp; impact nova at 50%"
     },
     {
-     "where": "UI: New character",
-     "pick": "mark cleared"
+     "where": "Philosopher's Flask",
+     "pick": "liquid swirl; cork wisp; impact nova at 50%"
+    },
+    {
+     "where": "Acid Flask",
+     "pick": "liquid swirl; cork wisp; impact nova at 50%"
+    },
+    {
+     "where": "Shock Flask",
+     "pick": "liquid swirl; cork wisp; impact nova at 50%"
+    },
+    {
+     "where": "Holy Water",
+     "pick": "liquid swirl; cork wisp; impact nova at 50%"
+    },
+    {
+     "where": "New Tablet weapon: Azura's Fallen Star",
+     "pick": "no"
+    },
+    {
+     "where": "Destruction: tier looks",
+     "pick": "I: Sorcery; II: Glintstone Mist; III: Glintstone Mist; Legendary: Glintstone Mist at its brightest"
+    },
+    {
+     "where": "UI cursor",
+     "pick": "Rune Arrow"
+    },
+    {
+     "where": "Wonder: Alduin's Bane",
+     "pick": "look Words of Power; strength + World-Eater's Fire; Light attack: Ash of Helgen; Heavy attack: White tornado (today); approved"
+    },
+    {
+     "where": "Wonder: Wyrmspine Javelin",
+     "pick": "look Elemental Edge; look with fire Elemental Edge; look with frost Elemental Edge; look with shock Elemental Edge; strength + Dragonfire; element Shock; Hold, then throw: Bursting throw (today); Its return: Flies back (today); approved"
+    },
+    {
+     "where": "Wonder: Mutagen Staff",
+     "pick": "look Transmutation Runes; strength + Living Mutagen; Hold block: the flasks: Six elements (today); Its staff strike: Mutating strike; change"
+    },
+    {
+     "where": "Wonder: Dragon Slayer",
+     "pick": "look Dragonfire Runes; strength + Slayer's Runes; Light attack: Golden fireball (today); Heavy attack: Golden rain (today); approved"
+    },
+    {
+     "where": "Wonder: Soulcaller's Staff",
+     "pick": "look Spectral Mist; strength + Soul Fire; Hold: the soul beam: Soul Beam (today); Every 20 souls: Spectral sabre cat (today); change"
     }
    ],
    "now": [
@@ -5390,12 +5590,28 @@
      "pick": "element Holy and sun; light: Radiant Strike; heavy: Pillar of Dawn; special: Ancestor's Guard"
     },
     {
+     "where": "Alchemist: armour look",
+     "pick": "Mantle; Legendary + Sheen"
+    },
+    {
+     "where": "Destruction: armour look",
+     "pick": "Embers; Legendary + Sheen"
+    },
+    {
+     "where": "Spellsword: armour look",
+     "pick": "Sheen; Legendary + Embers"
+    },
+    {
+     "where": "Summoner: armour look",
+     "pick": "Sheen; Legendary + Embers"
+    },
+    {
      "where": "Alchemist: model",
      "pick": "Dragon Priest scythe"
     },
     {
      "where": "Destruction: model",
-     "pick": "Glass wand"
+     "pick": "Daedric wand"
     },
     {
      "where": "Spellsword: model",
@@ -5420,6 +5636,34 @@
     {
      "where": "Decision: Your note on the launch screen and main menu: which music should they play? (It starts with the launch screen and fades out when a game starts.)",
      "pick": "Dragonborn (the main theme)"
+    },
+    {
+     "where": "Voidglass Flask",
+     "pick": "liquid swirl; cork wisp; impact nova at 50%"
+    },
+    {
+     "where": "Fire Flask",
+     "pick": "liquid swirl; cork wisp; impact nova at 50%"
+    },
+    {
+     "where": "Frost Flask",
+     "pick": "liquid swirl; cork wisp; impact nova at 50%"
+    },
+    {
+     "where": "Philosopher's Flask",
+     "pick": "liquid swirl; cork wisp; impact nova at 50%"
+    },
+    {
+     "where": "Acid Flask",
+     "pick": "liquid swirl; cork wisp; impact nova at 50%"
+    },
+    {
+     "where": "Shock Flask",
+     "pick": "liquid swirl; cork wisp; impact nova at 50%"
+    },
+    {
+     "where": "Holy Water",
+     "pick": "liquid swirl; cork wisp; impact nova at 50%"
     },
     {
      "where": "Arcane kit",
@@ -5558,6 +5802,10 @@
      "pick": "add"
     },
     {
+     "where": "New Tablet weapon: Azura's Fallen Star",
+     "pick": "no"
+    },
+    {
      "where": "New Tablet weapon: Harkon's Bloodbite",
      "pick": "no"
     },
@@ -5647,7 +5895,7 @@
     },
     {
      "where": "Destruction: tier looks",
-     "pick": "I: Glintstone Mist; II: Glintstone Mist; III: Glintstone Mist; Legendary: Glintstone Mist at its brightest"
+     "pick": "I: Sorcery; II: Glintstone Mist; III: Glintstone Mist; Legendary: Glintstone Mist at its brightest"
     },
     {
      "where": "Spellsword: tier looks",
@@ -5656,6 +5904,10 @@
     {
      "where": "Summoner: tier looks",
      "pick": "I: Radiant Heads; II: Radiant Heads; III: Radiant Heads; Legendary: Radiant Heads + Dawn Halo"
+    },
+    {
+     "where": "UI cursor",
+     "pick": "Rune Arrow"
     },
     {
      "where": "UI direction",
@@ -5824,6 +6076,68 @@
     {
      "where": "UI: A Tablet weapon\\'s uses",
      "pick": "approved"
+    },
+    {
+     "where": "Wonder: Alduin's Bane",
+     "pick": "look Words of Power; strength + World-Eater's Fire; Light attack: Ash of Helgen; Heavy attack: White tornado (today); approved"
+    },
+    {
+     "where": "Wonder: Wyrmspine Javelin",
+     "pick": "look Elemental Edge; look with fire Elemental Edge; look with frost Elemental Edge; look with shock Elemental Edge; strength + Dragonfire; element Shock; Hold, then throw: Bursting throw (today); Its return: Flies back (today); approved"
+    },
+    {
+     "where": "Wonder: Mutagen Staff",
+     "pick": "look Transmutation Runes; strength + Living Mutagen; Hold block: the flasks: Six elements (today); Its staff strike: Mutating strike; change"
+    },
+    {
+     "where": "Wonder: Dragon Slayer",
+     "pick": "look Dragonfire Runes; strength + Slayer's Runes; Light attack: Golden fireball (today); Heavy attack: Golden rain (today); approved"
+    },
+    {
+     "where": "Wonder: Soulcaller's Staff",
+     "pick": "look Spectral Mist; strength + Soul Fire; Hold: the soul beam: Soul Beam (today); Every 20 souls: Spectral sabre cat (today); change"
+    }
+   ]
+  },
+  {
+   "round": "Workshop, Nov 27 (wonders and moves)",
+   "date": "2026-11-27",
+   "changed": [
+    {
+     "where": "Destruction: moves",
+     "pick": "light: Glintstone Bolt; heavy: Arcane Ray; special: Starfall"
+    },
+    {
+     "where": "Spellsword: moves",
+     "pick": "element Shock; light: Spellthrust; heavy: Spell Pillar; special: Elemental Wake"
+    },
+    {
+     "where": "Summoner: moves",
+     "pick": "element Holy and sun; light: Radiant Strike; heavy: Pillar of Dawn; special: Ancestor's Guard"
+    },
+    {
+     "where": "Decision: Your note on the Echo Altar menus: keep the altar menu you have in the game now, or use the new one (class painting, tab icons, every brew's icon - see In-game UI > Every screen > The Echo Altar)?",
+     "pick": "The new one"
+    },
+    {
+     "where": "Wind and Thu'um kit",
+     "pick": "Impact Drain; Burst Explosion; Ground Rune circle; From above From the sky; Cast sound MAGWhirlwindLP; Impact sound VOCShoutImpactPushSD; Burst sound VOCShoutImpactPushImpactDragonSD"
+    },
+    {
+     "where": "UI: Choosing your class",
+     "pick": "mark cleared"
+    },
+    {
+     "where": "UI: The scoreboard",
+     "pick": "mark cleared"
+    },
+    {
+     "where": "UI: The Codex",
+     "pick": "mark cleared"
+    },
+    {
+     "where": "UI: New character",
+     "pick": "mark cleared"
     }
    ]
   },

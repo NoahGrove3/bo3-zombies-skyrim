@@ -1,43 +1,87 @@
 [
  {
-  "round": "Workshop, Nov 27 (this round)",
+  "round": "Your final picks, Nov 27 (build 7eb037f)",
   "date": "2026-11-27",
   "changed": [
    {
-    "where": "Destruction: moves",
-    "pick": "light: Glintstone Bolt; heavy: Arcane Ray; special: Starfall"
+    "where": "Alchemist: armour look",
+    "pick": "Mantle; Legendary + Sheen"
    },
    {
-    "where": "Spellsword: moves",
-    "pick": "element Shock; light: Spellthrust; heavy: Spell Pillar; special: Elemental Wake"
+    "where": "Destruction: armour look",
+    "pick": "Embers; Legendary + Sheen"
    },
    {
-    "where": "Summoner: moves",
-    "pick": "element Holy and sun; light: Radiant Strike; heavy: Pillar of Dawn; special: Ancestor's Guard"
+    "where": "Spellsword: armour look",
+    "pick": "Sheen; Legendary + Embers"
    },
    {
-    "where": "Decision: Your note on the Echo Altar menus: keep the altar menu you have in the game now, or use the new one (class painting, tab icons, every brew's icon - see In-game UI > Every screen > The Echo Altar)?",
-    "pick": "The new one"
+    "where": "Summoner: armour look",
+    "pick": "Sheen; Legendary + Embers"
    },
    {
-    "where": "Wind and Thu'um kit",
-    "pick": "Impact Drain; Burst Explosion; Ground Rune circle; From above From the sky; Cast sound MAGWhirlwindLP; Impact sound VOCShoutImpactPushSD; Burst sound VOCShoutImpactPushImpactDragonSD"
+    "where": "Destruction: model",
+    "pick": "Daedric wand"
    },
    {
-    "where": "UI: Choosing your class",
-    "pick": "mark cleared"
+    "where": "Voidglass Flask",
+    "pick": "liquid swirl; cork wisp; impact nova at 50%"
    },
    {
-    "where": "UI: The scoreboard",
-    "pick": "mark cleared"
+    "where": "Fire Flask",
+    "pick": "liquid swirl; cork wisp; impact nova at 50%"
    },
    {
-    "where": "UI: The Codex",
-    "pick": "mark cleared"
+    "where": "Frost Flask",
+    "pick": "liquid swirl; cork wisp; impact nova at 50%"
    },
    {
-    "where": "UI: New character",
-    "pick": "mark cleared"
+    "where": "Philosopher's Flask",
+    "pick": "liquid swirl; cork wisp; impact nova at 50%"
+   },
+   {
+    "where": "Acid Flask",
+    "pick": "liquid swirl; cork wisp; impact nova at 50%"
+   },
+   {
+    "where": "Shock Flask",
+    "pick": "liquid swirl; cork wisp; impact nova at 50%"
+   },
+   {
+    "where": "Holy Water",
+    "pick": "liquid swirl; cork wisp; impact nova at 50%"
+   },
+   {
+    "where": "New Tablet weapon: Azura's Fallen Star",
+    "pick": "no"
+   },
+   {
+    "where": "Destruction: tier looks",
+    "pick": "I: Sorcery; II: Glintstone Mist; III: Glintstone Mist; Legendary: Glintstone Mist at its brightest"
+   },
+   {
+    "where": "UI cursor",
+    "pick": "Rune Arrow"
+   },
+   {
+    "where": "Wonder: Alduin's Bane",
+    "pick": "look Words of Power; strength + World-Eater's Fire; Light attack: Ash of Helgen; Heavy attack: White tornado (today); approved"
+   },
+   {
+    "where": "Wonder: Wyrmspine Javelin",
+    "pick": "look Elemental Edge; look with fire Elemental Edge; look with frost Elemental Edge; look with shock Elemental Edge; strength + Dragonfire; element Shock; Hold, then throw: Bursting throw (today); Its return: Flies back (today); approved"
+   },
+   {
+    "where": "Wonder: Mutagen Staff",
+    "pick": "look Transmutation Runes; strength + Living Mutagen; Hold block: the flasks: Six elements (today); Its staff strike: Mutating strike; change"
+   },
+   {
+    "where": "Wonder: Dragon Slayer",
+    "pick": "look Dragonfire Runes; strength + Slayer's Runes; Light attack: Golden fireball (today); Heavy attack: Golden rain (today); approved"
+   },
+   {
+    "where": "Wonder: Soulcaller's Staff",
+    "pick": "look Spectral Mist; strength + Soul Fire; Hold: the soul beam: Soul Beam (today); Every 20 souls: Spectral sabre cat (today); change"
    }
   ],
   "now": [
@@ -58,12 +102,28 @@
     "pick": "element Holy and sun; light: Radiant Strike; heavy: Pillar of Dawn; special: Ancestor's Guard"
    },
    {
+    "where": "Alchemist: armour look",
+    "pick": "Mantle; Legendary + Sheen"
+   },
+   {
+    "where": "Destruction: armour look",
+    "pick": "Embers; Legendary + Sheen"
+   },
+   {
+    "where": "Spellsword: armour look",
+    "pick": "Sheen; Legendary + Embers"
+   },
+   {
+    "where": "Summoner: armour look",
+    "pick": "Sheen; Legendary + Embers"
+   },
+   {
     "where": "Alchemist: model",
     "pick": "Dragon Priest scythe"
    },
    {
     "where": "Destruction: model",
-    "pick": "Glass wand"
+    "pick": "Daedric wand"
    },
    {
     "where": "Spellsword: model",
@@ -88,6 +148,34 @@
    {
     "where": "Decision: Your note on the launch screen and main menu: which music should they play? (It starts with the launch screen and fades out when a game starts.)",
     "pick": "Dragonborn (the main theme)"
+   },
+   {
+    "where": "Voidglass Flask",
+    "pick": "liquid swirl; cork wisp; impact nova at 50%"
+   },
+   {
+    "where": "Fire Flask",
+    "pick": "liquid swirl; cork wisp; impact nova at 50%"
+   },
+   {
+    "where": "Frost Flask",
+    "pick": "liquid swirl; cork wisp; impact nova at 50%"
+   },
+   {
+    "where": "Philosopher's Flask",
+    "pick": "liquid swirl; cork wisp; impact nova at 50%"
+   },
+   {
+    "where": "Acid Flask",
+    "pick": "liquid swirl; cork wisp; impact nova at 50%"
+   },
+   {
+    "where": "Shock Flask",
+    "pick": "liquid swirl; cork wisp; impact nova at 50%"
+   },
+   {
+    "where": "Holy Water",
+    "pick": "liquid swirl; cork wisp; impact nova at 50%"
    },
    {
     "where": "Arcane kit",
@@ -226,6 +314,10 @@
     "pick": "add"
    },
    {
+    "where": "New Tablet weapon: Azura's Fallen Star",
+    "pick": "no"
+   },
+   {
     "where": "New Tablet weapon: Harkon's Bloodbite",
     "pick": "no"
    },
@@ -315,7 +407,7 @@
    },
    {
     "where": "Destruction: tier looks",
-    "pick": "I: Glintstone Mist; II: Glintstone Mist; III: Glintstone Mist; Legendary: Glintstone Mist at its brightest"
+    "pick": "I: Sorcery; II: Glintstone Mist; III: Glintstone Mist; Legendary: Glintstone Mist at its brightest"
    },
    {
     "where": "Spellsword: tier looks",
@@ -324,6 +416,10 @@
    {
     "where": "Summoner: tier looks",
     "pick": "I: Radiant Heads; II: Radiant Heads; III: Radiant Heads; Legendary: Radiant Heads + Dawn Halo"
+   },
+   {
+    "where": "UI cursor",
+    "pick": "Rune Arrow"
    },
    {
     "where": "UI direction",
@@ -492,6 +588,68 @@
    {
     "where": "UI: A Tablet weapon\\'s uses",
     "pick": "approved"
+   },
+   {
+    "where": "Wonder: Alduin's Bane",
+    "pick": "look Words of Power; strength + World-Eater's Fire; Light attack: Ash of Helgen; Heavy attack: White tornado (today); approved"
+   },
+   {
+    "where": "Wonder: Wyrmspine Javelin",
+    "pick": "look Elemental Edge; look with fire Elemental Edge; look with frost Elemental Edge; look with shock Elemental Edge; strength + Dragonfire; element Shock; Hold, then throw: Bursting throw (today); Its return: Flies back (today); approved"
+   },
+   {
+    "where": "Wonder: Mutagen Staff",
+    "pick": "look Transmutation Runes; strength + Living Mutagen; Hold block: the flasks: Six elements (today); Its staff strike: Mutating strike; change"
+   },
+   {
+    "where": "Wonder: Dragon Slayer",
+    "pick": "look Dragonfire Runes; strength + Slayer's Runes; Light attack: Golden fireball (today); Heavy attack: Golden rain (today); approved"
+   },
+   {
+    "where": "Wonder: Soulcaller's Staff",
+    "pick": "look Spectral Mist; strength + Soul Fire; Hold: the soul beam: Soul Beam (today); Every 20 souls: Spectral sabre cat (today); change"
+   }
+  ]
+ },
+ {
+  "round": "Workshop, Nov 27 (wonders and moves)",
+  "date": "2026-11-27",
+  "changed": [
+   {
+    "where": "Destruction: moves",
+    "pick": "light: Glintstone Bolt; heavy: Arcane Ray; special: Starfall"
+   },
+   {
+    "where": "Spellsword: moves",
+    "pick": "element Shock; light: Spellthrust; heavy: Spell Pillar; special: Elemental Wake"
+   },
+   {
+    "where": "Summoner: moves",
+    "pick": "element Holy and sun; light: Radiant Strike; heavy: Pillar of Dawn; special: Ancestor's Guard"
+   },
+   {
+    "where": "Decision: Your note on the Echo Altar menus: keep the altar menu you have in the game now, or use the new one (class painting, tab icons, every brew's icon - see In-game UI > Every screen > The Echo Altar)?",
+    "pick": "The new one"
+   },
+   {
+    "where": "Wind and Thu'um kit",
+    "pick": "Impact Drain; Burst Explosion; Ground Rune circle; From above From the sky; Cast sound MAGWhirlwindLP; Impact sound VOCShoutImpactPushSD; Burst sound VOCShoutImpactPushImpactDragonSD"
+   },
+   {
+    "where": "UI: Choosing your class",
+    "pick": "mark cleared"
+   },
+   {
+    "where": "UI: The scoreboard",
+    "pick": "mark cleared"
+   },
+   {
+    "where": "UI: The Codex",
+    "pick": "mark cleared"
+   },
+   {
+    "where": "UI: New character",
+    "pick": "mark cleared"
    }
   ]
  },

@@ -460,6 +460,7 @@ def arto(key, model, kind):
 # (Noah: "The Aura needs to look like a super Saiyan around the player but not blinding thats fully animated" - "Flame Cloak")
 # Skyrim's Flame Cloak hung on you as a hit effect's art (src/Classes.cpp TickArmour paints it in the class's colour)
 arto('armaura', 'dlc01\\magic\\dlc01_sunaurabodyfx.nif', 1)   # (then: "too overwhelming" - "Dawnguard Sun Aura")
+arto('armembers', 'CurseOfAlduin\\fx\\aura_embers.nif', 1)   # (Nov 27 final: the armour look "Embers" - tools/auraembers.py, painted in the class's colour)
 for r in SCRAFT.values():
     arto('fx_' + r['id'] + '_hand', 'CurseOfAlduin\\fx\\' + r['id'] + '_hand.nif', 0)          # magic casting art
     recs['STAT'].append(record('STAT', fid('STAT', 'fx_' + r['id'] + '_orb'), [sub('EDID', z('COA_Orb_' + r['id'])), sub('OBND', struct.pack('<6h', -30, -30, -30, 30, 30, 30)),
@@ -965,6 +966,22 @@ for key, fill, edge in (('tabletgreen', (40, 110, 255), (150, 200, 255)), ('tabl
         if name == 'EDID': continue
         subs.append(sub(name, bytes(d) if name == 'DATA' else bytes.fromhex(hx)))
     recs['EFSH'].append(record('EFSH', fid('EFSH', key), subs))
+
+# (Noah, Nov 27 final - the armour sets' looks: "Sheen: the set itself glows from inside ... brightest at its edges") a rim of
+# light round you in your class's colour: the membrane's edge lit, its fill all but clear (src/Classes.cpp TickArmour)
+for key, fill, edge in (('sun', (255, 190, 70), (255, 230, 150)), ('violet', (130, 60, 255), (200, 160, 255)), ('purple', (150, 40, 220), (220, 130, 255)),
+                        ('fire', (255, 110, 30), (255, 190, 110)), ('frost', (80, 170, 255), (190, 230, 255)), ('shock', (120, 120, 255), (200, 210, 255))):
+    d = bytearray(tsub('efsh_enchpurple', 'DATA'))
+    d[0] |= 0x08
+    struct.pack_into('<f', d, 0x20, 1.3)
+    struct.pack_into('<f', d, 0x24, 0.04)
+    d[0x10:0x13] = bytes(fill)
+    d[0x38:0x3B] = bytes(edge)
+    subs = [sub('EDID', z('COA_ArmourSheen_' + key))]
+    for name, hx in T['efsh_enchpurple']['subs']:
+        if name == 'EDID': continue
+        subs.append(sub(name, bytes(d) if name == 'DATA' else bytes.fromhex(hx)))
+    recs['EFSH'].append(record('EFSH', fid('EFSH', 'sheen_' + key), subs))
 
 # (Noah: "shadowflame ... should set enemies on fire with purple flames") Shadowflame on its victim: Skyrim's enchantment fire
 # wrapped round the whole body in violet - a burning membrane and a thick stream of violet flames rising off it - for as
@@ -1846,7 +1863,7 @@ recs['CONT'] = [record('CONT', fid('CONT', 'classchest'), [
 # turning them on changes how those things look today
 # (the armour sets' glows were written for a night - Noah: "the marks on the armor are actually on my players skin" - "Remove it,
 # aura only": the aura is the Flame Cloak's art now)
-_efsh_on = {fid('EFSH', k) for k in ('soulpurple', 'tabletgreen', 'tabletgold')}
+_efsh_on = {fid('EFSH', k) for k in ('soulpurple', 'tabletgreen', 'tabletgold')} | {fid('EFSH', 'sheen_' + k) for k in ('sun', 'violet', 'purple', 'fire', 'frost', 'shock')}
 out += group('EFSH', [r for r in recs['EFSH'] if struct.unpack_from('<I', r, 12)[0] in _efsh_on])
 for k in ['KYWD', 'GLOB', 'FACT', 'VTYP', 'FSTS', 'LSCR', 'MUSC', 'MUST', 'ARTO', 'MGEF', 'BOOK', 'ENCH', 'SPEL', 'WOOP', 'SHOU', 'ACTI', 'ARMO', 'LIGH', 'STAT', 'WEAP', 'AMMO', 'NPC_', 'ALCH', 'PROJ', 'PERK', 'ARMA', 'SNDR', 'QUST', 'CONT']: out += group(k, recs[k])  # (PERK: the Summoner's command - it was never written before)  # Bethesda's group order: effects load before the spells that use them
 (ROOT / 'data').mkdir(exist_ok=True)

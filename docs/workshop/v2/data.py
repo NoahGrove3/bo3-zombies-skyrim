@@ -45,43 +45,44 @@ FEATURES = []
 def F(i, s, t, st, what, how='', look='', note='', since=''):
     FEATURES.append(dict(id=i, sys=s, t=t, st=st, what=what, how=how, look=look, note=note, since=since))
 
-B = '3938d82'   # (the build installed now)
+B = '7eb037f'   # (the build to install now)
+B0 = '3938d82'   # (the one before it)
 
 # ---- movement
 F('mv_sprint', 'movement', 'Sprint winds up', 'done', 'The sprint builds over 180 ms to 440 and widens the view 7 degrees.', since='286a000')
-F('mv_slide', 'movement', 'Slide from a sprint', 'ready', 'Sprint for a moment, then crouch: a slide that tilts the view; jump out of it and keep the speed. Ours now (SkyParkour\'s slide is off).',
-  how='Sprint for two or three seconds, then crouch. Then slide again and jump while sliding.',
-  look='You slide at any point of a sprint (not only right after starting it). The jump carries the slide\'s speed forward.',
-  note='Last time: "can\'t jump out of it to carry my momentum ... only lets me slide right after a sprint".', since=B)
-F('mv_omni', 'movement', 'Sprint in any direction', 'ready', 'Sprint sideways and backwards too, in first and third person (your pick: "Third person too").',
-  how='Hold sprint and move sideways and back, in first person, then in third person.', look='Full sprint speed in every direction, both views.', since=B)
+F('mv_slide', 'movement', 'Slide from a sprint', 'ready', 'Crouch while sprinting (any time in it, the omni-sprint too): you slide, the view tilts, and a jump out of it keeps the speed. Fixed: Skyrim took the crouch key first, so the sprint had ended and you were sneaking before we heard it - no slide, and the sneak it left stood you up still sneaking. Now how you were a moment before the press is what counts.',
+  how='Sprint for two or three seconds, then crouch. Then slide again and jump while sliding. Stand still and crouch once, then stand.',
+  look='A slide every time from a sprint; after it you stand up and the sneak eye goes away. Crouching from a stand still sneaks normally.',
+  note='Last test (3938d82): "now it wont slide at all and my sneak eye pops up while im standing".', since=B)
+F('mv_omni', 'movement', 'Sprint in any direction', 'done', 'Sprint sideways and backwards too, in first and third person (your pick: "Third person too").',
+  how='Hold sprint and move sideways and back, in first person, then in third person.', look='Full sprint speed in every direction, both views.', since='3938d82')
 F('mv_swing', 'movement', 'Quicker light swings', 'done', 'Light attacks 1.2x as fast; no early swing cancel (your pick: "the speed is enough").', since='286a000')
 
 # ---- combat feel
-F('cb_hitpause', 'combat', 'No hit pause', 'ready', 'The hit pause is gone everywhere: ours was already 0, Precision\'s own pause is now off in its MCM settings.',
-  how='Light and heavy hits on the dead with a sword and a greatsword.', look='No pause and no camera shake on any hit.', note='You asked: "remove the hit pause".', since=B)
-F('cb_soul', 'combat', 'No soul torn out', 'ready', 'Shadow, spirit and arcane kills no longer tear the soul out (removed as you asked).',
-  how='Kill the dead with the Shadowflame Scythe and the Soulcaller.', look='No white beam rising from the bodies.', since=B)
-F('cb_ash', 'combat', 'Ash piles gone after 5 s', 'ready', 'Fire kills burn to ash; the ash pile and the body are cleared 5 s later.',
-  how='Kill the dead with fire (a fire spell, the Fire Flask).', look='They burn to a pile of ash that disappears after about 5 seconds.', since=B)
+F('cb_hitpause', 'combat', 'No hit pause', 'done', 'The hit pause is gone everywhere: ours was already 0, Precision\'s own pause is now off in its MCM settings.',
+  how='Light and heavy hits on the dead with a sword and a greatsword.', look='No pause and no camera shake on any hit.', note='You asked: "remove the hit pause".', since='3938d82')
+F('cb_soul', 'combat', 'No soul torn out', 'done', 'Shadow, spirit and arcane kills no longer tear the soul out (removed as you asked).',
+  how='Kill the dead with the Shadowflame Scythe and the Soulcaller.', look='No white beam rising from the bodies.', since='3938d82')
+F('cb_ash', 'combat', 'Ash piles gone after 5 s', 'done', 'Fire kills burn to ash; the ash pile and the body are cleared 5 s later.',
+  how='Kill the dead with fire (a fire spell, the Fire Flask).', look='They burn to a pile of ash that disappears after about 5 seconds.', since='3938d82')
 F('cb_sounds', 'combat', 'Every weapon its own sounds', 'done', 'Draw, swing, heavy and hit sounds per weapon, all at 20%.', since='15cfd57')
 F('cb_ragdoll', 'combat', 'Bodies fly half as far', 'done', 'Heavy hits throw bodies at half strength; Alduin\'s Bane as before.', since='76167f7')
 F('cb_marks', 'combat', 'No hit markers', 'done', 'No crosshair marks; the night\'s last kill in slow motion.', since='5865977')
 F('cb_hitfeel', 'combat', 'Hit feel options', 'done', 'Removed as you asked ("Remove this").')
 
 # ---- class weapons
-F('cw_onemodel', 'classes', 'One model per class weapon', 'building', 'Your picks: the Dragon Priest scythe (Alchemist), the Ebony quarterstaff (Summoner), the Glass wand (Destruction), the Daedric rapier (Spellsword) - in the game now; next, our own models from Skyrim\'s meshes - each through every tier, the tiers changing its look only.')
+F('cw_onemodel', 'classes', 'One model per class weapon', 'building', 'Your picks: the Dragon Priest scythe (Alchemist), the Ebony quarterstaff (Summoner), the Daedric wand (Destruction, changed from the Glass wand in your final picks), the Daedric rapier (Spellsword) - in the game; next, our own models from Skyrim\'s meshes.')
 F('cw_tierlooks', 'classes', 'Tier looks: one look, stronger each tier', 'building', 'Your picks saved for all four. Now made in 3D on the model itself (its own surface glowing, particles born on it, a volume of light round each part) - never flat or an outline at any angle; the game gets the same from 4K baked textures with a 2K option.')
-F('nov27_models', 'classes', 'One model per class weapon, in game', 'ready', 'The Dragon Priest scythe, the Glass wand, the Ebony quarterstaff and the Daedric rapier at every tier; your looks (Transmuted Edge, Glintstone Mist, Radiant Heads, Bare Blade) faint at Tier I and stronger each tier.',
-  how='Tester\'s Kit: each class weapon at Tier I, then III, then Legendary.', look='The same model every tier; its glow faint at I, full at III, brightest at Legendary.', since=B)
+F('nov27_models', 'classes', 'One model per class weapon, in game', 'ready', 'The Dragon Priest scythe, the Daedric wand (your final pick), the Ebony quarterstaff and the Daedric rapier at every tier; your looks faint at Tier I and stronger each tier. (The wand\'s Tier I in Sorcery, your pick, comes with the looks build.)',
+  how='Tester\'s Kit: each class weapon at Tier I, then III, then Legendary.', look='The same model every tier, the wand now the Daedric one; its glow faint at I, full at III, brightest at Legendary.', since=B)
 F('nov27_tablet', 'tablet', 'Tablet lineup and rarity', 'ready', 'Only your seven kept weapons roll (the seven cut ones never come up). Rare 60%, Epic 30%, Legendary 10% (Legendary from night 8); the glow blue, purple or gold; a Legendary win rings the bell.',
-  how='Roll the Tablet several times (Tester\'s Kit: tablet roll).', look='Stormtalons, Rimewick and Eclipse come up purple, the rest blue; no Bloodmoon, Bonereaper, Riverstone, Silver Scythe, Talons, Wandering Star or Wyrmtooth.', since=B)
+  how='Roll the Tablet several times (Tester\'s Kit: tablet roll).', look='Stormtalons, Rimewick and Eclipse come up purple, the rest blue; no Bloodmoon, Bonereaper, Riverstone, Silver Scythe, Talons, Wandering Star or Wyrmtooth.', since=B0)
 F('nov27_firestorm', 'spells', 'Fire Storm replaces Immolate', 'ready', 'Destruction\'s Tier III fire spell is Skyrim\'s Fire Storm: a ring of flame bursting out round you.',
-  how='Altar: Destruction\'s fire ladder at Tier III; cast it among the dead.', look='Fire Storm in the list where Immolate was; flames burst out all round you.', since=B)
+  how='Altar: Destruction\'s fire ladder at Tier III; cast it among the dead.', look='Fire Storm in the list where Immolate was; flames burst out all round you.', since=B0)
 F('nov27_fixes', 'classes', 'Your fixes: javelin, auto-switch, class change', 'ready', 'The javelin is held and put away like a staff (over the shoulder, onto your back; the press only throws). Class weapons are no longer taken off and on when put away (the switching you saw). Changing class costs 20,000.',
-  how='Draw and put away the javelin; carry two class weapons and put one away; change class at an altar.', look='The javelin goes onto your back with a matching animation; the weapon you held stays the one you hold; the altar asks 20,000.', since=B)
+  how='Draw and put away the javelin; carry two class weapons and put one away; change class at an altar.', look='The javelin goes onto your back with a matching animation; the weapon you held stays the one you hold; the altar asks 20,000.', since=B0)
 F('nov27_small', 'hud', 'Gold class cards, menu music, Slay the Undead', 'ready', 'The class cards\' words in Ember Tally gold (the screen as it was); the main menu plays Skyrim\'s main theme; the first trial is Slay the Undead.',
-  how='Start the game; open the class choice at an altar; look at a city\'s trials.', look='Dragonborn at the menu; gold names and words on the class cards; "Slay the Undead" first.', since=B)
+  how='Start the game; open the class choice at an altar; look at a city\'s trials.', look='Dragonborn at the menu; gold names and words on the class cards; "Slay the Undead" first.', since=B0)
 F('ui_coop', 'hud', 'Co-op UI', 'idea', 'The party list, a friend down and lifting them, you down, names over the party, the scoreboard, a shared trial, joins and falls - in the workshop to approve.')
 F('ui_fades', 'hud', 'Every box fades in and out', 'idea', 'A soft gradient fade in and out on every pop-up box (your note); drawn by our HUD, so it goes in with the new direction.')
 F('ui_scale', 'hud', 'The UI fits any screen', 'idea', 'Sizes follow the screen\'s height, places the corners: 2560x1600, 1920x1080, 2560x1440 and 3440x1440 all previewed. Loading screens fill the screen on any shape.')
@@ -89,17 +90,24 @@ F('ui_menus', 'hud', 'Inventory, Magic and Tab menus ours', 'idea', 'Recoloured 
 F('tb_rarity', 'tablet', 'Rarity: Rare, Epic, Legendary', 'idea', 'Each Tablet weapon is Rare (blue), Epic (purple) or Legendary (gold) by strength; rarer ones roll less often (60/30/10 to start, yours to set). Uses rebalanced once the lineup is final.')
 F('tb_roll', 'tablet', 'A new roll for the Tablet', 'idea', 'Four rolls to pick from in the workshop: The Reel, Pillar of Light, The Wheel, Soul Storm - each ending in the rarity\'s colour.')
 F('cw_ownmodels', 'classes', 'Our own models from Skyrim\'s meshes', 'idea', 'Each class weapon (and later the Tablet\'s) built from Skyrim, Dawnguard and Dragonborn parts: no mod needed for it.')
-F('cw_abilities', 'classes', 'Each class\'s own moves', 'building', 'A Light, a Heavy and a Special only that class has, built from its element\'s kit and stronger each tier. Your picks: Destruction Glintstone Bolt (tap, 0.5 s between shots) / Arcane Ray (hold, costs magicka) / Starfall; Spellsword (shock) Spellthrust / Spell Pillar / Elemental Wake; Summoner Radiant Strike / Pillar of Dawn / Ancestor\'s Guard; the Alchemist still to pick. Next build.',
-  note='"They all look very poorly done ... redo the abilities and have a starting foundation".')
-F('cw_ults', 'classes', 'Ultimates and the kill meter removed', 'ready', 'The Tier III ultimates and their meter are gone (Tier III keeps its cards as before).',
-  how='Tester\'s Kit: a class weapon at Tier III; kill 30 of the dead.', look='No meter above the perks, nothing extra on a heavy.', since=B)
-F('cw_card', 'classes', 'Weapon card removed', 'ready', 'The held weapon\'s card bottom right is gone.', how='Draw any weapon.', look='Nothing drawn bottom right.', since=B)
+F('cw_abilities', 'classes', 'Each class\'s own moves', 'done', 'In the game since 7eb037f: see the four tests below.', since=B)
+F('mv_summoner', 'classes', 'Summoner: Radiant Strike, Pillar of Dawn, Ancestor\'s Guard', 'ready', 'Light: each strike of the quarterstaff flares with sunlight that sears the dead and staggers them for a moment. Heavy: a pillar of sunlight falls where you strike. Special: every 20 kills, a ghost of light rises from the 20th body out of a pillar of light and fights beside you for 12 s.',
+  how='Summoner, the quarterstaff at any tier: light hits, heavies, then 20 kills.', look='A small sun-flare and burn on each hit; the white pillar on heavies; a see-through warrior rising out of light on the 20th kill.', since=B)
+F('mv_destruction', 'classes', 'Destruction: Glintstone Bolt, Arcane Ray, Starfall', 'ready', 'The wand is Destruction\'s own now (no spell needed in the other hand). Tap attack: a glintstone bolt from the tip that bends a little toward the nearest of the dead, at most one every 0.5 s. Hold attack: the Arcane Ray from the tip, wider and hotter the longer you hold it, draining your magicka (it stops when you run out). Every 25th bolt: Starfall, twelve great bolts raining in front of you.',
+  how='Destruction, the wand: tap attack quickly several times; then hold it for a few seconds; then tap 25 bolts.', look='Bolts no faster than every half second; the violet beam from the wand\'s tip with your magicka bar dropping; twelve bolts falling ahead on the 25th.', since=B)
+F('mv_alchemist', 'classes', 'Alchemist: Reaping Arc, Shadowfire Eruption, Philosopher\'s Edge', 'ready', 'Light: a wide violet sweep through every one of the dead in front of you, setting them smouldering in shadowfire; the burn stacks with each sweep (up to three). Heavy: geysers of shadowfire burst up in a ring round you. Special: every 10th kill, your next kill bursts into Cursed Essence (+150) and shadowfire.',
+  how='Alchemist, the scythe: light swings into a crowd, a heavy among them, then 10 kills and one more.', look='A wide sweep hitting several at once; eight violet bursts in a ring on the heavy; a hint on the 10th kill and a burst with an Essence count on the next.', since=B)
+F('mv_spellsword', 'classes', 'Spellsword: Spellthrust, Spell Pillar, Elemental Wake', 'ready', 'All follow the spell in your other hand. Light: each thrust that lands carries it - fire burns, frost slows, shock arcs to one more of the dead. Heavy: a pillar of your element pours down on the one ahead. Special: your kills leave a patch of the element on the ground for 4 s that hurts the dead crossing it.',
+  how='Spellsword with fire, then frost, then shock in the other hand: thrusts, heavies, kills.', look='Fire burns, frost slows, lightning jumping to a second; a pillar in the element on heavies; element patches where the dead fall.', since=B)
+F('cw_ults', 'classes', 'Ultimates and the kill meter removed', 'done', 'The Tier III ultimates and their meter are gone (Tier III keeps its cards as before).',
+  how='Tester\'s Kit: a class weapon at Tier III; kill 30 of the dead.', look='No meter above the perks, nothing extra on a heavy.', since='3938d82')
+F('cw_card', 'classes', 'Weapon card removed', 'done', 'The held weapon\'s card bottom right is gone.', how='Draw any weapon.', look='Nothing drawn bottom right.', since='3938d82')
 F('cw_ascend', 'classes', 'Ascend grows the abilities', 'done', 'Each Ascend +15% damage and +10% size.', since='650d613')
-F('cw_scythes', 'classes', 'Scythes solid (not inside out)', 'ready', 'All nine scythes: patches of the blades faced inward and the cut poles were open, so you saw their inside and through them. Every piece now faces out; open cuts drawn from both sides.',
+F('cw_scythes', 'classes', 'Scythes solid (not inside out)', 'done', 'All nine scythes: patches of the blades faced inward and the cut poles were open, so you saw their inside and through them. Every piece now faces out; open cuts drawn from both sides.',
   how='Tester\'s Kit: the Shadowflame Scythe at each tier, the four Tablet scythes; look at each from every side, close.',
   look='Solid from every side: no seeing the inside of the texture, no see-through.', note='"the model was inside out, so I can see the inside of the textures, and at some angles I could see through".', since='2384ca5')
-F('cw_mutagen1p', 'classes', 'Mutagen Staff in first person', 'ready', 'A first-person model of its own, set lower in the hand so your hand no longer passes through its head.',
-  how='Alchemist with the Mutagen Staff: first person, idle and swinging.', look='Your hand on the shaft, the head well above it.', note='"my players hand clipping through the head of the staff".', since=B)
+F('cw_mutagen1p', 'classes', 'Mutagen Staff in first person', 'done', 'A first-person model of its own, set lower in the hand so your hand no longer passes through its head.',
+  how='Alchemist with the Mutagen Staff: first person, idle and swinging.', look='Your hand on the shaft, the head well above it.', note='"my players hand clipping through the head of the staff".', since='3938d82')
 F('cw_sheath', 'classes', 'Sheathing the Mutagen Staff', 'building', 'It must stay the Mutagen Staff when drawn and sheathed.', note='Failed last test (no note).')
 F('cw_rapiershock', 'classes', 'Spellbound Rapier shock look', 'building', 'Part of the tier-look rebuild.', note='"The shock effect on the spellbound rapier still looks wrong".')
 F('cw_radiant', 'classes', 'Radiant Quarterstaff heavy pillar', 'building', 'Part of the abilities rebuild.', note='"looks like a poorly done white line standing vertically".')
@@ -109,56 +117,72 @@ F('sp_own', 'spells', 'Class spells play their own effects', 'done', 'Each spell
 F('sp_immolate', 'spells', 'Fire Storm replaces Immolate', 'building', 'Your pick (Decisions): Skyrim\'s Fire Storm takes Immolate\'s place in the Destruction fire spells, in the next build.', note='"I want to replace the immolate from the spell pool".')
 
 # ---- flasks
-F('fl_fire', 'flasks', 'Fire Flask bursts in flames', 'ready', 'Dragonfire\'s impact and a ball-of-fire burst: flames, not a flat explosion.',
-  how='Throw the Fire Flask at the ground and at a group.', look='A burst of real flames.', note='"The Fire Flask explosion should be flames".', since=B)
-F('fl_holy', 'flasks', 'Holy Water without the golden streaks', 'ready', 'The flat golden wind streaks that stayed on the ground are gone.',
-  how='Throw Holy Water.', look='Its sunbeam and burst; nothing flat and streaky left standing.', note='"golden wind streaky effect that\'s stagnant and looks 2D".', since=B)
+F('fl_fire', 'flasks', 'Fire Flask bursts in flames', 'done', 'Dragonfire\'s impact and a ball-of-fire burst: flames, not a flat explosion.',
+  how='Throw the Fire Flask at the ground and at a group.', look='A burst of real flames.', note='"The Fire Flask explosion should be flames".', since='3938d82')
+F('fl_holy', 'flasks', 'Holy Water leaves no glow behind', 'ready', 'The golden light it casts is cut back and its motes and burst now end with the beam, so no golden hue stays after it.',
+  how='Throw Holy Water at Tier III (its sunbeam), then watch the ground after the beam is gone.', look='The beam and burst, then nothing: no golden tint left on the ground or the dead.', note='Last test (3938d82): "there was a lingering hue after the beam disappears".', since=B)
 F('fl_rest', 'flasks', 'The other flasks\' bursts', 'idea', 'Frost, Shock, Acid and Voidglass rebuilt on the element kits with the rest of the effects.')
 
 # ---- relics
 F('rl_abilities', 'relics', 'Relic abilities rebuilt', 'idea', 'The ten relics\' hits and heavies redone on the element kits.', note='Vahlok\'s chains and the real-parts effects failed your last test.')
 F('rl_list', 'relics', 'The ten relics and what they do', 'done', 'Keyhammer, Mistblade, Windcutter, Glacier Greatsword, Storm Blade, Sacrifice Knife, Grief Blade, Sealbreaker, Nightcaller\'s Scythe, Arcane Maul.')
 
-F('cw_flasklook', 'classes', 'The flasks\' look and smaller bursts', 'idea', 'Pick in Weapons & effects > Flasks: the potion\'s liquid, the cork\'s element and the impact, and its size (today\'s blast is too big: every flask starts at 45%).')
-F('ui_cursor', 'hud', 'Our own cursor in every menu', 'idea', 'Pick it in In-game UI > Cursor: it replaces Skyrim\'s cursor at the main menu, the inventory, the magic menu, the map, the altar and the Codex.')
+F('cw_flasklook', 'flasks', 'The flasks\' swirling potions', 'ready', 'Your picks for all six: a skin of light over the potion with its swirls turning round and climbing through it, in the flask\'s colour, so the liquid moves in the glass; the element\'s wisp still curls off the cork.',
+  how='Hold each flask in your hand and look at it; throw one and watch it fly.', look='The potion swirling inside the glass, in its element\'s colour; a wisp off the cork.', since=B)
+F('fl_size', 'flasks', 'Flask bursts half the size, with a ring', 'ready', 'Your pick: the Ring impact at 50%. Each flask\'s burst is half its old size, and a low ring of its element runs out along the ground to the edge of what it catches. The glass shatter and the Legendary bursts are smaller too.',
+  how='Throw each flask you have at a crowd, at its tier.', look='A small burst and a ring spreading on the ground, not a screen-filling explosion.', note='"the explosion size for the flasks needs to be much less its a bit overwhelming currently".', since=B)
+F('ui_bars', 'hud', 'The bars hide when full', 'ready', 'Your health, magicka and stamina plate keeps its look, and fades out once all three have been full for two seconds (and your shout is ready); it comes back the moment any drops or you shout.',
+  how='Stand still with everything full; then take a hit, cast, sprint, shout.', look='The plate fades away when full and returns the moment a bar drops.', since=B)
+F('ui_cursor', 'hud', 'The Rune Arrow cursor', 'ready', 'Your pick: a Nordic arrowhead in dark iron with a gold edge and one rune cut in it, glowing - in every menu (it replaces the cursor drawn there before).',
+  how='Open the main menu, the inventory, the map and the altar with the mouse.', look='The iron arrowhead with its gold edge and a slowly glowing rune, its point exactly where you click.', since=B)
 # ---- tablet
 F('tb_lineup', 'tablet', 'The Tablet lineup redone', 'building', 'Your lineup: the seven you kept and the 11 you added (Voice of the Mountain, Soulrender, Chaurus Fang, Mace of the Bound, Giant\'s Toe Club, Sweetroll of the Damned, Lil\' Atronach, Grasp of Apocrypha, Frostbite Egg Sac, Spriggan\'s Heartroot, Dragonguard Ward-Shield), by rarity, rolled with the Wheel.')
 F('tb_claws', 'tablet', 'Both claws from the Tester\'s Kit', 'ready', 'The kit gives each claw\'s left-hand twin too, and equipping a claw puts its twin in your other hand.',
-  how='Tester\'s Kit: the Tablet weapons; equip Stormtalons and Cinderclaws from the inventory.', look='A claw in each hand every time.', note='"The test kit was only giving me one claw".', since=B)
+  how='Tester\'s Kit: the Tablet weapons; equip Stormtalons and Cinderclaws from the inventory.', look='A claw in each hand every time.', note='"The test kit was only giving me one claw".', since=B0)
 F('tb_storm', 'tablet', 'Stormtalons: lightning, not ice', 'ready', 'The heavy hit\'s stun no longer coats the dead in ice: a lightning arc and a shock burst.',
-  how='Stormtalons: heavy hits, and three light hits in a row.', look='Lightning on the heavy and on every 3rd hit; no ice anywhere.', since=B)
+  how='Stormtalons: heavy hits, and three light hits in a row.', look='Lightning on the heavy and on every 3rd hit; no ice anywhere.', since=B0)
 F('tb_bonereaper', 'tablet', 'Seven Tablet weapons cut', 'building', 'Your marks: Bloodmoon, Bonereaper, Riverstone, Silver Reaping, Talons of Woe, the Wandering Star and Wyrmtooth no longer roll (since 3938d82); the 11 new ones you added take their place in the next build.')
 
 # ---- wonders
 F('wd_javhand', 'wonders', 'Javelin held palm to you', 'ready', 'The hand turned so the palm faces you while charging and throwing; the charge effect over your head removed.',
-  how='Destruction wonder: hold to charge, look around, throw.', look='Palm towards you on the shaft; nothing floating above your head.', note='"hand twisted ... palm facing towards the player"; "remove the charge element".', since=B)
-F('wd_bane', 'wonders', 'Alduin\'s Bane light meteors', 'ready', 'Smaller impacts: no white flash and no firestorm stacked on each meteor.',
-  how='Light hits on the dead with Alduin\'s Bane.', look='A meteor on each hit with a fiery impact that doesn\'t blind you.', note='"a massive explosion and it\'s blinding".', since=B)
-F('wd_javlook', 'wonders', 'The javelin\'s look follows your other hand', 'idea', 'Like the Spellsword\'s rapier: its look in the element of the spell in your other hand (fire, frost or shock); pick a look for each in Weapons & effects > Wonders.')
+  how='Destruction wonder: hold to charge, look around, throw.', look='Palm towards you on the shaft; nothing floating above your head.', note='"hand twisted ... palm facing towards the player"; "remove the charge element".', since=B0)
+F('wd_bane', 'wonders', 'Alduin\'s Bane: Ash of Helgen', 'ready', 'Your pick for its Light: each hit sets the one struck burning, a patch of embers smoulders under it, and a moment later the fire spreads to those beside it (the meteors are gone). Its Heavy is still the white tornado.',
+  how='Light hits on a crowd with Alduin\'s Bane; then a heavy.', look='Fire on the one hit and embers under it, then the ones next to it catch; the heavy\'s white tornado as before.', since=B)
+F('wd_javlook', 'wonders', 'The javelin\'s look follows your other hand', 'ready', 'Your pick, Elemental Edge with Dragonfire over it, now in the element of the spell in your other hand: fire orange, frost ice-blue, shock violet-blue.',
+  how='Hold the javelin with a fire spell in your other hand, then frost, then shock.', look='Its look changes colour with the spell in your other hand.', since=B)
+F('wd_looks', 'wonders', 'The wonders\' looks, each with its second', 'ready', 'Your picks: the Soulcaller Spectral Mist + Soul Fire; the Mutagen Staff Transmutation Runes + Living Mutagen (on its orb); the Dragon Slayer Dragonfire Runes + Slayer\'s Runes; Alduin\'s Bane Words of Power + World-Eater\'s Fire.',
+  how='Draw each wonder and look at it.', look='Each in your picked look with the second laid over it.', since=B)
+F('cw_layers', 'classes', 'Tier looks: Destruction\'s Tier I, the Legendary layers', 'ready', 'Your tier picks: the Destruction wand in Sorcery at Tier I, then Glintstone Mist; at Legendary (Ascend) the Summoner\'s quarterstaff adds Dawn Halo and the Spellsword\'s rapier adds Spellbound over its look; the Alchemist and Destruction at their brightest.',
+  how='Tester\'s Kit: the wand at Tier I then II; the quarterstaff and rapier at Tier III then Ascend.', look='The wand\'s look changes from Tier I to II; the quarterstaff and rapier gain a second look at Ascend.', since=B)
+F('wd_soulmana', 'wonders', 'Soulcaller: the beam costs magicka; cats out of the portal', 'ready', 'Its held beam now drains your magicka (it stops when there\'s none left). Each spectral sabre cat comes out of Skyrim\'s purple conjuring portal: the portal opens, and the cat steps out of it.',
+  how='Hold the Soulcaller\'s beam on the dead; let your magicka run out; take 20 souls.', look='Your magicka dropping while it runs; the purple portal, then the cat out of it.', note='"the spectral cat should spawn from skyrims purple portals. and the beam should cost mana."', since=B)
+F('wd_mutagenstrike', 'wonders', 'Mutagen Staff: Mutating Strike', 'ready', 'Your pick for its staff strike: each strike marks the one struck, and a second later the mark bursts as the next flask\'s element in turn - fire, frost, shock, acid, holy water, voidglass - like the block\'s flasks.',
+  how='Strike the dead several times with the Mutagen Staff.', look='A burst a second after each strike, a different element each time, cycling through all six.', note='"got the mutating strike make it cycle through the flask effects like the block does."', since=B)
 F('wd_soulcaller', 'wonders', 'Soulcaller look', 'done', 'White soul wisps on its glass head.', since='76167f7')
 
 # ---- summons
 F('sm_portal', 'summons', 'Summons come out of the portal', 'building', 'Conjurations and the Soulcaller\'s pride should step out of Skyrim\'s conjuring portal.', note='"Doesn\'t come out of the Skyrim summon portal they just pop up".')
 F('sm_thrall', 'summons', 'Raised thralls safe', 'ready', 'A thrall raised from a leveled enemy (the Frost Brute) used a temporary copy of its record that is thrown away with the body: the round 20 crash. Now made from the real record.',
-  how='Any raise on many kinds of the dead, rounds 15 to 20 (the Bonereaper no longer rolls from the Tablet).', look='Thralls rise and fight; no crash.', since=B)
+  how='Any raise on many kinds of the dead, rounds 15 to 20 (the Bonereaper no longer rolls from the Tablet).', look='Thralls rise and fight; no crash.', since=B0)
 
 # ---- armour
 F('ar_ssbody', 'armour', 'Spellsword set shows your body', 'ready', 'The cuirass now uses a slot of its own, so the body slot stays free and your body shows under it.',
   how='Tester\'s Kit: Spellsword set at each tier; look at yourself in third person.', look='Your body under the cuirass. If the cuirass itself is missing now, tell me.',
-  note='"Still makes my body invisible".', since=B)
-F('ar_looks', 'armour', 'Each set\'s own look', 'idea', 'Pick it in Weapons & effects > Armour looks: one of five looks on the set itself, in the class\'s colour, stronger each tier (today: one faint glow, the same for every class).')
+  note='"Still makes my body invisible".', since=B0)
+F('ar_looks', 'armour', 'Each set\'s own look', 'ready', 'Your picks, once the set is upgraded and worn: the Summoner a Sheen (a rim of light round you, sun-gold), Destruction Embers (ribbons of violet embers rising round you), the Alchemist a Mantle (a soft column of shadowfire light), the Spellsword a Sheen in its element\'s colour. At Legendary each adds its second: the Summoner and the Spellsword the Embers, Destruction and the Alchemist the Sheen. Hidden in first person (the Sheen\'s rim may show on your arms).',
+  how='Tester\'s Kit: each class\'s set at Tier I, then III, then Ascend (Legendary); look in third person.', look='Faint at Tier I, stronger each tier; the second look joining at Legendary; nothing blocking your view in first person.', since=B)
 F('ar_inv', 'armour', 'Class sets in the inventory', 'done', 'Each piece has a model in the inventory and on the ground.', since='76167f7')
 
 # ---- nights
 F('nt_enemies', 'nights', 'Only the dead you kept', 'done', 'Your keep/remove picks of Nov 26.', since='e93f679')
 F('nt_n5', 'nights', 'Night 5 mini-boss', 'done', 'One of your kept mini-bosses at random.', since='a4584e6')
 F('nt_loot', 'nights', 'No loot on the night\'s dead', 'ready', 'Looking at a night enemy\'s body or ash shows no loot list.',
-  how='Look at bodies and ash piles of the night\'s dead; then at a chest.', look='Nothing listed for the dead; chests still list their loot.', since=B)
+  how='Look at bodies and ash piles of the night\'s dead; then at a chest.', look='Nothing listed for the dead; chests still list their loot.', since=B0)
 F('nt_float', 'nights', 'No floating dead', 'done', 'Any of the dead held in the air is set down.', since='76167f7')
 
 # ---- dragons
 F('dr_stuck', 'dragons', 'Dragons don\'t stay stuck flying', 'ready', 'A dragon aloft more than 20 s is made to land for 12 s, then may fly again.',
-  how='Tester\'s Kit: night 20 (Grahzah), and a dragon in the wild.', look='Dragons come down to fight within about 20 seconds.', note='"The dragons get stuck flying in the air".', since=B)
+  how='Tester\'s Kit: night 20 (Grahzah), and a dragon in the wild.', look='Dragons come down to fight within about 20 seconds.', note='"The dragons get stuck flying in the air".', since=B0)
 F('dr_half', 'dragons', 'Dragons at half size', 'done', 'Every dragon half size; the bosses\' breath and called dead on the ground.', since='76167f7')
 
 # ---- altars
@@ -170,20 +194,20 @@ F('al_seals', 'altars', 'Break the Priest\'s Seals', 'building', 'Part of the tr
 
 # ---- felldir
 F('fd_finish', 'felldir', 'Answers play to the end', 'ready', 'A question asked while Felldir is speaking waits until the answer ends, instead of cutting it off.',
-  how='At a freed altar, Talk: ask a question, then click another while he answers.', look='The first answer finishes, then the second starts.', note='"The Echo Altar\'s voice sometimes cuts out".', since=B)
+  how='At a freed altar, Talk: ask a question, then click another while he answers.', look='The first answer finishes, then the second starts.', note='"The Echo Altar\'s voice sometimes cuts out".', since=B0)
 F('fd_four', 'felldir', 'Four questions a topic', 'ready', 'Each topic lists at most four questions, the ones you haven\'t asked first.',
-  how='At a freed altar, open each Talk topic.', look='Four questions at most in each list.', note='"way too many dialogue options".', since=B)
+  how='At a freed altar, open each Talk topic.', look='Four questions at most in each list.', note='"way too many dialogue options".', since=B0)
 F('fd_quiet', 'felldir', 'The altar quiet during trials', 'done', 'No subtitles until the altar is freed.', since='76167f7')
 
 # ---- hud
 F('hd_night', 'hud', 'Bigger night counter and quests', 'ready', 'The night box and the quest list under it are larger.',
-  how='Start a night; have a trial and a Skyrim quest tracked.', look='Easier to read at a glance, top left.', note='"Make it larger as well as the quests under it".', since=B)
+  how='Start a night; have a trial and a Skyrim quest tracked.', look='Easier to read at a glance, top left.', note='"Make it larger as well as the quests under it".', since=B0)
 F('hd_banner', 'hud', 'Quest banner style', 'building', 'Goes into the In-game UI redesign.', note='"the banner looks off and the size needs to be a bit larger".')
 F('hd_impacts2d', 'hud', 'Impact effects in 2D look', 'building', 'Impacts that look flat: part of the element kits rebuild.', note='"impact effects ... look really low quality in 2D".')
 
 # ---- loading
 F('ld_continue', 'loading', 'Continue shows our screen', 'ready', 'Our Curse of Alduin loading screen whenever a save loads from the main menu (Continue or Load).',
-  how='From the main menu, Continue; then Load a save.', look='Our own screen the whole time, faded off when the world is in.', note='"Loading in a save still shows the loading screens from the mod".', since=B)
+  how='From the main menu, Continue; then Load a save.', look='Our own screen the whole time, faded off when the world is in.', note='"Loading in a save still shows the loading screens from the mod".', since=B0)
 F('ld_doors', 'loading', 'No loading screens for doors', 'done', 'Doors load in about a second: no screen needed (your note).')
 F('ld_newchar', 'loading', 'New character flow', 'done', 'One smooth start, menu music from launch.', since='5865977')
 
@@ -194,7 +218,7 @@ F('wo_mods', 'world', 'The 20 mods off', 'done', 'No missing masters; the world 
 
 # ---- stability
 F('st_r20', 'stability', 'Round 20 crash', 'ready', 'The game fell 0.6 s after a Bonereaper kill raised a Frost Brute. The raise is fixed; Crash Logger is installed to catch anything else.',
-  how='Play to round 20, heavy attacks on big crowds.', look='No crash. If one comes, Crash Logger writes a log I can read.', note='"I crashed on round 20 when I did a heavy attack on a crowd using one of the tablet scythes".', since=B)
+  how='Play to round 20, heavy attacks on big crowds.', look='No crash. If one comes, Crash Logger writes a log I can read.', note='"I crashed on round 20 when I did a heavy attack on a crowd using one of the tablet scythes".', since=B0)
 
 
 # ------------------------------------------------------------------------------------------------ the class weapons: one model each (his pick)

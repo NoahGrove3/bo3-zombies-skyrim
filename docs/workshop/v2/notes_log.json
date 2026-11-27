@@ -1,5 +1,60 @@
 [
  {
+  "build": "Your final picks, Nov 27 (build 7eb037f)",
+  "date": "2026-11-27",
+  "notes": [
+   {
+    "when": "2026-11-27 02:15",
+    "where": "wonders/mutagen",
+    "note": "got the mutating strike make it cycle through the flask effects like the block does.",
+    "choice": "change",
+    "done": "Built: each strike's mutation bursts a second later as the next flask's element in turn (fire, frost, shock, acid, holy water, voidglass)."
+   },
+   {
+    "when": "2026-11-27 02:15",
+    "where": "wonders/soulcaller",
+    "note": "the spectral cat should spawn from skyrims purple portals. and the beam should cost mana.",
+    "choice": "change",
+    "done": "Built: the beam drains magicka while it runs and stops when there's none; Skyrim's purple conjuring portal opens first and the cat steps out of it."
+   },
+   {
+    "when": "2026-11-27 02:15",
+    "where": "flasks/philosopher",
+    "note": "philosphers flask is old and was removed a while ago.",
+    "choice": "",
+    "done": "The Philosopher's Flask is gone from the Flasks tab."
+   },
+   {
+    "when": "2026-11-27 02:21",
+    "where": "chat/alchemist moves",
+    "note": "(asked) Reaping Arc, Shadowfire Eruption, Philosopher's Edge",
+    "choice": "",
+    "done": "Built as the Alchemist's Light, Heavy and Special."
+   },
+   {
+    "when": "2026-11-27 02:21",
+    "where": "chat/bars",
+    "note": "(asked, the bars marked Change) Hide when full, keep the current health magika and stamina bars look",
+    "choice": "",
+    "done": "Built: the plate keeps its look and fades out once all three bars have been full for two seconds; it comes back when any drops or you shout."
+   },
+   {
+    "when": "2026-11-27 01:30",
+    "where": "test/mv_slide",
+    "note": "(failed) now it wont slide at all and my sneak eye pops up while im standing.",
+    "choice": "fail",
+    "done": "Fixed: Skyrim took the crouch first, so the sprint had already ended and you were sneaking; now how you were a moment before the press counts, and the slide stands you up after."
+   },
+   {
+    "when": "2026-11-27 01:52",
+    "where": "test/fl_holy",
+    "note": "(failed) there was a lingering hue after the beam disappears",
+    "choice": "fail",
+    "done": "Fixed: its light cut back, and its motes and burst end with the beam."
+   }
+  ]
+ },
+ {
   "build": "Workshop, Nov 27 (wonders and moves)",
   "date": "2026-11-27",
   "notes": [
@@ -58,20 +113,6 @@
     "note": "and make sure the weapons preview isnt stretched",
     "choice": "",
     "done": "Every 3D preview is now cut to its own frame's shape instead of squeezed into it, and the weapons are fitted to what the frame shows."
-   },
-   {
-    "when": "2026-11-27 01:52",
-    "where": "test/fl_holy",
-    "note": "(failed) there was a lingering hue after the beam disappears",
-    "choice": "fail",
-    "done": "Queued for the next game build: Holy Water's light cleared with its beam."
-   },
-   {
-    "when": "2026-11-27 01:30",
-    "where": "test/mv_slide",
-    "note": "(failed) now it wont slide at all and my sneak eye pops up while im standing.",
-    "choice": "fail",
-    "done": "Queued for the next game build: the slide fixed, and no sneak eye while standing."
    },
    {
     "when": "2026-11-27 01:58",

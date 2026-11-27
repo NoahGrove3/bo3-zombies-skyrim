@@ -10,7 +10,6 @@ const FLASKS = [
   { id: 'poison', name: 'Acid Flask', el: 'poison', what: 'Bursts in acid that eats the dead (6 cities).' },
   { id: 'sun', name: 'Holy Water', el: 'holy', what: 'Bursts in golden light; the dead burn in it (8 cities).' },
   { id: 'blood', name: 'Voidglass Flask', el: 'blood', what: 'What it drains comes back to you (9 cities).' },
-  { id: 'philosopher', name: 'Philosopher\'s Flask', el: 'holy', what: 'Its gold mist turns the dead to statues.' },
 ];
 const FLASK_LIQUID = [
   { id: 'calm', name: 'Calm glow', about: 'The potion glows softly from inside, slowly turning.' },

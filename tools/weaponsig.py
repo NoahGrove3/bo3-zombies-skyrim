@@ -31,7 +31,12 @@ SIG = {
 
 def sig_key(key):
     """the art key's signature key: a class weapon's tier models share their look key's; the left claws their right's"""
-    if key.startswith('cls_'): return key.rsplit('_', 1)[-1] if not key.split('_', 2)[-1].startswith('ss_') else 'ss_' + key.rsplit('_', 1)[-1]
+    # (Nov 27 final: a Legendary's layered variant "_L", Destruction's Tier I look "carian1", the javelin in each element)
+    if key.endswith('_L'): key = key[:-2]
+    if key.startswith('javelin_'): return 'javelin'
+    if key.startswith('cls_'):
+        k = key.rsplit('_', 1)[-1] if not key.split('_', 2)[-1].startswith('ss_') else 'ss_' + key.rsplit('_', 1)[-1]
+        return 'carian' if k == 'carian1' else k
     return key[:-2] if key.endswith('_l') else key
 
 

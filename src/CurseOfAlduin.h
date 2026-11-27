@@ -384,6 +384,7 @@ namespace coa
 	namespace Classes
 	{
 		int HandLookKey();     // (Noah, 2026-11-24) the look the class weapon in your right hand wears, or -1 (src/WeaponFx.cpp)
+		int JavelinLook(const RE::TESForm* a_w, bool a_left);   // the Wyrmspine Javelin's look by its other hand's element (0 fire 1 frost 2 shock), or -1 if not it
 		bool HeldCard(std::string& a_title, std::string& a_text);   // the weapon in hand's card (its name, what it does at its tier)
 		void TickItemCard();   // (Noah: the swords' item cards "way too long" - each tier's card tells only what it is and what that tier does; the charge bar hidden)
 		int              Get();            // -1 none chosen yet

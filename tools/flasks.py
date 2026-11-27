@@ -463,6 +463,23 @@ def build(el, tex):
         for X, Y, uu, vv in ((-hs, hs, 0, 0), (hs, hs, cu, 0), (hs, -hs, cu, cv), (-hs, -hs, 0, cv)):
             L.append(f'v {X:.2f} {Y:.2f} 0 {uu} {vv} 1 1 1 1')
         L += ['t 0 1 2', 't 0 2 3']
+    # (Noah, Nov 27 final - the flasks: "swirling glowing potion liquid") a skin of light just over the liquid, its swirls turning
+    # round and climbing through it (a greyscale swirl through the element's palette, scrolled), so the potion moves in the glass
+    SWIRL_PAL = {'fire': 'orange', 'frost': 'iceblue', 'shock': 'shockv', 'poison': 'poison', 'sun': 'gold', 'blood': 'red', 'philosopher': 'gold'}
+    liq = [g for g in M.groups if g[0] == 'Liquid']
+    if liq:
+        Vs, Fs, base = [], [], 0
+        for g in liq:
+            Vg, Ng, Fg = g[2], g[3], g[5]
+            Vs.append(Vg + Ng * 0.06); Fs.append(Fg + base); base += len(Vg)
+        V = np.vstack(Vs); F = np.vstack(Fs)
+        y0, y1 = V[:, 1].min(), V[:, 1].max()
+        L.append(f'shape swirl tex=CurseOfAlduin\\wfx\\sk_swirls.dds color=1,1,1,1 scale={1.5 if el != "frost" else 1.3} blend=add '
+                 f'palette=CurseOfAlduin\\wfx\\pal_{SWIRL_PAL[el]}.dds vscroll=0.30 parent=FlaskSpin')
+        for x, y, z in V:
+            u = (math.atan2(z, x) / (2 * math.pi) + 0.5) * 2.0 + (y - y0) / max(0.01, y1 - y0) * 0.6   # (the bands wound round it, rising)
+            L.append(f'v {x:.3f} {y:.3f} {z:.3f} {u:.4f} {(y - y0) / max(0.01, y1 - y0) * 1.2:.4f} 1 1 1 0.85')
+        L += [f't {a} {b} {c}' for a, b, c in F]
     (WORK / 'fx.job').write_text('\n'.join(realfire.fix(L, 'fire')) + '\n')
     r = subprocess.run([str(TOOLS / 'fxwrite'), str(WORK / 'fx.job')], capture_output=True, text=True)
     if r.returncode or 'no node' in r.stderr: print(r.stdout, r.stderr); raise SystemExit('fxwrite failed')

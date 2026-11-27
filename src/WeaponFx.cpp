@@ -46,6 +46,11 @@ namespace coa::WeaponFx
 				}
 				logger::info("weaponfx: {} weapons have their own effect art", g_arts.size());
 			}
+			// (Noah, Nov 27: the javelin's look follows the spell in its other hand, like the Spellsword's) its art in that element
+			if (const int jl = Classes::JavelinLook(a_w, a_left); jl >= 0) {
+				static constexpr std::string_view kJav[3] = { "CurseOfAlduin\\wfx\\javelin_fire.nif", "CurseOfAlduin\\wfx\\javelin_frost.nif", "CurseOfAlduin\\wfx\\javelin_shock.nif" };
+				return kJav[jl];
+			}
 			if (const auto it = g_arts.find(a_w->GetFormID()); it != g_arts.end()) return it->second;   // (in either hand: a one-handed weapon of ours in the left wears its look there too)
 			// a class weapon: its model changes at every tier, and its look with the tier (and the Spellbound Rapier's with the
 			// spell in the other hand) - the art fitted to the model it has now, in the look it wears now
