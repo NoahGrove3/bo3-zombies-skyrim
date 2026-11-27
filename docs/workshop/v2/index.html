@@ -247,7 +247,10 @@ textarea:focus { outline: 2px solid var(--ember); outline-offset: 1px; }
 .abcol { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: grid; gap: 10px; min-width: 0; }
 .abcol canvas { width: 100%; aspect-ratio: 2 / 1; display: block; border-radius: 8px; background: #05070a; }
 .abopts { margin: 0; } .abopts .chip[data-on="true"] { outline: 2px solid var(--ember); outline-offset: 1px; } .abopts .chip[aria-pressed="true"] { background: var(--gold-soft); border-color: var(--gold); }
-.kitmark { color: var(--gold); font-size: 11px; } .abnow { font-size: 13px; margin: 0; }
+.kitmark { color: var(--gold); font-size: 11px; }
+.mvopts { display: grid; gap: 6px; } .mvopt { text-align: left; display: grid; gap: 2px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel2); color: var(--fg); cursor: pointer; font: inherit; }
+.mvopt b { font: 700 15px 'Barlow Condensed', sans-serif; letter-spacing: .06em; text-transform: uppercase; } .mvopt span { font-size: 13px; color: var(--muted); }
+.mvopt[data-on="true"] { border-color: var(--ember); box-shadow: 0 0 0 1px var(--ember); } .mvopt[aria-pressed="true"] { background: var(--gold-soft); border-color: var(--gold); } .mvopt[aria-pressed="true"] b::after { content: '  - in use'; color: var(--gold); font-size: 12px; } .abnow { font-size: 13px; margin: 0; }
 .rar { margin-left: auto; font: 700 11px 'Barlow Condensed', sans-serif; letter-spacing: .14em; text-transform: uppercase; color: var(--r); border: 1px solid var(--r); padding: 1px 7px; border-radius: 999px; }
 .rargrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 12px; }
 .rarcol { background: var(--panel); border: 1px solid var(--line); border-top: 3px solid var(--r); border-radius: 12px; padding: 12px; display: grid; gap: 8px; align-content: start; }

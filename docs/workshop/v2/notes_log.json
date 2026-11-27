@@ -158,5 +158,102 @@
     "done": "12 more ideas added to the Tablet tab, sorted by rarity."
    }
   ]
+ },
+ {
+  "build": "Install 3938d82, Nov 27",
+  "date": "2026-11-27",
+  "notes": [
+   {
+    "when": "2026-11-27",
+    "where": "abil/destruction",
+    "note": "how does the wand charge an attack?",
+    "choice": "",
+    "done": "Answered: it didn't - holding fired a bolt every 0.5 s. Your pick: a tap fires a bolt (0.5 s between shots), holding channels a beam. The beam designs are on the Destruction page to pick."
+   },
+   {
+    "when": "2026-11-27",
+    "where": "kits/earth",
+    "note": "I dont want to include the earth element.",
+    "choice": "",
+    "done": "Earth removed. The Giant's Toe Club now uses Wind, the Spriggan's Heartroot Poison."
+   },
+   {
+    "when": "2026-11-27",
+    "where": "kits/wind",
+    "note": "This just looks like black and white colors it doesnt look like wind.",
+    "choice": "",
+    "done": "Wind remade: swirling pale-blue gusts, racing streaks, dust and leaves torn up."
+   },
+   {
+    "when": "2026-11-27",
+    "where": "lore/trials",
+    "note": "rename the first one to Slay the Undead",
+    "choice": "",
+    "done": "Renamed in the game (the trial, the Codex, the altar's guide) and here."
+   },
+   {
+    "when": "2026-11-27",
+    "where": "tierlook/alchemist",
+    "note": "the alchemist smoke looks like the effect end is a hard cut so it looks like a box",
+    "choice": "",
+    "done": "Every 3D volume now thins to nothing before its edges - no box edge anywhere."
+   },
+   {
+    "when": "2026-11-27",
+    "where": "tierlook/spellsword",
+    "note": "make sure the effect is only on the blade part of the sword not the handle.",
+    "choice": "",
+    "done": "In the game the rapier's look is fitted to the blade only (from 14 units up the model); the workshop preview follows the same."
+   },
+   {
+    "when": "2026-11-27",
+    "where": "uiscreens/classpick",
+    "note": "keep this screen as it is in my current game but make the text Gold like in this preview.",
+    "choice": "",
+    "done": "Done in the game: names, motto and words in Ember Tally's gold; the screen otherwise as it was."
+   },
+   {
+    "when": "2026-11-27",
+    "where": "uiscreens/co_score",
+    "note": "the headshots dont make sense for the loot pool I have. other than that I approve",
+    "choice": "",
+    "done": "Headshots replaced by Trials (the trial steps each player did) - goes in with the co-op HUD."
+   },
+   {
+    "when": "2026-11-27",
+    "where": "uiscreens/codex",
+    "note": "keep the current CoA Codex UI",
+    "choice": "",
+    "done": "Kept as it is."
+   },
+   {
+    "when": "2026-11-27",
+    "where": "uiscreens/inv_new",
+    "note": "I want the inventory models as well for the items and the flasks would be in the weapons tab not its own. I also want the model cards like how it looks in my game right now.",
+    "choice": "",
+    "done": "Planned for the remade inventory: the 3D item model and your current item card kept, flasks under Weapons. Built in the menus build."
+   },
+   {
+    "when": "2026-11-27",
+    "where": "uiscreens/mag_new",
+    "note": "I want the inventory models too and the item cards like how it is now.",
+    "choice": "",
+    "done": "Same for Magic: the spell's model and your current card kept."
+   },
+   {
+    "when": "2026-11-27",
+    "where": "uiscreens/setup",
+    "note": "keep the current UI in my game the one we made with the art boxes.",
+    "choice": "",
+    "done": "Kept as it is."
+   },
+   {
+    "when": "2026-11-27",
+    "where": "uiscreens/thuum",
+    "note": "this would only be for the dragon glider shout and the shout that makes everyone tiny.",
+    "choice": "",
+    "done": "The Thu'um tab will hold only Dragon's Updraft and Tiny Terrors (built with the altar menu)."
+   }
+  ]
  }
 ]

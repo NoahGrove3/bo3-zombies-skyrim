@@ -36,7 +36,9 @@ const ELEM = {
   blood: { c: ['#140000', '#9a0010', '#ff5a48'], smoke: true, rise: 0.2, nsc: 2.0, spark: 'drip', light: '#c0182a', tint: [.9, .08, .05] },
   spirit: { c: ['#0a1828', '#9fd2ff', '#ffffff'], rise: 0.7, nsc: 1.4, spark: 'wisp', light: '#dfe8ff', tint: [.75, .85, 1] },
   earth: { c: ['#1a1008', '#7a5a34', '#ffcf80'], smoke: true, rise: 0.25, nsc: 1.7, spark: 'grit', rocks: true, light: '#b08a5a', tint: [.7, .55, .35] },
-  wind: { c: ['#1a242c', '#c8dcea', '#ffffff'], smoke: true, rise: 0.1, nsc: 1.3, spark: 'streak', swirl: true, light: '#cfe3f2', tint: [.85, .9, 1] },
+  // (Noah: the old Wind "just looks like black and white colors - it doesn't look like wind") remade: pale sky-blue gusts that swirl,
+  // long streaks racing round them, dust and leaves kicked up from the ground
+  wind: { c: ['#163042', '#8fcbe8', '#f4fcff'], smoke: true, rise: 0.35, nsc: 1.1, spark: 'streak', swirl: true, dust: true, light: '#bfe6ff', tint: [.75, .9, 1] },
 };
 // the colours a weapon look is drawn in (viewer.js COLS keys) -> the element it moves like
 const LOOK_ELEM = { shadow: 'shadowfire', purple: 'shadowfire', gold: 'holy', white: 'holy', blue: 'arcane', carian: 'arcane', iceblue: 'frost', orange: 'fire', red: 'fire',
@@ -67,6 +69,8 @@ float dens3(vec3 p, out float heat){
   q.xz = mat2(cos(a), -sin(a), sin(a), cos(a)) * q.xz;
   float n = fbm(q * nsc + vec3(seed, -time * rise + seed * .7, seed * 1.3));
   float d = clamp(b + n * namp - cut, 0., 1.);
+  // (Noah: "the effect end is a hard cut so it looks like a box") every volume thins to nothing before its box's walls
+  float wall = 1. - max(max(abs(p.x), abs(p.y)), abs(p.z)); d *= smoothstep(0., .22, wall);
   heat = clamp(d * 1.7 * (1. - h * .55 * step(.5, shape) * step(shape, 1.5)) + .15 * b, 0., 1.);
   return d;
 }
@@ -86,7 +90,7 @@ void main(){
       vec3 col;
       if (smoke > .5) col = mix(c0, c1, smoothstep(0., .8, d)) + c2 * pow(heat, 3.) * .6;
       else if (dark > .5) col = mix(vec3(0.), ramp(heat), smoothstep(.15, .9, 1. - d)) * 1.6 + c2 * pow(heat, 5.) * 1.2;
-      else col = ramp(heat) * (.35 + heat * 2.6);
+      else col = ramp(heat) * (.3 + heat * 1.9);
       acc += T * a * col; T *= 1. - a;
       if (T < .02) break;
     }
@@ -283,9 +287,9 @@ function makeEffect(el, role, opt, o = {}) {
   const fx = { g, dur: 2.4, f: null, light: null, lightAt: new THREE.Vector3(at[0], at[1] + 60 * S, at[2]), el, react: o.react };
   const add = x => (g.add(x), x);
   const P = add(Particles({ el, cap: 1400, psz: 3.2, grav: [0, E.rise > .5 ? 40 : E.spark === 'drip' || E.spark === 'grit' ? -520 : E.spark === 'snow' ? -60 : 0, 0], turb: E.spark === 'wisp' ? 60 : 18, gain: 2.4 }));
-  const Pa = E.smoke || E.spark === 'drip' || E.spark === 'grit' ? add(Particles({ el, cap: 600, psz: 2.6, grav: [0, -620, 0], alpha: true, gain: 1, c: [E.c[0], E.c[1], E.c[1]] })) : null;
+  const Pa = E.smoke || E.spark === 'drip' || E.spark === 'grit' ? add(Particles({ el, cap: 600, psz: 2.6, grav: [0, E.dust ? -120 : -620, 0], turb: E.dust ? 120 : 0, alpha: true, gain: 1, c: E.dust ? ['#2a2216', '#6e5a3c', '#8a7a52'] : [E.c[0], E.c[1], E.c[1]] })) : null;
   const vols = [];
-  const vol = (oo, place, f) => { const v = add(Volume(Object.assign({ el, seed: seed + vols.length * 3.1 }, oo))); vols.push({ v, f }); place(v); return v; };
+  const vol = (oo, place, f) => { const v = add(Volume(Object.assign({ el, seed: seed + vols.length * 3.1 }, E.swirl && !oo.swirl ? { swirl: 1.6, namp: 1.3, cut: .3 } : {}, oo))); vols.push({ v, f }); place(v); return v; };
   let bolts = null, bl = null, shards = [], rocks = [], disc = null;
   const sparks = (n, p, oo) => burstInto(E.spark === 'drip' || E.spark === 'grit' ? (Pa || P) : P, n, p, Object.assign({ kind: E.spark === 'spark' || E.spark === 'streak' ? 1 : E.spark === 'drip' || E.spark === 'grit' || E.spark === 'snow' ? 3 : 0 }, oo));
   const y = at[1];
@@ -443,11 +447,12 @@ function makeEffect(el, role, opt, o = {}) {
     parts.push(t => { m.uniforms.k.value = env(t, (t0 || 0) + .05, (t0 || 0) + .2, fx.dur - .6, fx.dur); });
   }
   (D[role + ':' + opt] || D['impact:core'])();
+  if (E.dust && Pa) for (let i = 0; i < 160; i++) { const a = Math.random() * 6.283, r = 40 + Math.random() * 160 * S; Pa.add1([at[0] + Math.cos(a) * r, 4, at[2] + Math.sin(a) * r], [-Math.sin(a) * 300, 120 + Math.random() * 200, Math.cos(a) * 300], Math.random() * 1.2, 1.4, 5 * S, 3 * S, .8, 3); }
   if (bl) { bolts = add(Bolts({ el, seed, width: 5 * S })); }
   const c0 = [at[0], y + H, at[2]];
   fx.f = t => {
     P.u.time.value = t; if (Pa) Pa.u.time.value = t;
-    for (const { v, f } of vols) { v.u.time.value = t + v.u.seed.value; f(v, t); v.visible = v.u.life.value > .003; }
+    for (const { v, f } of vols) { v.u.time.value = t + v.u.seed.value; f(v, t); v.visible = v.u.life.value > .003; if (v.position.y - v.scale.y < 2) v.position.y = v.scale.y + 2; }   // (never sunk into the ground)
     for (const p of parts) p(t);
     for (const sh of shards) { const k = ease((t - sh.t0) / .18), die = env(t, sh.t0, sh.t0 + .01, sh.die, sh.die + .5); sh.s.visible = t > sh.t0 && die > 0; sh.s.scale.set(sh.w * (.6 + .4 * k), sh.h * k * die, sh.w * (.6 + .4 * k)); }
     for (const r of rocks) {

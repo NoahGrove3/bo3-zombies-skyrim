@@ -332,57 +332,54 @@ function paintClass(rebuildTiers) {
   const tn = $('[data-note="tiers"]', tiers); if (tn && document.activeElement !== tn) tn.value = picks.note || '';
 }
 
-// ---- the class weapon's abilities, built from its element's kit, shown in action (you swinging at the dead)
-const ROLE_N = { impact: 'Impact', burst: 'Burst', ground: 'Ground', above: 'From above' };
+// ---- each class's own moves (Nov 27: "Own moves, like the Tablet"): a Light, a Heavy and a Special only that class has, each with
+// three designs to pick from, shown in action - you in the class's set, holding your model, against the night's dead
 const ABVIEWS = {};
-function abilEl(c) { const a = D.abil[c.id], p = DB.get('abil', c.id) || {}; return a.els.includes(p.el) ? p.el : a.els[0]; }
+function abilEl(c) { const m = D.moves[c.id], p = DB.get('abil', c.id) || {}; return (m.els || [m.el]).includes(p.el) ? p.el : m.el; }
 function drawAbil(c, key, look) {
-  const a = D.abil[c.id], box = $('#abil'); if (!box || !a) return;
+  const M = D.moves[c.id], box = $('#abil'); if (!box || !M) return;
   const el = abilEl(c), kit = D.kits.find(k => k.id === el);
-  const optsFor = roles => roles.flatMap(r => kit.parts.find(p => p.id === r).opts.map(o => ({ v: r + ':' + o.id, n: (r === 'impact' ? '' : ROLE_N[r] + ': ') + o.label, about: o.about })));
-  box.innerHTML = `<h3 class="sub">3. Its abilities</h3><p class="hint">Made here, from the ${esc(kit.name)} kit: you (a Nord in the ${esc(c.name)}'s set, holding this model in your Tier III look) strike the night's own dead, and they react the way the game makes them. Click an option to watch it, then Use it. Your kit's own pick for that part is marked.</p>
-${a.els.length > 1 ? `<div class="chips" id="abel">${a.els.map(e => { const k = D.kits.find(x => x.id === e); return `<button class="chip" data-abel="${e}" aria-pressed="${e === el}"><span class="dot" style="background:${k.col}"></span>${esc(k.name)}</button>`; }).join('')}<span class="muted" style="align-self:center">The rapier follows the spell in your other hand: one ability per element.</span></div>` : ''}
-<div class="abgrid">${['light', 'heavy'].map(w => { const ab = a[w]; return `<div class="abcol" data-ab="${w}"><div class="classhead"><h4 style="font-size:18px">${w === 'light' ? 'Light attack' : 'Heavy attack'}</h4><span>${esc(ab.what)}</span></div>
-<canvas aria-label="${w} attack, playing"></canvas>
-<div class="chips abopts">${optsFor(ab.roles).map(o => `<button class="chip" data-abo="${o.v}" title="${esc(o.about)}">${esc(o.n)}<span class="kitmark" data-km="${o.v}"></span></button>`).join('')}</div>
-<p class="muted abnow"></p><div class="row"><button class="btn pass" data-abuse="${w}" aria-pressed="false">Use this</button><span class="saved" data-sv="ab_${w}"></span></div></div>`; }).join('')}</div>
-<textarea rows="2" data-note="abil" placeholder="Anything about the ${esc(c.name)}'s abilities (optional)" aria-label="Note on the ${esc(c.name)} abilities" style="margin-top:12px"></textarea><span class="saved" data-sv="abil"></span>`;
-  for (const w of ['light', 'heavy']) {
+  box.innerHTML = `<h3 class="sub">3. Its own moves</h3><p class="hint">${esc(M.why)} Each move is the ${esc(c.name)}'s alone; your ${esc(kit.name)} kit decides how it looks, and each tier makes it stronger. Click a design to watch it, then Use it.</p>
+${(M.els || []).length > 1 ? `<div class="chips" id="abel">${M.els.map(e => { const k = D.kits.find(x => x.id === e); return `<button class="chip" data-abel="${e}" aria-pressed="${e === el}"><span class="dot" style="background:${k.col}"></span>${esc(k.name)}</button>`; }).join('')}<span class="muted" style="align-self:center">See it in each element: the rapier follows the spell in your other hand.</span></div>` : ''}
+<div class="abgrid">${M.moves.map(([w, wn, opts]) => `<div class="abcol" data-ab="${w}"><div class="classhead"><h4 style="font-size:18px">${esc(wn)}</h4></div>
+<canvas aria-label="${esc(wn)}, playing"></canvas>
+<div class="mvopts">${opts.map(([id, n, what]) => `<button class="mvopt" data-mv="${id}"><b>${esc(n)}</b><span>${esc(what)}</span></button>`).join('')}</div>
+<div class="row"><button class="btn pass" data-abuse="${w}" aria-pressed="false">Use this</button><span class="saved" data-sv="ab_${w}"></span></div></div>`).join('')}</div>
+<textarea rows="2" data-note="abil" placeholder="Anything about the ${esc(c.name)}'s moves (optional)" aria-label="Note on the ${esc(c.name)} moves" style="margin-top:12px"></textarea><span class="saved" data-sv="abil"></span>`;
+  const p = DB.get('abil', c.id) || {};
+  for (const [w, , opts] of M.moves) {
     const col = $(`.abcol[data-ab="${w}"]`, box), cv = $('canvas', col);
-    if (!GL.ok) continue;
-    const v = actionView(cv); VIEWS.push(v); ABVIEWS[w] = v; v.setPlayer(c.id, key, look);
-    const p = DB.get('abil', c.id) || {}, saved = (p[el] || {})[w], first = saved || (a[w].roles[0] + ':' + kit.parts.find(x => x.id === a[w].roles[0]).opts[0].id);
-    playAbil(c, w, first);
+    if (GL.ok) { const v = actionView(cv); VIEWS.push(v); ABVIEWS[w] = v; v.setPlayer(c.id, key, look); }
+    playAbil(c, w, p['mv_' + w] || opts[0][0]);
   }
   box.onclick = async e => {
     const eb = e.target.closest('button[data-abel]');
     if (eb) { const prev = DB.get('abil', c.id) || {}; await saveTo('abil', c.id, Object.assign({}, prev, { el: eb.dataset.abel }), $('[data-sv="abil"]', box)); VIEWS.filter(v => v.cv.closest('#abil')).forEach(v => { GL.remove(v); VIEWS.splice(VIEWS.indexOf(v), 1); }); drawAbil(c, key, look); return; }
-    const ob = e.target.closest('button[data-abo]');
-    if (ob) { playAbil(c, ob.closest('.abcol').dataset.ab, ob.dataset.abo); return; }
+    const ob = e.target.closest('button[data-mv]');
+    if (ob) { playAbil(c, ob.closest('.abcol').dataset.ab, ob.dataset.mv); return; }
     const ub = e.target.closest('button[data-abuse]');
-    if (ub) { const w = ub.dataset.abuse, colEl = ub.closest('.abcol'), cur = colEl.dataset.playing, prev = DB.get('abil', c.id) || {}, elp = Object.assign({}, prev[el] || {});
-      elp[w] = elp[w] === cur ? '' : cur; await saveTo('abil', c.id, Object.assign({}, prev, { [el]: elp }), $(`[data-sv="ab_${w}"]`, box)); paintAbil(c); }
+    if (ub) { const w = ub.dataset.abuse, cur = ub.closest('.abcol').dataset.playing, prev = DB.get('abil', c.id) || {};
+      await saveTo('abil', c.id, Object.assign({}, prev, { ['mv_' + w]: prev['mv_' + w] === cur ? '' : cur }), $(`[data-sv="ab_${w}"]`, box)); paintAbil(c); }
   };
   box.onchange = async e => { if (e.target.dataset.note !== 'abil') return; const prev = DB.get('abil', c.id) || {}; await saveTo('abil', c.id, Object.assign({}, prev, { note: e.target.value.slice(0, 2000) }), $('[data-sv="abil"]', box)); };
   paintAbil(c);
 }
-function playAbil(c, w, val) {
-  const a = D.abil[c.id], el = abilEl(c), [role, opt] = val.split(':'), box = $('#abil'); if (!box) return;
-  const col = $(`.abcol[data-ab="${w}"]`, box); col.dataset.playing = val;
-  $$('button[data-abo]', col).forEach(b => b.dataset.on = String(b.dataset.abo === val));
-  const kit = D.kits.find(k => k.id === el), o = kit.parts.find(p => p.id === role).opts.find(x => x.id === opt);
-  $('.abnow', col).textContent = (ROLE_N[role] + ': ' + o.label + ' - ' + o.about);
-  const v = ABVIEWS[w]; if (v) v.ability({ el, act: a[w].act, cast: !!a[w].cast, role, opt });
+function playAbil(c, w, id) {
+  const M = D.moves[c.id], box = $('#abil'); if (!box) return;
+  const col = $(`.abcol[data-ab="${w}"]`, box), opts = M.moves.find(m => m[0] === w)[2], o = opts.find(x => x[0] === id) || opts[0];
+  col.dataset.playing = o[0];
+  $$('button[data-mv]', col).forEach(b => b.dataset.on = String(b.dataset.mv === o[0]));
+  const [role, opt] = o[3].split(':'), act = o[4];
+  const v = ABVIEWS[w]; if (v) v.ability({ el: abilEl(c), act: act === 'hold' ? 'cast' : act, cast: act === 'cast' || act === 'hold', beam: act === 'hold', role, opt });
   paintAbil(c);
 }
 function paintAbil(c) {
-  const box = $('#abil'); if (!box || !D.abil[c.id]) return;
-  const el = abilEl(c), p = DB.get('abil', c.id) || {}, kp = DB.get('kits', el) || {};
-  for (const w of ['light', 'heavy']) {
+  const box = $('#abil'); if (!box || !D.moves[c.id]) return;
+  const p = DB.get('abil', c.id) || {};
+  for (const [w] of D.moves[c.id].moves) {
     const col = $(`.abcol[data-ab="${w}"]`, box); if (!col) continue;
-    const saved = (p[el] || {})[w];
-    $$('button[data-abo]', col).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.abo === saved)));
-    $$('[data-km]', col).forEach(m => { const [r, o] = m.dataset.km.split(':'); m.textContent = kp['p_' + r] === o ? ' (kit pick)' : ''; });
+    const saved = p['mv_' + w];
+    $$('button[data-mv]', col).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mv === saved)));
     const ub = $('button[data-abuse]', col), on = saved && saved === col.dataset.playing; ub.setAttribute('aria-pressed', String(!!on)); ub.textContent = on ? 'In use' : 'Use this';
   }
   const ta = $('[data-note="abil"]', box); if (ta && document.activeElement !== ta) ta.value = p.note || '';

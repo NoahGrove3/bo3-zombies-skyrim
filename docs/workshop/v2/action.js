@@ -42,15 +42,34 @@ function actionView(cv) {
     REACT.__ab = rows;
     rx = zReactions('__ab', new THREE.Vector3(at[0], 0, at[2]), spots, SPOT2.wielder, 1);
     // a bolt from the hand for a cast
-    if (proj) { scene.remove(proj.g); proj = null; }
-    if (sp.cast) {
+    if (beam) {
+      const k = env(tt, beam.on[0], beam.on[0] + .15, beam.on[1] - .2, beam.on[1]), grow = Math.min(1, Math.max(0, (tt - beam.on[0]) / 1.2));
+      beam.g.visible = k > .01;
+      for (const [x, w] of [[beam.core, 10 + 16 * grow], [beam.halo, 26 + 30 * grow]]) { x.u.life.value = k; x.u.time.value = t; x.scale.x = x.scale.z = w; }
+      beam.bolts.at(t, [[[beam.from.x, beam.from.y, beam.from.z], [beam.to.x, beam.to.y, beam.to.z], .12]], k);
+    }
+    if (proj && !spec.beam) { scene.remove(proj.g); proj = null; }
+    if (sp.cast && !sp.beam) {
       const g = new THREE.Group(), core = Volume({ el: sp.el, shape: 0, sp: [.9, 0, 0, 0], dens: 12, cut: .05 }), P = Particles({ el: sp.el, cap: 300, gain: 2.4 });
       core.scale.setScalar(16); g.add(core); g.add(P);
       for (let i = 0; i < 300; i++) { const k = i / 300, t0 = .28 + k * (T - .28); P.add1([0, 0, 0], [0, 0, 0], t0, .35, 5, 1, 0, 0); }
       proj = { g, core, P, T }; scene.add(g);
     }
+    // a held beam (the wand's hold): a column of raw light from the tip to the one it holds, wider and hotter the longer it's held,
+    // with lightning crawling along it
+    if (beam) { scene.remove(beam.g); beam = null; }
+    if (sp.beam) {
+      const g = new THREE.Group(), from = SPOT2.wielder.clone().add(new THREE.Vector3(30, 120, -20)), to = new THREE.Vector3(SPOT2.t0.x, 80, SPOT2.t0.z);
+      const dir = to.clone().sub(from), L = dir.length(); dir.normalize();
+      const core = Volume({ el: sp.el, shape: 4, sp: [.18, .18, 0, 0], dens: 14, cut: 0, rise: 6, gain: 1.6 }), halo = Volume({ el: sp.el, shape: 4, sp: [.55, .55, 0, 0], dens: 3, cut: .25, rise: 4, gain: .8 });
+      for (const x of [core, halo]) { x.position.copy(from).addScaledVector(dir, L / 2); x.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir); x.scale.set(22, L / 2, 22); g.add(x); }
+      const bolts = Bolts({ el: sp.el === 'arcane' ? 'arcane' : sp.el, width: 3, gain: 2.2 }); g.add(bolts);
+      beam = { g, core, halo, bolts, from, to, on: [.3, T + 1.3] }; scene.add(g);
+      full.dur = Math.max(full.dur, T + 1.8);
+    }
     v.play(full);
   };
+  let beam = null;
   const base = v.tick;
   const from = new THREE.Vector3(), to = new THREE.Vector3();
   v.tick = t => {

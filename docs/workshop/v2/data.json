@@ -1,9 +1,9 @@
 {
  "installed": {
-  "sha": "f696bbb",
-  "date": "2026-11-26",
-  "label": "Stabilization build",
-  "extra": "The nine scythes turned the right way out (installed on its own, Nov 26 20:05)"
+  "sha": "3938d82",
+  "date": "2026-11-27",
+  "label": "Your finalized workshop picks",
+  "extra": "One model per class weapon, the Tablet lineup and rarity, Fire Storm, and your fixes (installed Nov 27 01:10)"
  },
  "systems": [
   {
@@ -118,7 +118,7 @@
    "how": "Sprint for two or three seconds, then crouch. Then slide again and jump while sliding.",
    "look": "You slide at any point of a sprint (not only right after starting it). The jump carries the slide's speed forward.",
    "note": "Last time: \"can't jump out of it to carry my momentum ... only lets me slide right after a sprint\".",
-   "since": "f696bbb"
+   "since": "3938d82"
   },
   {
    "id": "mv_omni",
@@ -129,7 +129,7 @@
    "how": "Hold sprint and move sideways and back, in first person, then in third person.",
    "look": "Full sprint speed in every direction, both views.",
    "note": "",
-   "since": "f696bbb"
+   "since": "3938d82"
   },
   {
    "id": "mv_swing",
@@ -151,7 +151,7 @@
    "how": "Light and heavy hits on the dead with a sword and a greatsword.",
    "look": "No pause and no camera shake on any hit.",
    "note": "You asked: \"remove the hit pause\".",
-   "since": "f696bbb"
+   "since": "3938d82"
   },
   {
    "id": "cb_soul",
@@ -162,7 +162,7 @@
    "how": "Kill the dead with the Shadowflame Scythe and the Soulcaller.",
    "look": "No white beam rising from the bodies.",
    "note": "",
-   "since": "f696bbb"
+   "since": "3938d82"
   },
   {
    "id": "cb_ash",
@@ -173,7 +173,7 @@
    "how": "Kill the dead with fire (a fire spell, the Fire Flask).",
    "look": "They burn to a pile of ash that disappears after about 5 seconds.",
    "note": "",
-   "since": "f696bbb"
+   "since": "3938d82"
   },
   {
    "id": "cb_sounds",
@@ -224,7 +224,7 @@
    "sys": "classes",
    "t": "One model per class weapon",
    "st": "building",
-   "what": "Your picks: the Dragon Priest scythe (Alchemist), the Daedric quarterstaff (Summoner, changed Nov 26 late), the Daedric wand (Destruction), the Daedric rapier (Spellsword) - each through every tier, the tiers changing its look only.",
+   "what": "Your picks: the Dragon Priest scythe (Alchemist), the Ebony quarterstaff (Summoner), the Glass wand (Destruction), the Daedric rapier (Spellsword) - in the game now; next, our own models from Skyrim's meshes - each through every tier, the tiers changing its look only.",
    "how": "",
    "look": "",
    "note": "",
@@ -240,6 +240,61 @@
    "look": "",
    "note": "",
    "since": ""
+  },
+  {
+   "id": "nov27_models",
+   "sys": "classes",
+   "t": "One model per class weapon, in game",
+   "st": "ready",
+   "what": "The Dragon Priest scythe, the Glass wand, the Ebony quarterstaff and the Daedric rapier at every tier; your looks (Transmuted Edge, Glintstone Mist, Radiant Heads, Bare Blade) faint at Tier I and stronger each tier.",
+   "how": "Tester's Kit: each class weapon at Tier I, then III, then Legendary.",
+   "look": "The same model every tier; its glow faint at I, full at III, brightest at Legendary.",
+   "note": "",
+   "since": "3938d82"
+  },
+  {
+   "id": "nov27_tablet",
+   "sys": "tablet",
+   "t": "Tablet lineup and rarity",
+   "st": "ready",
+   "what": "Only your seven kept weapons roll (the seven cut ones never come up). Rare 60%, Epic 30%, Legendary 10% (Legendary from night 8); the glow blue, purple or gold; a Legendary win rings the bell.",
+   "how": "Roll the Tablet several times (Tester's Kit: tablet roll).",
+   "look": "Stormtalons, Rimewick and Eclipse come up purple, the rest blue; no Bloodmoon, Bonereaper, Riverstone, Silver Scythe, Talons, Wandering Star or Wyrmtooth.",
+   "note": "",
+   "since": "3938d82"
+  },
+  {
+   "id": "nov27_firestorm",
+   "sys": "spells",
+   "t": "Fire Storm replaces Immolate",
+   "st": "ready",
+   "what": "Destruction's Tier III fire spell is Skyrim's Fire Storm: a ring of flame bursting out round you.",
+   "how": "Altar: Destruction's fire ladder at Tier III; cast it among the dead.",
+   "look": "Fire Storm in the list where Immolate was; flames burst out all round you.",
+   "note": "",
+   "since": "3938d82"
+  },
+  {
+   "id": "nov27_fixes",
+   "sys": "classes",
+   "t": "Your fixes: javelin, auto-switch, class change",
+   "st": "ready",
+   "what": "The javelin is held and put away like a staff (over the shoulder, onto your back; the press only throws). Class weapons are no longer taken off and on when put away (the switching you saw). Changing class costs 20,000.",
+   "how": "Draw and put away the javelin; carry two class weapons and put one away; change class at an altar.",
+   "look": "The javelin goes onto your back with a matching animation; the weapon you held stays the one you hold; the altar asks 20,000.",
+   "note": "",
+   "since": "3938d82"
+  },
+  {
+   "id": "nov27_small",
+   "sys": "hud",
+   "t": "Gold class cards, menu music, Slay the Undead",
+   "st": "ready",
+   "what": "The class cards' words in Ember Tally gold (the screen as it was); the main menu plays Skyrim's main theme; the first trial is Slay the Undead.",
+   "how": "Start the game; open the class choice at an altar; look at a city's trials.",
+   "look": "Dragonborn at the menu; gold names and words on the class cards; \"Slay the Undead\" first.",
+   "note": "",
+   "since": "3938d82"
   },
   {
    "id": "ui_coop",
@@ -338,7 +393,7 @@
    "how": "Tester's Kit: a class weapon at Tier III; kill 30 of the dead.",
    "look": "No meter above the perks, nothing extra on a heavy.",
    "note": "",
-   "since": "f696bbb"
+   "since": "3938d82"
   },
   {
    "id": "cw_card",
@@ -349,7 +404,7 @@
    "how": "Draw any weapon.",
    "look": "Nothing drawn bottom right.",
    "note": "",
-   "since": "f696bbb"
+   "since": "3938d82"
   },
   {
    "id": "cw_ascend",
@@ -382,7 +437,7 @@
    "how": "Alchemist with the Mutagen Staff: first person, idle and swinging.",
    "look": "Your hand on the shaft, the head well above it.",
    "note": "\"my players hand clipping through the head of the staff\".",
-   "since": "f696bbb"
+   "since": "3938d82"
   },
   {
    "id": "cw_sheath",
@@ -448,7 +503,7 @@
    "how": "Throw the Fire Flask at the ground and at a group.",
    "look": "A burst of real flames.",
    "note": "\"The Fire Flask explosion should be flames\".",
-   "since": "f696bbb"
+   "since": "3938d82"
   },
   {
    "id": "fl_holy",
@@ -459,7 +514,7 @@
    "how": "Throw Holy Water.",
    "look": "Its sunbeam and burst; nothing flat and streaky left standing.",
    "note": "\"golden wind streaky effect that's stagnant and looks 2D\".",
-   "since": "f696bbb"
+   "since": "3938d82"
   },
   {
    "id": "fl_rest",
@@ -514,7 +569,7 @@
    "how": "Tester's Kit: the Tablet weapons; equip Stormtalons, Talons of Woe and Cinderclaws from the inventory.",
    "look": "A claw in each hand every time.",
    "note": "\"The test kit was only giving me one claw\".",
-   "since": "f696bbb"
+   "since": "3938d82"
   },
   {
    "id": "tb_storm",
@@ -525,7 +580,7 @@
    "how": "Stormtalons: heavy hits, and three light hits in a row.",
    "look": "Lightning on the heavy and on every 3rd hit; no ice anywhere.",
    "note": "",
-   "since": "f696bbb"
+   "since": "3938d82"
   },
   {
    "id": "tb_woe",
@@ -536,7 +591,7 @@
    "how": "Talons of Woe: light and heavy hits.",
    "look": "A red blood burst and mist on every hit, bigger on the heavy.",
    "note": "",
-   "since": "f696bbb"
+   "since": "3938d82"
   },
   {
    "id": "tb_bonereaper",
@@ -558,7 +613,7 @@
    "how": "Destruction wonder: hold to charge, look around, throw.",
    "look": "Palm towards you on the shaft; nothing floating above your head.",
    "note": "\"hand twisted ... palm facing towards the player\"; \"remove the charge element\".",
-   "since": "f696bbb"
+   "since": "3938d82"
   },
   {
    "id": "wd_bane",
@@ -569,7 +624,7 @@
    "how": "Light hits on the dead with Alduin's Bane.",
    "look": "A meteor on each hit with a fiery impact that doesn't blind you.",
    "note": "\"a massive explosion and it's blinding\".",
-   "since": "f696bbb"
+   "since": "3938d82"
   },
   {
    "id": "wd_soulcaller",
@@ -602,7 +657,7 @@
    "how": "Bonereaper (or any raise) on many kinds of the dead, rounds 15 to 20.",
    "look": "Thralls rise and fight; no crash.",
    "note": "",
-   "since": "f696bbb"
+   "since": "3938d82"
   },
   {
    "id": "ar_ssbody",
@@ -613,7 +668,7 @@
    "how": "Tester's Kit: Spellsword set at each tier; look at yourself in third person.",
    "look": "Your body under the cuirass. If the cuirass itself is missing now, tell me.",
    "note": "\"Still makes my body invisible\".",
-   "since": "f696bbb"
+   "since": "3938d82"
   },
   {
    "id": "ar_inv",
@@ -657,7 +712,7 @@
    "how": "Look at bodies and ash piles of the night's dead; then at a chest.",
    "look": "Nothing listed for the dead; chests still list their loot.",
    "note": "",
-   "since": "f696bbb"
+   "since": "3938d82"
   },
   {
    "id": "nt_float",
@@ -679,7 +734,7 @@
    "how": "Tester's Kit: night 20 (Grahzah), and a dragon in the wild.",
    "look": "Dragons come down to fight within about 20 seconds.",
    "note": "\"The dragons get stuck flying in the air\".",
-   "since": "f696bbb"
+   "since": "3938d82"
   },
   {
    "id": "dr_half",
@@ -745,7 +800,7 @@
    "how": "At a freed altar, Talk: ask a question, then click another while he answers.",
    "look": "The first answer finishes, then the second starts.",
    "note": "\"The Echo Altar's voice sometimes cuts out\".",
-   "since": "f696bbb"
+   "since": "3938d82"
   },
   {
    "id": "fd_four",
@@ -756,7 +811,7 @@
    "how": "At a freed altar, open each Talk topic.",
    "look": "Four questions at most in each list.",
    "note": "\"way too many dialogue options\".",
-   "since": "f696bbb"
+   "since": "3938d82"
   },
   {
    "id": "fd_quiet",
@@ -778,7 +833,7 @@
    "how": "Start a night; have a trial and a Skyrim quest tracked.",
    "look": "Easier to read at a glance, top left.",
    "note": "\"Make it larger as well as the quests under it\".",
-   "since": "f696bbb"
+   "since": "3938d82"
   },
   {
    "id": "hd_banner",
@@ -811,7 +866,7 @@
    "how": "From the main menu, Continue; then Load a save.",
    "look": "Our own screen the whole time, faded off when the world is in.",
    "note": "\"Loading in a save still shows the loading screens from the mod\".",
-   "since": "f696bbb"
+   "since": "3938d82"
   },
   {
    "id": "ld_doors",
@@ -877,7 +932,7 @@
    "how": "Play to round 20, raising thralls with the Bonereaper in big crowds.",
    "look": "No crash. If one comes, Crash Logger writes a log I can read.",
    "note": "\"I crashed on round 20 when I did a heavy attack on a crowd using one of the tablet scythes\".",
-   "since": "f696bbb"
+   "since": "3938d82"
   }
  ],
  "decisions": [
@@ -986,6 +1041,11 @@
   }
  ],
  "builds": [
+  {
+   "sha": "3938d82",
+   "when": "2026-11-27 00:51",
+   "what": "Noah's finalized workshop picks (Nov 27): one model per class weapon at every tier (Dragon Priest scythe, Glass wand, Ebony quarterstaff, Daedric rapier) with his looks at each tier's strength; Tablet lineup (seven cut from the pool), Rare/Epic/Legendary at 60/30/10 with blue/purple/gold glows; Fire Storm in Immolate's place; trial I renamed Slay the Undead; Skyrim's main theme as the menu music; "
+  },
   {
    "sha": "f696bbb",
    "when": "2026-11-26 19:16",
@@ -1115,9 +1175,145 @@
    "sha": "c34b333",
    "when": "2026-11-24 23:41",
    "what": "Looks remade: rising Flame, real-lightning Storm, softer Mist, new Frost/Shadow/Radiance/Spirit; Ascended keeps Tier III's model"
+  },
+  {
+   "sha": "9b02d0d",
+   "when": "2026-11-24 22:59",
+   "what": "Live workshop previews: weapons in every look, packed small for the review doc"
+  },
+  {
+   "sha": "c9a3c8f",
+   "when": "2026-11-24 22:34",
+   "what": "Blade effects run guard to tip, smoother lightning, Carian Wand mist, class voices out"
+  },
+  {
+   "sha": "d0bdc53",
+   "when": "2026-11-24 22:06",
+   "what": "Preview renders for the per-build review doc; nifworld prints UVs"
+  },
+  {
+   "sha": "c2db1a3",
+   "when": "2026-11-24 21:50",
+   "what": "White-fireball souls, smooth altar ring fill, cut-plugin and dead-code cleanup"
+  },
+  {
+   "sha": "35fb293",
+   "when": "2026-11-24 21:28",
+   "what": "Javelin throw: the javelin itself laid along your aim when cocked and thrown (the wrist aimed too)"
+  },
+  {
+   "sha": "28d29f7",
+   "when": "2026-11-24 21:19",
+   "what": "Regenerate the plugin and the guide for Hold the Light"
+  },
+  {
+   "sha": "f64b181",
+   "when": "2026-11-24 21:17",
+   "what": "Trials: Hold the Light replaces Repeat the Echo; souls are blue spirit flames in the world; the altar's ring is real light on the ground"
+  },
+  {
+   "sha": "dec31f3",
+   "when": "2026-11-24 21:09",
+   "what": "Javelin seen in the hand, tap jabs and hold throws, a human overhand throw, trails you can follow; Wandering Star's tip; Mutagen Staff in the hands"
+  },
+  {
+   "sha": "07d6c6f",
+   "when": "2026-11-24 21:04",
+   "what": "Weapon effects: whole blade, no outline lines, scythes the right way round, claws lined up and in both hands"
+  },
+  {
+   "sha": "6a0f8a0",
+   "when": "2026-11-24 19:18",
+   "what": "Weapon effects for the class weapons: an art fitted to each tier's model in each look"
+  },
+  {
+   "sha": "7f76e15",
+   "when": "2026-11-24 19:12",
+   "what": "Our own weapon effects in place of Visual Animated Enchants (Noah's picks on the Curse Weapon Effects page): each of the 24 Dragon Priest, Tablet and Bane weapons wears its look fitted to its own model - a living sheet along its real edges and a glow worked into its steel - hung on it in the hand in both views (src/WeaponFx.cpp, tools/weaponfx.py, tools/modelconv/nifworld.cpp)"
+  },
+  {
+   "sha": "a52f811",
+   "when": "2026-11-24 18:27",
+   "what": "The Curse of Alduin by name everywhere (Noah): src/BO3Z.h is src/CurseOfAlduin.h, namespace bo3z is coa, every record's editor ID COA_ (was UN_ and BO3Z_ - form IDs unchanged, saves load), the co-op lobby and Skyrim Together hook files curse-of-alduin (an older undying-nights patch taken out first)"
+  },
+  {
+   "sha": "5cf655c",
+   "when": "2026-11-24 18:26",
+   "what": "The class swords' element art hung on the blade (its models name the WEAPON node: AttachT, as Vibrant Weapons' do) - it stood on the floor at your feet; tools/modelconv/addattach.cpp"
+  },
+  {
+   "sha": "7a4779a",
+   "when": "2026-11-24 18:06",
+   "what": "Tier III class sets come alive (Noah: \"Both\"): the trim and runes breathe and flare as you cast or strike, and a light trail of wisps in the set's colour rises off you with a soft edge glow"
+  },
+  {
+   "sha": "204db07",
+   "when": "2026-11-24 18:00",
+   "what": "Class sets: every piece's addon claims the slots Skyrim's own addon for its mesh does (the robe's calves, the boots' calf wraps, the gauntlets' forearms, the hood's hair) - the invisible legs; Skyrim's floating quest markers (the gold ticks in the air) hidden, the compass keeps them"
+  },
+  {
+   "sha": "a5f788a",
+   "when": "2026-11-24 17:57",
+   "what": "Felldir's echo shorter (Noah: \"2 Short\"): two soft repeats at 180 and 360 ms, less of the hall, a shorter tail - every altar line and whisper made again"
+  },
+  {
+   "sha": "50ebf5b",
+   "when": "2026-11-24 17:53",
+   "what": "Class sets: the robe's and cuirass's addons claim the forearms and calves as Skyrim's own robes do (the sleeves' forearm partition was never drawn in first person); the set waits in Your Kit to be claimed, never handed over by itself"
+  },
+  {
+   "sha": "a43789f",
+   "when": "2026-11-24 16:36",
+   "what": "Felldir's voice carried on the altar (a bare point played to no one), subtitles centred by the movie's own visible frame, the Sanctuary banner and Edge UI's crosshair gone, Tiny Terrors fells shrunk common dead in one blow (never dragons, elites or bosses), the night's number burning in the blood moon, owed altar wakings played when you arrive"
+  },
+  {
+   "sha": "0c786e2",
+   "when": "2026-11-24 16:14",
+   "what": "Class armour: every skinned shape's bounding sphere left empty as Skyrim's own (the sleeves were culled in first person - the invisible forearms); tools/modelconv/zerobounds.cpp"
+  },
+  {
+   "sha": "c7ee84f",
+   "when": "2026-11-24 15:34",
+   "what": "Talk only at freed altars (Noah): the dark altar's trial hints and greetings retired, no question in two tabs; Felldir's echo dies away smoothly (four repeats, a gentle fade); build fix (the wisps' HUD names)"
+  },
+  {
+   "sha": "42ac32b",
+   "when": "2026-11-24 15:25",
+   "what": "Polish: the game's sounds back (only the master held under the black, never the paused-in-menu categories), Felldir's voice clear with a stone echo and from the altar's centre stone (whole within 5 m, gone at 30 m), every altar line by file, subtitles centred, Talk only at a freed altar and silent until asked, Lay the Restless to Rest without the old ring of runes and its souls as pale blue wisps "
+  },
+  {
+   "sha": "297dca5",
+   "when": "2026-11-24 02:08",
+   "what": "Ground: trees, plants, shrubs and rocks hanging over nothing set down onto what's under them, all over the map, as their cells load"
+  },
+  {
+   "sha": "16a2160",
+   "when": "2026-11-24 01:41",
+   "what": "dev: armour - what you wear (slots, addons, first-person models) and every body shape in both views, drawn or hidden"
+  },
+  {
+   "sha": "25b8849",
+   "when": "2026-11-24 01:39",
+   "what": "Felldir's ending lines re-recorded: the echo broken, Alduin left to face in Sovngarde"
+  },
+  {
+   "sha": "c182a39",
+   "when": "2026-11-24 01:38",
+   "what": "Talk: greeted once a visit, \"nothing more\" once a topic, an answer let finish when you leave (no goodbye over it), questions opening night by night and altar by altar; the story ends right before Skyrim's own fight with Alduin (Felldir waits in Sovngarde)"
+  },
+  {
+   "sha": "8ce05c1",
+   "when": "2026-11-24 01:29",
+   "what": "New character: no sound under the loading screen or the black after the name (faded back in with the picture), a quick fade to black on Enter, no rain in the creator, RaceMenu's bottom bar at the bottom of a 16:10 screen"
+  },
+  {
+   "sha": "c650db3",
+   "when": "2026-11-24 01:23",
+   "what": "Menu music from the launch's loading screen through the main menu, faded out over 3 s when a game starts"
   }
  ],
  "installs": {
+  "3938d82": "2026-11-27 01:10",
   "f696bbb": "2026-11-26 20:00",
   "15cfd57": "2026-11-26 17:20",
   "a4584e6": "2026-11-26 15:01",
@@ -1752,7 +1948,7 @@
    "id": "giantclub",
    "name": "Giant's Toe Club",
    "kind": "Giant's club",
-   "el": "earth",
+   "el": "wind",
    "base": "A giant's club, a mammoth toe bound to its head",
    "light": "Every hit sends one of the dead flying into the sky.",
    "heavy": "A ground stomp that knocks down every one of the dead within 8 m.",
@@ -3278,176 +3474,10 @@
    ]
   },
   {
-   "id": "earth",
-   "name": "Earth",
-   "col": "#b08a5a",
-   "about": "Stone and dust: the ground split, rocks thrown up, a heavy thud.",
-   "theme": "earth",
-   "parts": [
-    {
-     "id": "impact",
-     "name": "Impact",
-     "about": "One hit landing.",
-     "opts": [
-      {
-       "id": "core",
-       "label": "Flare",
-       "about": "A compact burst of stone and dust where it lands, sparks thrown out, a wisp left hanging."
-      },
-      {
-       "id": "spark",
-       "label": "Splash",
-       "about": "Stone and dust spraying off the hit in the direction of the blow."
-      },
-      {
-       "id": "drain",
-       "label": "Drain",
-       "about": "Stone and dust pulled into the one struck from all round, then a pop."
-      }
-     ]
-    },
-    {
-     "id": "burst",
-     "name": "Burst",
-     "about": "A heavy or an explosion.",
-     "opts": [
-      {
-       "id": "big",
-       "label": "Explosion",
-       "about": "A full blast of stone and dust rolling up into smoke, debris thrown, the ground scorched."
-      },
-      {
-       "id": "nova",
-       "label": "Nova ring",
-       "about": "A ring of stone and dust tearing outward along the ground from the heart of it."
-      },
-      {
-       "id": "spikes",
-       "label": "Eruption",
-       "about": "Stone spikes bursting up from the ground in a ring round you."
-      }
-     ]
-    },
-    {
-     "id": "ground",
-     "name": "Ground",
-     "about": "What lingers where it struck.",
-     "opts": [
-      {
-       "id": "mist",
-       "label": "Lingering",
-       "about": "A low blanket of dust rolling over the ground for a few seconds."
-      },
-      {
-       "id": "rune",
-       "label": "Rune circle",
-       "about": "A circle of runes burned into the ground, stone and dust rising off it."
-      },
-      {
-       "id": "wave",
-       "label": "Spreading wave",
-       "about": "A creeping ring of dust running outward, leaving patches behind."
-      }
-     ]
-    },
-    {
-     "id": "above",
-     "name": "From above",
-     "about": "A strike from the sky.",
-     "opts": [
-      {
-       "id": "sky",
-       "label": "From the sky",
-       "about": "A falling boulder comes down on the spot and bursts."
-      },
-      {
-       "id": "pillar",
-       "label": "Pillar",
-       "about": "A turning column of stone and dust pours down from the sky onto the spot."
-      }
-     ]
-    }
-   ],
-   "sounds": [
-    {
-     "id": "cast",
-     "name": "Cast",
-     "opts": [
-      {
-       "id": "WB_AlterationEarth_Sound_Release",
-       "name": "WB AlterationEarth Sound Release",
-       "mp3": "trp_rockfall_release_01.mp3",
-       "src": "Apocalypse"
-      },
-      {
-       "id": "WB_AlterationBaleful_Sound_Release_ArmorCrush",
-       "name": "WB AlterationBaleful Sound Release ArmorCrush",
-       "mp3": "qst_da09_lightbeamon_01.mp3",
-       "src": "Apocalypse"
-      },
-      {
-       "id": "WPNSwing2Hand",
-       "name": "WPNSwing2Hand",
-       "mp3": "fx_swing_blade2hand_01.mp3",
-       "src": "Skyrim"
-      }
-     ]
-    },
-    {
-     "id": "impact",
-     "name": "Impact",
-     "opts": [
-      {
-       "id": "WB_AlterationEarth_Sound_Impact",
-       "name": "WB AlterationEarth Sound Impact",
-       "mp3": "phy_boulder_large_boulder_h_01.mp3",
-       "src": "Apocalypse"
-      },
-      {
-       "id": "WB_AlterationBaleful_Sound_Impact_Rumble",
-       "name": "WB AlterationBaleful Sound Impact Rumble",
-       "mp3": "npc_atronachfrost_attackpower_impact_01.mp3",
-       "src": "Apocalypse"
-      },
-      {
-       "id": "WPNImpactCrGiantClubVsFlesh",
-       "name": "WPNImpactCrGiantClubVsFlesh",
-       "mp3": "wpn_impact_crgiantclub_flesh_01.mp3",
-       "src": "Skyrim"
-      }
-     ]
-    },
-    {
-     "id": "burst",
-     "name": "Burst",
-     "opts": [
-      {
-       "id": "WB_AlterationEarth_Sound_Explosion_TalonsOfNirn",
-       "name": "WB AlterationEarth Sound Explosion TalonsOfNirn",
-       "mp3": "amb_rumbleshake_01.mp3",
-       "src": "Apocalypse"
-      },
-      {
-       "id": "WB_ConjurationDetonate_Sound_Explosion_Blast",
-       "name": "WB ConjurationDetonate Sound Explosion Blast",
-       "mp3": "mag_destruction_firestorm_impact.mp3",
-       "src": "Apocalypse"
-      },
-      {
-       "id": "MAGPowerSerpentStoneImpact",
-       "name": "MAGPowerSerpentStoneImpact",
-       "mp3": "mag_serpentstone_impact_01.mp3",
-       "src": "Skyrim"
-      }
-     ]
-    }
-   ]
-  },
-  {
    "id": "wind",
    "name": "Wind and Thu'um",
-   "col": "#cfe3f2",
-   "about": "The Voice: shouts, gusts and shockwaves that throw the dead.",
+   "col": "#8fcbe8",
+   "about": "The Voice: swirling sky-blue gusts, racing streaks, dust and leaves torn up - shockwaves that throw the dead. (Remade: your note.)",
    "theme": "wind",
    "parts": [
     {
@@ -3750,7 +3780,7 @@
    "id": "spriggan",
    "name": "Spriggan's Heartroot",
    "kind": "Living wood mace",
-   "el": "earth",
+   "el": "poison",
    "base": "A gnarled mace of spriggan heartwood, its knot glowing green",
    "light": "Hits heal you a little.",
    "heavy": "Roots burst from the ground and hold every one of the dead within 6 m for 4 s.",
@@ -4231,7 +4261,7 @@
    "lead": "The same four trials in every city, each with the city's own places, one after another, all at night, the party sharing them. The last seal calls the city's Dragon Priest out at once; his fall frees the city.",
    "items": [
     {
-     "t": "Lay the Restless to Rest",
+     "t": "Slay the Undead",
      "s": "Slay the risen in the altar's light",
      "d": "Alduin's mist bars the road to Sovngarde, and the dead of the city have nowhere to go. Put them down within the light of the city's Echo Altar and their souls rise through the mist at last. Lay a number of of the risen to rest in the altar's light."
     },
@@ -5029,8 +5059,460 @@
      "done": "12 more ideas added to the Tablet tab, sorted by rarity."
     }
    ]
+  },
+  {
+   "build": "Install 3938d82, Nov 27",
+   "date": "2026-11-27",
+   "notes": [
+    {
+     "when": "2026-11-27",
+     "where": "abil/destruction",
+     "note": "how does the wand charge an attack?",
+     "choice": "",
+     "done": "Answered: it didn't - holding fired a bolt every 0.5 s. Your pick: a tap fires a bolt (0.5 s between shots), holding channels a beam. The beam designs are on the Destruction page to pick."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "kits/earth",
+     "note": "I dont want to include the earth element.",
+     "choice": "",
+     "done": "Earth removed. The Giant's Toe Club now uses Wind, the Spriggan's Heartroot Poison."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "kits/wind",
+     "note": "This just looks like black and white colors it doesnt look like wind.",
+     "choice": "",
+     "done": "Wind remade: swirling pale-blue gusts, racing streaks, dust and leaves torn up."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "lore/trials",
+     "note": "rename the first one to Slay the Undead",
+     "choice": "",
+     "done": "Renamed in the game (the trial, the Codex, the altar's guide) and here."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "tierlook/alchemist",
+     "note": "the alchemist smoke looks like the effect end is a hard cut so it looks like a box",
+     "choice": "",
+     "done": "Every 3D volume now thins to nothing before its edges - no box edge anywhere."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "tierlook/spellsword",
+     "note": "make sure the effect is only on the blade part of the sword not the handle.",
+     "choice": "",
+     "done": "In the game the rapier's look is fitted to the blade only (from 14 units up the model); the workshop preview follows the same."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "uiscreens/classpick",
+     "note": "keep this screen as it is in my current game but make the text Gold like in this preview.",
+     "choice": "",
+     "done": "Done in the game: names, motto and words in Ember Tally's gold; the screen otherwise as it was."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "uiscreens/co_score",
+     "note": "the headshots dont make sense for the loot pool I have. other than that I approve",
+     "choice": "",
+     "done": "Headshots replaced by Trials (the trial steps each player did) - goes in with the co-op HUD."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "uiscreens/codex",
+     "note": "keep the current CoA Codex UI",
+     "choice": "",
+     "done": "Kept as it is."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "uiscreens/inv_new",
+     "note": "I want the inventory models as well for the items and the flasks would be in the weapons tab not its own. I also want the model cards like how it looks in my game right now.",
+     "choice": "",
+     "done": "Planned for the remade inventory: the 3D item model and your current item card kept, flasks under Weapons. Built in the menus build."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "uiscreens/mag_new",
+     "note": "I want the inventory models too and the item cards like how it is now.",
+     "choice": "",
+     "done": "Same for Magic: the spell's model and your current card kept."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "uiscreens/setup",
+     "note": "keep the current UI in my game the one we made with the art boxes.",
+     "choice": "",
+     "done": "Kept as it is."
+    },
+    {
+     "when": "2026-11-27",
+     "where": "uiscreens/thuum",
+     "note": "this would only be for the dragon glider shout and the shout that makes everyone tiny.",
+     "choice": "",
+     "done": "The Thu'um tab will hold only Dragon's Updraft and Tiny Terrors (built with the altar menu)."
+    }
+   ]
   }
  ],
+ "moves": {
+  "alchemist": {
+   "el": "shadowfire",
+   "why": "The Alchemist turns the dead into fuel: brands, catalysts and transmutation.",
+   "moves": [
+    [
+     "light",
+     "Light attack",
+     [
+      [
+       "reaping",
+       "Reaping Arc",
+       "A wide sweep that cuts every one of the dead in front of you and sets them smouldering in shadowfire; the burn stacks with each swing.",
+       "impact:spark",
+       "swing"
+      ],
+      [
+       "catalyst",
+       "Catalyst Cut",
+       "Each hit marks the dead with a violet catalyst; a marked one that dies bursts, burning the ones beside it.",
+       "impact:core",
+       "swing"
+      ],
+      [
+       "corrode",
+       "Corroding Edge",
+       "Hits leave a corroding brand that eats armour and spreads to the next of the dead it touches.",
+       "impact:drain",
+       "swing"
+      ]
+     ]
+    ],
+    [
+     "heavy",
+     "Heavy attack",
+     [
+      [
+       "eruption",
+       "Shadowfire Eruption",
+       "The blade driven into the ground: geysers of shadowfire burst up in a ring round you (your kit pick).",
+       "burst:spikes",
+       "slam"
+      ],
+      [
+       "harvest",
+       "Grim Harvest",
+       "A full spinning reap that pulls the dead within 5 m in toward you and cuts them all.",
+       "burst:nova",
+       "slam"
+      ],
+      [
+       "transmute",
+       "Transmutation",
+       "The slam turns the dead within 4 m to burning ash statues that shatter when struck.",
+       "ground:wave",
+       "slam"
+      ]
+     ]
+    ],
+    [
+     "special",
+     "Special",
+     [
+      [
+       "philosopher",
+       "Philosopher's Edge",
+       "Every 10th kill transmutes: the next of the dead you kill bursts into Cursed Essence and shadowfire.",
+       "burst:big",
+       "swing"
+      ],
+      [
+       "volatile",
+       "Volatile Brew",
+       "Kills sometimes drop a cracked flask that bursts in shadowfire a second later.",
+       "ground:mist",
+       "swing"
+      ],
+      [
+       "reaper",
+       "Reaper's Shade",
+       "Every 4th hit, a violet ghost of the scythe slashes beside you on its own.",
+       "impact:spark",
+       "swing"
+      ]
+     ]
+    ]
+   ]
+  },
+  "summoner": {
+   "el": "holy",
+   "why": "The Summoner fights beside what it calls: marks for its servants, light from the sky, spirits on command.",
+   "moves": [
+    [
+     "light",
+     "Light attack",
+     [
+      [
+       "radiant",
+       "Radiant Strike",
+       "Each strike flares with sunlight that sears the dead and blinds them for a moment.",
+       "impact:core",
+       "swing"
+      ],
+      [
+       "lash",
+       "Spirit Lash",
+       "Each strike sends a small spirit off the staff that seeks out another of the dead.",
+       "impact:drain",
+       "swing"
+      ],
+      [
+       "command",
+       "Command",
+       "Each strike marks the dead: your summons go for the marked first, and hit them harder.",
+       "impact:spark",
+       "swing"
+      ]
+     ]
+    ],
+    [
+     "heavy",
+     "Heavy attack",
+     [
+      [
+       "dawn",
+       "Pillar of Dawn",
+       "Both heads driven down: a pillar of sunlight pours onto the spot (your kit pick).",
+       "above:pillar",
+       "slam"
+      ],
+      [
+       "pack",
+       "Call the Pack",
+       "The slam calls two spectral wolves out of the light to hunt for 8 s.",
+       "burst:nova",
+       "slam"
+      ],
+      [
+       "consecrate",
+       "Consecrate",
+       "A circle of runes where your summons heal and the dead burn.",
+       "ground:rune",
+       "slam"
+      ]
+     ]
+    ],
+    [
+     "special",
+     "Special",
+     [
+      [
+       "bond",
+       "Soul Bond",
+       "Every 15 kills, your summons blaze with light: half again as strong for 10 s.",
+       "burst:big",
+       "swing"
+      ],
+      [
+       "ancestor",
+       "Ancestor's Guard",
+       "Every 20 kills, a spectral Nord warrior rises from the light and fights beside you for 12 s.",
+       "above:pillar",
+       "swing"
+      ],
+      [
+       "orbit",
+       "Radiant Orbit",
+       "Three orbs of light circle you and strike the dead that come close.",
+       "impact:core",
+       "swing"
+      ]
+     ]
+    ]
+   ]
+  },
+  "destruction": {
+   "el": "arcane",
+   "why": "The Battle-mage is the caster: a tap fires, a hold channels, and power builds the longer you keep it up.",
+   "moves": [
+    [
+     "light",
+     "Tap: the bolt (0.5 s between shots)",
+     [
+      [
+       "glint",
+       "Glintstone Bolt",
+       "A tap fires a glintstone bolt that bends a little toward the nearest of the dead.",
+       "impact:core",
+       "cast"
+      ],
+      [
+       "spread",
+       "Arcane Spread",
+       "A tap fires three smaller bolts in a fan.",
+       "impact:spark",
+       "cast"
+      ],
+      [
+       "pierce",
+       "Piercing Ray",
+       "A tap fires a narrow ray that passes through the first of the dead into the next.",
+       "impact:drain",
+       "cast"
+      ]
+     ]
+    ],
+    [
+     "heavy",
+     "Hold: the beam",
+     [
+      [
+       "ray",
+       "Arcane Ray",
+       "Hold: a beam of raw magicka that grows wider and hotter the longer you hold it.",
+       "burst:big",
+       "hold"
+      ],
+      [
+       "fork",
+       "Forking Beam",
+       "Hold: a beam that forks to two more of the dead near the one it holds.",
+       "burst:nova",
+       "hold"
+      ],
+      [
+       "disintegrate",
+       "Disintegrate",
+       "Hold: a beam that burns a line through the dead; what it kills bursts in magicka.",
+       "above:sky",
+       "hold"
+      ]
+     ]
+    ],
+    [
+     "special",
+     "Special",
+     [
+      [
+       "starfall",
+       "Starfall",
+       "Every 25th bolt, twelve great bolts rain down in front of you.",
+       "above:sky",
+       "cast"
+      ],
+      [
+       "echo",
+       "Arcane Echo",
+       "Beam kills leave a rune that bursts a second later.",
+       "ground:rune",
+       "cast"
+      ],
+      [
+       "surge",
+       "Mana Surge",
+       "Beam kills refill your magicka, and your next tap fires three bolts.",
+       "impact:drain",
+       "cast"
+      ]
+     ]
+    ]
+   ]
+  },
+  "spellsword": {
+   "el": "fire",
+   "els": [
+    "fire",
+    "frost",
+    "shock"
+   ],
+   "why": "The Spellsword fuses blade and spell: the other hand's element rides every move.",
+   "moves": [
+    [
+     "light",
+     "Light attack",
+     [
+      [
+       "spellthrust",
+       "Spellthrust",
+       "Each thrust carries the spell in your other hand: fire burns, frost slows, shock arcs to one more.",
+       "impact:core",
+       "swing"
+      ],
+      [
+       "riposte",
+       "Riposte",
+       "Block a blow just in time and the counter-thrust strikes three times as hard in a burst of your element.",
+       "impact:spark",
+       "swing"
+      ],
+      [
+       "flurry",
+       "Flurry",
+       "Every 3rd thrust is a quick double thrust.",
+       "impact:drain",
+       "swing"
+      ]
+     ]
+    ],
+    [
+     "heavy",
+     "Heavy attack",
+     [
+      [
+       "pillar",
+       "Spell Pillar",
+       "A pillar of your element pours down on the one you strike (your kit pick).",
+       "above:pillar",
+       "slam"
+      ],
+      [
+       "lunge",
+       "Spell Lunge",
+       "You dash 6 m through the dead, leaving a trail of your element.",
+       "ground:wave",
+       "slam"
+      ],
+      [
+       "lance",
+       "Spell Lance",
+       "A long lance of your element pierces everything in a line.",
+       "burst:nova",
+       "slam"
+      ]
+     ]
+    ],
+    [
+     "special",
+     "Special",
+     [
+      [
+       "resonance",
+       "Resonance",
+       "Each spell cast with your other hand charges the blade: your next heavy is twice as strong.",
+       "burst:big",
+       "swing"
+      ],
+      [
+       "wake",
+       "Elemental Wake",
+       "Kills leave a patch of your element on the ground that burns, freezes or shocks the dead that cross it.",
+       "ground:mist",
+       "swing"
+      ],
+      [
+       "focus",
+       "Duelist's Focus",
+       "Go 5 s without being hit and your next thrust is a sure critical.",
+       "impact:spark",
+       "swing"
+      ]
+     ]
+    ]
+   ]
+  }
+ },
  "modstack": {
   "about": "Every mod The Curse of Alduin plays with in your game. Updated Nov 26 evening: Screen-Space GI added, the grass down to Folkvangr and the pine grass (your Plugins.txt kept as Plugins.txt.before-grass-nov26), 20 plugins off from the morning (kept as Plugins.txt.before-modstack-nov26). Your pick shows on each.",
   "groups": [
