@@ -1466,7 +1466,7 @@ namespace coa
 				case 4:  // a meteor's strike: once
 					if (tick && z.tick > -1.0f) {
 						z.tick = -100.0f;
-						Blast(BlastIndex("firestorm"), z.at + RE::NiPoint3{ 0, 0, 20.0f }, 0.0f, z.r > 300.0f ? 1.0f : 0.6f);
+						if (z.r > 300.0f) Blast(BlastIndex("firestorm"), z.at + RE::NiPoint3{ 0, 0, 20.0f }, 0.0f, 1.0f);   // (a small strike: its meteor's own impact is enough - three stacked blinded)
 						for (auto* f : Foes(z.at, z.r)) { if (!Damage(f, z.dmg, false, false, true)) Stagger(f, 0.8f); }
 						z.left = 0;
 					}
@@ -3160,7 +3160,7 @@ namespace coa
 		{
 			const int el = a_gold ? 8 : 0;
 			ElemBurst(el, a_at + RE::NiPoint3{ 0, 0, 40.0f }, 2.0f * a_size, 0.0f, 0.8f);
-			ElemBurst(4, a_at + RE::NiPoint3{ 0, 0, 60.0f }, 1.1f * a_size, 0.0f, 0.3f);   // (the white flash at its heart)
+			if (a_size >= 0.7f) ElemBurst(4, a_at + RE::NiPoint3{ 0, 0, 60.0f }, 1.1f * a_size, 0.0f, 0.3f);   // (the white flash at its heart - not on the small ones: it blinded)
 			FxBlast(a_gold ? "dragonfire" : "fireball", a_at);
 			Ring(a_gold ? "gold" : "fire", a_at, 40.0f, 400.0f * a_size, 0.7f);
 			Ring("white", a_at, 20.0f, 220.0f * a_size, 0.35f);

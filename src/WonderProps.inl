@@ -298,12 +298,12 @@ namespace Props
 		// down on the one struck, chasing it; where it lands the dead round it are struck hard (the heavy: BaneWind's tornado)
 		if (!a_power && !killed) {
 			Gun::MeteorAt(a_z, false, 1.2f, [](const RE::NiPoint3& hit) {
-				Gun::MeteorImpact(hit, false, 0.9f);
+				Gun::MeteorImpact(hit, false, 0.55f);   // (Noah, Nov 26: "the light attack meteors give a massive explosion and it's blinding")
 				g_zones.push_back({ 4, hit, 260.0f, 0.15f, 0.0f, FangBase() * BaneMult() * 1.5f, 0, false, 0 });
 			});
 		} else if (!a_power) {
 			Gun::Meteor(at, false, 1.2f, [](const RE::NiPoint3& hit) {   // (the one struck already dead: the meteor still falls where it stood)
-				Gun::MeteorImpact(hit, false, 0.9f);
+				Gun::MeteorImpact(hit, false, 0.55f);   // (Noah, Nov 26: "the light attack meteors give a massive explosion and it's blinding")
 				g_zones.push_back({ 4, hit, 260.0f, 0.15f, 0.0f, FangBase() * BaneMult() * 1.5f, 0, false, 0 });
 			});
 		}
