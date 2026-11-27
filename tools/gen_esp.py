@@ -1733,11 +1733,13 @@ for _c, _ps in CLASS_SET.items():
                 sub('EDID', z(f'COA_CS_{_c}_{_p}_T{_t}AA')), sub('BOD2', struct.pack('<II', (1 << (CS_OWN_SLOT[(_c, _p)] - 30)) if (_c, _p) in CS_OWN_SLOT else CS_AA_SLOT.get(_p, CS_SLOT[_p]), 0)), sub('RNAM', struct.pack('<I', 0x19)),
                 sub('DNAM', bytes.fromhex('000002020000001700000000')),
                 sub('MOD2', m('m')), sub('MOD3', m('f')), sub('MOD4', fp('m')), sub('MOD5', fp('f'))] + [sub('MODL', struct.pack('<I', r)) for r in UW_RACES]))
-        addons = [fid('ARMA', f'ca_{_c}_{_p}_t0')] + ([NAKED_TORSO] if CS_SLOT[_p] == 1 << 2 else [])
+        # (Noah, Nov 26 night: "Still makes my body invisible" - NakedTorso carried in the cuirass did not bring the body back) a
+        # piece on its own slot claims only that slot, never the body's: the body stays the skin's, as if nothing were worn there
+        addons = [fid('ARMA', f'ca_{_c}_{_p}_t0')] + ([NAKED_TORSO] if CS_SLOT[_p] == 1 << 2 and (_c, _p) not in CS_OWN_SLOT else [])
         recs['ARMO'].append(record('ARMO', fid('ARMO', f'ca_{_c}_{_p}'), [
             sub('EDID', z(f'COA_CS_{_c}_{_p}')), sub('OBND', bytes(12)), sub('FULL', z(f'{CS_NAME[_c]} Set {_p.title()}')),
             sub('MOD2', z(CS_GND[(_c, _p)][0])), sub('MOD4', z(CS_GND[(_c, _p)][1])),
-            sub('BOD2', struct.pack('<II', CS_SLOT[_p] | ((1 << (CS_OWN_SLOT[(_c, _p)] - 30)) if (_c, _p) in CS_OWN_SLOT else 0), 0)), sub('RNAM', struct.pack('<I', 0x19)),
+            sub('BOD2', struct.pack('<II', (1 << (CS_OWN_SLOT[(_c, _p)] - 30)) if (_c, _p) in CS_OWN_SLOT else CS_SLOT[_p], 0)), sub('RNAM', struct.pack('<I', 0x19)),
             sub('KSIZ', struct.pack('<I', 2)), sub('KWDA', struct.pack('<II', CS_KW[_p], 0x06BBD3))] +
             [sub('MODL', struct.pack('<I', a)) for a in addons] +
             [sub('DATA', struct.pack('<If', 0, 1.0)), sub('DNAM', struct.pack('<I', 0))]))

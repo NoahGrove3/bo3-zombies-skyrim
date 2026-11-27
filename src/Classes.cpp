@@ -5116,7 +5116,7 @@ namespace coa::Classes
 		using S = RE::BGSBipedObjectForm::BipedObjectSlot;
 		for (int c = 0; c < 4; ++c) {
 			for (auto* a : SetForms(c, 0)) {
-				const char* part = a->HasPartOf(S::kBody) ? (c <= 1 ? "Robes" : "Cuirass") : (a->HasPartOf(S::kHead) || a->HasPartOf(S::kHair)) ? (c == 3 ? "Helm" : "Hood") : a->HasPartOf(S::kHands) ? "Gauntlets" : a->HasPartOf(S::kFeet) ? (c == 3 ? "Sabatons" : "Boots") : "Piece";
+				const char* part = (a->HasPartOf(S::kBody) || a->HasPartOf(static_cast<S>(1u << 28))) ? (c <= 1 ? "Robes" : "Cuirass") : (a->HasPartOf(S::kHead) || a->HasPartOf(S::kHair)) ? (c == 3 ? "Helm" : "Hood") : a->HasPartOf(S::kHands) ? "Gauntlets" : a->HasPartOf(S::kFeet) ? (c == 3 ? "Sabatons" : "Boots") : "Piece";
 				a->fullName = fmt::format("{} {}", kSet[c], part);
 			}
 		}
@@ -5209,7 +5209,9 @@ namespace coa::Classes
 		{
 			const int at = std::min(6, Kit::ArmourTier(c));
 			bool worn = false;
-			if (auto* body = p->GetWornArmor(RE::BGSBipedObjectForm::BipedObjectSlot::kBody)) for (auto* a : SetForms(c, 0)) worn = worn || a == body;
+			// (the Spellsword's cuirass is worn on slot 58, the body left bare under it)
+			for (auto slot : { RE::BGSBipedObjectForm::BipedObjectSlot::kBody, static_cast<RE::BGSBipedObjectForm::BipedObjectSlot>(1u << 28) })
+				if (auto* body = p->GetWornArmor(slot)) for (auto* a : SetForms(c, 0)) worn = worn || a == body;
 			auto* art = RE::TESDataHandler::GetSingleton()->LookupForm<RE::BGSArtObject>(gen::kArmAura, gen::kPlugin);
 			RE::ModelReferenceEffect* mine = nullptr;
 			if (art) if (auto* pl = RE::ProcessLists::GetSingleton()) pl->ForEachModelEffect([&](RE::ModelReferenceEffect* e) {
