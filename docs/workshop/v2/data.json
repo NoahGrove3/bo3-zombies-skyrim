@@ -1,0 +1,2372 @@
+{
+ "installed": {
+  "sha": "f696bbb",
+  "date": "2026-11-26",
+  "label": "Stabilization build",
+  "extra": "The nine scythes turned the right way out (installed on its own, Nov 26 20:05)"
+ },
+ "systems": [
+  {
+   "id": "movement",
+   "name": "Movement",
+   "about": "Sprint, slide, jump, the glider and the dragon ride: how it feels to move."
+  },
+  {
+   "id": "combat",
+   "name": "Combat feel",
+   "about": "Hits, deaths, bodies and ash, weapon sounds: what every blow feels like."
+  },
+  {
+   "id": "classes",
+   "name": "Class weapons",
+   "about": "The four classes' weapons, their tiers and abilities."
+  },
+  {
+   "id": "spells",
+   "name": "Class spells",
+   "about": "The spells each class learns at the altar."
+  },
+  {
+   "id": "flasks",
+   "name": "Flasks",
+   "about": "The Alchemist's six flasks."
+  },
+  {
+   "id": "relics",
+   "name": "Dragon Priest relics",
+   "about": "The ten priests' weapons, one per freed city."
+  },
+  {
+   "id": "tablet",
+   "name": "Tablet of Mysteries",
+   "about": "The gamble: donated weapons with limited uses."
+  },
+  {
+   "id": "wonders",
+   "name": "Wonders and secrets",
+   "about": "The four wonders, the hidden quests and Alduin's Bane."
+  },
+  {
+   "id": "summons",
+   "name": "Summons and thralls",
+   "about": "What fights for you: conjurations, raised dead, the Soulcaller's pride."
+  },
+  {
+   "id": "armour",
+   "name": "Armour sets",
+   "about": "The four class sets and their tiers."
+  },
+  {
+   "id": "nights",
+   "name": "Nights and the dead",
+   "about": "Rounds, enemies, bosses, special nights, essence."
+  },
+  {
+   "id": "dragons",
+   "name": "Dragons",
+   "about": "Dragon bosses and the three word-dragons."
+  },
+  {
+   "id": "altars",
+   "name": "Echo Altars and trials",
+   "about": "Freeing each city: the four trials and the priest."
+  },
+  {
+   "id": "felldir",
+   "name": "Felldir's voice",
+   "about": "The altar's voice, its Talk and whispers."
+  },
+  {
+   "id": "hud",
+   "name": "HUD and menus",
+   "about": "Everything drawn on screen and every menu of ours."
+  },
+  {
+   "id": "loading",
+   "name": "Loading and new game",
+   "about": "Loading screens, the new-character flow."
+  },
+  {
+   "id": "world",
+   "name": "World and mod stack",
+   "about": "Grass, light, the mods we run with, performance."
+  },
+  {
+   "id": "stability",
+   "name": "Stability",
+   "about": "Crashes and anything that stops a night."
+  }
+ ],
+ "features": [
+  {
+   "id": "mv_sprint",
+   "sys": "movement",
+   "t": "Sprint winds up",
+   "st": "done",
+   "what": "The sprint builds over 180 ms to 440 and widens the view 7 degrees.",
+   "how": "",
+   "look": "",
+   "note": "",
+   "since": "286a000"
+  },
+  {
+   "id": "mv_slide",
+   "sys": "movement",
+   "t": "Slide from a sprint",
+   "st": "ready",
+   "what": "Sprint for a moment, then crouch: a slide that tilts the view; jump out of it and keep the speed. Ours now (SkyParkour's slide is off).",
+   "how": "Sprint for two or three seconds, then crouch. Then slide again and jump while sliding.",
+   "look": "You slide at any point of a sprint (not only right after starting it). The jump carries the slide's speed forward.",
+   "note": "Last time: \"can't jump out of it to carry my momentum ... only lets me slide right after a sprint\".",
+   "since": "f696bbb"
+  },
+  {
+   "id": "mv_omni",
+   "sys": "movement",
+   "t": "Sprint in any direction",
+   "st": "ready",
+   "what": "Sprint sideways and backwards too, in first and third person (your pick: \"Third person too\").",
+   "how": "Hold sprint and move sideways and back, in first person, then in third person.",
+   "look": "Full sprint speed in every direction, both views.",
+   "note": "",
+   "since": "f696bbb"
+  },
+  {
+   "id": "mv_swing",
+   "sys": "movement",
+   "t": "Quicker light swings",
+   "st": "done",
+   "what": "Light attacks 1.2x as fast; no early swing cancel (your pick: \"the speed is enough\").",
+   "how": "",
+   "look": "",
+   "note": "",
+   "since": "286a000"
+  },
+  {
+   "id": "cb_hitpause",
+   "sys": "combat",
+   "t": "No hit pause",
+   "st": "ready",
+   "what": "The hit pause is gone everywhere: ours was already 0, Precision's own pause is now off in its MCM settings.",
+   "how": "Light and heavy hits on the dead with a sword and a greatsword.",
+   "look": "No pause and no camera shake on any hit.",
+   "note": "You asked: \"remove the hit pause\".",
+   "since": "f696bbb"
+  },
+  {
+   "id": "cb_soul",
+   "sys": "combat",
+   "t": "No soul torn out",
+   "st": "ready",
+   "what": "Shadow, spirit and arcane kills no longer tear the soul out (removed as you asked).",
+   "how": "Kill the dead with the Shadowflame Scythe and the Soulcaller.",
+   "look": "No white beam rising from the bodies.",
+   "note": "",
+   "since": "f696bbb"
+  },
+  {
+   "id": "cb_ash",
+   "sys": "combat",
+   "t": "Ash piles gone after 5 s",
+   "st": "ready",
+   "what": "Fire kills burn to ash; the ash pile and the body are cleared 5 s later.",
+   "how": "Kill the dead with fire (a fire spell, the Fire Flask).",
+   "look": "They burn to a pile of ash that disappears after about 5 seconds.",
+   "note": "",
+   "since": "f696bbb"
+  },
+  {
+   "id": "cb_sounds",
+   "sys": "combat",
+   "t": "Every weapon its own sounds",
+   "st": "done",
+   "what": "Draw, swing, heavy and hit sounds per weapon, all at 20%.",
+   "how": "",
+   "look": "",
+   "note": "",
+   "since": "15cfd57"
+  },
+  {
+   "id": "cb_ragdoll",
+   "sys": "combat",
+   "t": "Bodies fly half as far",
+   "st": "done",
+   "what": "Heavy hits throw bodies at half strength; Alduin's Bane as before.",
+   "how": "",
+   "look": "",
+   "note": "",
+   "since": "76167f7"
+  },
+  {
+   "id": "cb_marks",
+   "sys": "combat",
+   "t": "No hit markers",
+   "st": "done",
+   "what": "No crosshair marks; the night's last kill in slow motion.",
+   "how": "",
+   "look": "",
+   "note": "",
+   "since": "5865977"
+  },
+  {
+   "id": "cb_hitfeel",
+   "sys": "combat",
+   "t": "Hit feel options",
+   "st": "done",
+   "what": "Removed as you asked (\"Remove this\").",
+   "how": "",
+   "look": "",
+   "note": "",
+   "since": ""
+  },
+  {
+   "id": "cw_onemodel",
+   "sys": "classes",
+   "t": "One model per class weapon",
+   "st": "idea",
+   "what": "Your Nov 26 decision: each class keeps one model through every tier; the tiers change its look only (stronger each tier, like Pack-a-Punch). You pick the model in Weapons & effects.",
+   "how": "",
+   "look": "",
+   "note": "",
+   "since": ""
+  },
+  {
+   "id": "cw_tierlooks",
+   "sys": "classes",
+   "t": "Tier looks: one look, stronger each tier",
+   "st": "idea",
+   "what": "Tier I faint, Tier II a glowing edge, Tier III a full aura and trail, Legendary all of it plus a signature effect. Built on the element kits.",
+   "how": "",
+   "look": "",
+   "note": "",
+   "since": ""
+  },
+  {
+   "id": "cw_ownmodels",
+   "sys": "classes",
+   "t": "Our own models from Skyrim's meshes",
+   "st": "idea",
+   "what": "Each class weapon (and later the Tablet's) built from Skyrim, Dawnguard and Dragonborn parts: no mod needed for it.",
+   "how": "",
+   "look": "",
+   "note": "",
+   "since": ""
+  },
+  {
+   "id": "cw_abilities",
+   "sys": "classes",
+   "t": "Class weapon abilities rebuilt",
+   "st": "idea",
+   "what": "Every light and heavy ability redone on the new foundation (element kits, the Test Range).",
+   "how": "",
+   "look": "",
+   "note": "\"They all look very poorly done ... redo the abilities and have a starting foundation\".",
+   "since": ""
+  },
+  {
+   "id": "cw_ults",
+   "sys": "classes",
+   "t": "Ultimates and the kill meter removed",
+   "st": "ready",
+   "what": "The Tier III ultimates and their meter are gone (Tier III keeps its cards as before).",
+   "how": "Tester's Kit: a class weapon at Tier III; kill 30 of the dead.",
+   "look": "No meter above the perks, nothing extra on a heavy.",
+   "note": "",
+   "since": "f696bbb"
+  },
+  {
+   "id": "cw_card",
+   "sys": "classes",
+   "t": "Weapon card removed",
+   "st": "ready",
+   "what": "The held weapon's card bottom right is gone.",
+   "how": "Draw any weapon.",
+   "look": "Nothing drawn bottom right.",
+   "note": "",
+   "since": "f696bbb"
+  },
+  {
+   "id": "cw_ascend",
+   "sys": "classes",
+   "t": "Ascend grows the abilities",
+   "st": "done",
+   "what": "Each Ascend +15% damage and +10% size.",
+   "how": "",
+   "look": "",
+   "note": "",
+   "since": "650d613"
+  },
+  {
+   "id": "cw_scythes",
+   "sys": "classes",
+   "t": "Scythes solid (not inside out)",
+   "st": "ready",
+   "what": "All nine scythes: patches of the blades faced inward and the cut poles were open, so you saw their inside and through them. Every piece now faces out; open cuts drawn from both sides.",
+   "how": "Tester's Kit: the Shadowflame Scythe at each tier, the four Tablet scythes; look at each from every side, close.",
+   "look": "Solid from every side: no seeing the inside of the texture, no see-through.",
+   "note": "\"the model was inside out, so I can see the inside of the textures, and at some angles I could see through\".",
+   "since": "2384ca5"
+  },
+  {
+   "id": "cw_mutagen1p",
+   "sys": "classes",
+   "t": "Mutagen Staff in first person",
+   "st": "ready",
+   "what": "A first-person model of its own, set lower in the hand so your hand no longer passes through its head.",
+   "how": "Alchemist with the Mutagen Staff: first person, idle and swinging.",
+   "look": "Your hand on the shaft, the head well above it.",
+   "note": "\"my players hand clipping through the head of the staff\".",
+   "since": "f696bbb"
+  },
+  {
+   "id": "cw_sheath",
+   "sys": "classes",
+   "t": "Sheathing the Mutagen Staff",
+   "st": "building",
+   "what": "It must stay the Mutagen Staff when drawn and sheathed.",
+   "how": "",
+   "look": "",
+   "note": "Failed last test (no note).",
+   "since": ""
+  },
+  {
+   "id": "cw_rapiershock",
+   "sys": "classes",
+   "t": "Spellbound Rapier shock look",
+   "st": "building",
+   "what": "Part of the tier-look rebuild.",
+   "how": "",
+   "look": "",
+   "note": "\"The shock effect on the spellbound rapier still looks wrong\".",
+   "since": ""
+  },
+  {
+   "id": "cw_radiant",
+   "sys": "classes",
+   "t": "Radiant Quarterstaff heavy pillar",
+   "st": "building",
+   "what": "Part of the abilities rebuild.",
+   "how": "",
+   "look": "",
+   "note": "\"looks like a poorly done white line standing vertically\".",
+   "since": ""
+  },
+  {
+   "id": "sp_own",
+   "sys": "spells",
+   "t": "Class spells play their own effects",
+   "st": "done",
+   "what": "Each spell plays its mod's own impact, nothing of ours over it.",
+   "how": "",
+   "look": "",
+   "note": "",
+   "since": "9b0de93"
+  },
+  {
+   "id": "sp_immolate",
+   "sys": "spells",
+   "t": "Replace Immolate in the pool",
+   "st": "idea",
+   "what": "You asked to replace Immolate (Destruction, fire Tier III). Pick its replacement in Decisions.",
+   "how": "",
+   "look": "",
+   "note": "\"I want to replace the immolate from the spell pool\".",
+   "since": ""
+  },
+  {
+   "id": "fl_fire",
+   "sys": "flasks",
+   "t": "Fire Flask bursts in flames",
+   "st": "ready",
+   "what": "Dragonfire's impact and a ball-of-fire burst: flames, not a flat explosion.",
+   "how": "Throw the Fire Flask at the ground and at a group.",
+   "look": "A burst of real flames.",
+   "note": "\"The Fire Flask explosion should be flames\".",
+   "since": "f696bbb"
+  },
+  {
+   "id": "fl_holy",
+   "sys": "flasks",
+   "t": "Holy Water without the golden streaks",
+   "st": "ready",
+   "what": "The flat golden wind streaks that stayed on the ground are gone.",
+   "how": "Throw Holy Water.",
+   "look": "Its sunbeam and burst; nothing flat and streaky left standing.",
+   "note": "\"golden wind streaky effect that's stagnant and looks 2D\".",
+   "since": "f696bbb"
+  },
+  {
+   "id": "fl_rest",
+   "sys": "flasks",
+   "t": "The other flasks' bursts",
+   "st": "idea",
+   "what": "Frost, Shock, Acid and Voidglass rebuilt on the element kits with the rest of the effects.",
+   "how": "",
+   "look": "",
+   "note": "",
+   "since": ""
+  },
+  {
+   "id": "rl_abilities",
+   "sys": "relics",
+   "t": "Relic abilities rebuilt",
+   "st": "idea",
+   "what": "The ten relics' hits and heavies redone on the element kits.",
+   "how": "",
+   "look": "",
+   "note": "Vahlok's chains and the real-parts effects failed your last test.",
+   "since": ""
+  },
+  {
+   "id": "rl_list",
+   "sys": "relics",
+   "t": "The ten relics and what they do",
+   "st": "done",
+   "what": "Keyhammer, Mistblade, Windcutter, Glacier Greatsword, Storm Blade, Sacrifice Knife, Grief Blade, Sealbreaker, Nightcaller's Scythe, Arcane Maul.",
+   "how": "",
+   "look": "",
+   "note": "",
+   "since": ""
+  },
+  {
+   "id": "tb_lineup",
+   "sys": "tablet",
+   "t": "The Tablet lineup redone",
+   "st": "idea",
+   "what": "Your Nov 26 decision: a new lineup (keep / cut / new) on our own models, each with a BO3-style ability, approved item by item in Weapons & effects.",
+   "how": "",
+   "look": "",
+   "note": "",
+   "since": ""
+  },
+  {
+   "id": "tb_claws",
+   "sys": "tablet",
+   "t": "Both claws from the Tester's Kit",
+   "st": "ready",
+   "what": "The kit gives each claw's left-hand twin too, and equipping a claw puts its twin in your other hand.",
+   "how": "Tester's Kit: the Tablet weapons; equip Stormtalons, Talons of Woe and Cinderclaws from the inventory.",
+   "look": "A claw in each hand every time.",
+   "note": "\"The test kit was only giving me one claw\".",
+   "since": "f696bbb"
+  },
+  {
+   "id": "tb_storm",
+   "sys": "tablet",
+   "t": "Stormtalons: lightning, not ice",
+   "st": "ready",
+   "what": "The heavy hit's stun no longer coats the dead in ice: a lightning arc and a shock burst.",
+   "how": "Stormtalons: heavy hits, and three light hits in a row.",
+   "look": "Lightning on the heavy and on every 3rd hit; no ice anywhere.",
+   "note": "",
+   "since": "f696bbb"
+  },
+  {
+   "id": "tb_woe",
+   "sys": "tablet",
+   "t": "Talons of Woe show their effect",
+   "st": "ready",
+   "what": "Its hit effect was drawn at a fraction of its size inside the body; now full size (Vampiric Drain, a blood burst and mist).",
+   "how": "Talons of Woe: light and heavy hits.",
+   "look": "A red blood burst and mist on every hit, bigger on the heavy.",
+   "note": "",
+   "since": "f696bbb"
+  },
+  {
+   "id": "tb_bonereaper",
+   "sys": "tablet",
+   "t": "Bonereaper",
+   "st": "building",
+   "what": "Its raise was the likely cause of the round 20 crash (fixed). You said it can be replaced if it was the cause: it goes into the lineup review.",
+   "how": "",
+   "look": "",
+   "note": "",
+   "since": ""
+  },
+  {
+   "id": "wd_javhand",
+   "sys": "wonders",
+   "t": "Javelin held palm to you",
+   "st": "ready",
+   "what": "The hand turned so the palm faces you while charging and throwing; the charge effect over your head removed.",
+   "how": "Destruction wonder: hold to charge, look around, throw.",
+   "look": "Palm towards you on the shaft; nothing floating above your head.",
+   "note": "\"hand twisted ... palm facing towards the player\"; \"remove the charge element\".",
+   "since": "f696bbb"
+  },
+  {
+   "id": "wd_bane",
+   "sys": "wonders",
+   "t": "Alduin's Bane light meteors",
+   "st": "ready",
+   "what": "Smaller impacts: no white flash and no firestorm stacked on each meteor.",
+   "how": "Light hits on the dead with Alduin's Bane.",
+   "look": "A meteor on each hit with a fiery impact that doesn't blind you.",
+   "note": "\"a massive explosion and it's blinding\".",
+   "since": "f696bbb"
+  },
+  {
+   "id": "wd_soulcaller",
+   "sys": "wonders",
+   "t": "Soulcaller look",
+   "st": "done",
+   "what": "White soul wisps on its glass head.",
+   "how": "",
+   "look": "",
+   "note": "",
+   "since": "76167f7"
+  },
+  {
+   "id": "sm_portal",
+   "sys": "summons",
+   "t": "Summons come out of the portal",
+   "st": "building",
+   "what": "Conjurations and the Soulcaller's pride should step out of Skyrim's conjuring portal.",
+   "how": "",
+   "look": "",
+   "note": "\"Doesn't come out of the Skyrim summon portal they just pop up\".",
+   "since": ""
+  },
+  {
+   "id": "sm_thrall",
+   "sys": "summons",
+   "t": "Raised thralls safe",
+   "st": "ready",
+   "what": "A thrall raised from a leveled enemy (the Frost Brute) used a temporary copy of its record that is thrown away with the body: the round 20 crash. Now made from the real record.",
+   "how": "Bonereaper (or any raise) on many kinds of the dead, rounds 15 to 20.",
+   "look": "Thralls rise and fight; no crash.",
+   "note": "",
+   "since": "f696bbb"
+  },
+  {
+   "id": "ar_ssbody",
+   "sys": "armour",
+   "t": "Spellsword set shows your body",
+   "st": "ready",
+   "what": "The cuirass now uses a slot of its own, so the body slot stays free and your body shows under it.",
+   "how": "Tester's Kit: Spellsword set at each tier; look at yourself in third person.",
+   "look": "Your body under the cuirass. If the cuirass itself is missing now, tell me.",
+   "note": "\"Still makes my body invisible\".",
+   "since": "f696bbb"
+  },
+  {
+   "id": "ar_inv",
+   "sys": "armour",
+   "t": "Class sets in the inventory",
+   "st": "done",
+   "what": "Each piece has a model in the inventory and on the ground.",
+   "how": "",
+   "look": "",
+   "note": "",
+   "since": "76167f7"
+  },
+  {
+   "id": "nt_enemies",
+   "sys": "nights",
+   "t": "Only the dead you kept",
+   "st": "done",
+   "what": "Your keep/remove picks of Nov 26.",
+   "how": "",
+   "look": "",
+   "note": "",
+   "since": "e93f679"
+  },
+  {
+   "id": "nt_n5",
+   "sys": "nights",
+   "t": "Night 5 mini-boss",
+   "st": "done",
+   "what": "One of your kept mini-bosses at random.",
+   "how": "",
+   "look": "",
+   "note": "",
+   "since": "a4584e6"
+  },
+  {
+   "id": "nt_loot",
+   "sys": "nights",
+   "t": "No loot on the night's dead",
+   "st": "ready",
+   "what": "Looking at a night enemy's body or ash shows no loot list.",
+   "how": "Look at bodies and ash piles of the night's dead; then at a chest.",
+   "look": "Nothing listed for the dead; chests still list their loot.",
+   "note": "",
+   "since": "f696bbb"
+  },
+  {
+   "id": "nt_float",
+   "sys": "nights",
+   "t": "No floating dead",
+   "st": "done",
+   "what": "Any of the dead held in the air is set down.",
+   "how": "",
+   "look": "",
+   "note": "",
+   "since": "76167f7"
+  },
+  {
+   "id": "dr_stuck",
+   "sys": "dragons",
+   "t": "Dragons don't stay stuck flying",
+   "st": "ready",
+   "what": "A dragon aloft more than 20 s is made to land for 12 s, then may fly again.",
+   "how": "Tester's Kit: night 20 (Grahzah), and a dragon in the wild.",
+   "look": "Dragons come down to fight within about 20 seconds.",
+   "note": "\"The dragons get stuck flying in the air\".",
+   "since": "f696bbb"
+  },
+  {
+   "id": "dr_half",
+   "sys": "dragons",
+   "t": "Dragons at half size",
+   "st": "done",
+   "what": "Every dragon half size; the bosses' breath and called dead on the ground.",
+   "how": "",
+   "look": "",
+   "note": "",
+   "since": "76167f7"
+  },
+  {
+   "id": "al_redesign",
+   "sys": "altars",
+   "t": "Trials redesigned",
+   "st": "idea",
+   "what": "All four trials redone with their sounds and visuals: the rings you couldn't see, the souls, the seals that were only magic visuals.",
+   "how": "",
+   "look": "",
+   "note": "\"We are going to have to redesign these with their sounds and visuals\".",
+   "since": ""
+  },
+  {
+   "id": "al_rings",
+   "sys": "altars",
+   "t": "Trial rings visible",
+   "st": "building",
+   "what": "Part of the trials redesign.",
+   "how": "",
+   "look": "",
+   "note": "\"The ring is still invisible for all the quests\".",
+   "since": ""
+  },
+  {
+   "id": "al_souls",
+   "sys": "altars",
+   "t": "Lay the Restless to Rest",
+   "st": "building",
+   "what": "Part of the trials redesign.",
+   "how": "",
+   "look": "",
+   "note": "\"Very visually wrong, the circle is invisible ... the audio effects are overwhelming\".",
+   "since": ""
+  },
+  {
+   "id": "al_seals",
+   "sys": "altars",
+   "t": "Break the Priest's Seals",
+   "st": "building",
+   "what": "Part of the trials redesign.",
+   "how": "",
+   "look": "",
+   "note": "\"the seals for the last trial are just magic ability visuals\".",
+   "since": ""
+  },
+  {
+   "id": "fd_finish",
+   "sys": "felldir",
+   "t": "Answers play to the end",
+   "st": "ready",
+   "what": "A question asked while Felldir is speaking waits until the answer ends, instead of cutting it off.",
+   "how": "At a freed altar, Talk: ask a question, then click another while he answers.",
+   "look": "The first answer finishes, then the second starts.",
+   "note": "\"The Echo Altar's voice sometimes cuts out\".",
+   "since": "f696bbb"
+  },
+  {
+   "id": "fd_four",
+   "sys": "felldir",
+   "t": "Four questions a topic",
+   "st": "ready",
+   "what": "Each topic lists at most four questions, the ones you haven't asked first.",
+   "how": "At a freed altar, open each Talk topic.",
+   "look": "Four questions at most in each list.",
+   "note": "\"way too many dialogue options\".",
+   "since": "f696bbb"
+  },
+  {
+   "id": "fd_quiet",
+   "sys": "felldir",
+   "t": "The altar quiet during trials",
+   "st": "done",
+   "what": "No subtitles until the altar is freed.",
+   "how": "",
+   "look": "",
+   "note": "",
+   "since": "76167f7"
+  },
+  {
+   "id": "hd_night",
+   "sys": "hud",
+   "t": "Bigger night counter and quests",
+   "st": "ready",
+   "what": "The night box and the quest list under it are larger.",
+   "how": "Start a night; have a trial and a Skyrim quest tracked.",
+   "look": "Easier to read at a glance, top left.",
+   "note": "\"Make it larger as well as the quests under it\".",
+   "since": "f696bbb"
+  },
+  {
+   "id": "hd_banner",
+   "sys": "hud",
+   "t": "Quest banner style",
+   "st": "building",
+   "what": "Goes into the In-game UI redesign.",
+   "how": "",
+   "look": "",
+   "note": "\"the banner looks off and the size needs to be a bit larger\".",
+   "since": ""
+  },
+  {
+   "id": "hd_impacts2d",
+   "sys": "hud",
+   "t": "Impact effects in 2D look",
+   "st": "building",
+   "what": "Impacts that look flat: part of the element kits rebuild.",
+   "how": "",
+   "look": "",
+   "note": "\"impact effects ... look really low quality in 2D\".",
+   "since": ""
+  },
+  {
+   "id": "ld_continue",
+   "sys": "loading",
+   "t": "Continue shows our screen",
+   "st": "ready",
+   "what": "Our Curse of Alduin loading screen whenever a save loads from the main menu (Continue or Load).",
+   "how": "From the main menu, Continue; then Load a save.",
+   "look": "Our own screen the whole time, faded off when the world is in.",
+   "note": "\"Loading in a save still shows the loading screens from the mod\".",
+   "since": "f696bbb"
+  },
+  {
+   "id": "ld_doors",
+   "sys": "loading",
+   "t": "No loading screens for doors",
+   "st": "done",
+   "what": "Doors load in about a second: no screen needed (your note).",
+   "how": "",
+   "look": "",
+   "note": "",
+   "since": ""
+  },
+  {
+   "id": "ld_newchar",
+   "sys": "loading",
+   "t": "New character flow",
+   "st": "done",
+   "what": "One smooth start, menu music from launch.",
+   "how": "",
+   "look": "",
+   "note": "",
+   "since": "5865977"
+  },
+  {
+   "id": "wo_grass",
+   "sys": "world",
+   "t": "Floating grass at Riverwood's water",
+   "st": "building",
+   "what": "One grass piece floating over the water at Riverwood.",
+   "how": "",
+   "look": "",
+   "note": "\"one grass piece that was floating over the water at riverwood other than that it's good\".",
+   "since": ""
+  },
+  {
+   "id": "wo_world",
+   "sys": "world",
+   "t": "One grass, Screen-Space GI",
+   "st": "done",
+   "what": "Folkvangr and the pine grass; Screen-Space GI's light bounce.",
+   "how": "",
+   "look": "",
+   "note": "",
+   "since": "15cfd57"
+  },
+  {
+   "id": "wo_mods",
+   "sys": "world",
+   "t": "The 20 mods off",
+   "st": "done",
+   "what": "No missing masters; the world as before.",
+   "how": "",
+   "look": "",
+   "note": "",
+   "since": "a4584e6"
+  },
+  {
+   "id": "st_r20",
+   "sys": "stability",
+   "t": "Round 20 crash",
+   "st": "ready",
+   "what": "The game fell 0.6 s after a Bonereaper kill raised a Frost Brute. The raise is fixed; Crash Logger is installed to catch anything else.",
+   "how": "Play to round 20, raising thralls with the Bonereaper in big crowds.",
+   "look": "No crash. If one comes, Crash Logger writes a log I can read.",
+   "note": "\"I crashed on round 20 when I did a heavy attack on a crowd using one of the tablet scythes\".",
+   "since": "f696bbb"
+  }
+ ],
+ "decisions": [
+  {
+   "id": "immolate",
+   "sys": "spells",
+   "q": "What replaces Immolate (the Destruction fire spell at Tier III)?",
+   "opts": [
+    {
+     "id": "fireStorm",
+     "name": "Fire Storm",
+     "about": "Skyrim's master fire spell: a ring of flame bursting out round you."
+    },
+    {
+     "id": "meteor",
+     "name": "Meteor",
+     "about": "A meteor called down where you aim (the look of Alduin's Bane's, smaller)."
+    },
+    {
+     "id": "flameWall",
+     "name": "Wall of Flames",
+     "about": "A burning wall laid along the ground ahead."
+    },
+    {
+     "id": "inferno",
+     "name": "Inferno Bolt",
+     "about": "A slow, heavy fire bolt that bursts in a wide blast."
+    }
+   ]
+  },
+  {
+   "id": "bonereaper",
+   "sys": "tablet",
+   "q": "The Bonereaper's raise caused the round 20 crash (fixed now). Keep it in the Tablet?",
+   "opts": [
+    {
+     "id": "keep",
+     "name": "Keep it",
+     "about": "Fixed; it stays as it is until the lineup review."
+    },
+    {
+     "id": "review",
+     "name": "Decide in the lineup review",
+     "about": "Keep, cut or rework it with the rest of the Tablet."
+    },
+    {
+     "id": "cut",
+     "name": "Cut it now",
+     "about": "Take it out of the Tablet from the next build."
+    }
+   ]
+  }
+ ],
+ "builds": [
+  {
+   "sha": "f696bbb",
+   "when": "2026-11-26 19:16",
+   "what": "Alduin's Bane's light meteors: a smaller impact, no white flash, no firestorm stacked on it (Noah: \"massive ... blinding\")"
+  },
+  {
+   "sha": "aa2ca45",
+   "when": "2026-11-26 19:15",
+   "what": "The Spellsword's cuirass on slot 58 alone, the body left to the skin (NakedTorso in the cuirass didn't bring it back); the esp regenerated for the 1st-person Mutagen Staff"
+  },
+  {
+   "sha": "ad61a60",
+   "when": "2026-11-26 19:12",
+   "what": "The round 20 crash: a thrall raised from a dead one's temporary leveled base (freed with its body) - raised from the record it was placed from"
+  },
+  {
+   "sha": "764ce7b",
+   "when": "2026-11-26 19:10",
+   "what": "Stabilization (Noah's Nov 26 night test): the ultimates, weapon card and soul-torn death off; bigger night counter and quests; slide from a sprint; ash and bodies gone after 5 s; no loot on the night's dead; Continue's cover only from the main menu; grounded dragons; javelin palm to you; 1st-person Mutagen Staff; fire and holy flask bursts; Stormtalons' stun without ice, Talons of Woe's burst full"
+  },
+  {
+   "sha": "15cfd57",
+   "when": "2026-11-26 16:44",
+   "what": "Noah's Nov 26 evening asks: only the 123 fitting Compendium loading screens in game, our own Curse of Alduin loading screen when a saved game loads from the main menu; every weapon's own draw, swing, heavy and hit sound and the abilities' unset slots on the doc's recommended picks (the Issues tab's generic and same-sounding swings); his fire death - burned to a pile of ash"
+  },
+  {
+   "sha": "b95083f",
+   "when": "2026-11-26 16:12",
+   "what": "The ladder's kill and ultimate declared ahead of their first use"
+  },
+  {
+   "sha": "650d613",
+   "when": "2026-11-26 15:46",
+   "what": "The ability ladder (Noah's doc XziAfzRj): the four class weapons' Tier III ultimate, fired by a heavy (the wand: its next cast) once 25 kills fill the meter - Aetherial Host (three wolves of light, 15 s), Starfall (twelve great bolts), Soul Harvest (every dead within 12 m has its soul torn out), Spell Lance (a lance of your element through a line); each Ascend +15% damage and +10% size; the meter "
+  },
+  {
+   "sha": "286a000",
+   "when": "2026-11-26 15:43",
+   "what": "Noah's doc XziAfzRj picks, part 1: BO3 movement (sprint wind-up 180 ms and 440 speed, 7 degree view kick, slide tilt, light swings 1.2x), the javelin's draw/throw/landing sounds, night countdown 10 s and no between-wave countdown, no night or wave banners, the night counter as his clean plain number, a smaller quest stack, the held weapon's lore card bottom right, hints off, the hit arc half size"
+  },
+  {
+   "sha": "a4584e6",
+   "when": "2026-11-26 14:45",
+   "what": "Noah's decisions (doc 59NMqJ): night 5's boss one of his kept mini-bosses; his death pick in the game - a kill by shadow, spirit or arcane tears the soul out (Alduin's soul sound); hit feel read from his picks (no pause, no shake); WorkshopPicks generated again"
+  },
+  {
+   "sha": "e93f679",
+   "when": "2026-11-26 04:50",
+   "what": "Noah's workshop changes (doc WSKjuLEJ): 99 enemies taken out, his dragons (Vile Grimmvar, Necro 4 Grahzah, Aether Tiidrah, a Plague Dragon mini-boss), no hit pause or shake, his 15 ability picks, the Radiant Quarterstaff's heavy as Holy Water's pillar, the javelin and Soulcaller looks, every weapon art rebuilt from the looks the doc shows, the restless trial's light at 860"
+  },
+  {
+   "sha": "c9230c8",
+   "when": "2026-11-26 03:58",
+   "what": "Gun: kRagdoll named from its namespace (the build); the workshop doc for this build: dragons and the dead to keep or swap, the wonders' effects, the Nexus bar, this build's tests and decisions; the fire flask's picked burst"
+  },
+  {
+   "sha": "76167f7",
+   "when": "2026-11-26 03:50",
+   "what": "Fix build: Mutagen Staff's staff keywords off, Spellsword body shown, dragons at half size and flying free, reaper scythes faced out, javelin solid with effects"
+  },
+  {
+   "sha": "5865977",
+   "when": "2026-11-26 00:29",
+   "what": "Test build: all of Noah's workshop picks in the game, and the Tester's Kit"
+  },
+  {
+   "sha": "852e3f2",
+   "when": "2026-11-26 00:01",
+   "what": "The test build's plan: all of Noah's workshop picks at once, and a Tester's Kit power behind a test file"
+  },
+  {
+   "sha": "542bf69",
+   "when": "2026-11-25 23:49",
+   "what": "Noah's sound picks, final: every weapon and ability sound at 20%; the Mutagen Staff's flasks take the Alchemist flasks' sounds"
+  },
+  {
+   "sha": "9e6d746",
+   "when": "2026-11-25 17:50",
+   "what": "The workshop as the master doc: sounds, hit feel, deaths, the trials in 3D, big nights, issues, simple cards"
+  },
+  {
+   "sha": "2b2b079",
+   "when": "2026-11-25 16:34",
+   "what": "Five weapon looks and five ability options each; the scythes' joins"
+  },
+  {
+   "sha": "b447496",
+   "when": "2026-11-25 14:41",
+   "what": "The white sunbeam stands in Auriel's sunbeam, white all through"
+  },
+  {
+   "sha": "2056461",
+   "when": "2026-11-25 14:25",
+   "what": "The Radiant Quarterstaff's sunbeam in white; ability pictures from the real parts"
+  },
+  {
+   "sha": "871b59a",
+   "when": "2026-11-25 13:52",
+   "what": "Our own scythes in the game (CurseOfAlduin\\reapers): nine built from Skyrim's weapons, 25% larger, the Silver Reaping, Wyrmtooth and Bloodmoon blades set flush on their poles; their looks refitted to the new blades; Noah's ability picks (the Bane's heavy a wind shockwave, the Radiant staff's heavy white); the Soulcaller's cats come through Skyrim's own summon portal"
+  },
+  {
+   "sha": "9b0de93",
+   "when": "2026-11-25 04:19",
+   "what": "Every ability rebuilt from real parts: Skyrim's, Dawnguard's, Dragonborn's, Apocalypse's and Mysticism's own particle effects put together, one new effect each, in its own colour and size, each part on its own beat; Vahlok's chains real links that catch the dead and haul them in; class spells play their own; Noah's look picks in; our own scythes built from Skyrim's weapons for the workshop"
+  },
+  {
+   "sha": "8cd53a1",
+   "when": "2026-11-25 03:25",
+   "what": "Each weapon three looks of its own (no add-ons, no shared families); every ability one custom effect from Skyrim's textures, the same in the workshop and the game"
+  },
+  {
+   "sha": "d7da111",
+   "when": "2026-11-25 02:27",
+   "what": "Every weapon, bolt, flask and class spell its own effects, on Skyrim's own: each look's own signature, 2K textures (4K for the wonders and Alduin's Bane), Skyrim's enchantment membranes as the looks' second skin"
+  },
+  {
+   "sha": "13d37a7",
+   "when": "2026-11-25 01:00",
+   "what": "Weapon looks: light comes to a point at tips and ends, slanted sheets for depth, no motes; staff effects on the heads only; Noah's 2026-11-25 picks; priest weapons lose their old built-in pillars"
+  },
+  {
+   "sha": "22f0f37",
+   "when": "2026-11-24 23:48",
+   "what": "Mist softer still; the workshop's record of the mod and its road to Nexus kept in the repo"
+  },
+  {
+   "sha": "c34b333",
+   "when": "2026-11-24 23:41",
+   "what": "Looks remade: rising Flame, real-lightning Storm, softer Mist, new Frost/Shadow/Radiance/Spirit; Ascended keeps Tier III's model"
+  },
+  {
+   "sha": "9b02d0d",
+   "when": "2026-11-24 22:59",
+   "what": "Live workshop previews: weapons in every look, packed small for the review doc"
+  },
+  {
+   "sha": "c9a3c8f",
+   "when": "2026-11-24 22:34",
+   "what": "Blade effects run guard to tip, smoother lightning, Carian Wand mist, class voices out"
+  },
+  {
+   "sha": "d0bdc53",
+   "when": "2026-11-24 22:06",
+   "what": "Preview renders for the per-build review doc; nifworld prints UVs"
+  },
+  {
+   "sha": "c2db1a3",
+   "when": "2026-11-24 21:50",
+   "what": "White-fireball souls, smooth altar ring fill, cut-plugin and dead-code cleanup"
+  },
+  {
+   "sha": "35fb293",
+   "when": "2026-11-24 21:28",
+   "what": "Javelin throw: the javelin itself laid along your aim when cocked and thrown (the wrist aimed too)"
+  },
+  {
+   "sha": "28d29f7",
+   "when": "2026-11-24 21:19",
+   "what": "Regenerate the plugin and the guide for Hold the Light"
+  },
+  {
+   "sha": "f64b181",
+   "when": "2026-11-24 21:17",
+   "what": "Trials: Hold the Light replaces Repeat the Echo; souls are blue spirit flames in the world; the altar's ring is real light on the ground"
+  },
+  {
+   "sha": "dec31f3",
+   "when": "2026-11-24 21:09",
+   "what": "Javelin seen in the hand, tap jabs and hold throws, a human overhand throw, trails you can follow; Wandering Star's tip; Mutagen Staff in the hands"
+  },
+  {
+   "sha": "07d6c6f",
+   "when": "2026-11-24 21:04",
+   "what": "Weapon effects: whole blade, no outline lines, scythes the right way round, claws lined up and in both hands"
+  }
+ ],
+ "installs": {
+  "f696bbb": "2026-11-26 20:00",
+  "15cfd57": "2026-11-26 17:20",
+  "a4584e6": "2026-11-26 15:01",
+  "5865977": "2026-11-26 01:30"
+ },
+ "bible": {
+  "motto": "Skyrim look, BO3 punch.",
+  "map": [
+   [
+    "Rounds",
+    "Nights and waves",
+    "Each night climbs; every 5th a boss, every 10th a dragon."
+   ],
+   [
+    "Points",
+    "Cursed Essence",
+    "Earned on every kill, spent at the Echo Altar; +10s rise where the kill falls."
+   ],
+   [
+    "Mystery Box",
+    "Tablet of Mysteries",
+    "The only gamble: a donated weapon with limited uses; the mask makes it fly to another city."
+   ],
+   [
+    "Pack-a-Punch",
+    "Tier upgrades",
+    "One model per class weapon; each tier makes its look and ability visibly stronger."
+   ],
+   [
+    "Perk-a-Colas",
+    "Nordic brews",
+    "Mead, ales and draughts bought at the altar, shown as a row of icons."
+   ],
+   [
+    "Wonder Weapons",
+    "The four wonders",
+    "Soulcaller's Staff, Wyrmspine Javelin, Mutagen Staff, Dragon Slayer: each earned by a hidden quest."
+   ],
+   [
+    "Easter eggs",
+    "Hidden quests and Felldir",
+    "Felldir the Old whispers the steps; his story opens as cities are freed."
+   ],
+   [
+    "Map bosses",
+    "Dragon Priests and dragons",
+    "Each city's priest; the three word-dragons and the Echo of Alduin."
+   ],
+   [
+    "Downed / revive",
+    "Fall and rise",
+    "In a party a fallen player can be lifted; alone, the night ends."
+   ],
+   [
+    "Power-ups",
+    "Nordic boons (planned)",
+    "Short drops from the dead - to be designed."
+   ]
+  ],
+  "rules": [
+   [
+    "Reads in a split second",
+    "Every weapon, ability and enemy is clear by its shape, colour and sound before you think about it - BO3's clarity."
+   ],
+   [
+    "Made of Skyrim",
+    "Everything is built from Skyrim's own meshes, textures and sounds (and the DLCs'): nothing flat, nothing that looks 2D or pasted on."
+   ],
+   [
+    "One element, one look",
+    "Fire, frost, shock, shadowfire, holy, poison, arcane and blood each have one kit - colour, textures, sounds - used by every weapon, spell and flask of that element. No purple bolt that burns red."
+   ],
+   [
+    "Punch without clutter",
+    "A hit confirms with a sound and a short burst; no hit pause, no screen shake, no banners."
+   ],
+   [
+    "Power you can see",
+    "Every tier is visibly stronger than the last on the same model; Legendary adds a signature you can spot across the field."
+   ],
+   [
+    "Less on screen",
+    "Only what a BO3 player looks for: the night, the essence, the brews, the compass. Everything else appears when it matters."
+   ],
+   [
+    "Thirty of the dead",
+    "Every effect is budgeted for a crowd of 30 or more; nothing that stutters the first time it plays."
+   ],
+   [
+    "Our own, not borrowed",
+    "Fewer mod requirements over time: our own models from Skyrim's meshes, our own effects from Skyrim's parts."
+   ]
+  ],
+  "flow": [
+   [
+    "Idea",
+    "A change you ask for, or one I propose and you approve, written as a feature in its system."
+   ],
+   [
+    "Building",
+    "I build it; previews go in the workshop where they help you decide."
+   ],
+   [
+    "Test Range",
+    "Each new effect is played in the Test Range on dummies; you record it with NVIDIA, and the clip comes into the workshop."
+   ],
+   [
+    "Ready to test",
+    "Installed on your PC; it appears in Now under its category with how to test it and what you should see."
+   ],
+   [
+    "Passed / Failed",
+    "You mark it (or pass a whole category at once). A fail goes straight back to Building with your note."
+   ],
+   [
+    "Done",
+    "Passed and unchanged since; it stays in its system so it never comes back as a suggestion."
+   ]
+  ]
+ },
+ "elements": [
+  {
+   "id": "fire",
+   "name": "Fire",
+   "col": "#ff7a2e",
+   "about": "Skyrim's fire spells and Dragonfire: real flames, embers, scorch."
+  },
+  {
+   "id": "frost",
+   "name": "Frost",
+   "col": "#9fd6ff",
+   "about": "Ice spikes, frost mist, rime on the dead; shatter bursts."
+  },
+  {
+   "id": "shock",
+   "name": "Shock",
+   "col": "#b9a8ff",
+   "about": "Real branching lightning, sparks, a static crackle on the dead."
+  },
+  {
+   "id": "shadowfire",
+   "name": "Shadowfire",
+   "col": "#9a3bff",
+   "about": "Violet-black flame that burns violet all the way through (the Shadowflame Scythe)."
+  },
+  {
+   "id": "holy",
+   "name": "Holy and sun",
+   "col": "#ffd56a",
+   "about": "Dawnguard's sunlight: beams from the sky, warm bursts, motes; never flat streaks."
+  },
+  {
+   "id": "poison",
+   "name": "Poison and acid",
+   "col": "#9be03a",
+   "about": "Bubbling green, dripping, a lingering cloud low on the ground."
+  },
+  {
+   "id": "arcane",
+   "name": "Arcane",
+   "col": "#8fb4ff",
+   "about": "Magicka itself: runes, blue-white light, a soft hum."
+  },
+  {
+   "id": "blood",
+   "name": "Blood",
+   "col": "#c0182a",
+   "about": "Vampiric drain, blood mist and spray."
+  }
+ ],
+ "kit": [
+  {
+   "name": "Projectile",
+   "about": "What flies: a bolt, a ball, a thrown flask."
+  },
+  {
+   "name": "Impact",
+   "about": "Where it lands: one hit."
+  },
+  {
+   "name": "Burst",
+   "about": "A big one: a heavy, an explosion."
+  },
+  {
+   "name": "Ground",
+   "about": "What lingers on the ground for a few seconds."
+  },
+  {
+   "name": "On the dead",
+   "about": "Burning, frozen, shocked: the shader on the one hit."
+  },
+  {
+   "name": "Weapon aura",
+   "about": "Tier I, II, III and Legendary on a weapon of that element."
+  },
+  {
+   "name": "Trail",
+   "about": "Behind a swing or a projectile."
+  },
+  {
+   "name": "Sounds",
+   "about": "Cast, travel, impact, linger - one set per element."
+  }
+ ],
+ "classes": [
+  {
+   "id": "alchemist",
+   "name": "Alchemist",
+   "weapon": "Shadowflame Scythe",
+   "now": "Forsworn at Tier I, Falmer II, Dwarven III, Dragon Priest Legendary",
+   "cands": [
+    {
+     "key": "cls_forsworn_alch",
+     "name": "Forsworn scythe",
+     "src": "Built from Skyrim's Forsworn axe and sword (ours)"
+    },
+    {
+     "key": "cls_falmer_alch",
+     "name": "Falmer scythe",
+     "src": "Built from Skyrim's Falmer axe and longsword (ours)"
+    },
+    {
+     "key": "cls_dwarven_alch",
+     "name": "Dwarven scythe",
+     "src": "Built from Skyrim's Dwarven battleaxe and greatsword (ours)"
+    },
+    {
+     "key": "cls_dragonpriest_alch",
+     "name": "Dragon Priest scythe",
+     "src": "Built from a Dragon Priest staff and dagger (ours)"
+    }
+   ]
+  },
+  {
+   "id": "summoner",
+   "name": "Summoner",
+   "weapon": "Radiant Quarterstaff",
+   "now": "Steel, Ebony, Daedric, Dragonbone by tier (Animated Armoury)",
+   "cands": [
+    {
+     "key": "cls_steelstaff_radiant",
+     "name": "Steel quarterstaff",
+     "src": "Animated Armoury - to be rebuilt from Skyrim's meshes"
+    },
+    {
+     "key": "cls_ebonystaff_radiant",
+     "name": "Ebony quarterstaff",
+     "src": "Animated Armoury - to be rebuilt from Skyrim's meshes"
+    },
+    {
+     "key": "cls_daedricstaff_radiant",
+     "name": "Daedric quarterstaff",
+     "src": "Animated Armoury - to be rebuilt from Skyrim's meshes"
+    },
+    {
+     "key": "cls_dragonbonestaff_radiant",
+     "name": "Dragonbone quarterstaff",
+     "src": "Animated Armoury - to be rebuilt from Skyrim's meshes"
+    }
+   ]
+  },
+  {
+   "id": "destruction",
+   "name": "Destruction",
+   "weapon": "Carian Wand",
+   "now": "Steel, Stalhrim, Glass, Daedric by tier (Fulcimentum)",
+   "cands": [
+    {
+     "key": "cls_steelwand_carian",
+     "name": "Steel wand",
+     "src": "Fulcimentum - to be rebuilt from Skyrim's meshes"
+    },
+    {
+     "key": "cls_stahlrimwand_carian",
+     "name": "Stalhrim wand",
+     "src": "Fulcimentum - to be rebuilt from Skyrim's meshes"
+    },
+    {
+     "key": "cls_glasswand_carian",
+     "name": "Glass wand",
+     "src": "Fulcimentum - to be rebuilt from Skyrim's meshes"
+    },
+    {
+     "key": "cls_daedricwand_carian",
+     "name": "Daedric wand",
+     "src": "Fulcimentum - to be rebuilt from Skyrim's meshes"
+    }
+   ]
+  },
+  {
+   "id": "spellsword",
+   "name": "Spellsword",
+   "weapon": "Spellbound Rapier",
+   "now": "Steel, Ebony, Daedric, Dragonbone by tier (Animated Armoury)",
+   "cands": [
+    {
+     "key": "cls_steelrapier_ss_none",
+     "name": "Steel rapier",
+     "src": "Animated Armoury - to be rebuilt from Skyrim's meshes"
+    },
+    {
+     "key": "cls_ebonyrapier_ss_none",
+     "name": "Ebony rapier",
+     "src": "Animated Armoury - to be rebuilt from Skyrim's meshes"
+    },
+    {
+     "key": "cls_daedricrapier_ss_none",
+     "name": "Daedric rapier",
+     "src": "Animated Armoury - to be rebuilt from Skyrim's meshes"
+    },
+    {
+     "key": "cls_dragonbonerapier_ss_none",
+     "name": "Dragonbone rapier",
+     "src": "Animated Armoury - to be rebuilt from Skyrim's meshes"
+    }
+   ]
+  }
+ ],
+ "tablet": [
+  {
+   "id": "stormtalons",
+   "key": "tab_stormtalons",
+   "name": "Stormtalons",
+   "kind": "Glass claws - worn",
+   "does": "Every 3rd hit chains lightning to 2 more. Heavy: a lightning stun."
+  },
+  {
+   "id": "gravebell",
+   "key": "tab_gravebell",
+   "name": "Gravebell Mace",
+   "kind": "Mace - worn",
+   "does": "Every 5th hit tolls the bell, stunning the dead within 5 m."
+  },
+  {
+   "id": "riverstone",
+   "key": "tab_riverstone",
+   "name": "Riverstone Halberd",
+   "kind": "Halberd - worn",
+   "does": "Hits knock the dead back. Heavy: splits the ground in a line ahead."
+  },
+  {
+   "id": "cinderclaws",
+   "key": "tab_cinderclaws",
+   "name": "Cinderclaws",
+   "kind": "Ember claws - worn",
+   "does": "Every swipe sets the dead burning. Heavy: a fan of embers."
+  },
+  {
+   "id": "frostmourn",
+   "key": "tab_frostmourn",
+   "name": "Frostmourn Rapier",
+   "kind": "Rapier - worn",
+   "does": "Thrusts slow the dead. Heavy: freezes a ring of the dead round you."
+  },
+  {
+   "id": "silverscythe",
+   "key": "tab_silverscythe",
+   "name": "Silver Reaping Scythe",
+   "kind": "Scythe - worn",
+   "does": "Every 4th hit: a silver flash that briefly slows the dead."
+  },
+  {
+   "id": "wyrmtooth",
+   "key": "tab_wyrmtooth",
+   "name": "Wyrmtooth Scythe",
+   "kind": "Scythe - worn",
+   "does": "Hits make the dead bleed. Heavy: a shockwave that staggers within 8 m."
+  },
+  {
+   "id": "lanternwick",
+   "key": "tab_lanternwick",
+   "name": "Rimewick Quarterstaff",
+   "kind": "Quarterstaff - battered",
+   "does": "Light: freezes the dead for 3 s. Heavy: a 10 m blizzard for 6 s."
+  },
+  {
+   "id": "talons",
+   "key": "tab_talons",
+   "name": "Talons of Woe",
+   "kind": "Dragonbone claws - battered",
+   "does": "Their bleed runs twice as deep; kills heal you a little."
+  },
+  {
+   "id": "wyrmspine",
+   "key": "tab_wyrmspine",
+   "name": "Wyrmspine Pike",
+   "kind": "Pike - battered",
+   "does": "Thrusts pierce 2 more in a line. Heavy: a shockwave within 8 m."
+  },
+  {
+   "id": "eclipse",
+   "key": "tab_eclipse",
+   "name": "Eclipse Edge",
+   "kind": "Glass pike - battered",
+   "does": "Hits alternate frost and sun. Heavy: an ice shockwave, then a sun shockwave."
+  },
+  {
+   "id": "wanderstar",
+   "key": "",
+   "name": "The Wandering Star",
+   "kind": "Wand - battered",
+   "does": "Hold to cast a gold star every 0.5 s that bounces to up to 4 of the dead."
+  },
+  {
+   "id": "bonereaper",
+   "key": "tab_bonereaper",
+   "name": "Bonereaper",
+   "kind": "Scythe - battered",
+   "does": "1 kill in 4 rises to fight for you for 20 s. (Its raise caused the round 20 crash - fixed.)"
+  },
+  {
+   "id": "bloodmoon",
+   "key": "tab_bloodmoon",
+   "name": "Bloodmoon Scythe",
+   "kind": "Scythe - battered",
+   "does": "Hits drain blood to heal you. Heavy: drains everything it touches."
+  }
+ ],
+ "modstack": {
+  "about": "Every mod The Curse of Alduin plays with in your game. Updated Nov 26 evening: Screen-Space GI added, the grass down to Folkvangr and the pine grass (your Plugins.txt kept as Plugins.txt.before-grass-nov26), 20 plugins off from the morning (kept as Plugins.txt.before-modstack-nov26). Your pick shows on each.",
+  "groups": [
+   [
+    "Rendering and light",
+    [
+     [
+      "cs",
+      "Community Shaders",
+      "The shader engine: light, shadows, parallax.",
+      "need",
+      "keep",
+      "Kept with its add-ons, all in your game now: Screen-Space GI added Nov 26 (from your Downloads) beside Light Limit Fix, Dynamic Cubemaps, Extended Materials, Subsurface Scattering, Volumetric Lighting, Screen-Space Shadows, IBL, True PBR, Terrain and Cloud Shadows, Grass Lighting and Water Effects.",
+      [
+       "Keep + add-ons",
+       "Switch to ENB (as Nolvus)",
+       "Keep as is"
+      ]
+     ],
+     [
+      "enblight",
+      "ENB Light",
+      "Light placement for ENB.",
+      "no",
+      "drop",
+      "Done Nov 26: turned off in your Plugins.txt (a copy of the old list is kept beside it). Light Limit Fix lights the spells and flasks instead.",
+      [
+       "Drop",
+       "Keep"
+      ]
+     ],
+     [
+      "lux",
+      "Lux, Lux Via, Lux Orbis",
+      "Interior, road and exterior lighting.",
+      "rec",
+      "keep",
+      "The same lighting Nolvus uses. Keep.",
+      [
+       "Keep",
+       "Drop"
+      ]
+     ],
+     [
+      "azurite",
+      "Azurite Weathers III",
+      "Weather and sky.",
+      "rec",
+      "keep",
+      "Fine for dark nights. NAT III (Nolvus' weather) is the other choice; it's brighter and heavier.",
+      [
+       "Keep",
+       "Try NAT III",
+       "Make our own Curse weathers"
+      ]
+     ],
+     [
+      "rw2",
+      "Realistic Water Two",
+      "Water.",
+      "no",
+      "keep",
+      "Keep.",
+      [
+       "Keep",
+       "Drop"
+      ]
+     ]
+    ]
+   ],
+   [
+    "Land and textures",
+    [
+     [
+      "skyland",
+      "Skyland (Watercolor)",
+      "Landscape textures.",
+      "no",
+      "keep",
+      "Keep: cities and roads are where the nights happen.",
+      [
+       "Keep",
+       "Swap for another landscape pack"
+      ]
+     ],
+     [
+      "grass",
+      "Folkvangr, Cathedral 3D Pine Grass, Origins of Forest, Tamrielic Grass, Veydosebrom, Short Grass, Freak's Floral Fields",
+      "Grass and flowers (seven grass mods).",
+      "no",
+      "trim",
+      "Done: Folkvangr with Cathedral 3D Pine Grass; Tamrielic Grass, Veydosebrom and Origins of Forest turned off. Short Grass Mixed and Freak's Floral Fields are still on: see Decisions.",
+      [
+       "Trim to one set",
+       "Keep all"
+      ]
+     ],
+     [
+      "trees",
+      "Happy Little Trees",
+      "Trees.",
+      "no",
+      "keep",
+      "Keep.",
+      [
+       "Keep",
+       "Swap"
+      ]
+     ],
+     [
+      "seasons",
+      "Seasons of Skyrim / Seasonal Landscapes, Snow Over Skyrim",
+      "Seasons and snow.",
+      "no",
+      "keep",
+      "Keep (Nolvus has seasons too).",
+      [
+       "Keep",
+       "Drop"
+      ]
+     ],
+     [
+      "smim",
+      "SMIM, Lit Road Signs, Icy cave and biome remasters",
+      "Static meshes and caves.",
+      "no",
+      "keep",
+      "Keep.",
+      [
+       "Keep",
+       "Drop"
+      ]
+     ]
+    ]
+   ],
+   [
+    "Magic and effects",
+    [
+     [
+      "apoc",
+      "Apocalypse - Magic of Skyrim",
+      "Spells; its effects are parts of our abilities.",
+      "need",
+      "keep",
+      "Keep: many of our ability effects are built from its parts.",
+      [
+       "Keep"
+      ]
+     ],
+     [
+      "myst",
+      "Mysticism",
+      "Spells; its effects are parts of our abilities.",
+      "need",
+      "keep",
+      "Keep, same reason.",
+      [
+       "Keep"
+      ]
+     ],
+     [
+      "dsi",
+      "Deadly Spell Impacts",
+      "Scorch marks where spells land.",
+      "rec",
+      "keep",
+      "Keep.",
+      [
+       "Keep",
+       "Drop"
+      ]
+     ],
+     [
+      "embers",
+      "Embers XD (+ Fire Magick)",
+      "Fire and embers.",
+      "rec",
+      "keep",
+      "Keep.",
+      [
+       "Keep",
+       "Drop"
+      ]
+     ],
+     [
+      "runes",
+      "Strange Runes",
+      "Rune spell looks.",
+      "no",
+      "keep",
+      "Keep.",
+      [
+       "Keep",
+       "Drop"
+      ]
+     ],
+     [
+      "vae",
+      "Visual Animated Enchants, Vibrant Weapons Lite",
+      "Weapon glows (no longer used by CoA).",
+      "no",
+      "drop",
+      "Done Nov 26: turned off in your Plugins.txt (a copy of the old list is kept beside it). Vibrant Weapons Lite with it; our weapon effects are made by the mod.",
+      [
+       "Drop",
+       "Keep"
+      ]
+     ],
+     [
+      "fec",
+      "Frozen Electrocuted Combusted (FEC)",
+      "Bodies burned, frozen or shocked on death.",
+      "rec",
+      "own",
+      "Your death picks are in: heavy kills throw the body, shadow, spirit and arcane kills tear the soul out. Fire, frost, shock and the rest you left as they are, which is FEC's bodies: keep it or make our own is in Decisions.",
+      [
+       "Make our own deaths",
+       "Keep FEC"
+      ]
+     ]
+    ]
+   ],
+   [
+    "Weapons",
+    [
+     [
+      "aa",
+      "Animated Armoury",
+      "Quarterstaffs, rapiers, claws, pikes; their moves.",
+      "need",
+      "keep",
+      "Keep: class weapons and Tablet weapons use its models and animations.",
+      [
+       "Keep"
+      ]
+     ],
+     [
+      "fulci",
+      "Fulcimentum - More Staves and Wands",
+      "The wands and the Soulcaller's look.",
+      "need",
+      "keep",
+      "Keep, or we make our own wand and staff models later.",
+      [
+       "Keep",
+       "Make our own"
+      ]
+     ],
+     [
+      "lgs",
+      "Light Greatswords, Ultra Greatswords",
+      "Alduin's Bane's model.",
+      "need",
+      "own",
+      "Your pick: our own Alduin's Bane model. In the works; previews come in the doc before it goes in the game.",
+      [
+       "Make our own Bane",
+       "Keep"
+      ]
+     ],
+     [
+      "bows",
+      "Faction Crossbows, Offhand Bows, Bow Charge Plus",
+      "Bows.",
+      "no",
+      "keep",
+      "Done Nov 26: turned off in your Plugins.txt (a copy of the old list is kept beside it). No CoA class uses a bow.",
+      [
+       "Keep",
+       "Drop"
+      ]
+     ],
+     [
+      "spellsword",
+      "Spell Sword / Spellsword",
+      "Spell-in-blade casting.",
+      "rec",
+      "keep",
+      "Keep.",
+      [
+       "Keep",
+       "Drop"
+      ]
+     ]
+    ]
+   ],
+   [
+    "Combat and movement",
+    [
+     [
+      "mco",
+      "MCO / ADXP, Precision, TrueHUD, SCAR, Modern Combat AI",
+      "Combat moves, hit detection, enemy AI.",
+      "need",
+      "keep",
+      "The same base Nolvus uses. Keep.",
+      [
+       "Keep"
+      ]
+     ],
+     [
+      "tdm",
+      "True Directional Movement, TK Dodge, Better Jumping",
+      "Movement and dodges.",
+      "rec",
+      "own",
+      "Your BO3 movement is in the game (sprint wind-up and view kick, slide tilt, quicker light swings); True Directional Movement stays under it.",
+      [
+       "Our own BO3 movement",
+       "Keep as is"
+      ]
+     ],
+     [
+      "parkour",
+      "SkyParkour (and its slide)",
+      "Climbing and a slide.",
+      "rec",
+      "keep",
+      "Keep; its slide is a start for ours.",
+      [
+       "Keep",
+       "Drop"
+      ]
+     ],
+     [
+      "oar",
+      "Open/Dynamic Animation Replacer, Behavior Data Injector",
+      "Animation frameworks.",
+      "need",
+      "keep",
+      "Keep.",
+      [
+       "Keep"
+      ]
+     ],
+     [
+      "glide",
+      "Paragliding",
+      "Gliding (our dragon glide).",
+      "need",
+      "keep",
+      "Keep.",
+      [
+       "Keep"
+      ]
+     ]
+    ]
+   ],
+   [
+    "The dead and creatures",
+    [
+     [
+      "sic",
+      "Skyrim Immersive Creatures",
+      "Most of the night's creatures and mini-bosses.",
+      "need",
+      "keep",
+      "Keep: you kept its brutes, Hunger, Ogrim and mini-bosses.",
+      [
+       "Keep"
+      ]
+     ],
+     [
+      "rnr",
+      "Rogues 'n Raiders (+ add-ons)",
+      "Skeletons.",
+      "no",
+      "drop",
+      "Done Nov 26: turned off in your Plugins.txt (a copy of the old list is kept beside it). Its three add-ons with it.",
+      [
+       "Drop",
+       "Keep"
+      ]
+     ],
+     [
+      "mihail",
+      "Mihail's Zombies (+ his other packs)",
+      "The zombies and the Thriceborn bodies.",
+      "need",
+      "keep",
+      "Your picks: zombies kept, and the High Fantasy pack kept (CoA's world creatures and the Bolgan sword). Off since Nov 26: Bone Colossus, Old God, Giant Family, Fogling, Indrik Mounts.",
+      [
+       "Keep zombies, drop the rest",
+       "Keep all"
+      ]
+     ],
+     [
+      "ddc",
+      "Diverse Dragons Collection",
+      "Every dragon.",
+      "need",
+      "keep",
+      "Keep.",
+      [
+       "Keep"
+      ]
+     ],
+     [
+      "restless",
+      "The Restless Dead",
+      "Undead variety.",
+      "no",
+      "check",
+      "Done Nov 26: turned off in your Plugins.txt (a copy of the old list is kept beside it). The trial's restless are ours.",
+      [
+       "Drop",
+       "Keep"
+      ]
+     ],
+     [
+      "conj",
+      "Calling of the Conjurer, Gondorian Ranger Armor, Black Mage Armor",
+      "Old summons and armour (no longer used).",
+      "no",
+      "drop",
+      "Done Nov 26: turned off in your Plugins.txt (a copy of the old list is kept beside it). The Summoner's undead are ours.",
+      [
+       "Drop",
+       "Keep"
+      ]
+     ],
+     [
+      "populated",
+      "Populated Dungeons Caves Ruins Legendary",
+      "More enemies in dungeons.",
+      "no",
+      "check",
+      "Done Nov 26: turned off in your Plugins.txt (a copy of the old list is kept beside it). CoA fills the dungeons itself on a night.",
+      [
+       "Drop",
+       "Keep"
+      ]
+     ]
+    ]
+   ],
+   [
+    "Interface",
+    [
+     [
+      "ui",
+      "SkyUI, Untarnished UI (subtitles), moreHUD, Tween Menu Overhaul, Modern Wait Menu, Character Menu",
+      "Menus and HUD.",
+      "rec",
+      "own",
+      "Your notes on every screen are in the UI tab, each marked in the game now, kept as it was, or next.",
+      [
+       "Make our own CoA theme",
+       "Keep"
+      ]
+     ],
+     [
+      "maps",
+      "FWMF fantasy paper maps, Legendary Map, HD Local Map, Flat Map Markers",
+      "Maps.",
+      "no",
+      "keep",
+      "Keep.",
+      [
+       "Keep",
+       "Drop"
+      ]
+     ]
+    ]
+   ],
+   [
+    "Characters",
+    [
+     [
+      "bodies",
+      "CBBE, HIMBO, High Poly Head, RaceMenu, XPMSE, SMP hair, eyes and brows",
+      "Bodies and faces.",
+      "no",
+      "keep",
+      "Player-side; the class armour is fitted to CBBE 3BA and HIMBO. Keep.",
+      [
+       "Keep"
+      ]
+     ],
+     [
+      "followers",
+      "Fabulous Followers, Faithful Faces, SerketHetyt overhauls, PAN NPCs",
+      "NPC looks.",
+      "no",
+      "keep",
+      "Keep.",
+      [
+       "Keep",
+       "Drop"
+      ]
+     ]
+    ]
+   ],
+   [
+    "Co-op",
+    [
+     [
+      "st",
+      "Skyrim Together",
+      "Co-op for 1-4.",
+      "rec",
+      "keep",
+      "Keep.",
+      [
+       "Keep"
+      ]
+     ]
+    ]
+   ]
+  ]
+ },
+ "nexus": {
+  "updated": "Nov 26, 2026 (early morning)",
+  "groups": [
+   [
+    "Gameplay",
+    [
+     [
+      "loop",
+      "Nights, rounds, enemies, essence",
+      "done",
+      ""
+     ],
+     [
+      "classes",
+      "Four classes, kits and tiers",
+      "doing",
+      "Refining class by class (Summoner first); tier models settled Nov 24."
+     ],
+     [
+      "trials",
+      "Echo Altar trials and freeing",
+      "testing",
+      "Hold the Light and the white souls are new."
+     ],
+     [
+      "relics",
+      "Dragon Priest relics and their abilities",
+      "doing",
+      "Abilities to be remade on the new tier ladder (light, heavy, ultimate)."
+     ],
+     [
+      "tablet",
+      "Tablet of Mysteries",
+      "done",
+      ""
+     ],
+     [
+      "wonders",
+      "Wonders and hidden quests",
+      "doing",
+      "The Summoner's wonder and the Mutagen Staff still need work."
+     ],
+     [
+      "felldir",
+      "Felldir's voice and Talk",
+      "done",
+      ""
+     ],
+     [
+      "civil",
+      "The civil-war line (line A)",
+      "todo",
+      "Approved at about 450 credits; made and wired in with the civil-war check."
+     ],
+     [
+      "boons",
+      "Nordic boons",
+      "todo",
+      "After the second plugin."
+     ],
+     [
+      "sting",
+      "Round-change sting",
+      "todo",
+      ""
+     ],
+     [
+      "coop",
+      "Co-op for 1-4 (Skyrim Together)",
+      "todo",
+      "Solo first."
+     ]
+    ]
+   ],
+   [
+    "Our own content",
+    [
+     [
+      "looks",
+      "Weapon looks (replacing Visual Animated Enchants)",
+      "testing",
+      "Noah's picks in (9b0de93); check in game."
+     ],
+     [
+      "lookbase",
+      "Weapon looks on Skyrim's own elemental effects, enhanced (2K, 30 FPS)",
+      "done",
+      "Skyrim's enchantment membranes under each look but Core."
+     ],
+     [
+      "abil",
+      "Ability effects rebuilt from real parts (Skyrim, Apocalypse, Mysticism particles)",
+      "testing",
+      "84 effects from 61 real parts; class spells their own (9b0de93)."
+     ],
+     [
+      "ring",
+      "The shockwave (remake of the Labyrinthian ring)",
+      "done",
+      "The real Labyrinthian shockwave, in each ability's colour."
+     ],
+     [
+      "scythes",
+      "Our own scythe models (dropping Battle Scythe)",
+      "doing",
+      "Nine built from Skyrim's weapons; in the workshop for Noah's OK."
+     ],
+     [
+      "bane",
+      "Our own Alduin's Bane model",
+      "todo",
+      "Drops Light Greatswords."
+     ],
+     [
+      "sets",
+      "Class armour sets",
+      "done",
+      ""
+     ],
+     [
+      "under",
+      "Underwear",
+      "done",
+      ""
+     ],
+     [
+      "launch",
+      "Launch screen and menu music",
+      "done",
+      ""
+     ],
+     [
+      "sounds",
+      "Every weapon and ability its own sounds",
+      "doing",
+      "Sounds tab: five options each, waiting on your picks."
+     ],
+     [
+      "feel",
+      "Hit feel: hit-stop and shake by weapon weight",
+      "doing",
+      "Hit feel tab."
+     ],
+     [
+      "deaths",
+      "The dead die by what kills them",
+      "doing",
+      "The dead tab."
+     ]
+    ]
+   ],
+   [
+    "Technical",
+    [
+     [
+      "plugin2",
+      "A second plugin for new records",
+      "todo",
+      "CurseOfAlduin.esp is full."
+     ],
+     [
+      "sheath",
+      "Build check: weapons drawn from the right sheath",
+      "todo",
+      ""
+     ],
+     [
+      "dead",
+      "Dead code cleaned out",
+      "done",
+      "Class voices, screen ring, old echo stones, cut mods."
+     ],
+     [
+      "ground",
+      "Floating trees and rocks set down",
+      "done",
+      ""
+     ],
+     [
+      "perf",
+      "Performance pass",
+      "doing",
+      "Big nights tab: your own numbers and the knobs."
+     ],
+     [
+      "hitches",
+      "The 40-85 ms stutters (Classes, Gun, Director, Shops)",
+      "todo",
+      "Measured on your Nov 24 night; Big nights tab."
+     ]
+    ]
+   ],
+   [
+    "Release",
+    [
+     [
+      "reqs",
+      "Final requirements list and permissions audit",
+      "doing",
+      "Six mods dropped so far."
+     ],
+     [
+      "page",
+      "Nexus page: text, images, trailer",
+      "todo",
+      "Noah is cutting the trailer in CapCut."
+     ],
+     [
+      "collection",
+      "Nexus Collection install",
+      "todo",
+      ""
+     ],
+     [
+      "party",
+      "Party Pack for friends",
+      "done",
+      ""
+     ],
+     [
+      "playthrough",
+      "A full solo playthrough, start to Sovngarde",
+      "todo",
+      ""
+     ],
+     [
+      "modstack",
+      "The mod stack: what the release needs, recommends, and what we replace",
+      "doing",
+      "The Mod stack tab (Nov 26)."
+     ]
+    ]
+   ]
+  ]
+ },
+ "modnow": {
+  "updated": "Nov 26 2026 (night)",
+  "about": "Everything the mod is, as built - kept in the repo (docs/workshop/modnow.json) and updated with every build. The workshop's \"The mod now\" tab is drawn from it.",
+  "sections": [
+   [
+    "The game",
+    [
+     "Skyrim played as Black Ops 3 Zombies: <b>nights of the dead</b> in each of Skyrim's <b>10 Dragon Priest cities</b> (Riverwood, Whiterun, Solitude, Windhelm, Markarth, Riften, Falkreath, Morthal, Dawnstar, Winterhold), rounds that climb, <b>Cursed Essence</b> earned on every kill.",
+     "The dead come down <b>red beams of light</b> from the sky. No XP from them; no casters, archers or shouting enemies at night (Dragon Priests and dragons keep their powers).",
+     "<b>The dead</b> (Nov 26, your keep/remove marks): Mihail's zombies (walkers, headless, dread, deranged runners), our six Thriceborn, Rag Draugr and Restless Rag Draugr, Rotten and Bloody Skeletons, the Feral Death Hound, the Hulking Draugr, Ash Spawn and Immolators, the Frost Brute, the Hunger, the Ogrim and the Winged Twilight. Bosses: Grimmvar (a Vile dragon, every 10th night), the Hunting Ground King (from 10), Gehenoth (from 15), Grahzah (a level-4 Necro dragon, from 20). Mini-bosses: the Giant Brute Berserker, Minotaur Lord, Ogrim Lord and a Plague Dragon. 99 others taken out.",
+     "<b>Dragons</b> are half size and fly as Skyrim flies them; a dragon boss's breath and the dead it calls land on the ground near you. The three word-dragons: Sanguine (flesh), Aether (time), Otherworld (undoing); the Echo of Alduin a level-7 Dark dragon.",
+     "<b>Bosses</b>: night 5 one of your kept mini-bosses at random (Giant Brute, Minotaur Lord, Ogrim Lord, Plague Dragon), the Hunting Ground King from 10, Gehenoth from 15, Grahzah from 20. No noise hunter (off since Nov 17).",
+     "<b>Movement</b> (your BO3 movement): the sprint winds up (180 ms) to 440 and widens the view 7 degrees; the slide (sprint + crouch) tilts the view 3 degrees and its speed carries into a jump; light swings 1.2x.",
+     "<b>The ability ladder</b>: the class weapons' Tier I light ability, Tier II heavy, Tier III ultimate from a 25-kill meter (Aetherial Host, Starfall, Soul Harvest, Spell Lance); each Ascend +15% damage, +10% size.",
+     "<b>On screen</b>: the night counter a plain number top left with the quests under it; the essence bottom left; the held weapon's card bottom right; the ultimate's meter above the perks; no banners or hints; a 10 s countdown before a night only.",
+     "<b>Loading screens</b>: 123 of the Load Screen Compendium's that fit the Curse, at random; our own Curse of Alduin screen when a saved game loads from the main menu. <b>Sounds</b>: every weapon its own draw, swing, heavy and hit; the abilities on their picked or recommended sounds; all at 20%.",
+     "<b>Deaths</b>: a kill by shadow, spirit or arcane tears the soul out (a white beam, Alduin's soul sound); heavies throw the body at half strength; fire kills burn to a pile of ash; the rest through FEC, as you chose.",
+     "Free every city at its <b>Echo Altar</b>; the questline ends right before Skyrim's own Alduin fight. The last three dragons and the Echo of Alduin are the hardest fights.",
+     "Solo first; co-op for <b>1 to 4 players</b> (Skyrim Together, optional). Releasing free on Nexus.",
+     "Special nights: <b>The Pack, Daedric Incursion, Armored Champions, Blood Fog</b>.",
+     "After night 10: kill essence tapers, and Tablet, upgrade and Armory prices rise 3% a night (brews stay fixed).",
+     "<b>Hit feel</b>: no hit pause and no shake (Nov 26). Bodies fly half as far (Alduin's Bane as before)."
+    ]
+   ],
+   [
+    "New character",
+    [
+     "One loading screen from NEW to the character creator (sliders only, by body area); our own launch screen (the Alduin painting) and menu music.",
+     "At Riverwood you choose your Helgen companion (<b>Ralof or Hadvar</b>) and <b>Survival Mode</b> on or off. No starting weapons. Skyrim's own underwear on both bodies (3BA, HIMBO).",
+     "The class is chosen later, at the Echo Altar (changing it costs 50,000 Cursed Essence; one shared inventory)."
+    ]
+   ],
+   [
+    "Each city: the Echo Altar",
+    [
+     "Four trials, in order, at night, shared by the party: <b>Lay the Restless to Rest</b> (souls fly to the stone as white fireballs, the ring of light fills smoothly), <b>The Stone's Whisper</b> (Felldir's Whisper once six are free), <b>Hold the Light</b>, <b>Break the Priest's Seals</b>.",
+     "The last seal calls the city's <b>Dragon Priest</b> at once; his fall frees the city and drops his relic to every player.",
+     "<b>Felldir the Old</b> speaks from each freed altar's centre stone (his own ElevenLabs voice, a short stone echo, centred subtitles). <b>Talk</b>: four topics, 244 lines and 67 whispers, opening as the story goes.",
+     "The altar menu: choose your class, <b>Your Kit</b> (claim your weapon, armour set and spells), the <b>Armory</b>, the <b>Tablet of Mysteries</b>, brews."
+    ]
+   ],
+   [
+    "The four classes",
+    [
+     "<b>Summoner</b>: the Radiant Quarterstaff (Steel, Ebony, Daedric, Dragonbone by tier), conjurations of our own; wonder: the Soulcaller's Staff; Necromancer robes.",
+     "<b>Battle-mage (Destruction)</b>: the Carian Wand (Steel, Stalhrim, Glass, Daedric by tier), Destruction spells; wonder: the Wyrmspine Javelin (tap jabs, hold throws); Arch-Mage's robes.",
+     "<b>Alchemist</b>: the Shadowflame Scythe (Forsworn, Falmer, Dwarven, Dragon Priest by tier; sheathe it for your flasks), six flasks; wonder: the Mutagen Staff; Morag Tong set.",
+     "<b>Spellsword</b>: the Spellbound Rapier (Steel, Ebony, Daedric, Dragonbone by tier; its look follows the spell in your other hand), touch spells; wonder: the Dragon Slayer; Ahzidal's set.",
+     "Every item climbs Base, Tier I, II, III and Ascended. <b>Ascended adds damage only; it keeps Tier III's model.</b> Class weapons wear their look from Tier I. Class sets: hoods only, a class-colour aura that grows; Tier III sets breathe and trail wisps."
+    ]
+   ],
+   [
+    "Class spells",
+    [
+     "<b>Destruction</b>: Fire: Firebolt → Fireball → Incinerate → Immolate; Frost: Ice Spike → Ice Storm → Icy Spear → Throat of the World; Shock: Chain Lightning → Shock Nova → Finger of the Mountain → Lightning Strike; Sun: Solar Flare → Sunbeam → Forbidden Sun → Daybreak; Arcane: Arcane Bolt → Mana Void → Lunar Tide → Apocalypse; Walls: Wall of Flames → Wall of Frost → Wall of Storms → Inferno; Storms: Frost Nova → Lightning Storm → Multivortex → Cinder Storm",
+     "<b>Summoner</b>: Beasts: Conjure Wolf → Conjure Ice Wolf → Conjure Alpha Wolf → Conjure Werebear; The Dead: Conjure Skeleton → Conjure Draugr Wight → Conjure Draugr Deathlord Warrior → Conjure Draugr Death Overlord; Daedra: Conjure Dremora → Conjure Dremora Archer → Conjure Dremora Mage → Conjure Dremora Warlock; Dwemer: Conjure Dwarven Spider → Conjure Dwarven Sphere → Conjure Dwarven Centurion → Conjure Dwarven Ballista Master; The Wild: Conjure Spriggan → Conjure Spriggan Matron → Conjure Burnt Spriggan → Conjure Spriggan Earth Mother; Atronachs: Conjure Flame Atronach → Conjure Frost Atronach → Conjure Storm Atronach → Conjure Storm Monarch; Ash: Conjure Ash Spawn → Conjure Ash Husk → Conjure Ash Spawn Immolator → Conjure Ash Guardian; The Night: Conjure Death Hound → Conjure Volkihar Hound → Conjure Gargoyle → Conjure Gargoyle Brute; The Wrath: Conjure Mistman → Conjure Wrathman → Conjure Wrathman Marksman → Conjure Wrathman Warlock",
+     "<b>Spellsword</b>: Fire: Burning Touch → Flame Touch → Fiery Grasp; Frost: Chilling Touch → Icy Touch → Freezing Grasp; Shock: Shocking Touch → Static Touch → Thundering Grasp; Sun: Sunlight Touch → Radiant Touch → Searing Grasp; Arcane: Arcane Edge → Arcane Brand → Arcane Cascade",
+     "<b>Every ability one custom effect</b> (Nov 25, tools/abilityfx.py): relics, Tablet weapons, wonders, Alduin's Bane, class weapons, all 43 combat spells and the flasks - the style Noah picked, built from Skyrim's own textures, grown and faded by the game exactly as the workshop draws it, replacing what played before (nothing borrowed round it). Conjurations keep Skyrim's portal; the Soulcaller keeps the Staff of Magnus beam; the Mutagen Staff has no beam (a flask every 0.5 s while blocking)."
+    ]
+   ],
+   [
+    "Flasks (Alchemist)",
+    [
+     "Fire Flask, Frost Flask (2 cities freed), Shock Flask (4), Acid Flask (6), Holy Water (8), Voidglass Flask (9). Each bursts, leaves its ground, and has a tier power (Firestorm, Frost Nova, Lightning Strike, Mana Void then Lunar Tide)."
+    ]
+   ],
+   [
+    "Dragon Priest relics",
+    [
+     "<b>Jailor's Keyhammer</b> (Vahlok, Riverwood): Hits shackle the dead in place. Heavy: chains yank the nearby dead together.",
+     "<b>Mistblade</b> (Nahkriin, Whiterun): Hits blind the dead: they slow and hit weaker. Heavy: a fog where they wander lost.",
+     "<b>Windcutter</b> (Volsung, Solitude): Light: a gust that staggers the dead 8 m ahead. Heavy: a 12 m cone that knocks them down.",
+     "<b>Glacier Greatsword</b> (Zahkriisos, Windhelm): Hits freeze the dead until they die. Heavy: shatters every frozen one around you.",
+     "<b>Storm Blade</b> (Otar, Markarth): Hits chain lightning to 2 more of the dead. Heavy: lightning arcs to all around you.",
+     "<b>Sacrifice Knife</b> (Rahgot, Riften): Hits poison, spreading to the next of the dead. Heavy: every poisoned one bursts.",
+     "<b>Grief Blade</b> (Krosis, Falkreath): Hits heal you 1%. Heavy: a wail that weakens the dead around you.",
+     "<b>Sealbreaker</b> (Hevnoraak, Morthal): Hits shatter armour. Heavy: a shockwave that staggers all around you.",
+     "<b>Nightcaller's Scythe</b> (Vokun, Dawnstar): Hits put the dead to sleep. Heavy: a nightmare fog that slows them.",
+     "<b>Arcane Maul</b> (Morokei, Winterhold): Hits burst with magic. Heavy: a magicka shockwave that refills your magicka.",
+     "Each relic's hits and heavy are <b>its own effect</b> on Skyrim's (tools/fxown.py): Keyhammer green paralyze + metal sparks; Mistblade illusion light, heavy waterfall mist; Windcutter shout bursts; Glacier frost impact + icicles, heavy frost explosion + ice-wraith burst; Storm Blade shock impact, heavy mass shock; Sacrifice Knife poison spray, heavy Dragonborn poison gas; Grief Blade red absorb + vampire drain, heavy dark burst; Sealbreaker metal sparks + green absorb; Nightcaller purple illusion, heavy shadow burst + mist; Arcane Maul drain absorb, heavy Staff of Magnus impact."
+    ]
+   ],
+   [
+    "Tablet of Mysteries",
+    [
+     "The only gamble: a donated weapon, worn or battered, with a number of uses; lost if you fall.",
+     "<b>Stormtalons</b>: Glass claws. Every 3rd hit chains lightning to 2 more of the dead. Heavy: stuns.",
+     "<b>Gravebell Mace</b>: A mace. Every 5th hit tolls the bell, stunning the dead within 5 m.",
+     "<b>Talons of Woe</b>: Dragonbone claws. Their bleeding runs twice as deep, and kills heal you a little.",
+     "<b>Riverstone Halberd</b>: A halberd. Hits knock the dead back. Heavy: splits the ground in a line ahead.",
+     "<b>Wyrmspine Pike</b>: A pike. Thrusts pierce 2 more of the dead in a line. Heavy: a shockwave that staggers the dead within 8 m.",
+     "<b>Rimewick Quarterstaff</b>: A quarterstaff. Light: freezes the dead for 3 s. Heavy: a 10 m blizzard for 6 s.",
+     "<b>Cinderclaws</b>: Ember claws. Every swipe sets the dead burning. Heavy: a fan of embers.",
+     "<b>Eclipse Edge</b>: A greatsword. Hits alternate frost and sun. Heavy: an ice shockwave, then a sun shockwave (10 m).",
+     "<b>The Wandering Star</b>: A wand. Hold to cast a gold star every 0.5 s that bounces to up to 4 of the dead. Every 5th hit throws them far.",
+     "<b>Frostmourn Rapier</b>: A rapier. Thrusts slow the dead. Heavy: freezes a ring of the dead around you.",
+     "<b>Silver Reaping Scythe</b>: A scythe. Every 4th hit: a silver flash that briefly slows the dead.",
+     "<b>Bonereaper</b>: A scythe. 1 kill in 4 rises to fight for you for 20 s.",
+     "<b>Wyrmtooth Scythe</b>: A scythe. Hits make the dead bleed. Heavy: a shockwave that staggers the dead within 8 m.",
+     "<b>Bloodmoon Scythe</b>: A scythe. Hits drain blood to heal you. Heavy: drains everything it touches.",
+     "Each Tablet weapon's hits its own effect on Skyrim's: Eclipse Edge in Dawnguard's eclipse burst, Bloodmoon heavy in its blood explosion, Bonereaper in the reanimate flash, Riverstone heavy in the giant's slam, Gravebell in gold turn-undead, Wyrmspine Pike dragonfire, Cinderclaws fireball, Frostmourn ice, Silver Scythe moon light, Wyrmtooth blood spray and tail stomp, Wandering Star Auriel's sky bolt, Talons blood mist."
+    ]
+   ],
+   [
+    "Wonders, secrets and the last weapon",
+    [
+     "Wonders: <b>Soulcaller's Staff</b> (white soul-gem glow on its glass head), <b>Wyrmspine Javelin</b> (throw only; it leaves your hand until it returns, flies bare, bursts in its element, Dragonfire look on its head; a solid model, the bones overlapping), <b>Mutagen Staff</b> (Living Mutagen glow on its head), <b>Dragon Slayer</b>.",
+     "Hidden quests: <b>wyrm, sixfires, vortex, slayer</b>.",
+     "<b>Alduin's Bane</b>, from the Hall of the Awakened: a meteor on each light hit (landing in Alduin's own explosion), a white tornado on heavy."
+    ]
+   ],
+   [
+    "Weapon looks",
+    [
+     "Every relic, wonder and class weapon tier wears <b>its own look</b> (Nov 25: \"custom weapon looks ... not changing their model or adding something on top\"): five looks designed for each weapon (tools/weaponlooks.py), all light on its own edges and faces, many in two colours, built from our textures and Skyrim's own enchantment membranes at 2K (4K on the wonders and Alduin's Bane). <b>Noah's picks are in</b> (Nov 25): third looks on the Grief Blade, Storm Blade, Sacrifice Knife, Nightcaller's Scythe, Glacier Greatsword, Rimewick and Radiant Quarterstaff; second looks on the Windcutter, Bloodmoon Scythe and Frostmourn; the Keyhammer's first look in green; the rest their first.",
+     "No pieces laid over the weapons (the Nov 25 signatures - chains, crystals, seals, rings - retired) and no shared look families.",
+     "Effects come to a point at the tips and ends; quarterstaffs glow on their heads only; the Gravebell doesn't pulse. Scythes 25% larger. <b>Our own scythes</b> (tools/scythes.py): nine, each from Skyrim's own weapons of its make - a battleaxe's pole (a Dragon Priest's staff, a pair of spines) and a sword's blade bent into a crescent, its guard as the collar - in the game now (Nov 25: Noah's OK, with the blade flush where it meets the haft on Wyrmtooth, Silver Reaping and Bloodmoon).",
+     "Nov 25 evening: two more looks for every weapon (five each); the scythes' joins fixed - Wyrmtooth, Silver Reaping and Bloodmoon's blades square to the haft, the Dragon Priest's blade lower and clamped round the staff.",
+     "Nov 26: every weapon art rebuilt from the looks the workshop shows (the shock rapier and Storm Blade had been older builds); the nine scythe blades and the Bonereaper's skull turned the right way out (they were see-through)."
+    ]
+   ],
+   [
+    "Ability effects",
+    [
+     "<b>Every ability rebuilt from real parts</b> (Nov 25: \"All of the abilities need a complete remake ... hyper realistic and 3D ... as highly polished and visually satisfying as the mods we used\" - \"Rebuild from their real parts\"): the real particle effects of Skyrim, Dawnguard, Dragonborn, Apocalypse and Mysticism (fire, smoke, sparks, shockwaves - 61 of them) put together into one new effect per ability (tools/realfx.py, 84 effects: relics, Tablet weapons, wonders, Alduin's Bane, class weapons' bolts and cyclones, the javelin's landings, the flasks), each in its own colour and size, each part on its own beat, the ground ones laid on the ground. Noah's style, colour and size picks from the workshop drive them.",
+     "The workshop shows a close picture of each <b>built from the real parts themselves</b> (Nov 25: \"Build from real parts\"): their own textures and particle settings, read from your game; bolts, the javelin's bounce, the sunbeam and the meteors on the paths and beats the game gives them. The game plays the real thing.",
+     "<b>The class spells play their own</b> (Noah: \"we can use the spells from the actual mods and base Skyrim for those\"): no impact of ours over them.",
+     "<b>Vahlok's chains</b>: a heavy hit throws spectral chains (real 3D links, Skyrim's enchantment fire in green) from the one struck to each of the dead within 6 m, keeps them taut while it hauls them in to arm's reach, then lets go.",
+     "<b>Alduin's Bane heavy</b>: a wind blast within 10 m that hurls the dead far: Skyrim's Labyrinthian shockwave, Unrelenting Force and waterfall mist, in white (Nov 25: \"Shockwave\").",
+     "<b>The Radiant Quarterstaff's sunbeam all in white</b> (Nov 25): its bolt from the sky, burst, turning pillar and motes (fxmap.ini sun_*_white); Holy Water keeps the gold.",
+     "<b>Summons come out of Skyrim's own conjuring portal</b> (Nov 25: \"Use skyrims summon portal\"): the Soulcaller's wolves and sabre cat.",
+     "Retired: the Nov 25 flat 'own effect' elements (tools/abilityfx.py) and the borrowed-impact list (tools/fxown.py).",
+     "<b>Five options of its own per ability</b> (Nov 25: \"different variations of what the weapon is actually doing\"): what it does picks its kind (a chain, a stun round you, a freeze, a fog, a pull...), and each has five ways to show it from real parts, with any colour and sliders for size, brightness, area of effect (also how far it reaches in game), vibrance, speed, linger, density and light cast (tools/abilityopts.py).",
+     "The workshop pictures show the night's own dead (the Thriceborn) reacting as the game makes them, and you as a male Nord in the weapon's class set holding it."
+    ]
+   ],
+   [
+    "Brews, shouts and perks",
+    [
+     "<b>Brews</b> (Nordic): Troll's Hide Mead, Wellspring Draught, Stormrunner Brew, Bounty Hunter's Ale, Last Stand Ale, Gilded Tongue Tonic, Dragonsblood Cider, Pack Leader Mead, Grave Fury Wine, Bone Burst Brew, Overflow Tea, Ember Echo Ale, Mana Font Draught, Volatile Tincture, Quickhand Elixir, Catalyst Philter, Bladesong Mead, Spellbinder's Draught, Spellguard Ale, Quick Revive Draught. Kept through death, up to 9 held, about 3,000 each, refundable at half.",
+     "<b>Shouts</b>: each freed altar teaches one; Solitude's is <b>Tiny Terrors</b> (normal dead shrink to knee height for 20 s and die in one hit). Whiterun gives Dragon's Updraft."
+    ]
+   ],
+   [
+    "The screen",
+    [
+     "Edge UI throughout; the night counter is a glowing ember number inside the red moon; beside it the wave and the dead left.",
+     "Only these pop-ups: the Carian Wand and Mutagen Staff hints, the Dragon Priest slain card, and the small callouts (essence, style tags, round tally, hit marker). No crosshair marks.",
+     "The MCM: subtitles on/off and size, Echo Altar voice volume, screen shake and the rest."
+    ]
+   ],
+   [
+    "Taken out (so they never come back as suggestions)",
+    [
+     "Class voice lines (kept in Noah's Downloads only). Runic look. Repeat the Echo (now Hold the Light). The screen-drawn ring, runes and wisps. Dance of Death. Floating motes beside weapons. The relics' built-in effect pillars.",
+     "Old kit: guns, altar bows and crossbows, staves, power-ups (until Nordic boons), crew picker, Atronach Reforge, Bone-Throne, Runes, Cloaks, breath spells, relic infusions, the Summoner's heroes and armies, the old wonders (Frostbinder Gauntlets, Wolf Queen's Crown, Horn), the Ranger class.",
+     "Mods turned off Nov 26 (Mod stack picks): ENB Light, Faction Crossbows, OffhandBows, Bow Charge Plus, Calling of the Conjurer, Gondorian Ranger Armor, Black Mage Armor SE, Populated Dungeons, The Restless Dead, Rogues 'n Raiders and its 3 add-ons, VAE, Vibrant Weapons Lite, Mihail's Bone Colossus, Old God, Giant Family, Fogling and Indrik Mounts. Traps were declined. The Elixir stays out.",
+     "Enemies taken out Nov 26: every caster (necromancers, cultists, prophets, liches, skeleton mages), the skeleton soldiers and heroes of Rogues 'n Raiders and the Restless Dead, ghosts, Undead Blades, draugr overlords and reapers, Draman, daedroth, dremora, clannfear, hybrids, werewolves, wereskeevers, the soul wraith, the Immortal Draugr Overlord boss, eight mini-bosses and the Resonant Centurion. The Radiant Quarterstaff's sky-bolt heavy (now Holy Water's pillar).",
+     "Nov 26 evening: the night and wave banners, the between-wave countdown, the weapon hints, the blood-moon night counter; Tamrielic Grass, Veydosebrom, Origins of Forest."
+    ]
+   ]
+  ]
+ }
+}
