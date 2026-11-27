@@ -89,7 +89,7 @@ F('ui_menus', 'hud', 'Inventory, Magic and Tab menus ours', 'idea', 'Recoloured 
 F('tb_rarity', 'tablet', 'Rarity: Rare, Epic, Legendary', 'idea', 'Each Tablet weapon is Rare (blue), Epic (purple) or Legendary (gold) by strength; rarer ones roll less often (60/30/10 to start, yours to set). Uses rebalanced once the lineup is final.')
 F('tb_roll', 'tablet', 'A new roll for the Tablet', 'idea', 'Four rolls to pick from in the workshop: The Reel, Pillar of Light, The Wheel, Soul Storm - each ending in the rarity\'s colour.')
 F('cw_ownmodels', 'classes', 'Our own models from Skyrim\'s meshes', 'idea', 'Each class weapon (and later the Tablet\'s) built from Skyrim, Dawnguard and Dragonborn parts: no mod needed for it.')
-F('cw_abilities', 'classes', 'Class weapon abilities rebuilt', 'building', 'Every light and heavy ability redone on the new foundation (element kits, the Test Range).',
+F('cw_abilities', 'classes', 'Each class\'s own moves', 'building', 'A Light, a Heavy and a Special only that class has, built from its element\'s kit and stronger each tier. Your picks: Destruction Glintstone Bolt (tap, 0.5 s between shots) / Arcane Ray (hold, costs magicka) / Starfall; Spellsword (shock) Spellthrust / Spell Pillar / Elemental Wake; Summoner Radiant Strike / Pillar of Dawn / Ancestor\'s Guard; the Alchemist still to pick. Next build.',
   note='"They all look very poorly done ... redo the abilities and have a starting foundation".')
 F('cw_ults', 'classes', 'Ultimates and the kill meter removed', 'ready', 'The Tier III ultimates and their meter are gone (Tier III keeps its cards as before).',
   how='Tester\'s Kit: a class weapon at Tier III; kill 30 of the dead.', look='No meter above the perks, nothing extra on a heavy.', since=B)
@@ -119,15 +119,14 @@ F('fl_rest', 'flasks', 'The other flasks\' bursts', 'idea', 'Frost, Shock, Acid 
 F('rl_abilities', 'relics', 'Relic abilities rebuilt', 'idea', 'The ten relics\' hits and heavies redone on the element kits.', note='Vahlok\'s chains and the real-parts effects failed your last test.')
 F('rl_list', 'relics', 'The ten relics and what they do', 'done', 'Keyhammer, Mistblade, Windcutter, Glacier Greatsword, Storm Blade, Sacrifice Knife, Grief Blade, Sealbreaker, Nightcaller\'s Scythe, Arcane Maul.')
 
+F('ui_cursor', 'hud', 'Our own cursor in every menu', 'idea', 'Pick it in In-game UI > Cursor: it replaces Skyrim\'s cursor at the main menu, the inventory, the magic menu, the map, the altar and the Codex.')
 # ---- tablet
-F('tb_lineup', 'tablet', 'The Tablet lineup redone', 'idea', 'Your Nov 26 decision: a new lineup (keep / cut / new) on our own models, each with a BO3-style ability, approved item by item in Weapons & effects.')
+F('tb_lineup', 'tablet', 'The Tablet lineup redone', 'building', 'Your lineup: the seven you kept and the 11 you added (Voice of the Mountain, Soulrender, Chaurus Fang, Mace of the Bound, Giant\'s Toe Club, Sweetroll of the Damned, Lil\' Atronach, Grasp of Apocrypha, Frostbite Egg Sac, Spriggan\'s Heartroot, Dragonguard Ward-Shield), by rarity, rolled with the Wheel.')
 F('tb_claws', 'tablet', 'Both claws from the Tester\'s Kit', 'ready', 'The kit gives each claw\'s left-hand twin too, and equipping a claw puts its twin in your other hand.',
-  how='Tester\'s Kit: the Tablet weapons; equip Stormtalons, Talons of Woe and Cinderclaws from the inventory.', look='A claw in each hand every time.', note='"The test kit was only giving me one claw".', since=B)
+  how='Tester\'s Kit: the Tablet weapons; equip Stormtalons and Cinderclaws from the inventory.', look='A claw in each hand every time.', note='"The test kit was only giving me one claw".', since=B)
 F('tb_storm', 'tablet', 'Stormtalons: lightning, not ice', 'ready', 'The heavy hit\'s stun no longer coats the dead in ice: a lightning arc and a shock burst.',
   how='Stormtalons: heavy hits, and three light hits in a row.', look='Lightning on the heavy and on every 3rd hit; no ice anywhere.', since=B)
-F('tb_woe', 'tablet', 'Talons of Woe show their effect', 'ready', 'Its hit effect was drawn at a fraction of its size inside the body; now full size (Vampiric Drain, a blood burst and mist).',
-  how='Talons of Woe: light and heavy hits.', look='A red blood burst and mist on every hit, bigger on the heavy.', since=B)
-F('tb_bonereaper', 'tablet', 'Eight Tablet weapons cut', 'building', 'Your marks: Bloodmoon, Bonereaper, Gravebell, Riverstone, Silver Reaping, Talons of Woe, the Wandering Star and Wyrmtooth leave the Tablet; the new ones you add take their place.')
+F('tb_bonereaper', 'tablet', 'Seven Tablet weapons cut', 'building', 'Your marks: Bloodmoon, Bonereaper, Riverstone, Silver Reaping, Talons of Woe, the Wandering Star and Wyrmtooth no longer roll (since 3938d82); the 11 new ones you added take their place in the next build.')
 
 # ---- wonders
 F('wd_javhand', 'wonders', 'Javelin held palm to you', 'ready', 'The hand turned so the palm faces you while charging and throwing; the charge effect over your head removed.',
@@ -139,12 +138,13 @@ F('wd_soulcaller', 'wonders', 'Soulcaller look', 'done', 'White soul wisps on it
 # ---- summons
 F('sm_portal', 'summons', 'Summons come out of the portal', 'building', 'Conjurations and the Soulcaller\'s pride should step out of Skyrim\'s conjuring portal.', note='"Doesn\'t come out of the Skyrim summon portal they just pop up".')
 F('sm_thrall', 'summons', 'Raised thralls safe', 'ready', 'A thrall raised from a leveled enemy (the Frost Brute) used a temporary copy of its record that is thrown away with the body: the round 20 crash. Now made from the real record.',
-  how='Bonereaper (or any raise) on many kinds of the dead, rounds 15 to 20.', look='Thralls rise and fight; no crash.', since=B)
+  how='Any raise on many kinds of the dead, rounds 15 to 20 (the Bonereaper no longer rolls from the Tablet).', look='Thralls rise and fight; no crash.', since=B)
 
 # ---- armour
 F('ar_ssbody', 'armour', 'Spellsword set shows your body', 'ready', 'The cuirass now uses a slot of its own, so the body slot stays free and your body shows under it.',
   how='Tester\'s Kit: Spellsword set at each tier; look at yourself in third person.', look='Your body under the cuirass. If the cuirass itself is missing now, tell me.',
   note='"Still makes my body invisible".', since=B)
+F('ar_looks', 'armour', 'Each set\'s own look', 'idea', 'Pick it in Weapons & effects > Armour looks: one of five looks on the set itself, in the class\'s colour, stronger each tier (today: one faint glow, the same for every class).')
 F('ar_inv', 'armour', 'Class sets in the inventory', 'done', 'Each piece has a model in the inventory and on the ground.', since='76167f7')
 
 # ---- nights
@@ -192,7 +192,7 @@ F('wo_mods', 'world', 'The 20 mods off', 'done', 'No missing masters; the world 
 
 # ---- stability
 F('st_r20', 'stability', 'Round 20 crash', 'ready', 'The game fell 0.6 s after a Bonereaper kill raised a Frost Brute. The raise is fixed; Crash Logger is installed to catch anything else.',
-  how='Play to round 20, raising thralls with the Bonereaper in big crowds.', look='No crash. If one comes, Crash Logger writes a log I can read.', note='"I crashed on round 20 when I did a heavy attack on a crowd using one of the tablet scythes".', since=B)
+  how='Play to round 20, heavy attacks on big crowds.', look='No crash. If one comes, Crash Logger writes a log I can read.', note='"I crashed on round 20 when I did a heavy attack on a crowd using one of the tablet scythes".', since=B)
 
 
 # ------------------------------------------------------------------------------------------------ the class weapons: one model each (his pick)
@@ -344,64 +344,97 @@ DECISIONS = [
 # abilities each class has? not all of them cast the same spells or powers like the tablet weapon pool" - "Own moves, like the
 # Tablet": a Light, a Heavy and a Special that only that class has; the element kits only decide how they look; each tier stronger)
 # each option: id, name, what it does, and the kit part its preview plays (role:design) with how you move (swing / slam / cast / hold)
+def A(a, t=.2, d=None): return dict(k='act', a=a, t=t, **({'d': d} if d else {}))
+def FX(t, role, opt, at='t0', size=1, el=None): return dict(k='fx', t=t, role=role, opt=opt, at=at, size=size, **({'el': el} if el else {}))
+def R(t, who, r='elem', **kw): return dict(k='react', t=t, who=who, r=r, **kw)
+def BOLT(t, to='t0', d=.35, curve=False, hit=None, frm='hand', size=1, el=None): return dict(k='bolt', t=t, to=to, d=d, curve=curve, hit=hit, **{'from': frm}, size=size, **({'el': el} if el else {}))
+def ARC(t, frm, to, d=.3): return dict(k='arc', t=t, **{'from': frm}, to=to, d=d)
+def SMALL(role='impact', opt='core', size=.6): return dict(role=role, opt=opt, size=size)
+# each class's own moves: (id, name, what it does, the script its preview plays - the description, beat by beat)
 CLASS_MOVES = {
     'alchemist': dict(el='shadowfire', why='The Alchemist turns the dead into fuel: brands, catalysts and transmutation.', moves=[
         ('light', 'Light attack', [
-            ('reaping', 'Reaping Arc', 'A wide sweep that cuts every one of the dead in front of you and sets them smouldering in shadowfire; the burn stacks with each swing.', 'impact:spark', 'swing'),
-            ('catalyst', 'Catalyst Cut', 'Each hit marks the dead with a violet catalyst; a marked one that dies bursts, burning the ones beside it.', 'impact:core', 'swing'),
-            ('corrode', 'Corroding Edge', 'Hits leave a corroding brand that eats armour and spreads to the next of the dead it touches.', 'impact:drain', 'swing')]),
+            ('reaping', 'Reaping Arc', 'A wide sweep that cuts every one of the dead in front of you and sets them smouldering in shadowfire; the burn stacks with each swing.',
+             [A('swing', .2), FX(.32, 'impact', 'spark', 't0', .8), FX(.36, 'impact', 'spark', 't4', .7), FX(.4, 'impact', 'spark', 't2', .7), R(.34, 't0'), R(.38, 't4'), R(.42, 't2')]),
+            ('catalyst', 'Catalyst Cut', 'Each hit marks the dead with a violet catalyst; a marked one that dies bursts, burning the ones beside it.',
+             [A('swing', .2), FX(.32, 'impact', 'core', 't0', .7), dict(k='mark', t=.35, at='t0', d=1.2), R(1.3, 't0', 'die'), FX(1.35, 'burst', 'big', 't0', .7), R(1.4, 'near:260@t0', 'burn')]),
+            ('corrode', 'Corroding Edge', 'Hits leave a corroding brand that eats armour and spreads to the next of the dead it touches.',
+             [A('swing', .2), FX(.32, 'impact', 'drain', 't0', .7), R(.34, 't0', 'poison'), ARC(.9, 't0', 't4', .5), FX(1.0, 'impact', 'drain', 't4', .6), R(1.0, 't4', 'poison')])]),
         ('heavy', 'Heavy attack', [
-            ('eruption', 'Shadowfire Eruption', 'The blade driven into the ground: geysers of shadowfire burst up in a ring round you (your kit pick).', 'burst:spikes', 'slam'),
-            ('harvest', 'Grim Harvest', 'A full spinning reap that pulls the dead within 5 m in toward you and cuts them all.', 'burst:nova', 'slam'),
-            ('transmute', 'Transmutation', 'The slam turns the dead within 4 m to burning ash statues that shatter when struck.', 'ground:wave', 'slam')]),
+            ('eruption', 'Shadowfire Eruption', 'The blade driven into the ground: geysers of shadowfire burst up in a ring round you (your kit pick).', [A('slam', .2), FX(.42, 'burst', 'spikes', 'me', 1.1), R(.55, 'near:340@me', 'stagger'), R(.6, 'near:340@me')]),
+            ('harvest', 'Grim Harvest', 'A full spinning reap that pulls the dead within 5 m in toward you and cuts them all.', [A('swing', .15), A('swing', .45), FX(.5, 'burst', 'nova', 'me', 1), R(.5, 'near:420@me', 'pull'), R(.9, 'near:420@me')]),
+            ('transmute', 'Transmutation', 'The slam turns the dead within 4 m to burning ash statues that shatter when struck.', [A('slam', .2), FX(.42, 'ground', 'wave', 't0', 1), R(.6, 'near:300@t0', 'freeze'), R(1.6, 'near:300@t0', 'shatter')])]),
         ('special', 'Special', [
-            ('philosopher', 'Philosopher\'s Edge', 'Every 10th kill transmutes: the next of the dead you kill bursts into Cursed Essence and shadowfire.', 'burst:big', 'swing'),
-            ('volatile', 'Volatile Brew', 'Kills sometimes drop a cracked flask that bursts in shadowfire a second later.', 'ground:mist', 'swing'),
-            ('reaper', 'Reaper\'s Shade', 'Every 4th hit, a violet ghost of the scythe slashes beside you on its own.', 'impact:spark', 'swing')]),
+            ('philosopher', 'Philosopher\'s Edge', 'Every 10th kill transmutes: the next of the dead you kill bursts into Cursed Essence and shadowfire.', [A('swing', .2), R(.34, 't0', 'die'), FX(.36, 'burst', 'big', 't0', .8), dict(k='motes', t=.5, **{'from': 't0'}, to='me', d=.8, c=['#5a3a00', '#ffc54a', '#fff2c0'])]),
+            ('volatile', 'Volatile Brew', 'Kills sometimes drop a cracked flask that bursts in shadowfire a second later.', [A('swing', .2), R(.34, 't0', 'die'), BOLT(.5, 't0', .4, True, None, 't0', .5), FX(1.4, 'burst', 'big', 't0', .7), R(1.45, 'near:260@t0', 'burn')]),
+            ('reaper', 'Reaper\'s Shade', 'Every 4th hit, a violet ghost of the scythe slashes beside you on its own.', [A('swing', .2), FX(.32, 'impact', 'core', 't0', .6), R(.34, 't0'), dict(k='ghost', t=.5, d=1.8, at=[-120, -60], face='t4', swings=[.5, 1.1]), FX(1.05, 'impact', 'spark', 't4', .8), R(1.05, 't4', 'die')])]),
     ]),
     'summoner': dict(el='holy', why='The Summoner fights beside what it calls: marks for its servants, light from the sky, spirits on command.', moves=[
         ('light', 'Light attack', [
-            ('radiant', 'Radiant Strike', 'Each strike flares with sunlight that sears the dead and blinds them for a moment.', 'impact:core', 'swing'),
-            ('lash', 'Spirit Lash', 'Each strike sends a small spirit off the staff that seeks out another of the dead.', 'impact:drain', 'swing'),
-            ('command', 'Command', 'Each strike marks the dead: your summons go for the marked first, and hit them harder.', 'impact:spark', 'swing')]),
+            ('radiant', 'Radiant Strike', 'Each strike flares with sunlight that sears the dead and blinds them for a moment.', [A('swing', .2), FX(.32, 'impact', 'core', 't0', .9), R(.34, 't0', 'burn'), R(.5, 't0', 'lost')]),
+            ('lash', 'Spirit Lash', 'Each strike sends a small spirit off the staff that seeks out another of the dead.', [A('swing', .2), FX(.32, 'impact', 'core', 't0', .6), R(.34, 't0'), BOLT(.45, 't1', .6, True, SMALL(), 't0', .6, 'spirit'), R(1.05, 't1', 'lost')]),
+            ('command', 'Command', 'Each strike marks the dead: your summons go for the marked first, and hit them harder.', [A('swing', .2), FX(.32, 'impact', 'core', 't0', .6), dict(k='mark', t=.35, at='t0', d=1.8), dict(k='ghost', t=.6, d=1.6, at=[90, 120], face='t0', swings=[.6, 1.0]), R(1.2, 't0', 'die')])]),
         ('heavy', 'Heavy attack', [
-            ('dawn', 'Pillar of Dawn', 'Both heads driven down: a pillar of sunlight pours onto the spot (your kit pick).', 'above:pillar', 'slam'),
-            ('pack', 'Call the Pack', 'The slam calls two spectral wolves out of the light to hunt for 8 s.', 'burst:nova', 'slam'),
-            ('consecrate', 'Consecrate', 'A circle of runes where your summons heal and the dead burn.', 'ground:rune', 'slam')]),
+            ('dawn', 'Pillar of Dawn', 'Both heads driven down: a pillar of sunlight pours onto the spot (your kit pick).', [A('slam', .2), FX(.42, 'above', 'pillar', 't0', 1), R(.6, 'near:300@t0', 'burn'), R(1.6, 't0', 'die')]),
+            ('pack', 'Call the Pack', 'The slam calls two spectral wolves out of the light to hunt for 8 s.', [A('slam', .2), FX(.42, 'burst', 'nova', 'me', .8), dict(k='ghost', t=.55, d=1.9, at=[-60, 40], face='t0', swings=[.5, 1.1], el='spirit'), dict(k='ghost', t=.7, d=1.8, at=[-80, -90], face='t4', swings=[.6, 1.2], el='spirit'), R(1.2, 't0', 'die'), R(1.4, 't4', 'die')]),
+            ('consecrate', 'Consecrate', 'A circle of runes where your summons heal and the dead burn.', [A('slam', .2), FX(.42, 'ground', 'rune', 'front', 1.1), R(.7, 'near:330@front', 'burn')])]),
         ('special', 'Special', [
-            ('bond', 'Soul Bond', 'Every 15 kills, your summons blaze with light: half again as strong for 10 s.', 'burst:big', 'swing'),
-            ('ancestor', 'Ancestor\'s Guard', 'Every 20 kills, a spectral Nord warrior rises from the light and fights beside you for 12 s.', 'above:pillar', 'swing'),
-            ('orbit', 'Radiant Orbit', 'Three orbs of light circle you and strike the dead that come close.', 'impact:core', 'swing')]),
+            ('bond', 'Soul Bond', 'Every 15 kills, your summons blaze with light: half again as strong for 10 s.', [A('cast', .2), FX(.4, 'burst', 'big', 'me', .7), dict(k='ghost', t=.5, d=1.8, at=[40, 140], face='t0', swings=[.5, .9, 1.3]), R(1.0, 't0', 'die')]),
+            ('ancestor', 'Ancestor\'s Guard', 'Every 20 kills, a spectral Nord warrior rises from the light and fights beside you for 12 s.', [A('cast', .2), FX(.3, 'above', 'pillar', [-60, 70], .7), dict(k='ghost', t=.6, d=2.4, at=[-60, 70], face='t0', swings=[.9, 1.5, 2.0]), FX(1.55, 'impact', 'core', 't0', .8), R(1.55, 't0', 'die'), R(2.05, 't4', 'stagger')]),
+            ('orbit', 'Radiant Orbit', 'Three orbs of light circle you and strike the dead that come close.', [dict(k='orbit', t=.1, d=2.4, n=3), BOLT(.8, 't4', .3, False, SMALL(), 'me', .5), R(1.1, 't4', 'burn'), BOLT(1.5, 't0', .35, False, SMALL(), 'me', .5), R(1.85, 't0', 'burn')])]),
     ]),
-    'destruction': dict(el='arcane', why='The Battle-mage is the caster: a tap fires, a hold channels, and power builds the longer you keep it up.', moves=[
+    'destruction': dict(el='arcane', why='The Battle-mage is the caster: a tap fires (0.5 s between shots), a hold channels a beam that costs magicka, and power builds the longer you keep it up.', moves=[
         ('light', 'Tap: the bolt (0.5 s between shots)', [
-            ('glint', 'Glintstone Bolt', 'A tap fires a glintstone bolt that bends a little toward the nearest of the dead.', 'impact:core', 'cast'),
-            ('spread', 'Arcane Spread', 'A tap fires three smaller bolts in a fan.', 'impact:spark', 'cast'),
-            ('pierce', 'Piercing Ray', 'A tap fires a narrow ray that passes through the first of the dead into the next.', 'impact:drain', 'cast')]),
-        ('heavy', 'Hold: the beam', [
-            ('ray', 'Arcane Ray', 'Hold: a beam of raw magicka that grows wider and hotter the longer you hold it.', 'burst:big', 'hold'),
-            ('fork', 'Forking Beam', 'Hold: a beam that forks to two more of the dead near the one it holds.', 'burst:nova', 'hold'),
-            ('disintegrate', 'Disintegrate', 'Hold: a beam that burns a line through the dead; what it kills bursts in magicka.', 'above:sky', 'hold')]),
+            ('glint', 'Glintstone Bolt', 'A tap fires a glintstone bolt that bends a little toward the nearest of the dead.', [A('cast', .2), BOLT(.25, 't0', .4, True, SMALL()), R(.66, 't0'), A('cast', .75), BOLT(.8, 't4', .4, True, SMALL()), R(1.2, 't4'), A('cast', 1.3), BOLT(1.35, 't2', .45, True, SMALL()), R(1.8, 't2', 'die')]),
+            ('spread', 'Arcane Spread', 'A tap fires three smaller bolts in a fan.', [A('cast', .2), BOLT(.25, 't0', .4, False, SMALL(size=.5), size=.6), BOLT(.25, 't4', .4, False, SMALL(size=.5), size=.6), BOLT(.25, 't2', .45, False, SMALL(size=.5), size=.6), R(.66, 't0'), R(.66, 't4'), R(.7, 't2')]),
+            ('pierce', 'Piercing Ray', 'A tap fires a narrow ray that passes through the first of the dead into the next.', [A('cast', .2), BOLT(.25, 't0', .25, False, SMALL(size=.5), size=.6), BOLT(.5, 't1', .25, False, SMALL(size=.5), 't0', .6), R(.5, 't0'), R(.75, 't1')])]),
+        ('heavy', 'Hold: the beam (costs magicka)', [
+            ('ray', 'Arcane Ray', 'Hold: a beam of raw magicka from the wand\'s tip that grows wider and hotter the longer you hold it, draining your magicka while it runs.', [A('hold', .2, 2.2), dict(k='beam', mana=1, t=.3, d=2.1, to='t0'), R(.4, 't0', 'shock'), R(2.2, 't0', 'die'), FX(2.25, 'impact', 'core', 't0', .8)]),
+            ('fork', 'Forking Beam', 'Hold: a beam that forks to two more of the dead near the one it holds (it costs magicka while it runs).', [A('hold', .2, 2.2), dict(k='beam', mana=1, t=.3, d=2.1, to='t0', fork=['t1', 't4']), R(.4, 't0', 'shock'), R(.5, 't1', 'shock'), R(.5, 't4', 'shock'), R(2.2, 't0', 'die')]),
+            ('disintegrate', 'Disintegrate', 'Hold: a beam that burns a line through the dead; what it kills bursts in magicka (it costs magicka while it runs).', [A('hold', .2, 2.2), dict(k='beam', mana=1, t=.3, d=2.1, to='t1'), R(.5, 'line', 'burn'), R(1.4, 't0', 'die'), FX(1.45, 'burst', 'big', 't0', .6), R(2.2, 't1', 'die'), FX(2.25, 'burst', 'big', 't1', .6)])]),
         ('special', 'Special', [
-            ('starfall', 'Starfall', 'Every 25th bolt, twelve great bolts rain down in front of you.', 'above:sky', 'cast'),
-            ('echo', 'Arcane Echo', 'Beam kills leave a rune that bursts a second later.', 'ground:rune', 'cast'),
-            ('surge', 'Mana Surge', 'Beam kills refill your magicka, and your next tap fires three bolts.', 'impact:drain', 'cast')]),
+            ('starfall', 'Starfall', 'Every 25th bolt, twelve great bolts rain down in front of you.', [A('cast', .2), dict(k='rain', t=.4, n=12, d=1.4, at='t0', R=230, size=.9, hit=SMALL('impact', 'core', .7)), R(.9, 'near:260@t0', 'stagger'), R(1.6, 'near:260@t0', 'die')]),
+            ('echo', 'Arcane Echo', 'Beam kills leave a rune that bursts a second later.', [A('hold', .2, 1.2), dict(k='beam', mana=1, t=.3, d=1.1, to='t0'), R(1.3, 't0', 'die'), dict(k='mark', t=1.35, at='t0', d=1.0), FX(2.3, 'burst', 'nova', 't0', .7), R(2.35, 'near:280@t0', 'stagger')]),
+            ('surge', 'Mana Surge', 'Beam kills refill your magicka, and your next tap fires three bolts.', [A('hold', .2, 1.0), dict(k='beam', mana=1, t=.3, d=.9, to='t0'), R(1.1, 't0', 'die'), dict(k='motes', t=1.15, **{'from': 't0'}, to='me', d=.6), A('cast', 1.9), BOLT(1.95, 't4', .35, False, SMALL()), BOLT(1.95, 't2', .4, False, SMALL()), BOLT(1.95, 't1', .45, False, SMALL())])]),
     ]),
     'spellsword': dict(el='fire', els=['fire', 'frost', 'shock'], why='The Spellsword fuses blade and spell: the other hand\'s element rides every move.', moves=[
         ('light', 'Light attack', [
-            ('spellthrust', 'Spellthrust', 'Each thrust carries the spell in your other hand: fire burns, frost slows, shock arcs to one more.', 'impact:core', 'swing'),
-            ('riposte', 'Riposte', 'Block a blow just in time and the counter-thrust strikes three times as hard in a burst of your element.', 'impact:spark', 'swing'),
-            ('flurry', 'Flurry', 'Every 3rd thrust is a quick double thrust.', 'impact:drain', 'swing')]),
+            ('spellthrust', 'Spellthrust', 'Each thrust carries the spell in your other hand: fire burns, frost slows, shock arcs to one more.', [A('swing', .2), FX(.32, 'impact', 'core', 't0', .7), R(.34, 't0'), ARC(.5, 't0', 't4', .3), R(.55, 't4')]),
+            ('riposte', 'Riposte', 'Block a blow just in time and the counter-thrust strikes three times as hard in a burst of your element.', [R(.1, 't0', 'flinch'), A('swing', .45), FX(.58, 'impact', 'spark', 't0', 1.3), R(.6, 't0', 'die')]),
+            ('flurry', 'Flurry', 'Every 3rd thrust is a quick double thrust.', [A('swing', .2), FX(.32, 'impact', 'core', 't0', .5), A('swing', .6), FX(.72, 'impact', 'core', 't0', .5), A('swing', .8), FX(.92, 'impact', 'core', 't0', .6), R(.95, 't0', 'die')])]),
         ('heavy', 'Heavy attack', [
-            ('pillar', 'Spell Pillar', 'A pillar of your element pours down on the one you strike (your kit pick).', 'above:pillar', 'slam'),
-            ('lunge', 'Spell Lunge', 'You dash 6 m through the dead, leaving a trail of your element.', 'ground:wave', 'slam'),
-            ('lance', 'Spell Lance', 'A long lance of your element pierces everything in a line.', 'burst:nova', 'slam')]),
+            ('pillar', 'Spell Pillar', 'A pillar of your element pours down on the one you strike (your kit pick).', [A('slam', .2), FX(.42, 'above', 'pillar', 't0', 1), R(.6, 'near:300@t0'), R(1.5, 't0', 'die')]),
+            ('lunge', 'Spell Lunge', 'You dash 6 m through the dead, leaving a trail of your element.', [dict(k='dash', t=.15, d=.35, to=[140, -60]), A('swing', .2), FX(.4, 'ground', 'wave', 't0', .8), R(.35, 't0'), R(.42, 't1')]),
+            ('lance', 'Spell Lance', 'A long lance of your element pierces everything in a line.', [A('slam', .2), dict(k='beam', t=.4, d=.45, to='t1'), R(.5, 'line', 'die')])]),
         ('special', 'Special', [
-            ('resonance', 'Resonance', 'Each spell cast with your other hand charges the blade: your next heavy is twice as strong.', 'burst:big', 'swing'),
-            ('wake', 'Elemental Wake', 'Kills leave a patch of your element on the ground that burns, freezes or shocks the dead that cross it.', 'ground:mist', 'swing'),
-            ('focus', 'Duelist\'s Focus', 'Go 5 s without being hit and your next thrust is a sure critical.', 'impact:spark', 'swing')]),
+            ('resonance', 'Resonance', 'Each spell cast with your other hand charges the blade: your next heavy is twice as strong.', [A('cast', .2), FX(.35, 'impact', 'drain', 'me', .6), A('slam', .9), FX(1.1, 'burst', 'big', 't0', 1.2), R(1.15, 'near:360@t0', 'die')]),
+            ('wake', 'Elemental Wake', 'Kills leave a patch of your element on the ground that burns, freezes or shocks the dead that cross it.', [A('swing', .2), R(.34, 't0', 'die'), FX(.5, 'ground', 'mist', 't0', .7), R(1.0, 'near:240@t0')]),
+            ('focus', 'Duelist\'s Focus', 'Go 5 s without being hit and your next thrust is a sure critical.', [FX(.1, 'impact', 'drain', 'me', .5), A('swing', .9), FX(1.02, 'impact', 'spark', 't0', 1.4), R(1.05, 't0', 'die')])]),
     ]),
 }
+# the wonders (Nov 27: "the wonders aren't in the weapon & effects"): each its model, its look, and what its description says it does
+WONDERS = [
+    dict(id='soulcaller', key='soulcaller', look='o2', cls='summoner', name='Soulcaller\'s Staff', el='spirit', who='Summoner\'s wonder (The Ghost Pride)',
+         text='Hold to cast: each of the dead the beam kills gives a soul. Every 20 souls: a spectral sabre cat for 45 s (max 3).',
+         moves=[('Hold: the soul beam', [A('hold', .2, 2.3), dict(k='beam', t=.3, d=2.2, to='t0', el='spirit'), R(.4, 't0', 'drain'), R(1.6, 't0', 'die'), dict(k='motes', t=1.65, **{'from': 't0'}, to='me', d=.6, el='spirit')]),
+                ('Every 20 souls: the spectral cat', [FX(.2, 'burst', 'nova', 'me', .6, 'spirit'), dict(k='ghost', t=.4, d=2.4, at=[-80, 60], face='t0', swings=[.8, 1.4, 2.0], el='spirit'), R(1.3, 't0', 'die'), R(1.9, 't4', 'die')])]),
+    dict(id='javelin', key='javelin', look='o5', cls='destruction', name='Wyrmspine Javelin', el='fire', who='Destruction\'s wonder (The Eye of Magnus)',
+         text='Hold attack to charge, let go to throw: it bursts in your other hand\'s element, bigger the longer you held. A kill sends it on to the next enemy; then it flies back to you.',
+         moves=[('Hold, then throw', [A('hold', .2, .9), FX(.3, 'impact', 'drain', 'me', .5), A('throw', 1.1), dict(BOLT(1.15, 't0', .35, False, None, 'hand', 1.0), model='javelin'), FX(1.5, 'burst', 'big', 't0', .7), R(1.55, 't0', 'die'), dict(BOLT(1.7, 't1', .4, True, None, 't0', .8), model='javelin'), FX(2.1, 'impact', 'spark', 't1', .8), R(2.1, 't1', 'die'), dict(BOLT(2.3, 'me', .5, True, None, 't1', .6), model='javelin')])]),
+    dict(id='mutagen', key='flaskweap_philosopher', look='o1', cls='alchemist', name='Mutagen Staff', el='poison', who='Alchemist\'s wonder (The Elixir of Aetherius)',
+         text='Hold block: throws a flask every 0.5 s, cycling the six elements. Power attack: throws the next flask. And its normal staff attacks.',
+         moves=[('Hold block: the flasks', [A('throw', .2), BOLT(.25, 't0', .5, True, SMALL('burst', 'big', .5), 'hand', .5, 'fire'), A('throw', .7), BOLT(.75, 't4', .5, True, SMALL('burst', 'nova', .5), 'hand', .5, 'frost'), A('throw', 1.2), BOLT(1.25, 't2', .5, True, SMALL('impact', 'spark', .7), 'hand', .5, 'shock'), A('throw', 1.7), BOLT(1.75, 't1', .5, True, SMALL('ground', 'rune', .5), 'hand', .5, 'poison'),
+                                              R(.75, 't0', 'burn'), R(1.25, 't4', 'freeze'), R(1.75, 't2', 'shock'), R(2.25, 't1', 'poison')]),
+                ('A staff strike', [A('swing', .2), FX(.32, 'impact', 'core', 't0', .6), R(.34, 't0', 'stagger')])]),
+    dict(id='slayer', key='cls_dragonslayer_slayer', look='o3', cls='spellsword', name='Dragon Slayer', el='fire', who='Spellsword\'s wonder (The Slayer\'s Oath)',
+         text='Light: a golden fireball, 2x damage to dragons. Heavy: 5 s of golden fireballs on the dead within 20 m.',
+         moves=[('Light: a golden fireball', [A('swing', .2), BOLT(.3, 't0', .35, False, SMALL('burst', 'big', .6), 'hand', .8, 'holy'), R(.66, 't0', 'die')]),
+                ('Heavy: 5 s of golden fireballs', [A('slam', .2), dict(k='rain', t=.4, n=14, d=2.2, at='t0', R=260, size=.7, hit=SMALL('burst', 'big', .45), el='holy'), R(1.0, 'near:300@t0', 'burn'), R(2.3, 'near:300@t0', 'die')])]),
+    dict(id='bane', key='fang', look='o2', cls='summoner', name='Alduin\'s Bane', el='fire', who='The last weapon (the Hall of the Awakened)',
+         text='Light: a large meteor falls on each of the dead you hit. Heavy: a bright white tornado for 5 s that flings the dead away.',
+         moves=[('Light: a meteor on each hit', [A('swing', .2), R(.34, 't0', 'flinch'), FX(.4, 'above', 'sky', 't0', 1), R(1.0, 'near:300@t0', 'die')]),
+                ('Heavy: the white tornado', [A('slam', .2), FX(.4, 'above', 'pillar', 'front', 1.2, 'wind'), R(.7, 'near:420@front', 'fling'), R(1.6, 'all', 'stagger')])]),
+]
 
 # ------------------------------------------------------------------------------------------------ the lore (Nov 26 late: "add one more tab in the workshop for
 # the story for CoA, the easter eggs, and trials - all of the lore essentially"): read from the mod itself, so it is what the game says
@@ -445,6 +478,7 @@ def lore():
 # ------------------------------------------------------------------------------------------------ his notes, kept with the build they went into
 # (Noah, Nov 26 late: "clear my notes in the boxes for the build and save them in the build history so it's documented")
 NOTE_LOG = json.loads((HERE / 'notes_log.json').read_text()) if (HERE / 'notes_log.json').exists() else []
+PICK_LOG = json.loads((HERE / 'picks_log.json').read_text()) if (HERE / 'picks_log.json').exists() else []   # (picks.py: his picks and decisions, round by round)
 
 # ------------------------------------------------------------------------------------------------ the design bible
 BIBLE = dict(
@@ -608,7 +642,7 @@ EXTRA_ELEMENTS = [
 # ------------------------------------------------------------------------------------------------ the builds (history)
 def builds():
     out = []
-    log = subprocess.run(['git', '-C', str(ROOT), 'log', '--since=2026-11-24', '--format=%h|%ad|%s', '--date=format:%Y-%m-%d %H:%M'], capture_output=True, text=True).stdout
+    log = subprocess.run(['git', '-C', str(ROOT), 'log', '--since=2026-11-24 00:00 -0500', '--format=%h|%ad|%s', '--date=format:%Y-%m-%d %H:%M'], capture_output=True, text=True).stdout
     for line in log.splitlines():
         sha, when, subj = line.split('|', 2)
         if 'skip ci' in subj or subj.startswith('Workshop') or subj.startswith('The mod now'):
@@ -644,7 +678,7 @@ def main():
                 decisions=[dict(d, opts=[dict(id=a, name=b, about=c) for a, b, c in d['opts']]) for d in DECISIONS],
                 builds=builds(), installs=INSTALLS, bible=BIBLE,
                 elements=[dict(id=a, name=b, col=c, about=d) for a, b, c, d in ELEMENTS], kit=[dict(name=a, about=b) for a, b in KIT_PARTS],
-                classes=CLASSES, tablet=TABLET, tabnew=TABLET_NEW, kits=element_kits(), abil=CLASS_ABIL, tabnew2=TABLET_NEW2, rarity=RARITY_DEFAULT, odds=ODDS_DEFAULT, rolls=ROLLS, lore=lore(), notelog=NOTE_LOG, moves=CLASS_MOVES)
+                classes=CLASSES, tablet=TABLET, tabnew=TABLET_NEW, kits=element_kits(), abil=CLASS_ABIL, tabnew2=TABLET_NEW2, rarity=RARITY_DEFAULT, odds=ODDS_DEFAULT, rolls=ROLLS, lore=lore(), notelog=NOTE_LOG, picklog=PICK_LOG, moves=CLASS_MOVES, wonders=WONDERS)
     for k in ('modstack', 'nexus', 'modnow'):
         data[k] = json.loads((ROOT / 'docs' / 'workshop' / f'{k}.json').read_text())
     (HERE / 'data.json').write_text(json.dumps(data, ensure_ascii=False, indent=1))

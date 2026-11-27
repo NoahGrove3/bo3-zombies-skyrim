@@ -1,0 +1,982 @@
+[
+ {
+  "round": "Workshop, Nov 27 (this round)",
+  "date": "2026-11-27",
+  "changed": [
+   {
+    "where": "Destruction: moves",
+    "pick": "light: Glintstone Bolt; heavy: Arcane Ray; special: Starfall"
+   },
+   {
+    "where": "Spellsword: moves",
+    "pick": "element Shock; light: Spellthrust; heavy: Spell Pillar; special: Elemental Wake"
+   },
+   {
+    "where": "Summoner: moves",
+    "pick": "element Holy and sun; light: Radiant Strike; heavy: Pillar of Dawn; special: Ancestor's Guard"
+   },
+   {
+    "where": "Decision: Your note on the Echo Altar menus: keep the altar menu you have in the game now, or use the new one (class painting, tab icons, every brew's icon - see In-game UI > Every screen > The Echo Altar)?",
+    "pick": "The new one"
+   },
+   {
+    "where": "Wind and Thu'um kit",
+    "pick": "Impact Drain; Burst Explosion; Ground Rune circle; From above From the sky; Cast sound MAGWhirlwindLP; Impact sound VOCShoutImpactPushSD; Burst sound VOCShoutImpactPushImpactDragonSD"
+   },
+   {
+    "where": "UI: Choosing your class",
+    "pick": "mark cleared"
+   },
+   {
+    "where": "UI: The scoreboard",
+    "pick": "mark cleared"
+   },
+   {
+    "where": "UI: The Codex",
+    "pick": "mark cleared"
+   },
+   {
+    "where": "UI: New character",
+    "pick": "mark cleared"
+   }
+  ],
+  "now": [
+   {
+    "where": "Alchemist: moves",
+    "pick": "light: not picked; heavy: not picked; special: not picked"
+   },
+   {
+    "where": "Destruction: moves",
+    "pick": "light: Glintstone Bolt; heavy: Arcane Ray; special: Starfall"
+   },
+   {
+    "where": "Spellsword: moves",
+    "pick": "element Shock; light: Spellthrust; heavy: Spell Pillar; special: Elemental Wake"
+   },
+   {
+    "where": "Summoner: moves",
+    "pick": "element Holy and sun; light: Radiant Strike; heavy: Pillar of Dawn; special: Ancestor's Guard"
+   },
+   {
+    "where": "Alchemist: model",
+    "pick": "Dragon Priest scythe"
+   },
+   {
+    "where": "Destruction: model",
+    "pick": "Glass wand"
+   },
+   {
+    "where": "Spellsword: model",
+    "pick": "Daedric rapier"
+   },
+   {
+    "where": "Summoner: model",
+    "pick": "Ebony quarterstaff"
+   },
+   {
+    "where": "Decision: Your note on the Echo Altar menus: keep the altar menu you have in the game now, or use the new one (class painting, tab icons, every brew's icon - see In-game UI > Every screen > The Echo Altar)?",
+    "pick": "The new one"
+   },
+   {
+    "where": "Decision: The Bonereaper's raise caused the round 20 crash (fixed now). Keep it in the Tablet?",
+    "pick": "Cut it now"
+   },
+   {
+    "where": "Decision: What replaces Immolate (the Destruction fire spell at Tier III)?",
+    "pick": "Fire Storm"
+   },
+   {
+    "where": "Decision: Your note on the launch screen and main menu: which music should they play? (It starts with the launch screen and fades out when a game starts.)",
+    "pick": "Dragonborn (the main theme)"
+   },
+   {
+    "where": "Arcane kit",
+    "pick": "Impact Drain; Burst Explosion; Ground Rune circle; From above From the sky; Cast sound MAGAlterationReleaseSD; Impact sound MAGAetherialShieldImpact; Burst sound MAGPowerSerpentStoneExplosion"
+   },
+   {
+    "where": "Blood kit",
+    "pick": "Impact Splash; Burst Eruption; Ground Rune circle; From above Pillar; Cast sound WB RestorationBlood Sound Release OrcishHealing; Impact sound MAGAlterationVampireDrainOnHit; Burst sound WB RestorationNecro Sound Explosion Undead"
+   },
+   {
+    "where": "Fire kit",
+    "pick": "Impact Flare; Burst Eruption; Ground Spreading wave; From above Pillar; Cast sound MAGFireboltFire2DSD; Impact sound MAGFireboltImpactSD; Burst sound MAGDestructionFireballExplosion"
+   },
+   {
+    "where": "Frost kit",
+    "pick": "Impact Flare; Burst Eruption; Ground Spreading wave; From above Pillar; Cast sound MAGIcicleFireSD; Impact sound WB DestructionFrost Sound Impact Crystalize; Burst sound WB DestructionFrost Sound Explosion Cryoblast"
+   },
+   {
+    "where": "Holy and sun kit",
+    "pick": "Impact Drain; Burst Nova ring; Ground Rune circle; From above Pillar; Cast sound MAGLightFireSD; Impact sound MAGAurielShieldBlastA; Burst sound FXExplosionAurielBowHarkon"
+   },
+   {
+    "where": "Poison and acid kit",
+    "pick": "Impact Flare; Burst Nova ring; Ground Rune circle; From above From the sky; Cast sound MAG PoisonReleaseSFX; Impact sound MAG PoisonImpactSFX; Burst sound MAG PoisonExplosionSFX"
+   },
+   {
+    "where": "Shadowfire kit",
+    "pick": "Impact Flare; Burst Eruption; Ground Spreading wave; From above Pillar; Cast sound MAGIllusionFireLPM; Impact sound MAGNightCloakBatsHitLPM; Burst sound WB Illusion Sound Explosion Subsonic"
+   },
+   {
+    "where": "Shock kit",
+    "pick": "Impact Flare; Burst Nova ring; Ground Rune circle; From above Pillar; Cast sound WB DestructionShock Sound Release JoyBuzzer 2; Impact sound MAGShockImpactSD; Burst sound WB DestructionShock Sound Explosion LightningStrike 2C"
+   },
+   {
+    "where": "Spirit kit",
+    "pick": "Impact Flare; Burst Explosion; Ground Lingering; From above Pillar; Cast sound WB ConjurationBanish Sound Release Hiss; Impact sound WB ConjurationGhosts Sound Impact Wail; Burst sound WB ConjurationCommand Sound Explosion EtherealCall"
+   },
+   {
+    "where": "Wind and Thu'um kit",
+    "pick": "Impact Drain; Burst Explosion; Ground Rune circle; From above From the sky; Cast sound MAGWhirlwindLP; Impact sound VOCShoutImpactPushSD; Burst sound VOCShoutImpactPushImpactDragonSD"
+   },
+   {
+    "where": "Lore: the cities",
+    "pick": "approved"
+   },
+   {
+    "where": "Lore: the classes",
+    "pick": "approved"
+   },
+   {
+    "where": "Lore: the Curse",
+    "pick": "approved"
+   },
+   {
+    "where": "Lore: the Easter eggs",
+    "pick": "approved"
+   },
+   {
+    "where": "Lore: the ending",
+    "pick": "approved"
+   },
+   {
+    "where": "Lore: Felldir",
+    "pick": "approved"
+   },
+   {
+    "where": "Lore: the trials",
+    "pick": "approved"
+   },
+   {
+    "where": "Tablet: Bloodmoon Scythe",
+    "pick": "cut"
+   },
+   {
+    "where": "Tablet: Bonereaper",
+    "pick": "cut"
+   },
+   {
+    "where": "Tablet: Cinderclaws",
+    "pick": "keep"
+   },
+   {
+    "where": "Tablet: Eclipse Edge",
+    "pick": "keep"
+   },
+   {
+    "where": "Tablet: Frostmourn Rapier",
+    "pick": "keep"
+   },
+   {
+    "where": "Tablet: Gravebell Mace",
+    "pick": "keep"
+   },
+   {
+    "where": "Tablet: Rimewick Quarterstaff",
+    "pick": "keep"
+   },
+   {
+    "where": "Tablet: Riverstone Halberd",
+    "pick": "cut"
+   },
+   {
+    "where": "Tablet: Silver Reaping Scythe",
+    "pick": "cut"
+   },
+   {
+    "where": "Tablet: Stormtalons",
+    "pick": "keep"
+   },
+   {
+    "where": "Tablet: Talons of Woe",
+    "pick": "cut"
+   },
+   {
+    "where": "Tablet: The Wandering Star",
+    "pick": "cut"
+   },
+   {
+    "where": "Tablet: Wyrmspine Pike",
+    "pick": "keep"
+   },
+   {
+    "where": "Tablet: Wyrmtooth Scythe",
+    "pick": "cut"
+   },
+   {
+    "where": "New Tablet weapon: Aetherium Disc Blade",
+    "pick": "no"
+   },
+   {
+    "where": "New Tablet weapon: Grasp of Apocrypha",
+    "pick": "add"
+   },
+   {
+    "where": "New Tablet weapon: Lil' Atronach",
+    "pick": "add"
+   },
+   {
+    "where": "New Tablet weapon: Harkon's Bloodbite",
+    "pick": "no"
+   },
+   {
+    "where": "New Tablet weapon: Mace of the Bound",
+    "pick": "add"
+   },
+   {
+    "where": "New Tablet weapon: Chaurus Fang",
+    "pick": "add"
+   },
+   {
+    "where": "New Tablet weapon: Daedra Heart Flail",
+    "pick": "no"
+   },
+   {
+    "where": "New Tablet weapon: Razor of Dagon",
+    "pick": "no"
+   },
+   {
+    "where": "New Tablet weapon: Frostbite Egg Sac",
+    "pick": "add"
+   },
+   {
+    "where": "New Tablet weapon: Voice of the Mountain",
+    "pick": "add"
+   },
+   {
+    "where": "New Tablet weapon: Giant's Toe Club",
+    "pick": "add"
+   },
+   {
+    "where": "New Tablet weapon: Hagraven's Fetish",
+    "pick": "no"
+   },
+   {
+    "where": "New Tablet weapon: The Jester's Cane",
+    "pick": "no"
+   },
+   {
+    "where": "New Tablet weapon: Dwemer Piston Lance",
+    "pick": "no"
+   },
+   {
+    "where": "New Tablet weapon: Skyforge Thunder Maul",
+    "pick": "no"
+   },
+   {
+    "where": "New Tablet weapon: Soul Cairn Lantern",
+    "pick": "no"
+   },
+   {
+    "where": "New Tablet weapon: Soulrender",
+    "pick": "add"
+   },
+   {
+    "where": "New Tablet weapon: Spriggan's Heartroot",
+    "pick": "add"
+   },
+   {
+    "where": "New Tablet weapon: Stalhrim Shatter Axe",
+    "pick": "no"
+   },
+   {
+    "where": "New Tablet weapon: Sweetroll of the Damned",
+    "pick": "add"
+   },
+   {
+    "where": "New Tablet weapon: Tusk of the Herd",
+    "pick": "no"
+   },
+   {
+    "where": "New Tablet weapon: Dragonguard Ward-Shield",
+    "pick": "add"
+   },
+   {
+    "where": "New Tablet weapon: Whisper Edge",
+    "pick": "no"
+   },
+   {
+    "where": "Tablet roll",
+    "pick": "The Wheel"
+   },
+   {
+    "where": "Alchemist: tier looks",
+    "pick": "I: Transmuted Edge; II: Transmuted Edge; III: Transmuted Edge; Legendary: Transmuted Edge at its brightest"
+   },
+   {
+    "where": "Destruction: tier looks",
+    "pick": "I: Glintstone Mist; II: Glintstone Mist; III: Glintstone Mist; Legendary: Glintstone Mist at its brightest"
+   },
+   {
+    "where": "Spellsword: tier looks",
+    "pick": "I: Bare Blade; II: Bare Blade; III: Bare Blade; Legendary: Bare Blade + Spellbound"
+   },
+   {
+    "where": "Summoner: tier looks",
+    "pick": "I: Radiant Heads; II: Radiant Heads; III: Radiant Heads; Legendary: Radiant Heads + Dawn Halo"
+   },
+   {
+    "where": "UI direction",
+    "pick": "Ember Tally"
+   },
+   {
+    "where": "UI: The altar menu",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Armory",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: bars",
+    "pick": "change"
+   },
+   {
+    "where": "UI: Before the night",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Launch screen",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Boss bar",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Choosing your class",
+    "pick": "mark cleared"
+   },
+   {
+    "where": "UI: You are down",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: A friend is down",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Joins and falls",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Names over the party",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: The scoreboard",
+    "pick": "mark cleared"
+   },
+   {
+    "where": "UI: The party",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: A shared trial",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: The Codex",
+    "pick": "mark cleared"
+   },
+   {
+    "where": "UI: Compass",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Falling",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Cursed Essence and kill pops",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Health over enemies",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Getting hit",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Inventory: remade",
+    "pick": "picked"
+   },
+   {
+    "where": "UI: Inventory: recoloured",
+    "pick": "mark cleared"
+   },
+   {
+    "where": "UI: Loading screens",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Magic: remade",
+    "pick": "picked"
+   },
+   {
+    "where": "UI: Magic: recoloured",
+    "pick": "mark cleared"
+   },
+   {
+    "where": "UI: Main menu",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Prompts at the altar and the Tablet",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Message boxes",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Night counter",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Brews",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Brews (perks)",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Quests and trials",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: New character",
+    "pick": "mark cleared"
+   },
+   {
+    "where": "UI: Dragon Priest slain",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Subtitles",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Tab menu: remade",
+    "pick": "picked"
+   },
+   {
+    "where": "UI: Tablet of Mysteries",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Talk",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Thu\\'um",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Trials",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: A Tablet weapon\\'s uses",
+    "pick": "approved"
+   }
+  ]
+ },
+ {
+  "round": "Install 3938d82, Nov 27",
+  "date": "2026-11-27",
+  "changed": [
+   {
+    "where": "Alchemist: moves",
+    "pick": "light: not picked; heavy: not picked; special: not picked"
+   },
+   {
+    "where": "Destruction: moves",
+    "pick": "light: not picked; heavy: not picked; special: not picked"
+   },
+   {
+    "where": "Spellsword: moves",
+    "pick": "element Fire; light: not picked; heavy: not picked; special: not picked"
+   },
+   {
+    "where": "Summoner: moves",
+    "pick": "element Holy and sun; light: not picked; heavy: not picked; special: not picked"
+   },
+   {
+    "where": "Destruction: model",
+    "pick": "Glass wand"
+   },
+   {
+    "where": "Summoner: model",
+    "pick": "Ebony quarterstaff"
+   },
+   {
+    "where": "Decision: The Bonereaper's raise caused the round 20 crash (fixed now). Keep it in the Tablet?",
+    "pick": "Cut it now"
+   },
+   {
+    "where": "Decision: Your note on the launch screen and main menu: which music should they play? (It starts with the launch screen and fades out when a game starts.)",
+    "pick": "Dragonborn (the main theme)"
+   },
+   {
+    "where": "Arcane kit",
+    "pick": "Impact Drain; Burst Explosion; Ground Rune circle; From above From the sky; Cast sound MAGAlterationReleaseSD; Impact sound MAGAetherialShieldImpact; Burst sound MAGPowerSerpentStoneExplosion"
+   },
+   {
+    "where": "Blood kit",
+    "pick": "Impact Splash; Burst Eruption; Ground Rune circle; From above Pillar; Cast sound WB RestorationBlood Sound Release OrcishHealing; Impact sound MAGAlterationVampireDrainOnHit; Burst sound WB RestorationNecro Sound Explosion Undead"
+   },
+   {
+    "where": "Fire kit",
+    "pick": "Impact Flare; Burst Eruption; Ground Spreading wave; From above Pillar; Cast sound MAGFireboltFire2DSD; Impact sound MAGFireboltImpactSD; Burst sound MAGDestructionFireballExplosion"
+   },
+   {
+    "where": "Frost kit",
+    "pick": "Impact Flare; Burst Eruption; Ground Spreading wave; From above Pillar; Cast sound MAGIcicleFireSD; Impact sound WB DestructionFrost Sound Impact Crystalize; Burst sound WB DestructionFrost Sound Explosion Cryoblast"
+   },
+   {
+    "where": "Holy and sun kit",
+    "pick": "Impact Drain; Burst Nova ring; Ground Rune circle; From above Pillar; Cast sound MAGLightFireSD; Impact sound MAGAurielShieldBlastA; Burst sound FXExplosionAurielBowHarkon"
+   },
+   {
+    "where": "Poison and acid kit",
+    "pick": "Impact Flare; Burst Nova ring; Ground Rune circle; From above From the sky; Cast sound MAG PoisonReleaseSFX; Impact sound MAG PoisonImpactSFX; Burst sound MAG PoisonExplosionSFX"
+   },
+   {
+    "where": "Shadowfire kit",
+    "pick": "Impact Flare; Burst Eruption; Ground Spreading wave; From above Pillar; Cast sound MAGIllusionFireLPM; Impact sound MAGNightCloakBatsHitLPM; Burst sound WB Illusion Sound Explosion Subsonic"
+   },
+   {
+    "where": "Shock kit",
+    "pick": "Impact Flare; Burst Nova ring; Ground Rune circle; From above Pillar; Cast sound WB DestructionShock Sound Release JoyBuzzer 2; Impact sound MAGShockImpactSD; Burst sound WB DestructionShock Sound Explosion LightningStrike 2C"
+   },
+   {
+    "where": "Spirit kit",
+    "pick": "Impact Flare; Burst Explosion; Ground Lingering; From above Pillar; Cast sound WB ConjurationBanish Sound Release Hiss; Impact sound WB ConjurationGhosts Sound Impact Wail; Burst sound WB ConjurationCommand Sound Explosion EtherealCall"
+   },
+   {
+    "where": "Wind and Thu'um kit",
+    "pick": "nothing picked"
+   },
+   {
+    "where": "Lore: the cities",
+    "pick": "approved"
+   },
+   {
+    "where": "Lore: the classes",
+    "pick": "approved"
+   },
+   {
+    "where": "Lore: the Curse",
+    "pick": "approved"
+   },
+   {
+    "where": "Lore: the Easter eggs",
+    "pick": "approved"
+   },
+   {
+    "where": "Lore: the ending",
+    "pick": "approved"
+   },
+   {
+    "where": "Lore: Felldir",
+    "pick": "approved"
+   },
+   {
+    "where": "Lore: the trials",
+    "pick": "approved"
+   },
+   {
+    "where": "Tablet: Gravebell Mace",
+    "pick": "keep"
+   },
+   {
+    "where": "New Tablet weapon: Aetherium Disc Blade",
+    "pick": "no"
+   },
+   {
+    "where": "New Tablet weapon: Grasp of Apocrypha",
+    "pick": "add"
+   },
+   {
+    "where": "New Tablet weapon: Lil' Atronach",
+    "pick": "add"
+   },
+   {
+    "where": "New Tablet weapon: Harkon's Bloodbite",
+    "pick": "no"
+   },
+   {
+    "where": "New Tablet weapon: Mace of the Bound",
+    "pick": "add"
+   },
+   {
+    "where": "New Tablet weapon: Chaurus Fang",
+    "pick": "add"
+   },
+   {
+    "where": "New Tablet weapon: Daedra Heart Flail",
+    "pick": "no"
+   },
+   {
+    "where": "New Tablet weapon: Razor of Dagon",
+    "pick": "no"
+   },
+   {
+    "where": "New Tablet weapon: Frostbite Egg Sac",
+    "pick": "add"
+   },
+   {
+    "where": "New Tablet weapon: Voice of the Mountain",
+    "pick": "add"
+   },
+   {
+    "where": "New Tablet weapon: Giant's Toe Club",
+    "pick": "add"
+   },
+   {
+    "where": "New Tablet weapon: Hagraven's Fetish",
+    "pick": "no"
+   },
+   {
+    "where": "New Tablet weapon: The Jester's Cane",
+    "pick": "no"
+   },
+   {
+    "where": "New Tablet weapon: Dwemer Piston Lance",
+    "pick": "no"
+   },
+   {
+    "where": "New Tablet weapon: Skyforge Thunder Maul",
+    "pick": "no"
+   },
+   {
+    "where": "New Tablet weapon: Soul Cairn Lantern",
+    "pick": "no"
+   },
+   {
+    "where": "New Tablet weapon: Soulrender",
+    "pick": "add"
+   },
+   {
+    "where": "New Tablet weapon: Spriggan's Heartroot",
+    "pick": "add"
+   },
+   {
+    "where": "New Tablet weapon: Stalhrim Shatter Axe",
+    "pick": "no"
+   },
+   {
+    "where": "New Tablet weapon: Sweetroll of the Damned",
+    "pick": "add"
+   },
+   {
+    "where": "New Tablet weapon: Tusk of the Herd",
+    "pick": "no"
+   },
+   {
+    "where": "New Tablet weapon: Dragonguard Ward-Shield",
+    "pick": "add"
+   },
+   {
+    "where": "New Tablet weapon: Whisper Edge",
+    "pick": "no"
+   },
+   {
+    "where": "Tablet roll",
+    "pick": "The Wheel"
+   },
+   {
+    "where": "Alchemist: tier looks",
+    "pick": "I: Transmuted Edge; II: Transmuted Edge; III: Transmuted Edge; Legendary: Transmuted Edge at its brightest"
+   },
+   {
+    "where": "Summoner: tier looks",
+    "pick": "I: Radiant Heads; II: Radiant Heads; III: Radiant Heads; Legendary: Radiant Heads + Dawn Halo"
+   },
+   {
+    "where": "UI direction",
+    "pick": "Ember Tally"
+   },
+   {
+    "where": "UI: The altar menu",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Armory",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: bars",
+    "pick": "change"
+   },
+   {
+    "where": "UI: Before the night",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Launch screen",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Boss bar",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Choosing your class",
+    "pick": "change"
+   },
+   {
+    "where": "UI: You are down",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: A friend is down",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Joins and falls",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Names over the party",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: The scoreboard",
+    "pick": "change"
+   },
+   {
+    "where": "UI: The party",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: A shared trial",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: The Codex",
+    "pick": "change"
+   },
+   {
+    "where": "UI: Compass",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Falling",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Cursed Essence and kill pops",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Health over enemies",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Getting hit",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Inventory: remade",
+    "pick": "picked"
+   },
+   {
+    "where": "UI: Inventory: recoloured",
+    "pick": "mark cleared"
+   },
+   {
+    "where": "UI: Loading screens",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Magic: remade",
+    "pick": "picked"
+   },
+   {
+    "where": "UI: Magic: recoloured",
+    "pick": "mark cleared"
+   },
+   {
+    "where": "UI: Main menu",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Prompts at the altar and the Tablet",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Message boxes",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Night counter",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Brews",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Brews (perks)",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Quests and trials",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: New character",
+    "pick": "change"
+   },
+   {
+    "where": "UI: Dragon Priest slain",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Subtitles",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Tab menu: remade",
+    "pick": "picked"
+   },
+   {
+    "where": "UI: Tablet of Mysteries",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Talk",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Thu\\'um",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: Trials",
+    "pick": "approved"
+   },
+   {
+    "where": "UI: A Tablet weapon\\'s uses",
+    "pick": "approved"
+   }
+  ]
+ },
+ {
+  "round": "Workshop, Nov 26 late",
+  "date": "2026-11-26",
+  "changed": [
+   {
+    "where": "Alchemist: model",
+    "pick": "Dragon Priest scythe"
+   },
+   {
+    "where": "Destruction: model",
+    "pick": "Daedric wand"
+   },
+   {
+    "where": "Spellsword: model",
+    "pick": "Daedric rapier"
+   },
+   {
+    "where": "Summoner: model",
+    "pick": "Daedric quarterstaff"
+   },
+   {
+    "where": "Decision: The Bonereaper's raise caused the round 20 crash (fixed now). Keep it in the Tablet?",
+    "pick": "Decide in the lineup review"
+   },
+   {
+    "where": "Decision: What replaces Immolate (the Destruction fire spell at Tier III)?",
+    "pick": "Fire Storm"
+   },
+   {
+    "where": "Tablet: Bloodmoon Scythe",
+    "pick": "cut"
+   },
+   {
+    "where": "Tablet: Bonereaper",
+    "pick": "cut"
+   },
+   {
+    "where": "Tablet: Cinderclaws",
+    "pick": "keep"
+   },
+   {
+    "where": "Tablet: Eclipse Edge",
+    "pick": "keep"
+   },
+   {
+    "where": "Tablet: Frostmourn Rapier",
+    "pick": "keep"
+   },
+   {
+    "where": "Tablet: Gravebell Mace",
+    "pick": "cut"
+   },
+   {
+    "where": "Tablet: Rimewick Quarterstaff",
+    "pick": "keep"
+   },
+   {
+    "where": "Tablet: Riverstone Halberd",
+    "pick": "cut"
+   },
+   {
+    "where": "Tablet: Silver Reaping Scythe",
+    "pick": "cut"
+   },
+   {
+    "where": "Tablet: Stormtalons",
+    "pick": "keep"
+   },
+   {
+    "where": "Tablet: Talons of Woe",
+    "pick": "cut"
+   },
+   {
+    "where": "Tablet: The Wandering Star",
+    "pick": "cut"
+   },
+   {
+    "where": "Tablet: Wyrmspine Pike",
+    "pick": "keep"
+   },
+   {
+    "where": "Tablet: Wyrmtooth Scythe",
+    "pick": "cut"
+   },
+   {
+    "where": "Alchemist: tier looks",
+    "pick": "I: Alchemist's Smoke; II: Alchemist's Smoke; III: Bubbling Brew; Legendary: Bubbling Brew + Shadowflame"
+   },
+   {
+    "where": "Destruction: tier looks",
+    "pick": "I: Glintstone Mist; II: Glintstone Mist; III: Glintstone Mist; Legendary: Glintstone Mist at its brightest"
+   },
+   {
+    "where": "Spellsword: tier looks",
+    "pick": "I: Bare Blade; II: Bare Blade; III: Bare Blade; Legendary: Bare Blade + Spellbound"
+   },
+   {
+    "where": "Summoner: tier looks",
+    "pick": "I: Radiant Heads; II: Radiant Heads; III: Radiant Heads; Legendary: Radiant Heads + Sunfire"
+   }
+  ]
+ }
+]

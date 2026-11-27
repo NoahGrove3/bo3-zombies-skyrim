@@ -1,7 +1,7 @@
 // Every in-game screen of the mod, drawn over a real frame of Noah's own game (his NVIDIA clips at 2560x1600, our old HUD
 // painted out) at true size: the page is 16:10 like his screen, and every size is in cqw (1cqw = 25.6 px on his screen). Each
 // screen is made of the same parts (the night, the quests, the essence...), and the direction picked styles those parts
-// (Ember Tally .dA, Dragon Stone .dB, Edge Clean .dC) - so picking a direction redraws every screen in it.
+// (Ember Tally .dA, Dragonbone .dD, Echo Glass .dE) - so picking a direction redraws every screen in it.
 const ROMAN = n => { const r = [[10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']]; let s = ''; for (const [v, c] of r) while (n >= v) { s += c; n -= v; } return s; };
 function tallySvg(n) {   // BO3's round tally - four strokes and a slash through them - scratched like runes, in ember
   let s = '', x = 6; const r = i => ((Math.sin(i * 12.9898 + 3.1) * 43758.5453) % 1 + 1) % 1;

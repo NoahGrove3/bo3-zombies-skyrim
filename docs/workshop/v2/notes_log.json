@@ -1,5 +1,46 @@
 [
  {
+  "build": "Workshop, Nov 27 (wonders and moves)",
+  "date": "2026-11-27",
+  "notes": [
+   {
+    "when": "2026-11-27 01:17",
+    "where": "abil/destruction",
+    "note": "make the beam cost magica and make sure the beam is animated in the preview as it would be in game.",
+    "choice": "",
+    "done": "Every beam move now says it costs magicka, and its preview shows your magicka bar draining while you hold it and refilling after. The beam now comes from the wand's tip, grows wider and hotter the longer it's held, crackles along its length and throws sparks where it lands."
+   },
+   {
+    "when": "2026-11-27 01:22",
+    "where": "chat/wonders",
+    "note": "i noticed the wonders arent in the weapon & effects can you add them? and can you make sure the previews are up to date with my notes changes and I want the preview to show what the weapon description says it does.",
+    "choice": "",
+    "done": "Weapons & effects has a Wonders tab: the Soulcaller's Staff, the Wyrmspine Javelin, the Mutagen Staff, the Dragon Slayer and Alduin's Bane, each on its own model in its look, with each of its moves playing out what its description says. Every class move is now played beat by beat from its own description too."
+   },
+   {
+    "when": "2026-11-27 01:24",
+    "where": "chat/doc",
+    "note": "remove the things i cut and update the things i changed or made notes on in the doc. Also include my changes in the history tab along with my notes for you to use as context on previous builds so you dont assume any old information",
+    "choice": "",
+    "done": "The Tablet weapons you cut and the new ones you said no to are gone from the doc. History now lists your picks and decisions round by round, with everything as it stands."
+   },
+   {
+    "when": "2026-11-27 01:32",
+    "where": "chat/armour",
+    "note": "the armor effects should also be in the doc for me to choose from like the weapon looks.",
+    "choice": "",
+    "done": "Weapons & effects has an Armour looks tab: each class's set on you with five looks (Sheen, Rising wisps, Embers, Rune circle, Mantle) made on the set itself in the class's colour, then the one you pick at each tier, and what Legendary adds."
+   },
+   {
+    "when": "2026-11-27 01:34",
+    "where": "chat/cursor",
+    "note": "in the In Game UI tab can you add where i can change my cursor design for my map inventory and overall UI navigation like at the main menu",
+    "choice": "",
+    "done": "In-game UI has a Cursor tab: Skyrim's own and five of ours, each playing on the main menu, the inventory and the map, glowing over what it can pick and clicking. The one you pick replaces Skyrim's cursor in every menu."
+   }
+  ]
+ },
+ {
   "build": "Workshop, Nov 26 late",
   "date": "2026-11-26",
   "notes": [
