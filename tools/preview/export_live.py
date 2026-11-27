@@ -112,7 +112,7 @@ def export(key):
     texcache = {}
     # (Noah, Nov 26: "make sure the weapon look effects are made on the actual weapon models so it feels accurate") the blood
     # decals a weapon carries for the game's hit blood are hidden until it draws blood: never drawn as part of the weapon
-    model = [s for s in model if not re.search(r'blood|scabbard|^scb', (s['tex'] or '').split('\\')[-1] + ' ' + s['name'], re.I)]
+    model = [s for s in model if not re.search(r'blood|scabbard|(^|[\s_])scb', (s['tex'] or '').split('\\')[-1] + ' ' + s['name'], re.I)]
     allp = np.concatenate([np.array(s['v']) for s in model] + [np.array([v[:3] for v in sh['v']]) for lk in looks.values() for sh in lk if sh['v']])
     lo, hi = allp.min(0) - 1, allp.max(0) + 1
     span = np.maximum(hi - lo, 1e-3)

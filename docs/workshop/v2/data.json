@@ -5055,6 +5055,20 @@
      "note": "the weapon look effect for the mutagen staff should be at the very top of the staff head where the orb is",
      "choice": "",
      "done": "The Mutagen Staff's looks now sit on the orb at the very top of its head and the brass round it, not down the vials and tubes; the game's art for it was remade the same way (in the next build)."
+    },
+    {
+     "when": "2026-11-27 02:02",
+     "where": "chat/slayer",
+     "note": "take the sheath off the dragonslayer sword model please I want to see the blade in the preview",
+     "choice": "",
+     "done": "The Dragon Slayer's previews now show the bare blade: its scabbard is left off the model (in the looks and in your hand in the moves)."
+    },
+    {
+     "when": "2026-11-27 02:03",
+     "where": "chat/staffs",
+     "note": "the effect change on the mutagen staff where its on the head needs to also be done on the other staffs like the soulcallers staff",
+     "choice": "",
+     "done": "The Soulcaller's Staff's looks now sit only at the very top of its glass head, like the Mutagen Staff's on its orb (its game art remade too). The quarterstaffs keep a look on both heads, as you asked on Nov 25."
     }
    ]
   },
