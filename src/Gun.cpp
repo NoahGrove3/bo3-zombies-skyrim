@@ -847,6 +847,7 @@ namespace coa
 						ex->data.force = std::min(src->data.force * Gun::kRagdoll, 40.0f * Gun::kRagdoll);
 						ex->data.flags.reset(RE::BGSExplosionData::Flag::kKnockDown_Always, RE::BGSExplosionData::Flag::kKnockDown_ByFormula);
 						ex->data.spawnProjectile = nullptr;
+						ex->data.eSoundLevel = RE::SOUND_LEVEL::kSilent;   // (Noah's crash, Nov 27 03:53: the dead's detection, hearing one of our bursts, fell over on a worker thread - our bursts are looks only: no one hears them)
 						ex->formEnchanting = nullptr;
 						// screen flashes only for the great storms; a shot's impact never whites out the screen
 						const std::string_view nm = gen::kBlasts[a_index].first;
@@ -884,6 +885,7 @@ namespace coa
 				ex->data.force = std::min(a_src->data.force * Gun::kRagdoll, 40.0f * Gun::kRagdoll);
 				ex->data.flags.reset(RE::BGSExplosionData::Flag::kKnockDown_Always, RE::BGSExplosionData::Flag::kKnockDown_ByFormula);
 				ex->data.spawnProjectile = nullptr;
+				ex->data.eSoundLevel = RE::SOUND_LEVEL::kSilent;   // (Noah's crash, Nov 27 03:53: the dead's detection, hearing one of our bursts, fell over on a worker thread - our bursts are looks only: no one hears them)
 				ex->formEnchanting = nullptr;
 				ex->imageSpaceModifying = nullptr;
 				ex->data.imageSpaceRadius = 0.0f;
@@ -907,6 +909,7 @@ namespace coa
 				ex->data = tpl->data;
 				ex->data.light = nullptr, ex->data.sound1 = nullptr, ex->data.sound2 = nullptr;
 				ex->data.impactDataSet = nullptr, ex->data.impactPlacedObject = nullptr, ex->data.spawnProjectile = nullptr;
+				ex->data.eSoundLevel = RE::SOUND_LEVEL::kSilent;   // (Noah's crash, Nov 27 03:53: the dead's detection, hearing one of our bursts, fell over on a worker thread - our bursts are looks only: no one hears them)
 				ex->data.damage = 0.0f, ex->data.force = 0.0f, ex->data.radius = 1.0f, ex->data.imageSpaceRadius = 0.0f;
 				ex->formEnchanting = nullptr, ex->imageSpaceModifying = nullptr;
 			}
@@ -987,6 +990,7 @@ namespace coa
 				ex->data.damage = 0.0f, ex->data.force = std::min(src->data.force * Gun::kRagdoll, 40.0f * Gun::kRagdoll);
 				ex->data.flags.reset(RE::BGSExplosionData::Flag::kKnockDown_Always, RE::BGSExplosionData::Flag::kKnockDown_ByFormula);
 				ex->data.impactDataSet = nullptr, ex->data.impactPlacedObject = nullptr, ex->data.spawnProjectile = nullptr;
+				ex->data.eSoundLevel = RE::SOUND_LEVEL::kSilent;   // (Noah's crash, Nov 27 03:53: the dead's detection, hearing one of our bursts, fell over on a worker thread - our bursts are looks only: no one hears them)
 				ex->data.light = nullptr;   // (its orange light too)
 				ex->formEnchanting = nullptr, ex->imageSpaceModifying = nullptr, ex->data.imageSpaceRadius = 0.0f;
 			}
