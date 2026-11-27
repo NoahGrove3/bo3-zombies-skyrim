@@ -16,15 +16,15 @@ function actionView(cv) {
     zomData(key).then(([sk, body]) => { const z = makeZombie(sk, body, (i * .37 + .11) % 1); zs[i] = z; scene.add(z.holder); zPose(z, [], 0, zinfo[i]); }).catch(e => console.warn('zombie', key, e)); });
   const pdir = SPOT2.t0.clone().sub(SPOT2.wielder).setY(0).normalize(), pinfo = { home: SPOT2.wielder.clone().setY(0), face: Math.atan2(-pdir.x, -pdir.z) };
   let plr = null, want = '', plrCls = 'summoner';
-  v.setPlayer = (cls, weaponKey, look) => {
+  v.setPlayer = (cls, weaponKey, look, lookEl) => {
     plrCls = cls;
-    const w = cls + '|' + weaponKey + '|' + look; if (w === want) return; want = w;
+    const w = cls + '|' + weaponKey + '|' + look + '|' + (lookEl || ''); if (w === want) return; want = w;
     Promise.all([zomData(cls, 'plr'), weaponKey ? loadWeapon(weaponKey).catch(() => null) : null]).then(([[sk, body], wd]) => {
       if (want !== w) return;
       const z = makeZombie(sk, body, .5);
       if (wd && z.bones.WEAPON) {
         const wm = weaponModel(wd).g; wm.scale.setScalar((wd.scale || 1) * (SCYTHES.includes(weaponKey) ? 1.25 : 1));
-        if (look && typeof weaponAura === 'function' && wd.fx && wd.fx[look]) { const art = weaponFx(wd, look); const a = weaponAura(wd, art.pts, Object.assign(lookStyle(wd, look), { k: 1, span: 120 })); wm.add(a); z.aura = a; z.auraHolder = wm; }
+        if (look && typeof weaponAura === 'function' && wd.fx && wd.fx[look]) { const art = weaponFx(wd, look); const a = weaponAura(wd, art.pts, Object.assign(lookStyle(wd, look), elemStyle(lookEl), { k: 1, span: 120 })); wm.add(a); z.aura = a; z.auraHolder = wm; }
         z.bones.WEAPON.add(wm); z.weapon = wm;
       }
       if (plr) scene.remove(plr.holder); plr = z; scene.add(z.holder); plrPose(z, 0, [], pinfo);

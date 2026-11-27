@@ -80,6 +80,8 @@ def say(col, id, v):   # one row in words: (where, what)
         if not w: return None
         ln = {l['id']: l['name'] for l in w['looks']}; parts = []
         if v.get('look'): parts.append('look ' + ln.get(v['look'], v['look']))
+        for e in ('fire', 'frost', 'shock'):
+            if v.get('look_' + e): parts.append(f'look with {e} ' + ln.get(v['look_' + e], v['look_' + e]))
         if v.get('str'): parts.append('strength ' + (('+ ' + ln.get(v['str'][6:], v['str'][6:])) if v['str'].startswith('layer:') else v['str']))
         if v.get('el'): parts.append('element ' + KIT.get(v['el'], {}).get('name', v['el']))
         for sl, sn, opts in w['slots']:

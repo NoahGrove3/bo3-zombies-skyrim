@@ -72,6 +72,20 @@
     "note": "(failed) now it wont slide at all and my sneak eye pops up while im standing.",
     "choice": "fail",
     "done": "Queued for the next game build: the slide fixed, and no sneak eye while standing."
+   },
+   {
+    "when": "2026-11-27 01:58",
+    "where": "chat/javelin",
+    "note": "I want the javelins look effect to change depending on which element is being held in the other hand like the spellsword.",
+    "choice": "",
+    "done": "Wonders > Wyrmspine Javelin: pick fire, frost or shock in your other hand, and pick its look for each; the looks, the strength and the moves all show in that element. In the game it will follow your other hand's spell, as the Spellsword's rapier does (next build)."
+   },
+   {
+    "when": "2026-11-27 01:59",
+    "where": "chat/mutagen",
+    "note": "the weapon look effect for the mutagen staff should be at the very top of the staff head where the orb is",
+    "choice": "",
+    "done": "The Mutagen Staff's looks now sit on the orb at the very top of its head and the brass round it, not down the vials and tubes; the game's art for it was remade the same way (in the next build)."
    }
   ]
  },

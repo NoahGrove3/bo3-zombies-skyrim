@@ -229,7 +229,7 @@ let COMPARE = false;   // (the old flat art shown instead of the 3D look, to com
 function clearViews() { stopSound(); while (VIEWS.length) { const v = VIEWS.pop(); try { GL.remove(v); } catch (e) {} } }
 function view3d(cv, key, o = {}) {
   if (!GL.ok || !key) return null;
-  const v = weaponView(cv); VIEWS.push(v); v.spin = !!o.spin; v.gain = o.gain == null ? 1 : o.gain; v.vol = o.vol !== false; v.compare = COMPARE;
+  const v = weaponView(cv); VIEWS.push(v); v.elem = o.el || null; v.spin = !!o.spin; v.gain = o.gain == null ? 1 : o.gain; v.vol = o.vol !== false; v.compare = COMPARE;
   v.show(key, o.look || 'o1', 'own').then(() => { if (v.fx) v.fx.g.visible = !o.bare; if (o.layer) v.layer(o.layer, o.layerGain || 0.7); });
   cv.__v = v; return v;
 }
@@ -395,6 +395,9 @@ function paintAbil(c) {
 let curWd = 'soulcaller', wdSig = '';
 const WD_STR = [['subtle', 'Subtle', .6, 'The look faint on it: there, but quiet.'], ['full', 'Full', 1, 'The look at its full strength.'], ['blaze', 'Blazing', 1.5, 'The look at its brightest.']];
 const wdEl = w => { const p = DB.get('wonders', w.id) || {}; return (w.els || [w.el]).includes(p.el) ? p.el : w.el; };
+const wdLookKey = w => w.els ? 'look_' + wdEl(w) : 'look';   // (the javelin: a look for each element in your other hand, as the Spellsword's)
+const wdLook = w => (DB.get('wonders', w.id) || {})[wdLookKey(w)] || '';
+const wdLookEl = w => w.els ? wdEl(w) : null;
 function drawWonders() {
   const box = $('#wbody');
   box.innerHTML = `<p class="hint">Each class's wonder, and Alduin's Bane. Like the class weapons: pick its look on its own model, how strong the look is (or a second look over it), and a design for each of its moves, each played in action as its description says. The first design of each move is what it does today. (Summoned spirits are drawn here as a figure of light; in the game each is the creature it names.) Drag to turn, scroll to zoom.</p>
@@ -406,18 +409,19 @@ function drawWonder() {
   clearViews(); wdSig = '';
   const w = D.wonders.find(x => x.id === curWd), box = $('#wdbody');
   box.innerHTML = `<div class="classblock"><div class="classhead"><h4>${esc(w.name)}</h4><span>${esc(w.who)}</span></div><p class="lead" style="margin:6px 0 0">${esc(w.text)}</p>
-<h3 class="sub">1. Its look</h3>
+${(w.els || []).length > 1 ? `<div class="chips" style="margin-top:12px">${w.els.map(e => { const k = D.kits.find(x => x.id === e); return `<button class="chip" data-wdel="${e}" aria-pressed="${e === wdEl(w)}"><span class="dot" style="background:${k.col}"></span>${esc(k.name)} in your other hand</button>`; }).join('')}</div><p class="hint">Its look follows the spell in your other hand, like the Spellsword's rapier: pick a look for each element, and see its moves in each.</p>` : ''}
+<h3 class="sub">1. Its look${w.els ? ' with ' + esc((D.kits.find(x => x.id === wdEl(w)) || {}).name || '') + ' in your other hand' : ''}</h3>
 <div class="wgrid">${w.looks.map(l => `<article class="wcard" data-wl="${l.id}"><canvas aria-label="${esc(l.name)} on the ${esc(w.name)}, turning"></canvas><div class="wb"><h4>${esc(l.name)}</h4><p>${esc(l.desc)}</p><div class="row"><button class="btn pass" data-wlpick="${l.id}" aria-pressed="false">Pick this look</button></div></div></article>`).join('')}</div>
 <div id="wdstr"></div><div id="wdmoves"></div>
 <div class="row" style="margin-top:14px"><button class="btn pass" data-wc="ok" aria-pressed="false">Approve the ${esc(w.name)}</button><button class="btn skip" data-wc="change" aria-pressed="false">Change it</button><span class="saved" data-sv="wd"></span></div>
 <textarea rows="2" data-note="wd" placeholder="Anything about the ${esc(w.name)} (optional)" aria-label="Note on the ${esc(w.name)}" style="margin-top:8px"></textarea></div>`;
-  $$('.wcard[data-wl]', box).forEach(a => view3d($('canvas', a), w.key, { look: a.dataset.wl, spin: true }));
+  $$('.wcard[data-wl]', box).forEach(a => view3d($('canvas', a), w.key, { look: a.dataset.wl, spin: true, el: wdLookEl(w) }));
   drawWdMoves(w);
   const save = async (row, sv) => { const prev = DB.get('wonders', w.id) || {}; await saveTo('wonders', w.id, Object.assign({}, prev, row), $(`[data-sv="${sv || 'wd'}"]`, box)); paintWonders(); };
   box.onclick = async e => {
-    const lp = e.target.closest('button[data-wlpick]'); if (lp) { const p = DB.get('wonders', w.id) || {}; await save({ look: p.look === lp.dataset.wlpick ? '' : lp.dataset.wlpick, str: '' }); return; }
+    const lp = e.target.closest('button[data-wlpick]'); if (lp) { const lk = wdLookKey(w), p = DB.get('wonders', w.id) || {}; await save({ [lk]: p[lk] === lp.dataset.wlpick ? '' : lp.dataset.wlpick, ...(w.els ? {} : { str: '' }) }); return; }
     const sp = e.target.closest('button[data-wstr]'); if (sp) { const p = DB.get('wonders', w.id) || {}; await save({ str: p.str === sp.dataset.wstr ? '' : sp.dataset.wstr }); return; }
-    const eb = e.target.closest('button[data-wdel]'); if (eb) { await save({ el: eb.dataset.wdel }); drawWdMoves(w); return; }
+    const eb = e.target.closest('button[data-wdel]'); if (eb) { await save({ el: eb.dataset.wdel }); drawWonder(); return; }
     const ob = e.target.closest('button[data-wmv]'); if (ob) { playWd(w, ob.closest('.abcol').dataset.ab, ob.dataset.wmv); return; }
     const ub = e.target.closest('button[data-wuse]'); if (ub) { const sl = ub.dataset.wuse, cur = ub.closest('.abcol').dataset.playing, p = DB.get('wonders', w.id) || {}; await save({ ['mv_' + sl]: p['mv_' + sl] === cur ? '' : cur }, 'wd_' + sl); return; }
     const cb = e.target.closest('button[data-wc]'); if (cb) { const p = DB.get('wonders', w.id) || {}; await save({ choice: p.choice === cb.dataset.wc ? '' : cb.dataset.wc }); }
@@ -431,14 +435,13 @@ function drawWdMoves(w) {
   VIEWS.filter(v => v.cv.closest('#wdmoves')).forEach(v => { GL.remove(v); VIEWS.splice(VIEWS.indexOf(v), 1); });
   const el = wdEl(w), p = DB.get('wonders', w.id) || {};
   box.innerHTML = `<h3 class="sub">3. Its moves</h3><p class="hint">Click a design to watch it, then Use it. The first is what it does today.</p>
-${(w.els || []).length > 1 ? `<div class="chips">${w.els.map(e => { const k = D.kits.find(x => x.id === e); return `<button class="chip" data-wdel="${e}" aria-pressed="${e === el}"><span class="dot" style="background:${k.col}"></span>${esc(k.name)}</button>`; }).join('')}<span class="muted" style="align-self:center">It bursts in your other hand's element: see it in each.</span></div>` : ''}
 <div class="abgrid">${w.slots.map(([sl, sn, opts]) => `<div class="abcol" data-ab="${sl}"><div class="classhead"><h4 style="font-size:18px">${esc(sn)}</h4></div>
 <div class="cvw"><canvas aria-label="${esc(sn)}, playing"></canvas></div>
 <div class="mvopts">${opts.map(([id, n, what]) => `<button class="mvopt" data-wmv="${id}"><b>${esc(n)}</b><span>${esc(what)}</span></button>`).join('')}</div>
 <div class="row"><button class="btn pass" data-wuse="${sl}" aria-pressed="false">Use this</button><span class="saved" data-sv="wd_${sl}"></span></div></div>`).join('')}</div>`;
   for (const [sl, , opts] of w.slots) {
     const cv = $(`.abcol[data-ab="${sl}"] canvas`, box);
-    if (GL.ok) { const v = actionView(cv); VIEWS.push(v); WDVIEWS[sl] = v; v.setPlayer(w.cls, w.key, p.look || w.look); }
+    if (GL.ok) { const v = actionView(cv); VIEWS.push(v); WDVIEWS[sl] = v; v.setPlayer(w.cls, w.key, wdLook(w) || w.look, wdLookEl(w)); }
     playWd(w, sl, p['mv_' + sl] || opts[0][0]);
   }
 }
@@ -451,18 +454,18 @@ function playWd(w, sl, id) {
 }
 function paintWonders() {
   const box = $('#wdbody'); if (!box || wTab !== 'wonders') return;
-  const w = D.wonders.find(x => x.id === curWd), p = DB.get('wonders', w.id) || {};
-  $$('.wcard[data-wl]', box).forEach(a => { const on = p.look === a.dataset.wl; a.dataset.picked = String(on); const b = $('button', a); b.setAttribute('aria-pressed', String(on)); b.textContent = on ? 'Your pick' : 'Pick this look'; });
-  const st = $('#wdstr', box), sig = w.id + '|' + (p.look || '');
+  const w = D.wonders.find(x => x.id === curWd), p = DB.get('wonders', w.id) || {}, look = wdLook(w);
+  $$('.wcard[data-wl]', box).forEach(a => { const on = look === a.dataset.wl; a.dataset.picked = String(on); const b = $('button', a); b.setAttribute('aria-pressed', String(on)); b.textContent = on ? 'Your pick' : 'Pick this look'; });
+  const st = $('#wdstr', box), sig = w.id + '|' + look + '|' + (wdLookEl(w) || '');
   if (sig !== wdSig) {
     wdSig = sig;
     VIEWS.filter(v => v.cv.closest('#wdstr')).forEach(v => { GL.remove(v); VIEWS.splice(VIEWS.indexOf(v), 1); });
-    if (!p.look) st.innerHTML = `<h3 class="sub">2. How strong, or a second look</h3><p class="empty">Pick its look first: it shows here at each strength, and with each other look over it.</p>`;
+    if (!look) st.innerHTML = `<h3 class="sub">2. How strong, or a second look</h3><p class="empty">Pick its look first: it shows here at each strength, and with each other look over it.</p>`;
     else {
-      const L = w.looks.find(x => x.id === p.look), opts = [...WD_STR.map(([id, n, g, d]) => ({ id, n: L.name + ': ' + n, d, g })), ...w.looks.filter(x => x.id !== p.look).map(x => ({ id: 'layer:' + x.id, n: L.name + ' + ' + x.name, d: 'Your look with ' + x.name + ' laid over it.', g: 1, layer: x.id }))];
+      const L = w.looks.find(x => x.id === look), opts = [...WD_STR.map(([id, n, g, d]) => ({ id, n: L.name + ': ' + n, d, g })), ...w.looks.filter(x => x.id !== look).map(x => ({ id: 'layer:' + x.id, n: L.name + ' + ' + x.name, d: 'Your look with ' + x.name + ' laid over it.', g: 1, layer: x.id }))];
       st.innerHTML = `<h3 class="sub">2. How strong, or a second look</h3><div class="wgrid">${opts.map(o => `<article class="wcard" data-ws="${o.id}"><canvas aria-label="${esc(o.n)}, turning"></canvas><div class="wb"><h4>${esc(o.n)}</h4><p>${esc(o.d)}</p><div class="row"><button class="btn pass" data-wstr="${o.id}" aria-pressed="false">Pick this</button></div></div></article>`).join('')}</div>`;
-      opts.forEach(o => view3d($(`[data-ws="${o.id}"] canvas`, st), w.key, { look: p.look, gain: o.g, layer: o.layer || null, layerGain: .75, spin: true }));
-      Object.values(WDVIEWS).forEach(v => v.setPlayer && v.setPlayer(w.cls, w.key, p.look));
+      opts.forEach(o => view3d($(`[data-ws="${o.id}"] canvas`, st), w.key, { look, gain: o.g, layer: o.layer || null, layerGain: .75, spin: true, el: wdLookEl(w) }));
+      Object.values(WDVIEWS).forEach(v => v.setPlayer && v.setPlayer(w.cls, w.key, look, wdLookEl(w)));
     }
   }
   $$('[data-ws]', st).forEach(a => { const on = p.str === a.dataset.ws; a.dataset.picked = String(on); $('button', a).setAttribute('aria-pressed', String(on)); });

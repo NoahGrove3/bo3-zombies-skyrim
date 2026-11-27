@@ -71,7 +71,8 @@ WEAPONS = {
     'tab_stormtalons_l': ('weapons\\NewArmoury\\Fists\\GlassClawLft.nif', ['GlassClawGlass1'], None, 'o1', 'blue'),
     'tab_talons_l':      ('weapons\\NewArmoury\\Fists\\DBClawLft.nif', ['DBClaw_MTL_B'], None, 'o1', 'red'),
     # (Noah, 2026-11-26: "Whole-weapon effects on the Mutagen Staff, the Soulcaller Staff and the javelin") their heads
-    'flaskweap_philosopher': ('CurseOfAlduin\\alchemist\\mutagen_staff_qs.nif', ['Brass:1', 'Glass:3', 'Orbglass:4', 'Tubeglass:5'], (44, 99), 'o1', 'poison'),
+    # (Noah, Nov 27: "the weapon look effect for the mutagen staff should be at the very top of the staff head where the orb is")
+    'flaskweap_philosopher': ('CurseOfAlduin\\alchemist\\mutagen_staff_qs.nif', ['Brass:1', 'Orbglass:4'], (70, 99), 'o1', 'poison'),
     'soulcaller':        ('SSS\\GlassStaff.nif', ['1stPersonGlassMace:0'], None, 'o2', 'white'),   # (doc WSKjuLEJ: o2 white)
     'javelin':           ('CurseOfAlduin\\wyrmspine\\wyrmspine.nif', ['Dbone:1', 'Runes:0'], None, 'o5', 'orange'),   # (doc WSKjuLEJ: o5)
     'tab_cinderclaws_l': ('weapons\\NewArmoury\\Fists\\DaedricClawLft.nif', ['DaedricClaws_MTL_B'], None, 'o3', 'orange'),   # (its right hand's pick)

@@ -134,6 +134,7 @@ F('wd_javhand', 'wonders', 'Javelin held palm to you', 'ready', 'The hand turned
   how='Destruction wonder: hold to charge, look around, throw.', look='Palm towards you on the shaft; nothing floating above your head.', note='"hand twisted ... palm facing towards the player"; "remove the charge element".', since=B)
 F('wd_bane', 'wonders', 'Alduin\'s Bane light meteors', 'ready', 'Smaller impacts: no white flash and no firestorm stacked on each meteor.',
   how='Light hits on the dead with Alduin\'s Bane.', look='A meteor on each hit with a fiery impact that doesn\'t blind you.', note='"a massive explosion and it\'s blinding".', since=B)
+F('wd_javlook', 'wonders', 'The javelin\'s look follows your other hand', 'idea', 'Like the Spellsword\'s rapier: its look in the element of the spell in your other hand (fire, frost or shock); pick a look for each in Weapons & effects > Wonders.')
 F('wd_soulcaller', 'wonders', 'Soulcaller look', 'done', 'White soul wisps on its glass head.', since='76167f7')
 
 # ---- summons

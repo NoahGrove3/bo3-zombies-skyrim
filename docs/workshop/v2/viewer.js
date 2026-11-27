@@ -301,7 +301,7 @@ function weaponView(cv, onInfo) {
       v.fx = weaponFx(d, look); root.add(v.fx.g); v.look = look; v.col = null;
       if (v.aura) { root.remove(v.aura); v.aura = null; }
       if (v.vol && typeof weaponAura === 'function') {   // (the 3D look on the model itself; the game's old flat art hidden unless compared)
-        v.aura = weaponAura(d, v.fx.pts, Object.assign(lookStyle(d, look), { k: v.gain == null ? 1 : v.gain, span: v.span }));
+        v.aura = weaponAura(d, v.fx.pts, Object.assign(lookStyle(d, look), elemStyle(v.elem), { k: v.gain == null ? 1 : v.gain, span: v.span }));
         root.add(v.aura); v.fx.g.visible = !!v.compare;
       }
     }
@@ -318,7 +318,7 @@ function weaponView(cv, onInfo) {
     if (v.aura2) { root.remove(v.aura2); v.aura2 = null; }
     if (!look2 || !v.d) return;
     v.fx2 = weaponFx(v.d, look2); root.add(v.fx2.g); v.gain2 = gain2;
-    if (v.vol && typeof weaponAura === 'function') { v.aura2 = weaponAura(v.d, v.fx2.pts, Object.assign(lookStyle(v.d, look2), { k: gain2, span: v.span })); root.add(v.aura2); v.fx2.g.visible = !!v.compare; }
+    if (v.vol && typeof weaponAura === 'function') { v.aura2 = weaponAura(v.d, v.fx2.pts, Object.assign(lookStyle(v.d, look2), elemStyle(v.elem), { k: gain2, span: v.span })); root.add(v.aura2); v.fx2.g.visible = !!v.compare; }
   };
   v.setCompare = on => { v.compare = on; if (v.fx) v.fx.g.visible = on || !v.aura; if (v.fx2) v.fx2.g.visible = on || !v.aura2; if (v.aura) v.aura.visible = !on; if (v.aura2) v.aura2.visible = !on; };
   return GL.add(v);
@@ -332,6 +332,9 @@ const TEXSTYLE = { fire_rise0: { pk: 'ember', pn: 1.2, rise: 1.4, vol: 1, mem: .
   sig_embers: { pk: 'ember', pn: 1.4, rise: 1 }, sig_runes: { mem: 1.3, pn: .4, runes: true }, mist_strip0: { vol: 1.6, pn: .4, pk: 'mote' }, mist_strip1: { vol: 1.6, pn: .4, pk: 'mote' },
   haze: { vol: 1.4, pn: .4 }, stream_strip: { pk: 'streak', pn: 1, rise: .3 }, ray_strip: { pk: 'streak', pn: .9, rise: .2 }, halo_shell: { vol: 1.5, pn: .5 },
   wisp_strip: { pk: 'wisp', pn: .9 }, sk_wisps: { pk: 'wisp', pn: .8 }, sig_band: { mem: 1.5, pn: .3, sweep: true }, sk_enchfill: { mem: 1, pn: .5 }, sk_swirls: { pk: 'wisp', pn: .8 } };
+// (Nov 27: "the javelin's look effect to change depending on which element is being held in the other hand like the spellsword") a look
+// worn in another element: its shape and motion kept, its element and colours that element's
+function elemStyle(el) { const E = el && typeof ELEM !== 'undefined' && ELEM[el]; return E ? { el, c0: E.c[0], c1: E.c[1], c2: E.c[2] } : {}; }
 function lookStyle(d, look) {
   const shapes = (d.fx && d.fx[look]) || [], pals = [], st = { pn: .5, mem: .8, vol: .3, rise: null, pk: null, dark: false };
   for (const { s } of shapes) {
