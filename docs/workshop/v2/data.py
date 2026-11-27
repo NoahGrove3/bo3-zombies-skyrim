@@ -14,8 +14,8 @@ import json, pathlib, subprocess
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent.parent.parent
 
-INSTALLED = {'sha': '3938d82', 'date': '2026-11-27', 'label': 'Your finalized workshop picks',
-             'extra': 'One model per class weapon, the Tablet lineup and rarity, Fire Storm, and your fixes (installed Nov 27 01:10)'}
+INSTALLED = {'sha': '3edd0b7', 'date': '2026-11-27', 'label': 'Your Nov 27 picks: each class\'s moves and the looks',
+             'extra': 'Each class\'s own moves, the wonders\' looks, the armour sets\' looks, the flasks\' swirling potions and smaller bursts, the Rune Arrow cursor, the bars hiding when full, and your fixes (installed Nov 27 03:20)'}
 
 # ------------------------------------------------------------------------------------------------ the systems (categories)
 SYSTEMS = [
@@ -45,7 +45,7 @@ FEATURES = []
 def F(i, s, t, st, what, how='', look='', note='', since=''):
     FEATURES.append(dict(id=i, sys=s, t=t, st=st, what=what, how=how, look=look, note=note, since=since))
 
-B = '7eb037f'   # (the build to install now)
+B = '3edd0b7'   # (the build installed now: builds 1 and 2 of Nov 27, 7eb037f and 3edd0b7)
 B0 = '3938d82'   # (the one before it)
 
 # ---- movement
@@ -730,6 +730,7 @@ def builds():
     return out
 
 INSTALLS = {   # (each build installed on Noah's PC, and when)
+    '3edd0b7': '2026-11-27 03:20',
     '3938d82': '2026-11-27 01:10',
     'f696bbb': '2026-11-26 20:00', '15cfd57': '2026-11-26 17:20', 'a4584e6': '2026-11-26 15:01', '5865977': '2026-11-26 01:30',
 }

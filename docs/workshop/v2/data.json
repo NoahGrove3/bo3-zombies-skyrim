@@ -1,9 +1,9 @@
 {
  "installed": {
-  "sha": "3938d82",
+  "sha": "3edd0b7",
   "date": "2026-11-27",
-  "label": "Your finalized workshop picks",
-  "extra": "One model per class weapon, the Tablet lineup and rarity, Fire Storm, and your fixes (installed Nov 27 01:10)"
+  "label": "Your Nov 27 picks: each class's moves and the looks",
+  "extra": "Each class's own moves, the wonders' looks, the armour sets' looks, the flasks' swirling potions and smaller bursts, the Rune Arrow cursor, the bars hiding when full, and your fixes (installed Nov 27 03:20)"
  },
  "systems": [
   {
@@ -118,7 +118,7 @@
    "how": "Sprint for two or three seconds, then crouch. Then slide again and jump while sliding. Stand still and crouch once, then stand.",
    "look": "A slide every time from a sprint; after it you stand up and the sneak eye goes away. Crouching from a stand still sneaks normally.",
    "note": "Last test (3938d82): \"now it wont slide at all and my sneak eye pops up while im standing\".",
-   "since": "7eb037f"
+   "since": "3edd0b7"
   },
   {
    "id": "mv_omni",
@@ -250,7 +250,7 @@
    "how": "Tester's Kit: each class weapon at Tier I, then III, then Legendary.",
    "look": "The same model every tier, the wand now the Daedric one; its glow faint at I, full at III, brightest at Legendary.",
    "note": "",
-   "since": "7eb037f"
+   "since": "3edd0b7"
   },
   {
    "id": "nov27_tablet",
@@ -382,7 +382,7 @@
    "how": "",
    "look": "",
    "note": "",
-   "since": "7eb037f"
+   "since": "3edd0b7"
   },
   {
    "id": "mv_summoner",
@@ -393,7 +393,7 @@
    "how": "Summoner, the quarterstaff at any tier: light hits, heavies, then 20 kills.",
    "look": "A small sun-flare and burn on each hit; the white pillar on heavies; a see-through warrior rising out of light on the 20th kill.",
    "note": "",
-   "since": "7eb037f"
+   "since": "3edd0b7"
   },
   {
    "id": "mv_destruction",
@@ -404,7 +404,7 @@
    "how": "Destruction, the wand: tap attack quickly several times; then hold it for a few seconds; then tap 25 bolts.",
    "look": "Bolts no faster than every half second; the violet beam from the wand's tip with your magicka bar dropping; twelve bolts falling ahead on the 25th.",
    "note": "",
-   "since": "7eb037f"
+   "since": "3edd0b7"
   },
   {
    "id": "mv_alchemist",
@@ -415,7 +415,7 @@
    "how": "Alchemist, the scythe: light swings into a crowd, a heavy among them, then 10 kills and one more.",
    "look": "A wide sweep hitting several at once; eight violet bursts in a ring on the heavy; a hint on the 10th kill and a burst with an Essence count on the next.",
    "note": "",
-   "since": "7eb037f"
+   "since": "3edd0b7"
   },
   {
    "id": "mv_spellsword",
@@ -426,7 +426,7 @@
    "how": "Spellsword with fire, then frost, then shock in the other hand: thrusts, heavies, kills.",
    "look": "Fire burns, frost slows, lightning jumping to a second; a pillar in the element on heavies; element patches where the dead fall.",
    "note": "",
-   "since": "7eb037f"
+   "since": "3edd0b7"
   },
   {
    "id": "cw_ults",
@@ -558,7 +558,7 @@
    "how": "Throw Holy Water at Tier III (its sunbeam), then watch the ground after the beam is gone.",
    "look": "The beam and burst, then nothing: no golden tint left on the ground or the dead.",
    "note": "Last test (3938d82): \"there was a lingering hue after the beam disappears\".",
-   "since": "7eb037f"
+   "since": "3edd0b7"
   },
   {
    "id": "fl_rest",
@@ -602,7 +602,7 @@
    "how": "Hold each flask in your hand and look at it; throw one and watch it fly.",
    "look": "The potion swirling inside the glass, in its element's colour; a wisp off the cork.",
    "note": "",
-   "since": "7eb037f"
+   "since": "3edd0b7"
   },
   {
    "id": "fl_size",
@@ -613,7 +613,7 @@
    "how": "Throw each flask you have at a crowd, at its tier.",
    "look": "A small burst and a ring spreading on the ground, not a screen-filling explosion.",
    "note": "\"the explosion size for the flasks needs to be much less its a bit overwhelming currently\".",
-   "since": "7eb037f"
+   "since": "3edd0b7"
   },
   {
    "id": "ui_bars",
@@ -624,7 +624,7 @@
    "how": "Stand still with everything full; then take a hit, cast, sprint, shout.",
    "look": "The plate fades away when full and returns the moment a bar drops.",
    "note": "",
-   "since": "7eb037f"
+   "since": "3edd0b7"
   },
   {
    "id": "ui_cursor",
@@ -635,7 +635,7 @@
    "how": "Open the main menu, the inventory, the map and the altar with the mouse.",
    "look": "The iron arrowhead with its gold edge and a slowly glowing rune, its point exactly where you click.",
    "note": "",
-   "since": "7eb037f"
+   "since": "3edd0b7"
   },
   {
    "id": "tb_lineup",
@@ -701,7 +701,7 @@
    "how": "Light hits on a crowd with Alduin's Bane; then a heavy.",
    "look": "Fire on the one hit and embers under it, then the ones next to it catch; the heavy's white tornado as before.",
    "note": "",
-   "since": "7eb037f"
+   "since": "3edd0b7"
   },
   {
    "id": "wd_javlook",
@@ -712,7 +712,7 @@
    "how": "Hold the javelin with a fire spell in your other hand, then frost, then shock.",
    "look": "Its look changes colour with the spell in your other hand.",
    "note": "",
-   "since": "7eb037f"
+   "since": "3edd0b7"
   },
   {
    "id": "wd_looks",
@@ -723,7 +723,7 @@
    "how": "Draw each wonder and look at it.",
    "look": "Each in your picked look with the second laid over it.",
    "note": "",
-   "since": "7eb037f"
+   "since": "3edd0b7"
   },
   {
    "id": "cw_layers",
@@ -734,7 +734,7 @@
    "how": "Tester's Kit: the wand at Tier I then II; the quarterstaff and rapier at Tier III then Ascend.",
    "look": "The wand's look changes from Tier I to II; the quarterstaff and rapier gain a second look at Ascend.",
    "note": "",
-   "since": "7eb037f"
+   "since": "3edd0b7"
   },
   {
    "id": "wd_soulmana",
@@ -745,7 +745,7 @@
    "how": "Hold the Soulcaller's beam on the dead; let your magicka run out; take 20 souls.",
    "look": "Your magicka dropping while it runs; the purple portal, then the cat out of it.",
    "note": "\"the spectral cat should spawn from skyrims purple portals. and the beam should cost mana.\"",
-   "since": "7eb037f"
+   "since": "3edd0b7"
   },
   {
    "id": "wd_mutagenstrike",
@@ -756,7 +756,7 @@
    "how": "Strike the dead several times with the Mutagen Staff.",
    "look": "A burst a second after each strike, a different element each time, cycling through all six.",
    "note": "\"got the mutating strike make it cycle through the flask effects like the block does.\"",
-   "since": "7eb037f"
+   "since": "3edd0b7"
   },
   {
    "id": "wd_soulcaller",
@@ -811,7 +811,7 @@
    "how": "Tester's Kit: each class's set at Tier I, then III, then Ascend (Legendary); look in third person.",
    "look": "Faint at Tier I, stronger each tier; the second look joining at Legendary; nothing blocking your view in first person.",
    "note": "",
-   "since": "7eb037f"
+   "since": "3edd0b7"
   },
   {
    "id": "ar_inv",
@@ -1185,6 +1185,11 @@
  ],
  "builds": [
   {
+   "sha": "3edd0b7",
+   "when": "2026-11-27 03:01",
+   "what": "The looks (Noah's Nov 27 picks): the flasks' potions swirl in the glass; each class set's own look - the Summoner a Sheen, Destruction Embers, the Alchemist a Mantle, the Spellsword a Sheen in its element, each adding its second at Legendary; the Rune Arrow cursor; the javelin's look follows the spell in your other hand; the wonders in his looks with their second laid over; the wand in Sorcery at "
+  },
+  {
    "sha": "7eb037f",
    "when": "2026-11-27 02:32",
    "what": "Each class's own moves (Noah's Nov 27 picks): Summoner Radiant Strike / Pillar of Dawn / Ancestor's Guard; Destruction's wand a tap Glintstone Bolt (0.5 s), a held Arcane Ray that costs magicka, Starfall every 25th bolt; Alchemist Reaping Arc / Shadowfire Eruption / Philosopher's Edge; Spellsword Spellthrust / Spell Pillar / Elemental Wake. The Destruction wand is the Daedric wand. Wonders: the So"
@@ -1496,6 +1501,7 @@
   }
  ],
  "installs": {
+  "3edd0b7": "2026-11-27 03:20",
   "3938d82": "2026-11-27 01:10",
   "f696bbb": "2026-11-26 20:00",
   "15cfd57": "2026-11-26 17:20",
