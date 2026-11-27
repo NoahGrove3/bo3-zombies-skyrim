@@ -4269,9 +4269,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			if (static bool dumped = false; !dumped) {
 				dumped = true;
-				DumpMembers(mv, "_root.MenuHolder.Menu_mc", true);
-				DumpMembers(mv, "_root.MenuHolder", true);
-				DumpMembers(mv, "_root", true);
+				// (with Edge UI's menu: listed only - its own marks and busy spinner are left as Edge draws them)
+				DumpMembers(mv, "_root.MenuHolder.Menu_mc", !kEdgeMenu);
+				DumpMembers(mv, "_root.MenuHolder", !kEdgeMenu);
+				DumpMembers(mv, "_root", !kEdgeMenu);
 			}
 			RE::GFxValue::DisplayInfo hi;
 			holder.GetDisplayInfo(&hi);
@@ -4702,6 +4703,61 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				fg->AddRectFilledMultiColor({ W * 0.5f - hw, ly }, { W * 0.5f, ly + 0.1f * u + 1.0f }, IM_COL32(255, 122, 60, 0), Fade(kTAcc, in), Fade(kTAcc, in), IM_COL32(255, 122, 60, 0));
 				fg->AddRectFilledMultiColor({ W * 0.5f, ly }, { W * 0.5f + hw, ly + 0.1f * u + 1.0f }, Fade(kTAcc, in), IM_COL32(255, 122, 60, 0), IM_COL32(255, 122, 60, 0), Fade(kTAcc, in));
 			}
+		}
+		// (Noah, Nov 27 decision on the main menu's words: "Our centred words") Skyrim's own entries (Edge UI's list, CO-OP PARTY in it)
+		// drawn by us under the title as the workshop shows them: spaced capitals in the words' parchment, the chosen one ember orange
+		// with a soft glow, each fading in after the one above. Edge's list is moved off the screen (ReadMainList) and keeps working
+		// for the keys and the pad - ours follows its choice; the mouse picks a word by hovering it, a click presses it. While a
+		// panel of Edge's has the screen (Load, a question) or its list can't be read, nothing is drawn here and Edge's words stand.
+		constexpr bool kTallyWords = true;
+		bool TallyMenuWords(ImDrawList* fg, ImVec2 size, float now, float dt, float openT, ImVec2 cur, bool click)
+		{
+			RE::GFxMovieView* mv = nullptr;
+			const auto entries = ReadMainList(&mv);
+			static int said = 0;
+			if (entries.empty()) {
+				if (said == 0 && openT > 4.0f && !MenuQuestionUp()) said = 1, logger::info("menu: Skyrim's list can't be read here - Edge UI's own words stand");
+				return false;
+			}
+			if (said < 2) {
+				said = 2;
+				std::string all;
+				for (const auto& e : entries) all += e.text + " | ";
+				logger::info("menu: our words under the title: {}", all);
+			}
+			const float W = size.x, H = size.y, u = TU(size);
+			const float fs = 0.85f * u, track = 0.5f, rowH = 1.45f * u;
+			const float top = H * 0.30f + 2.9f * u + 1.3f * u;   // (under the title's orange line)
+			static std::vector<float> glow;
+			glow.resize(entries.size(), 0.0f);
+			static int lastHover = -1;
+			int hovered = -1;
+			for (std::size_t i = 0; i < entries.size(); ++i) {
+				const auto& e = entries[i];
+				std::string up = e.text;
+				std::transform(up.begin(), up.end(), up.begin(), [](unsigned char ch) { return static_cast<char>(std::toupper(ch)); });
+				const float y = top + rowH * static_cast<float>(i);
+				const float tw = TMeasure(HF(), fs, up, track).x;
+				const float hw = std::max(tw * 0.5f + 1.2f * u, 6.0f * u);
+				if (!e.disabled && cur.x >= W * 0.5f - hw && cur.x <= W * 0.5f + hw && cur.y >= y - 0.25f * u && cur.y < y + rowH - 0.25f * u) hovered = static_cast<int>(i);
+				glow[i] += ((e.sel ? 1.0f : 0.0f) - glow[i]) * std::min(1.0f, dt * 10.0f);
+				const float in = std::clamp((openT - 0.6f - 0.08f * static_cast<float>(i)) / 0.45f, 0.0f, 1.0f);
+				const float ease = 1.0f - (1.0f - in) * (1.0f - in);
+				const ImU32 base = e.disabled ? IM_COL32(150, 140, 125, 150) : kTTxt;
+				auto mix = [&](int sh) { const float a = static_cast<float>((base >> sh) & 0xFF), b = static_cast<float>((kTAcc >> sh) & 0xFF); return static_cast<ImU32>(a + (b - a) * glow[i]) << sh; };
+				const ImU32 col = Fade(mix(IM_COL32_R_SHIFT) | mix(IM_COL32_G_SHIFT) | mix(IM_COL32_B_SHIFT) | mix(IM_COL32_A_SHIFT), in);
+				const float br = 0.8f + 0.2f * std::sin(now * 3.0f);
+				TTextC(fg, HF(), fs, W * 0.5f, y + (1.0f - ease) * 0.6f * u, col, up, track, glow[i] > 0.02f ? IM_COL32(232, 90, 40, static_cast<int>(200 * glow[i] * br * in)) : 0, 0.5f * u * glow[i]);
+			}
+			if (hovered >= 0 && hovered != lastHover && !entries[hovered].sel) PressMainList(mv, entries[hovered].index, false);
+			lastHover = hovered;
+			if (click && hovered >= 0 && !Net::OverlayBusy()) {
+				std::string up = entries[hovered].text;
+				std::transform(up.begin(), up.end(), up.begin(), [](unsigned char ch) { return static_cast<char>(std::toupper(ch)); });
+				if (up == "CO-OP PARTY") PressMainList(mv, entries[hovered].index, false);   // (chosen; the party opens from its own press - PartyInMainList)
+				else PressMainList(mv, entries[hovered].index, true);
+			}
+			return true;
 		}
 		void DrawMenu(ImVec2 size, float now, bool click)
 		{
@@ -5277,6 +5333,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_frameSrv)), { 0, 0 }, size, { 0, 0 }, { 1, 1 });
 				fg->AddCallback(ImDrawCallback_ResetRenderState, nullptr);
 			}
+			if (Hud::kTally && kTallyWords && !DevTools::HudOff()) TallyMenuWords(fg, size, now, dt, openT, cur, click);
 			// the menu: Skyrim's own entries as words only, the way the base game shows them (no plates, no boxes): the
 			// chosen word bright with a soft cold glow, the rest dim; keys and pad move Skyrim's selection, the mouse moves
 			// it by hovering a word, a click or Enter does what Skyrim would

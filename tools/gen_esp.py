@@ -1745,6 +1745,10 @@ CS_AA_SLOT = {'robes': 0x114, 'cuirass': 0x114, 'hood': 0x2802, 'gauntlets': 0x1
 # (Noah, 2026-11-26: the Spellsword's set made the body under it vanish - its addon and NakedTorso both on the body slot, and
 # Skyrim draws one) the Spellsword's cuirass is worn on slot 58 (tools/armoursets.py OWN_SLOT), the body left to NakedTorso
 CS_OWN_SLOT = {('spellsword', 'cuirass'): 58}
+# (Noah, Nov 27 decision: the Spellsword's legs - the Black Mage trousers and greaves, tools/sslegs.py) its 'boots' are worn on the
+# leg's slot (53) as well as the feet: the mesh is all slot 53 (tools/armoursets.py OWN_SLOT), its addon claims 53 with the feet
+# and calves, so the body's own feet aren't drawn through the greaves
+CS_EXTRA_SLOT = {('spellsword', 'boots'): 1 << (53 - 30)}
 # (Noah, 2026-11-26: "the class sets when viewing them in the inventory, they don't have a model") each piece's look on the
 # ground and in the inventory: Skyrim's own for the armour it was made from (the Necromancer's and Arch-Mage's robes and boots,
 # a mage's hood for the hoods, which Skyrim only has on its hooded robes; the Morag Tong's chitin; the Draugr's)
@@ -1770,7 +1774,7 @@ for _c, _ps in CLASS_SET.items():
             # first-person piece in the tier's look (tools/armoursets.py first_person); the rest keep their own model
             fp = (lambda sx: z(f'CurseOfAlduin\\armour\\{_c}\\{_p}_{sx}_1p_t{_t}_1.nif')) if CS_SLOT[_p] == 1 << 2 else m
             recs['ARMA'].append(record('ARMA', fid('ARMA', f'ca_{_c}_{_p}_t{_t}'), [
-                sub('EDID', z(f'COA_CS_{_c}_{_p}_T{_t}AA')), sub('BOD2', struct.pack('<II', (1 << (CS_OWN_SLOT[(_c, _p)] - 30)) if (_c, _p) in CS_OWN_SLOT else CS_AA_SLOT.get(_p, CS_SLOT[_p]), 0)), sub('RNAM', struct.pack('<I', 0x19)),
+                sub('EDID', z(f'COA_CS_{_c}_{_p}_T{_t}AA')), sub('BOD2', struct.pack('<II', ((1 << (CS_OWN_SLOT[(_c, _p)] - 30)) if (_c, _p) in CS_OWN_SLOT else CS_AA_SLOT.get(_p, CS_SLOT[_p])) | CS_EXTRA_SLOT.get((_c, _p), 0), 0)), sub('RNAM', struct.pack('<I', 0x19)),
                 sub('DNAM', bytes.fromhex('000002020000001700000000')),
                 sub('MOD2', m('m')), sub('MOD3', m('f')), sub('MOD4', fp('m')), sub('MOD5', fp('f'))] + [sub('MODL', struct.pack('<I', r)) for r in UW_RACES]))
         # (Noah, Nov 26 night: "Still makes my body invisible" - NakedTorso carried in the cuirass did not bring the body back) a
@@ -1779,7 +1783,7 @@ for _c, _ps in CLASS_SET.items():
         recs['ARMO'].append(record('ARMO', fid('ARMO', f'ca_{_c}_{_p}'), [
             sub('EDID', z(f'COA_CS_{_c}_{_p}')), sub('OBND', bytes(12)), sub('FULL', z(f'{CS_NAME[_c]} Set {_p.title()}')),
             sub('MOD2', z(CS_GND[(_c, _p)][0])), sub('MOD4', z(CS_GND[(_c, _p)][1])),
-            sub('BOD2', struct.pack('<II', (1 << (CS_OWN_SLOT[(_c, _p)] - 30)) if (_c, _p) in CS_OWN_SLOT else CS_SLOT[_p], 0)), sub('RNAM', struct.pack('<I', 0x19)),
+            sub('BOD2', struct.pack('<II', ((1 << (CS_OWN_SLOT[(_c, _p)] - 30)) if (_c, _p) in CS_OWN_SLOT else CS_SLOT[_p]) | CS_EXTRA_SLOT.get((_c, _p), 0), 0)), sub('RNAM', struct.pack('<I', 0x19)),
             sub('KSIZ', struct.pack('<I', 2)), sub('KWDA', struct.pack('<II', CS_KW[_p], 0x06BBD3))] +
             [sub('MODL', struct.pack('<I', a)) for a in addons] +
             [sub('DATA', struct.pack('<If', 0, 1.0)), sub('DNAM', struct.pack('<I', 0))]))

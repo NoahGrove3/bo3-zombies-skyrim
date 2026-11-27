@@ -9,3 +9,7 @@ assets/shrine/motes.png
 
 # meshes made from other authors' mods (Auriel's Bow of Light, KittyVFX - Portals): built locally (tools/aurielbows.py, tools/modelconv/fxtint) and shipped with the Party Pack, never committed
 assets/fx/Meshes/CurseOfAlduin/fx/portal_red*.nif
+# (Noah, Nov 27: the Spellsword's legs - the Black Mage robe's trousers and greaves, another author's model: tools/sslegs.py +
+# tools/armoursets.py build them from his install's files; installed on his PC and shipped with the Party Pack, never committed)
+assets/fx/Meshes/CurseOfAlduin/armour/spellsword/boots_*
+assets/fx/Textures/CurseOfAlduin/armour/spellsword/blackmage_*

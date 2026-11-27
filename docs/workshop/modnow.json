@@ -1,5 +1,5 @@
 {
- "updated": "Nov 26 2026 (night)",
+ "updated": "Nov 27 2026 (afternoon)",
  "about": "Everything the mod is, as built - kept in the repo (docs/workshop/modnow.json) and updated with every build. The workshop's \"The mod now\" tab is drawn from it.",
  "sections": [
   [
@@ -25,7 +25,7 @@
   [
    "New character",
    [
-    "One loading screen from NEW to the character creator (sliders only, by body area); our own launch screen (the Alduin painting) and menu music.",
+    "One loading screen from NEW to the character creator (sliders only, by body area); our own launch screen (the Alduin painting) and menu music; the main menu in Ember Tally - the painting, rising embers, the title and our own centred words (Nov 27).",
     "At Riverwood you choose your Helgen companion (<b>Ralof or Hadvar</b>) and <b>Survival Mode</b> on or off. No starting weapons. Skyrim's own underwear on both bodies (3BA, HIMBO).",
     "The class is chosen later, at the Echo Altar (changing it costs 50,000 Cursed Essence; one shared inventory)."
    ]
@@ -46,7 +46,7 @@
     "<b>Battle-mage (Destruction)</b>: the Carian Wand (Steel, Stalhrim, Glass, Daedric by tier), Destruction spells; wonder: the Wyrmspine Javelin (tap jabs, hold throws); Arch-Mage's robes.",
     "<b>Alchemist</b>: the Shadowflame Scythe (Forsworn, Falmer, Dwarven, Dragon Priest by tier; sheathe it for your flasks), six flasks; wonder: the Mutagen Staff; Morag Tong set.",
     "<b>Spellsword</b>: the Spellbound Rapier (Steel, Ebony, Daedric, Dragonbone by tier; its look follows the spell in your other hand), touch spells; wonder: the Dragon Slayer; Ahzidal's set.",
-    "Every item climbs Base, Tier I, II, III and Ascended. <b>Ascended adds damage only; it keeps Tier III's model.</b> Class weapons wear their look from Tier I. Class sets: hoods only, a class-colour aura that grows; Tier III sets breathe and trail wisps."
+    "Every item climbs Base, Tier I, II, III and Ascended. <b>Ascended adds damage only; it keeps Tier III's model.</b> Class weapons wear their look from Tier I. Class sets: hoods only, a class-colour aura that grows; Tier III sets breathe and trail wisps. The Spellsword's set wears the Black Mage robe's trousers and greaves (from your install, fitted to your body) with its Draugr cuirass cut at the belt behind (Nov 27)."
    ]
   ],
   [
@@ -106,7 +106,7 @@
    [
     "Wonders: <b>Soulcaller's Staff</b> (white soul-gem glow on its glass head), <b>Wyrmspine Javelin</b> (throw only; it leaves your hand until it returns, flies bare, bursts in its element, Dragonfire look on its head; a solid model, the bones overlapping), <b>Mutagen Staff</b> (Living Mutagen glow on its head), <b>Dragon Slayer</b>.",
     "Hidden quests: <b>wyrm, sixfires, vortex, slayer</b>.",
-    "<b>Alduin's Bane</b>, from the Hall of the Awakened: a meteor on each light hit (landing in Alduin's own explosion), a white tornado on heavy."
+    "<b>Alduin's Bane</b>, from the Hall of the Awakened (Nov 27, as the Wonders page plays it): Ash of Helgen on each light hit - the fire pulled into the one struck until it pops, embers on the ground, the fire spreading to those beside it; on a heavy, a pillar of white wind 3 m ahead that hurls the dead near it away while the rest stagger."
    ]
   ],
   [
@@ -126,7 +126,7 @@
     "The workshop shows a close picture of each <b>built from the real parts themselves</b> (Nov 25: \"Build from real parts\"): their own textures and particle settings, read from your game; bolts, the javelin's bounce, the sunbeam and the meteors on the paths and beats the game gives them. The game plays the real thing.",
     "<b>The class spells play their own</b> (Noah: \"we can use the spells from the actual mods and base Skyrim for those\"): no impact of ours over them.",
     "<b>Vahlok's chains</b>: a heavy hit throws spectral chains (real 3D links, Skyrim's enchantment fire in green) from the one struck to each of the dead within 6 m, keeps them taut while it hauls them in to arm's reach, then lets go.",
-    "<b>Alduin's Bane heavy</b>: a wind blast within 10 m that hurls the dead far: Skyrim's Labyrinthian shockwave, Unrelenting Force and waterfall mist, in white (Nov 25: \"Shockwave\").",
+    "<b>Alduin's Bane heavy</b>: the Wonders page's white tornado pillar, baked from the preview, 3 m before you (Nov 27).",
     "<b>The Radiant Quarterstaff's sunbeam all in white</b> (Nov 25): its bolt from the sky, burst, turning pillar and motes (fxmap.ini sun_*_white); Holy Water keeps the gold.",
     "<b>Summons come out of Skyrim's own conjuring portal</b> (Nov 25: \"Use skyrims summon portal\"): the Soulcaller's wolves and sabre cat.",
     "Retired: the Nov 25 flat 'own effect' elements (tools/abilityfx.py) and the borrowed-impact list (tools/fxown.py).",

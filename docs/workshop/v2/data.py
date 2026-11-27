@@ -250,14 +250,18 @@ U('nov27_fixes', st='done', since=T3)
 U('wd_javhand', st='ready', t='Javelin held overhand', what='While charging, the palm turns toward your head - the overhand grip of a javelin throw.', how='Hold to charge the javelin, look around, throw.', look='Overhand grip, palm toward your head.', note='Last test (3edd0b7): "My palm is facing the sky now".', since=B)
 U('wd_javlook', st='ready', note='Last test (3edd0b7): "It stays the same looking like a white flaming effect". The aura in the element\'s colour is new.', since=B)
 U('wd_looks', st='ready', note='Last test (3edd0b7): Soulcaller flat from some angles; the Mutagen Staff\'s look below its orb. Now the aura on each, and the Mutagen look on the orb in first person.', since=B)
-U('wd_bane', st='ready', note='Last test (3edd0b7): "It\'s still the old version". Its fire is the preview\'s impact now - and a question for you in Decisions.', since=B)
+U('wd_bane', st='ready', t='Alduin\'s Bane as the preview', what='Your decision: the Heavy is the Wonders page\'s white tornado - a pillar of white wind 3 m before you, the dead near it hurled away, the rest staggering. The Light is Ash of Helgen as the preview plays it: the fire pulled into the one struck until it pops, the embers\' mist rolling over the ground under it, the fire spreading to the ones beside it.',
+  how='Light hits on a crowd with Alduin\'s Bane; then a heavy.', look='The preview\'s pull-in pop and ember mist; the white tornado pillar ahead of you.', note='Your decision note: "Doesn\'t cast the tornado looking pillar from the preview and the light attack just does a fire explosion".', since=B)
+F('ld_menuwords', 'hud', 'Our words on the main menu', 'ready', 'Your pick: the menu\'s words drawn by us, centred under the title in Ember Tally - the chosen one ember orange and glowing. Edge UI\'s list is hidden but still works for keys and pad.',
+  how='Launch: move through the words with the mouse, the keys and the pad; press Continue, New, Load, Co-op Party, Quit.', look='The words under the title; each does what Edge\'s did. If Edge\'s words show instead, the log says why.', since=B)
 U('wd_soulmana', st='ready', note='Last test (3edd0b7): "No mana usage no purple spawn portal ... the cats blue holographic effect is only visible from certain angles". Fixed: the cast read in every state, the portal kept 2.5 s, the cat\'s body glowing blue.', since=B)
 U('cw_flasklook', st='ready', what='The potion\'s swirl seen from every side (the glass no longer hides it) and slow enough to read as moving; the neck 1.5x long (your pick).', note='Last test (3edd0b7): "the swirling animation is broken".', since=B)
 U('fl_holy', st='ready', t='Flask bursts as the preview', what='Every flask\'s burst is the preview\'s Ring (your pick), baked, its ring reaching exactly as far as the flask hurts, facing you from every side, played once; the Legendary rings too. No gold flickers, no line on the floor, no white flames.',
   how='Throw each flask at a crowd; look from the side and from above.', look='The same ring as the workshop, the size of what it catches.', note='Last test (3edd0b7): see History.', since=B)
 U('fl_size', st='done', t='Flask bursts half the size (folded into "Flask bursts as the preview")', since=B)
 U('ar_looks', st='ready', what='The Embers are motes rising all round you, from every side; the Sheen a flowing glow brightest at its edges. The Mantle as you approved it.', note='Last test (3edd0b7): "They don\'t look in game how they look in the preview".', since=B)
-U('ar_ssbody', st='building', what='Full-length legs for the set - pick in Decisions.', note='Last test (3edd0b7): "the back is clipping through my legs and I don\'t like that my legs are visible".')
+U('ar_ssbody', st='ready', t='Spellsword legs: Black Mage trousers and greaves', what='Your picks: the Black Mage robe\'s trousers and greaves (cut B) in the Draugr boots\' place, fitted to your body in the set\'s tier looks; the cuirass\'s back cut off at the belt, so nothing hangs through your legs. Built from the Black Mage Armor in your install (another author\'s model: on your PC only, never in the mod\'s files).',
+  how='Tester\'s Kit: the Spellsword set at Tier I, III and Ascend; walk, run and sprint in third person; look from behind.', look='Dark trousers and greaves, no skin showing, nothing through the legs; the inventory still shows the Draugr boots\' model.', note='Last test (3edd0b7): "the back is clipping through my legs and I don\'t like that my legs are visible".', since=B)
 U('nov27_tablet', st='ready', t='The Wheel', what='The Tablet turns six of its weapons round on a wheel of runes and eases the prize to the front; its rarity\'s colour.', how='Roll the Tablet.', look='The Wheel, not the old roll.', note='Last test (3edd0b7): "It\'s still using the old roll animation" (the Wheel came in build 3).', since=B)
 U('tb_claws', st='done', since=T3)
 U('ld_continue', st='ready', what='The Ember Tally main menu (the Alduin painting, embers rising, the title); our loading screen for every save you load - from the menu, the journal, or after you fall - reading LOADING SAVE; Continue never taken for a new game.',
@@ -404,22 +408,7 @@ ROLLS = [
 ]
 
 # ------------------------------------------------------------------------------------------------ decisions waiting for Noah
-DECISIONS = [
-    dict(id='sspants', sys='armour', q='Your Spellsword set note: "the back is clipping through my legs and I don\'t like that my legs are visible". Which full-length legs should the set wear (in its own colours, refitted to your body like the rest)?',
-         opts=[('nordic', 'Nordic Carved legs', 'Dragonborn\'s Nordic Carved armour: heavy carved plate down to the boots, close to the Draugr cuirass\'s style.'),
-               ('ahzidal', 'Ahzidal\'s legs', 'Ahzidal\'s armour (Dragonborn): the ancient Dragon Priest robes and plate, the set\'s first inspiration.'),
-               ('steelplate', 'Steel Plate legs', 'Skyrim\'s Steel Plate: clean plate over mail, a knight\'s legs.'),
-               ('blackmage', 'Black Mage legs', 'The Black Mage Armor you have installed: dark fitted trousers and greaves, a battle-mage look.'),
-               ('draugrcloth', 'Draugr wraps', 'The Draugr set\'s own wrapped cloth and leather legs, made solid (no skin showing).')]),
-    dict(id='menuwords', sys='hud', q='The new main menu (the Alduin painting, rising embers, the title) is in this build with Edge UI\'s own words over it, where Edge puts them. Should the words be ours instead - CONTINUE, NEW, LOAD, SETTINGS, QUIT centred under the title in Ember Tally, as the workshop shows?',
-         opts=[('ours', 'Our centred words', 'Drawn by us under the title in Ember Tally; keys, pad and mouse work as now. Needs a careful test (if the list can\'t be read, Edge\'s words come back).'),
-               ('edge', 'Keep Edge UI\'s words', 'The new scene with Edge\'s menu words, as in this build.')]),
-    dict(id='baneold', sys='wonders', q='Your note on Alduin\'s Bane: "It\'s still the old version". What feels old?',
-         opts=[('heavy', 'The heavy\'s white tornado', 'Replace the heavy with a new one (we pick it on the Wonders page).'),
-               ('look', 'Its look on the blade', 'Words of Power + World-Eater\'s Fire on the blade - pick again on the Wonders page.'),
-               ('light', 'The light hits\' fire', 'Ash of Helgen\'s fire on each hit (now the preview\'s impact).'),
-               ('model', 'The sword itself', 'The dragonbone greatsword model.')]),
-]
+DECISIONS = []   # (none waiting: the three of Nov 27 afternoon are below in DECIDED)
 
 
 
@@ -427,6 +416,12 @@ DECISIONS = [
 # the question, your answer, where you gave it, and what was done with it - kept here for good, newest first. A pick you make in the
 # workshop moves here at the next build.
 DECIDED = [
+    dict(when='2026-11-27', sys='wonders', q='Alduin\'s Bane\'s heavy, the preview\'s white tornado pillar: where should it land, and who gets flung?', pick='In front, like the preview', where='chat', done='The pillar 3 m before you; the dead near it hurled away, the rest stagger.'),
+    dict(when='2026-11-27', sys='armour', q='The Draugr cuirass\'s back flap that clips through your legs: what should happen to it?', pick='Cut it off', where='chat', done='The cuirass ends at the belt behind; the trousers show there.'),
+    dict(when='2026-11-27', sys='armour', q='Which cut of the Black Mage legs should the Spellsword set wear?', pick='B: Trousers + greaves', where='chat', done='The trousers and greaves in the Draugr boots\' place, in the set\'s tier looks.'),
+    dict(when='2026-11-27', sys='wonders', q='Your note on Alduin\'s Bane: "It\'s still the old version". What feels old?', pick='The heavy\'s white tornado - "Doesn\'t cast the tornado looking pillar from the preview and the light attack just does a fire explosion"', where='workshop', done='Both now as the Wonders page plays them: the white tornado pillar for the Heavy, Ash of Helgen (the fire pulled in, the embers\' mist) for the Light.'),
+    dict(when='2026-11-27', sys='hud', q='The main menu\'s words: ours, centred under the title in Ember Tally, or Edge UI\'s?', pick='Our centred words', where='workshop', done='Drawn by us under the title; Edge\'s list hidden but still working for keys and pad.'),
+    dict(when='2026-11-27', sys='armour', q='Which full-length legs should the Spellsword set wear?', pick='Black Mage legs', where='workshop', done='The Black Mage robe\'s trousers and greaves, fitted to your body (cut picked in chat).'),
     dict(when='2026-11-27', sys='armour', q='The Spellsword pants clip at the back and show your legs. What should replace them?', pick='Show me options', where='chat', done='The options are in Decisions waiting for you.'),
     dict(when='2026-11-27', sys='flasks', q='How much longer should the flask\'s spout be?', pick='1.5x as long', where='chat', done='Held and thrown flasks, the neck from the shoulder to the lip half again as long.'),
     dict(when='2026-11-27', sys='felldir', q='Felldir is silent until an altar is freed, yet the Whisper trial showed his riddle as speech. How to close the gap?', pick='Runes on the altar', where='chat', done='Before an altar is freed its riddle is carved on the stone: the quest line, the journal, the Codex, the trial\'s words.'),
@@ -584,13 +579,13 @@ WONDERS = [
              ('sovngarde', 'Light of Sovngarde', 'A pillar of golden light falls where you strike and the dead in it burn away.', [A('slam', .2), FX(.42, 'above', 'pillar', 't0', 1.1), R(.6, 'near:300@t0', 'burn'), R(1.6, 'near:300@t0', 'die')]),
              ('dragon', 'Spectral dragon', 'A spectral dragon\'s breath of golden fire sweeps across the dead in front of you.', [A('slam', .2), dict(k='beam', t=.4, d=1.4, to='t1'), R(.6, 'line', 'burn'), R(1.6, 'line', 'die'), FX(.5, 'ground', 'mist', 't0', .9)])])]),
     dict(id='bane', key='fang', cls='summoner', name='Alduin\'s Bane', el='fire', look='o2', who='The last weapon (the Hall of the Awakened)',
-         text='Light: a large meteor falls on each of the dead you hit. Heavy: a bright white tornado for 5 s that flings the dead away.',
+         text='Light: Ash of Helgen - the fire pulled into the one struck until it pops, embers on the ground, the fire spreading to those beside it. Heavy: a pillar of white wind 3 m before you that hurls the dead near it away.',
          slots=[('light', 'Light attack', [
-             ('meteor', 'Meteor on each hit (today)', 'A large meteor falls on each of the dead you hit.', [A('swing', .2), R(.34, 't0', 'flinch'), FX(.4, 'above', 'sky', 't0', 1), R(1.0, 'near:300@t0', 'die')]),
+             ('meteor', 'Meteor on each hit', 'A large meteor falls on each of the dead you hit.', [A('swing', .2), R(.34, 't0', 'flinch'), FX(.4, 'above', 'sky', 't0', 1), R(1.0, 'near:300@t0', 'die')]),
              ('shout', 'World-Eater\'s breath', 'Each swing breathes a short cone of Alduin\'s fire through the dead in front of you.', [A('swing', .2), dict(k='beam', t=.3, d=.6, to='t0'), R(.4, 'near:200@t0', 'burn'), R(1.0, 't0', 'die')]),
-             ('ash', 'Ash of Helgen', 'Hits burn the dead to ash that falls and smoulders, spreading to those next to them.', [A('swing', .2), FX(.32, 'impact', 'drain', 't0', .7), R(.4, 't0', 'burn'), FX(.9, 'ground', 'mist', 't0', .8), R(1.1, 'near:240@t0', 'burn'), R(1.6, 't0', 'die')])]),
+             ('ash', 'Ash of Helgen (today)', 'Hits burn the dead to ash that falls and smoulders, spreading to those next to them.', [A('swing', .2), FX(.32, 'impact', 'drain', 't0', .7), R(.4, 't0', 'burn'), FX(.9, 'ground', 'mist', 't0', .8), R(1.1, 'near:240@t0', 'burn'), R(1.6, 't0', 'die')])]),
            ('heavy', 'Heavy attack', [
-             ('tornado', 'White tornado (today)', 'A bright white tornado for 5 s that flings the dead away.', [A('slam', .2), FX(.4, 'above', 'pillar', 'front', 1.2, 'wind'), R(.7, 'near:420@front', 'fling'), R(1.6, 'all', 'stagger')]),
+             ('tornado', 'White tornado (today)', 'A pillar of white wind pours down before you and hurls the dead near it away; the rest stagger.', [A('slam', .2), FX(.4, 'above', 'pillar', 'front', 1.2, 'wind'), R(.7, 'near:420@front', 'fling'), R(1.6, 'all', 'stagger')]),
              ('firestorm', 'Firestorm', 'A ring of Alduin\'s fire bursts out round you and the ground burns.', [A('slam', .2), FX(.4, 'burst', 'nova', 'me', 1.3), FX(.6, 'ground', 'wave', 'me', 1.1), R(.6, 'near:420@me', 'burn'), R(1.5, 'near:420@me', 'die')]),
              ('timewound', 'Time-Wound', 'Time stops round the blade: the dead freeze where they stand, then shatter.', [A('slam', .2), FX(.4, 'burst', 'nova', 'front', 1.1, 'arcane'), R(.5, 'all', 'freeze'), R(1.7, 'all', 'shatter')])])]),
 ]
@@ -626,7 +621,7 @@ def lore():
              eggs=[dict(t=r['title'], cls=r['cls'], reward=r['rewardText'], open=r.get('open', ''), steps=[dict(t=st['title'], d=st['text'], hint=st.get('hint', '')) for st in r['steps']],
                         whispers=[re.sub(r'\[[^\]]*\]\s*', '', l['text']) for l in vo if l['group'] == 'Whispers: ' + r['title']]) for r in eggs['rows']],
              qa=asks('Whispers: cities') + asks('Whispers: signs') + asks('Whispers: reveals')),
-        dict(id='end', title='The dragons and the end', lead='Every 10th night a dragon; the three word-dragons and the Echo of Alduin are the hardest fights of all (35x, 40x, 45x and 80x health, tougher waves, enrage phases). Alduin\'s Bane waits in the Hall of the Awakened: a meteor on every light hit, a white tornado on a heavy. The Curse of Alduin ends right before Skyrim\'s own battle with Alduin.',
+        dict(id='end', title='The dragons and the end', lead='Every 10th night a dragon; the three word-dragons and the Echo of Alduin are the hardest fights of all (35x, 40x, 45x and 80x health, tougher waves, enrage phases). Alduin\'s Bane waits in the Hall of the Awakened: Ash of Helgen on every light hit, a white tornado on a heavy. The Curse of Alduin ends right before Skyrim\'s own battle with Alduin.',
              items=[dict(t='Dragons', d='A dragon comes every 10th night; its words teach the city\'s shout (Solitude\'s bards teach Tiny Terrors, Whiterun gives Dragon\'s Updraft).'),
                     dict(t='The three word-dragons', d='The last three dragons, each guarding a word: the hardest fights before the end.'),
                     dict(t='The Echo of Alduin', d='Alduin\'s own echo, the curse made flesh: 80 times the health of the dead, the last fight of the mod.'),

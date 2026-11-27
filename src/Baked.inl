@@ -69,6 +69,15 @@ void TickBaked(float a_delta)
 		const int f = std::clamp(static_cast<int>(age / b.d->dur * static_cast<float>(b.d->frames)), 0, b.d->frames - 1);
 		const float u = static_cast<float>(f % b.d->cols) * b.d->stepU, v = static_cast<float>(f / b.d->cols) * b.d->stepV;
 		for (auto* m : b.mats) m->texCoordOffset[0] = { u, v }, m->texCoordOffset[1] = { u, v };
+		// a ground effect (the embers' mist) lies flat on the ground, its front (its local -Y) to the sky - seen from above as baked
+		if (b.d->flat) {
+			RE::NiMatrix3 fr;
+			fr.entry[0][0] = 1, fr.entry[0][1] = 0, fr.entry[0][2] = 0;
+			fr.entry[1][0] = 0, fr.entry[1][1] = 0, fr.entry[1][2] = 1;
+			fr.entry[2][0] = 0, fr.entry[2][1] = -1, fr.entry[2][2] = 0;
+			b.fx.Place(b.at + RE::NiPoint3{ 0, 0, 4.0f }, fr, b.k);
+			continue;
+		}
 		// upright, turned to you: the card's front (its local -Y) toward the eye, about the vertical
 		RE::NiPoint3 to = eye - b.at;
 		to.z = 0.0f;

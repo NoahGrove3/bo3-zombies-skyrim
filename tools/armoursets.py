@@ -56,7 +56,10 @@ SETS = {
     'spellsword': {
         'cuirass': ('body', 'armor/draugr/draugrarmorfemale_1.nif', 'armor/draugr/draugrarmormale_1.nif', {}),
         'gauntlets': ('piece', 'armor/draugr/draugrgauntletsfemale_1.nif', 'armor/draugr/draugrgauntletsmale_1.nif', {}),
-        'boots': ('piece', 'armor/draugr/draugrbootsfemale_1.nif', 'armor/draugr/draugrbootsmale_1.nif', {}),
+        # (Noah, Nov 27 decision: "Black Mage legs" - "B: Trousers + greaves") the Black Mage robe's trousers and greaves in the
+        # Draugr boots' place (tools/sslegs.py lifts them out of the robe in his install: another author's model, built on his PC's
+        # files, never committed - .gitignore)
+        'boots': ('piece', 'blackmage_cut/legsf_1.nif', 'blackmage_cut/legsm_1.nif', {}),
     },
 }
 
@@ -250,7 +253,10 @@ def first_person(cls):
 # player's body never came. A cuirass that doesn't cover the arms and legs itself (the Spellsword's, Skyrim's Draugr armour,
 # whose arms and legs were its own skin, dropped for the player's body) wears its armour on a slot of its own (58), the body
 # keeping slot 32 for NakedTorso - src/../tools/gen_esp.py gives that addon slot 58
-OWN_SLOT = {('spellsword', 'cuirass'): 58}
+OWN_SLOT = {('spellsword', 'cuirass'): 58,
+            # (the Spellsword's legs: trousers and greaves on a slot of their own, the leg's (53) - the body under them stays the
+            # player's, and its addon also claims the feet and calves so they are not drawn through the greaves - gen_esp.py)
+            ('spellsword', 'boots'): 53}
 
 
 def own_slot():
@@ -278,6 +284,11 @@ if __name__ == '__main__':
         own_slot()
         zero_bounds()
         raise SystemExit
+    # (Noah, Nov 27: the Spellsword cuirass's back "clipping through my legs" - "Cut it off") cut at the belt behind, before its tiers
+    if 'spellsword' in classes:
+        import sslegs
+        for sx in 'fm':
+            for wt in '01': sslegs.back(BASE / 'spellsword' / f'cuirass_{sx}_{wt}.nif')
     made = {}
     for cls in classes: tiers(cls, made)
     for cls in classes: first_person(cls)

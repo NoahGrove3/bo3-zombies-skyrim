@@ -47,6 +47,7 @@
   //        elev (radians the camera looks down), bloom }
   window.bakeFrames = function (job) {
     setup(job.w, job.h);
+    R.toneMappingExposure = job.exposure == null ? 1.05 : job.exposure;   // (the preview's own 1.05, unless the job dims it)
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
     const fx = makeEffect(job.el, job.role, job.opt, { at: [0, 0, 0], size: job.size || 1, seed: job.seed || 11 });
@@ -57,6 +58,7 @@
     const fov = 8, dist = (bh / 2) / Math.tan(fov * Math.PI / 360);
     const cam = new THREE.PerspectiveCamera(fov, job.w / job.h, Math.max(2, dist - 4000), dist + 4000);
     cam.position.set(cx, cy + Math.sin(elev) * dist, Math.cos(elev) * dist);
+    if (elev > 1.5) cam.up.set(0, 0, -1);   // (straight down: the picture's top is the far side)
     cam.lookAt(cx, cy, 0);
     const out = [], span = job.tmax || fx.dur;   // (tmax: where the last of it fades - the frames spread over what is seen)
     for (let i = 0; i < job.frames; i++) {

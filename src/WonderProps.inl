@@ -301,14 +301,15 @@ namespace Props
 		if (!a_power) {
 			const float burn = FangBase() * BaneMult() * 0.45f;
 			if (!killed) Gun::Burn(a_z, burn, 4.0f, 0);
-			// (Noah, Nov 27 test: "It's still the old version of Alduin's bane") the preview's own fire impact, baked, in place of the old burst
-			Gun::BakedAt("impact_fire", at + RE::NiPoint3{ 0, 0, -10.0f }, Gun::kBakedScale * 1.2f);
-			Gun::Puddle(0, at, 0.6f, 3.0f);
-			Tasks::Later(0.6f, [at, burn, h = a_z->GetHandle()] {
+			// (Noah, Nov 27 decision: "the light attack just does a fire explosion") Ash of Helgen as the Wonders page plays it: the fire
+			// pulled into the one struck until it pops (impact: drain), then the embers' mist rolling over the ground under it, and the
+			// fire spreading to those beside it
+			Gun::BakedAt("drain_fire", at, Gun::kBakedScale * 0.7f);
+			Gun::BakedAt("mist_fire", at, Gun::kBakedScale * 0.8f, 0.58f);
+			Tasks::Later(0.78f, [at, burn, h = a_z->GetHandle()] {
 				for (auto* f : Foes(at, 240.0f)) {
 					if (!f || f->IsDead() || f == h.get().get()) continue;
 					Gun::Burn(f, burn * 0.6f, 3.0f, 0);
-					Gun::BakedAt("impact_fire", f->GetPosition() + RE::NiPoint3{ 0, 0, -10.0f }, Gun::kBakedScale * 0.8f);
 				}
 			});
 		}
@@ -343,33 +344,39 @@ namespace Props
 		if (now - last < std::chrono::milliseconds(200)) return;   // (one swing heard from both bodies)
 		last = now;
 		if (!a_power) return;   // (Noah: the light attack is the meteor on each hit - FangHit; no slash)
-		// (Noah, then: "change Alduin's Bane heavy attack to a wind shockwave instead of a lingering tornado" - "Both together")
-		// (Noah: "make the heavy attack one wind circle instead of 5 the attack range should be within 10m of the player")
-		// one wave: a single white ring racing out to 10 m over the Thu'um's blast at your feet
-		const RE::NiPoint3 c = p->GetPosition();
-		Blast(BlastIndex("shoutarea"), c + RE::NiPoint3{ 0, 0, 60.0f }, 0.0f, 0.9f);
-		Gun::Ring("white", c, 30.0f, 700.0f, 0.6f);
+		// (Noah, then: "change Alduin's Bane heavy attack to a wind shockwave instead of a lingering tornado" - "Both together";
+		// "make the heavy attack one wind circle instead of 5 the attack range should be within 10m of the player")
+		// (Noah, Nov 27 decision: "Doesn't cast the tornado looking pillar from the preview" - "In front, like the preview") the
+		// Wonders page's white tornado: a pillar of white wind pours down 3 m before you; the dead near it are hurled away (the
+		// "insanely strong" throw kept), and a moment later every one of the dead round you staggers
+		const Aim aim = AimAt(400.0f);
+		RE::NiPoint3 dir = aim.dir; dir.z = 0;
+		if (dir.Length() < 0.01f) dir = { 0, 1, 0 };
+		dir.Unitize();
+		const RE::NiPoint3 c = p->GetPosition() + dir * 210.0f;
+		Gun::BakedAt("pillar_wind", c, Gun::kBakedScale, 0.2f);
 		Gun::BlastSound("lightmassive", c, 0.7f);
-		for (auto* f : Foes(c, 700.0f)) {
-			const float d = f->GetPosition().GetDistance(c);
-			Tasks::Later(0.05f + d / 1170.0f, [h = f->GetHandle()]() {   // (struck as the wave reaches it)
-				auto a = h.get();
+		Tasks::Later(0.5f, [c]() {
+			for (auto* f : Foes(c, 450.0f)) {
 				auto* pl = RE::PlayerCharacter::GetSingleton();
-				if (!a || !pl || a->IsDead()) return;
-				// (Noah: "Make the knockback strength for alduins banes heavy attack insanely strong") hurled first - so the slain
-				// fly too - four times the old throw, from below and behind, so they go up and far out over the field
+				if (!f || !pl || f->IsDead()) continue;
 				if (auto* proc = pl->GetActorRuntimeData().currentProcess) {
-					RE::NiPoint3 away = a->GetPosition() - pl->GetPosition();
+					RE::NiPoint3 away = f->GetPosition() - c;
 					away.z = 0;
+					if (away.Length() < 1.0f) away = f->GetPosition() - pl->GetPosition(), away.z = 0;
 					if (away.Length() < 1.0f) away = { 0, 1, 0 };
 					away.Unitize();
-					proc->KnockExplosion(a.get(), a->GetPosition() - away * 120.0f - RE::NiPoint3{ 0, 0, 90.0f }, 85.0f);
+					proc->KnockExplosion(f, f->GetPosition() - away * 120.0f - RE::NiPoint3{ 0, 0, 90.0f }, 85.0f);
 				}
-				const bool killed = Damage(a.get(), FangBase() * BaneMult() * 1.6f, false, false, true);
-				if (killed) BaneKilled(pl);
-			});
-		}
-		logger::info("bane: the wind shockwave");
+				if (Damage(f, FangBase() * BaneMult() * 1.6f, false, false, true)) BaneKilled(pl);
+			}
+		});
+		Tasks::Later(1.4f, [c]() {
+			for (auto* f : Foes(c, 1500.0f)) {
+				if (f && !f->IsDead() && f->GetPosition().GetDistance(c) > 450.0f) Stagger(f, 0.6f);
+			}
+		});
+		logger::info("bane: the white tornado");
 	}
 	// (Noah: "the dragon slayer sword ... is supposed to send lightning slashes similar to Alduin's Bane but not as strong in
 	// damage") the Spellsword's wonder: every swing looses a crescent of lightning down the line - a power attack a wider,

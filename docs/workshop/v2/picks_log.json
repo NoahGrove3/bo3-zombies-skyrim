@@ -1,8 +1,21 @@
 [
  {
-  "round": "Your 3edd0b7 test, Nov 27",
+  "round": "Your decisions, Nov 27 afternoon (build 6c22c73)",
   "date": "2026-11-27",
-  "changed": [],
+  "changed": [
+   {
+    "where": "Decision: Your note on Alduin's Bane: \"It's still the old version\". What feels old?",
+    "pick": "The heavy's white tornado"
+   },
+   {
+    "where": "Decision: The new main menu (the Alduin painting, rising embers, the title) is in this build with Edge UI's own words over it, where Edge puts them. Should the words be ours instead - CONTINUE, NEW, LOAD, SETTINGS, QUIT centred under the title in Ember Tally, as the workshop shows?",
+    "pick": "Our centred words"
+   },
+   {
+    "where": "Decision: Your Spellsword set note: \"the back is clipping through my legs and I don't like that my legs are visible\". Which full-length legs should the set wear (in its own colours, refitted to your body like the rest)?",
+    "pick": "Black Mage legs"
+   }
+  ],
   "now": [
    {
     "where": "Alchemist: moves",
@@ -527,8 +540,25 @@
    {
     "where": "Wonder: Soulcaller's Staff",
     "pick": "look Spectral Mist; strength + Soul Fire; Hold: the soul beam: Soul Beam (today); Every 20 souls: Spectral sabre cat (today); change"
+   },
+   {
+    "where": "Decision: Your note on Alduin's Bane: \"It's still the old version\". What feels old?",
+    "pick": "The heavy's white tornado"
+   },
+   {
+    "where": "Decision: The new main menu (the Alduin painting, rising embers, the title) is in this build with Edge UI's own words over it, where Edge puts them. Should the words be ours instead - CONTINUE, NEW, LOAD, SETTINGS, QUIT centred under the title in Ember Tally, as the workshop shows?",
+    "pick": "Our centred words"
+   },
+   {
+    "where": "Decision: Your Spellsword set note: \"the back is clipping through my legs and I don't like that my legs are visible\". Which full-length legs should the set wear (in its own colours, refitted to your body like the rest)?",
+    "pick": "Black Mage legs"
    }
   ]
+ },
+ {
+  "round": "Your 3edd0b7 test, Nov 27",
+  "date": "2026-11-27",
+  "changed": []
  },
  {
   "round": "Install 3edd0b7, Nov 27 (your UI and look picks)",
