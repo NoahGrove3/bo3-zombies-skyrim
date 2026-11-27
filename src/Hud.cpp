@@ -5802,6 +5802,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			return tex[a_index];
 		}
 
+#include "HudMenus.inl"
 		void DrawCodex(ImVec2 size, float now, int clicks)
 		{
 			auto*       dl = ImGui::GetForegroundDrawList();
@@ -6612,7 +6613,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				if (g_partyOpen && Net::Available()) {
 					PartyPanel(ImGui::GetForegroundDrawList(), io.DisplaySize, { -1, -1 }, kk, clicks > 0 && !over);
 				}
+			} else if (Hud::kTally && uiM && !uiM->IsMenuOpen(RE::MainMenu::MENU_NAME) && (uiM->IsMenuOpen(RE::InventoryMenu::MENU_NAME) || uiM->IsMenuOpen(RE::MagicMenu::MENU_NAME))) {
+				// (Noah, Nov 27: the Inventory and Magic menus remade - its 3D model and item card kept)
+				TallyItemMenu(uiM, io.DisplaySize, clicks, uiM->IsMenuOpen(RE::MagicMenu::MENU_NAME) && !uiM->IsMenuOpen(RE::InventoryMenu::MENU_NAME));
 			} else if (journal || escJournal) {
+				if (journal && Hud::kTally) TallyTween(uiM, io.DisplaySize, s, static_cast<float>(ImGui::GetTime()));   // (Noah, Nov 27: the Tab menu remade)
 				// (Noah: the Party tab in Skyrim's system menu) in the Esc journal a PARTY tab at the top left (click it, or P /
 				// Triangle-Y): it opens the party window - the lobby, everyone's night, last night's score and your records
 				if (escJournal) {
