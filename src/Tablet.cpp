@@ -1853,9 +1853,10 @@ namespace coa::Tablet
 		if (on && !g_holdLatched) {   // (aimed at: the prompt and its empty ring; held: the ring fills)
 			g_holdT = held ? g_holdT + a_delta : 0.0f;
 			frac = std::clamp(g_holdT / kHoldTime, 0.0f, 1.0f);
-			what = g_phase == Phase::Offering && g_prize >= 0 ? "to take the " + std::string(gen::kTabletWeapons[g_prize].label)
-				: g_held >= 0 && Carrying() && g_uses < gen::kTabletWeapons[g_held].uses ? "to mend it  (" + Num(Price()) + ")"
-				: "to roll  (" + Num(Price()) + ")";
+			// (Ember Tally: the key, then "Hold to turn the Tablet", its price in gold after the dash - src/HudTally.inl TallyHold)
+			what = g_phase == Phase::Offering && g_prize >= 0 ? "Hold to take the " + std::string(gen::kTabletWeapons[g_prize].label)
+				: g_held >= 0 && Carrying() && g_uses < gen::kTabletWeapons[g_held].uses ? "Hold to mend it - " + Num(Price())
+				: "Hold to turn the Tablet - " + Num(Price());
 			if (held && g_holdT >= kHoldTime) {
 				g_holdLatched = true, g_holdT = 0.0f, frac = -1.0f;
 				g_holdDoneAt = std::chrono::steady_clock::now();
@@ -1971,6 +1972,7 @@ namespace coa::Tablet
 			std::scoped_lock l(Hud::Lock());
 			auto& h = Hud::Edit();
 			h.tabletWear = Wear(), h.tabletName = std::string(HeldName());
+			h.tabletRarity = g_held >= 0 ? gen::kTabletWeapons[g_held].rarity : 0, h.tabletUses = g_held >= 0 ? g_uses : 0;
 		}
 	}
 

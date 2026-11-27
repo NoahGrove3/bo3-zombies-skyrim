@@ -1874,8 +1874,10 @@ namespace coa
 			               : (kb && code == 0xD0) || (pad && code == 0x0002) || (dev == RE::INPUT_DEVICE::kMouse && code == 9) ? 1
 			                                                                                                                                 : 0;
 			const int  side = (kb && code == 0xCB) || (pad && code == 0x0004) ? -1 : (kb && code == 0xCD) || (pad && code == 0x0008) ? 1 : 0;
+			// (Ember Tally: the altar's tabs along the top) Q / E or the shoulder buttons step between them; left / right too, off the brews
+			const int  tabKey = Hud::kTally ? ((kb && code == 0x10) || (pad && code == 0x0100) ? -1 : (kb && code == 0x12) || (pad && code == 0x0200) ? 1 : 0) : 0;
 			const bool pick = (kb && (code == 0x1C || code == 0x9C)) || (pad && code == 0x1000) || (dev == RE::INPUT_DEVICE::kMouse && code == 0);  // (Noah: Enter or left click; A / X on a pad)
-			if (nav || side || pick) {
+			if (nav || side || pick || tabKey) {
 				auto* r = g_menuRef.get().get();
 				const int t = r ? TownOf(r) : -1;
 				// (Noah, the altar rework) the class; your kit (each item: its next upgrade); the Armory; then the brews, the
@@ -1943,8 +1945,60 @@ namespace coa
 						}
 					}
 				}
+				// (Noah, Nov 27: the new altar menu, in Ember Tally - "the tab icons along the top") its sections are tabs: one open,
+				// its rows under it; your class on Your Kit's painting; the dragon glider in Your Kit; Thu'um only shows the two shouts
+				// (Dragon's Updraft, Tiny Terrors) - nothing to choose there
+				int tabSide = tabKey;
+				if (Hud::kTally) {
+					std::vector<int> tabs;
+					const auto kit = Classes::Get() >= 0 ? Kit::Rows() : std::vector<int>{};
+					if (Classes::Get() >= 0) {
+						tabs.push_back(kSecKit);
+						if (std::any_of(kit.begin(), kit.end(), [](int id) { return id >= 100; })) tabs.push_back(kSecArmory);
+					}
+					tabs.push_back(kSecPerks);
+					tabs.push_back(kSecVoice);
+					if (trials) tabs.push_back(kSecTrials);
+					if (talkHere) tabs.push_back(kSecTalk);
+					if (!whispers.empty()) tabs.push_back(kSecWhispers);
+					if (std::find(tabs.begin(), tabs.end(), g_open) == tabs.end()) g_open = tabs.front();
+					if (side && g_focus != kRowPerk) tabSide = side;   // (left / right: the tabs, but on the brews they pick one)
+					if (tabSide) {
+						const auto ti = std::find(tabs.begin(), tabs.end(), g_open) - tabs.begin();
+						g_open = tabs[(ti + tabSide + static_cast<int>(tabs.size())) % static_cast<int>(tabs.size())];
+						if (g_open == kSecTalk) Eggs::TalkOpen(t);
+					}
+					rows.clear();
+					if (g_open == kSecKit || Classes::Get() < 0) rows.push_back(kRowClass);
+					if (g_open == kSecKit) {
+						for (int id : kit) if (id < 100) rows.push_back(id);
+						rows.push_back(kRowBond);
+					}
+					if (g_open == kSecArmory) for (int id : kit) if (id >= 100) rows.push_back(id);
+					if (g_open == kSecPerks) rows.push_back(kRowPerk);
+					if (g_open == kSecTrials) for (int q : { 0, 1, 2, 3 }) rows.push_back(kRowTrial + q);
+					if (g_open == kSecTalk) {
+						for (int g = 1; g <= 4; ++g) {
+							rows.push_back(kRowTalkTopic + g);
+							if (g_talkOpen == g) for (int q = 0; q < static_cast<int>(talk.size()) && q < 200; ++q) rows.push_back(kRowTalk + q);
+						}
+					}
+					if (g_open == kSecWhispers) {
+						for (int g = 0; g < 5; ++g) {
+							rows.push_back(kRowWhGroup + g);
+							if (g_whOpen == g) for (int w = 0; w < static_cast<int>(whispers.size()); ++w) if (whispers[w].group == g) rows.push_back(kRowWhisper + w);
+						}
+					}
+					if (tabSide) g_focus = rows.size() > 1 && rows.front() == kRowClass && g_open != kSecKit ? rows[1] : rows.front();
+				}
 				rows.push_back(kRowLeave);
-				if (std::find(rows.begin(), rows.end(), g_focus) == rows.end()) {  // (its section shut: back to its header)
+				if (Hud::kTally && tabSide) {   // (a tab changed: nothing else this press)
+					PlayUi(UiSnd::kMove, 0.7f);
+					return true;
+				}
+				if (Hud::kTally && std::find(rows.begin(), rows.end(), g_focus) == rows.end()) {
+					g_focus = rows.front();
+				} else if (std::find(rows.begin(), rows.end(), g_focus) == rows.end()) {  // (its section shut: back to its header)
 					const int sec = sectionOf(g_focus);
 					g_focus = sec && std::find(rows.begin(), rows.end(), sec) != rows.end() ? sec : kRowClass;
 				}

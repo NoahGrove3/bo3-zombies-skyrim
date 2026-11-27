@@ -514,6 +514,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			dl->AddLine({ cx + 8 * k, y }, { cx + half, y }, Fade(kGoldDim, alpha), 1.2f * k);
 			dl->AddQuadFilled({ cx, y - 5 * k }, { cx + 5 * k, y }, { cx, y + 5 * k }, { cx - 5 * k, y }, Fade(kGold, alpha));
 		}
+#include "HudTally.inl"
 
 		// Slim stat bar with a lagging "ghost" that shows recent loss.
 		// A red fire licking round a health bar's border: tier 1 (the specials) a low smoulder, 2 (elites) a steady
@@ -1027,6 +1028,16 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		{
 			const float t = s.deathT;
 			const float veil = std::clamp(t / 1.4f, 0.0f, 1.0f);
+			if (Hud::kTally) {   // (Noah, Nov 27: Ember Tally - "the grey drains in over a second, the words rise in, and fade away again")
+				const float g = std::clamp(t / 1.0f, 0.0f, 1.0f);
+				dl->AddRectFilled({ 0, 0 }, size, IM_COL32(52, 52, 54, static_cast<int>(130 * g)));
+				const float e = size.y * 0.35f;
+				const ImU32 edge = IM_COL32(0, 0, 0, static_cast<int>(170 * g)), clr = IM_COL32(0, 0, 0, 0);
+				dl->AddRectFilledMultiColor({ 0, 0 }, { size.x, e }, edge, edge, clr, clr);
+				dl->AddRectFilledMultiColor({ 0, size.y - e }, size, clr, clr, edge, edge);
+				TallyDeath(dl, s, size, EaseOut(std::clamp((t - 0.5f) / 0.8f, 0.0f, 1.0f)));
+				return;
+			}
 			// the dark: deep at the edges, a little lighter at the heart, and a slow blood bloom from below
 			dl->AddRectFilled({ 0, 0 }, size, IM_COL32(0, 0, 0, static_cast<int>(150 * veil)));
 			const float e = size.y * 0.42f;
@@ -1218,6 +1229,29 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			auto*       dl = ImGui::GetForegroundDrawList();
 			const float k = size.y / 1080.0f;
 			float       below = size.y * 0.27f;
+			if (Hud::kTally) {   // (Noah, Nov 27: Ember Tally - "Pop-ups and words", every box fading in and out)
+				if (s.bannerTime > 0 && !s.banner.empty()) TallyBanner(dl, size, s.banner, TFade(s.bannerTime, s.bannerTotal, 0.3f, 0.5f));
+				if (s.slainTime > 0 && !s.slainTitle.empty()) TallyCard(dl, size, "DRAGON PRIEST SLAIN", s.slainTitle, s.slainLine, TFade(s.slainTime, s.slainTotal, 0.4f, 0.8f));
+				if (s.loreTime > 0 && !s.loreText.empty() && !s.perkMenu) {
+					const float u = TU(size), a = TFade(s.loreTime, s.loreTotal, 0.5f, 0.6f);
+					const float w = std::min(size.x * 0.6f, 34.0f * u), x0 = size.x * 0.5f - w * 0.5f, y0 = size.y * 0.62f, px = 0.9f * u;
+					std::vector<std::string> rows(1);
+					{
+						std::istringstream in(s.loreText);
+						std::string wd;
+						while (in >> wd) {
+							if (!rows.back().empty() && Measure(Inter(), px, rows.back() + " " + wd).x > w && rows.size() < 7) rows.emplace_back();
+							rows.back() += (rows.back().empty() ? "" : " ") + wd;
+						}
+					}
+					const bool titled = !s.loreTitle.empty();
+					const float top = y0 + (titled ? 1.6f * u : 0.0f), bot = top + rows.size() * 1.35f * u;
+					TShade(dl, { x0, y0 - 0.4f * u }, { x0 + w, bot }, 3.0f * u, 0.55f * a);
+					if (titled) TTextC(dl, HF(), 0.9f * u, size.x * 0.5f, y0, Fade(kTAcc, a), Upper(s.loreTitle), 0.26f);
+					for (std::size_t i = 0; i < rows.size(); ++i) TTextC(dl, Inter(), px, size.x * 0.5f, top + i * 1.35f * u, Fade(kTTxt, a), rows[i]);
+				}
+				return;
+			}
 			if (s.bannerTime > 0 && !s.banner.empty()) {
 				const float a = std::min(1.0f, s.bannerTime * 2), y = size.y * 0.27f + (1.0f - a) * 10 * k;
 				const float px = 26 * k, maxW = std::min(size.x * 0.8f, 1400 * k);
@@ -1474,7 +1508,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 
 			if (s.compassOn && !s.perkMenu && s.bossName.empty()) {  // (a boss's bar takes the top of the screen while it lives)
-				if (!Hud::kEdgeHud) DrawCompass(dl, s, size, k, now);
+				if (Hud::kTally) TallyCompass(dl, s, size);
+				else if (!Hud::kEdgeHud) DrawCompass(dl, s, size, k, now);
 			}
 
 			// The crosshair: a small white dot (Skyrim's own is hidden), and while you sneak a small clean eye just over
@@ -1882,7 +1917,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			const bool classChosen = Classes::Get() >= 0;
 			static float leftFoot = 0;   // (the quests stack under the night's box, top-left)
 			leftFoot = 0;
-			if (Hud::kEdgeHud && s.round > 0 && classChosen) {
+			if (Hud::kTally && s.round > 0 && classChosen) {
+				leftFoot = TallyNight(dl, s, size, roundFlash);
+			} else if (Hud::kEdgeHud && s.round > 0 && classChosen) {
 				// (Noah, Nov 26 doc: his Plain number - "smaller text and make it cleaner and more centered in the top left corner")
 				// NIGHT in small spaced capitals, the number under it, the wave and the dead still to fall under that; the night's
 				// kind beside the number in its tint. No moon, no frame: a soft shadow behind
@@ -1940,11 +1977,16 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				shownPts += (s.points - shownPts) * std::min(1.0f, dt * 9.0f);
 				if (std::abs(s.points - shownPts) < 1.0f) shownPts = static_cast<float>(s.points);
 				const bool        rising = shownPts < s.points - 0.5f;
+				if (Hud::kTally) {
+					TallyEssence(dl, s, size, shownPts, rising);
+					TallyKillPops(dl, s, size);
+				}
 				const std::string num = std::to_string(static_cast<int>(std::lround(shownPts)));
 				const float       numW = Measure(g_num, 26 * k, num).x;
 				const float       foot = size.y;  // (Noah: "move the cursed essence box down to the bottom corner" - Edge UI's shout meter is gone from it)
 				const ImVec2      coin{ 40 * k, foot - 36 * k };
 				const float       w = 70 * k + std::max(numW, Measure(g_body, 11 * k, "CURSED ESSENCE").x);
+				if (!Hud::kTally) {
 				dl->AddRectFilledMultiColor({ 0, foot - 76 * k }, { w + 70 * k, foot }, IM_COL32(0, 0, 0, Hud::kEdgeHud ? 60 : 90), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, Hud::kEdgeHud ? 90 : 140));
 				// (Noah: their own essence, not septims - "Cursed Essence", animated) a soul burning in Alduin's curse,
 				// ringed by turning dragon-script (tools/essence.py: an 8x6 flipbook, 24 frames a second)
@@ -1985,6 +2027,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const float a = std::min(1.0f, s.styleTime / 0.4f), pop = 1.0f + 0.25f * std::max(0.0f, s.styleTime - 1.5f) / 0.3f;
 					Txt(dl, g_title, 18 * k * pop, { coin.x + cr + 9 * k, coin.y - 84 * k }, Fade(kRune, a), s.styleTag, 2.0f * k, IM_COL32(20, 60, 140, 255));
 				}
+				}   // (the old essence corner: not with Ember Tally)
 			}
 
 			// Health / magicka / stamina: one forged plate, bottom centre - health the long blood bar in the middle (tenths
@@ -2129,7 +2172,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						c = (c & ~IM_COL32_A_MASK) | (al << IM_COL32_A_SHIFT);
 					}
 				}
-				{  // (Noah: "move the perk icons to above my health bar, centered")
+				if (Hud::kTally && classChosen) TallyBrews(dl, s, size, g_perkIcons.data(), g_perkIcons.size());   // (Ember Tally: bottom left)
+				if (!Hud::kTally) {  // (Noah: "move the perk icons to above my health bar, centered")
 				// perk row: sockets, the draughts in them; a new draught bursts in
 				static std::array<int, 32>   lastStacks{};
 				static std::array<float, 32> burst{};
@@ -2447,6 +2491,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			// (Noah: "displayed as item durability like in Minecraft") the Tablet's donated weapon: its uses left as a bar
 			// under the hand cards - green, yellow as it wears, red near the end - blinking in its last tenth
+			if (Hud::kTally && !s.perkMenu) TallyUses(dl, s, size);   // (Noah: "beside the stamina and stat bar box on the right side")
 			if (!Hud::kEdgeHud && s.tabletWear >= 0.0f) {
 				const float  f = std::clamp(s.tabletWear, 0.0f, 1.0f);
 				const ImVec2 a{ size.x - 400 * k, size.y - 98 * k }, b{ size.x - 40 * k, size.y - 88 * k };
@@ -2463,7 +2508,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			// (Noah: "Holding the action key on the tablet should start the roll") the Tablet's hold: a gold ring filling under
 			// the crosshair, "Hold [E] to roll"
-			if (s.holdFrac >= 0.0f && !s.holdText.empty()) {
+			if (Hud::kTally) TallyHold(dl, s, size, g_padLast);
+			if (!Hud::kTally && s.holdFrac >= 0.0f && !s.holdText.empty()) {
 				const ImVec2 c{ size.x / 2, size.y * 0.6f };
 				dl->AddCircle(c, 26 * k, IM_COL32(20, 16, 10, 200), 48, 6 * k);
 				if (s.holdFrac > 0) {
@@ -2565,7 +2611,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// Countdown between nights: the Blood Moon rising. A ring of the Curse's runes round it, one going dark for
 			// each second spent; the moon's face fills with blood as the night comes on; cold-blue fire licks round the
 			// ring, turning red and climbing higher in the last seconds, when the numeral beats like a heart.
-			if (s.countdown > 0.05f) {
+			if (Hud::kTally) TallyCountdown(dl, s, size);
+			if (!Hud::kTally && s.countdown > 0.05f) {
 				const ImVec2 c{ size.x * 0.5f, size.y * 0.21f };
 				const float  R = 52 * k, total = std::max(1.0f, gen::kRounds.breakSeconds);
 				const float  frac = std::clamp(s.countdown / total, 0.0f, 1.0f), dread = 1.0f - frac;
@@ -2646,6 +2693,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 
 			// Boss bar: name over a long ornate bar at the top.
+			if (Hud::kTally && !s.bossName.empty() && !s.perkMenu) {   // (Ember Tally: under the compass)
+				static float tallyGhost = 1;
+				tallyGhost = s.bossHp > tallyGhost ? s.bossHp : std::max(s.bossHp, tallyGhost - dt * 0.25f);
+				TallyBoss(dl, s, size, tallyGhost);
+			}
 			if (!Hud::kEdgeHud && !s.bossName.empty()) {
 				const float w = size.x * 0.42f, h = 14 * k, x = size.x * 0.5f - w / 2, y = 74 * k;  // (where the compass was: it steps aside for the fight)
 				TxtC(dl, g_title, 26 * k, size.x * 0.5f, y - 36 * k, s.bossEnraged ? IM_COL32(255, 120, 60, 255) : kParch, s.bossName, s.bossEnraged ? 3 * k : 0, IM_COL32(255, 60, 20, 255));
@@ -2677,7 +2729,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// selected quests are ... on the top left of my screen under the Night Counter UI box. And that should be where all quests
 			// go. For normal Skyrim and our mod") one stack, top-left under the night's box: the trial under way (its name, what to do,
 			// its clock, a thin bar, the riddle), then each quest chosen in the journal with its open goals - Skyrim's and ours alike
-			if (Hud::kEdgeHud && !s.perkMenu && (!s.questTitle.empty() || !s.tracked.empty())) {
+			if (Hud::kTally && !s.perkMenu && (!s.tracked.empty() || !s.questTitle.empty())) {
+				TallyQuests(dl, s, size, leftFoot);
+			} else if (Hud::kEdgeHud && !s.perkMenu && (!s.questTitle.empty() || !s.tracked.empty())) {
 				// (Noah, Nov 26 doc: "make the box smaller to match the night adjustment") smaller type, narrower
 				const float x = 40 * k, maxW = std::min(430 * k, size.x * 0.28f), Q = 1.0f;   // (Nov 26 night: larger again, easier to read)
 				float y = std::max(leftFoot + 12 * k, 30 * k);
@@ -2859,19 +2913,24 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const ImVec2 a{ c.x - w * 0.5f, c.y - h * 0.5f }, z{ c.x + w * 0.5f, c.y + h * 0.5f };
 					const float  al = in;
 					dl->AddRectFilled({ a.x - 2 * k, a.y - 2 * k }, { z.x + 2 * k, z.y + 2 * k }, Fade(IM_COL32(6, 6, 8, 170), al));  // the smoked plate
-					dl->AddRect({ a.x - 2 * k, a.y - 2 * k }, { z.x + 2 * k, z.y + 2 * k }, Fade(kGoldDim, al), 0.0f, 0, 1.0f);       // the bronze hairline
+					if (!Hud::kTally) dl->AddRect({ a.x - 2 * k, a.y - 2 * k }, { z.x + 2 * k, z.y + 2 * k }, Fade(kGoldDim, al), 0.0f, 0, 1.0f);       // the bronze hairline (Ember Tally: none)
 					dl->AddRectFilled(a, z, Fade(IM_COL32(40, 14, 14, 200), al));                                                   // the trough
 					if (pale > b.frac) dl->AddRectFilled({ a.x + w * b.frac, a.y }, { a.x + w * pale, z.y }, Fade(IM_COL32(232, 214, 186, 170), al));
 					const ImU32 lit = b.rank == 2 ? IM_COL32(214, 72, 46, 255) : IM_COL32(186, 34, 30, 255), deep = IM_COL32(110, 16, 16, 255);
 					dl->AddRectFilledMultiColor(a, { a.x + w * b.frac, z.y }, Fade(lit, al), Fade(lit, al), Fade(deep, al), Fade(deep, al));
 					if (b.rank == 1 || b.rank == 2) {  // a small diamond at each end, as Edge's dividers
-						for (float x : { a.x - 6 * k, z.x + 6 * k }) {
+						if (!Hud::kTally) for (float x : { a.x - 6 * k, z.x + 6 * k }) {
 							dl->AddQuadFilled({ x, c.y - 3 * k }, { x + 3 * k, c.y }, { x, c.y + 3 * k }, { x - 3 * k, c.y }, Fade(kGold, al));
 						}
 						if (!b.name.empty()) {
 							const float  fs = std::max(10.0f * k, 12.0f * k * sc);
+							if (Hud::kTally) {
+								const ImVec2 ts = TMeasure(HF(), fs * 1.1f, b.name, 0.06f);
+								TText(dl, HF(), fs * 1.1f, { std::round(c.x - ts.x * 0.5f), std::round(a.y - 3 * k - ts.y) }, Fade(kTInk, al), b.name, 0.06f);
+							} else {
 							const ImVec2 ts = Measure(g_body, fs, b.name);
 							Txt(dl, g_body, fs, { std::round(c.x - ts.x * 0.5f), std::round(a.y - 4 * k - ts.y) }, Fade(IM_COL32(228, 216, 190, 235), al), b.name, 1.0f * k, IM_COL32(0, 0, 0, 220));
+							}
 						}
 					}
 				}
@@ -2957,7 +3016,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 
 			// The ritual circle's words over the altar (the ring itself and the souls are in the world: src/Curse.cpp RingWorld,
 			// tools/trialfx.py - the screen-drawn ring, runes and wisps cut 2026-11-24)
-			if (s.ringOn && !s.perkMenu) {
+			if (Hud::kTally && !s.perkMenu) TallyAltarQuest(dl, s, size);
+			if (!Hud::kTally && s.ringOn && !s.perkMenu) {
 				const float fl = std::clamp(s.ringFlash, 0.0f, 1.0f);
 				const ImU32 cold = IM_COL32(120, 170, 255, 255);
 				if (s.ringLabelOn && !s.ringHead.empty()) {  // (the trials remade: a count, not seconds)
@@ -3034,7 +3094,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				TxtC(dl, g_num, 17 * k, at.x + 13 * k, at.y + 3 * k, live ? kParch : IM_COL32(150, 140, 125, 255), key);
 			};
 			(void)keyCap;  // (the altar is driven by its focus now: Shops Row)
-			if (s.perkMenu) {
+			if (s.perkMenu && Hud::kTally) {
+				TallyAltar(dl, s, size, now);   // (Noah, Nov 27: the new altar menu, in Ember Tally)
+			} else if (s.perkMenu) {
 				const float w = 470 * k;
 				const bool  shout = s.shrineShout >= 0 && s.shrineShout < static_cast<int>(gen::kShouts.size());
 				// (Noah: scroll down to the altar's trials) one panel, its trials below the rest; as tall as the screen allows,
@@ -5511,6 +5573,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			g_title = g_title ? g_title : g_font;
 			g_num = g_num ? g_num : g_font;
 			g_body = g_body ? g_body : g_font;
+			// (Noah, Nov 27: Ember Tally) its type: Barlow Condensed and Inter (SIL Open Font License)
+			g_hf = own("BarlowCondensed-SemiBold.ttf");
+			g_hfb = own("BarlowCondensed-Bold.ttf");
+			g_inter = own("Inter-Regular.ttf");
+			logger::info("hud: Ember Tally type {} {} {}", g_hf ? "Barlow" : "-", g_hfb ? "Barlow Bold" : "-", g_inter ? "Inter" : "-");
 			if (!ImGui_ImplDX11_Init(g_device, g_context)) {
 				g_failed = true;
 				logger::error("hud: ImGui DX11 init failed");
@@ -6627,7 +6694,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						if (!Hud::kEdgeHud) hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.EnemyHealth_mc._visible", RE::GFxValue(false));
 						// Skyrim's compass gives way to ours - its shout meter too (Noah: the cooldown is drawn round our compass's
 						// border instead: src/Hud.cpp DrawCompass)
-						if (!Hud::kEdgeHud) {
+						if (!Hud::kEdgeHud || Hud::kTally) {   // (Ember Tally: our compass)
 							hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.CompassShoutMeterHolder._alpha", RE::GFxValue(0.0));
 							hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.CompassShoutMeterHolder._visible", RE::GFxValue(false));
 						}

@@ -1154,7 +1154,8 @@ namespace coa
 		// (Noah: Edge UI is the game's UI) our compass, vitals, equip cards, health and boss bars, quest list and markers,
 		// crosshair and party panel stand down: Skyrim's own HUD (Edge UI, TrueHUD) shows them
 		inline constexpr bool kEdgeHud = true;
-		inline constexpr bool kOwnBars = true;  // (Noah: our own health, stamina and magicka plate instead of Edge UI's bars - with the shout's cooldown round it)
+		inline constexpr bool kOwnBars = true;
+		inline constexpr bool kTally = true;    // (Noah, Nov 27: his In-game UI direction, Ember Tally - src/HudTally.inl)  // (Noah: our own health, stamina and magicka plate instead of Edge UI's bars - with the shout's cooldown round it)
 		struct State
 		{
 			bool        inGame{ false };
@@ -1241,6 +1242,7 @@ namespace coa
 			int                   souls{ -1 };         // (the Soulcaller's Staff) souls gathered, of soulsMax (-1: not drawn)
 			int                   soulsMax{ 8 };
 			std::string           tabletName;
+			int                   tabletRarity{ 0 }, tabletUses{ 0 };   // (its uses ring: the rarity's colour, the uses left)
 			float                 holdFrac{ -1.0f };   // (the Tablet: hold Activate) 0..1 while held (-1: not drawn)
 			std::string           holdText;            // what holding does ("to roll the tablet")
 			int         trialDone{ 0 }, trialActive{ 0 }, trialSel{ 0 }, trialNext{ 0 };  // trialNext: the one to take up next (in order)
