@@ -14,7 +14,7 @@ import json, pathlib, subprocess
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent.parent.parent
 
-INSTALLED = {'sha': 'ed9dd2c', 'date': '2026-11-27', 'label': 'Your 3edd0b7 test fixed, the 11 new Tablet weapons and the Wheel, Ember Tally HUD and menus, the preview\'s effects in the game',
+INSTALLED = {'sha': '6c22c73', 'date': '2026-11-27', 'label': 'Your 3edd0b7 test fixed, the 11 new Tablet weapons and the Wheel, Ember Tally HUD and menus, the preview\'s effects in the game',
              'extra': 'Builds 3 and 4 (the Tablet\'s 11 new weapons and the Wheel; the Ember Tally HUD, the altar menu, the Inventory recoloured and the Magic and Tab menus remade) and every note of your 3edd0b7 test: the effects baked from the workshop\'s own previews, the weapon and armour looks\' aura, the moves by tier, the flasks, the main menu and loading screens'}
 
 # ------------------------------------------------------------------------------------------------ the systems (categories)
@@ -45,7 +45,7 @@ FEATURES = []
 def F(i, s, t, st, what, how='', look='', note='', since=''):
     FEATURES.append(dict(id=i, sys=s, t=t, st=st, what=what, how=how, look=look, note=note, since=since))
 
-B = 'ed9dd2c'   # (the build installed now: builds 3 and 4 of Nov 27 and the fixes of your 3edd0b7 test)
+B = '6c22c73'   # (the build installed now: builds 3 and 4 of Nov 27 and the fixes of your 3edd0b7 test)
 B0 = '3edd0b7'   # (the one before it)
 
 # ---- movement
