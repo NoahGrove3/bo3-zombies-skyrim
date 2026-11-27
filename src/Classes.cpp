@@ -1894,7 +1894,23 @@ namespace coa::Classes
 				if (!a) { pt.wait = 0; continue; }
 				if (!a->IsDead()) continue;
 				pt.wait = 0;
+				// (the round 20 crash, Nov 26: a Bonereaper kill raised a Frost Brute, and the game fell 0.6 s later) a dead one placed
+				// from a leveled or templated record wears a base made for it alone (a temporary FF form), freed with its body - an
+				// ally placed from that base is left wearing freed memory. The record it was placed from, never the temporary one
 				auto* base = a->GetActorBase();
+				if (base && base->IsDynamicForm()) {
+					base = nullptr;
+					if (auto* lc = a->extraList.GetByType<RE::ExtraLeveledCreature>()) {
+						for (auto* b : { lc->originalBase, lc->templateBase }) {
+							if (auto* n = b ? b->As<RE::TESNPC>() : nullptr; n && !n->IsDynamicForm()) { base = n; break; }
+						}
+					}
+					if (!base) {
+						static int told = 0;
+						if (told++ < 5) logger::info("classes: Reanimate - {} has only a temporary base, not raised", a->GetName());
+						continue;
+					}
+				}
 				const float secs = 20.0f + 5.0f * static_cast<float>(pt.level);
 				const float hp = Director::RoundHealth() * gen::kRounds.hpScale * (1.5f + 1.0f * static_cast<float>(pt.level));
 				const RE::NiPoint3 at = a->GetPosition();
