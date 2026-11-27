@@ -5016,6 +5016,20 @@
      "note": "and make sure the weapons preview isnt stretched",
      "choice": "",
      "done": "Every 3D preview is now cut to its own frame's shape instead of squeezed into it, and the weapons are fitted to what the frame shows."
+    },
+    {
+     "when": "2026-11-27 01:52",
+     "where": "test/fl_holy",
+     "note": "(failed) there was a lingering hue after the beam disappears",
+     "choice": "fail",
+     "done": "Queued for the next game build: Holy Water's light cleared with its beam."
+    },
+    {
+     "when": "2026-11-27 01:30",
+     "where": "test/mv_slide",
+     "note": "(failed) now it wont slide at all and my sneak eye pops up while im standing.",
+     "choice": "fail",
+     "done": "Queued for the next game build: the slide fixed, and no sneak eye while standing."
     }
    ]
   },
