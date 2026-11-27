@@ -5,7 +5,7 @@
 // Skyrim answered; the Echo Altars the Tongues raised in every city have woken only half. (Noah, 2026-11-23: the trials remade to
 // the story - the same four in every city, each with the city's own places; one after another, all at night, the party sharing them)
 //   restless  Lay the Restless to Rest: n of the risen slain in the altar's light - their souls rise through Alduin's mist
-//   whisper   The Stone's Whisper (Felldir's Whisper once six altars are free): the altar's voice speaks a riddle naming a place in
+//   whisper   The Stone's Whisper (Felldir's Whisper once six altars are free): the altar's runes glow with a riddle naming a place in
 //             the city; find it at night, then slay n of the risen there
 //   echo      Repeat the Echo: at midnight (and each hour after, until dawn) the altar sings n notes on six stones round it;
 //             touch the stones in the same order
@@ -298,8 +298,8 @@ namespace coa
 			switch (a_trial) {
 			case gen::kTrial_restless: return fmt::format("Slay {} of the risen in the altar's light", n);
 			case gen::kTrial_whisper:
-				if (a_town >= 0 && a_town < static_cast<int>(gen::kCurseCities.size())) return fmt::format("\"{}\" - find it, then slay {} there", gen::kCurseCities[a_town].riddle, n);
-				return fmt::format("Find the place the altar's voice names, then slay {} of the risen there", n);
+				if (a_town >= 0 && a_town < static_cast<int>(gen::kCurseCities.size())) return fmt::format("Carved on the altar: {} - find it, then slay {} there", gen::kCurseCities[a_town].riddle, n);   // (Noah, Nov 27: Felldir's voice is off until an altar is freed - his pick, "Runes on the altar": the riddle is carved in the stone, never spoken)
+				return fmt::format("Find the place the altar's runes name, then slay {} of the risen there", n);
 			case gen::kTrial_echo: return fmt::format("At midnight, touch the six stones in the order they sing ({} notes)", n);
 			case gen::kTrial_seals: return "Kill the three guards and break their seals - the last calls the Dragon Priest";
 			default: return {};
@@ -736,8 +736,8 @@ namespace coa
 				break;
 			case gen::kTrial_whisper:
 				if (s.prog == 0) {
-					h.questGoal = "Find the place the altar's voice names";
-					h.questSub = "\"" + std::string(gen::kCurseCities[a_zone].riddle) + "\"";
+					h.questGoal = "Find the place the altar's runes name";
+					h.questSub = "Carved on the altar: " + std::string(gen::kCurseCities[a_zone].riddle);   // (Noah, Nov 27: Felldir's voice is off until an altar is freed - his pick, "Runes on the altar": the riddle is carved in the stone, never spoken)
 				} else {
 					const auto at = WhisperAt(a_zone);
 					const bool in = player && std::hypot(player->GetPosition().x - at.x, player->GetPosition().y - at.y) < gen::kCurseWhisperRadius + 300.0f;

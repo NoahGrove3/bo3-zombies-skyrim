@@ -75,7 +75,7 @@ EXTRA = {(SKY, 'Conjure Flame Atronach'): (0x0204C3, 150, False), (SKY, 'Conjure
 # Legendary rungs from Apocalypse - appended after every other spell (a spell's index is in the saves); their damage comes
 # from the scripted spells they cast (PROCS: those hit as the rung itself)
 APPEND = {('destruction', 'shock'): [(APOC, 'Lightning Strike')],
-          ('destruction', 'walls'): [(APOC, 'Inferno', 'fire')], ('destruction', 'storms'): [(MYST, 'Cinder Storm', 'fire')]}   # (Noah: Volcano -> Inferno)
+          ('destruction', 'walls'): [(SKY, 'Fire Storm', 'fire')], ('destruction', 'storms'): [(MYST, 'Cinder Storm', 'fire')]}   # (Noah: Volcano -> Inferno; Nov 27: "the spell I actually want to remove is inferno" - Skyrim's Fire Storm in its place, Immolate kept)
 EXTRA.update({(APOC, 'Lightning Strike'): (0x002878, 361, False), (APOC, 'Ravaging Storm'): (0x15E728, 431, False),
               (APOC, 'Volcano'): (0x04733C, 636, False), (APOC, 'Flamestrike'): (0x02E0C0, 664, False),
               (APOC, 'Shock Nova'): (0x00186D, 375, False), (APOC, 'Forbidden Sun'): (0x044264, 610, False), (APOC, 'Inferno'): (0x022DAB, 180, False),

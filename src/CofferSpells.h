@@ -90,7 +90,7 @@ namespace coa::coffer
 		{ "Skyrim.esm", 0x07E8E5, "Lightning Storm", kShock, 1, 46, true, 1.0f, kDestruction, 20, 2, 4, "Storms" },
 		{ "Apocalypse - Magic of Skyrim.esp", 0x1A4A4A, "Multivortex", kArcane, 2, 50, false, 1.0f, kDestruction, 20, 3, 4, "Storms" },
 		{ "Apocalypse - Magic of Skyrim.esp", 0x002878, "Lightning Strike", kShock, 3, 60, false, 1.0f, kDestruction, 2, 4, 4, "Shock" },
-		{ "Apocalypse - Magic of Skyrim.esp", 0x022DAB, "Inferno", kFire, 3, 45, false, 1.0f, kDestruction, 19, 4, 4, "Walls" },
+		{ "Skyrim.esm", 0x07A82B, "Fire Storm", kFire, 3, 60, false, 1.0f, kDestruction, 19, 4, 4, "Walls" },
 		{ "MysticismMagic.esp", 0x4B065B, "Cinder Storm", kFire, 3, 60, false, 1.0f, kDestruction, 20, 4, 4, "Storms" },
 	} };
 	// the spells a rung casts by script (their hits are the rung's): its index in kSpells, the proc's plugin and id

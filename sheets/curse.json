@@ -350,9 +350,9 @@
     {
       "id": "whisper",
       "title": "The Stone's Whisper",
-      "short": "Find the place the altar's voice names",
-      "goal": "Find the place the altar's voice names in {city}, and slay the risen there",
-      "text": "At night a voice speaks from the Echo Altar of {city}, and it speaks in riddles. Find the place it names, and hold it against the dead: slay {n} of the risen there.",
+      "short": "Find the place the altar's runes name",
+      "goal": "Find the place the altar's runes name in {city}, and slay the risen there",
+      "text": "At night runes glow on the Echo Altar of {city}, carved as a riddle. Find the place they name, and hold it against the dead: slay {n} of the risen there.",
       "n": [
         10,
         12,

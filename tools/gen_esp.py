@@ -1309,7 +1309,7 @@ for c in CU['cities']:
     overview = (f"Win the four trials at the Echo Altar of {c['town']}, one after another. Breaking the last seal calls out {boss['name']}, "
                 f"its Dragon Priest - slay it to free the city.")
     stages = [(10, overview)]
-    stages += [(20 + i, overview + f"\n\nNow: {tr['title']} - {fill(tr['goal'], c)}." + (f"\n\nThe altar's voice: \"{c['whisper']['riddle']}\"" if tr['id'] == 'whisper' else '')) for i, tr in enumerate(CU['trials'])]
+    stages += [(20 + i, overview + f"\n\nNow: {tr['title']} - {fill(tr['goal'], c)}." + (f"\n\nCarved on the altar: {c['whisper']['riddle']}" if tr['id'] == 'whisper' else '')) for i, tr in enumerate(CU['trials'])]
     stages += [(100, f"The seals are broken. {boss['name']} walks the night in {c['town']} - slay it and the altar wakes.")]
     for st, text in stages:
         assert '{' not in text, text
@@ -1370,7 +1370,7 @@ def lore_text():
            "Alduin's mist, and through the altars he raised he whispers to the living. Now that six cities are free, he will lead you to the wonders the Tongues hid.</p>",
            "[pagebreak]", "<p align='center'><font size='24'>IV. Waking an Altar</font></p>",
            "<p>Stand at an altar and it sets you four <b>trials</b>, one after another. Lay the restless dead to rest in its light, so their souls can pass the mist. "
-           "Follow the riddle its voice speaks to a place in the city. Sing its song back to it at midnight, the way the Tongues once did. "
+           "Follow the riddle carved in its runes to a place in the city. Sing its song back to it at midnight, the way the Tongues once did. "
            "Then break the three seals its Dragon Priest set in the city's great places: the last one calls him out. Kill him and the altar wakes.</p>",
            "<p>A woken altar makes its city a <b>sanctuary</b>: none of the curse's dead rise inside it, by night or by day. Step outside its walls and they find you again.</p>",
            "[pagebreak]", "<p align='center'><font size='24'>V. The Dragonborn's Road</font></p>",
@@ -1415,7 +1415,7 @@ def guide_text():
            "[pagebreak]", h("The Four Trials"),
            p("All four are won at night, one after another, and your party shares them."),
            p("<b>Slay the Undead</b> - slay the dead inside the altar's light, the circle round it. Their souls rise to Sovngarde."),
-           p("<b>The Stone's Whisper</b> - the altar's voice speaks a riddle naming a place in the city. Find it at night and slay the dead there."),
+           p("<b>The Stone's Whisper</b> - runes on the altar glow with a riddle naming a place in the city. Find it at night and slay the dead there."),
            p("<b>Hold the Light</b> - step into the altar's light at night and it begins to close round the stone while the dead pour in. Stay inside until it closes. Step out and the light slips back."),
            p("<b>Break the Priest's Seals</b> - three seals in the city's great places, each kept by an elite. Kill the guard, then strike the seal. The last one calls the Dragon Priest out."),
            "[pagebreak]", h("Spells"),

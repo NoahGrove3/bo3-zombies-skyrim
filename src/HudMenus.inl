@@ -141,6 +141,20 @@ void TallyItemMenu(RE::UI* a_ui, ImVec2 size, int a_clicks, bool a_magic)
 {
 	auto menu = a_ui->GetMenu(a_magic ? RE::MagicMenu::MENU_NAME : RE::InventoryMenu::MENU_NAME);
 	auto* mv = menu ? menu->uiMovie.get() : nullptr;
+	if (mv && !a_magic) {
+		// (Noah's later pick, Nov 27: the Inventory "recoloured" - Untarnished UI's layout as he has it, in the Curse's colours)
+		// the whole page warmed: its whites to our parchment, its greys to ember-browns (its 3D model is the game's, not the page's)
+		RE::GFxValue root;
+		if (mv->GetVariable(&root, "_root") && root.IsDisplayObject()) {
+			RE::GRenderer::Cxform cx;
+			cx.matrix[RE::GRenderer::Cxform::kR][RE::GRenderer::Cxform::kMult] = 1.0f, cx.matrix[RE::GRenderer::Cxform::kR][RE::GRenderer::Cxform::kAdd] = 0.0f;
+			cx.matrix[RE::GRenderer::Cxform::kG][RE::GRenderer::Cxform::kMult] = 0.88f, cx.matrix[RE::GRenderer::Cxform::kG][RE::GRenderer::Cxform::kAdd] = 0.0f;
+			cx.matrix[RE::GRenderer::Cxform::kB][RE::GRenderer::Cxform::kMult] = 0.70f, cx.matrix[RE::GRenderer::Cxform::kB][RE::GRenderer::Cxform::kAdd] = 0.0f;
+			cx.matrix[RE::GRenderer::Cxform::kA][RE::GRenderer::Cxform::kMult] = 1.0f, cx.matrix[RE::GRenderer::Cxform::kA][RE::GRenderer::Cxform::kAdd] = 0.0f;
+			root.SetCxform(cx);
+		}
+		return;
+	}
 	auto& L = a_magic ? g_magLists : g_invLists;
 	if (!mv || !ResolveLists(mv, L, a_magic ? "Magic" : "Inventory")) return;
 	int sel = -1, csel = -1;

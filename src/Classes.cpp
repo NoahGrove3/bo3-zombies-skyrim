@@ -2750,7 +2750,8 @@ namespace coa::Classes
 		g_wandNext = std::max(0.0f, g_wandNext - a_delta);
 		if (held) {
 			heldFor += a_delta;
-			if (heldFor >= 0.3f) RayTick(p, w, a_delta);   // the hold: the beam
+			// (Noah, Nov 27: "Heavy II") the hold's Arcane Ray from Tier II
+			if (heldFor >= 0.3f && Kit::TierOfWeapon(w) >= 2) RayTick(p, w, a_delta);   // the hold: the beam
 		} else {
 			if (wasHeld && heldFor < 0.3f && g_wandNext <= 0.0f && inHand) {   // a tap: a bolt
 				g_wandNext = 0.5f;

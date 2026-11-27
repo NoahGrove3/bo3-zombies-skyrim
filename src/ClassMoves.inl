@@ -5,6 +5,11 @@
 //   Alchemist    Reaping Arc / Shadowfire Eruption / Philosopher's Edge       (shadowfire)
 //   Spellsword   Spellthrust / Spell Pillar / Elemental Wake                  (the spell in the other hand)
 // (included in Classes.cpp's unnamed namespace, after the Soulcaller's: it uses its spectral look)
+// (Noah, Nov 27 test of 3edd0b7: "it all works from base tier when it should be unlocked as it's fully upgraded" - his pick, "Light I,
+// Heavy II, Special III") each move waits for its tier: the base weapon is plain, Tier I adds the Light, Tier II the Heavy, Tier III the
+// Special. (The wand's tap is always its Glintstone Bolt - his pick, "Glintstone Bolt from base"; only the Ray and Starfall wait.)
+constexpr int kLightTier = 1, kHeavyTier = 2, kSpecialTier = 3;
+int MoveTier(const RE::TESForm* a_w) { return std::max(0, Kit::TierOfWeapon(a_w)); }
 
 float MovePw(const RE::TESForm* a_w)
 {
@@ -69,6 +74,7 @@ void MovesHit(RE::Actor* a_target, RE::TESForm* a_src, bool a_power)
 	if (!p || !a_target || a_target->IsDead() || !a_src) return;
 	const int cls = SwordClass(a_src);
 	if (cls < 0 || cls == 1) return;
+	if (MoveTier(a_src) < kLightTier) return;
 	const float pw = MovePw(a_src);
 	const RE::NiPoint3 at = a_target->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f };
 	if (cls == 0 && !a_power) {
@@ -91,9 +97,10 @@ void MovesKill(RE::Actor* a_dying, RE::TESForm* a_src)
 	if (!p || !a_dying || !a_src) return;
 	const int cls = SwordClass(a_src);
 	if (cls < 0) return;
+	g_reapStacks.erase(a_dying->GetFormID());
+	if (MoveTier(a_src) < kSpecialTier) return;
 	const float pw = MovePw(a_src);
 	const RE::NiPoint3 at = a_dying->GetPosition();
-	g_reapStacks.erase(a_dying->GetFormID());
 	if (cls == 2) {
 		// Philosopher's Edge: every 10th kill transmutes - the next of the dead you kill bursts into Cursed Essence and shadowfire
 		if (g_philArmed) {
@@ -159,26 +166,37 @@ void MovesSwing(int a_cls, bool a_power, RE::TESForm* a_w)
 	const float pw = MovePw(a_w);
 	const RE::NiPoint3 me = p->GetPosition(), fwd = MoveFwd(p);
 	if (a_cls == 2 && !a_power) {
-		// Reaping Arc: a wide sweep that cuts every one of the dead in front of you and sets them smouldering in shadowfire; the
-		// burn stacks with each swing (up to three)
-		Gun::SlashSpec sl;
-		sl.model = ArcModel(0);
-		sl.from = Gun::SwingFrom(), sl.dir = Gun::SwingDir(), sl.roll = Gun::SwingRoll(sl.dir);
-		sl.sideways = true, sl.range = 380.0f, sl.radius = 170.0f, sl.speed = 1300.0f;
-		sl.scale = (1.0f + 0.12f * t) * AscSize(AscOf(a_w));
-		sl.share = BladeShare(a_w->As<RE::TESObjectWEAP>()) * 0.5f * (0.7f + 0.3f * Arcana::Power());
-		sl.onHit = [t, pw](RE::Actor* a, bool killed) {
-			if (!a) return;
-			if (killed) { CorpseBurn(a); Gun::ElemBurst(9, a->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f }, 0.5f, 0.0f, 0.5f); return; }
-			Shadowburn(a, t);
-			const int n = std::min(3, ++g_reapStacks[a->GetFormID()]);
-			if (n > 1) Gun::Burn(a, MoveWhole() * 0.03f * static_cast<float>(n - 1) * pw, 3.0f, -1);
-		};
-		Gun::Slash(sl);
+		if (t < kLightTier) return;
+		// Reaping Arc (Noah, Nov 27: "Match the preview" - no ball flying out): the swing itself sweeps a wide arc in front of you; every
+		// one of the dead it catches takes the blow and your Shadowfire light impact (his pick: impact core) and is set smouldering in
+		// shadowfire; the burn stacks with each sweep (up to three)
+		const float reach = 330.0f * AscSize(AscOf(a_w));
+		const float share = BladeShare(a_w->As<RE::TESObjectWEAP>()) * 0.5f * (0.7f + 0.3f * Arcana::Power());
+		int n = 0;
+		for (auto* f : NearFoes(me + fwd * (reach * 0.5f), reach, 12)) {
+			if (!f || f->IsDead()) continue;
+			RE::NiPoint3 to = f->GetPosition() - me;
+			to.z = 0.0f;
+			const float d = to.Length();
+			if (d > reach || (d > 60.0f && to.Dot(fwd) / d < 0.26f)) continue;   // (about 150 degrees across, in front)
+			const float delay = 0.04f * static_cast<float>(n++);
+			Tasks::Later(delay, [h = f->GetHandle(), t, pw, share] {
+				auto a = h.get();
+				if (!a || a->IsDead()) return;
+				Gun::ElemBurst(9, a->GetPosition() + RE::NiPoint3{ 0, 0, 80.0f }, 0.45f + 0.06f * t, 0.0f, 0.5f);
+				Gun::AreaHurt(a->GetPosition(), 1.0f, share, "");
+				if (a->IsDead()) { CorpseBurn(a.get()); return; }
+				Shadowburn(a.get(), t);
+				const int k = std::min(3, ++g_reapStacks[a->GetFormID()]);
+				if (k > 1) Gun::Burn(a.get(), MoveWhole() * 0.03f * static_cast<float>(k - 1) * pw, 3.0f, -1);
+			});
+			if (n >= 8) break;
+		}
 		if (g_reapStacks.size() > 300) g_reapStacks.clear();
 		return;
 	}
 	if (!a_power) return;
+	if (t < kHeavyTier) return;
 	if (a_cls == 2) {
 		// Shadowfire Eruption: the blade driven into the ground - geysers of shadowfire burst up in a ring round you
 		const float r = 230.0f * AscSize(AscOf(a_w));
@@ -205,7 +223,7 @@ void MovesSwing(int a_cls, bool a_power, RE::TESForm* a_w)
 		}
 		static constexpr const char* kPillar[5] = { "fire", "frost", "shock", "sun", "arcane" };
 		Gun::QueueFx(std::string("CurseOfAlduin\\fx\\pillar_") + kPillar[el] + ".nif", at, 1.0f + 0.15f * t, 0.0f, 2.0f, false);
-		if (el == 2) for (int i = 0; i < 3; ++i) Gun::LightningArc(at + RE::NiPoint3{ 0, 0, 1400.0f }, at + RE::NiPoint3{ 0, 0, 20.0f }, 0.12f * static_cast<float>(i));
+		// (Noah, Nov 27: "casting 2 beams instead of one") the pillar alone - no bolts of our own laid down beside it
 		static constexpr const char* kSnd[5] = { "fireball", "frost", "runeshock", "lightmassive", "shockmass" };
 		Gun::BlastSound(kSnd[el], at, 0.9f);
 		const float r = 260.0f + 40.0f * t;
@@ -270,7 +288,7 @@ void GlintBolt(RE::PlayerCharacter* a_p, RE::TESObjectWEAP* a_w)
 	Gun::Slash(sl);
 	WandKick(0);
 	if (auto* snd = ReleaseSound(0x0002DD2A)) Audio::Game(snd->GetFormID(), a_p, 0.8f);
-	if (++g_glintBolts >= 25) { g_glintBolts = 0; Starfall(a_p, pw); }
+	if (MoveTier(a_w) >= kSpecialTier && ++g_glintBolts >= 25) { g_glintBolts = 0; Starfall(a_p, pw); }
 }
 struct RayState { bool on = false; float t = 0, hurt = 0; };
 RayState g_ray;
@@ -288,15 +306,21 @@ void RayTick(RE::PlayerCharacter* a_p, RE::TESObjectWEAP* a_w, float a_dt)
 	if (av->GetActorValue(RE::ActorValue::kMagicka) < cost + 0.5f) {
 		RayStop();
 		static auto told = std::chrono::steady_clock::now() - std::chrono::seconds(10);
-		if (std::chrono::steady_clock::now() - told > std::chrono::seconds(3)) { told = std::chrono::steady_clock::now(); Hud::Hint("Out of magicka", 1.5f); }
+		if (std::chrono::steady_clock::now() - told > std::chrono::seconds(3)) { told = std::chrono::steady_clock::now(); Hud::Hint("Out of magicka", 1.5f); logger::info("moves: Arcane Ray - out of magicka"); }
 		return;
 	}
 	av->DamageActorValue(RE::ActorValue::kMagicka, cost);
-	if (!g_ray.on) { g_ray.on = true; Gun::BlastSound("shockmass", a_p->GetPosition(), 0.5f); }
-	g_ray.t += a_dt;
 	const RE::NiPoint3 from = WandTip(a_p);
 	RE::NiPoint3 to;
-	Gun::StaffBeam(5, 0.55f + 0.85f * grow, from, to);
+	const bool drawn = Gun::StaffBeam(5, 0.55f + 0.85f * grow, from, to);
+	if (!g_ray.on) {
+		g_ray.on = true;
+		Gun::BlastSound("shockmass", a_p->GetPosition(), 0.5f);
+		// (Noah, Nov 27: "Arcane ray doesn't work" - nothing of it reached the log, so each hold says what it drew)
+		logger::info("moves: Arcane Ray on - from ({:.0f},{:.0f},{:.0f}) to ({:.0f},{:.0f},{:.0f}), drawn {}, magicka {:.0f}", from.x, from.y, from.z, to.x, to.y, to.z, drawn,
+			av->GetActorValue(RE::ActorValue::kMagicka));
+	}
+	g_ray.t += a_dt;
 	if ((g_ray.hurt -= a_dt) <= 0.0f) {
 		g_ray.hurt = 0.2f;
 		const float pw = MovePw(a_w);
