@@ -1008,7 +1008,7 @@
   {
    "id": "ld_continue",
    "sys": "loading",
-   "t": "Continue shows our screen",
+   "t": "A save loads under our screen from the start",
    "st": "ready",
    "what": "The Ember Tally main menu (the Alduin painting, embers rising, the title); our loading screen for every save you load - from the menu, the journal, or after you fall - reading LOADING SAVE; Continue never taken for a new game.",
    "how": "Launch; Continue; then load from the journal.",
@@ -1086,89 +1086,89 @@
    "id": "ld_menuwords",
    "sys": "menu",
    "t": "The main menu: keys, pad and mouse",
-   "st": "ready",
+   "st": "done",
    "what": "Your test of f88dc6b (\"The menu UI isnt working when I try to navigate the menu and its tabs\"): the word under a still mouse took the choice back from the keys every frame. Now the keys and the pad move the choice, and the mouse takes it only when it moves or clicks. Your binds: W up, S down, A left, D right and a click to select on keyboard and mouse (Enter, Space and E still select); the D-pad or the left stick (held, it repeats) and A / Cross on a controller. Skyrim's own cursor and ours are one now (the mouse's movement is never held back from it), so where you see the cursor is where it clicks.",
    "how": "Launch: W / S through the words, then move the mouse onto one and click; on a controller the D-pad, then the left stick (hold it), A to select. New, answer NO; Continue.",
    "look": "The keys move the choice even with the mouse resting on a word; the stick repeats while held; a click lands exactly under the cursor.",
-   "note": "Last test (f88dc6b): \"For controller the binds should be the dpad or left stick direction and X or A. the keybinds for keyboard and mouse should be W up S Down A Left and D Right with the mouse cursor click for selections\".",
+   "note": "Passed your test of 168adac. Since: the prompts along the bottom are gone (right-click, Esc or B backs out).",
    "since": "168adac"
   },
   {
    "id": "mn_msgbox",
    "sys": "menu",
    "t": "Skyrim's own boxes take the mouse",
-   "st": "ready",
+   "st": "done",
    "what": "Your screenshot: Skyrim's \"This save relies on Creations... Activate now?\" box over the menu took no clicks - the box came up on the controller's footing, and our cursor was drawn away from Skyrim's. Now each newly opened menu is told which you are using, a message box gets the mouse, and our cursor is Skyrim's own.",
    "how": "Load the save that asks about Creations (or any that asks a question); click Yes or No with the mouse.",
    "look": "The button under the cursor lights and takes the click.",
-   "note": "Last test (f88dc6b): \"in the screen shot my mouse cant select the options\".",
+   "note": "Passed your test of 168adac.",
    "since": "168adac"
   },
   {
    "id": "ld_menuembers",
    "sys": "menu",
    "t": "The main menu: embers, title, line",
-   "st": "ready",
+   "st": "done",
    "what": "Dense, real embers: sparks streaking up off the bottom, white-gold when born, cooling through orange to red as they climb, curled by a gusting wind (no circles, no blinking). The title's glow is a soft haze behind it (not eight blocky copies), and its orange line sits clear of the letters.",
    "how": "Launch and watch the menu for a while.",
    "look": "Fine sparks rising in drifts, not dots; a smooth glow behind the title; a gap between the letters and the line.",
-   "note": "Last test (2b534e1): \"more dense realistic embers not blinking circles in different sizes\"; \"behind the curse of alduin text it looks blocky\"; \"the bar ... should be gapped a little\".",
+   "note": "Passed your test of 168adac.",
    "since": "f88dc6b"
   },
   {
    "id": "ld_menuload",
    "sys": "menu",
-   "t": "The main menu: our Load",
+   "t": "Load: choose a save, then load or delete it",
    "st": "ready",
-   "what": "Every save on our own page: the character, level, place, date, autosave or save; the chosen one's picture (from the save file) with its race and time played; Delete (asked first - put aside in Saves\\Deleted, not destroyed) and a filter by character. Fixed from your test: the list no longer slides under a still mouse (the wheel scrolls it; the keys move the choice and the list follows), so the row under the cursor is the one chosen; and DELETE no longer answers its own question with the same click.",
-   "how": "LOAD: scroll with the wheel; point at a save; W / S and the D-pad; PgUp / PgDn or LB / RB through the characters. Click DELETE (or press Delete / X / Square) on an old save: NO, then again YES.",
-   "look": "The lit row is the one under the cursor; the question stays up until you answer; YES takes the save off the list.",
-   "note": "Last test (f88dc6b): \"in the load screen deleting a save doesnt work it closes the menu and the selection is not accurate to where the mouse cursor is\".",
-   "since": "168adac"
+   "what": "Your note on 168adac (it passed; then): a click, A / Cross or Enter chooses a save; the same again loads it. Once chosen, LOAD and DELETE stand under its picture (left / right or the mouse between them); DELETE asks first and puts the save aside in Saves\\Deleted. Square / Delete goes straight to the question; right-click, Esc or B lets the choice go, then leaves.",
+   "how": "LOAD: click a save, then click it again; choose another and press DELETE, NO; with the pad A, A; A, right, A.",
+   "look": "The chosen save lit with its bar, LOAD and DELETE under its picture; a second press loads.",
+   "note": "Your note (Nov 28): \"In the load menu left click on a save or X/A should select the save and pressing again should load it, that way players can select a save and choose to either load that save or delete the selected save\".",
+   "since": "f922230"
   },
   {
    "id": "ld_menusettings",
    "sys": "menu",
-   "t": "Settings: six tabs, in the menu and in game",
+   "t": "Settings: sliders you drag",
    "st": "ready",
-   "what": "Tabs on one page (your pick), now centred with the screen and SETTINGS (your note): GRAPHICS, DISPLAY, GAMEPLAY, CONTROLS, KEYBINDS, AUDIO. What needs a restart is saved at once and marked RESTART. In game the Esc menu's Settings opens this same page (your pick for the keybinds: \"Both\").",
-   "how": "SETTINGS from the main menu: Q / E (LB / RB) through the tabs, W / S a row, A / D or a click to change it, Esc to leave. Then in game: Esc, Settings - the same page; change something and Esc back to the game.",
-   "look": "The tab words centred under SETTINGS; the page in game is the menu's own.",
-   "note": "Your note on the preview: \"make the tab words Graphics Display Gameplay ect centered with the screen and the Settings word\".",
-   "since": "168adac"
+   "what": "Six tabs centred under SETTINGS, in the menu and from the Esc menu in game (passed on 168adac). New: hold the left button on a slider and it follows the cursor; the prompts at the foot are gone - click a tab to change it; right-click, Esc or B to leave.",
+   "how": "SETTINGS: drag Brightness and a volume; click through the tabs; right-click out.",
+   "look": "The slider moves smoothly with the cursor while held.",
+   "note": "Your note (Nov 28): \"make using the sliders with the cursor smooth by holding left click to drag the sliders\".",
+   "since": "f922230"
   },
   {
    "id": "mn_keys",
    "sys": "menu",
    "t": "Keybinds, keyboard & mouse and controller",
-   "st": "ready",
+   "st": "done",
    "what": "Your picks: the Curse's keys (a perk, the Thu'um, leaving and the dragon's bond at the altar, the Codex, the party) and Skyrim's controls (moving, jump, sprint, sneak, activate, attack and block, shout, the menus, the view, walk / run, quick save and load), each with a keyboard & mouse key and a controller button, every one changeable: choose it, press the new key (Esc cancels); Delete / X clears it; the same key twice shows red; RESET ALL TO DEFAULTS at the end. Skyrim's are kept in our file and put back each launch; the Mod Configuration menu shows the Curse's keyboard keys and stays in step. Moving on a controller stays the left stick.",
    "how": "Settings > KEYBINDS: change Jump to another key and the Codex to a controller button; play and use them; then RESET ALL.",
    "look": "The new keys work at once in game; Reset puts every key back.",
-   "note": "Your note (Nov 28): \"I also want to add a keybinds section for controller and keyboard and mouse in the menu settings and in game settings\".",
+   "note": "Passed your test of 168adac.",
    "since": "168adac"
   },
   {
    "id": "mn_switch",
    "sys": "menu",
    "t": "Keyboard and mouse stay in charge",
-   "st": "ready",
+   "st": "done",
    "what": "The log of your test showed the game flipping to the controller 40 ms after every mouse move - a controller lying on the desk. Now the controller counts only when really used (a stick pushed well over and held, or a button pressed and held); for half a second after the mouse or a key only a button does. That flipping was what you saw in game: menus ignoring the mouse, controller prompts, keys not answering and the cursor in the wrong place.",
    "how": "With the controller plugged in, play on keyboard and mouse: the inventory, the map, the Esc menu, the altar; then pick up the controller and press a button.",
    "look": "The mouse works everywhere and the prompts stay keyboard ones until the controller is used.",
-   "note": "Your answers (Nov 28): in game \"Menus ignore mouse, Switches to pad, Keys don't respond, Cursor wrong\".",
+   "note": "Passed your test of 168adac.",
    "since": "168adac"
   },
   {
    "id": "ld_menuparty",
    "sys": "menu",
-   "t": "The co-op party page, in our style",
+   "t": "The co-op party page, cleaner",
    "st": "ready",
-   "what": "The party on the menu (and in the Esc journal) in Ember Tally: the heading and line, your party's words (host, invite, join, leave), tonight's table, last night and your records; the keys at the foot. Your cursor is drawn over it.",
-   "how": "CO-OP PARTY on the main menu; P in the Esc journal; choose with the mouse, arrows or D-pad; Esc closes it.",
-   "look": "The same look as the menu; the cursor on top.",
-   "note": "Last test (2b534e1): \"the party UI needs to match our new UI Setup. My mouse cursor also stays behind the party UI\".",
-   "since": "f88dc6b"
+   "what": "Your note: the party is its own page now - the menu's title and words give way to it - laid out as the preview: the heading and line, your party's words in the middle, the night's table in even columns under a thin rule, last night and your records; no box. Right-click, Esc or B closes it.",
+   "how": "CO-OP PARTY on the main menu; then P in the Esc journal.",
+   "look": "Nothing of the menu behind it; the columns lined up under their headings.",
+   "note": "Your note (Nov 28): \"I want the stats part to look better and cleaner to match the UI in the Party Menu\".",
+   "since": "f922230"
   },
   {
    "id": "edge_out",
@@ -1213,6 +1213,61 @@
    "look": "The blue soul and number in the corner; the motes flying in; the gold +10 pops where they fell.",
    "note": "Your note (Nov 28): \"use the current Cursed essence UI our old blue look and kill pops\".",
    "since": "168adac"
+  },
+  {
+   "id": "mn_prompts",
+   "sys": "menu",
+   "t": "No prompts at the bottom of the menu",
+   "st": "ready",
+   "what": "Your note and pick: the key prompts along the bottom of the menu's pages are gone; right-click (or Esc / B) backs out of a page or a question. In Keybinds the chosen key has its own small x to clear it.",
+   "how": "Go through Load, Settings, Keybinds and the party with the mouse only, backing out with right-click.",
+   "look": "No prompts anywhere along the bottom; right-click always takes you back one step.",
+   "note": "Your note (Nov 28): \"I want to remove the control prompts that show up on the bottom of the screen in the menu\"; your pick: \"Right-click backs out\".",
+   "since": "f922230"
+  },
+  {
+   "id": "ui_shade",
+   "sys": "hud",
+   "t": "No black boxes behind the words",
+   "st": "ready",
+   "what": "Your note: the dark backing behind questions, the quest list and the menu's pages was a box with notched corners. Now it is a soft haze that thins out past the words, round at the corners.",
+   "how": "Press NEW on the main menu (the question); in game, track a quest (top left).",
+   "look": "No box edges or corners anywhere - only a soft darkness behind the words.",
+   "note": "Your note (Nov 28): \"I noticed these black background boxes on the pop ups and I also see this behind the quest UI in game on the top left of my screen\".",
+   "since": "f922230"
+  },
+  {
+   "id": "ui_compass",
+   "sys": "hud",
+   "t": "Compass larger and centred",
+   "st": "ready",
+   "what": "Your note: a third larger and wider, laid out from the screen's own middle, with a small ember notch under the line where you face.",
+   "how": "Look at the compass in play; turn to face a quest marker.",
+   "look": "Bigger letters, the marker sliding to the notch in the very middle.",
+   "note": "Your note (Nov 28): \"The compass needs to be a bit larger and centered with the screen\".",
+   "since": "f922230"
+  },
+  {
+   "id": "ui_tally",
+   "sys": "hud",
+   "t": "The tallies as carved runes",
+   "st": "ready",
+   "what": "Your picks: A, Carved runes - each mark a groove cut in stone, ember glowing deep in it, its lip chipped - and \"Cut in with sparks\": when a night begins its new mark is cut in stroke by stroke, a white-hot tip throwing sparks.",
+   "how": "Survive a night and watch the top left as the next begins.",
+   "look": "Textured grooves, not lines; the new one cut in with sparks.",
+   "note": "Your note (Nov 28): \"The tally marks themselves needs to look higher quality and textured with cool animations when starting a new night\".",
+   "since": "f922230"
+  },
+  {
+   "id": "ui_uses",
+   "sys": "hud",
+   "t": "The Tablet weapon's uses as a bar",
+   "st": "ready",
+   "what": "Your pick: A, a thin bar - the weapon's name and uses over a bar in its rarity colour, on the bars' line just left of the magicka bar (shorter, or raised, to keep clear of your brews); it blinks when nearly spent.",
+   "how": "Win a weapon at the Tablet and use it.",
+   "look": "The bar beside magicka, draining as you use it.",
+   "note": "Your note (Nov 28): \"the tablet weapons usage meter doesnt match the rest of the UI so it stands out\"; your pick: \"A but make its placement lined up next to the health bar on the left side of the screen so to the left of the Magika bar\".",
+   "since": "f922230"
   },
   {
    "id": "st_crash27",
@@ -1294,6 +1349,46 @@
  ],
  "decisions": [],
  "decided": [
+  {
+   "when": "2026-11-28",
+   "sys": "menu",
+   "q": "With the bottom-of-screen prompts gone, how should mouse players go back from a menu page?",
+   "pick": "Right-click backs out",
+   "where": "chat",
+   "done": "Right-click (or Esc / B) backs out of every page and question; no BACK word."
+  },
+  {
+   "when": "2026-11-28",
+   "sys": "hud",
+   "q": "The Tablet weapon's uses meter: which look?",
+   "pick": "A, a thin bar - \"lined up next to the health bar on the left side of the screen so to the left of the Magika bar\"",
+   "where": "chat",
+   "done": "Its name and uses over a thin rarity bar, just left of magicka."
+  },
+  {
+   "when": "2026-11-28",
+   "sys": "hud",
+   "q": "What should happen to the tallies when a new night starts?",
+   "pick": "Cut in with sparks",
+   "where": "chat",
+   "done": "The new mark is cut in stroke by stroke, a white-hot tip throwing sparks."
+  },
+  {
+   "when": "2026-11-28",
+   "sys": "hud",
+   "q": "Tally marks: which texture?",
+   "pick": "A Carved runes",
+   "where": "chat",
+   "done": "Grooves cut in stone with ember glowing inside (tools/tallytex.py)."
+  },
+  {
+   "when": "2026-11-28",
+   "sys": "hud",
+   "q": "The Cursed Essence preview, in its old blue look",
+   "pick": "Approve",
+   "where": "workshop",
+   "done": "In the game since 168adac."
+  },
   {
    "when": "2026-11-28",
    "sys": "hud",
@@ -1616,6 +1711,11 @@
   }
  ],
  "builds": [
+  {
+   "sha": "f922230",
+   "when": "2026-11-28 03:09",
+   "what": "Menu: no prompts, right-click backs out, sliders drag, Load chooses then loads (or deletes); the party as a page; soft shades; the save's loading screen from the start; a larger centred compass; carved-rune tallies cut in with sparks; the Tablet's uses as a bar left of magicka"
+  },
   {
    "sha": "168adac",
    "when": "2026-11-28 01:38",
@@ -6392,6 +6492,89 @@
      "note": "",
      "choice": "ok",
      "done": "Approved as previewed; the HUD leftovers are being built next."
+    }
+   ]
+  },
+  {
+   "build": "Your test of 168adac (Nov 28) - built as f922230",
+   "date": "2026-11-28",
+   "notes": [
+    {
+     "when": "2026-11-28 02:37",
+     "where": "test/ld_menuwords, ld_menuembers, ld_menuload, ld_menusettings, mn_keys, ld_menuparty, mn_msgbox, mn_switch",
+     "note": "",
+     "choice": "pass",
+     "done": "Marked done (the menu's keys and pad, the embers, Load, Settings, Keybinds, the party page, Skyrim's boxes taking the mouse, keyboard and mouse staying in charge)."
+    },
+    {
+     "when": "2026-11-28 02:54",
+     "where": "test/ld_continue (fail)",
+     "note": "The painting with embers only shows at the end of the load not the begining. in the begining its the normal loading screens with the player level on the top right of the screen.",
+     "choice": "fail",
+     "done": "The HUD returned early behind Skyrim's own loading screen once the main menu closed, so our cover only appeared when the world was in. It now stays up from the first moment."
+    },
+    {
+     "when": "2026-11-28 02:54",
+     "where": "chat/menu prompts",
+     "note": "I want to remove the control prompts that show up on the bottom of the screen in the menu",
+     "choice": "Right-click backs out",
+     "done": "Gone from every page and question; right-click, Esc or B backs out; Keybinds' chosen key has a small x to clear it."
+    },
+    {
+     "when": "2026-11-28 02:54",
+     "where": "chat/sliders",
+     "note": "make using the sliders with the cursor smooth by holding left click to drag the sliders.",
+     "choice": "",
+     "done": "A slider follows the cursor while the left button is held on it."
+    },
+    {
+     "when": "2026-11-28 02:54",
+     "where": "chat/party (screenshot)",
+     "note": "In the screen shot I want the stats part to look better and cleaner to match the UI in the Party Menu.",
+     "choice": "",
+     "done": "The party is its own page (the menu's title and words give way), laid out as the workshop preview: even columns under a thin rule, no box."
+    },
+    {
+     "when": "2026-11-28 02:54",
+     "where": "chat/load",
+     "note": "In the load menu left click on a save or X/A should select the save and pressing again should load it, that way players can select a save and choose to either load that save or delete the selected save.",
+     "choice": "",
+     "done": "Choose, then press again to load; LOAD and DELETE stand under the chosen save's picture."
+    },
+    {
+     "when": "2026-11-28 02:54",
+     "where": "chat/boxes (screenshot)",
+     "note": "In the second screen shot I noticed these black background boxes on the pop ups and I also see this behind the quest UI in game on the top left of my screen.",
+     "choice": "",
+     "done": "The backing is a soft rounded haze now, everywhere it was used (questions, the quest list, the pages)."
+    },
+    {
+     "when": "2026-11-28 02:54",
+     "where": "chat/compass",
+     "note": "The compass needs to be a bit larger and centered with the screen.",
+     "choice": "",
+     "done": "A third larger and wider, laid out from the screen's middle, an ember notch where you face."
+    },
+    {
+     "when": "2026-11-28 02:54",
+     "where": "chat/tallies",
+     "note": "The tally marks themselves needs to look higher quality and textured with cool animations when starting a new night",
+     "choice": "A Carved runes; Cut in with sparks",
+     "done": "Carved-rune grooves with ember inside; the new mark cut in with a white-hot tip and sparks."
+    },
+    {
+     "when": "2026-11-28 02:54",
+     "where": "chat/tablet uses",
+     "note": "the tablet weapons usage meter doesnt match the rest of the UI so it stands out.",
+     "choice": "A - to the left of the Magicka bar",
+     "done": "Its name and uses over a thin rarity bar, just left of magicka, clear of the brews."
+    },
+    {
+     "when": "2026-11-28 02:46",
+     "where": "ui/essence",
+     "note": "",
+     "choice": "ok",
+     "done": "Approved; in the game since 168adac."
     }
    ]
   }
@@ -11792,7 +11975,7 @@
   ]
  },
  "modnow": {
-  "updated": "Nov 28 2026 (build 168adac)",
+  "updated": "Nov 28 2026 (build f922230)",
   "about": "Everything the mod is, as built - kept in the repo (docs/workshop/modnow.json) and updated with every build. The workshop's \"The mod now\" tab is drawn from it.",
   "sections": [
    [
@@ -11818,7 +12001,7 @@
    [
     "New character",
     [
-     "One loading screen from NEW to the character creator (sliders only, by body area); our own launch screen (the Alduin painting) and menu music; the main menu in Ember Tally, ours entirely (Nov 27): the painting, rising sparks, the title and our own words, moved by W/S/A/D and a click, or the D-pad / left stick and A (Nov 28); our own Load (each save's picture, Delete, a filter by character), Settings (Graphics, Display, Gameplay, Controls, <b>Keybinds</b>, Audio - restart settings marked; the same page from the Esc menu's Settings in game) and co-op party page, and Skyrim's questions in our words.",
+     "One loading screen from NEW to the character creator (sliders only, by body area); our own launch screen (the Alduin painting) and menu music; the main menu in Ember Tally, ours entirely (Nov 27): the painting, rising sparks, the title and our own words, moved by W/S/A/D and a click, or the D-pad / left stick and A, with no prompts along the bottom - right-click, Esc or B backs out (Nov 28); Settings' sliders dragged with the mouse; our own Load (choose a save, then LOAD or DELETE it; each save's picture; a filter by character), Settings (Graphics, Display, Gameplay, Controls, <b>Keybinds</b>, Audio - restart settings marked; the same page from the Esc menu's Settings in game) and co-op party page, and Skyrim's questions in our words.",
      "At Riverwood you choose your Helgen companion (<b>Ralof or Hadvar</b>) and <b>Survival Mode</b> on or off. No starting weapons. Skyrim's own underwear on both bodies (3BA, HIMBO).",
      "The class is chosen later, at the Echo Altar (changing it costs 50,000 Cursed Essence; one shared inventory)."
     ]
@@ -11937,10 +12120,11 @@
    [
     "The screen",
     [
-     "Ember Tally throughout, in one font - <b>Philosopher</b> (Nov 28) - for every word we draw; Edge UI still draws its HUD leftovers and Skyrim's other menus until each is replaced (then it comes out). The night counter is a glowing ember number inside the red moon; beside it the wave and the dead left. The <b>Cursed Essence</b> in its blue look bottom right, each kill's essence flying in and a gold pop where it fell.",
+     "Ember Tally throughout, in one font - <b>Philosopher</b> (Nov 28) - for every word we draw; Edge UI still draws its HUD leftovers and Skyrim's other menus until each is replaced (then it comes out). The night's tallies carved in stone with ember glowing inside, the new one cut in with sparks; the compass larger, centred, a notch where you face; no dark boxes behind words (a soft haze). The <b>Cursed Essence</b> in its blue look bottom right, each kill's essence flying in and a gold pop where it fell.",
      "Only these pop-ups: the Carian Wand and Mutagen Staff hints, the Dragon Priest slain card, and the small callouts (essence, style tags, round tally, hit marker). No crosshair marks.",
      "The MCM: subtitles on/off and size, Echo Altar voice volume, screen shake and the rest.",
-     "<b>Keybinds</b> (Nov 28): the Curse's keys (perk, Thu'um, leave and bond at the altar, the Codex, the party) and Skyrim's controls, keyboard & mouse and controller, every one rebindable. Keyboard & mouse and controller switch by which you really use (a controller left on the desk doesn't take over)."
+     "<b>Keybinds</b> (Nov 28): the Curse's keys (perk, Thu'um, leave and bond at the altar, the Codex, the party) and Skyrim's controls, keyboard & mouse and controller, every one rebindable. Keyboard & mouse and controller switch by which you really use (a controller left on the desk doesn't take over).",
+     "The Tablet weapon's uses: its name and uses over a thin bar in its rarity colour, left of the magicka bar."
     ]
    ],
    [

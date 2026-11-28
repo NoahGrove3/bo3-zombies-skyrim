@@ -25,9 +25,8 @@
 /* ================= A: Ember Tally - BO3's places and punch, in Skyrim's fire ================= */
 .dA .c-night { left: 2.4%; top: 3.6%; display: grid; gap: calc(.25 * var(--u)); }
 .dA .c-night small { font-size: calc(.62 * var(--u)); letter-spacing: .45em; color: #e6d6bb; font-weight: 600; text-shadow: 0 1px 2px #000; }
-.dA .c-night .tally { display: block; height: calc(4.6 * var(--u)); width: auto; max-width: calc(22 * var(--u)); filter: drop-shadow(0 0 calc(.45 * var(--u)) rgba(232,90,40,.85)); }
-.dA .c-night .tally .t1 { stroke: #ff7a3c; stroke-width: 5.5; stroke-linecap: round; fill: none; }
-.dA .c-night .tally .t2 { stroke: #ffe0bd; stroke-width: 1.6; stroke-linecap: round; fill: none; opacity: .85; }
+.dA .c-night .tally { display: block; height: calc(4.6 * var(--u)); width: auto; max-width: calc(22 * var(--u)); filter: drop-shadow(0 0 calc(.35 * var(--u)) rgba(232,90,40,.7)); }
+.stage.play .c-night .tally .cut image { animation: cutin 1.4s ease-out both; } @keyframes cutin { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
 .dA .c-night .sub { font-size: calc(.72 * var(--u)); letter-spacing: .14em; color: #e6d6bb; text-transform: uppercase; font-weight: 600; text-shadow: 0 1px 2px #000; }
 .dA .c-quests { left: 2.4%; top: 17.5%; width: calc(17 * var(--u)); display: grid; gap: calc(.7 * var(--u)); }
 .dA .c-quests .q { display: grid; gap: calc(.15 * var(--u)); }
@@ -315,3 +314,14 @@
 .stage .m-new .mmodel { display: grid; justify-items: center; gap: calc(.4 * var(--u)); margin-top: calc(.6 * var(--u)); padding-top: calc(.8 * var(--u)); border-top: calc(.08 * var(--u)) solid var(--edge); }
 .stage .m-new .mmodel img { height: calc(13 * var(--u)); filter: drop-shadow(0 0 calc(.8 * var(--u)) rgba(140,110,255,.45)); }
 .stage .m-new .mmodel small { font-size: calc(.55 * var(--u)) !important; letter-spacing: .25em !important; color: var(--txt) !important; opacity: .7; }
+
+/* (Noah, Nov 28) the Tablet weapon's uses: a thin bar left of magicka */
+.dA .c-uses { position: absolute; left: 10.6%; width: 11.6%; bottom: 5.2%; display: grid; gap: calc(.2 * var(--u)); }
+.dA .c-uses .uh { display: flex; justify-content: space-between; align-items: baseline; } .dA .c-uses b { font-size: calc(.66 * var(--u)); letter-spacing: .18em; color: #f5e2b8; } .dA .c-uses em { font-style: normal; font-weight: 700; font-size: calc(.74 * var(--u)); color: var(--c); }
+.dA .c-uses i { display: block; height: calc(.32 * var(--u)); background: linear-gradient(90deg, var(--c) var(--v), rgba(255,255,255,.16) var(--v)); box-shadow: 0 0 calc(.4 * var(--u)) color-mix(in srgb, var(--c) 45%, transparent); }
+.dA .c-uses small { font-size: calc(.5 * var(--u)); letter-spacing: .4em; color: #e6d6bb; }
+/* (Noah, Nov 28) the Load page: the chosen save's LOAD and DELETE */
+.dA .c-mpage .mpb { display: flex; gap: calc(3 * var(--u)); margin-top: calc(1 * var(--u)); } .dA .c-mpage .mpb span { font-size: calc(1.45 * var(--u)); letter-spacing: .35em; color: #dccfb9; } .dA .c-mpage .mpb span.on { color: #ff7a3c; text-shadow: 0 0 calc(.5 * var(--u)) rgba(232,90,40,.6); } .dA .c-mpage .mpb span.del { color: #e6786a; }
+/* (Noah, Nov 28) the compass: a third larger, from the screen's middle, a notch where you face */
+.dA .c-comp { left: 29% !important; right: 29% !important; font-size: calc(1.01 * var(--u)) !important; }
+.dA .c-comp::after { content: ""; position: absolute; left: 50%; bottom: calc(-.5 * var(--u)); transform: translateX(-50%); border: calc(.3 * var(--u)) solid transparent; border-bottom-color: #ff7a3c; }

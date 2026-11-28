@@ -805,5 +805,88 @@
     "done": "Approved as previewed; the HUD leftovers are being built next."
    }
   ]
+ },
+ {
+  "build": "Your test of 168adac (Nov 28) - built as f922230",
+  "date": "2026-11-28",
+  "notes": [
+   {
+    "when": "2026-11-28 02:37",
+    "where": "test/ld_menuwords, ld_menuembers, ld_menuload, ld_menusettings, mn_keys, ld_menuparty, mn_msgbox, mn_switch",
+    "note": "",
+    "choice": "pass",
+    "done": "Marked done (the menu's keys and pad, the embers, Load, Settings, Keybinds, the party page, Skyrim's boxes taking the mouse, keyboard and mouse staying in charge)."
+   },
+   {
+    "when": "2026-11-28 02:54",
+    "where": "test/ld_continue (fail)",
+    "note": "The painting with embers only shows at the end of the load not the begining. in the begining its the normal loading screens with the player level on the top right of the screen.",
+    "choice": "fail",
+    "done": "The HUD returned early behind Skyrim's own loading screen once the main menu closed, so our cover only appeared when the world was in. It now stays up from the first moment."
+   },
+   {
+    "when": "2026-11-28 02:54",
+    "where": "chat/menu prompts",
+    "note": "I want to remove the control prompts that show up on the bottom of the screen in the menu",
+    "choice": "Right-click backs out",
+    "done": "Gone from every page and question; right-click, Esc or B backs out; Keybinds' chosen key has a small x to clear it."
+   },
+   {
+    "when": "2026-11-28 02:54",
+    "where": "chat/sliders",
+    "note": "make using the sliders with the cursor smooth by holding left click to drag the sliders.",
+    "choice": "",
+    "done": "A slider follows the cursor while the left button is held on it."
+   },
+   {
+    "when": "2026-11-28 02:54",
+    "where": "chat/party (screenshot)",
+    "note": "In the screen shot I want the stats part to look better and cleaner to match the UI in the Party Menu.",
+    "choice": "",
+    "done": "The party is its own page (the menu's title and words give way), laid out as the workshop preview: even columns under a thin rule, no box."
+   },
+   {
+    "when": "2026-11-28 02:54",
+    "where": "chat/load",
+    "note": "In the load menu left click on a save or X/A should select the save and pressing again should load it, that way players can select a save and choose to either load that save or delete the selected save.",
+    "choice": "",
+    "done": "Choose, then press again to load; LOAD and DELETE stand under the chosen save's picture."
+   },
+   {
+    "when": "2026-11-28 02:54",
+    "where": "chat/boxes (screenshot)",
+    "note": "In the second screen shot I noticed these black background boxes on the pop ups and I also see this behind the quest UI in game on the top left of my screen.",
+    "choice": "",
+    "done": "The backing is a soft rounded haze now, everywhere it was used (questions, the quest list, the pages)."
+   },
+   {
+    "when": "2026-11-28 02:54",
+    "where": "chat/compass",
+    "note": "The compass needs to be a bit larger and centered with the screen.",
+    "choice": "",
+    "done": "A third larger and wider, laid out from the screen's middle, an ember notch where you face."
+   },
+   {
+    "when": "2026-11-28 02:54",
+    "where": "chat/tallies",
+    "note": "The tally marks themselves needs to look higher quality and textured with cool animations when starting a new night",
+    "choice": "A Carved runes; Cut in with sparks",
+    "done": "Carved-rune grooves with ember inside; the new mark cut in with a white-hot tip and sparks."
+   },
+   {
+    "when": "2026-11-28 02:54",
+    "where": "chat/tablet uses",
+    "note": "the tablet weapons usage meter doesnt match the rest of the UI so it stands out.",
+    "choice": "A - to the left of the Magicka bar",
+    "done": "Its name and uses over a thin rarity bar, just left of magicka, clear of the brews."
+   },
+   {
+    "when": "2026-11-28 02:46",
+    "where": "ui/essence",
+    "note": "",
+    "choice": "ok",
+    "done": "Approved; in the game since 168adac."
+   }
+  ]
  }
 ]

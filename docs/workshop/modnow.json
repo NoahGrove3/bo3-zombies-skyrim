@@ -1,5 +1,5 @@
 {
- "updated": "Nov 28 2026 (build 168adac)",
+ "updated": "Nov 28 2026 (build f922230)",
  "about": "Everything the mod is, as built - kept in the repo (docs/workshop/modnow.json) and updated with every build. The workshop's \"The mod now\" tab is drawn from it.",
  "sections": [
   [
@@ -25,7 +25,7 @@
   [
    "New character",
    [
-    "One loading screen from NEW to the character creator (sliders only, by body area); our own launch screen (the Alduin painting) and menu music; the main menu in Ember Tally, ours entirely (Nov 27): the painting, rising sparks, the title and our own words, moved by W/S/A/D and a click, or the D-pad / left stick and A (Nov 28); our own Load (each save's picture, Delete, a filter by character), Settings (Graphics, Display, Gameplay, Controls, <b>Keybinds</b>, Audio - restart settings marked; the same page from the Esc menu's Settings in game) and co-op party page, and Skyrim's questions in our words.",
+    "One loading screen from NEW to the character creator (sliders only, by body area); our own launch screen (the Alduin painting) and menu music; the main menu in Ember Tally, ours entirely (Nov 27): the painting, rising sparks, the title and our own words, moved by W/S/A/D and a click, or the D-pad / left stick and A, with no prompts along the bottom - right-click, Esc or B backs out (Nov 28); Settings' sliders dragged with the mouse; our own Load (choose a save, then LOAD or DELETE it; each save's picture; a filter by character), Settings (Graphics, Display, Gameplay, Controls, <b>Keybinds</b>, Audio - restart settings marked; the same page from the Esc menu's Settings in game) and co-op party page, and Skyrim's questions in our words.",
     "At Riverwood you choose your Helgen companion (<b>Ralof or Hadvar</b>) and <b>Survival Mode</b> on or off. No starting weapons. Skyrim's own underwear on both bodies (3BA, HIMBO).",
     "The class is chosen later, at the Echo Altar (changing it costs 50,000 Cursed Essence; one shared inventory)."
    ]
@@ -144,10 +144,11 @@
   [
    "The screen",
    [
-    "Ember Tally throughout, in one font - <b>Philosopher</b> (Nov 28) - for every word we draw; Edge UI still draws its HUD leftovers and Skyrim's other menus until each is replaced (then it comes out). The night counter is a glowing ember number inside the red moon; beside it the wave and the dead left. The <b>Cursed Essence</b> in its blue look bottom right, each kill's essence flying in and a gold pop where it fell.",
+    "Ember Tally throughout, in one font - <b>Philosopher</b> (Nov 28) - for every word we draw; Edge UI still draws its HUD leftovers and Skyrim's other menus until each is replaced (then it comes out). The night's tallies carved in stone with ember glowing inside, the new one cut in with sparks; the compass larger, centred, a notch where you face; no dark boxes behind words (a soft haze). The <b>Cursed Essence</b> in its blue look bottom right, each kill's essence flying in and a gold pop where it fell.",
     "Only these pop-ups: the Carian Wand and Mutagen Staff hints, the Dragon Priest slain card, and the small callouts (essence, style tags, round tally, hit marker). No crosshair marks.",
     "The MCM: subtitles on/off and size, Echo Altar voice volume, screen shake and the rest.",
-    "<b>Keybinds</b> (Nov 28): the Curse's keys (perk, Thu'um, leave and bond at the altar, the Codex, the party) and Skyrim's controls, keyboard & mouse and controller, every one rebindable. Keyboard & mouse and controller switch by which you really use (a controller left on the desk doesn't take over)."
+    "<b>Keybinds</b> (Nov 28): the Curse's keys (perk, Thu'um, leave and bond at the altar, the Codex, the party) and Skyrim's controls, keyboard & mouse and controller, every one rebindable. Keyboard & mouse and controller switch by which you really use (a controller left on the desk doesn't take over).",
+    "The Tablet weapon's uses: its name and uses over a thin bar in its rarity colour, left of the magicka bar."
    ]
   ],
   [

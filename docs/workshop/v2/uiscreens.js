@@ -3,13 +3,15 @@
 // screen is made of the same parts (the night, the quests, the essence...), and the direction picked styles those parts
 // (Ember Tally .dA, Dragonbone .dD, Echo Glass .dE) - so picking a direction redraws every screen in it.
 const ROMAN = n => { const r = [[10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']]; let s = ''; for (const [v, c] of r) while (n >= v) { s += c; n -= v; } return s; };
-function tallySvg(n) {   // BO3's round tally - four strokes and a slash through them - scratched like runes, in ember
+function tallySvg(n) {   // BO3's round tally - four strokes and a slash through them - (Noah, Nov 28: "Carved runes") cut in stone, ember deep in each groove
   let s = '', x = 6; const r = i => ((Math.sin(i * 12.9898 + 3.1) * 43758.5453) % 1 + 1) % 1;
+  const seg = (k, x0, y0, x1, y1, last) => { const L = Math.hypot(x1 - x0, y1 - y0), a = Math.atan2(y1 - y0, x1 - x0) * 180 / Math.PI;
+    return `<g transform="translate(${x0} ${y0}) rotate(${a})"${last ? ' class="cut"' : ''}><image href="${ART('tally_' + (k % 4) + '.png')}" x="0" y="-7" width="${L}" height="14" preserveAspectRatio="none"/></g>`; };
   for (let i = 0; i < n; i++) {
-    if (i % 5 === 4) { const x0 = x - 4 * 13 - 3; s += `<path d="M${x0} ${44 - r(i) * 5} L${x - 8} ${17 + r(i + 3) * 4}"/>`; x += 15; continue; }
-    s += `<path d="M${x + r(i) * 3} ${8 + r(i + 1) * 5} L${x + 2 - r(i + 2) * 3} ${54 - r(i + 5) * 5}"/>`; x += 13;
+    if (i % 5 === 4) { const x0 = x - 4 * 13 - 3; s += seg(i, x0, 44 - r(i) * 5, x - 8, 17 + r(i + 3) * 4, i === n - 1); x += 15; continue; }
+    s += seg(i, x + r(i) * 3, 8 + r(i + 1) * 5, x + 2 - r(i + 2) * 3, 54 - r(i + 5) * 5, i === n - 1); x += 13;
   }
-  return `<svg class="tally" viewBox="0 0 ${x + 6} 62" preserveAspectRatio="xMinYMid meet" aria-hidden="true"><g class="t1">${s}</g><g class="t2">${s}</g></svg>`;
+  return `<svg class="tally" viewBox="0 0 ${x + 6} 62" preserveAspectRatio="xMinYMid meet" aria-hidden="true">${s}</svg>`;
 }
 const UIP = {
   night: (n, wave, left) => `<div class="c-night"><small>NIGHT</small>${tallySvg(n)}<b class="num">${n}</b><b class="rom">${ROMAN(n)}</b><span class="sub">Wave ${wave} &middot; ${left} left</span></div>`,
@@ -32,6 +34,8 @@ const UIP = {
   panel: (title, rows, cls) => `<div class="c-panel ${cls || ''}"><div class="ph">${title}</div>${rows.map(([a, b, on]) => `<div class="row${on ? ' on' : ''}"><span>${a}</span><em>${b || ''}</em></div>`).join('')}</div>`,
   text: (title, body, cls) => `<div class="c-panel ${cls || ''}"><div class="ph">${title}</div><p>${body}</p></div>`,
   dim: () => `<div class="c-dim"></div>`,
+  // (Noah, Nov 28: his pick A, "lined up next to the health bar on the left side of the screen so to the left of the Magika bar")
+  uses: (name, n, v, col) => `<div class="c-uses" style="--c:${col}"><div class="uh"><b>${name}</b><em>${n}</em></div><i style="--v:${v * 100}%"></i><small>USES</small></div>`,
   rings: list => `<div class="c-rings">${list.map(([v, t]) => `<span><i style="--v:${v * 100}%"></i>${t}</span>`).join('')}</div>`,
   countdown: (n) => `<div class="c-center count"><small>THE NIGHT BEGINS IN</small><b>${n}</b></div>`,
   classes: (list, on) => `<div class="c-classes">${list.map(([a, b], i) => `<div class="${i === on ? 'on' : ''}"><b>${a}</b><span>${b}</span></div>`).join('')}</div>`,
@@ -55,7 +59,7 @@ const UIP = {
   // (Noah, Nov 27 test of 2b534e1: the main menu's own pages, in the same look - Load, Settings, the party, its questions)
   mload: () => `<div class="c-mpage"><div class="mph"><b>LOAD</b><i></i></div><div class="mpf">&lsaquo;&nbsp;&nbsp; ALL CHARACTERS &nbsp;&nbsp;&rsaquo;</div>
     <div class="mpl">${[['PRISONER', 'Level 24 &middot; Whiterun', 'Nov 27, 2026  11:04 PM', 'SAVE', 1], ['PRISONER', 'Level 24 &middot; Dragonsreach', 'Nov 27, 2026  10:41 PM', 'AUTOSAVE'], ['PRISONER', 'Level 23 &middot; Riverwood', 'Nov 26, 2026  09:12 PM', 'SAVE'], ['ARVEL', 'Level 7 &middot; Helgen', 'Nov 25, 2026  06:30 PM', 'SAVE'], ['ARVEL', 'Level 6 &middot; Bleak Falls Barrow', 'Nov 25, 2026  05:58 PM', 'AUTOSAVE']].map(([n, l, d, t, on]) => `<div class="mr${on ? ' on' : ''}"><b>${n}</b><em>${d}</em><span>${l}</span><small class="${t === 'AUTOSAVE' ? 'auto' : ''}">${t}</small></div>`).join('')}</div>
-    <div class="mpd"><div class="shot" style="background-image:url('frames/village.jpg')"></div><b>PRISONER</b><span>Level 24 &middot; Dark Elf</span><span>Whiterun</span><small>Nov 27, 2026  11:04 PM &middot; Played 14h 22m</small></div></div>` + MHINTS([['ENTER', 'LOAD'], ['DEL', 'DELETE'], ['PGUP PGDN', 'CHARACTER'], ['ESC', 'BACK']]),
+    <div class="mpd"><div class="shot" style="background-image:url('frames/village.jpg')"></div><b>PRISONER</b><span>Level 24 &middot; Dark Elf</span><span>Whiterun</span><small>Nov 27, 2026  11:04 PM &middot; Played 14h 22m</small><div class="mpb"><span class="on">LOAD</span><span class="del">DELETE</span></div></div></div>` + MHINTS([['ENTER', 'LOAD'], ['DEL', 'DELETE'], ['PGUP PGDN', 'CHARACTER'], ['ESC', 'BACK']]),
   msettings: () => `<div class="c-mpage"><div class="mph"><b>SETTINGS</b><i></i></div><div class="mpt">${['GRAPHICS', 'DISPLAY', 'GAMEPLAY', 'CONTROLS', 'KEYBINDS', 'AUDIO'].map((t, i) => `<span class="${i === 1 ? 'on' : ''}">${t}</span>`).join('')}</div>
     <div class="mps">${[['RESOLUTION', '2560 x 1600', 0, 1, 1], ['DISPLAY MODE', 'BORDERLESS', 0, 1], ['FRAME RATE CAP', '120', 0, 0], ['VSYNC', 'OFF', 0, 0], ['FIELD OF VIEW - FIRST PERSON', '130', .89], ['FIELD OF VIEW - THIRD PERSON', '120', .74]].map(([l, v, sl, rs, on]) => `<div class="ms${on ? ' on' : ''}"><b>${l}${rs ? '<small>RESTART</small>' : ''}</b>${sl ? `<i style="--v:${sl * 100}%"></i><em>${v}</em>` : `<em class="ch">&lsaquo;&nbsp; ${v} &nbsp;&rsaquo;</em>`}</div>`).join('')}</div>
     <p class="mpn">Settings marked RESTART take effect the next time you start Skyrim.</p></div>` + MHINTS([['Q  E', 'TAB'], ['ARROWS', 'CHANGE'], ['ESC', 'BACK']]),
@@ -82,7 +86,8 @@ function EMBERS() {
   }
   return `<div class="c-embers" aria-hidden="true">${s}</div>`;
 }
-const MHINTS = list => `<div class="c-mhints">${list.map(([k, w]) => `<span><kbd>${k}</kbd>${w}</span>`).join('')}</div>`;
+// (Noah, Nov 28: "remove the control prompts that show up on the bottom of the screen in the menu" - right-click / Esc / B back out)
+const MHINTS = list => '';
 // the HUD of a night, as it stands (every night screen starts from it)
 const NIGHT_HUD = () => UIP.night(12, 3, 17) + UIP.quests([['BEFORE THE STORM', 'Talk to the Jarl of Whiterun']]) + UIP.compass() + UIP.essence('12,480') + UIP.brews(4);
 // [group id, group name, [[id, name, what it is, frame, draw]]] - frame: the real still behind it (frames/<name>.jpg)
@@ -104,7 +109,7 @@ const UI_SCREENS = [
     ['e_notify', 'Quest and location notices (now Edge UI\'s)', 'To replace Edge UI: Quest started / completed, a place discovered - small capitals in ember over the name, under the compass, fading in and out.', 'night2', () => UIP.compass() + UIP.notify('QUEST STARTED', 'Before the Storm')],
     ['e_levelup', 'Level up notice (now Edge UI\'s)', 'To replace Edge UI: LEVEL UP small, your new level large in gold, the skill that raised it under it - top centre for 3 s.', 'village', () => UIP.compass() + UIP.levelup(25, 'Destruction rose to 62')],
     ['e_prompt', 'Activate prompts (now Edge UI\'s)', 'To replace Edge UI: what Activate does on Skyrim\'s own things (open, talk, take) in the same style as ours at the altar.', 'village', () => UIP.prompt('E', 'Open  &middot;  Chest')],
-    ['weapon', 'A Tablet weapon\'s uses', 'Your note: beside the stamina bar on the right, clear of everything: the uses left as a small ring, in the weapon\'s rarity colour.', 'firstperson', () => UIP.rings([[0.66, 'USES 66']])],
+    ['weapon', 'A Tablet weapon\'s uses', 'Your pick (Nov 28): A, a thin bar - the weapon\'s name and uses over a bar in its rarity colour, on the bars\' line just left of magicka (it shortens, or rises, to keep clear of your brews).', 'firstperson', () => UIP.uses('STORMTALONS', 66, 0.66, '#a84dff')],
   ]],
   ['pop', 'Pop-ups and words', [
     ['slain', 'Dragon Priest slain', 'The relic card: the priest\'s name and the relic you received.', 'boss', () => UIP.card('DRAGON PRIEST SLAIN', 'Vahlok the Jailor', 'Jailor\'s Keyhammer received')],
