@@ -78,12 +78,16 @@ float TFade(float a_left, float a_total, float a_in = 0.35f, float a_out = 0.6f)
 // a smoked shadow fading out on every side behind a block of words (no box)
 void TShade(ImDrawList* dl, ImVec2 a, ImVec2 b, float a_pad, float a_alpha)
 {
-	const ImU32 dark = IM_COL32(8, 5, 3, static_cast<int>(150 * a_alpha)), clear = IM_COL32(8, 5, 3, 0);
-	dl->AddRectFilled(a, b, dark);
-	dl->AddRectFilledMultiColor({ a.x - a_pad, a.y }, { a.x, b.y }, clear, dark, dark, clear);
-	dl->AddRectFilledMultiColor({ b.x, a.y }, { b.x + a_pad, b.y }, dark, clear, clear, dark);
-	dl->AddRectFilledMultiColor({ a.x, a.y - a_pad }, { b.x, a.y }, clear, clear, dark, dark);
-	dl->AddRectFilledMultiColor({ a.x, b.y }, { b.x, b.y + a_pad }, dark, dark, clear, clear);
+	// (Noah, Nov 28: "I noticed these black background boxes on the pop ups and I also see this behind the quest UI") no box: a soft
+	// dark haze that thins out past its edges, round at the corners - many faint rounded layers, each a little larger
+	constexpr int kLayers = 16;
+	const int per = std::max(1, static_cast<int>(std::lround(15.0f * a_alpha)));
+	for (int i = 0; i < kLayers; ++i) {
+		const float t = static_cast<float>(i) / static_cast<float>(kLayers - 1);   // 0 the outermost .. 1 the innermost
+		const float e = a_pad * (1.0f - t) - a_pad * 0.35f * t;
+		if (b.x - a.x + 2 * e <= 1.0f || b.y - a.y + 2 * e <= 1.0f) continue;
+		dl->AddRectFilled({ a.x - e, a.y - e }, { b.x + e, b.y + e }, IM_COL32(8, 5, 3, per), a_pad * 0.6f + std::max(0.0f, e));
+	}
 }
 // a thin bar: a dark trough and its fill
 void TBar(ImDrawList* dl, ImVec2 a, float w, float h, float v, ImU32 fill, ImU32 trough = IM_COL32(255, 255, 255, 41), bool a_glow = false)
@@ -112,6 +116,9 @@ float TallyWidth(int n, float a_h)
 }
 void TallyMarks(ImDrawList* dl, ImVec2 p, float a_h, int n, float a_new, float a_alpha)
 {
+	// (Noah, Nov 28: "The tally marks themselves needs to look higher quality and textured with cool animations when starting a new
+	// night" - his picks: A, Carved runes; "Cut in with sparks") each mark a groove cut in stone with ember glowing deep in it
+	// (tools/tallytex.py, four strokes), laid along its mark; the newest is cut in stroke by stroke, sparks flying off the chisel
 	const float s = a_h / 62.0f;
 	const auto r = [](int i) { const double v = std::sin(i * 12.9898 + 3.1) * 43758.5453; return static_cast<float>(v - std::floor(v)); };
 	struct Seg { ImVec2 a, b; };
@@ -127,16 +134,44 @@ void TallyMarks(ImDrawList* dl, ImVec2 p, float a_h, int n, float a_new, float a
 		segs.push_back({ { x + r(i) * 3, 8 + r(i + 1) * 5 }, { x + 2 - r(i + 2) * 3, 54 - r(i + 5) * 5 } });
 		x += 13;
 	}
+	const float now = static_cast<float>(ImGui::GetTime());
 	for (std::size_t i = 0; i < segs.size(); ++i) {
-		auto a = segs[i].a, b = segs[i].b;
-		if (i + 1 == segs.size() && a_new < 1.0f) b = { a.x + (b.x - a.x) * a_new, a.y + (b.y - a.y) * a_new };   // (the newest cut in)
+		const bool newest = i + 1 == segs.size() && a_new < 1.0f;
+		const float cut = newest ? std::clamp(a_new, 0.0f, 1.0f) : 1.0f;
+		const auto a = segs[i].a, b0 = segs[i].b;
+		const ImVec2 b{ a.x + (b0.x - a.x) * cut, a.y + (b0.y - a.y) * cut };
 		const ImVec2 A{ p.x + a.x * s, p.y + a.y * s }, B{ p.x + b.x * s, p.y + b.y * s };
-		// (drop-shadow .45u of rgba(232,90,40,.85): a soft ember glow round each stroke)
-		dl->AddLine(A, B, IM_COL32(232, 90, 40, static_cast<int>(40 * a_alpha)), 13.0f * s);
-		dl->AddLine(A, B, IM_COL32(232, 90, 40, static_cast<int>(70 * a_alpha)), 9.0f * s);
-		dl->AddLine(A, B, Fade(kTAcc, a_alpha), 5.5f * s);
-		dl->AddLine(A, B, IM_COL32(255, 224, 189, static_cast<int>(217 * a_alpha)), 1.6f * s);
-		for (const ImVec2 c : { A, B }) dl->AddCircleFilled(c, 2.75f * s, Fade(kTAcc, a_alpha), 10);   // (round caps)
+		const float L = std::hypot(B.x - A.x, B.y - A.y);
+		if (L < 0.5f) continue;
+		// the ember's glow round the groove (brighter on the one being cut)
+		const float hot = newest ? 1.6f : 1.0f;
+		dl->AddLine(A, B, IM_COL32(232, 90, 40, static_cast<int>(std::min(255.0f, 34 * hot * a_alpha))), 16.0f * s);
+		dl->AddLine(A, B, IM_COL32(232, 90, 40, static_cast<int>(std::min(255.0f, 52 * hot * a_alpha))), 9.0f * s);
+		if (g_tallyTex) {
+			const ImVec2 d{ (B.x - A.x) / L, (B.y - A.y) / L }, nrm{ -d.y, d.x };
+			const float T = 14.0f * s * 0.5f;
+			const float v0 = static_cast<float>(i % 4) / 4.0f, v1 = v0 + 0.25f;
+			// (the texture's stroke starts and ends in points: a cut half-way shows the stroke's first part, its tip still sharp)
+			dl->AddImageQuad(ImTextureID(reinterpret_cast<std::uintptr_t>(g_tallyTex)),
+				{ A.x - nrm.x * T, A.y - nrm.y * T }, { B.x - nrm.x * T, B.y - nrm.y * T }, { B.x + nrm.x * T, B.y + nrm.y * T }, { A.x + nrm.x * T, A.y + nrm.y * T },
+				{ 0.0f, v0 }, { cut, v0 }, { cut, v1 }, { 0.0f, v1 }, IM_COL32(255, 255, 255, static_cast<int>(255 * a_alpha)));
+		} else {
+			dl->AddLine(A, B, Fade(kTAcc, a_alpha), 5.5f * s);
+			dl->AddLine(A, B, IM_COL32(255, 224, 189, static_cast<int>(217 * a_alpha)), 1.6f * s);
+		}
+		if (newest) {   // the chisel's tip: a white-hot point and sparks thrown off it
+			dl->AddCircleFilled(B, 3.2f * s, IM_COL32(255, 236, 200, static_cast<int>(230 * a_alpha)), 12);
+			dl->AddCircleFilled(B, 7.0f * s, IM_COL32(255, 140, 60, static_cast<int>(70 * a_alpha)), 16);
+			for (int k = 0; k < 18; ++k) {
+				const float ph = std::fmod(now * 2.6f + static_cast<float>(k) * 0.0557f * 7.0f, 1.0f);
+				const float ang = -1.5707963f + (r(k * 3 + 1) - 0.5f) * 3.2f;   // (up and out, mostly)
+				const float dist = (8.0f + 26.0f * r(k * 5 + 2)) * s * ph;
+				const ImVec2 q{ B.x + std::cos(ang) * dist, B.y + std::sin(ang) * dist + 14.0f * s * ph * ph };   // (falling as they cool)
+				const ImVec2 q0{ q.x - std::cos(ang) * 3.0f * s, q.y - std::sin(ang) * 3.0f * s };
+				const float al = (1.0f - ph) * a_alpha;
+				dl->AddLine(q0, q, IM_COL32(255, static_cast<int>(200 - 110 * ph), static_cast<int>(120 - 100 * ph), static_cast<int>(240 * al)), std::max(1.0f, 1.3f * s));
+			}
+		}
 	}
 }
 
@@ -236,14 +271,20 @@ void TallyQuests(ImDrawList* dl, const Hud::State& s, ImVec2 size, float a_top)
 // ---- the compass, top centre: the directions spaced along a hairline, the quest's mark in ember, the dead as red dots
 void TallyCompass(ImDrawList* dl, const Hud::State& s, ImVec2 size)
 {
+	// (Noah, Nov 28: "The compass needs to be a bit larger and centered with the screen") a third larger and wider, laid out from the
+	// screen's own middle, with a small ember notch under the line where you face
 	if (!s.compassOn) return;
-	const float u = TU(size);
-	const float x0 = size.x * 0.33f, x1 = size.x * 0.67f, cx = (x0 + x1) * 0.5f, y = size.y * 0.026f, half = (x1 - x0) * 0.5f;
+	const float u = TU(size) * 1.3f;
+	const float cx = size.x * 0.5f, half = size.x * 0.21f, x0 = cx - half, x1 = cx + half, y = size.y * 0.024f;
 	const float span = 1.5707963f;   // (a quarter turn each side of where you face)
-	const float base = y + 1.15f * u;
+	const float base = y + 1.2f * u;
 	// the hairline (rgba(239,231,216,.5)), fading out at its ends
 	dl->AddRectFilledMultiColor({ x0, base }, { cx, base + 0.06f * u }, IM_COL32(239, 231, 216, 0), IM_COL32(239, 231, 216, 128), IM_COL32(239, 231, 216, 128), IM_COL32(239, 231, 216, 0));
 	dl->AddRectFilledMultiColor({ cx, base }, { x1, base + 0.06f * u }, IM_COL32(239, 231, 216, 128), IM_COL32(239, 231, 216, 0), IM_COL32(239, 231, 216, 0), IM_COL32(239, 231, 216, 128));
+	{   // (where you face: the middle of the screen)
+		const float ny = base + 0.12f * u, nr = 0.24f * u;
+		dl->AddTriangleFilled({ cx - nr, ny + nr * 1.2f }, { cx + nr, ny + nr * 1.2f }, { cx, ny }, Fade(kTAcc, 0.9f));
+	}
 	auto place = [&](float a_ang, float& a_x, float& a_edge) {
 		float d = std::remainder(a_ang - s.heading, 6.2831853f);
 		a_edge = std::clamp(1.0f - (std::abs(d) - span * 0.8f) / (span * 0.2f), 0.0f, 1.0f);
@@ -394,20 +435,33 @@ void TallyCountdown(ImDrawList* dl, const Hud::State& s, ImVec2 size)
 	TTextC(dl, HFB(), 6.0f * u * pop, size.x * 0.5f, cy - 2.4f * u - (pop - 1.0f) * 3.0f * u, Fade(kTAcc, a), std::to_string(n), 0.0f, IM_COL32(232, 90, 40, 255), 0.6f * u);
 }
 
-// ---- the Tablet weapon's uses: a small ring in its rarity's colour beside the stamina bar, "USES 66"
+// ---- the Tablet weapon's uses (Noah, Nov 28: "the tablet weapons usage meter doesnt match the rest of the UI" - his pick: A, a thin bar,
+// "lined up next to the health bar on the left side of the screen so to the left of the Magika bar") its name and uses over a thin
+// bar in its rarity's colour, on the bars' line just left of the magicka bar
 void TallyUses(ImDrawList* dl, const Hud::State& s, ImVec2 size)
 {
 	if (s.tabletWear < 0.0f) return;
-	const float u = TU(size);
+	const float u = TU(size), k = size.y / 1080.0f;
 	static constexpr ImU32 kRare[3] = { IM_COL32(61, 140, 255, 255), IM_COL32(168, 77, 255, 255), IM_COL32(255, 179, 41, 255) };
 	const ImU32 col = kRare[std::clamp(s.tabletRarity, 0, 2)];
-	const float d = 2.2f * u;
-	const ImVec2 c{ size.x * 0.855f + d * 0.5f, size.y * (1.0f - 0.016f) - 0.62f * u - 0.3f * u - d * 0.5f };
+	// (the bars' plate: health 360 wide in the middle, a 30 gap, magicka 220, its 26 sigil - see the plate in Hud.cpp)
+	const float cx = size.x * 0.5f, plateL = cx - 180.0f * k - 30.0f * k - 220.0f * k - 26.0f * k;
+	// (the brews' row runs in from the left on the same line: the bar shortens to keep clear of it, and rises over it when it can't)
+	int brews = 0;
+	for (const int st : s.perkStacks) brews += st > 0 ? 1 : 0;
+	const float brewsR = brews > 0 ? size.x * 0.024f + static_cast<float>(brews) * 2.35f * u + 1.0f * u : 0.0f;
+	const float x1 = plateL - 26.0f * k;
+	float w = 200.0f * k, by = size.y - 64.0f * k + 5.0f * k;
+	if (x1 - w < brewsR) w = std::max(120.0f * k, x1 - brewsR);
+	if (x1 - w < brewsR) by -= 3.4f * u;
+	const float x0 = x1 - w, bh = std::max(2.0f, 6.0f * k);
 	const float f = std::clamp(s.tabletWear, 0.0f, 1.0f);
 	const float blink = f < 0.1f ? 0.55f + 0.45f * std::sin(static_cast<float>(ImGui::GetTime()) * 9.0f) : 1.0f;
-	dl->AddCircleFilled(c, d * 0.5f, IM_COL32(0, 0, 0, 90), 40);
-	TRing(dl, c, d * 0.5f - 0.22f * u, 0.44f * u, f, Fade(col, blink), IM_COL32(255, 255, 255, 38));
-	TTextC(dl, HF(), 0.62f * u, c.x, c.y + d * 0.5f + 0.3f * u, IM_COL32(233, 220, 196, 255), fmt::format("USES {}", s.tabletUses), 0.12f);
+	const std::string name = s.tabletName.empty() ? std::string("TABLET WEAPON") : Upper(s.tabletName);
+	TText(dl, HF(), 0.66f * u, { x0, by - 1.05f * u }, IM_COL32(245, 226, 184, 255), name, 0.18f);
+	TTextR(dl, HFB(), 0.74f * u, x1, by - 1.12f * u, Fade(col, blink), Num(s.tabletUses), 0.04f);
+	TBar(dl, { x0, by }, w, bh, f, Fade(col, blink), IM_COL32(255, 255, 255, 41), true);
+	TText(dl, HF(), 0.5f * u, { x0, by + bh + 0.25f * u }, kTLab, "USES", 0.4f);
 }
 
 // ---- a card in the middle-top: a small ember line, the name large, a gold line (a Dragon Priest slain, the Tablet's win)

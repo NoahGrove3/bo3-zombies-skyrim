@@ -50,6 +50,7 @@ namespace coa
 		ID3D11ShaderResourceView* g_menuBg = nullptr;   // the main menu's backdrop (tools/cover.py, MENU=1)
 		ID3D11ShaderResourceView* g_menuFog = nullptr;  // a tileable fog layer that drifts over it
 		ID3D11ShaderResourceView* g_mapIcons = nullptr;  // the world map's marker icons, an 8x8 atlas (tools/mapicons.py)
+		ID3D11ShaderResourceView* g_tallyTex = nullptr;   // (Noah, Nov 28: the tallies as carved runes) 4 groove strokes (tools/tallytex.py)
 		ID3D11ShaderResourceView* g_essence = nullptr;  // the Cursed Essence emblem: 8x6 flipbook (tools/essence.py)
 		ID3D11ShaderResourceView* g_moon = nullptr;     // the night box's blood moon: 8x6 flipbook (tools/bloodmoon.py)
 		ID3D11ShaderResourceView* g_fire = nullptr;     // the shrine orb's purple magic fire: 16x8 flipbook (tools/magicfire.py)
@@ -58,6 +59,7 @@ namespace coa
 		ID3D11ShaderResourceView* g_cursorTex = nullptr;  // Noah's cursor: Moonlit Spirit, 8 frames of 128 px side by side (cursor_moonlit.png)    // nine-slice panel: black field, iron and bronze border (tools/uiart.py)
 		ID3D11ShaderResourceView* g_divider = nullptr;  // bronze line with a winged diamond
 		std::atomic<int>          g_clicks{ 0 };        // left clicks since the last frame (menus)
+		std::atomic<bool>         g_mouseHeld{ false }; // (Noah, Nov 28: the sliders dragged) the left button held down now
 		std::atomic<int>          g_cxScroll{ 0 }, g_cxChapter{ 0 }, g_cxBook{ 0 };  // the Codex: wheel / keys since the last frame
 		std::atomic<bool>         g_padLast{ false };   // the last thing touched was a controller: show its buttons
 		std::atomic<int>          g_padMove{ 0 }, g_padAccept{ 0 }, g_padBack{ 0 }, g_padSide{ 0 }, g_wheel{ 0 };  // main menu: pad / arrow keys since the last frame
@@ -5785,8 +5787,17 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// (Noah, Nov 28: the subtitles "nordic like how Edge UI's subtitles looked ... make sure the text font is consistent among the
 			// entire UI" - "Everything" in one face; his pick of the free ones, Philosopher, the nearest to Edge UI's Berserker, which
 			// isn't ours to ship) every word we draw: titles, menu words, numbers, subtitles and running text (SIL Open Font License)
+			// (Philosopher has no arrows, triangles or infinity: Inter's are merged in behind each face for those few)
+			auto merge = [&]() {
+				ImFontConfig cfg;
+				cfg.MergeMode = true;
+				const std::string p = "Data\\Interface\\CurseOfAlduin\\fonts\\Inter-Regular.ttf";
+				if (::GetFileAttributesA(p.c_str()) != INVALID_FILE_ATTRIBUTES) io.Fonts->AddFontFromFileTTF(p.c_str(), 64.0f, &cfg, kRanges);
+			};
 			if (auto* ph = own("Philosopher-Regular.ttf")) {
+				merge();
 				auto* phb = own("Philosopher-Bold.ttf");
+				if (phb) merge();
 				g_hf = ph, g_inter = ph, g_body = ph;
 				g_hfb = phb ? phb : ph, g_title = g_hfb, g_num = g_hfb, g_font = g_hfb;
 			} else {
@@ -5848,6 +5859,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\flame_ring.png", nullptr, &g_flame);
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\menu_fire.png", nullptr, &g_fire);
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\essence.png", nullptr, &g_essence);
+			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\tally.png", nullptr, &g_tallyTex);
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\bloodmoon.png", nullptr, &g_moon);
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\divider.png", nullptr, &g_divider);
 			g_init = true;
@@ -6788,7 +6800,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			} else if (was) {   // (Skyrim shows its HUD again on a load or a menu closing: kept hidden)
 				if (auto hud = uiM ? uiM->GetMenu(RE::HUDMenu::MENU_NAME) : nullptr; hud && hud->uiMovie && hud->uiMovie->GetVisible()) hud->uiMovie->SetVisible(false);
 			}
-			if (((!InGame() && !mainMenu && !journal && !escJournal && !cursorUp && !codex) || (DevTools::HudOff() && !keepUi && !mainMenu && !codex)) && !g_filmOn && g_veil <= 0 && !bootScreen && !coverOn) {
+			if (((!InGame() && !mainMenu && !journal && !escJournal && !cursorUp && !codex) || (DevTools::HudOff() && !keepUi && !mainMenu && !codex)) && !g_filmOn && g_veil <= 0 && !bootScreen && !coverOn && g_loadCover <= 0.0f) {   // (Noah, Nov 28: "the curse of alduin loading screen only shows at the end of loading an existing save" - a save's own cover was skipped here, behind Skyrim's loading, until the world was in)
 				if (static int m = 0; m++ % 1200 == 0) {
 					auto* ui = RE::UI::GetSingleton();
 					auto* pl = RE::PlayerCharacter::GetSingleton();
@@ -7534,6 +7546,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			if (a_b && a_b->IsDown()) {
 				g_padLast = a_b->GetDevice() == RE::INPUT_DEVICE::kGamepad;
 			}
+			if (a_b && a_b->GetDevice() == RE::INPUT_DEVICE::kMouse && a_b->GetIDCode() == 0) g_mouseHeld = a_b->IsPressed();
 			// (Noah, Nov 28: the Keybinds tab) a key being waited for takes the next press, and nothing else does
 			if (const int w = g_bindWait.load(); w >= 0 && a_b && a_b->IsDown()) {
 				const auto dev = a_b->GetDevice();
@@ -7561,7 +7574,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const auto id = a_b->GetIDCode();
 				const auto dev = a_b->GetDevice();
 				const bool accept = (dev == RE::INPUT_DEVICE::kGamepad && id == 0x1000) || (dev == RE::INPUT_DEVICE::kKeyboard && (id == 0x1C || id == 0x12 || id == 0x9C));
-				const bool back = (dev == RE::INPUT_DEVICE::kGamepad && id == 0x2000) || (dev == RE::INPUT_DEVICE::kKeyboard && (id == 0x0E || id == 0x0F || id == 0x01));
+				const bool back = (dev == RE::INPUT_DEVICE::kGamepad && id == 0x2000) || (dev == RE::INPUT_DEVICE::kKeyboard && (id == 0x0E || id == 0x0F || id == 0x01)) || (dev == RE::INPUT_DEVICE::kMouse && id == 1);
 				if (!g_partyOpen && accept) ++g_mainAccept;
 				else if (g_partyOpen && back) g_partyOpen = false;
 			}
@@ -7569,7 +7582,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const auto id = a_b->GetIDCode();
 				const auto dev = a_b->GetDevice();
 				const bool accept = (dev == RE::INPUT_DEVICE::kGamepad && id == 0x1000) || (dev == RE::INPUT_DEVICE::kKeyboard && (id == 0x1C || id == 0x12 || id == 0x9C));
-				const bool back = (dev == RE::INPUT_DEVICE::kGamepad && id == 0x2000) || (dev == RE::INPUT_DEVICE::kKeyboard && (id == 0x0E || id == 0x0F));
+				const bool back = (dev == RE::INPUT_DEVICE::kGamepad && id == 0x2000) || (dev == RE::INPUT_DEVICE::kKeyboard && (id == 0x0E || id == 0x0F)) || (dev == RE::INPUT_DEVICE::kMouse && id == 1 && g_partyOpen);
 				if (!g_partyOpen && accept) ++g_sysAccept;      // (the PARTY entry looks on the next frame whether it is the one selected)
 				else if (g_partyOpen && back) g_partyOpen = false;  // (B / Backspace / Tab: back to the list)
 			}
@@ -7655,6 +7668,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			} else if (a_b->GetDevice() == RE::INPUT_DEVICE::kMouse) {
 				if (id == 8) --g_wheel;        // the wheel, up
 				else if (id == 9) ++g_wheel;   // ... and down
+				else if (id == 1) ++g_padBack; // (Noah, Nov 28: "Right-click backs out") a right click: back
 			}
 		}
 		void DevMenuPick(const std::string& a_text)

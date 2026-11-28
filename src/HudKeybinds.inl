@@ -199,7 +199,7 @@ bool TmKeybinds(ImDrawList* fg, ImVec2 size, float now, float dt, float a, ImVec
 		if (r.kind != 0) continue;
 		for (int c = 0; c < 2; ++c) if (const int k = KbCode(r, c == 1); k >= 0) ++seen[c][k];
 	}
-	int hovered = -1, hoverCol = -1;
+	int hovered = -1, hoverCol = -1, clearCell = -1;
 	fg->PushClipRect({ colL, top - 0.4f * u }, { colR, bottom + 0.4f * u }, true);
 	for (int i = std::max(0, static_cast<int>(scroll) - 1); i < std::min(n, static_cast<int>(scroll) + fits + 2); ++i) {
 		const auto& r = rows[i];
@@ -235,6 +235,11 @@ bool TmKeybinds(ImDrawList* fg, ImVec2 size, float now, float dt, float a, ImVec
 			if (on || waiting) fg->AddRect({ cx - cw, y + 0.25f * u }, { cx + cw, y + rowH - 0.45f * u }, Fade(waiting ? kTAcc : kTGold, (waiting ? 0.6f + 0.4f * std::sin(now * 6.0f) : 0.7f) * a), 0.3f * u, 0, std::max(1.0f, 0.08f * u));
 			const ImU32 tc = waiting ? kTAcc : dup ? kTRed : k < 0 && k != -3 ? kTLab : on ? kTAcc : kTTxt;
 			TTextC(fg, HFB(), 1.0f * u, cx, y + 0.5f * u, Fade(tc, (k == -3 ? 0.55f : 1.0f) * a), t, 0.12f);
+			// (the hints are gone: the chosen key's own small x clears it)
+			if (on && !waiting && k >= 0) {
+				bool hx = false;
+				if (TmWord(fg, HFB(), 1.0f * u, cx + cw + 1.3f * u, y + 0.45f * u, "\xC3\x97", false, cur, click, 0.0f, 0.8f * a, &hx, kTLab)) clearCell = c, click = false;
+			}
 		}
 	}
 	fg->PopClipRect();
@@ -270,6 +275,8 @@ bool TmKeybinds(ImDrawList* fg, ImVec2 size, float now, float dt, float a, ImVec
 		g_bindGot = -1, g_bindWait = col;
 	} else if ((in.dels > 0 || a_hint == 1) && r.kind == 0) {
 		KbSet(r, col == 1, -1);
+	} else if (clearCell >= 0 && r.kind == 0) {
+		KbSet(r, clearCell == 1, -1);
 	}
-	return !(a_hint == 3 || in.backs > 0);
+	return !(a_hint == 3 || in.backs > 0 || TmBack(fg, size, cur, click, a));
 }

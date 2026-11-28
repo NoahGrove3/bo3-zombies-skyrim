@@ -73,8 +73,12 @@ void TmHeading(ImDrawList* fg, ImVec2 size, float y, const std::string& s, float
 
 // the keys along the foot, both ways (pad or keyboard, whichever was touched last): a key in a small gold frame, then what it
 // does; each is clickable. Returns the one clicked, or -1.
+// (Noah, Nov 28: "I want to remove the control prompts that show up on the bottom of the screen in the menu") no longer drawn - the
+// pages have their own words to click (BACK, LOAD, DELETE...) and the keys and pad still work as before
+constexpr bool kTmHints = false;
 int TmHints(ImDrawList* fg, ImVec2 size, const std::vector<std::pair<std::string, std::string>>& a_items, ImVec2 cur, bool click, float a)
 {
+	if (!kTmHints) return -1;
 	const float u = TU(size), fs = 0.95f * u, ks = 0.8f * u, gap = 2.4f * u, pad = 0.45f * u;
 	float total = 0;
 	std::vector<float> ws;
@@ -97,6 +101,20 @@ int TmHints(ImDrawList* fg, ImVec2 size, const std::vector<std::pair<std::string
 		x += ws[i] + gap;
 	}
 	return hit;
+}
+
+// a page's way back, top left: "BACK" in the menu's words (the hints are gone); true when clicked
+bool TmBack(ImDrawList* fg, ImVec2 size, ImVec2 cur, bool click, float a)
+{
+	// (Noah's pick, Nov 28: "Right-click backs out" - no BACK word; a right click, Esc or B goes back)
+	constexpr bool kBackWord = false;
+	if (!kBackWord) return false;
+	const float u = TU(size);
+	bool hv = false;
+	const float px = 1.0f * u, x = 4.0f * u, y = 3.2f * u;
+	const std::string t = "\xE2\x80\xB9  BACK";
+	const float tw = TMeasure(HF(), px, t, 0.3f).x;
+	return TmWord(fg, HF(), px, x + tw * 0.5f, y, t, false, cur, click, 0.3f, 0.85f * a, &hv);
 }
 
 // a question in our style: the scene dimmed, the words in the middle, YES and NO under them. Returns 1 yes, 0 no, -1 asking.
@@ -242,7 +260,10 @@ bool DeleteSave(const std::string& a_file)
 // ---------------------------------------------------------------- LOAD: every save, its picture, by character
 bool TmLoad(ImDrawList* fg, ImVec2 size, float now, float dt, float a, ImVec2 cur, bool click, const TmIn& in)
 {
-	static int   sel = 0, filter = 0, askFocus = 1;
+	// (Noah, Nov 28: "In the load menu left click on a save or X/A should select the save and pressing again should load it, that way
+	// players can select a save and choose to either load that save or delete the selected save") a click, A / Cross or Enter
+	// chooses a save; the same again loads it; once chosen its LOAD and DELETE stand under its picture (left / right between them)
+	static int   sel = 0, filter = 0, askFocus = 1, chosen = -1, btn = 0;
 	static float scroll = 0, target = 0;
 	static bool  loading = false, asking = false;
 	static TmMouse mouse;
@@ -259,42 +280,45 @@ bool TmLoad(ImDrawList* fg, ImVec2 size, float now, float dt, float a, ImVec2 cu
 		const std::string nm = r.name.empty() ? std::string("Unknown") : r.name;
 		if (std::find(chars.begin(), chars.end(), nm) == chars.end()) chars.push_back(nm);
 	}
-	if (!asking) filter = (filter + in.tabs + static_cast<int>(chars.size()) + 1) % (static_cast<int>(chars.size()) + 1);
-	std::vector<SaveRow> saves;
-	for (const auto& r : all) {
-		if (filter == 0 || (r.name.empty() ? std::string("Unknown") : r.name) == chars[filter - 1]) saves.push_back(r);
-	}
-	// the filter: CHARACTER  < ALL >
+	const int nf = static_cast<int>(chars.size()) + 1;
+	const int filter0 = filter;
+	if (!asking) filter = (filter + in.tabs + nf * 8) % nf;
+	// the filter: < ALL CHARACTERS >
 	{
-		const std::string who = filter == 0 ? std::string("ALL CHARACTERS") : TmUpper(chars[filter - 1]);
+		const std::string who = filter == 0 ? std::string("ALL CHARACTERS") : TmUpper(chars[std::min(filter, nf - 1) - 1]);
 		const float y = 10.6f * u;
 		bool hl = false, hr = false;
 		const float ww = TMeasure(HF(), 1.2f * u, who, 0.25f).x;
 		TTextC(fg, HF(), 1.2f * u, W * 0.5f, y, Fade(kTGold, a), who, 0.25f);
-		if (TmWord(fg, HFB(), 1.3f * u, W * 0.5f - ww * 0.5f - 2.4f * u, y - 0.05f * u, "<", false, cur, click && !asking, 0.0f, a, &hl)) filter = (filter + static_cast<int>(chars.size())) % (static_cast<int>(chars.size()) + 1);
-		if (TmWord(fg, HFB(), 1.3f * u, W * 0.5f + ww * 0.5f + 2.4f * u, y - 0.05f * u, ">", false, cur, click && !asking, 0.0f, a, &hr)) filter = (filter + 1) % (static_cast<int>(chars.size()) + 1);
+		if (TmWord(fg, HFB(), 1.3f * u, W * 0.5f - ww * 0.5f - 2.4f * u, y - 0.05f * u, "\xE2\x80\xB9", false, cur, click && !asking, 0.0f, a, &hl)) filter = (filter + nf - 1) % nf, click = false;
+		if (TmWord(fg, HFB(), 1.3f * u, W * 0.5f + ww * 0.5f + 2.4f * u, y - 0.05f * u, "\xE2\x80\xBA", false, cur, click && !asking, 0.0f, a, &hr)) filter = (filter + 1) % nf, click = false;
+	}
+	if (filter != filter0) chosen = -1, sel = 0, target = 0;
+	std::vector<SaveRow> saves;
+	for (const auto& r : all) {
+		if (filter == 0 || (r.name.empty() ? std::string("Unknown") : r.name) == chars[std::min(filter, nf - 1) - 1]) saves.push_back(r);
 	}
 	const int n = g_savesReady ? static_cast<int>(saves.size()) : 0;
 	if (!g_savesReady) TTextC(fg, Inter(), 1.1f * u, W * 0.5f, H * 0.45f, Fade(kTTxt, a), "Reading your saves...");
 	else if (n == 0) TTextC(fg, Inter(), 1.1f * u, W * 0.5f, H * 0.45f, Fade(kTTxt, a), "No saves yet - start a New game");
 	// the list on the left, the chosen save's picture and its details on the right
-	const float listL = W * 0.5f - 44.0f * u, listR = W * 0.5f + 2.0f * u, top = 14.0f * u, bottom = H - 7.5f * u;
+	const float listL = W * 0.5f - 44.0f * u, listR = W * 0.5f + 2.0f * u, top = 14.0f * u, bottom = H - 6.0f * u;
 	const float rowH = 4.4f * u;
 	const int   fits = std::max(1, static_cast<int>((bottom - top) / rowH));
-	// (Noah, Nov 28: "the selection is not accurate to where the mouse cursor is") the list no longer slides under a still mouse:
-	// the wheel scrolls it, the keys move the choice and the list follows that, and the row under the mouse is the choice
 	mouse.Note(cur, in);
 	const float maxScroll = std::max(0.0f, static_cast<float>(n - fits));
 	if (n > 0 && !asking && in.moves) {
 		sel = std::clamp(sel + in.moves, 0, n - 1);
+		if (chosen != sel) chosen = -1;
 		target = std::clamp(target, static_cast<float>(sel - fits + 1), static_cast<float>(sel));
 	}
 	if (!asking && in.wheel) target += static_cast<float>(in.wheel) * 2.0f;
 	target = std::clamp(std::round(target), 0.0f, maxScroll);
 	if (n > 0) sel = std::clamp(sel, 0, n - 1);
+	if (chosen >= n) chosen = -1;
+	if (!asking && chosen >= 0 && in.sides) btn = std::clamp(btn + in.sides, 0, 1);
 	scroll += (target - scroll) * std::min(1.0f, dt * 14.0f);
 	if (std::abs(target - scroll) < 0.002f) scroll = target;
-	if (n > 0) TShade(fg, { listL, top - 0.6f * u }, { listR, std::min(bottom, top + rowH * static_cast<float>(std::min(n, fits))) + 0.2f * u }, 3.0f * u, 0.85f * a);
 	int hovered = -1;
 	fg->PushClipRect({ listL - 2.0f * u, top - 0.6f * u }, { listR + 2.0f * u, bottom + 0.2f * u }, true);
 	for (int i = std::max(0, static_cast<int>(scroll) - 1); i < std::min(n, static_cast<int>(scroll) + fits + 2); ++i) {
@@ -302,36 +326,38 @@ bool TmLoad(ImDrawList* fg, ImVec2 size, float now, float dt, float a, ImVec2 cu
 		const float y = top + (static_cast<float>(i) - scroll) * rowH;
 		const bool  over = !asking && cur.x >= listL && cur.x <= listR && cur.y >= y && cur.y < y + rowH && cur.y >= top && cur.y <= bottom;
 		if (over) hovered = i;
-		const bool lit = i == sel;
+		const bool on = i == chosen, lit = i == sel || on;
 		if (lit) {
 			const float pl = 0.8f + 0.2f * std::sin(now * 3.0f);
-			fg->AddRectFilledMultiColor({ listL, y }, { listR, y + rowH - 0.3f * u }, IM_COL32(255, 122, 60, static_cast<int>(46 * pl * a)), IM_COL32(255, 122, 60, 0), IM_COL32(255, 122, 60, 0), IM_COL32(255, 122, 60, static_cast<int>(46 * pl * a)));
-			fg->AddRectFilled({ listL, y + 0.4f * u }, { listL + 0.22f * u, y + rowH - 0.7f * u }, Fade(kTAcc, a));
+			const int   al = static_cast<int>((on ? 52 : 22) * pl * a);
+			fg->AddRectFilledMultiColor({ listL, y }, { listR, y + rowH - 0.3f * u }, IM_COL32(255, 122, 60, al), IM_COL32(255, 122, 60, 0), IM_COL32(255, 122, 60, 0), IM_COL32(255, 122, 60, al));
+			if (on) fg->AddRectFilled({ listL, y + 0.4f * u }, { listL + 0.22f * u, y + rowH - 0.7f * u }, Fade(kTAcc, a));
 		} else {
 			fg->AddLine({ listL + 1.4f * u, y + rowH - 0.15f * u }, { listR - 1.4f * u, y + rowH - 0.15f * u }, IM_COL32(220, 207, 185, static_cast<int>(26 * a)), 1.0f);
 		}
 		const std::string nm = TmUpper(r.name.empty() ? std::string("Unknown") : r.name);
-		TText(fg, HF(), 1.45f * u, { listL + 1.4f * u, y + 0.45f * u }, Fade(lit ? kTAcc : kTInk, a), nm, 0.14f);
+		TText(fg, HF(), 1.45f * u, { listL + 1.4f * u, y + 0.45f * u }, Fade(on ? kTAcc : i == sel ? IM_COL32(255, 190, 140, 255) : kTInk, a), nm, 0.14f);
 		const std::string line = "Level " + std::to_string(r.level) + (r.place.empty() ? "" : "  \xc2\xb7  " + r.place);
 		TText(fg, Inter(), 0.95f * u, { listL + 1.4f * u, y + 2.35f * u }, Fade(kTTxt, 0.85f * a), line);
 		TTextR(fg, Inter(), 0.9f * u, listR - 1.2f * u, y + 0.65f * u, Fade(kTLab, 0.8f * a), r.date);
 		TTextR(fg, HF(), 0.85f * u, listR - 1.2f * u, y + 2.4f * u, Fade(r.autosave ? IM_COL32(150, 170, 200, 255) : kTGold, 0.8f * a), r.autosave ? "AUTOSAVE" : "SAVE", 0.25f);
 	}
 	fg->PopClipRect();
-	if (hovered >= 0 && (mouse.on || click)) sel = hovered;
+	if (hovered >= 0 && mouse.on) sel = hovered;
 	if (n > fits) {   // (where in the list: a thin ember thread down its right)
 		const float th = (bottom - top) * static_cast<float>(fits) / static_cast<float>(n), ty = top + (bottom - top - th) * (scroll / std::max(1.0f, maxScroll));
 		fg->AddRectFilled({ listR + 0.8f * u, top }, { listR + 0.95f * u, bottom }, IM_COL32(220, 207, 185, static_cast<int>(30 * a)));
 		fg->AddRectFilled({ listR + 0.8f * u, ty }, { listR + 0.95f * u, ty + th }, Fade(kTAcc, 0.85f * a));
 	}
-	// the chosen one: its picture and the rest of it
+	// the chosen one (or the one under the mouse / the keys): its picture, the rest of it, and LOAD / DELETE once chosen
+	int act = -1;   // 0 load, 1 delete
 	if (n > 0) {
-		const auto& r = saves[sel];
+		const int show = chosen >= 0 ? chosen : sel;
+		const auto& r = saves[show];
 		const float px0 = W * 0.5f + 6.0f * u, px1 = W * 0.5f + 44.0f * u;
 		int sw = 0, sh = 0;
 		ID3D11ShaderResourceView* shot = SaveShot(r.file, sw, sh);
 		const float pw = px1 - px0, ph = sw > 0 && sh > 0 ? pw * static_cast<float>(sh) / static_cast<float>(sw) : pw * 0.6f;
-		TShade(fg, { px0, top - 0.6f * u }, { px1, top + ph + 11.5f * u }, 3.0f * u, 0.85f * a);
 		if (shot) fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(shot)), { px0, top }, { px1, top + ph }, { 0, 0 }, { 1, 1 }, IM_COL32(255, 255, 255, static_cast<int>(255 * a)));
 		else TTextC(fg, Inter(), 0.95f * u, (px0 + px1) * 0.5f, top + ph * 0.45f, Fade(kTLab, 0.6f * a), "No picture in this save");
 		fg->AddRect({ px0, top }, { px1, top + ph }, Fade(kTGold, 0.55f * a), 0, 0, std::max(1.0f, 0.08f * u));
@@ -342,38 +368,64 @@ bool TmLoad(ImDrawList* fg, ImVec2 size, float now, float dt, float a, ImVec2 cu
 		y += 1.7f * u;
 		if (!r.place.empty()) TText(fg, Inter(), 1.0f * u, { px0, y }, Fade(kTTxt, a), r.place), y += 1.7f * u;
 		TText(fg, Inter(), 0.95f * u, { px0, y }, Fade(kTLab, 0.85f * a), r.date + (r.played.empty() ? "" : "   \xc2\xb7   Played " + r.played));
+		y += 2.6f * u;
+		if (chosen >= 0 && !asking && !loading) {
+			bool h0 = false, h1 = false;
+			const float bx = px0 + 4.0f * u;
+			if (TmWord(fg, HF(), 1.45f * u, bx, y, "LOAD", btn == 0, cur, click, 0.35f, a, &h0)) act = 0;
+			if (TmWord(fg, HF(), 1.45f * u, bx + 12.0f * u, y, "DELETE", btn == 1, cur, click, 0.35f, a, &h1, IM_COL32(230, 120, 100, 255))) act = 1;
+			if (h0 && mouse.on) btn = 0;
+			if (h1 && mouse.on) btn = 1;
+			if (act >= 0) click = false;
+		} else if (!asking && !loading) {
+			TText(fg, Inter(), 0.9f * u, { px0, y }, Fade(kTLab, 0.7f * a), "Choose it to load or delete it");
+		}
 	}
-	// the keys
-	const bool pad = g_padLast;
-	const int h = asking ? -1 : TmHints(fg, size, { { pad ? Hud::PadWord("A") : std::string("ENTER"), "LOAD" }, { pad ? Hud::PadWord("X") : std::string("DEL"), "DELETE" }, { pad ? Hud::PadWord("LB") + " " + Hud::PadWord("RB") : std::string("PGUP PGDN"), "CHARACTER" }, { pad ? Hud::PadWord("B") : std::string("ESC"), "BACK" } }, cur, click, a);
-	if (h == 2) filter = (filter + 1) % (static_cast<int>(chars.size()) + 1);
-	// Delete: asked first (Noah, Nov 28: "deleting a save doesnt work" - the click on DELETE also answered the question it opened)
-	if (!asking && !loading && n > 0 && (in.dels > 0 || h == 1)) {
+	const bool back = TmBack(fg, size, cur, click && !asking, a);
+	if (back) click = false;
+	// Delete: asked first (Delete / Square / X on the keyboard: straight to the question)
+	if (!asking && !loading && n > 0 && (in.dels > 0 || act == 1)) {
+		if (act != 1) chosen = sel;
 		asking = true, askFocus = 1;
-		logger::info("menu: delete '{}'? asked", saves[std::clamp(sel, 0, n - 1)].file);
+		logger::info("menu: delete '{}'? asked", saves[std::clamp(chosen, 0, n - 1)].file);
 		return true;
 	}
 	if (asking) {
-		const TmIn qi = in;
-		const auto& r = saves[std::clamp(sel, 0, std::max(0, n - 1))];
-		const int ans = n > 0 ? TmAsk(fg, size, a, "DELETE THIS SAVE?", (r.name.empty() ? std::string("Unknown") : r.name) + "  \xc2\xb7  Level " + std::to_string(r.level) + "  \xc2\xb7  " + r.date, cur, click, qi, askFocus) : 0;
+		const auto& r = saves[std::clamp(chosen, 0, std::max(0, n - 1))];
+		const int ans = n > 0 ? TmAsk(fg, size, a, "DELETE THIS SAVE?", (r.name.empty() ? std::string("Unknown") : r.name) + "  \xc2\xb7  Level " + std::to_string(r.level) + "  \xc2\xb7  " + r.date, cur, click, in, askFocus) : 0;
 		if (ans >= 0) {
 			asking = false;
 			logger::info("menu: delete '{}' - {}", r.file, ans == 1 ? "yes" : "no");
-			if (ans == 1 && DeleteSave(r.file)) RequestSaves();
+			if (ans == 1 && DeleteSave(r.file)) RequestSaves(), chosen = -1;
 		}
 		return true;
 	}
-	if (h == 3 || in.backs > 0) {
-		loading = false;
+	if (back || in.backs > 0) {
+		if (chosen >= 0 && !back) { chosen = -1; return true; }   // (Esc / B: first the choice let go, then the page)
+		loading = false, chosen = -1;
 		return false;
 	}
-	if (!loading && n > 0 && ((click && hovered >= 0 && h < 0) || in.accepts > 0 || h == 0)) {
-		loading = true;
-		g_menuNewAt = g_menuNewPressed = {};
-		LoadSave(saves[sel].file);
+	if (!loading && n > 0) {
+		bool load = act == 0;
+		if (click && hovered >= 0) {
+			if (hovered == chosen) load = true;
+			else chosen = hovered, sel = hovered, btn = 0;
+		} else if (in.accepts > 0) {
+			if (chosen == sel && chosen >= 0) {
+				if (btn == 0) load = true;
+				else {
+					asking = true, askFocus = 1;
+					return true;
+				}
+			} else chosen = sel, btn = 0;
+		}
+		if (load && chosen >= 0) {
+			loading = true;
+			g_menuNewAt = g_menuNewPressed = {};
+			LoadSave(saves[chosen].file);
+		}
 	}
-	if (loading) TTextC(fg, HF(), 1.3f * u, W * 0.5f, H - 6.6f * u, Fade(kTAcc, a), "LOADING...", 0.3f);
+	if (loading) TTextC(fg, HF(), 1.3f * u, W * 0.5f, H - 4.6f * u, Fade(kTAcc, a), "LOADING...", 0.3f);
 	return true;
 }
 
@@ -690,8 +742,9 @@ void TmSettingsLeave()
 }
 bool TmSettings(ImDrawList* fg, ImVec2 size, float now, float a, ImVec2 cur, bool click, const TmIn& in, float dt = 1.0f / 60.0f)
 {
-	static int tab = 0, sel = 0;
+	static int tab = 0, sel = 0, dragRow = -1, dragTab = -1;
 	static TmMouse mouse;
+	if (!g_mouseHeld) dragRow = -1;
 	const float W = size.x, H = size.y, u = TU(size);
 	auto& tabs = SettingsTabs();
 	TmHeading(fg, size, 6.0f * u, "SETTINGS", a);
@@ -754,9 +807,14 @@ bool TmSettings(ImDrawList* fg, ImVec2 size, float now, float a, ImVec2 cur, boo
 			fg->AddCircleFilled({ bx0 + (bx1 - bx0) * std::clamp(t, 0.0f, 1.0f), by }, 0.42f * u, Fade(lit ? kTAcc : kTInk, a), 16);
 			const std::string sv = o.show ? o.show(v) : std::to_string(static_cast<int>(v));
 			TText(fg, HFB(), 1.1f * u, { bx1 + 1.2f * u, y + 0.15f * u }, Fade(lit ? kTAcc : kTTxt, a), sv, 0.05f);
-			if (click && cur.x >= bx0 - 0.6f * u && cur.x <= bx1 + 0.6f * u && cur.y >= y - 0.3f * u && cur.y <= y + rowH - 0.6f * u) {
+			// (Noah, Nov 28: "make using the sliders with the cursor smooth by holding left click to drag the sliders") pressed on its bar,
+			// the slider follows the cursor for as long as the button is held
+			if (click && cur.x >= bx0 - 0.6f * u && cur.x <= bx1 + 0.6f * u && cur.y >= y - 0.3f * u && cur.y <= y + rowH - 0.6f * u) dragRow = i, dragTab = tab;
+			if (dragRow == i && dragTab == tab && g_mouseHeld) {
+				sel = i;
 				const float nv = o.mn + (o.mx - o.mn) * std::clamp((cur.x - bx0) / (bx1 - bx0), 0.0f, 1.0f);
-				o.set(std::clamp(std::round(nv / o.step) * o.step, o.mn, o.mx));
+				const float sv = std::clamp(std::round(nv / o.step) * o.step, o.mn, o.mx);
+				if (std::abs(sv - v) > o.step * 0.25f) o.set(sv);
 			}
 		} else {
 			const std::string sv = o.kind == 0 ? std::string(v != 0.0f ? "ON" : "OFF") : (o.names.empty() ? std::string() : o.names[std::clamp(static_cast<std::size_t>(std::max(0.0f, v)), std::size_t{ 0 }, o.names.size() - 1)]);
@@ -774,7 +832,7 @@ bool TmSettings(ImDrawList* fg, ImVec2 size, float now, float a, ImVec2 cur, boo
 	const bool pad = g_padLast;
 	const int h = TmHints(fg, size, { { pad ? Hud::PadWord("LB") + " " + Hud::PadWord("RB") : std::string("Q  E"), "TAB" }, { pad ? std::string("D-PAD") : std::string("ARROWS"), "CHANGE" }, { pad ? Hud::PadWord("B") : std::string("ESC"), "BACK" } }, cur, click, a);
 	if (h == 0) tab = (tab + 1) % 6, sel = 0;
-	if (h == 2 || in.backs > 0) {
+	if (h == 2 || in.backs > 0 || TmBack(fg, size, cur, click, a)) {
 		TmSettingsLeave();
 		return false;
 	}
@@ -782,8 +840,11 @@ bool TmSettings(ImDrawList* fg, ImVec2 size, float now, float a, ImVec2 cur, boo
 }
 
 // ---------------------------------------------------------------- the co-op party, in the menu's style (the Esc journal too)
-void TallyPartyPanel(ImDrawList* dl, ImVec2 size, bool click)
+void TallyPartyPanel(ImDrawList* dl, ImVec2 size, bool click, bool a_dim = true)
 {
+	// (Noah, Nov 28: "I want the stats part to look better and cleaner to match the UI in the Party Menu") the party as its own page,
+	// laid out as the workshop's Co-op party preview: no box, the heading and line, your party's words in the middle, then the night's
+	// table in even columns under a thin rule, last night and your records - the menu's words and title gone from behind it
 	const ImVec2 cur = Cursor(size);
 	const bool   net = Net::Available();
 	click = click && (!net || !Net::OverlayBusy());
@@ -798,15 +859,10 @@ void TallyPartyPanel(ImDrawList* dl, ImVec2 size, bool click)
 	const auto  rec = Stats::Lifetime();
 	const auto  party = Stats::Party();
 	const float W = size.x, H = size.y, u = TU(size);
-	const float now = static_cast<float>(ImGui::GetTime());
-	dl->AddRectFilled({ 0, 0 }, size, IM_COL32(4, 2, 1, 140));
-	const float colL = W * 0.5f - 28.0f * u, colR = W * 0.5f + 28.0f * u;
-	TShade(dl, { colL, 4.5f * u }, { colR, H - 3.0f * u }, 4.0f * u, 0.9f);
+	if (a_dim) dl->AddRectFilled({ 0, 0 }, size, IM_COL32(4, 2, 1, 200));
 	TmHeading(dl, size, 6.0f * u, "CO-OP PARTY", 1.0f);
-	float y = 10.4f * u;
-	const std::string st = !net ? "Solo" : Net::Status() + (Net::InLobby() ? "   \xc2\xb7   " + std::to_string(Net::Members() + 1) + " in the party" : "");
-	TTextC(dl, Inter(), 1.0f * u, W * 0.5f, y, Fade(kTTxt, 0.9f), st);
-	y += 2.6f * u;
+	const std::string st = !net ? "Solo - Steam isn't running" : Net::Status() + (Net::InLobby() ? "   \xc2\xb7   " + std::to_string(Net::Members() + 1) + " in the party" : "");
+	TTextC(dl, Inter(), 1.0f * u, W * 0.5f, 10.6f * u, Fade(kTTxt, 0.9f), st);
 	// the party's words: up / down (or the mouse) to choose, A / Enter or a click to press
 	struct Act { std::string text; ImU32 col; int what; int arg; };
 	std::vector<Act> acts;
@@ -824,6 +880,7 @@ void TallyPartyPanel(ImDrawList* dl, ImVec2 size, bool click)
 	const int focus = acts.empty() ? 0 : std::clamp(g_partyFocus.load(), 0, static_cast<int>(acts.size()) - 1);
 	g_partyFocus = focus;
 	const bool press = g_partyPress.exchange(0) > 0;
+	float y = H * 0.215f;
 	for (int i = 0; i < static_cast<int>(acts.size()); ++i) {
 		bool hv = false;
 		const bool hit = TmWord(dl, HF(), 1.4f * u, W * 0.5f, y, acts[i].text, i == focus, cur, click, 0.3f, 1.0f, &hv, acts[i].col);
@@ -836,51 +893,54 @@ void TallyPartyPanel(ImDrawList* dl, ImVec2 size, bool click)
 		}
 		y += 2.4f * u;
 	}
-	// the lobby, each with their night
-	y += 1.0f * u;
-	const float cols[6] = { colL + 2.5f * u, colL + 19.0f * u, colL + 25.0f * u, colL + 31.0f * u, colL + 37.0f * u, colL + 47.0f * u };
+	// tonight: the table, in the preview's columns (16.5 : 6 : 6 : 6 : 10 : 6 of 51u)
+	const float tL = W * 0.5f - 25.5f * u, tW = 51.0f * u;
+	static constexpr float kFr[6] = { 16.5f, 6.0f, 6.0f, 6.0f, 10.0f, 6.0f };
+	float cols[6];
+	{
+		float x = tL;
+		for (int c = 0; c < 6; ++c) cols[c] = x, x += tW * kFr[c] / 50.5f;
+	}
+	y = std::max(y + 1.6f * u, H * 0.33f);
 	const char* heads[6] = { me.night > 0 ? "TONIGHT" : "PLAYER", "KILLS", "HEADS", "STREAK", "ESSENCE", "REVIVES" };
-	for (int c = 0; c < 6; ++c) TText(dl, HF(), 0.85f * u, { cols[c], y }, Fade(kTAcc, 0.9f), heads[c], 0.25f);
-	y += 1.6f * u;
-	dl->AddLine({ colL + 2.5f * u, y - 0.2f * u }, { colR - 2.5f * u, y - 0.2f * u }, IM_COL32(220, 207, 185, 40), 1.0f);
+	for (int c = 0; c < 6; ++c) TText(dl, HF(), 0.85f * u, { cols[c], y }, Fade(kTAcc, 0.95f), heads[c], 0.25f);
+	y += 1.35f * u;
+	dl->AddLine({ tL, y }, { tL + tW, y }, IM_COL32(220, 207, 185, 42), 1.0f);
+	y += 0.55f * u;
 	auto line = [&](const std::string& who, const Stats::Line& v, ImU32 col) {
-		const std::string vals[6] = { who, std::to_string(v.kills), std::to_string(v.heads), std::to_string(v.best), std::to_string(v.septims), std::to_string(v.revives) };
-		for (int c = 0; c < 6; ++c) TText(dl, c == 0 ? Inter() : HFB(), c == 0 ? 1.0f * u : 1.05f * u, { cols[c], y + 0.3f * u }, col, vals[c]);
-		y += 1.9f * u;
+		const std::string vals[6] = { who, Num(v.kills), Num(v.heads), Num(v.best), Num(v.septims), Num(v.revives) };
+		for (int c = 0; c < 6; ++c) TText(dl, Inter(), 1.0f * u, { cols[c], y }, col, vals[c]);
+		y += 1.75f * u;
 	};
 	auto* pl = RE::PlayerCharacter::GetSingleton();
 	line(pl && pl->GetName() && *pl->GetName() ? std::string(pl->GetName()) + " (you)" : "You", me, kTInk);
 	for (const auto& f : party) line(f.name, f.line, kTTxt);
-	// last night
-	y += 1.2f * u;
-	TText(dl, HF(), 1.0f * u, { colL + 2.5f * u, y }, Fade(kTAcc, 0.95f), last.night > 0 ? fmt::format("LAST NIGHT  \xc2\xb7  NIGHT {}", last.night) : std::string("LAST NIGHT"), 0.25f);
-	y += 1.9f * u;
+	// last night, then your records
+	y = std::max(y + 1.4f * u, H * 0.48f);
+	TText(dl, HF(), 1.0f * u, { tL, y }, Fade(kTAcc, 0.95f), last.night > 0 ? fmt::format("LAST NIGHT  \xc2\xb7  NIGHT {}", last.night) : std::string("LAST NIGHT"), 0.25f);
+	y += 1.75f * u;
 	if (last.night > 0) {
-		TText(dl, Inter(), 0.95f * u, { colL + 2.5f * u, y }, kTTxt, fmt::format("{} kills   \xc2\xb7   {} headshots   \xc2\xb7   best streak {}   \xc2\xb7   {} Cursed Essence", last.kills, last.heads, last.best, last.septims));
-		y += 1.7f * u;
+		TText(dl, Inter(), 0.95f * u, { tL, y }, kTTxt, fmt::format("{} kills   \xc2\xb7   {} headshots   \xc2\xb7   best streak {}   \xc2\xb7   {} Cursed Essence", Num(last.kills), Num(last.heads), Num(last.best), Num(last.septims)));
+		y += 1.55f * u;
 		std::string mvp = pl && pl->GetName() ? pl->GetName() : "You";
 		int best = last.kills * 2 + last.heads + last.style / 50;
 		for (const auto& f : party) {
 			const int sc = f.line.kills * 2 + f.line.heads + f.line.style / 50;
 			if (sc > best) best = sc, mvp = f.name;
 		}
-		TText(dl, Inter(), 0.95f * u, { colL + 2.5f * u, y }, kTTxt, fmt::format("style {}   \xc2\xb7   waves {}   \xc2\xb7   mini-bosses {}{}", last.style, last.waves, last.minis, party.empty() ? std::string() : "   \xc2\xb7   MVP " + mvp));
-		y += 1.7f * u;
+		TText(dl, Inter(), 0.95f * u, { tL, y }, kTTxt, fmt::format("style {}   \xc2\xb7   waves {}   \xc2\xb7   mini-bosses {}{}", Num(last.style), last.waves, last.minis, party.empty() ? std::string() : "   \xc2\xb7   MVP " + mvp));
+		y += 1.55f * u;
 	} else {
-		TText(dl, Inter(), 0.95f * u, { colL + 2.5f * u, y }, Fade(kTLab, 0.8f), "Survive a night and its score shows here.");
-		y += 1.7f * u;
+		TText(dl, Inter(), 0.95f * u, { tL, y }, Fade(kTLab, 0.8f), "Survive a night and its score shows here.");
+		y += 1.55f * u;
 	}
-	// records
-	y += 1.0f * u;
-	TText(dl, HF(), 1.0f * u, { colL + 2.5f * u, y }, Fade(kTAcc, 0.95f), "RECORDS", 0.25f);
-	y += 1.9f * u;
-	TText(dl, Inter(), 0.95f * u, { colL + 2.5f * u, y }, kTTxt, fmt::format("best night {}   \xc2\xb7   nights survived {}   \xc2\xb7   kills {}   \xc2\xb7   headshots {}", rec.bestNight, rec.nights, rec.kills, rec.heads));
-	y += 1.7f * u;
-	TText(dl, Inter(), 0.95f * u, { colL + 2.5f * u, y }, kTTxt, fmt::format("best streak {}   \xc2\xb7   mini-bosses {}   \xc2\xb7   wonders won {}   \xc2\xb7   path secrets {}", rec.bestStreak, rec.minis, rec.wonders, rec.quests));
-	(void)now;
-	const bool pad = g_padLast;
-	const int h = TmHints(dl, size, { { pad ? std::string("D-PAD") : std::string("ARROWS"), "CHOOSE" }, { pad ? Hud::PadWord("A") : std::string("ENTER"), "SELECT" }, { pad ? Hud::PadWord("B") : std::string("ESC"), "CLOSE" } }, cur, click, 1.0f);
-	if (h == 2) g_partyOpen = false;
+	y += 1.2f * u;
+	TText(dl, HF(), 1.0f * u, { tL, y }, Fade(kTAcc, 0.95f), "RECORDS", 0.25f);
+	y += 1.75f * u;
+	TText(dl, Inter(), 0.95f * u, { tL, y }, kTTxt, fmt::format("best night {}   \xc2\xb7   nights survived {}   \xc2\xb7   kills {}   \xc2\xb7   headshots {}", rec.bestNight, rec.nights, Num(rec.kills), Num(rec.heads)));
+	y += 1.55f * u;
+	TText(dl, Inter(), 0.95f * u, { tL, y }, kTTxt, fmt::format("best streak {}   \xc2\xb7   mini-bosses {}   \xc2\xb7   wonders won {}   \xc2\xb7   path secrets {}", rec.bestStreak, rec.minis, rec.wonders, rec.quests));
+	if (TmBack(dl, size, cur, click, 1.0f)) g_partyOpen = false;
 }
 
 // ---------------------------------------------------------------- the menu itself: the words, and the pages over them
@@ -927,7 +987,7 @@ void TallyMenu(ImDrawList* fg, ImVec2 size, float now, float dt, float openT, Im
 			else in.moves += st.moves, in.sides += st.sides;
 		}
 	}
-	pageA = std::clamp(pageA + (page != 0 ? 1.0f : -1.0f) * dt * 5.0f, 0.0f, 1.0f);
+	pageA = std::clamp(pageA + (page != 0 || g_partyOpen ? 1.0f : -1.0f) * dt * 5.0f, 0.0f, 1.0f);   // (the party too is a page now: the words and title give way to it)
 	g_tmPageA = pageA;
 	if (otherMenu) {   // (its box shows through, as before)
 		if (g_frameSrv && g_keyPs) {
@@ -1045,5 +1105,5 @@ void TallyMenu(ImDrawList* fg, ImVec2 size, float now, float dt, float openT, Im
 		asked = {};   // (the next question asks afresh)
 	}
 	// the party, over everything (the cursor is drawn after it)
-	if (g_partyOpen && Net::Available()) TallyPartyPanel(fg, size, click);
+	if (g_partyOpen && Net::Available()) TallyPartyPanel(fg, size, click, false);
 }
