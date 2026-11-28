@@ -1,9 +1,9 @@
 {
  "installed": {
-  "sha": "168adac",
+  "sha": "f922230",
   "date": "2026-11-28",
-  "label": "The main menu by W/S/A/D, the D-pad and left stick and a click that lands under the cursor; Load's Delete and cursor fixed; Settings with KEYBINDS (ours and Skyrim's), in game too; keyboard and mouse stay in charge; one font (Philosopher); the blue Cursed Essence",
-  "extra": "On top of f88dc6b (the Ember Tally main menu, ours entirely) and 2b534e1 (Alduin's Bane as the preview, the Spellsword's Black Mage legs)"
+  "label": "The menu with no prompts (right-click backs out), sliders you drag, Load's choose-then-load or delete, the party as its own page, soft shades instead of boxes, our loading screen from the start of a save's load, a larger centred compass, carved-rune tallies cut in with sparks, the Tablet's uses as a bar left of magicka",
+  "extra": "On top of 168adac (the menu's keys, pad and cursor; Keybinds; Philosopher everywhere; the blue Cursed Essence) and f88dc6b (the Ember Tally main menu, ours entirely)"
  },
  "systems": [
   {
@@ -2098,6 +2098,7 @@
   }
  ],
  "installs": {
+  "f922230": "2026-11-28 03:40",
   "168adac": "2026-11-28 02:00",
   "f88dc6b": "2026-11-28 00:30",
   "3edd0b7": "2026-11-27 03:20",

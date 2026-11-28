@@ -14,8 +14,8 @@ import json, pathlib, subprocess
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent.parent.parent
 
-INSTALLED = {'sha': '168adac', 'date': '2026-11-28', 'label': 'The main menu by W/S/A/D, the D-pad and left stick and a click that lands under the cursor; Load\'s Delete and cursor fixed; Settings with KEYBINDS (ours and Skyrim\'s), in game too; keyboard and mouse stay in charge; one font (Philosopher); the blue Cursed Essence',
-             'extra': 'On top of f88dc6b (the Ember Tally main menu, ours entirely) and 2b534e1 (Alduin\'s Bane as the preview, the Spellsword\'s Black Mage legs)'}
+INSTALLED = {'sha': 'f922230', 'date': '2026-11-28', 'label': 'The menu with no prompts (right-click backs out), sliders you drag, Load\'s choose-then-load or delete, the party as its own page, soft shades instead of boxes, our loading screen from the start of a save\'s load, a larger centred compass, carved-rune tallies cut in with sparks, the Tablet\'s uses as a bar left of magicka',
+             'extra': 'On top of 168adac (the menu\'s keys, pad and cursor; Keybinds; Philosopher everywhere; the blue Cursed Essence) and f88dc6b (the Ember Tally main menu, ours entirely)'}
 
 # ------------------------------------------------------------------------------------------------ the systems (categories)
 SYSTEMS = [   # (Noah, Nov 28: "organize the testing by category so the tests at the top are as close to the start of the game like the menu tests
@@ -859,7 +859,7 @@ def builds():
     return out
 
 INSTALLS = {   # (each build installed on Noah's PC, and when)
-    '168adac': '2026-11-28 02:00', 'f88dc6b': '2026-11-28 00:30',
+    'f922230': '2026-11-28 03:40', '168adac': '2026-11-28 02:00', 'f88dc6b': '2026-11-28 00:30',
     '3edd0b7': '2026-11-27 03:20',
     '3938d82': '2026-11-27 01:10',
     'f696bbb': '2026-11-26 20:00', '15cfd57': '2026-11-26 17:20', 'a4584e6': '2026-11-26 15:01', '5865977': '2026-11-26 01:30',
