@@ -285,7 +285,7 @@ void TallyCompass(ImDrawList* dl, const Hud::State& s, ImVec2 size)
 }
 
 // ---- Cursed Essence, bottom right: the small label, the number large in gold; what a kill gave rising over it
-void TallyEssence(ImDrawList* dl, const Hud::State& s, ImVec2 size, float a_shown, bool a_rising)
+[[maybe_unused]] void TallyEssence(ImDrawList* dl, const Hud::State& s, ImVec2 size, float a_shown, bool a_rising)
 {
 	const float u = TU(size);
 	const float rx = size.x * (1.0f - 0.026f), by = size.y * (1.0f - 0.032f);
@@ -306,7 +306,7 @@ void TallyEssence(ImDrawList* dl, const Hud::State& s, ImVec2 size, float a_show
 	}
 }
 // what each kill gave, rising where it fell (BO3's points): gold, fading as it climbs
-void TallyKillPops(ImDrawList* dl, const Hud::State& s, ImVec2 size)
+[[maybe_unused]] void TallyKillPops(ImDrawList* dl, const Hud::State& s, ImVec2 size)
 {
 	const float u = TU(size);
 	for (const auto& m : s.motes) {

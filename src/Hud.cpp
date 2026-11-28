@@ -64,6 +64,9 @@ namespace coa
 		std::atomic<int>          g_padTab{ 0 }, g_padDel{ 0 };   // (Noah, Nov 27) the main menu's pages: LB / RB, Q / E a tab; X / Delete a save
 		std::atomic<bool>         g_menuOwn{ false };   // the Ember Tally main menu is ours entirely: Skyrim's (Edge UI's) menu under it takes no keys
 		std::atomic<bool>         g_tmSettings{ false };   // its Settings page is up (E turns its tabs there, not a press)
+		std::atomic<bool>         g_tmGame{ false };       // (Noah, Nov 28) our Settings page in game, over the Esc menu (its Settings opens it)
+		std::atomic<int>          g_sysSettings{ -1 };     // where Skyrim's Settings is in the Esc menu's list
+		std::string               g_sysPath;               // ... the list (for the input gate)
 		std::string               g_devPick;            // dev: a main-menu word to press as a click would (menupick)
 		std::mutex                g_devPickLock;
 		// Skyrim's main-menu buttons are kept over our picture: the frame as Skyrim drew it is copied, and in the
@@ -1980,17 +1983,18 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				shownPts += (s.points - shownPts) * std::min(1.0f, dt * 9.0f);
 				if (std::abs(s.points - shownPts) < 1.0f) shownPts = static_cast<float>(s.points);
 				const bool        rising = shownPts < s.points - 0.5f;
-				if (Hud::kTally) {
-					TallyEssence(dl, s, size, shownPts, rising);
-					TallyKillPops(dl, s, size);
-				}
+				// (Noah, Nov 28, the workshop's Cursed Essence: "use the current Cursed essence UI our old blue look and kill pops") the
+				// blue soul in its turning dragon-script, the number beside it and each kill's essence flying in - with Ember Tally
+				// too, in its bottom-right corner (the brews keep the left); the kill pops stay, each kill's essence rising where it fell
+				if (Hud::kTally) TallyKillPops(dl, s, size);
 				const std::string num = std::to_string(static_cast<int>(std::lround(shownPts)));
 				const float       numW = Measure(g_num, 26 * k, num).x;
 				const float       foot = size.y;  // (Noah: "move the cursed essence box down to the bottom corner" - Edge UI's shout meter is gone from it)
-				const ImVec2      coin{ 40 * k, foot - 36 * k };
+				const bool        onRight = Hud::kTally;
+				const ImVec2      coin{ onRight ? size.x - 40 * k : 40 * k, foot - 36 * k };
 				const float       w = 70 * k + std::max(numW, Measure(g_body, 11 * k, "CURSED ESSENCE").x);
-				if (!Hud::kTally) {
-				dl->AddRectFilledMultiColor({ 0, foot - 76 * k }, { w + 70 * k, foot }, IM_COL32(0, 0, 0, Hud::kEdgeHud ? 60 : 90), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, Hud::kEdgeHud ? 90 : 140));
+				{
+				if (!Hud::kTally) dl->AddRectFilledMultiColor({ 0, foot - 76 * k }, { w + 70 * k, foot }, IM_COL32(0, 0, 0, Hud::kEdgeHud ? 60 : 90), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, Hud::kEdgeHud ? 90 : 140));
 				// (Noah: their own essence, not septims - "Cursed Essence", animated) a soul burning in Alduin's curse,
 				// ringed by turning dragon-script (tools/essence.py: an 8x6 flipbook, 24 frames a second)
 				const float cr = 15 * k;
@@ -2008,8 +2012,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					dl->AddCircleFilled(coin, cr * 0.82f, IM_COL32(150, 110, 255, 255), 40);
 					dl->AddCircleFilled({ coin.x, coin.y + cr * 0.05f }, cr * 0.55f, IM_COL32(230, 215, 255, 255), 32);
 				}
-				Txt(dl, g_num, 26 * k, { coin.x + cr + 22 * k, coin.y - 9 * k }, rising ? IM_COL32(200, 228, 255, 255) : kParch, num, rising ? 2 * k : 1.2f * k, rising ? IM_COL32(90, 150, 255, 255) : IM_COL32(0, 0, 0, 220));
-				Txt(dl, g_body, 11 * k, { coin.x + cr + 23 * k, coin.y - 23 * k }, IM_COL32(190, 160, 255, 230), "CURSED ESSENCE", 1 * k, IM_COL32(0, 0, 0, 200));
+				const float tx = onRight ? coin.x - cr - 22 * k - numW : coin.x + cr + 22 * k;
+				const float lx = onRight ? coin.x - cr - 23 * k - Measure(g_body, 11 * k, "CURSED ESSENCE").x : coin.x + cr + 23 * k;
+				Txt(dl, g_num, 26 * k, { tx, coin.y - 9 * k }, rising ? IM_COL32(200, 228, 255, 255) : kParch, num, rising ? 2 * k : 1.2f * k, rising ? IM_COL32(90, 150, 255, 255) : IM_COL32(0, 0, 0, 220));
+				Txt(dl, g_body, 11 * k, { lx, coin.y - 23 * k }, IM_COL32(190, 160, 255, 230), "CURSED ESSENCE", 1 * k, IM_COL32(0, 0, 0, 200));
 				for (const auto& m : s.motes) {  // the kills' essence, flying in
 					const float u = std::clamp(m[2] / 0.75f, 0.0f, 1.0f), e = u * u * (3 - 2 * u);
 					const ImVec2 from{ m[0] * size.x, m[1] * size.y };
@@ -2024,11 +2030,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				if (s.gainTime > 0) {
 					const std::string g = (s.lastGain > 0 ? "+" : "") + std::to_string(s.lastGain);
 					const float       rise = (1.0f - s.gainTime) * 22 * k;
-					Txt(dl, g_num, 20 * k, { coin.x + cr + 9 * k, coin.y - 52 * k - rise }, Fade(s.lastGain < 0 ? IM_COL32(230, 60, 50, 255) : IM_COL32(240, 205, 90, 255), s.gainTime), g, 1.2f * k, IM_COL32(0, 0, 0, 200));
+					Txt(dl, g_num, 20 * k, { onRight ? coin.x - cr - 9 * k - Measure(g_num, 20 * k, g).x : coin.x + cr + 9 * k, coin.y - 52 * k - rise }, Fade(s.lastGain < 0 ? IM_COL32(230, 60, 50, 255) : IM_COL32(240, 205, 90, 255), s.gainTime), g, 1.2f * k, IM_COL32(0, 0, 0, 200));
 				}
 				if (s.styleTime > 0 && !s.styleTag.empty()) {  // (Noah: points for style) its tag over the septims
 					const float a = std::min(1.0f, s.styleTime / 0.4f), pop = 1.0f + 0.25f * std::max(0.0f, s.styleTime - 1.5f) / 0.3f;
-					Txt(dl, g_title, 18 * k * pop, { coin.x + cr + 9 * k, coin.y - 84 * k }, Fade(kRune, a), s.styleTag, 2.0f * k, IM_COL32(20, 60, 140, 255));
+					Txt(dl, g_title, 18 * k * pop, { onRight ? coin.x - cr - 9 * k - Measure(g_title, 18 * k * pop, s.styleTag).x : coin.x + cr + 9 * k, coin.y - 84 * k }, Fade(kRune, a), s.styleTag, 2.0f * k, IM_COL32(20, 60, 140, 255));
 				}
 				}   // (the old essence corner: not with Ember Tally)
 			}
@@ -3678,6 +3684,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 				g_sys.found = true;
 				g_sys.path = path;
+				g_sysPath = path;
 				logger::info("party: the system list is {}", path);
 			}
 			g_sys.list = RE::GFxValue();
@@ -3700,7 +3707,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				if (e.GetMember("text", &t) && t.IsString()) {
 					std::string up = t.GetString();
 					std::transform(up.begin(), up.end(), up.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
-					if (up.find("SETTING") != std::string::npos) settingsText = t.GetString();
+					if (up.find("SETTING") != std::string::npos && up.find("MOD") == std::string::npos) settingsText = t.GetString(), g_sysSettings = static_cast<int>(i);
 					if (!g_sys.logged) logger::info("party: system entry {} '{}'", i, t.GetString());
 				}
 			}
@@ -3737,6 +3744,13 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			const float sx = r.screenWidthX > 1 ? a_size.x / r.screenWidthX : 1.0f, sy = r.screenWidthY > 1 ? a_size.y / r.screenWidthY : 1.0f;
 			const ImVec2 sk{ r.cursorPosX * sx, r.cursorPosY * sy };
 			static ImVec2 lastSk{ -1, -1 };
+			// (Noah, Nov 28: Skyrim's "Activate now?" box over the main menu - "my mouse cant select the options") while Skyrim's
+			// own cursor is up, it is the cursor: ours is drawn exactly there, where its boxes take the clicks
+			auto* ui = RE::UI::GetSingleton();
+			if (ui && ui->IsMenuOpen(RE::CursorMenu::MENU_NAME)) {
+				g_cursor = sk, lastSk = sk, g_skCursor = sk;
+				return;
+			}
 			if (std::abs(sk.x - lastSk.x) + std::abs(sk.y - lastSk.y) > 0.5f || g_cursor.x < 0) {
 				g_cursor = sk;  // Skyrim moved it: follow
 			} else if (dx != 0 || dy != 0) {
@@ -5768,11 +5782,19 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			g_title = g_title ? g_title : g_font;
 			g_num = g_num ? g_num : g_font;
 			g_body = g_body ? g_body : g_font;
-			// (Noah, Nov 27: Ember Tally) its type: Barlow Condensed and Inter (SIL Open Font License)
-			g_hf = own("BarlowCondensed-SemiBold.ttf");
-			g_hfb = own("BarlowCondensed-Bold.ttf");
-			g_inter = own("Inter-Regular.ttf");
-			logger::info("hud: Ember Tally type {} {} {}", g_hf ? "Barlow" : "-", g_hfb ? "Barlow Bold" : "-", g_inter ? "Inter" : "-");
+			// (Noah, Nov 28: the subtitles "nordic like how Edge UI's subtitles looked ... make sure the text font is consistent among the
+			// entire UI" - "Everything" in one face; his pick of the free ones, Philosopher, the nearest to Edge UI's Berserker, which
+			// isn't ours to ship) every word we draw: titles, menu words, numbers, subtitles and running text (SIL Open Font License)
+			if (auto* ph = own("Philosopher-Regular.ttf")) {
+				auto* phb = own("Philosopher-Bold.ttf");
+				g_hf = ph, g_inter = ph, g_body = ph;
+				g_hfb = phb ? phb : ph, g_title = g_hfb, g_num = g_hfb, g_font = g_hfb;
+			} else {
+				g_hf = own("BarlowCondensed-SemiBold.ttf");
+				g_hfb = own("BarlowCondensed-Bold.ttf");
+				g_inter = own("Inter-Regular.ttf");
+			}
+			logger::info("hud: the UI's type: {}", g_hf && g_hf == g_inter ? "Philosopher" : "Barlow Condensed + Inter (Philosopher missing)");
 			if (!ImGui_ImplDX11_Init(g_device, g_context)) {
 				g_failed = true;
 				logger::error("hud: ImGui DX11 init failed");
@@ -6830,7 +6852,19 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				if (journal && Hud::kTally) TallyTween(uiM, io.DisplaySize, s, static_cast<float>(ImGui::GetTime()));   // (Noah, Nov 27: the Tab menu remade)
 				// (Noah: the Party tab in Skyrim's system menu) in the Esc journal a PARTY tab at the top left (click it, or P /
 				// Triangle-Y): it opens the party window - the lobby, everyone's night, last night's score and your records
-				if (escJournal) {
+				if (escJournal && g_tmGame) {   // (Noah, Nov 28) our Settings page over the Esc menu
+					auto* dl = ImGui::GetForegroundDrawList();
+					const float dtt = io.DeltaTime > 0 ? io.DeltaTime : 1.0f / 60.0f;
+					static float ga = 0;
+					ga = std::min(1.0f, ga + dtt * 5.0f);
+					dl->AddRectFilled({ 0, 0 }, io.DisplaySize, IM_COL32(4, 2, 1, static_cast<int>(225 * ga)));
+					TmIn tin{ g_padMove.exchange(0), g_padAccept.exchange(0), g_padBack.exchange(0), g_padSide.exchange(0), g_wheel.exchange(0), g_padTab.exchange(0), g_padDel.exchange(0) };
+					TmStick(tin, dtt);
+					g_tmSettings = true;
+					if (!TmSettings(dl, io.DisplaySize, static_cast<float>(ImGui::GetTime()), ga, g_cursor, clicks > 0, tin, dtt)) {
+						g_tmGame = false, g_tmSettings = false, ga = 0;
+					}
+				} else if (escJournal) {
 					const float kk = io.DisplaySize.y / 1080.0f;
 					auto*       dl = ImGui::GetForegroundDrawList();
 					bool over = false;
@@ -6849,6 +6883,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				} else {
 					g_partyOpen = false;
 					g_sys = {};  // (the journal closed: its list is gone)
+					if (g_tmGame) g_tmGame = false, g_tmSettings = false, g_bindWait = -1;
 				}
 			} else if (InGame() && (!DevTools::HudOff() || keepUi)) {
 				Draw(s, io.DisplaySize);
@@ -7159,15 +7194,58 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			static RE::BSEventNotifyControl thunk(RE::MenuControls* a_this, RE::InputEvent* const* a_ev, RE::BSTEventSource<RE::InputEvent*>* a_src)
 			{
 				if (a_ev && *a_ev) RaceTidy::Keys(*a_ev);
-				if ((g_partyOpen || g_menuOwn) && a_ev && *a_ev) {
+				// (Noah, Nov 28: "a keybinds section ... in game settings" - his pick: our Settings page in game too) the Esc menu's
+				// Settings opens ours: its press (Enter / E / A, or a click while it is the one chosen) never reaches Skyrim's
+				if (a_ev && *a_ev && !g_tmGame && Hud::kTally && g_sysSettings.load() >= 0 && !g_sysPath.empty()) {
 					auto* ui = RE::UI::GetSingleton();
-					const bool main = ui && ui->IsMenuOpen(RE::MainMenu::MENU_NAME);
-					if (ui && ((g_partyOpen && (ui->IsMenuOpen(RE::JournalMenu::MENU_NAME) || main)) || (g_menuOwn && main && !ui->IsMenuOpen(RE::MessageBoxMenu::MENU_NAME)))) {
+					if (ui && ui->IsMenuOpen(RE::JournalMenu::MENU_NAME) && !ui->IsMenuOpen(RE::MainMenu::MENU_NAME) && !g_partyOpen) {
+						bool press = false;
 						for (auto* e = *a_ev; e; e = e->next) {
-							if (e->GetEventType() == RE::INPUT_EVENT_TYPE::kButton || e->GetEventType() == RE::INPUT_EVENT_TYPE::kThumbstick) {
-								return RE::BSEventNotifyControl::kContinue;
+							auto* b = e->AsButtonEvent();
+							if (!b || !b->IsDown()) continue;
+							const auto id = b->GetIDCode();
+							const auto dev = b->GetDevice();
+							press = press || (dev == RE::INPUT_DEVICE::kKeyboard && (id == 0x1C || id == 0x12 || id == 0x9C)) || (dev == RE::INPUT_DEVICE::kGamepad && id == 0x1000) || (dev == RE::INPUT_DEVICE::kMouse && id == 0);
+						}
+						auto jm = press ? ui->GetMenu(RE::JournalMenu::MENU_NAME) : nullptr;
+						RE::GFxValue sel;
+						if (jm && jm->uiMovie && jm->uiMovie->GetVariable(&sel, (g_sysPath + ".selectedIndex").c_str()) && sel.IsNumber() && static_cast<int>(sel.GetNumber()) == g_sysSettings.load()) {
+							RE::GFxValue vis;   // (the System page, not the quests: its list is up)
+							if (!jm->uiMovie->GetVariable(&vis, (g_sysPath + "._visible").c_str()) || !vis.IsBool() || vis.GetBool()) {
+								g_tmGame = true;
+								logger::info("settings: the Esc menu's Settings - ours opened");
 							}
 						}
+					}
+				}
+				if ((g_partyOpen || g_menuOwn || g_tmGame) && a_ev && *a_ev) {
+					auto* ui = RE::UI::GetSingleton();
+					const bool main = ui && ui->IsMenuOpen(RE::MainMenu::MENU_NAME);
+					if (ui && ((g_partyOpen && (ui->IsMenuOpen(RE::JournalMenu::MENU_NAME) || main)) || (g_menuOwn && main && !ui->IsMenuOpen(RE::MessageBoxMenu::MENU_NAME)) ||
+							   (g_tmGame && ui->IsMenuOpen(RE::JournalMenu::MENU_NAME)))) {
+						// (Noah, Nov 28: "the selection is not accurate to where the mouse cursor is") only the keys, the buttons and the
+						// sticks are kept from the menu under ours - the mouse's movement still reaches Skyrim, so its cursor (where
+						// its own boxes take clicks) and ours never part. The batch is relinked without them, then put back as it was.
+						std::array<RE::InputEvent*, 96> all{};
+						std::array<RE::InputEvent*, 96> nexts{};
+						std::size_t n = 0;
+						for (auto* e = *a_ev; e && n < all.size(); e = e->next) all[n] = e, nexts[n] = e->next, ++n;
+						RE::InputEvent*  head = nullptr;
+						RE::InputEvent** tail = &head;
+						for (std::size_t i = 0; i < n; ++i) {
+							const auto t = all[i]->GetEventType();
+							if (t == RE::INPUT_EVENT_TYPE::kButton || t == RE::INPUT_EVENT_TYPE::kThumbstick || t == RE::INPUT_EVENT_TYPE::kChar) continue;
+							*tail = all[i], tail = &all[i]->next;
+						}
+						*tail = nullptr;
+						if (!head) {
+							for (std::size_t i = 0; i < n; ++i) all[i]->next = nexts[i];
+							return RE::BSEventNotifyControl::kContinue;
+						}
+						RE::InputEvent* const kept = head;
+						const auto r = func(a_this, &kept, a_src);
+						for (std::size_t i = 0; i < n; ++i) all[i]->next = nexts[i];
+						return r;
 					}
 				}
 				return func(a_this, a_ev, a_src);
@@ -7456,11 +7534,26 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			if (a_b && a_b->IsDown()) {
 				g_padLast = a_b->GetDevice() == RE::INPUT_DEVICE::kGamepad;
 			}
+			// (Noah, Nov 28: the Keybinds tab) a key being waited for takes the next press, and nothing else does
+			if (const int w = g_bindWait.load(); w >= 0 && a_b && a_b->IsDown()) {
+				const auto dev = a_b->GetDevice();
+				const int  id = static_cast<int>(a_b->GetIDCode());
+				if (dev == RE::INPUT_DEVICE::kKeyboard && id == 0x01) g_bindGot = -2;   // Esc: never mind
+				else if (w == 0 && dev == RE::INPUT_DEVICE::kKeyboard) g_bindGot = id;
+				else if (w == 0 && dev == RE::INPUT_DEVICE::kMouse) {
+					g_bindGot = 0x100 | id;
+					if (id == 0) g_clicks = std::max(0, g_clicks.load() - 1);   // (the click is the key, not a press on the page)
+				} else if (w == 1 && dev == RE::INPUT_DEVICE::kGamepad) g_bindGot = id;
+				else return;
+				g_bindWait = -1;
+				return;
+			}
 			auto* ui = RE::UI::GetSingleton();
 			// the Party tab in the Esc journal: P, or Triangle / Y
 			const bool partyScreen = ui && ((ui->IsMenuOpen(RE::JournalMenu::MENU_NAME) && !ui->IsMenuOpen(RE::MainMenu::MENU_NAME)) || (ui->IsMenuOpen(RE::MainMenu::MENU_NAME) && Net::Available()));
 			if (a_b && a_b->IsDown() && partyScreen &&
-				((a_b->GetDevice() == RE::INPUT_DEVICE::kKeyboard && a_b->GetIDCode() == 0x19) || ((!Hud::kEdgeHud || !g_sys.found) && a_b->GetDevice() == RE::INPUT_DEVICE::kGamepad && a_b->GetIDCode() == 0x8000))) {
+				((a_b->GetDevice() == RE::INPUT_DEVICE::kKeyboard && static_cast<int>(a_b->GetIDCode()) == Settings::Key(Settings::kKeyParty)) ||
+				 ((!Hud::kEdgeHud || !g_sys.found) && a_b->GetDevice() == RE::INPUT_DEVICE::kGamepad && static_cast<int>(a_b->GetIDCode()) == Settings::PadKey(Settings::kKeyParty)))) {
 				g_partyOpen = !g_partyOpen;
 				g_partyFocus = 0;
 			}
@@ -7515,7 +7608,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				return;
 			}
 			// F1, in the world: the Codex, at your class's guide (the lore, before you have a class)
-			if (a_b && a_b->IsDown() && a_b->GetDevice() == RE::INPUT_DEVICE::kKeyboard && a_b->GetIDCode() == 0x3B && InGame()) {
+			if (a_b && a_b->IsDown() && InGame() && !(ui && ui->GameIsPaused()) &&
+				((a_b->GetDevice() == RE::INPUT_DEVICE::kKeyboard && static_cast<int>(a_b->GetIDCode()) == Settings::Key(Settings::kKeyCodex)) ||
+				 (a_b->GetDevice() == RE::INPUT_DEVICE::kGamepad && Settings::PadKey(Settings::kKeyCodex) >= 0 && static_cast<int>(a_b->GetIDCode()) == Settings::PadKey(Settings::kKeyCodex)))) {
 				Tasks::AddUI([] {
 					const int cls = Classes::Get();
 					(void)cls;   // (Noah: one book - The Curse of Alduin, every class a tab in it)
@@ -7531,7 +7626,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				});
 				return;
 			}
-			if (!a_b || !a_b->IsDown() || !ui || !ui->IsMenuOpen(RE::MainMenu::MENU_NAME)) {
+			if (!a_b || !a_b->IsDown() || !ui || (!ui->IsMenuOpen(RE::MainMenu::MENU_NAME) && !(g_tmGame && ui->IsMenuOpen(RE::JournalMenu::MENU_NAME)))) {
 				return;
 			}
 			const auto id = a_b->GetIDCode();

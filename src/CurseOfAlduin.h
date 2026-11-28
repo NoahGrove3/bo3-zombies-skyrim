@@ -564,7 +564,9 @@ namespace coa
 	namespace Settings
 	{
 		inline constexpr float kFovMin = 60.0f, kFovMax = 130.0f;
-		inline constexpr int   kKeys = 7;          // the shrine's keys: roll, reforge, perk, shout, leave, bond the dragon, call a bow
+		inline constexpr int   kShrineKeys = 7;    // the shrine's keys: roll, reforge, perk, shout, leave, bond the dragon, call a bow
+		inline constexpr int   kKeys = 9;          // ... and (Noah, Nov 28: the Keybinds tab) the Codex and the co-op party
+		inline constexpr int   kKeyCodex = 7, kKeyParty = 8;
 		float       FovFirst();
 		float       FovThird();
 		void        SetFov(bool a_first, float a_v);
@@ -600,6 +602,10 @@ namespace coa
 		float       UndeadDamageMult();
 		int         Key(int a_action);
 		std::string KeyName(int a_action);
+		int         PadKey(int a_action);          // its controller button (Skyrim's gamepad code), -1 none
+		void        SetKey(int a_action, bool a_pad, int a_code);   // (Noah, Nov 28: the Keybinds tab) -1 clears it
+		int         DefaultKey(int a_action, bool a_pad);
+		std::string CodeName(int a_code, int a_device);   // a key's name: 0 keyboard, 1 mouse, 2 controller (its own button names)
 		void        Tick();                       // re-read the MCM's file when it changes
 		void        ApplyMods();                  // the Other mods page into those mods' own files (game start)
 	}

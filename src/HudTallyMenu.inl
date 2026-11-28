@@ -13,6 +13,36 @@ struct TmIn
 	int moves = 0, accepts = 0, backs = 0, sides = 0, wheel = 0, tabs = 0, dels = 0;
 };
 
+// (Noah, Nov 28: "For controller the binds should be the dpad or left stick direction and X or A") the left stick as the d-pad:
+// a push moves one; held, it repeats
+void TmStick(TmIn& a_in, float a_dt)
+{
+	static float ty = -1.0f, tx = -1.0f;
+	auto step = [&](float v, float& t, int& out, int sign) {
+		if (std::abs(v) < 0.55f) { t = -1.0f; return; }
+		const int d = (v > 0 ? 1 : -1) * sign;
+		if (t < 0.0f) { out += d, t = 0.0f; return; }
+		t += a_dt;
+		if (t > 0.38f) out += d, t -= 0.12f;
+	};
+	const float x = g_lsX.load(), y = g_lsY.load();
+	if (std::abs(y) >= std::abs(x)) step(y, ty, a_in.moves, -1), tx = -1.0f;
+	else step(x, tx, a_in.sides, 1), ty = -1.0f;
+}
+
+// the mouse counts for "which one" only once it moves; a key or the stick hands the choice back to the keys
+struct TmMouse
+{
+	ImVec2 last{ -1, -1 };
+	bool   on = true;
+	void   Note(ImVec2 a_cur, const TmIn& a_in)
+	{
+		if (last.x >= 0 && std::abs(a_cur.x - last.x) + std::abs(a_cur.y - last.y) > 3.0f) on = true;
+		last = a_cur;
+		if (a_in.moves || a_in.sides) on = false;
+	}
+};
+
 std::string TmUpper(std::string a_s)
 {
 	if (!a_s.empty() && a_s[0] == '$') a_s = a_s.substr(1);
@@ -213,10 +243,9 @@ bool DeleteSave(const std::string& a_file)
 bool TmLoad(ImDrawList* fg, ImVec2 size, float now, float dt, float a, ImVec2 cur, bool click, const TmIn& in)
 {
 	static int   sel = 0, filter = 0, askFocus = 1;
-	static float scroll = 0;
+	static float scroll = 0, target = 0;
 	static bool  loading = false, asking = false;
-	static ImVec2 lastCur{ -1, -1 };
-	static bool  mouseOn = true;
+	static TmMouse mouse;
 	const float W = size.x, H = size.y, u = TU(size);
 	TmHeading(fg, size, 6.0f * u, "LOAD", a);
 	std::vector<SaveRow> all;
@@ -252,22 +281,26 @@ bool TmLoad(ImDrawList* fg, ImVec2 size, float now, float dt, float a, ImVec2 cu
 	const float listL = W * 0.5f - 44.0f * u, listR = W * 0.5f + 2.0f * u, top = 14.0f * u, bottom = H - 7.5f * u;
 	const float rowH = 4.4f * u;
 	const int   fits = std::max(1, static_cast<int>((bottom - top) / rowH));
-	if (std::abs(cur.x - lastCur.x) + std::abs(cur.y - lastCur.y) > 3.0f) mouseOn = true;
-	lastCur = cur;
-	if (in.moves) mouseOn = false;
-	if (n > 0 && !asking) sel = std::clamp(sel + in.moves + in.wheel, 0, n - 1);
-	if (n > 0) sel = std::clamp(sel, 0, n - 1);
+	// (Noah, Nov 28: "the selection is not accurate to where the mouse cursor is") the list no longer slides under a still mouse:
+	// the wheel scrolls it, the keys move the choice and the list follows that, and the row under the mouse is the choice
+	mouse.Note(cur, in);
 	const float maxScroll = std::max(0.0f, static_cast<float>(n - fits));
-	float want = std::clamp(scroll, static_cast<float>(sel - fits + 1), static_cast<float>(sel));
-	want = std::clamp(want, 0.0f, maxScroll);
-	scroll += (want - scroll) * std::min(1.0f, dt * 14.0f);
+	if (n > 0 && !asking && in.moves) {
+		sel = std::clamp(sel + in.moves, 0, n - 1);
+		target = std::clamp(target, static_cast<float>(sel - fits + 1), static_cast<float>(sel));
+	}
+	if (!asking && in.wheel) target += static_cast<float>(in.wheel) * 2.0f;
+	target = std::clamp(std::round(target), 0.0f, maxScroll);
+	if (n > 0) sel = std::clamp(sel, 0, n - 1);
+	scroll += (target - scroll) * std::min(1.0f, dt * 14.0f);
+	if (std::abs(target - scroll) < 0.002f) scroll = target;
 	if (n > 0) TShade(fg, { listL, top - 0.6f * u }, { listR, std::min(bottom, top + rowH * static_cast<float>(std::min(n, fits))) + 0.2f * u }, 3.0f * u, 0.85f * a);
 	int hovered = -1;
 	fg->PushClipRect({ listL - 2.0f * u, top - 0.6f * u }, { listR + 2.0f * u, bottom + 0.2f * u }, true);
 	for (int i = std::max(0, static_cast<int>(scroll) - 1); i < std::min(n, static_cast<int>(scroll) + fits + 2); ++i) {
 		const auto& r = saves[i];
 		const float y = top + (static_cast<float>(i) - scroll) * rowH;
-		const bool  over = !asking && mouseOn && cur.x >= listL && cur.x <= listR && cur.y >= y && cur.y < y + rowH && cur.y >= top && cur.y <= bottom;
+		const bool  over = !asking && cur.x >= listL && cur.x <= listR && cur.y >= y && cur.y < y + rowH && cur.y >= top && cur.y <= bottom;
 		if (over) hovered = i;
 		const bool lit = i == sel;
 		if (lit) {
@@ -285,7 +318,7 @@ bool TmLoad(ImDrawList* fg, ImVec2 size, float now, float dt, float a, ImVec2 cu
 		TTextR(fg, HF(), 0.85f * u, listR - 1.2f * u, y + 2.4f * u, Fade(r.autosave ? IM_COL32(150, 170, 200, 255) : kTGold, 0.8f * a), r.autosave ? "AUTOSAVE" : "SAVE", 0.25f);
 	}
 	fg->PopClipRect();
-	if (hovered >= 0) sel = hovered;
+	if (hovered >= 0 && (mouse.on || click)) sel = hovered;
 	if (n > fits) {   // (where in the list: a thin ember thread down its right)
 		const float th = (bottom - top) * static_cast<float>(fits) / static_cast<float>(n), ty = top + (bottom - top - th) * (scroll / std::max(1.0f, maxScroll));
 		fg->AddRectFilled({ listR + 0.8f * u, top }, { listR + 0.95f * u, bottom }, IM_COL32(220, 207, 185, static_cast<int>(30 * a)));
@@ -314,14 +347,19 @@ bool TmLoad(ImDrawList* fg, ImVec2 size, float now, float dt, float a, ImVec2 cu
 	const bool pad = g_padLast;
 	const int h = asking ? -1 : TmHints(fg, size, { { pad ? Hud::PadWord("A") : std::string("ENTER"), "LOAD" }, { pad ? Hud::PadWord("X") : std::string("DEL"), "DELETE" }, { pad ? Hud::PadWord("LB") + " " + Hud::PadWord("RB") : std::string("PGUP PGDN"), "CHARACTER" }, { pad ? Hud::PadWord("B") : std::string("ESC"), "BACK" } }, cur, click, a);
 	if (h == 2) filter = (filter + 1) % (static_cast<int>(chars.size()) + 1);
-	// Delete: asked first
-	if (!asking && !loading && n > 0 && (in.dels > 0 || h == 1)) asking = true, askFocus = 1;
+	// Delete: asked first (Noah, Nov 28: "deleting a save doesnt work" - the click on DELETE also answered the question it opened)
+	if (!asking && !loading && n > 0 && (in.dels > 0 || h == 1)) {
+		asking = true, askFocus = 1;
+		logger::info("menu: delete '{}'? asked", saves[std::clamp(sel, 0, n - 1)].file);
+		return true;
+	}
 	if (asking) {
 		const TmIn qi = in;
 		const auto& r = saves[std::clamp(sel, 0, std::max(0, n - 1))];
 		const int ans = n > 0 ? TmAsk(fg, size, a, "DELETE THIS SAVE?", (r.name.empty() ? std::string("Unknown") : r.name) + "  \xc2\xb7  Level " + std::to_string(r.level) + "  \xc2\xb7  " + r.date, cur, click, qi, askFocus) : 0;
 		if (ans >= 0) {
 			asking = false;
+			logger::info("menu: delete '{}' - {}", r.file, ans == 1 ? "yes" : "no");
 			if (ans == 1 && DeleteSave(r.file)) RequestSaves();
 		}
 		return true;
@@ -330,7 +368,7 @@ bool TmLoad(ImDrawList* fg, ImVec2 size, float now, float dt, float a, ImVec2 cu
 		loading = false;
 		return false;
 	}
-	if (!loading && n > 0 && ((click && hovered >= 0) || in.accepts > 0 || h == 0)) {
+	if (!loading && n > 0 && ((click && hovered >= 0 && h < 0) || in.accepts > 0 || h == 0)) {
 		loading = true;
 		g_menuNewAt = g_menuNewPressed = {};
 		LoadSave(saves[sel].file);
@@ -413,7 +451,7 @@ std::vector<std::vector<TOpt>>& SettingsTabs()
 		return o;
 	};
 	auto pct = [](float v) { return std::to_string(static_cast<int>(std::lround(v * 100.0f))) + "%"; };
-	tabs.resize(5);
+	tabs.resize(6);   // (the sixth, KEYBINDS, is drawn by TmKeybinds)
 	// GRAPHICS
 	{
 		auto& t = tabs[0];
@@ -630,6 +668,8 @@ std::vector<std::vector<TOpt>>& SettingsTabs()
 	}
 	return tabs;
 }
+#include "HudKeybinds.inl"
+
 void TmStep(TOpt& o, int a_dir)
 {
 	const float v = o.get();
@@ -639,25 +679,34 @@ void TmStep(TOpt& o, int a_dir)
 		o.set(static_cast<float>((static_cast<int>(v) + a_dir + n) % n));
 	} else o.set(std::clamp(std::round((v + o.step * static_cast<float>(a_dir)) / o.step) * o.step, o.mn, o.mx));
 }
-bool TmSettings(ImDrawList* fg, ImVec2 size, float now, float a, ImVec2 cur, bool click, const TmIn& in)
+void TmSettingsLeave()
+{
+	if (g_tmPrefsDirty) {
+		if (auto* c = RE::INIPrefSettingCollection::GetSingleton()) c->WriteAllSettings();
+		logger::info("settings: SkyrimPrefs.ini written from our Settings");
+		g_tmPrefsDirty = false;
+	}
+	g_bindWait = -1;
+}
+bool TmSettings(ImDrawList* fg, ImVec2 size, float now, float a, ImVec2 cur, bool click, const TmIn& in, float dt = 1.0f / 60.0f)
 {
 	static int tab = 0, sel = 0;
-	static ImVec2 lastCur{ -1, -1 };
-	static bool mouseOn = true;
+	static TmMouse mouse;
 	const float W = size.x, H = size.y, u = TU(size);
 	auto& tabs = SettingsTabs();
 	TmHeading(fg, size, 6.0f * u, "SETTINGS", a);
-	static const char* kTabs[5] = { "GRAPHICS", "DISPLAY", "GAMEPLAY", "CONTROLS", "AUDIO" };
-	if (in.tabs) tab = (tab + in.tabs + 5 * 8) % 5, sel = 0;
+	static const char* kTabs[6] = { "GRAPHICS", "DISPLAY", "GAMEPLAY", "CONTROLS", "KEYBINDS", "AUDIO" };
+	static constexpr int kTabOf[6] = { 0, 1, 2, 3, 5, 4 };   // (the tab shown -> its options; KEYBINDS is drawn on its own)
+	if (in.tabs && g_bindWait.load() < 0) tab = (tab + in.tabs + 6 * 8) % 6, sel = 0;
 	// the tabs
 	{
 		const float fs = 1.25f * u, gap = 3.2f * u;
 		float total = 0;
 		for (const char* t : kTabs) total += TMeasure(HF(), fs, t, 0.3f).x;
-		total += gap * 4;
+		total += gap * 5;
 		float x = W * 0.5f - total * 0.5f;
 		const float y = 10.6f * u;
-		for (int i = 0; i < 5; ++i) {
+		for (int i = 0; i < 6; ++i) {
 			const float tw = TMeasure(HF(), fs, kTabs[i], 0.3f).x;
 			bool hv = false;
 			if (TmWord(fg, HF(), fs, x + tw * 0.5f, y, kTabs[i], i == tab, cur, click, 0.3f, a, &hv) && i != tab) tab = i, sel = 0, click = false;
@@ -665,11 +714,17 @@ bool TmSettings(ImDrawList* fg, ImVec2 size, float now, float a, ImVec2 cur, boo
 			x += tw + gap;
 		}
 	}
-	auto& opts = tabs[tab];
+	if (kTabOf[tab] == 5) {   // KEYBINDS
+		int h = -1;
+		const bool stay = TmKeybinds(fg, size, now, dt, a, cur, click, in, h);
+		if (h == 2) tab = (tab + 1) % 6, sel = 0;
+		if (!stay) { TmSettingsLeave(); return false; }
+		return true;
+	}
+	auto& opts = tabs[kTabOf[tab]];
 	const int n = static_cast<int>(opts.size());
-	if (std::abs(cur.x - lastCur.x) + std::abs(cur.y - lastCur.y) > 3.0f) mouseOn = true;
-	lastCur = cur;
-	if (in.moves) mouseOn = false;
+	mouse.Note(cur, in);
+	const bool mouseOn = mouse.on || click;
 	sel = n > 0 ? std::clamp(sel + in.moves, 0, n - 1) : 0;
 	const float colL = W * 0.5f - 30.0f * u, colR = W * 0.5f + 30.0f * u, valC = W * 0.5f + 19.0f * u;
 	const float rowH = 2.75f * u, top = 15.0f * u;
@@ -718,13 +773,9 @@ bool TmSettings(ImDrawList* fg, ImVec2 size, float now, float a, ImVec2 cur, boo
 	if (g_tmRestartChanged) TTextC(fg, Inter(), 0.95f * u, W * 0.5f, H - 7.0f * u, Fade(kTGold, a), "Settings marked RESTART take effect the next time you start Skyrim.");
 	const bool pad = g_padLast;
 	const int h = TmHints(fg, size, { { pad ? Hud::PadWord("LB") + " " + Hud::PadWord("RB") : std::string("Q  E"), "TAB" }, { pad ? std::string("D-PAD") : std::string("ARROWS"), "CHANGE" }, { pad ? Hud::PadWord("B") : std::string("ESC"), "BACK" } }, cur, click, a);
-	if (h == 0) tab = (tab + 1) % 5, sel = 0;
+	if (h == 0) tab = (tab + 1) % 6, sel = 0;
 	if (h == 2 || in.backs > 0) {
-		if (g_tmPrefsDirty) {
-			if (auto* c = RE::INIPrefSettingCollection::GetSingleton()) c->WriteAllSettings();
-			logger::info("settings: SkyrimPrefs.ini written from the main menu's Settings");
-			g_tmPrefsDirty = false;
-		}
+		TmSettingsLeave();
 		return false;
 	}
 	return true;
@@ -869,6 +920,12 @@ void TallyMenu(ImDrawList* fg, ImVec2 size, float now, float dt, float openT, Im
 	{
 		const int mv0 = g_padMove.exchange(0), ac = g_padAccept.exchange(0), bk = g_padBack.exchange(0), sd = g_padSide.exchange(0), wh = g_wheel.exchange(0), tb = g_padTab.exchange(0), de = g_padDel.exchange(0);
 		if (!g_partyOpen && !otherMenu) in = { mv0, ac, bk, sd, wh, tb, de };
+		if (!otherMenu) {
+			TmIn st;
+			TmStick(st, dt);
+			if (g_partyOpen) g_partyFocus = g_partyFocus + st.moves;
+			else in.moves += st.moves, in.sides += st.sides;
+		}
 	}
 	pageA = std::clamp(pageA + (page != 0 ? 1.0f : -1.0f) * dt * 5.0f, 0.0f, 1.0f);
 	g_tmPageA = pageA;
@@ -886,7 +943,7 @@ void TallyMenu(ImDrawList* fg, ImVec2 size, float now, float dt, float openT, Im
 		if (!TmLoad(fg, size, now, dt, pageA, cur, click && !g_partyOpen, in)) page = 0;
 		in = {}, click = false;
 	} else if (page == 2) {
-		if (!TmSettings(fg, size, now, pageA, cur, click && !g_partyOpen, in)) page = 0;
+		if (!TmSettings(fg, size, now, pageA, cur, click && !g_partyOpen, in, dt)) page = 0;
 		in = {}, click = false;
 	}
 	// the words: Skyrim's own (CO-OP PARTY among them) and our SETTINGS before QUIT
@@ -912,6 +969,8 @@ void TallyMenu(ImDrawList* fg, ImVec2 size, float now, float dt, float openT, Im
 		static std::vector<float> glow;
 		glow.resize(rows.size(), 0.0f);
 		const bool live = page == 0 && !question && !g_partyOpen;
+		static TmMouse mouse;
+		if (live) mouse.Note(cur, in);
 		// keys: up / down, skipping what can't be chosen
 		if (live && in.moves) {
 			for (int m = 0; m < std::abs(in.moves); ++m) {
@@ -937,7 +996,9 @@ void TallyMenu(ImDrawList* fg, ImVec2 size, float now, float dt, float openT, Im
 			const float br = 0.8f + 0.2f * std::sin(now * 3.0f);
 			TTextC(fg, HF(), fs, W * 0.5f, y + (1.0f - ease) * 0.6f * u, col, r.text, track, glow[i] > 0.02f ? IM_COL32(232, 90, 40, static_cast<int>(170 * glow[i] * br * in0 * wordsA)) : 0, 0.07f * fs * glow[i]);
 		}
-		if (hovered >= 0) sel = hovered;
+		// (Noah, Nov 28: "The menu UI isnt working when I try to navigate") the word under a still mouse no longer takes the choice
+		// back from the keys every frame: it is the choice when the mouse moves onto it, or is clicked
+		if (hovered >= 0 && (mouse.on || click)) sel = hovered;
 		// Skyrim's own choice follows ours (the party's own press looks at it)
 		if (lmv && rows[sel].index >= 0) {
 			RE::GFxValue list, cv;

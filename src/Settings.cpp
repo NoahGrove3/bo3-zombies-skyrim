@@ -22,8 +22,11 @@ namespace coa::Settings
 		float g_adsSens = 1.0f;  // (Noah) the look's speed while aiming down sights, against Skyrim's own sensitivity
 		float g_fpsCap = 0.0f;   // (Noah, Nov 27: the main menu's Settings) the frame cap in play, 0 = none
 		bool  g_vsync = false;   // ... and VSync (off: the frame rate unlimited, as before)
-		int   g_keys[kKeys] = { 0x02, 0x03, 0x04, 0x05, 0x0E, 0x06, 0x30 };
-		constexpr const wchar_t* kKeyIds[kKeys] = { L"iShrineRoll", L"iShrineReforge", L"iShrineBless", L"iShrineShout", L"iShrineLeave", L"iShrineBond", L"iShrineBow" };
+		constexpr int kDefaultKeys[kKeys] = { 0x02, 0x03, 0x04, 0x05, 0x0E, 0x06, 0x30, 0x3B, 0x19 };       // (F1 the Codex, P the party)
+		constexpr int kDefaultPad[kKeys] = { -1, -1, -1, -1, -1, -1, -1, -1, 0x8000 };                      // (Y / Triangle the party)
+		int   g_keys[kKeys] = { 0x02, 0x03, 0x04, 0x05, 0x0E, 0x06, 0x30, 0x3B, 0x19 };
+		int   g_pad[kKeys] = { -1, -1, -1, -1, -1, -1, -1, -1, 0x8000 };
+		constexpr const wchar_t* kKeyIds[kKeys] = { L"iShrineRoll", L"iShrineReforge", L"iShrineBless", L"iShrineShout", L"iShrineLeave", L"iShrineBond", L"iShrineBow", L"iCodex", L"iParty" };
 		bool  g_loaded = false;
 		std::filesystem::file_time_type g_stamp{};
 
@@ -222,10 +225,11 @@ namespace coa::Settings
 			g_follow = Read(L"Difficulty", L"bFollowSkyrim", 1.0f) != 0.0f;
 			g_hp = std::clamp(Read(L"Difficulty", L"fUndeadHealth", 1.0f), 0.25f, 4.0f);
 			g_dmg = std::clamp(Read(L"Difficulty", L"fUndeadDamage", 1.0f), 0.25f, 4.0f);
-			static constexpr int kDefault[kKeys] = { 0x02, 0x03, 0x04, 0x05, 0x0E, 0x06, 0x30 };
 			for (int i = 0; i < kKeys; ++i) {
-				const int k = static_cast<int>(Read(L"Keys", kKeyIds[i], static_cast<float>(kDefault[i])));
-				g_keys[i] = k > 0 && k < 0x100 ? k : kDefault[i];
+				const int k = static_cast<int>(Read(L"Keys", kKeyIds[i], static_cast<float>(kDefaultKeys[i])));
+				g_keys[i] = k == -1 ? -1 : k > 0 && k < 0x200 ? k : kDefaultKeys[i];   // (-1: unbound; 0x100 + n: a mouse button)
+				const int pk = static_cast<int>(Read(L"PadKeys", kKeyIds[i], static_cast<float>(kDefaultPad[i])));
+				g_pad[i] = pk > 0 && pk <= 0xFFFF ? pk : pk == -1 ? -1 : kDefaultPad[i];
 			}
 			g_stamp = std::filesystem::last_write_time(UserIni(), ec);
 			logger::info("settings: fov {:.0f}/{:.0f}, shelter {}, corpses {:.0f} s, difficulty follows Skyrim {}, undead health x{:.2f} damage x{:.2f}",
@@ -334,6 +338,48 @@ namespace coa::Settings
 		Write(L"General", a_first ? L"iFovFirstStep" : L"iFovThirdStep", std::clamp(std::round((v - 60.0f) / 5.0f), 0.0f, 14.0f), true);
 	}
 
+	int  PadKey(int a_action) { Ensure(); return a_action >= 0 && a_action < kKeys ? g_pad[a_action] : -1; }
+	int  DefaultKey(int a_action, bool a_pad) { return a_action >= 0 && a_action < kKeys ? (a_pad ? kDefaultPad : kDefaultKeys)[a_action] : -1; }
+	void SetKey(int a_action, bool a_pad, int a_code)
+	{
+		if (a_action < 0 || a_action >= kKeys) return;
+		Ensure();
+		Write(a_pad ? L"PadKeys" : L"Keys", kKeyIds[a_action], static_cast<float>(a_code), true);
+		Load();
+	}
+	std::string CodeName(int a_code, int a_device)
+	{
+		if (a_code < 0 || a_code == 0xFF) return "-";
+		if (a_device == 2) {
+			static const std::pair<int, const char*> kPad[] = { { 0x0001, "D-PAD UP" }, { 0x0002, "D-PAD DOWN" }, { 0x0004, "D-PAD LEFT" }, { 0x0008, "D-PAD RIGHT" },
+				{ 0x0010, "START" }, { 0x0020, "BACK" }, { 0x0040, "LS" }, { 0x0080, "RS" }, { 0x0100, "LB" }, { 0x0200, "RB" }, { 0x1000, "A" }, { 0x2000, "B" },
+				{ 0x4000, "X" }, { 0x8000, "Y" }, { 0x0009, "LT" }, { 0x000A, "RT" } };
+			for (const auto& [c, n] : kPad) {
+				if (c == a_code) {
+					const std::string_view x = n;
+					if (!PlayStationIcons()) return std::string(x == "BACK" ? "VIEW" : x == "START" ? "MENU" : x);
+					return x == "A" ? "CROSS" : x == "B" ? "CIRCLE" : x == "X" ? "SQUARE" : x == "Y" ? "TRIANGLE" : x == "LB" ? "L1" : x == "RB" ? "R1" : x == "LT" ? "L2" : x == "RT" ? "R2" :
+					       x == "LS" ? "L3" : x == "RS" ? "R3" : x == "BACK" ? "CREATE" : x == "START" ? "OPTIONS" : std::string(x);
+				}
+			}
+			return fmt::format("BUTTON {:X}", a_code);
+		}
+		if (a_device == 1 || a_code >= 0x100) {
+			const int m = a_code & 0xFF;
+			static constexpr const char* kMouse[10] = { "LEFT CLICK", "RIGHT CLICK", "MIDDLE CLICK", "MOUSE 4", "MOUSE 5", "MOUSE 6", "MOUSE 7", "MOUSE 8", "WHEEL UP", "WHEEL DOWN" };
+			return m < 10 ? kMouse[m] : fmt::format("MOUSE {}", m + 1);
+		}
+		static const std::unordered_map<int, const char*> kNames{ { 0x01, "ESC" }, { 0x0E, "BACKSPACE" }, { 0x0F, "TAB" }, { 0x1C, "ENTER" }, { 0x39, "SPACE" },
+			{ 0x1D, "L CTRL" }, { 0x9D, "R CTRL" }, { 0x2A, "L SHIFT" }, { 0x36, "R SHIFT" }, { 0x38, "L ALT" }, { 0xB8, "R ALT" }, { 0x3A, "CAPS LOCK" },
+			{ 0xC8, "UP" }, { 0xD0, "DOWN" }, { 0xCB, "LEFT" }, { 0xCD, "RIGHT" }, { 0xD2, "INSERT" }, { 0xD3, "DELETE" }, { 0xC7, "HOME" }, { 0xCF, "END" },
+			{ 0xC9, "PAGE UP" }, { 0xD1, "PAGE DOWN" }, { 0x29, "`" }, { 0x9C, "NUM ENTER" }, { 0x57, "F11" }, { 0x58, "F12" } };
+		if (auto it = kNames.find(a_code); it != kNames.end()) return it->second;
+		static constexpr const char* kRow = "??1234567890-=??QWERTYUIOP[]??ASDFGHJKL;'??\\ZXCVBNM,./";
+		if (a_code >= 0x02 && a_code < static_cast<int>(std::strlen(kRow)) && kRow[a_code] != '?') return std::string(1, kRow[a_code]);
+		if (a_code >= 0x3B && a_code <= 0x44) return "F" + std::to_string(a_code - 0x3A);
+		if (a_code >= 0x47 && a_code <= 0x53) return fmt::format("NUM {}", a_code);
+		return fmt::format("KEY {}", a_code);
+	}
 	std::string KeyName(int a_action)
 	{
 		const int k = Key(a_action);

@@ -1789,7 +1789,7 @@ namespace coa
 			const auto code = b->GetIDCode();
 			switch (b->GetDevice()) {
 			case RE::INPUT_DEVICE::kKeyboard:
-				for (int k = 0; k < Settings::kKeys; ++k) {
+				for (int k = 0; k < Settings::kShrineKeys; ++k) {
 					if (static_cast<int>(code) == Settings::Key(k)) {
 						return true;
 					}
@@ -1797,7 +1797,9 @@ namespace coa
 				// (Noah: "scroll wheel and left click for keyboard and mouse - walking away or Esc") W A S D walk you off the altar now
 				return code == 0x01 || code == 0x12 || code == 0xCB || code == 0xCD || code == 0xC8 || code == 0xD0 || code == 0x1C || code == 0x9C;
 			case RE::INPUT_DEVICE::kMouse: return code == 0 || code == 8 || code == 9;  // (left click: select)
-			case RE::INPUT_DEVICE::kGamepad: return code == 0x4000 || code == 0x8000 || code == 0x1000 || code == 0x2000 || code == 0x0001 || code == 0x0002 || code == 0x0004 || code == 0x0008 || code == 0x0100 || code == 0x0200 || code == 0x000A || code == 0x0009;
+			case RE::INPUT_DEVICE::kGamepad:
+				for (int k = 2; k < Settings::kShrineKeys; ++k) if (Settings::PadKey(k) >= 0 && static_cast<int>(code) == Settings::PadKey(k)) return true;
+				return code == 0x4000 || code == 0x8000 || code == 0x1000 || code == 0x2000 || code == 0x0001 || code == 0x0002 || code == 0x0004 || code == 0x0008 || code == 0x0100 || code == 0x0200 || code == 0x000A || code == 0x0009;
 			default: return false;
 			}
 		}
@@ -2111,7 +2113,7 @@ namespace coa
 				return true;
 			}
 			if (dev == RE::INPUT_DEVICE::kKeyboard) {
-				for (int k = 0; k < Settings::kKeys; ++k) {  // 1 2 3 4 Backspace unless rebound (Mod Configuration > The Curse of Alduin)
+				for (int k = 0; k < Settings::kShrineKeys; ++k) {  // 1 2 3 4 Backspace unless rebound (Mod Configuration > The Curse of Alduin)
 					if (static_cast<int>(code) == Settings::Key(k)) {
 						if (k == 0 || k == 1 || k == 6) return true;  // (the altar rework: no roll, no reforge key - the rows do it)
 						act(k);
@@ -2137,6 +2139,14 @@ namespace coa
 				g_sel = (g_sel + (code == 8 ? n - 1 : 1)) % n;
 				Forms::Play(gen::Sound::ui_move);
 				return true;
+			}
+			if (dev == RE::INPUT_DEVICE::kGamepad) {   // (Noah, Nov 28: the Keybinds tab) a controller button bound to one of the altar's actions
+				for (int k = 2; k < Settings::kShrineKeys; ++k) {
+					if (k != 6 && Settings::PadKey(k) >= 0 && static_cast<int>(code) == Settings::PadKey(k)) {
+						act(k);
+						return true;
+					}
+				}
 			}
 			if (dev == RE::INPUT_DEVICE::kGamepad) {
 				switch (code) {
