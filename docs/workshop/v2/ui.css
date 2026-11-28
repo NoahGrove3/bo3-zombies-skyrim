@@ -281,3 +281,15 @@
 .dE .c-foe i { border-radius: calc(.1 * var(--u)); } .dE .c-foe i::after { background: linear-gradient(90deg, #7a3cff, #ff6a8a); }
 .dE .c-rings i { background: conic-gradient(var(--acc2) var(--v), rgba(255,255,255,.15) 0); }
 .dE .c-classart div, .dE .apaint { border-radius: calc(.5 * var(--u)); } .dE .arow, .dE .abrew, .dE .m-new .mrow { border-radius: calc(.35 * var(--u)); background: rgba(20,26,48,.45); }
+
+/* (Noah, Nov 28: replacing Edge UI - the HUD's leftovers first) */
+.stage .c-shout, .stage .c-notify, .stage .c-levelup { position: absolute; }
+.dA .c-shout { left: 2.2%; bottom: 13%; display: grid; justify-items: center; gap: calc(.3 * var(--u)); }
+.dA .c-shout .ring { width: calc(3.6 * var(--u)); height: calc(3.6 * var(--u)); border-radius: 50%; display: grid; place-items: center; background: conic-gradient(#e8703f var(--v), rgba(255,255,255,.14) 0); -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - .22 * var(--u)), #000 0) ; mask: radial-gradient(farthest-side, transparent calc(100% - .22 * var(--u)), #000 0); position: relative; }
+.dA .c-shout .ring b { position: absolute; inset: 0; display: grid; place-items: center; font-size: calc(1 * var(--u)); letter-spacing: .1em; color: #f5e2b8; -webkit-mask: none; mask: none; }
+.dA .c-shout { filter: drop-shadow(0 1px 2px #000); } .dA .c-shout small { font-size: calc(.6 * var(--u)); letter-spacing: .3em; color: #e6d6bb; font-weight: 600; }
+.dA .c-notify { left: 0; right: 0; top: 7.5%; display: grid; justify-items: center; gap: calc(.2 * var(--u)); text-shadow: 0 1px 3px #000; }
+.dA .c-notify small { font-size: calc(.7 * var(--u)); letter-spacing: .4em; color: #ff7a3c; font-weight: 600; } .dA .c-notify b { font-size: calc(1.5 * var(--u)); letter-spacing: .1em; color: #f5e2b8; }
+.dA .c-notify i { display: block; width: calc(12 * var(--u)); height: calc(.08 * var(--u)); background: linear-gradient(90deg, transparent, #ff7a3c, transparent); }
+.dA .c-levelup { left: 0; right: 0; top: 7.5%; display: grid; justify-items: center; text-shadow: 0 1px 3px #000; }
+.dA .c-levelup small { font-size: calc(.7 * var(--u)); letter-spacing: .4em; color: #ff7a3c; font-weight: 600; } .dA .c-levelup b { font-size: calc(3 * var(--u)); line-height: 1.05; color: #f1c86e; text-shadow: 0 0 calc(.8 * var(--u)) rgba(241,170,70,.5); } .dA .c-levelup span { font: calc(.85 * var(--u)) Inter, sans-serif; color: #e6d6bb; }

@@ -14,7 +14,7 @@ import json, pathlib, subprocess
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent.parent.parent
 
-INSTALLED = {'sha': '2b534e1', 'date': '2026-11-27', 'label': 'Your three decisions: Alduin\'s Bane as the preview, our main-menu words, the Spellsword\'s Black Mage legs - on top of 6c22c73 (your 3edd0b7 test fixed, the 11 new Tablet weapons and the Wheel, Ember Tally HUD and menus, the preview\'s effects in the game)',
+INSTALLED = {'sha': 'f88dc6b', 'date': '2026-11-28', 'label': 'The Ember Tally main menu, ours entirely - sparks, the title, our Load, Settings, party page and questions - on top of 2b534e1 (Alduin\'s Bane as the preview, the Spellsword\'s Black Mage legs)',
              'extra': 'Builds 3 and 4 (the Tablet\'s 11 new weapons and the Wheel; the Ember Tally HUD, the altar menu, the Inventory recoloured and the Magic and Tab menus remade) and every note of your 3edd0b7 test: the effects baked from the workshop\'s own previews, the weapon and armour looks\' aura, the moves by tier, the flasks, the main menu and loading screens'}
 
 # ------------------------------------------------------------------------------------------------ the systems (categories)
@@ -45,7 +45,7 @@ FEATURES = []
 def F(i, s, t, st, what, how='', look='', note='', since=''):
     FEATURES.append(dict(id=i, sys=s, t=t, st=st, what=what, how=how, look=look, note=note, since=since))
 
-B = '2b534e1'   # (the build installed now: 6c22c73 - builds 3 and 4 of Nov 27 and the fixes of your 3edd0b7 test - and your three decisions)
+B = 'f88dc6b'   # (the build installed now: the main menu ours entirely, on top of 2b534e1)
 B0 = '3edd0b7'   # (the one before it)
 
 # ---- movement
@@ -262,6 +262,7 @@ F('ld_menusettings', 'hud', 'The main menu: Settings', 'ready', 'Your pick - fiv
   how='SETTINGS: Q / E (LB / RB) through the tabs; up / down a row; left / right or a click changes it; Esc to leave. Change the frame rate cap and a volume; set a resolution and restart.', look='Each change takes at once (the RESTART ones after a restart); leaving writes SkyrimPrefs.ini.', note='Your note (Nov 27): "add a settings tab in the menu for graphics, resolution, Fps cap, all the gameplay settings and general ones too like audio".', since=B)
 F('ld_menuparty', 'hud', 'The co-op party page, in our style', 'ready', 'The party on the menu (and in the Esc journal) in Ember Tally: the heading and line, your party\'s words (host, invite, join, leave), tonight\'s table, last night and your records; the keys at the foot. Your cursor is drawn over it.',
   how='CO-OP PARTY on the main menu; P in the Esc journal; choose with the mouse, arrows or D-pad; Esc closes it.', look='The same look as the menu; the cursor on top.', note='Last test (2b534e1): "the party UI needs to match our new UI Setup. My mouse cursor also stays behind the party UI".', since=B)
+F('edge_out', 'hud', 'Replacing Edge UI, then removing it', 'building', 'Your pick (Nov 28): Edge UI still draws these, and each becomes ours first (previewed in the UI tab, approved, built): 1. HUD leftovers - compass, shout meter, subtitles, quest / location / level-up notices, Activate prompts (in the UI tab now, to approve). 2. The Esc pause menu and journal - System, Quests, Stats (skills, level up). 3. Message boxes and dialogue. 4. Everyday menus - Favorites (Q), sleep / wait, containers and trading, the map. 5. The rest - crafting (smithing, alchemy, enchanting), lockpicking, books, training, tutorials, naming, the console. Then Edge UI comes out: its files moved aside (not deleted) and the SkyUI / Untarnished UI files it had replaced put back.', note='Your question (Nov 28): "Can we remove edges UI mod now since we have our own?"')
 F('ws_media', 'hud', 'Pictures and clips on your tests', 'done', 'Each test in the Now tab has Add a picture or clip: pick screenshots or short clips (up to 20 MB each); they stay with that test and I see them with your notes.', note='Your note (Nov 27): "I wasnt able to add images or clips to the test tabs in the doc".')
 U('wd_soulmana', st='ready', note='Last test (3edd0b7): "No mana usage no purple spawn portal ... the cats blue holographic effect is only visible from certain angles". Fixed: the cast read in every state, the portal kept 2.5 s, the cat\'s body glowing blue.', since=B)
 U('cw_flasklook', st='ready', what='The potion\'s swirl seen from every side (the glass no longer hides it) and slow enough to read as moving; the neck 1.5x long (your pick).', note='Last test (3edd0b7): "the swirling animation is broken".', since=B)
@@ -425,6 +426,9 @@ DECISIONS = []   # (none waiting: the three of Nov 27 afternoon are below in DEC
 # the question, your answer, where you gave it, and what was done with it - kept here for good, newest first. A pick you make in the
 # workshop moves here at the next build.
 DECIDED = [
+    dict(when='2026-11-28', sys='hud', q='Which group of Edge UI\'s screens should we start with?', pick='HUD leftovers', where='chat', done='Compass, shout meter, subtitles, quest and level-up notices, Activate prompts - previewed in the UI tab to approve.'),
+    dict(when='2026-11-28', sys='hud', q='Edge UI still draws about 20 screens: how should we make ours?', pick='Workshop first', where='chat', done='Each screen previewed in the UI tab in Ember Tally; you approve or note it, then it is built.'),
+    dict(when='2026-11-28', sys='hud', q='Can we remove Edge UI now that the main menu is ours?', pick='Replace, then remove', where='chat', done='Its screens remade one group at a time, then Edge UI taken out (its files moved aside, and the SkyUI / Untarnished UI files it replaced put back).'),
     dict(when='2026-11-27', sys='hud', q='Our LOAD page (every save: character, level, place, date, time played): what else should it have?', pick='The save\'s picture, Delete a save, Filter by character', where='chat', done='All three: the picture read from the save itself; Delete asked first and put aside in Saves\\Deleted; the characters in turn.'),
     dict(when='2026-11-27', sys='hud', q='Resolution, display mode and shadow quality only change when Skyrim restarts. How should those settings work?', pick='Save, apply next launch', where='chat', done='Saved at once into SkyrimPrefs.ini, each marked RESTART.'),
     dict(when='2026-11-27', sys='hud', q='The new SETTINGS page on the main menu: how should it be laid out?', pick='Tabs on one page', where='chat', done='GRAPHICS, DISPLAY, GAMEPLAY, CONTROLS, AUDIO across the top; LB / RB or Q / E switch them.'),

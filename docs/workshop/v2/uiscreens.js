@@ -61,6 +61,10 @@ const UIP = {
   mparty: () => `<div class="c-mpage"><div class="mph"><b>CO-OP PARTY</b><i></i></div><p class="mpst">In a party &middot; 2 in the party</p><div class="mpw"><span class="on">INVITE FRIENDS</span><span class="red">CLOSE THE PARTY</span></div>
     <div class="mpt2"><div class="hd"><span>TONIGHT</span><span>KILLS</span><span>HEADS</span><span>STREAK</span><span>ESSENCE</span><span>REVIVES</span></div><div><span>Noah (you)</span><span>431</span><span>88</span><span>42</span><span>12,480</span><span>5</span></div><div><span>Shane</span><span>302</span><span>41</span><span>27</span><span>9,215</span><span>3</span></div></div>
     <div class="mpx"><b>LAST NIGHT &middot; NIGHT 11</b><span>398 kills &middot; 72 headshots &middot; best streak 38 &middot; 11,020 Cursed Essence</span><b>RECORDS</b><span>best night 14 &middot; nights survived 63 &middot; kills 9,881 &middot; headshots 2,140</span></div></div>` + MHINTS([['ARROWS', 'CHOOSE'], ['ENTER', 'SELECT'], ['ESC', 'CLOSE']]),
+  // (Noah, Nov 28: "Replace, then remove" Edge UI - "Workshop first", "HUD leftovers" first) what Edge UI still draws on a night
+  shout: (v, word, name) => `<div class="c-shout"><span class="ring" style="--v:${v * 100}%"><b>${word}</b></span><small>${name}</small></div>`,
+  notify: (small, big) => `<div class="c-notify"><small>${small}</small><b>${big}</b><i></i></div>`,
+  levelup: (n, skill) => `<div class="c-levelup"><small>LEVEL UP</small><b>${n}</b><span>${skill}</span></div>`,
   mask: () => `<div class="c-mask"><b>START A NEW GAME?</b><div><span class="on">YES</span><span>NO</span></div></div>` + MHINTS([['ENTER', 'CHOOSE'], ['ESC', 'NO']]),
 };
 // (Noah, Nov 27: "more dense realistic embers not blinking circles") the main menu's sparks: short bright streaks rising and cooling
@@ -89,6 +93,12 @@ const UI_SCREENS = [
     ['hit', 'Getting hit', 'A red edge after a hit, and an arc toward a blow you can\'t see.', 'night2', () => UIP.hit()],
     ['marker', 'Prompts at the altar and the Tablet', 'What a held Activate does at one of ours: the Tablet, the altar.', 'altar', () => UIP.prompt('E', 'Hold to turn the Tablet', '1,500') + UIP.hold(0.45, '')],
     ['between', 'Before the night', 'Dusk: a 10 s count before the night; nothing between waves.', 'village', () => UIP.countdown(10) + UIP.essence('115,973') + UIP.compass()],
+    ['e_compass', 'Compass (now Edge UI\'s)', 'To replace Edge UI: our own compass across the top - the directions, your quest marker in ember, the altars and the dead as red dots, the line under it.', 'night2', () => UIP.compass()],
+    ['e_shout', 'Shout meter (now Edge UI\'s)', 'To replace Edge UI: your shout as a thin ember ring bottom left above your brews, its first word in the middle, its name under it; it fills as it recharges and glows when ready.', 'night', () => UIP.shout(0.7, 'FUS', 'UNRELENTING FORCE') + UIP.brews(4)],
+    ['e_subs', 'Subtitles (now Edge UI\'s line)', 'To replace Edge UI: every spoken line (Felldir, your character, people of Skyrim) centred low, the speaker small in gold above.', 'village', () => UIP.subs('JARL BALGRUUF', 'So, you\'re the one who survived the night at the gates. I owe you my thanks.')],
+    ['e_notify', 'Quest and location notices (now Edge UI\'s)', 'To replace Edge UI: Quest started / completed, a place discovered - small capitals in ember over the name, under the compass, fading in and out.', 'night2', () => UIP.compass() + UIP.notify('QUEST STARTED', 'Before the Storm')],
+    ['e_levelup', 'Level up notice (now Edge UI\'s)', 'To replace Edge UI: LEVEL UP small, your new level large in gold, the skill that raised it under it - top centre for 3 s.', 'village', () => UIP.compass() + UIP.levelup(25, 'Destruction rose to 62')],
+    ['e_prompt', 'Activate prompts (now Edge UI\'s)', 'To replace Edge UI: what Activate does on Skyrim\'s own things (open, talk, take) in the same style as ours at the altar.', 'village', () => UIP.prompt('E', 'Open  &middot;  Chest')],
     ['weapon', 'A Tablet weapon\'s uses', 'Your note: beside the stamina bar on the right, clear of everything: the uses left as a small ring, in the weapon\'s rarity colour.', 'firstperson', () => UIP.rings([[0.66, 'USES 66']])],
   ]],
   ['pop', 'Pop-ups and words', [
@@ -138,7 +148,7 @@ const UI_SCREENS = [
 ];
 // where each stands: in the game now (in its old look), kept, next (to be built in the picked direction), Skyrim's own
 const UI_STATE = { night: 'next', quests: 'next', compass: 'next', essence: 'next', perks: 'next', boss: 'next', foehp: 'next', hit: 'in', marker: 'next', between: 'in',
-  weapon: 'next', slain: 'next', subs: 'in', death: 'next', msg: 'next', altarmenu: 'next', armory: 'next', perkmenu: 'next', thuum: 'next', trialsmenu: 'next', talk: 'next',
+  e_compass: 'edge', e_shout: 'edge', e_subs: 'edge', e_notify: 'edge', e_levelup: 'edge', e_prompt: 'edge', weapon: 'next', slain: 'next', subs: 'in', death: 'next', msg: 'next', altarmenu: 'next', armory: 'next', perkmenu: 'next', thuum: 'next', trialsmenu: 'next', talk: 'next',
   tablet: 'next', classpick: 'next', codex: 'keep', boot: 'in', main: 'in', m_load: 'in', m_settings: 'in', m_party: 'in', m_ask: 'in', setup: 'keep', loading: 'in',
   co_team: 'next', co_down: 'next', co_bleed: 'next', co_plates: 'next', co_score: 'next', co_trial: 'next', co_feed: 'next',
   inv_re: 'menu', inv_new: 'menu', mag_re: 'menu', mag_new: 'menu', tab_re: 'menu', tab_new: 'menu' };

@@ -787,7 +787,7 @@ const DIRS = [
     pts: ['Every panel is dark frosted glass that blurs the world behind it, a thin line of soul-light round its edge.', 'The night\'s tally drawn in cold blue-white light; clean modern type (Jost, the mod\'s own font).', 'Pale blue and violet - the colours of the altar crystal and BO3\'s Apothicon - with soft glows, nothing heavy.', 'The most modern and the cleanest; the most like a new game\'s HUD.'] },
 ];
 const dirNow = () => DIRS.find(d => d.id === ((DB.get('uidir', 'pick') || {}).pick || 'tally')) || DIRS[0];
-const UI_STATE_T = { in: 'In the game now (old look)', next: 'To be built in your direction', own: 'Skyrim\'s own: stays', removed: 'Removed', keep: 'Kept as it is in your game (your note)', menu: 'Pick one of the two for this menu' };
+const UI_STATE_T = { in: 'In the game now (old look)', next: 'To be built in your direction', own: 'Skyrim\'s own: stays', removed: 'Removed', keep: 'Kept as it is in your game (your note)', menu: 'Pick one of the two for this menu', edge: 'Edge UI draws it now: ours to replace it (approve or note)' };
 const RES = [['2560x1600', '16 / 10', '2560 x 1600 (16:10)'], ['1920x1080', '16 / 9', '1920 x 1080 (16:9)'], ['2560x1440', '16 / 9', '2560 x 1440 (16:9)'], ['3440x1440', '43 / 18', '3440 x 1440 (21:9)']];
 let uRes = '2560x1600', uPlay = true;
 function drawUI() {
