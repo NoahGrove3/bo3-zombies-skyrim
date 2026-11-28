@@ -715,5 +715,95 @@
     "done": "The Thu'um tab will hold only Dragon's Updraft and Tiny Terrors (built with the altar menu)."
    }
   ]
+ },
+ {
+  "build": "Your test of f88dc6b and the workshop (Nov 28) - built as 168adac",
+  "date": "2026-11-28",
+  "notes": [
+   {
+    "when": "2026-11-28 00:31",
+    "where": "test/ld_menuwords (fail)",
+    "note": "See changes in my message and screen shots in the chat.",
+    "choice": "fail",
+    "done": "Your message: the menu's navigation, the binds, the Load page's Delete and cursor, Skyrim's Creations box, keyboard and mouse in game, keybinds and the tests in game order - every one done below."
+   },
+   {
+    "when": "2026-11-28 00:59",
+    "where": "chat/main menu",
+    "note": "The menu UI isnt working when I try to navigate the menu and its tabs. For controller the binds should be the dpad or left stick direction and X or A. the keybinds for keyboard and mouse should be W up S Down A Left and D Right with the mouse cursor click for selections.",
+    "choice": "",
+    "done": "The word under a still mouse no longer takes the choice back from the keys. W/S/A/D, the D-pad and the left stick (held, it repeats) move; A / Cross, Enter or a click select. The same on Load, Settings, Keybinds and the questions."
+   },
+   {
+    "when": "2026-11-28 00:59",
+    "where": "chat/load",
+    "note": "in the load screen deleting a save doesnt work it closes the menu and the selection is not accurate to where the mouse cursor is.",
+    "choice": "",
+    "done": "The click on DELETE was also answering its own question. The list no longer slides under the mouse: the wheel scrolls it, and the row under the cursor is the chosen one."
+   },
+   {
+    "when": "2026-11-28 00:59",
+    "where": "chat/screenshot",
+    "note": "in the screen shot my mouse cant select the options",
+    "choice": "",
+    "done": "Skyrim's own boxes (the Creations question) now get the mouse: each newly opened menu is told you're on keyboard and mouse, and our cursor is Skyrim's own, so the click lands under it."
+   },
+   {
+    "when": "2026-11-28 00:59",
+    "where": "chat/in game",
+    "note": "when in game using keboard and mouse does not work properly.",
+    "choice": "Menus ignore mouse, Switches to pad, Keys don't respond, Cursor wrong",
+    "done": "Your log showed the game flipping to the controller 40 ms after every mouse move (a controller on the desk). It now counts only when really used."
+   },
+   {
+    "when": "2026-11-28 00:59",
+    "where": "chat/keybinds",
+    "note": "I also want to add a keybinds section for controller and keyboard and mouse in the menu settings and in game settings.",
+    "choice": "Ours + Skyrim's; in game: Both",
+    "done": "Settings has a KEYBINDS tab: the Curse's keys and Skyrim's controls, keyboard & mouse and controller, every one changeable; the Esc menu's Settings opens the same page in game; the MCM shows the Curse's keys from the same file."
+   },
+   {
+    "when": "2026-11-28 00:59",
+    "where": "chat/workshop",
+    "note": "Can you organize the testing by category so the tests at the top are as close to the start of the game like the menu tests would be first then following the other tests.",
+    "choice": "",
+    "done": "The Now tab's categories run in the order you meet them: Main menu, settings and controls first, then Loading, the HUD, Movement, the altars and on to the night."
+   },
+   {
+    "when": "2026-11-28 00:52",
+    "where": "ui/e_subs",
+    "note": "make the font nordic like how edges UI subtitles looked.",
+    "choice": "change; then Berserker, \"make sure the text font is consistent among the entire UI\", Everything, more options, Philosopher",
+    "done": "Every word we draw is Philosopher now (titles, menu words, numbers, subtitles, running text) - in the game and in the previews."
+   },
+   {
+    "when": "2026-11-28 00:50",
+    "where": "ui/essence",
+    "note": "use the current Cursed essence UI our old blue look and kill pops",
+    "choice": "change",
+    "done": "The blue soul in its turning dragon-script with the number beside it and the motes flying in, bottom right; the gold kill pops kept."
+   },
+   {
+    "when": "2026-11-28 00:56",
+    "where": "ui/inv_new",
+    "note": "make sure this includes the item models on the right side too there is a nice space under the weapon information on the right box.",
+    "choice": "pick",
+    "done": "The preview shows the item's 3D model in the right box under its stats; built with the everyday menus (step 4 of replacing Edge UI)."
+   },
+   {
+    "when": "2026-11-28 00:54",
+    "where": "ui/m_settings",
+    "note": "make the tab words Graphics Display Gameplay ect centered with the screen and the Settings word.",
+    "choice": "change",
+    "done": "Centred with the screen and SETTINGS (the letters' spacing on both sides); KEYBINDS added."
+   },
+   {
+    "when": "2026-11-28 00:49",
+    "where": "ui/e_compass, e_shout, e_notify, e_levelup, e_prompt, m_ask, m_load, m_party",
+    "note": "",
+    "choice": "ok",
+    "done": "Approved as previewed; the HUD leftovers are being built next."
+   }
+  ]
  }
 ]

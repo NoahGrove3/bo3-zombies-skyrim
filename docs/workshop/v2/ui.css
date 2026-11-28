@@ -1,5 +1,5 @@
 /* ---- the in-game UI previews: a real 16:10 still of Noah's game, our screen drawn over it at true size (calc(1 * var(--u)) = 25.6 px at 2560) */
-.stage { position: relative; width: 100%; overflow: hidden; background: #0b0d11; color: #efe7d8; font-family: 'Barlow Condensed', sans-serif; }
+.stage { position: relative; width: 100%; overflow: hidden; background: #0b0d11; color: #efe7d8; font-family: 'Philosopher', serif; }
 .stage.grey { filter: grayscale(.85) brightness(.8); }
 .stage .c-dim { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 50%, rgba(6,5,4,.55), rgba(6,5,4,.82)); }
 .stage .tally { display: none; }
@@ -19,7 +19,7 @@
 .stage .c-rings i { display: block; width: calc(2.2 * var(--u)); height: calc(2.2 * var(--u)); border-radius: 50%; background: conic-gradient(#e8703f var(--v), rgba(255,255,255,.15) 0); -webkit-mask: radial-gradient(circle, transparent 56%, #000 58%); mask: radial-gradient(circle, transparent 56%, #000 58%); }
 .stage .c-words { left: 50%; top: 60%; transform: translateX(-50%); display: flex; gap: calc(2 * var(--u)); font-family: Cinzel, serif; font-size: calc(2.2 * var(--u)); }
 .stage .c-words b { color: rgba(239,231,216,.25); font-weight: 700; } .stage .c-words b.on { color: #f1c86e; text-shadow: 0 0 calc(1 * var(--u)) rgba(241,170,70,.6); }
-.stage .c-load { left: 0; right: 0; bottom: 4%; text-align: center; font-family: Inter, sans-serif; font-size: calc(.8 * var(--u)); color: #e5dccd; text-shadow: 0 1px 3px #000; }
+.stage .c-load { left: 0; right: 0; bottom: 4%; text-align: center; font-family: 'Philosopher', serif; font-size: calc(.8 * var(--u)); color: #e5dccd; text-shadow: 0 1px 3px #000; }
 .stage .c-load i { display: block; width: calc(18 * var(--u)); height: calc(.12 * var(--u)); margin: calc(.8 * var(--u)) auto 0; background: linear-gradient(90deg, #e8703f 40%, rgba(255,255,255,.15) 40%); }
 
 /* ================= A: Ember Tally - BO3's places and punch, in Skyrim's fire ================= */
@@ -32,7 +32,7 @@
 .dA .c-quests { left: 2.4%; top: 17.5%; width: calc(17 * var(--u)); display: grid; gap: calc(.7 * var(--u)); }
 .dA .c-quests .q { display: grid; gap: calc(.15 * var(--u)); }
 .dA .c-quests b { font-size: calc(.74 * var(--u)); letter-spacing: .16em; color: #f5e2b8; font-weight: 700; text-shadow: 0 1px 2px #000; }
-.dA .c-quests span { font: calc(.66 * var(--u)) Inter, sans-serif; color: #dccfb9; text-shadow: 0 1px 2px #000; }
+.dA .c-quests span { font: calc(.66 * var(--u)) 'Philosopher', serif; color: #dccfb9; text-shadow: 0 1px 2px #000; }
 .dA .c-quests i { display: block; height: calc(.16 * var(--u)); background: rgba(255,255,255,.16); margin-top: calc(.2 * var(--u)); } .dA .c-quests i::after { content: ""; display: block; height: 100%; width: var(--v); background: #e8703f; box-shadow: 0 0 calc(.4 * var(--u)) #e8703f; }
 .dA .c-comp { left: 33%; right: 33%; top: 2.6%; display: flex; justify-content: space-between; align-items: center; font-size: calc(.78 * var(--u)); letter-spacing: .25em; font-weight: 600; padding-bottom: calc(.25 * var(--u)); border-bottom: calc(.06 * var(--u)) solid rgba(239,231,216,.5); text-shadow: 0 1px 2px #000; }
 .dA .c-comp em { font-style: normal; } .dA .c-comp .m { color: #e8703f; } .dA .c-comp .r { color: #c0392b; font-size: calc(.45 * var(--u)); }
@@ -58,8 +58,8 @@
 .dA .c-card small { font-size: calc(.62 * var(--u)); letter-spacing: .4em; color: #ff7a3c; font-weight: 700; }
 .dA .c-card b { font-size: calc(2.2 * var(--u)); color: #f5e2b8; font-weight: 700; text-shadow: 0 0 calc(.8 * var(--u)) rgba(232,90,40,.5); }
 .dA .c-card span { font-size: calc(.8 * var(--u)); color: #f1c86e; letter-spacing: .08em; }
-.dA .c-subs { left: 20%; right: 20%; bottom: 13%; text-align: center; font: calc(.95 * var(--u))/1.4 Inter, sans-serif; color: #f2ead9; text-shadow: 0 1px 3px #000, 0 0 calc(.6 * var(--u)) #000; }
-.dA .c-subs small { display: block; font: 700 calc(.6 * var(--u)) 'Barlow Condensed', sans-serif; letter-spacing: .35em; color: #f1c86e; margin-bottom: calc(.2 * var(--u)); }
+.dA .c-subs { left: 20%; right: 20%; bottom: 13%; text-align: center; font: calc(.95 * var(--u))/1.4 'Philosopher', serif; color: #f2ead9; text-shadow: 0 1px 3px #000, 0 0 calc(.6 * var(--u)) #000; }
+.dA .c-subs small { display: block; font: 700 calc(.6 * var(--u)) 'Philosopher', serif; letter-spacing: .35em; color: #f1c86e; margin-bottom: calc(.2 * var(--u)); }
 .dA .c-death { inset: 0; display: grid; place-content: center; text-align: center; gap: calc(.5 * var(--u)); }
 .dA .c-death b { font-size: calc(4.2 * var(--u)); letter-spacing: .12em; color: #ff5a36; text-shadow: 0 0 calc(1.4 * var(--u)) rgba(200,40,20,.9); }
 .dA .c-death span { font-size: calc(.9 * var(--u)); color: #efe7d8; letter-spacing: .1em; }
@@ -75,7 +75,7 @@
 .dA .c-panel .row { display: flex; justify-content: space-between; gap: calc(1 * var(--u)); font-size: calc(1 * var(--u)); letter-spacing: .05em; padding: calc(.5 * var(--u)) calc(.7 * var(--u)); color: #dccfb9; }
 .dA .c-panel .row em { font-style: normal; color: #f1c86e; }
 .dA .c-panel .row.on { color: #fff; background: linear-gradient(90deg, rgba(232,112,63,.32), transparent); box-shadow: inset calc(.14 * var(--u)) 0 0 #ff7a3c; }
-.dA .c-panel p { margin: calc(.4 * var(--u)) 0 0; font: calc(.9 * var(--u))/1.5 Inter, sans-serif; color: #dccfb9; }
+.dA .c-panel p { margin: calc(.4 * var(--u)) 0 0; font: calc(.9 * var(--u))/1.5 'Philosopher', serif; color: #dccfb9; }
 .dA .c-classes { left: 8%; right: 8%; top: 30%; display: grid; grid-template-columns: repeat(4, 1fr); gap: calc(1.4 * var(--u)); }
 .dA .c-classes div { padding: calc(1.6 * var(--u)) calc(1 * var(--u)); text-align: center; border: calc(.06 * var(--u)) solid rgba(232,112,63,.25); background: rgba(10,6,4,.45); display: grid; gap: calc(.4 * var(--u)); }
 .dA .c-classes div.on { border-color: #ff7a3c; box-shadow: 0 0 calc(1 * var(--u)) rgba(232,90,40,.45) inset; }
@@ -92,34 +92,34 @@
 @media (prefers-reduced-motion: reduce) { .stage .c-embers i { animation: none; } }
 .stage .c-mpage, .stage .c-mask, .stage .c-mhints { position: absolute; }
 .dA .c-mpage { inset: 0; background: rgba(4,2,1,.6); }
-.dA .c-mpage .mph { position: absolute; left: 0; right: 0; top: 9.5%; text-align: center; } .dA .c-mpage .mph b { font-size: calc(2.6 * var(--u)); letter-spacing: .3em; color: #f5e2b8; font-weight: 700; }
+.dA .c-mpage .mph { position: absolute; left: 0; right: 0; top: 9.5%; text-align: center; } .dA .c-mpage .mph b { font-size: calc(2.6 * var(--u)); letter-spacing: .3em; padding-left: .3em; color: #f5e2b8; font-weight: 700; }
 .dA .c-mpage .mph i { display: block; width: calc(16 * var(--u)); height: calc(.1 * var(--u)); margin: calc(.8 * var(--u)) auto 0; background: linear-gradient(90deg, transparent, #ff7a3c, transparent); }
 .dA .c-mpage .mpf, .dA .c-mpage .mpt, .dA .c-mpage .mpst { position: absolute; left: 0; right: 0; top: 17%; text-align: center; font-size: calc(1.2 * var(--u)); letter-spacing: .25em; color: #f1c86e; }
-.dA .c-mpage .mpst { font: calc(1 * var(--u)) Inter, sans-serif; letter-spacing: 0; color: #dccfb9; }
-.dA .c-mpage .mpt { display: flex; justify-content: center; gap: calc(3.2 * var(--u)); color: #dccfb9; } .dA .c-mpage .mpt span.on { color: #ff7a3c; border-bottom: calc(.1 * var(--u)) solid #ff7a3c; }
+.dA .c-mpage .mpst { font: calc(1 * var(--u)) 'Philosopher', serif; letter-spacing: 0; color: #dccfb9; }
+.dA .c-mpage .mpt { display: flex; justify-content: center; gap: calc(3.2 * var(--u)); color: #dccfb9; } .dA .c-mpage .mpt span { padding-left: .25em; } /* (Noah, Nov 28: the tabs centred with the screen and SETTINGS - the letters' spacing on both sides) */ .dA .c-mpage .mpt span.on { color: #ff7a3c; border-bottom: calc(.1 * var(--u)) solid #ff7a3c; }
 .dA .c-mpage .mpl { position: absolute; left: calc(50% - 44 * var(--u)); width: calc(46 * var(--u)); top: 22.5%; display: grid; }
 .dA .c-mpage .mr { display: grid; grid-template-columns: 1fr auto; padding: calc(.45 * var(--u)) calc(1.4 * var(--u)); height: calc(4.4 * var(--u)); box-sizing: border-box; border-bottom: 1px solid rgba(220,207,185,.1); }
-.dA .c-mpage .mr b { font-size: calc(1.45 * var(--u)); letter-spacing: .14em; color: #f5e2b8; font-weight: 600; } .dA .c-mpage .mr em { font: calc(.9 * var(--u)) Inter, sans-serif; color: #e6d6bb; font-style: normal; }
-.dA .c-mpage .mr span { font: calc(.95 * var(--u)) Inter, sans-serif; color: #dccfb9; } .dA .c-mpage .mr small { font-size: calc(.85 * var(--u)); letter-spacing: .25em; color: #f1c86e; text-align: right; } .dA .c-mpage .mr small.auto { color: #96aac8; }
+.dA .c-mpage .mr b { font-size: calc(1.45 * var(--u)); letter-spacing: .14em; color: #f5e2b8; font-weight: 600; } .dA .c-mpage .mr em { font: calc(.9 * var(--u)) 'Philosopher', serif; color: #e6d6bb; font-style: normal; }
+.dA .c-mpage .mr span { font: calc(.95 * var(--u)) 'Philosopher', serif; color: #dccfb9; } .dA .c-mpage .mr small { font-size: calc(.85 * var(--u)); letter-spacing: .25em; color: #f1c86e; text-align: right; } .dA .c-mpage .mr small.auto { color: #96aac8; }
 .dA .c-mpage .mr.on { background: linear-gradient(90deg, rgba(255,122,60,.18), transparent); box-shadow: inset calc(.22 * var(--u)) 0 0 #ff7a3c; } .dA .c-mpage .mr.on b { color: #ff7a3c; }
 .dA .c-mpage .mpd { position: absolute; left: calc(50% + 6 * var(--u)); width: calc(38 * var(--u)); top: 22.5%; display: grid; gap: calc(.4 * var(--u)); }
 .dA .c-mpage .mpd .shot { aspect-ratio: 16 / 10; background: center / cover; border: 1px solid rgba(241,200,110,.55); margin-bottom: calc(.8 * var(--u)); }
-.dA .c-mpage .mpd b { font-size: calc(1.7 * var(--u)); letter-spacing: .16em; color: #f5e2b8; } .dA .c-mpage .mpd span { font: calc(1 * var(--u)) Inter, sans-serif; color: #dccfb9; } .dA .c-mpage .mpd small { font: calc(.95 * var(--u)) Inter, sans-serif; color: #e6d6bb; }
+.dA .c-mpage .mpd b { font-size: calc(1.7 * var(--u)); letter-spacing: .16em; color: #f5e2b8; } .dA .c-mpage .mpd span { font: calc(1 * var(--u)) 'Philosopher', serif; color: #dccfb9; } .dA .c-mpage .mpd small { font: calc(.95 * var(--u)) 'Philosopher', serif; color: #e6d6bb; }
 .dA .c-mpage .mps { position: absolute; left: calc(50% - 30 * var(--u)); width: calc(60 * var(--u)); top: 24%; display: grid; }
 .dA .c-mpage .ms { display: grid; grid-template-columns: 1fr calc(12 * var(--u)) calc(6 * var(--u)); align-items: center; height: calc(2.75 * var(--u)); padding: 0 calc(1.4 * var(--u)); }
 .dA .c-mpage .ms b { font-size: calc(1.2 * var(--u)); letter-spacing: .16em; color: #f5e2b8; font-weight: 600; } .dA .c-mpage .ms b small { margin-left: calc(1 * var(--u)); font-size: calc(.75 * var(--u)); letter-spacing: .25em; color: #f1c86e; opacity: .75; }
 .dA .c-mpage .ms i { display: block; height: calc(.24 * var(--u)); background: linear-gradient(90deg, #e8703f var(--v), rgba(255,255,255,.16) var(--v)); }
 .dA .c-mpage .ms em { font-style: normal; font-weight: 700; font-size: calc(1.1 * var(--u)); color: #dccfb9; padding-left: calc(1.2 * var(--u)); } .dA .c-mpage .ms em.ch { grid-column: 2 / 4; text-align: center; letter-spacing: .18em; }
 .dA .c-mpage .ms.on { background: linear-gradient(90deg, rgba(255,122,60,.16), transparent); box-shadow: inset calc(.22 * var(--u)) 0 0 #ff7a3c; } .dA .c-mpage .ms.on b, .dA .c-mpage .ms.on em { color: #ff7a3c; }
-.dA .c-mpage .mpn { position: absolute; left: 0; right: 0; bottom: 11%; text-align: center; font: calc(.95 * var(--u)) Inter, sans-serif; color: #f1c86e; margin: 0; }
+.dA .c-mpage .mpn { position: absolute; left: 0; right: 0; bottom: 11%; text-align: center; font: calc(.95 * var(--u)) 'Philosopher', serif; color: #f1c86e; margin: 0; }
 .dA .c-mpage .mpw { position: absolute; left: 0; right: 0; top: 21.5%; display: grid; justify-items: center; gap: calc(1 * var(--u)); } .dA .c-mpage .mpw span { font-size: calc(1.4 * var(--u)); letter-spacing: .3em; color: #dccfb9; font-weight: 600; } .dA .c-mpage .mpw span.on { color: #ff7a3c; } .dA .c-mpage .mpw span.red { color: #e66e5a; }
-.dA .c-mpage .mpt2 { position: absolute; left: calc(50% - 25.5 * var(--u)); width: calc(51 * var(--u)); top: 33%; display: grid; gap: calc(.5 * var(--u)); } .dA .c-mpage .mpt2 div { display: grid; grid-template-columns: 16.5fr 6fr 6fr 6fr 10fr 6fr; font: calc(1 * var(--u)) Inter, sans-serif; color: #f5e2b8; }
-.dA .c-mpage .mpt2 .hd { font: 600 calc(.85 * var(--u)) 'Barlow Condensed', sans-serif; letter-spacing: .25em; color: #ff7a3c; border-bottom: 1px solid rgba(220,207,185,.16); padding-bottom: calc(.3 * var(--u)); }
-.dA .c-mpage .mpx { position: absolute; left: calc(50% - 25.5 * var(--u)); width: calc(51 * var(--u)); top: 48%; display: grid; gap: calc(.5 * var(--u)); } .dA .c-mpage .mpx b { font-size: calc(1 * var(--u)); letter-spacing: .25em; color: #ff7a3c; margin-top: calc(.6 * var(--u)); } .dA .c-mpage .mpx span { font: calc(.95 * var(--u)) Inter, sans-serif; color: #dccfb9; }
+.dA .c-mpage .mpt2 { position: absolute; left: calc(50% - 25.5 * var(--u)); width: calc(51 * var(--u)); top: 33%; display: grid; gap: calc(.5 * var(--u)); } .dA .c-mpage .mpt2 div { display: grid; grid-template-columns: 16.5fr 6fr 6fr 6fr 10fr 6fr; font: calc(1 * var(--u)) 'Philosopher', serif; color: #f5e2b8; }
+.dA .c-mpage .mpt2 .hd { font: 600 calc(.85 * var(--u)) 'Philosopher', serif; letter-spacing: .25em; color: #ff7a3c; border-bottom: 1px solid rgba(220,207,185,.16); padding-bottom: calc(.3 * var(--u)); }
+.dA .c-mpage .mpx { position: absolute; left: calc(50% - 25.5 * var(--u)); width: calc(51 * var(--u)); top: 48%; display: grid; gap: calc(.5 * var(--u)); } .dA .c-mpage .mpx b { font-size: calc(1 * var(--u)); letter-spacing: .25em; color: #ff7a3c; margin-top: calc(.6 * var(--u)); } .dA .c-mpage .mpx span { font: calc(.95 * var(--u)) 'Philosopher', serif; color: #dccfb9; }
 .dA .c-mask { inset: 0; background: rgba(4,2,1,.68); display: grid; place-content: center; text-align: center; gap: calc(3 * var(--u)); } .dA .c-mask b { font-size: calc(2 * var(--u)); letter-spacing: .12em; color: #f5e2b8; }
 .dA .c-mask div { display: flex; justify-content: center; gap: calc(9 * var(--u)); } .dA .c-mask span { font-size: calc(1.6 * var(--u)); letter-spacing: .35em; font-weight: 700; color: #dccfb9; } .dA .c-mask span.on { color: #ff7a3c; text-shadow: 0 0 calc(.6 * var(--u)) rgba(232,90,40,.7); }
 .dA .c-mhints { left: 0; right: 0; bottom: 5%; display: flex; justify-content: center; gap: calc(2.4 * var(--u)); font-size: calc(.95 * var(--u)); letter-spacing: .18em; color: #dccfb9; }
-.dA .c-mhints kbd { font: 700 calc(.8 * var(--u)) 'Barlow Condensed', sans-serif; color: #f1c86e; border: calc(.08 * var(--u)) solid rgba(241,200,110,.8); border-radius: calc(.25 * var(--u)); padding: calc(.1 * var(--u)) calc(.45 * var(--u)); margin-right: calc(.6 * var(--u)); }
+.dA .c-mhints kbd { font: 700 calc(.8 * var(--u)) 'Philosopher', serif; color: #f1c86e; border: calc(.08 * var(--u)) solid rgba(241,200,110,.8); border-radius: calc(.25 * var(--u)); padding: calc(.1 * var(--u)) calc(.45 * var(--u)); margin-right: calc(.6 * var(--u)); }
 
 
 /* ---- the stage scales with the screen (Noah: "auto adjust to fit the resolution of the game"): every size is calc(1 * var(--u)) = 1% of the width on a
@@ -139,9 +139,9 @@
 .stage.play .c-dim { -webkit-mask-image: none; mask-image: none; }
 
 /* ---- the new parts, in Ember Tally (A); D and E restyle them */
-.dA { --acc: #ff7a3c; --acc2: #f1c86e; --ink: #f5e2b8; --txt: #dccfb9; --pan: rgba(12,7,4,.72); --edge: rgba(232,112,63,.35); --hf: 'Barlow Condensed', sans-serif; }
+.dA { --acc: #ff7a3c; --acc2: #f1c86e; --ink: #f5e2b8; --txt: #dccfb9; --pan: rgba(12,7,4,.72); --edge: rgba(232,112,63,.35); --hf: 'Philosopher', serif; }
 .stage .c-altarq { position: absolute; transform: translate(-50%, -50%); text-align: center; display: grid; padding: calc(.5 * var(--u)) calc(1.4 * var(--u)); background: radial-gradient(ellipse, rgba(0,0,0,.7), transparent 75%); gap: calc(.2 * var(--u)); min-width: calc(16 * var(--u)); text-shadow: 0 1px 3px #000, 0 0 calc(.8 * var(--u)) rgba(0,0,0,.7); }
-.stage .c-altarq b { font: 700 calc(.8 * var(--u)) var(--hf); letter-spacing: .22em; color: var(--ink); } .stage .c-altarq span { font: calc(.66 * var(--u)) Inter, sans-serif; color: var(--txt); }
+.stage .c-altarq b { font: 700 calc(.8 * var(--u)) var(--hf); letter-spacing: .22em; color: var(--ink); } .stage .c-altarq span { font: calc(.66 * var(--u)) 'Philosopher', serif; color: var(--txt); }
 .stage .c-altarq i { display: block; height: calc(.18 * var(--u)); width: calc(12 * var(--u)); margin: calc(.25 * var(--u)) auto 0; background: rgba(255,255,255,.18); } .stage .c-altarq i::after { content: ""; display: block; height: 100%; width: var(--v); background: var(--acc); box-shadow: 0 0 calc(.5 * var(--u)) var(--acc); }
 .stage .c-team { position: absolute; right: 2.6%; bottom: 12.5%; display: grid; gap: calc(.45 * var(--u)); justify-items: end; }
 .stage .c-team .tm { display: grid; grid-template-columns: auto auto; column-gap: calc(.8 * var(--u)); align-items: baseline; text-align: right; text-shadow: 0 1px 2px #000; }
@@ -152,15 +152,15 @@
 .stage .c-revive .ico { width: calc(2.6 * var(--u)); height: calc(2.6 * var(--u)); border-radius: 50%; border: calc(.18 * var(--u)) solid #ff5a36; box-shadow: 0 0 calc(1 * var(--u)) rgba(255,90,54,.7); background: radial-gradient(circle, rgba(255,90,54,.35), transparent 70%); }
 .stage .c-revive b { font: 700 calc(.75 * var(--u)) var(--hf); letter-spacing: .14em; color: #ffd0c4; } .stage .c-revive i { display: block; width: calc(6 * var(--u)); height: calc(.18 * var(--u)); background: rgba(255,255,255,.18); } .stage .c-revive i::after { content: ""; display: block; height: 100%; width: var(--v); background: #ff5a36; }
 .stage .c-bleed { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: calc(.7 * var(--u)); box-shadow: inset 0 0 calc(12 * var(--u)) rgba(150,10,10,.75); text-shadow: 0 1px 4px #000; }
-.stage .c-bleed b { font: 700 calc(3.2 * var(--u)) var(--hf); letter-spacing: .14em; color: #ff5a36; } .stage .c-bleed span { font: calc(.85 * var(--u)) Inter, sans-serif; color: var(--txt); }
+.stage .c-bleed b { font: 700 calc(3.2 * var(--u)) var(--hf); letter-spacing: .14em; color: #ff5a36; } .stage .c-bleed span { font: calc(.85 * var(--u)) 'Philosopher', serif; color: var(--txt); }
 .stage .c-bleed i { width: calc(5 * var(--u)); height: calc(5 * var(--u)); border-radius: 50%; background: conic-gradient(#ff5a36 var(--v), rgba(255,255,255,.12) 0); -webkit-mask: radial-gradient(circle, transparent 60%, #000 62%); mask: radial-gradient(circle, transparent 60%, #000 62%); }
 .stage .c-plate { position: absolute; transform: translate(-50%, -100%); text-align: center; display: grid; text-shadow: 0 1px 3px #000; }
-.stage .c-plate b { font: 700 calc(.85 * var(--u)) var(--hf); color: var(--pc); letter-spacing: .06em; } .stage .c-plate small { font: calc(.55 * var(--u)) Inter, sans-serif; color: var(--txt); letter-spacing: .2em; text-transform: uppercase; }
+.stage .c-plate b { font: 700 calc(.85 * var(--u)) var(--hf); color: var(--pc); letter-spacing: .06em; } .stage .c-plate small { font: calc(.55 * var(--u)) 'Philosopher', serif; color: var(--txt); letter-spacing: .2em; text-transform: uppercase; }
 .stage .c-score { position: absolute; left: 50%; top: 22%; transform: translateX(-50%); width: calc(52 * var(--u)); display: grid; gap: calc(.2 * var(--u)); }
 .stage .c-score .sh, .stage .c-score .sr { display: grid; grid-template-columns: 2.2fr repeat(5, 1fr); align-items: center; padding: calc(.55 * var(--u)) calc(1 * var(--u)); text-align: center; }
 .stage .c-score .sh { font: 700 calc(.62 * var(--u)) var(--hf); letter-spacing: .25em; color: var(--txt); border-bottom: calc(.08 * var(--u)) solid var(--edge); } .stage .c-score .sh b { text-align: left; color: var(--acc); font-size: calc(1 * var(--u)); letter-spacing: .12em; }
 .stage .c-score .sr { background: linear-gradient(90deg, color-mix(in srgb, var(--pc) 22%, transparent), rgba(0,0,0,.35) 40%); box-shadow: inset calc(.2 * var(--u)) 0 0 var(--pc); font: 700 calc(1 * var(--u)) var(--hf); color: var(--ink); }
-.stage .c-score .sr b { text-align: left; color: var(--pc); font-size: calc(1.1 * var(--u)); } .stage .c-score .sr small { display: block; font: calc(.55 * var(--u)) Inter, sans-serif; color: var(--txt); letter-spacing: .15em; text-transform: uppercase; }
+.stage .c-score .sr b { text-align: left; color: var(--pc); font-size: calc(1.1 * var(--u)); } .stage .c-score .sr small { display: block; font: calc(.55 * var(--u)) 'Philosopher', serif; color: var(--txt); letter-spacing: .15em; text-transform: uppercase; }
 .stage .c-feed { position: absolute; right: 2.6%; top: 9%; display: grid; gap: calc(.3 * var(--u)); justify-items: end; } .stage .c-feed span { font: 600 calc(.7 * var(--u)) var(--hf); letter-spacing: .1em; color: var(--pc); text-shadow: 0 1px 2px #000; }
 /* the rich Echo Altar */
 .stage .c-altar { position: absolute; left: 8%; right: 8%; top: 12%; min-height: 56%; display: grid; grid-template-rows: auto 1fr; background: var(--pan); box-shadow: 0 0 0 calc(.08 * var(--u)) var(--edge), 0 calc(2 * var(--u)) calc(4 * var(--u)) rgba(0,0,0,.6); }
@@ -171,49 +171,49 @@
 .stage .c-altar .ab { padding: calc(1.6 * var(--u)) calc(2 * var(--u)); overflow: hidden; }
 .stage .akit { display: grid; grid-template-columns: calc(20 * var(--u)) 1fr; gap: calc(2 * var(--u)); height: 100%; }
 .stage .apaint { background: center / cover; display: grid; align-content: end; padding: calc(1.2 * var(--u)); box-shadow: inset 0 calc(-8 * var(--u)) calc(6 * var(--u)) calc(-2 * var(--u)) rgba(0,0,0,.85), 0 0 0 calc(.08 * var(--u)) var(--edge); }
-.stage .apaint b { font: 700 calc(1.5 * var(--u)) var(--hf); letter-spacing: .2em; color: var(--ink); } .stage .apaint small { font: calc(.7 * var(--u)) Inter, sans-serif; color: var(--txt); }
+.stage .apaint b { font: 700 calc(1.5 * var(--u)) var(--hf); letter-spacing: .2em; color: var(--ink); } .stage .apaint small { font: calc(.7 * var(--u)) 'Philosopher', serif; color: var(--txt); }
 .stage .alist { display: grid; gap: calc(.5 * var(--u)); align-content: start; }
 .stage .arow { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: calc(1 * var(--u)); padding: calc(.7 * var(--u)) calc(1 * var(--u)); background: rgba(0,0,0,.28); font: 600 calc(1 * var(--u)) var(--hf); color: var(--ink); }
-.stage .arow img { width: calc(2.2 * var(--u)); height: calc(2.2 * var(--u)); object-fit: contain; } .stage .arow small { display: block; font: calc(.62 * var(--u)) Inter, sans-serif; color: var(--txt); }
+.stage .arow img { width: calc(2.2 * var(--u)); height: calc(2.2 * var(--u)); object-fit: contain; } .stage .arow small { display: block; font: calc(.62 * var(--u)) 'Philosopher', serif; color: var(--txt); }
 .stage .arow em { font-style: normal; color: var(--acc2); font-size: calc(.9 * var(--u)); } .stage .arow.on { background: linear-gradient(90deg, color-mix(in srgb, var(--acc) 30%, transparent), rgba(0,0,0,.2)); box-shadow: inset calc(.22 * var(--u)) 0 0 var(--acc); }
 .stage .arow.lock { opacity: .4; } .stage .pips { display: flex !important; gap: calc(.3 * var(--u)); margin-top: calc(.3 * var(--u)); } .stage .pips i { width: calc(.7 * var(--u)); height: calc(.7 * var(--u)); transform: rotate(45deg); border: calc(.08 * var(--u)) solid var(--acc2); } .stage .pips i.f { background: var(--acc2); }
-.stage .abrews { display: flex; align-items: center; gap: calc(.6 * var(--u)); margin-top: calc(1 * var(--u)); } .stage .abrews img { width: calc(2.4 * var(--u)); height: calc(2.4 * var(--u)); filter: drop-shadow(0 0 calc(.4 * var(--u)) var(--acc)); } .stage .abrews small { font: calc(.62 * var(--u)) Inter, sans-serif; color: var(--txt); letter-spacing: .2em; text-transform: uppercase; }
+.stage .abrews { display: flex; align-items: center; gap: calc(.6 * var(--u)); margin-top: calc(1 * var(--u)); } .stage .abrews img { width: calc(2.4 * var(--u)); height: calc(2.4 * var(--u)); filter: drop-shadow(0 0 calc(.4 * var(--u)) var(--acc)); } .stage .abrews small { font: calc(.62 * var(--u)) 'Philosopher', serif; color: var(--txt); letter-spacing: .2em; text-transform: uppercase; }
 .stage .agrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: calc(.8 * var(--u)); }
 .stage .abrew { display: grid; justify-items: center; text-align: center; gap: calc(.3 * var(--u)); padding: calc(1 * var(--u)) calc(.6 * var(--u)); background: rgba(0,0,0,.3); box-shadow: 0 0 0 calc(.06 * var(--u)) var(--edge); }
-.stage .abrew img { width: calc(3.6 * var(--u)); height: calc(3.6 * var(--u)); } .stage .abrew b { font: 700 calc(.82 * var(--u)) var(--hf); color: var(--ink); } .stage .abrew span { font: calc(.58 * var(--u))/1.3 Inter, sans-serif; color: var(--txt); } .stage .abrew em { font: 700 calc(.8 * var(--u)) var(--hf); font-style: normal; color: var(--acc2); }
+.stage .abrew img { width: calc(3.6 * var(--u)); height: calc(3.6 * var(--u)); } .stage .abrew b { font: 700 calc(.82 * var(--u)) var(--hf); color: var(--ink); } .stage .abrew span { font: calc(.58 * var(--u))/1.3 'Philosopher', serif; color: var(--txt); } .stage .abrew em { font: 700 calc(.8 * var(--u)) var(--hf); font-style: normal; color: var(--acc2); }
 .stage .abrew.have img { filter: drop-shadow(0 0 calc(.6 * var(--u)) var(--acc)); } .stage .abrew.have em { color: var(--acc); } .stage .abrew.on { box-shadow: 0 0 0 calc(.14 * var(--u)) var(--acc), 0 0 calc(1.4 * var(--u)) color-mix(in srgb, var(--acc) 50%, transparent); }
-.stage .athu { text-align: center; padding-top: calc(2 * var(--u)); } .stage .athu > b { font: 700 calc(1.8 * var(--u)) var(--hf); letter-spacing: .2em; color: var(--ink); } .stage .athu small { display: block; font: calc(.75 * var(--u)) Inter, sans-serif; color: var(--txt); } .stage .athu p { font: calc(.8 * var(--u)) Inter, sans-serif; color: var(--txt); margin-top: calc(1.4 * var(--u)); }
+.stage .athu { text-align: center; padding-top: calc(2 * var(--u)); } .stage .athu > b { font: 700 calc(1.8 * var(--u)) var(--hf); letter-spacing: .2em; color: var(--ink); } .stage .athu small { display: block; font: calc(.75 * var(--u)) 'Philosopher', serif; color: var(--txt); } .stage .athu p { font: calc(.8 * var(--u)) 'Philosopher', serif; color: var(--txt); margin-top: calc(1.4 * var(--u)); }
 .stage .apath { display: flex; align-items: center; justify-content: center; gap: calc(.8 * var(--u)); height: 100%; } .stage .apath > i { width: calc(3 * var(--u)); height: calc(.1 * var(--u)); background: var(--edge); }
 .stage .ast { display: grid; justify-items: center; text-align: center; gap: calc(.3 * var(--u)); width: calc(10 * var(--u)); } .stage .ast span { width: calc(3.4 * var(--u)); height: calc(3.4 * var(--u)); border-radius: 50%; display: grid; place-items: center; font: 700 calc(1 * var(--u)) Cinzel, serif; color: var(--txt); box-shadow: 0 0 0 calc(.12 * var(--u)) var(--edge); }
-.stage .ast b { font: 700 calc(.78 * var(--u)) var(--hf); color: var(--ink); letter-spacing: .06em; } .stage .ast small { font: calc(.58 * var(--u)) Inter, sans-serif; color: var(--txt); }
+.stage .ast b { font: 700 calc(.78 * var(--u)) var(--hf); color: var(--ink); letter-spacing: .06em; } .stage .ast small { font: calc(.58 * var(--u)) 'Philosopher', serif; color: var(--txt); }
 .stage .ast.done span { background: color-mix(in srgb, var(--acc2) 35%, transparent); color: var(--ink); } .stage .ast.next span { box-shadow: 0 0 0 calc(.16 * var(--u)) var(--acc), 0 0 calc(1.2 * var(--u)) var(--acc); color: var(--acc); } .stage .ast:not(.done):not(.next) { opacity: .45; }
 .stage .atalk { display: grid; grid-template-columns: calc(18 * var(--u)) 1fr; gap: calc(2 * var(--u)); } .stage .aq { font: italic calc(1.1 * var(--u))/1.6 'Cormorant Garamond', Georgia, serif; color: var(--ink); margin: 0; align-self: center; } .stage .aq small { display: block; font: 700 calc(.6 * var(--u)) var(--hf); letter-spacing: .35em; color: var(--acc2); margin-top: calc(.8 * var(--u)); font-style: normal; }
 .stage .c-classart { position: absolute; left: 6%; right: 6%; top: 24%; bottom: 10%; display: grid; grid-template-columns: 1fr 1fr 1.5fr 1fr; gap: calc(1 * var(--u)); }
 .stage .c-classart div { background: center / cover; display: grid; align-content: end; padding: calc(1.2 * var(--u)); box-shadow: inset 0 calc(-10 * var(--u)) calc(7 * var(--u)) calc(-3 * var(--u)) rgba(0,0,0,.9), 0 0 0 calc(.08 * var(--u)) var(--edge); filter: saturate(.75) brightness(.8); }
 .stage .c-classart div.on { filter: none; box-shadow: inset 0 calc(-10 * var(--u)) calc(7 * var(--u)) calc(-3 * var(--u)) rgba(0,0,0,.9), 0 0 0 calc(.16 * var(--u)) var(--acc), 0 0 calc(2 * var(--u)) color-mix(in srgb, var(--acc) 45%, transparent); }
-.stage .c-classart b { font: 700 calc(1.4 * var(--u)) var(--hf); letter-spacing: .14em; color: var(--ink); text-transform: uppercase; } .stage .c-classart span { font: calc(.7 * var(--u)) Inter, sans-serif; color: var(--txt); }
+.stage .c-classart b { font: 700 calc(1.4 * var(--u)) var(--hf); letter-spacing: .14em; color: var(--ink); text-transform: uppercase; } .stage .c-classart span { font: calc(.7 * var(--u)) 'Philosopher', serif; color: var(--txt); }
 .stage .c-classart div:not(.on) span { display: none; }
-.stage .c-classhead { position: absolute; left: 0; right: 0; top: 9%; text-align: center; } .stage .c-classhead b { font: 700 calc(2.6 * var(--u)) var(--hf); letter-spacing: .3em; color: var(--ink); text-shadow: 0 0 calc(1.2 * var(--u)) color-mix(in srgb, var(--acc) 55%, transparent); } .stage .c-classhead small { display: block; font: calc(.8 * var(--u)) Inter, sans-serif; color: var(--txt); }
+.stage .c-classhead { position: absolute; left: 0; right: 0; top: 9%; text-align: center; } .stage .c-classhead b { font: 700 calc(2.6 * var(--u)) var(--hf); letter-spacing: .3em; color: var(--ink); text-shadow: 0 0 calc(1.2 * var(--u)) color-mix(in srgb, var(--acc) 55%, transparent); } .stage .c-classhead small { display: block; font: calc(.8 * var(--u)) 'Philosopher', serif; color: var(--txt); }
 /* Skyrim's menus, ours */
 .stage .m-re { position: absolute; left: 4%; top: 5%; width: 44%; bottom: 8%; display: grid; align-content: start; gap: calc(.15 * var(--u)); }
 .stage .m-re .mh { display: flex; gap: calc(3 * var(--u)); align-items: center; padding: calc(.9 * var(--u)) calc(1.2 * var(--u)); font: 700 calc(.72 * var(--u)) var(--hf); letter-spacing: .25em; color: var(--txt); background: linear-gradient(90deg, color-mix(in srgb, var(--acc) 25%, transparent), transparent); box-shadow: inset 0 calc(-.08 * var(--u)) 0 var(--edge); }
 .stage .m-re .mh b { color: var(--ink); margin-right: auto; }
-.stage .m-re .mcol, .stage .m-re .mrow { display: grid; grid-template-columns: 2.4fr 1.4fr 1fr 1fr; gap: calc(.8 * var(--u)); padding: calc(.5 * var(--u)) calc(1.2 * var(--u)); font: calc(.72 * var(--u)) Inter, sans-serif; }
+.stage .m-re .mcol, .stage .m-re .mrow { display: grid; grid-template-columns: 2.4fr 1.4fr 1fr 1fr; gap: calc(.8 * var(--u)); padding: calc(.5 * var(--u)) calc(1.2 * var(--u)); font: calc(.72 * var(--u)) 'Philosopher', serif; }
 .stage .m-re .mcol { font: 700 calc(.55 * var(--u)) var(--hf); letter-spacing: .25em; color: var(--txt); opacity: .8; } .stage .m-re .mrow { color: var(--txt); } .stage .m-re .mrow img { width: calc(1 * var(--u)); height: calc(1 * var(--u)); vertical-align: calc(-.15 * var(--u)); margin-right: calc(.5 * var(--u)); }
 .stage .m-re .mrow.on { color: var(--ink); background: linear-gradient(90deg, color-mix(in srgb, var(--acc) 30%, transparent), transparent 80%); box-shadow: inset calc(.15 * var(--u)) 0 0 var(--acc); }
-.stage .m-re .mcard { position: absolute; left: 112%; top: 60%; width: calc(30 * var(--u)); padding: calc(1 * var(--u)) calc(1.4 * var(--u)); background: var(--pan); box-shadow: 0 0 0 calc(.08 * var(--u)) var(--edge); display: grid; gap: calc(.5 * var(--u)); } .stage .m-re .mcard b { font: 700 calc(.9 * var(--u)) var(--hf); letter-spacing: .2em; color: var(--ink); } .stage .m-re .mcard span { font: calc(.7 * var(--u))/1.5 Inter, sans-serif; color: var(--txt); }
+.stage .m-re .mcard { position: absolute; left: 112%; top: 60%; width: calc(30 * var(--u)); padding: calc(1 * var(--u)) calc(1.4 * var(--u)); background: var(--pan); box-shadow: 0 0 0 calc(.08 * var(--u)) var(--edge); display: grid; gap: calc(.5 * var(--u)); } .stage .m-re .mcard b { font: 700 calc(.9 * var(--u)) var(--hf); letter-spacing: .2em; color: var(--ink); } .stage .m-re .mcard span { font: calc(.7 * var(--u))/1.5 'Philosopher', serif; color: var(--txt); }
 .stage .m-new { position: absolute; inset: 6% 5% 8%; display: grid; grid-template-columns: 1fr 1.05fr; grid-template-rows: auto 1fr; gap: calc(1.4 * var(--u)) calc(3 * var(--u)); }
 .stage .m-new .mtabs { grid-column: 1 / -1; display: flex; gap: calc(2.4 * var(--u)); border-bottom: calc(.08 * var(--u)) solid var(--edge); } .stage .m-new .mtabs span { font: 700 calc(.85 * var(--u)) var(--hf); letter-spacing: .25em; color: var(--txt); padding-bottom: calc(.7 * var(--u)); }
 .stage .m-new .mtabs span.on { color: var(--ink); box-shadow: inset 0 calc(-.22 * var(--u)) 0 var(--acc); }
 .stage .m-new .mlist { display: grid; gap: calc(.5 * var(--u)); align-content: start; }
 .stage .m-new .mrow { display: grid; grid-template-columns: auto 1fr auto; gap: calc(1 * var(--u)); align-items: center; padding: calc(.8 * var(--u)) calc(1 * var(--u)); background: rgba(0,0,0,.35); font: 600 calc(1 * var(--u)) var(--hf); color: var(--ink); }
-.stage .m-new .mrow small { display: block; font: calc(.6 * var(--u)) Inter, sans-serif; color: var(--txt); } .stage .m-new .mrow em { font-style: normal; color: var(--acc2); } .stage .m-new .mrow img { width: calc(1.8 * var(--u)); height: calc(1.8 * var(--u)); }
+.stage .m-new .mrow small { display: block; font: calc(.6 * var(--u)) 'Philosopher', serif; color: var(--txt); } .stage .m-new .mrow em { font-style: normal; color: var(--acc2); } .stage .m-new .mrow img { width: calc(1.8 * var(--u)); height: calc(1.8 * var(--u)); }
 .stage .m-new .mrow > i { width: calc(.3 * var(--u)); height: calc(2.2 * var(--u)); background: rgba(255,255,255,.15); } .stage .m-new .mrow > i.r-epic { background: #a34bff; box-shadow: 0 0 calc(.6 * var(--u)) #a34bff; } .stage .m-new .mrow > i.r-legendary { background: #ffb52e; } .stage .m-new .mrow > i.r-rare { background: #3d8bff; }
 .stage .m-new .mrow.on { background: linear-gradient(90deg, color-mix(in srgb, var(--acc) 32%, transparent), rgba(0,0,0,.3)); box-shadow: inset 0 0 0 calc(.08 * var(--u)) var(--acc); }
 .stage .m-new .mdet { padding: calc(2 * var(--u)); background: var(--pan); box-shadow: 0 0 0 calc(.08 * var(--u)) var(--edge); display: grid; align-content: start; gap: calc(.8 * var(--u)); }
 .stage .m-new .mdet small { font: 700 calc(.62 * var(--u)) var(--hf); letter-spacing: .3em; color: var(--acc2); } .stage .m-new .mdet small.r-epic { color: #c38bff; } .stage .m-new .mdet > b { font: 700 calc(2.2 * var(--u)) var(--hf); color: var(--ink); letter-spacing: .04em; }
-.stage .m-new .mstats { display: flex; gap: calc(2.6 * var(--u)); } .stage .m-new .mstats span { font: calc(.6 * var(--u)) Inter, sans-serif; color: var(--txt); letter-spacing: .15em; text-transform: uppercase; } .stage .m-new .mstats b { display: block; font: 700 calc(1.5 * var(--u)) var(--hf); color: var(--ink); letter-spacing: 0; }
-.stage .m-new .mdet p { font: calc(.8 * var(--u))/1.6 Inter, sans-serif; color: var(--txt); margin: 0; } .stage .m-new .muse { height: calc(.2 * var(--u)); background: rgba(255,255,255,.15); } .stage .m-new .muse i { display: block; height: 100%; width: var(--v); background: #a34bff; }
+.stage .m-new .mstats { display: flex; gap: calc(2.6 * var(--u)); } .stage .m-new .mstats span { font: calc(.6 * var(--u)) 'Philosopher', serif; color: var(--txt); letter-spacing: .15em; text-transform: uppercase; } .stage .m-new .mstats b { display: block; font: 700 calc(1.5 * var(--u)) var(--hf); color: var(--ink); letter-spacing: 0; }
+.stage .m-new .mdet p { font: calc(.8 * var(--u))/1.6 'Philosopher', serif; color: var(--txt); margin: 0; } .stage .m-new .muse { height: calc(.2 * var(--u)); background: rgba(255,255,255,.15); } .stage .m-new .muse i { display: block; height: 100%; width: var(--v); background: #a34bff; }
 .stage .m-tabre { position: absolute; inset: 0; } .stage .m-tabre .mlvl { position: absolute; left: 8%; right: 8%; top: 3%; display: flex; align-items: center; gap: calc(1.2 * var(--u)); padding: calc(.7 * var(--u)) calc(1.4 * var(--u)); font: 700 calc(.85 * var(--u)) var(--hf); letter-spacing: .2em; color: var(--ink); background: linear-gradient(90deg, transparent, var(--pan) 15%, var(--pan) 85%, transparent); }
 .stage .m-tabre .mlvl i { flex: 0 0 calc(12 * var(--u)); height: calc(.3 * var(--u)); background: rgba(255,255,255,.15); } .stage .m-tabre .mlvl i::after { content: ""; display: block; height: 100%; width: var(--v); background: var(--acc); box-shadow: 0 0 calc(.5 * var(--u)) var(--acc); } .stage .m-tabre .mlvl span { margin-left: auto; color: var(--txt); font-weight: 600; letter-spacing: .1em; }
 .stage .m-tabre .mitems { position: absolute; left: 10%; right: 10%; bottom: 6%; display: flex; justify-content: space-around; padding: calc(1 * var(--u)); background: linear-gradient(90deg, transparent, var(--pan) 15%, var(--pan) 85%, transparent); }
@@ -292,4 +292,26 @@
 .dA .c-notify small { font-size: calc(.7 * var(--u)); letter-spacing: .4em; color: #ff7a3c; font-weight: 600; } .dA .c-notify b { font-size: calc(1.5 * var(--u)); letter-spacing: .1em; color: #f5e2b8; }
 .dA .c-notify i { display: block; width: calc(12 * var(--u)); height: calc(.08 * var(--u)); background: linear-gradient(90deg, transparent, #ff7a3c, transparent); }
 .dA .c-levelup { left: 0; right: 0; top: 7.5%; display: grid; justify-items: center; text-shadow: 0 1px 3px #000; }
-.dA .c-levelup small { font-size: calc(.7 * var(--u)); letter-spacing: .4em; color: #ff7a3c; font-weight: 600; } .dA .c-levelup b { font-size: calc(3 * var(--u)); line-height: 1.05; color: #f1c86e; text-shadow: 0 0 calc(.8 * var(--u)) rgba(241,170,70,.5); } .dA .c-levelup span { font: calc(.85 * var(--u)) Inter, sans-serif; color: #e6d6bb; }
+.dA .c-levelup small { font-size: calc(.7 * var(--u)); letter-spacing: .4em; color: #ff7a3c; font-weight: 600; } .dA .c-levelup b { font-size: calc(3 * var(--u)); line-height: 1.05; color: #f1c86e; text-shadow: 0 0 calc(.8 * var(--u)) rgba(241,170,70,.5); } .dA .c-levelup span { font: calc(.85 * var(--u)) 'Philosopher', serif; color: #e6d6bb; }
+
+/* (Noah, Nov 28) Cursed Essence: the old blue look - the soul in its dragon-script ring beside the number */
+.dA .c-ess.blue { display: flex; align-items: center; gap: calc(.6 * var(--u)); }
+.dA .c-ess.blue .et { display: grid; justify-items: end; }
+.dA .c-ess.blue small { color: rgba(190,160,255,.9); }
+.dA .c-ess.blue b { color: #f2ead9; text-shadow: 0 0 calc(.6 * var(--u)) rgba(90,150,255,.55), 0 calc(.1 * var(--u)) calc(.2 * var(--u)) #000; font-size: calc(1.7 * var(--u)); }
+.dA .c-ess.blue .soul { width: calc(4.2 * var(--u)); height: calc(4.2 * var(--u)); background: center / contain no-repeat; filter: drop-shadow(0 0 calc(.6 * var(--u)) rgba(150,90,255,.6)); animation: soulglow 3s ease-in-out infinite; }
+.dA .c-ess.blue .pop { position: absolute; right: calc(4.8 * var(--u)); bottom: calc(3.4 * var(--u)); }
+@keyframes soulglow { 50% { filter: drop-shadow(0 0 calc(1 * var(--u)) rgba(150,90,255,.85)); } }
+/* (Noah, Nov 28) the Keybinds tab */
+.dA .c-mpage .mpk { position: absolute; left: calc(50% - 34 * var(--u)); width: calc(68 * var(--u)); top: 22.5%; display: grid; background: rgba(4,2,1,.4); padding-bottom: calc(.4 * var(--u)); }
+.dA .c-mpage .mpk .kh, .dA .c-mpage .mpk .kr { display: grid; grid-template-columns: 1fr calc(15 * var(--u)) calc(15 * var(--u)); align-items: center; padding: 0 calc(1.4 * var(--u)); height: calc(2.45 * var(--u)); }
+.dA .c-mpage .mpk .kh span { font-size: calc(.9 * var(--u)); letter-spacing: .25em; color: #f1c86e; text-align: center; }
+.dA .c-mpage .mpk .ksec { font-size: calc(.95 * var(--u)); letter-spacing: .3em; color: #ff7a3c; padding: calc(.5 * var(--u)) calc(1.4 * var(--u)) calc(.2 * var(--u)); border-bottom: 1px solid rgba(220,207,185,.16); }
+.dA .c-mpage .mpk .kr b { font-size: calc(1.1 * var(--u)); letter-spacing: .08em; color: #f5e2b8; font-weight: 400; }
+.dA .c-mpage .mpk .kr em { font-style: normal; font-weight: 700; font-size: calc(1 * var(--u)); letter-spacing: .12em; color: #dccfb9; text-align: center; }
+.dA .c-mpage .mpk .kr em.fix { opacity: .55; } .dA .c-mpage .mpk .kr em.sel { color: #ff7a3c; outline: calc(.08 * var(--u)) solid rgba(241,200,110,.7); border-radius: calc(.3 * var(--u)); padding: calc(.15 * var(--u)) 0; margin: 0 calc(1 * var(--u)); }
+.dA .c-mpage .mpk .kr.on { background: linear-gradient(90deg, rgba(255,122,60,.16), transparent); box-shadow: inset calc(.22 * var(--u)) 0 0 #ff7a3c; } .dA .c-mpage .mpk .kr.on b { color: #ff7a3c; }
+/* (Noah, Nov 28, the Inventory remade: "the item models on the right side too ... under the weapon information") */
+.stage .m-new .mmodel { display: grid; justify-items: center; gap: calc(.4 * var(--u)); margin-top: calc(.6 * var(--u)); padding-top: calc(.8 * var(--u)); border-top: calc(.08 * var(--u)) solid var(--edge); }
+.stage .m-new .mmodel img { height: calc(13 * var(--u)); filter: drop-shadow(0 0 calc(.8 * var(--u)) rgba(140,110,255,.45)); }
+.stage .m-new .mmodel small { font-size: calc(.55 * var(--u)) !important; letter-spacing: .25em !important; color: var(--txt) !important; opacity: .7; }

@@ -7,19 +7,44 @@
  },
  "systems": [
   {
+   "id": "menu",
+   "name": "Main menu, settings and controls",
+   "about": "The first screen: the menu, Load, Settings and Keybinds, the party page; the keyboard, mouse and controller."
+  },
+  {
+   "id": "loading",
+   "name": "Loading and new game",
+   "about": "Loading screens, the new-character flow."
+  },
+  {
+   "id": "hud",
+   "name": "HUD and menus",
+   "about": "Everything drawn on screen in play and every menu of ours."
+  },
+  {
    "id": "movement",
    "name": "Movement",
    "about": "Sprint, slide, jump, the glider and the dragon ride: how it feels to move."
   },
   {
-   "id": "combat",
-   "name": "Combat feel",
-   "about": "Hits, deaths, bodies and ash, weapon sounds: what every blow feels like."
+   "id": "altars",
+   "name": "Echo Altars and trials",
+   "about": "Freeing each city: the four trials and the priest."
   },
   {
    "id": "classes",
    "name": "Class weapons",
    "about": "The four classes' weapons, their tiers and abilities."
+  },
+  {
+   "id": "armour",
+   "name": "Armour sets",
+   "about": "The four class sets and their tiers."
+  },
+  {
+   "id": "combat",
+   "name": "Combat feel",
+   "about": "Hits, deaths, bodies and ash, weapon sounds: what every blow feels like."
   },
   {
    "id": "spells",
@@ -32,29 +57,9 @@
    "about": "The Alchemist's six flasks."
   },
   {
-   "id": "relics",
-   "name": "Dragon Priest relics",
-   "about": "The ten priests' weapons, one per freed city."
-  },
-  {
-   "id": "tablet",
-   "name": "Tablet of Mysteries",
-   "about": "The gamble: donated weapons with limited uses."
-  },
-  {
-   "id": "wonders",
-   "name": "Wonders and secrets",
-   "about": "The four wonders, the hidden quests and Alduin's Bane."
-  },
-  {
    "id": "summons",
    "name": "Summons and thralls",
    "about": "What fights for you: conjurations, raised dead, the Soulcaller's pride."
-  },
-  {
-   "id": "armour",
-   "name": "Armour sets",
-   "about": "The four class sets and their tiers."
   },
   {
    "id": "nights",
@@ -62,29 +67,29 @@
    "about": "Rounds, enemies, bosses, special nights, essence."
   },
   {
+   "id": "tablet",
+   "name": "Tablet of Mysteries",
+   "about": "The gamble: donated weapons with limited uses."
+  },
+  {
+   "id": "relics",
+   "name": "Dragon Priest relics",
+   "about": "The ten priests' weapons, one per freed city."
+  },
+  {
+   "id": "wonders",
+   "name": "Wonders and secrets",
+   "about": "The four wonders, the hidden quests and Alduin's Bane."
+  },
+  {
    "id": "dragons",
    "name": "Dragons",
    "about": "Dragon bosses and the three word-dragons."
   },
   {
-   "id": "altars",
-   "name": "Echo Altars and trials",
-   "about": "Freeing each city: the four trials and the priest."
-  },
-  {
    "id": "felldir",
    "name": "Felldir's voice",
    "about": "The altar's voice, its Talk and whispers."
-  },
-  {
-   "id": "hud",
-   "name": "HUD and menus",
-   "about": "Everything drawn on screen and every menu of ours."
-  },
-  {
-   "id": "loading",
-   "name": "Loading and new game",
-   "about": "Loading screens, the new-character flow."
   },
   {
    "id": "world",
@@ -1079,18 +1084,29 @@
   },
   {
    "id": "ld_menuwords",
-   "sys": "hud",
-   "t": "The main menu, ours entirely",
+   "sys": "menu",
+   "t": "The main menu: keys, pad and mouse",
    "st": "ready",
-   "what": "Your notes on 2b534e1 (your screenshots are in History): Skyrim's (Edge UI's) menu is hidden and takes no keys - nothing of it laid over our painting any more (the layered, blurry words). Our words are larger (CONTINUE, NEW, LOAD, CO-OP PARTY, SETTINGS, QUIT); keys, pad and mouse move them; Skyrim's questions (Start a new game? Quit?) come up in our words with YES and NO.",
-   "how": "Launch: move through the words with the mouse, the arrows and the D-pad; press New and answer NO, then YES; Continue; Quit and answer NO.",
-   "look": "Big spaced words under the title; the question in our style; nothing of Edge's menu showing; your cursor on top of everything.",
-   "note": "Last test (2b534e1): \"The confirmation buttons and text need to match the new UI\".",
-   "since": "f88dc6b"
+   "what": "Your test of f88dc6b (\"The menu UI isnt working when I try to navigate the menu and its tabs\"): the word under a still mouse took the choice back from the keys every frame. Now the keys and the pad move the choice, and the mouse takes it only when it moves or clicks. Your binds: W up, S down, A left, D right and a click to select on keyboard and mouse (Enter, Space and E still select); the D-pad or the left stick (held, it repeats) and A / Cross on a controller. Skyrim's own cursor and ours are one now (the mouse's movement is never held back from it), so where you see the cursor is where it clicks.",
+   "how": "Launch: W / S through the words, then move the mouse onto one and click; on a controller the D-pad, then the left stick (hold it), A to select. New, answer NO; Continue.",
+   "look": "The keys move the choice even with the mouse resting on a word; the stick repeats while held; a click lands exactly under the cursor.",
+   "note": "Last test (f88dc6b): \"For controller the binds should be the dpad or left stick direction and X or A. the keybinds for keyboard and mouse should be W up S Down A Left and D Right with the mouse cursor click for selections\".",
+   "since": "168adac"
+  },
+  {
+   "id": "mn_msgbox",
+   "sys": "menu",
+   "t": "Skyrim's own boxes take the mouse",
+   "st": "ready",
+   "what": "Your screenshot: Skyrim's \"This save relies on Creations... Activate now?\" box over the menu took no clicks - the box came up on the controller's footing, and our cursor was drawn away from Skyrim's. Now each newly opened menu is told which you are using, a message box gets the mouse, and our cursor is Skyrim's own.",
+   "how": "Load the save that asks about Creations (or any that asks a question); click Yes or No with the mouse.",
+   "look": "The button under the cursor lights and takes the click.",
+   "note": "Last test (f88dc6b): \"in the screen shot my mouse cant select the options\".",
+   "since": "168adac"
   },
   {
    "id": "ld_menuembers",
-   "sys": "hud",
+   "sys": "menu",
    "t": "The main menu: embers, title, line",
    "st": "ready",
    "what": "Dense, real embers: sparks streaking up off the bottom, white-gold when born, cooling through orange to red as they climb, curled by a gusting wind (no circles, no blinking). The title's glow is a soft haze behind it (not eight blocky copies), and its orange line sits clear of the letters.",
@@ -1101,29 +1117,51 @@
   },
   {
    "id": "ld_menuload",
-   "sys": "hud",
+   "sys": "menu",
    "t": "The main menu: our Load",
    "st": "ready",
-   "what": "Every save on our own page: the character, level, place, date, autosave or save; the chosen one's own picture (from the save file) with its race and time played. Your picks: Delete (asked first - the save is put aside in Saves\\Deleted, not destroyed) and a filter by character.",
-   "how": "LOAD: scroll with the wheel, arrows or D-pad; PgUp/PgDn or LB/RB (or the arrows by the name) through the characters; Delete or X on an old save, NO then YES; load one.",
-   "look": "The list on the left, the picture on the right; the filter changes the list; the deleted save leaves the list; loading starts.",
-   "note": "Last test (2b534e1): \"the load page ... text looks layered and blurry\".",
-   "since": "f88dc6b"
+   "what": "Every save on our own page: the character, level, place, date, autosave or save; the chosen one's picture (from the save file) with its race and time played; Delete (asked first - put aside in Saves\\Deleted, not destroyed) and a filter by character. Fixed from your test: the list no longer slides under a still mouse (the wheel scrolls it; the keys move the choice and the list follows), so the row under the cursor is the one chosen; and DELETE no longer answers its own question with the same click.",
+   "how": "LOAD: scroll with the wheel; point at a save; W / S and the D-pad; PgUp / PgDn or LB / RB through the characters. Click DELETE (or press Delete / X / Square) on an old save: NO, then again YES.",
+   "look": "The lit row is the one under the cursor; the question stays up until you answer; YES takes the save off the list.",
+   "note": "Last test (f88dc6b): \"in the load screen deleting a save doesnt work it closes the menu and the selection is not accurate to where the mouse cursor is\".",
+   "since": "168adac"
   },
   {
    "id": "ld_menusettings",
-   "sys": "hud",
-   "t": "The main menu: Settings",
+   "sys": "menu",
+   "t": "Settings: six tabs, in the menu and in game",
    "st": "ready",
-   "what": "Your pick - five tabs on one page. GRAPHICS: brightness, shadow quality, object fade, grass distance, TAA, ambient occlusion, volumetric light, reflections, depth of field, the night's fog, screen shake, softer flashes. DISPLAY: resolution, display mode, frame rate cap, VSync, field of view (first / third). GAMEPLAY: difficulty, the dead follow it, melee and bow speed, how long bodies stay, compass, crosshair, quest markers, subtitles, autosaves. CONTROLS: mouse and controller look, aiming sensitivity, invert look, vibration, PlayStation icons. AUDIO: master, every sound category of Skyrim's own audio menu, the Echo Altar's voice. What needs a restart is saved at once and marked RESTART (your pick).",
-   "how": "SETTINGS: Q / E (LB / RB) through the tabs; up / down a row; left / right or a click changes it; Esc to leave. Change the frame rate cap and a volume; set a resolution and restart.",
-   "look": "Each change takes at once (the RESTART ones after a restart); leaving writes SkyrimPrefs.ini.",
-   "note": "Your note (Nov 27): \"add a settings tab in the menu for graphics, resolution, Fps cap, all the gameplay settings and general ones too like audio\".",
-   "since": "f88dc6b"
+   "what": "Tabs on one page (your pick), now centred with the screen and SETTINGS (your note): GRAPHICS, DISPLAY, GAMEPLAY, CONTROLS, KEYBINDS, AUDIO. What needs a restart is saved at once and marked RESTART. In game the Esc menu's Settings opens this same page (your pick for the keybinds: \"Both\").",
+   "how": "SETTINGS from the main menu: Q / E (LB / RB) through the tabs, W / S a row, A / D or a click to change it, Esc to leave. Then in game: Esc, Settings - the same page; change something and Esc back to the game.",
+   "look": "The tab words centred under SETTINGS; the page in game is the menu's own.",
+   "note": "Your note on the preview: \"make the tab words Graphics Display Gameplay ect centered with the screen and the Settings word\".",
+   "since": "168adac"
+  },
+  {
+   "id": "mn_keys",
+   "sys": "menu",
+   "t": "Keybinds, keyboard & mouse and controller",
+   "st": "ready",
+   "what": "Your picks: the Curse's keys (a perk, the Thu'um, leaving and the dragon's bond at the altar, the Codex, the party) and Skyrim's controls (moving, jump, sprint, sneak, activate, attack and block, shout, the menus, the view, walk / run, quick save and load), each with a keyboard & mouse key and a controller button, every one changeable: choose it, press the new key (Esc cancels); Delete / X clears it; the same key twice shows red; RESET ALL TO DEFAULTS at the end. Skyrim's are kept in our file and put back each launch; the Mod Configuration menu shows the Curse's keyboard keys and stays in step. Moving on a controller stays the left stick.",
+   "how": "Settings > KEYBINDS: change Jump to another key and the Codex to a controller button; play and use them; then RESET ALL.",
+   "look": "The new keys work at once in game; Reset puts every key back.",
+   "note": "Your note (Nov 28): \"I also want to add a keybinds section for controller and keyboard and mouse in the menu settings and in game settings\".",
+   "since": "168adac"
+  },
+  {
+   "id": "mn_switch",
+   "sys": "menu",
+   "t": "Keyboard and mouse stay in charge",
+   "st": "ready",
+   "what": "The log of your test showed the game flipping to the controller 40 ms after every mouse move - a controller lying on the desk. Now the controller counts only when really used (a stick pushed well over and held, or a button pressed and held); for half a second after the mouse or a key only a button does. That flipping was what you saw in game: menus ignoring the mouse, controller prompts, keys not answering and the cursor in the wrong place.",
+   "how": "With the controller plugged in, play on keyboard and mouse: the inventory, the map, the Esc menu, the altar; then pick up the controller and press a button.",
+   "look": "The mouse works everywhere and the prompts stay keyboard ones until the controller is used.",
+   "note": "Your answers (Nov 28): in game \"Menus ignore mouse, Switches to pad, Keys don't respond, Cursor wrong\".",
+   "since": "168adac"
   },
   {
    "id": "ld_menuparty",
-   "sys": "hud",
+   "sys": "menu",
    "t": "The co-op party page, in our style",
    "st": "ready",
    "what": "The party on the menu (and in the Esc journal) in Ember Tally: the heading and line, your party's words (host, invite, join, leave), tonight's table, last night and your records; the keys at the foot. Your cursor is drawn over it.",
@@ -1137,7 +1175,7 @@
    "sys": "hud",
    "t": "Replacing Edge UI, then removing it",
    "st": "building",
-   "what": "Your pick (Nov 28): Edge UI still draws these, and each becomes ours first (previewed in the UI tab, approved, built): 1. HUD leftovers - compass, shout meter, subtitles, quest / location / level-up notices, Activate prompts (in the UI tab now, to approve). 2. The Esc pause menu and journal - System, Quests, Stats (skills, level up). 3. Message boxes and dialogue. 4. Everyday menus - Favorites (Q), sleep / wait, containers and trading, the map. 5. The rest - crafting (smithing, alchemy, enchanting), lockpicking, books, training, tutorials, naming, the console. Then Edge UI comes out: its files moved aside (not deleted) and the SkyUI / Untarnished UI files it had replaced put back.",
+   "what": "Your pick (Nov 28): Edge UI still draws these, and each becomes ours first (previewed in the UI tab, approved, built): 1. HUD leftovers - compass, shout meter, subtitles, quest / location / level-up notices, Activate prompts (all approved Nov 28; the subtitles in Philosopher - being built). 2. The Esc pause menu and journal - System, Quests, Stats (skills, level up). 3. Message boxes and dialogue. 4. Everyday menus - the Inventory remade (your pick: the item's 3D model in the right box), Favorites (Q), sleep / wait, containers and trading, the map. 5. The rest - crafting (smithing, alchemy, enchanting), lockpicking, books, training, tutorials, naming, the console. Then Edge UI comes out: its files moved aside (not deleted) and the SkyUI / Untarnished UI files it had replaced put back.",
    "how": "",
    "look": "",
    "note": "Your question (Nov 28): \"Can we remove edges UI mod now since we have our own?\"",
@@ -1153,6 +1191,28 @@
    "look": "",
    "note": "Your note (Nov 27): \"I wasnt able to add images or clips to the test tabs in the doc\".",
    "since": ""
+  },
+  {
+   "id": "ui_font",
+   "sys": "hud",
+   "t": "One font for the whole UI: Philosopher",
+   "st": "ready",
+   "what": "Your note on the subtitles (\"make the font nordic like how Edge UI's subtitles looked ... make sure the text font is consistent among the entire UI\") and your picks: Philosopher - free to ship, the nearest to Edge UI's Berserker - for everything we draw: titles, the menu's words, numbers, subtitles and every line of text. (Skyrim's own menus that Edge UI still draws keep its font until each is replaced.)",
+   "how": "Look over the main menu, Settings, the HUD on a night, the altar menu and a subtitle.",
+   "look": "One Nordic face everywhere; nothing cut off or overlapping (it is wider than the old one - tell me where it is tight).",
+   "note": "Your notes (Nov 28): Berserker first, then \"give me more options this is not the look im going for\" - Philosopher from the 19 free ones.",
+   "since": "168adac"
+  },
+  {
+   "id": "ui_essence",
+   "sys": "hud",
+   "t": "Cursed Essence: the old blue look",
+   "st": "ready",
+   "what": "Your note on the preview: the blue soul burning in its turning dragon-script, the number beside it and each kill's essence flying into it - bottom right now (the brews keep the left) - with the kill pops still rising where each of the dead fell.",
+   "how": "Kill a few of the dead and watch the bottom right.",
+   "look": "The blue soul and number in the corner; the motes flying in; the gold +10 pops where they fell.",
+   "note": "Your note (Nov 28): \"use the current Cursed essence UI our old blue look and kill pops\".",
+   "since": "168adac"
   },
   {
    "id": "st_crash27",
@@ -1234,6 +1294,94 @@
  ],
  "decisions": [],
  "decided": [
+  {
+   "when": "2026-11-28",
+   "sys": "hud",
+   "q": "Which font should the whole UI use? (19 free ones shown next to Berserker)",
+   "pick": "1 Philosopher",
+   "where": "chat",
+   "done": "Every word we draw is Philosopher (titles, words, numbers, subtitles, running text); it ships with the mod (SIL Open Font License)."
+  },
+  {
+   "when": "2026-11-28",
+   "sys": "hud",
+   "q": "\"Consistent among the entire UI\": which text should use that one font?",
+   "pick": "Everything",
+   "where": "chat",
+   "done": "Titles, menu words, numbers, subtitles and running text all in it."
+  },
+  {
+   "when": "2026-11-28",
+   "sys": "hud",
+   "q": "Berserker is Edge UI's (Iconian Fonts' freeware, not ours to ship). Which font instead? (Macondo, Uncial Antiqua, Metamorphous, Almendra shown)",
+   "pick": "\"give me more options this is not the look im going for\"",
+   "where": "chat",
+   "done": "19 more free fonts shown; you picked Philosopher."
+  },
+  {
+   "when": "2026-11-28",
+   "sys": "hud",
+   "q": "The subtitles \"nordic like how Edge UI's subtitles looked\": which font did you mean?",
+   "pick": "Berserker - \"but make sure the text font is consistent among the entire UI\"",
+   "where": "chat",
+   "done": "See the font picks above."
+  },
+  {
+   "when": "2026-11-28",
+   "sys": "menu",
+   "q": "\"In game, using keyboard and mouse does not work properly.\" What goes wrong?",
+   "pick": "Menus ignore mouse, Switches to pad, Keys don't respond, Cursor wrong",
+   "where": "chat",
+   "done": "All four were the game flipping to the controller after every mouse move (your log); the controller now counts only when really used."
+  },
+  {
+   "when": "2026-11-28",
+   "sys": "menu",
+   "q": "In game, where should the keybinds section live?",
+   "pick": "Both - our Settings page, and the MCM page kept in step",
+   "where": "chat",
+   "done": "The Esc menu's Settings opens our page (KEYBINDS among its tabs); the MCM shows the Curse's keyboard keys from the same file."
+  },
+  {
+   "when": "2026-11-28",
+   "sys": "menu",
+   "q": "The Keybinds section: which keys should it list and let you change?",
+   "pick": "Ours + Skyrim's",
+   "where": "chat",
+   "done": "The Curse's keys and Skyrim's controls, keyboard & mouse and controller, all rebindable."
+  },
+  {
+   "when": "2026-11-28",
+   "sys": "hud",
+   "q": "Inventory: recoloured or remade?",
+   "pick": "Remade - \"make sure this includes the item models on the right side too there is a nice space under the weapon information on the right box\"",
+   "where": "workshop",
+   "done": "The preview shows the item's 3D model in the right box under its stats; built with the everyday menus (step 4 of replacing Edge UI)."
+  },
+  {
+   "when": "2026-11-28",
+   "sys": "hud",
+   "q": "The Cursed Essence and kill pops preview (gold, bottom right)",
+   "pick": "Change - \"use the current Cursed essence UI our old blue look and kill pops\"",
+   "where": "workshop",
+   "done": "The blue soul and its flying motes, bottom right, with the gold kill pops kept."
+  },
+  {
+   "when": "2026-11-28",
+   "sys": "menu",
+   "q": "The Settings page preview",
+   "pick": "Change - \"make the tab words Graphics Display Gameplay ect centered with the screen and the Settings word\"",
+   "where": "workshop",
+   "done": "Centred; KEYBINDS added as the fifth tab."
+  },
+  {
+   "when": "2026-11-28",
+   "sys": "hud",
+   "q": "Edge UI's HUD leftovers: compass, shout meter, quest and level-up notices, Activate prompts",
+   "pick": "OK (each)",
+   "where": "workshop",
+   "done": "Approved as previewed - being built next, then the next group (the Esc menu and journal)."
+  },
   {
    "when": "2026-11-28",
    "sys": "hud",
@@ -1468,6 +1616,11 @@
   }
  ],
  "builds": [
+  {
+   "sha": "168adac",
+   "when": "2026-11-28 01:38",
+   "what": "Main menu keys, pad and mouse fixed; Keybinds (ours and Skyrim's, in the menu and in game); one font (Philosopher); the old blue essence"
+  },
   {
    "sha": "f88dc6b",
    "when": "2026-11-28 00:09",
@@ -6147,6 +6300,96 @@
      "note": "this would only be for the dragon glider shout and the shout that makes everyone tiny.",
      "choice": "",
      "done": "The Thu'um tab will hold only Dragon's Updraft and Tiny Terrors (built with the altar menu)."
+    }
+   ]
+  },
+  {
+   "build": "Your test of f88dc6b and the workshop (Nov 28) - built as 168adac",
+   "date": "2026-11-28",
+   "notes": [
+    {
+     "when": "2026-11-28 00:31",
+     "where": "test/ld_menuwords (fail)",
+     "note": "See changes in my message and screen shots in the chat.",
+     "choice": "fail",
+     "done": "Your message: the menu's navigation, the binds, the Load page's Delete and cursor, Skyrim's Creations box, keyboard and mouse in game, keybinds and the tests in game order - every one done below."
+    },
+    {
+     "when": "2026-11-28 00:59",
+     "where": "chat/main menu",
+     "note": "The menu UI isnt working when I try to navigate the menu and its tabs. For controller the binds should be the dpad or left stick direction and X or A. the keybinds for keyboard and mouse should be W up S Down A Left and D Right with the mouse cursor click for selections.",
+     "choice": "",
+     "done": "The word under a still mouse no longer takes the choice back from the keys. W/S/A/D, the D-pad and the left stick (held, it repeats) move; A / Cross, Enter or a click select. The same on Load, Settings, Keybinds and the questions."
+    },
+    {
+     "when": "2026-11-28 00:59",
+     "where": "chat/load",
+     "note": "in the load screen deleting a save doesnt work it closes the menu and the selection is not accurate to where the mouse cursor is.",
+     "choice": "",
+     "done": "The click on DELETE was also answering its own question. The list no longer slides under the mouse: the wheel scrolls it, and the row under the cursor is the chosen one."
+    },
+    {
+     "when": "2026-11-28 00:59",
+     "where": "chat/screenshot",
+     "note": "in the screen shot my mouse cant select the options",
+     "choice": "",
+     "done": "Skyrim's own boxes (the Creations question) now get the mouse: each newly opened menu is told you're on keyboard and mouse, and our cursor is Skyrim's own, so the click lands under it."
+    },
+    {
+     "when": "2026-11-28 00:59",
+     "where": "chat/in game",
+     "note": "when in game using keboard and mouse does not work properly.",
+     "choice": "Menus ignore mouse, Switches to pad, Keys don't respond, Cursor wrong",
+     "done": "Your log showed the game flipping to the controller 40 ms after every mouse move (a controller on the desk). It now counts only when really used."
+    },
+    {
+     "when": "2026-11-28 00:59",
+     "where": "chat/keybinds",
+     "note": "I also want to add a keybinds section for controller and keyboard and mouse in the menu settings and in game settings.",
+     "choice": "Ours + Skyrim's; in game: Both",
+     "done": "Settings has a KEYBINDS tab: the Curse's keys and Skyrim's controls, keyboard & mouse and controller, every one changeable; the Esc menu's Settings opens the same page in game; the MCM shows the Curse's keys from the same file."
+    },
+    {
+     "when": "2026-11-28 00:59",
+     "where": "chat/workshop",
+     "note": "Can you organize the testing by category so the tests at the top are as close to the start of the game like the menu tests would be first then following the other tests.",
+     "choice": "",
+     "done": "The Now tab's categories run in the order you meet them: Main menu, settings and controls first, then Loading, the HUD, Movement, the altars and on to the night."
+    },
+    {
+     "when": "2026-11-28 00:52",
+     "where": "ui/e_subs",
+     "note": "make the font nordic like how edges UI subtitles looked.",
+     "choice": "change; then Berserker, \"make sure the text font is consistent among the entire UI\", Everything, more options, Philosopher",
+     "done": "Every word we draw is Philosopher now (titles, menu words, numbers, subtitles, running text) - in the game and in the previews."
+    },
+    {
+     "when": "2026-11-28 00:50",
+     "where": "ui/essence",
+     "note": "use the current Cursed essence UI our old blue look and kill pops",
+     "choice": "change",
+     "done": "The blue soul in its turning dragon-script with the number beside it and the motes flying in, bottom right; the gold kill pops kept."
+    },
+    {
+     "when": "2026-11-28 00:56",
+     "where": "ui/inv_new",
+     "note": "make sure this includes the item models on the right side too there is a nice space under the weapon information on the right box.",
+     "choice": "pick",
+     "done": "The preview shows the item's 3D model in the right box under its stats; built with the everyday menus (step 4 of replacing Edge UI)."
+    },
+    {
+     "when": "2026-11-28 00:54",
+     "where": "ui/m_settings",
+     "note": "make the tab words Graphics Display Gameplay ect centered with the screen and the Settings word.",
+     "choice": "change",
+     "done": "Centred with the screen and SETTINGS (the letters' spacing on both sides); KEYBINDS added."
+    },
+    {
+     "when": "2026-11-28 00:49",
+     "where": "ui/e_compass, e_shout, e_notify, e_levelup, e_prompt, m_ask, m_load, m_party",
+     "note": "",
+     "choice": "ok",
+     "done": "Approved as previewed; the HUD leftovers are being built next."
     }
    ]
   }
@@ -11547,7 +11790,7 @@
   ]
  },
  "modnow": {
-  "updated": "Nov 28 2026 (night)",
+  "updated": "Nov 28 2026 (build 168adac)",
   "about": "Everything the mod is, as built - kept in the repo (docs/workshop/modnow.json) and updated with every build. The workshop's \"The mod now\" tab is drawn from it.",
   "sections": [
    [
@@ -11573,7 +11816,7 @@
    [
     "New character",
     [
-     "One loading screen from NEW to the character creator (sliders only, by body area); our own launch screen (the Alduin painting) and menu music; the main menu in Ember Tally, ours entirely (Nov 27): the painting, rising sparks, the title and our own words; our own Load (each save's picture, Delete, a filter by character), Settings (Graphics, Display, Gameplay, Controls, Audio - restart settings marked) and co-op party page, and Skyrim's questions in our words.",
+     "One loading screen from NEW to the character creator (sliders only, by body area); our own launch screen (the Alduin painting) and menu music; the main menu in Ember Tally, ours entirely (Nov 27): the painting, rising sparks, the title and our own words, moved by W/S/A/D and a click, or the D-pad / left stick and A (Nov 28); our own Load (each save's picture, Delete, a filter by character), Settings (Graphics, Display, Gameplay, Controls, <b>Keybinds</b>, Audio - restart settings marked; the same page from the Esc menu's Settings in game) and co-op party page, and Skyrim's questions in our words.",
      "At Riverwood you choose your Helgen companion (<b>Ralof or Hadvar</b>) and <b>Survival Mode</b> on or off. No starting weapons. Skyrim's own underwear on both bodies (3BA, HIMBO).",
      "The class is chosen later, at the Echo Altar (changing it costs 50,000 Cursed Essence; one shared inventory)."
     ]
@@ -11692,9 +11935,10 @@
    [
     "The screen",
     [
-     "Edge UI throughout; the night counter is a glowing ember number inside the red moon; beside it the wave and the dead left.",
+     "Ember Tally throughout, in one font - <b>Philosopher</b> (Nov 28) - for every word we draw; Edge UI still draws its HUD leftovers and Skyrim's other menus until each is replaced (then it comes out). The night counter is a glowing ember number inside the red moon; beside it the wave and the dead left. The <b>Cursed Essence</b> in its blue look bottom right, each kill's essence flying in and a gold pop where it fell.",
      "Only these pop-ups: the Carian Wand and Mutagen Staff hints, the Dragon Priest slain card, and the small callouts (essence, style tags, round tally, hit marker). No crosshair marks.",
-     "The MCM: subtitles on/off and size, Echo Altar voice volume, screen shake and the rest."
+     "The MCM: subtitles on/off and size, Echo Altar voice volume, screen shake and the rest.",
+     "<b>Keybinds</b> (Nov 28): the Curse's keys (perk, Thu'um, leave and bond at the altar, the Codex, the party) and Skyrim's controls, keyboard & mouse and controller, every one rebindable. Keyboard & mouse and controller switch by which you really use (a controller left on the desk doesn't take over)."
     ]
    ],
    [

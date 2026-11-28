@@ -1,5 +1,5 @@
 {
- "updated": "Nov 28 2026 (night)",
+ "updated": "Nov 28 2026 (build 168adac)",
  "about": "Everything the mod is, as built - kept in the repo (docs/workshop/modnow.json) and updated with every build. The workshop's \"The mod now\" tab is drawn from it.",
  "sections": [
   [
@@ -25,7 +25,7 @@
   [
    "New character",
    [
-    "One loading screen from NEW to the character creator (sliders only, by body area); our own launch screen (the Alduin painting) and menu music; the main menu in Ember Tally, ours entirely (Nov 27): the painting, rising sparks, the title and our own words; our own Load (each save's picture, Delete, a filter by character), Settings (Graphics, Display, Gameplay, Controls, Audio - restart settings marked) and co-op party page, and Skyrim's questions in our words.",
+    "One loading screen from NEW to the character creator (sliders only, by body area); our own launch screen (the Alduin painting) and menu music; the main menu in Ember Tally, ours entirely (Nov 27): the painting, rising sparks, the title and our own words, moved by W/S/A/D and a click, or the D-pad / left stick and A (Nov 28); our own Load (each save's picture, Delete, a filter by character), Settings (Graphics, Display, Gameplay, Controls, <b>Keybinds</b>, Audio - restart settings marked; the same page from the Esc menu's Settings in game) and co-op party page, and Skyrim's questions in our words.",
     "At Riverwood you choose your Helgen companion (<b>Ralof or Hadvar</b>) and <b>Survival Mode</b> on or off. No starting weapons. Skyrim's own underwear on both bodies (3BA, HIMBO).",
     "The class is chosen later, at the Echo Altar (changing it costs 50,000 Cursed Essence; one shared inventory)."
    ]
@@ -52,9 +52,9 @@
   [
    "Class spells",
    [
-    "<b>Destruction</b>: Fire: Firebolt \u2192 Fireball \u2192 Incinerate \u2192 Immolate; Frost: Ice Spike \u2192 Ice Storm \u2192 Icy Spear \u2192 Throat of the World; Shock: Chain Lightning \u2192 Shock Nova \u2192 Finger of the Mountain \u2192 Lightning Strike; Sun: Solar Flare \u2192 Sunbeam \u2192 Forbidden Sun \u2192 Daybreak; Arcane: Arcane Bolt \u2192 Mana Void \u2192 Lunar Tide \u2192 Apocalypse; Walls: Wall of Flames \u2192 Wall of Frost \u2192 Wall of Storms \u2192 Inferno; Storms: Frost Nova \u2192 Lightning Storm \u2192 Multivortex \u2192 Cinder Storm",
-    "<b>Summoner</b>: Beasts: Conjure Wolf \u2192 Conjure Ice Wolf \u2192 Conjure Alpha Wolf \u2192 Conjure Werebear; The Dead: Conjure Skeleton \u2192 Conjure Draugr Wight \u2192 Conjure Draugr Deathlord Warrior \u2192 Conjure Draugr Death Overlord; Daedra: Conjure Dremora \u2192 Conjure Dremora Archer \u2192 Conjure Dremora Mage \u2192 Conjure Dremora Warlock; Dwemer: Conjure Dwarven Spider \u2192 Conjure Dwarven Sphere \u2192 Conjure Dwarven Centurion \u2192 Conjure Dwarven Ballista Master; The Wild: Conjure Spriggan \u2192 Conjure Spriggan Matron \u2192 Conjure Burnt Spriggan \u2192 Conjure Spriggan Earth Mother; Atronachs: Conjure Flame Atronach \u2192 Conjure Frost Atronach \u2192 Conjure Storm Atronach \u2192 Conjure Storm Monarch; Ash: Conjure Ash Spawn \u2192 Conjure Ash Husk \u2192 Conjure Ash Spawn Immolator \u2192 Conjure Ash Guardian; The Night: Conjure Death Hound \u2192 Conjure Volkihar Hound \u2192 Conjure Gargoyle \u2192 Conjure Gargoyle Brute; The Wrath: Conjure Mistman \u2192 Conjure Wrathman \u2192 Conjure Wrathman Marksman \u2192 Conjure Wrathman Warlock",
-    "<b>Spellsword</b>: Fire: Burning Touch \u2192 Flame Touch \u2192 Fiery Grasp; Frost: Chilling Touch \u2192 Icy Touch \u2192 Freezing Grasp; Shock: Shocking Touch \u2192 Static Touch \u2192 Thundering Grasp; Sun: Sunlight Touch \u2192 Radiant Touch \u2192 Searing Grasp; Arcane: Arcane Edge \u2192 Arcane Brand \u2192 Arcane Cascade",
+    "<b>Destruction</b>: Fire: Firebolt → Fireball → Incinerate → Immolate; Frost: Ice Spike → Ice Storm → Icy Spear → Throat of the World; Shock: Chain Lightning → Shock Nova → Finger of the Mountain → Lightning Strike; Sun: Solar Flare → Sunbeam → Forbidden Sun → Daybreak; Arcane: Arcane Bolt → Mana Void → Lunar Tide → Apocalypse; Walls: Wall of Flames → Wall of Frost → Wall of Storms → Inferno; Storms: Frost Nova → Lightning Storm → Multivortex → Cinder Storm",
+    "<b>Summoner</b>: Beasts: Conjure Wolf → Conjure Ice Wolf → Conjure Alpha Wolf → Conjure Werebear; The Dead: Conjure Skeleton → Conjure Draugr Wight → Conjure Draugr Deathlord Warrior → Conjure Draugr Death Overlord; Daedra: Conjure Dremora → Conjure Dremora Archer → Conjure Dremora Mage → Conjure Dremora Warlock; Dwemer: Conjure Dwarven Spider → Conjure Dwarven Sphere → Conjure Dwarven Centurion → Conjure Dwarven Ballista Master; The Wild: Conjure Spriggan → Conjure Spriggan Matron → Conjure Burnt Spriggan → Conjure Spriggan Earth Mother; Atronachs: Conjure Flame Atronach → Conjure Frost Atronach → Conjure Storm Atronach → Conjure Storm Monarch; Ash: Conjure Ash Spawn → Conjure Ash Husk → Conjure Ash Spawn Immolator → Conjure Ash Guardian; The Night: Conjure Death Hound → Conjure Volkihar Hound → Conjure Gargoyle → Conjure Gargoyle Brute; The Wrath: Conjure Mistman → Conjure Wrathman → Conjure Wrathman Marksman → Conjure Wrathman Warlock",
+    "<b>Spellsword</b>: Fire: Burning Touch → Flame Touch → Fiery Grasp; Frost: Chilling Touch → Icy Touch → Freezing Grasp; Shock: Shocking Touch → Static Touch → Thundering Grasp; Sun: Sunlight Touch → Radiant Touch → Searing Grasp; Arcane: Arcane Edge → Arcane Brand → Arcane Cascade",
     "<b>Every ability one custom effect</b> (Nov 25, tools/abilityfx.py): relics, Tablet weapons, wonders, Alduin's Bane, class weapons, all 43 combat spells and the flasks - the style Noah picked, built from Skyrim's own textures, grown and faded by the game exactly as the workshop draws it, replacing what played before (nothing borrowed round it). Conjurations keep Skyrim's portal; the Soulcaller keeps the Staff of Magnus beam; the Mutagen Staff has no beam (a flask every 0.5 s while blocking)."
    ]
   ],
@@ -144,9 +144,10 @@
   [
    "The screen",
    [
-    "Edge UI throughout; the night counter is a glowing ember number inside the red moon; beside it the wave and the dead left.",
+    "Ember Tally throughout, in one font - <b>Philosopher</b> (Nov 28) - for every word we draw; Edge UI still draws its HUD leftovers and Skyrim's other menus until each is replaced (then it comes out). The night counter is a glowing ember number inside the red moon; beside it the wave and the dead left. The <b>Cursed Essence</b> in its blue look bottom right, each kill's essence flying in and a gold pop where it fell.",
     "Only these pop-ups: the Carian Wand and Mutagen Staff hints, the Dragon Priest slain card, and the small callouts (essence, style tags, round tally, hit marker). No crosshair marks.",
-    "The MCM: subtitles on/off and size, Echo Altar voice volume, screen shake and the rest."
+    "The MCM: subtitles on/off and size, Echo Altar voice volume, screen shake and the rest.",
+    "<b>Keybinds</b> (Nov 28): the Curse's keys (perk, Thu'um, leave and bond at the altar, the Codex, the party) and Skyrim's controls, keyboard & mouse and controller, every one rebindable. Keyboard & mouse and controller switch by which you really use (a controller left on the desk doesn't take over)."
    ]
   ],
   [
