@@ -574,6 +574,10 @@ namespace coa
 		inline constexpr float kAdsSensMin = 0.1f, kAdsSensMax = 2.0f;
 		float       AdsSensitivity();             // (Noah) the look's speed aiming down sights, times Skyrim's own (1 = the same)
 		void        SetAdsSensitivity(float a_v);
+		float       FpsCap();                     // (Noah, Nov 27: main menu Settings) the frame cap in play (0 = none; menus keep 120)
+		bool        VSync();
+		float       Number(const wchar_t* a_section, const wchar_t* a_key, float a_def);    // any of ours from the MCM's file
+		void        SetNumber(const wchar_t* a_section, const wchar_t* a_key, float a_v, bool a_int);   // ... written and in use at once
 		bool        Shelter();                    // townsfolk go indoors at night
 		bool        Blood();                      // headshot blood bursts (MCM: Effects)
 		bool        Scout();                      // (Noah) scout mode, for laying out each city's spawn points (MCM: 6. Scout, or F10)

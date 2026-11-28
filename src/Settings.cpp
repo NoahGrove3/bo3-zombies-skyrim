@@ -20,6 +20,8 @@ namespace coa::Settings
 		float g_altarVoVol = 1.0f;  // the Echo Altar's voice's volume (0..1)
 		float g_fog = 1.0f;
 		float g_adsSens = 1.0f;  // (Noah) the look's speed while aiming down sights, against Skyrim's own sensitivity
+		float g_fpsCap = 0.0f;   // (Noah, Nov 27: the main menu's Settings) the frame cap in play, 0 = none
+		bool  g_vsync = false;   // ... and VSync (off: the frame rate unlimited, as before)
 		int   g_keys[kKeys] = { 0x02, 0x03, 0x04, 0x05, 0x0E, 0x06, 0x30 };
 		constexpr const wchar_t* kKeyIds[kKeys] = { L"iShrineRoll", L"iShrineReforge", L"iShrineBless", L"iShrineShout", L"iShrineLeave", L"iShrineBond", L"iShrineBow" };
 		bool  g_loaded = false;
@@ -200,6 +202,8 @@ namespace coa::Settings
 			if (const float st = Read(L"General", L"iFovThirdStep", -1.0f); st >= 0) g_fovThird = std::clamp(60.0f + 5.0f * std::round(st), kFovMin, kFovMax);
 			g_bright = std::clamp(Read(L"General", L"fBrightness", 1.5f), kBrightMin, kBrightMax);
 			g_adsSens = std::clamp(Read(L"General", L"fAdsSensitivity", 1.0f), kAdsSensMin, kAdsSensMax);
+			g_fpsCap = std::clamp(Read(L"Display", L"fFpsCap", 0.0f), 0.0f, 500.0f);
+			g_vsync = Read(L"Display", L"bVSync", 0.0f) != 0.0f;
 			g_shelter = Read(L"General", L"bShelter", 1.0f) != 0.0f;
 			g_blood = Read(L"Effects", L"bBlood", 1.0f) != 0.0f;
 			g_scout = Read(L"Scout", L"bScout", 0.0f) != 0.0f;
@@ -272,6 +276,17 @@ namespace coa::Settings
 	}
 	float FovFirst() { Ensure(); return g_fovFirst; }
 	float FovThird() { Ensure(); return g_fovThird; }
+	float FpsCap() { Ensure(); return g_fpsCap; }
+	bool  VSync() { Ensure(); return g_vsync; }
+	// (Noah, Nov 27: the main menu's own Settings page) any of ours by its key in the MCM's file - written, then read back so the
+	// game uses it at once
+	float Number(const wchar_t* a_section, const wchar_t* a_key, float a_def) { Ensure(); return Read(a_section, a_key, a_def); }
+	void  SetNumber(const wchar_t* a_section, const wchar_t* a_key, float a_v, bool a_int)
+	{
+		Ensure();
+		Write(a_section, a_key, a_v, a_int);
+		Load();
+	}
 	bool  Shelter() { Ensure(); return g_shelter; }
 	bool  Blood() { Ensure(); return g_blood; }
 	bool  Scout() { Ensure(); return g_scout; }

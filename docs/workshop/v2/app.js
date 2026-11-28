@@ -1,6 +1,8 @@
 // The Curse of Alduin workshop: one permanent page (Noah, Nov 26 night). Its data is docs/workshop/v2/data.json, written by
 // data.py; what Noah marks here is kept in the page's own database:
-//   marks/<build>_<feature>   {r: 'pass'|'fail'|'skip', note}      one feature tested in a build
+//   marks/<build>_<feature>   {r: 'pass'|'fail'|'skip', note, media: [{id, url, type, name}]}   one feature tested in a build
+//                             (media: Noah's pictures and clips of it, in the page's asset store - Nov 27: "I wasnt able to add
+//                             images or clips to the test tabs in the doc")
 //   groups/<build>_<system>   {pass: true, note}                     a whole category passed at once
 //   decisions/<id>            {pick, note}
 //   cwpick/<class>            {model, note}                          the class weapon's one model
@@ -116,7 +118,18 @@ function drawNow() {
     if (mb) {
       const it = mb.closest('.item'), id = it.dataset.f, prev = DB.get('marks', BUILD + '_' + id) || {};
       const r = prev.r === mb.dataset.mark ? '' : mb.dataset.mark;
-      try { await DB.set('marks', BUILD + '_' + id, { r, note: $('textarea', it).value.slice(0, 2000), feature: id, build: BUILD }); savedMsg($('.saved', it)); } catch (er) { savedMsg($('.saved', it), er); }
+      try { await DB.set('marks', BUILD + '_' + id, { r, note: $('textarea', it).value.slice(0, 2000), feature: id, build: BUILD, media: prev.media || [] }); savedMsg($('.saved', it)); } catch (er) { savedMsg($('.saved', it), er); }
+      paintNow(); return;
+    }
+    const xb = e.target.closest('button[data-unmedia]');
+    if (xb) {
+      const it = xb.closest('.item'), id = it.dataset.f, prev = DB.get('marks', BUILD + '_' + id) || {};
+      const media = (prev.media || []).slice(), gone = media.splice(+xb.dataset.unmedia, 1)[0];
+      try {
+        await DB.set('marks', BUILD + '_' + id, { r: prev.r || '', note: prev.note || '', feature: id, build: BUILD, media });
+        const a = await assetsReady; if (a && gone && gone.id) { try { await a.delete(gone.id); } catch (er) { /* (kept in the store: harmless) */ } }
+        savedMsg($('.saved', it));
+      } catch (er) { savedMsg($('.saved', it), er); }
       paintNow(); return;
     }
     const gb = e.target.closest('button[data-group]');
@@ -133,10 +146,30 @@ function drawNow() {
     }
   });
   el.addEventListener('change', async e => {
+    if (e.target.type === 'file') {
+      const it = e.target.closest('.item[data-f]'); if (!it) return;
+      const id = it.dataset.f, up = $('.up', it), files = [...e.target.files]; e.target.value = '';
+      const a = await assetsReady;
+      if (!a) { up.textContent = 'Adding pictures works when this page is opened in Claude.'; return; }
+      const added = [];
+      for (const f of files) {
+        if (f.size > 20 * 1024 * 1024) { up.textContent = `${f.name} is over 20 MB - trim the clip and try again.`; continue; }
+        up.textContent = `Adding ${f.name}...`;
+        try { const r = await a.upload(f); added.push({ id: r.id, url: r.url, type: r.contentType || f.type, name: f.name.slice(0, 120) }); }
+        catch (er) { up.textContent = er && er.code === 'not_granted' ? 'You can view this page but not add to it.' : `${f.name} didn't upload. Try again.`; }
+      }
+      if (added.length) {
+        const prev = DB.get('marks', BUILD + '_' + id) || {};
+        try { await DB.set('marks', BUILD + '_' + id, { r: prev.r || '', note: $('textarea', it).value.slice(0, 2000), feature: id, build: BUILD, media: (prev.media || []).concat(added).slice(0, 24) }); up.textContent = `Added ${added.length}.`; }
+        catch (er) { savedMsg(up, er); }
+        paintNow();
+      }
+      return;
+    }
     if (e.target.tagName !== 'TEXTAREA') return;
     const it = e.target.closest('.item[data-f]');
     if (it) { const id = it.dataset.f, prev = DB.get('marks', BUILD + '_' + id) || {};
-      try { await DB.set('marks', BUILD + '_' + id, { r: prev.r || '', note: e.target.value.slice(0, 2000), feature: id, build: BUILD }); savedMsg($('.saved', it)); } catch (er) { savedMsg($('.saved', it), er); } return; }
+      try { await DB.set('marks', BUILD + '_' + id, { r: prev.r || '', note: e.target.value.slice(0, 2000), feature: id, build: BUILD, media: prev.media || [] }); savedMsg($('.saved', it)); } catch (er) { savedMsg($('.saved', it), er); } return; }
     const box = e.target.closest('[data-dec]');
     if (box) { const prev = DB.get('decisions', box.dataset.dec) || {};
       try { await DB.set('decisions', box.dataset.dec, { pick: prev.pick || '', note: e.target.value.slice(0, 2000) }); savedMsg($('.saved', box)); } catch (er) { savedMsg($('.saved', box), er); } }
@@ -149,7 +182,19 @@ function itemHtml(f) {
 <div class="howlook"><div><span class="lbl">How to test</span>${esc(f.how)}</div><div><span class="lbl">What you should see</span>${esc(f.look)}</div></div>
 ${f.note ? `<p class="note">Last time: ${esc(f.note.replace(/^Last time: /, ''))}</p>` : ''}
 <div class="marks"><button class="btn pass" data-mark="pass" aria-pressed="false">Pass</button><button class="btn fail" data-mark="fail" aria-pressed="false">Fail</button><button class="btn skip" data-mark="skip" aria-pressed="false">Skip</button><span class="saved"></span></div>
-<textarea rows="1" placeholder="What you saw (a fail needs a note)" aria-label="Note on ${esc(f.t)}"></textarea></div>`;
+<textarea rows="1" placeholder="What you saw (a fail needs a note)" aria-label="Note on ${esc(f.t)}"></textarea>
+<div class="media"></div>
+<div class="attach"><label class="btn neutral">Add a picture or clip<input type="file" accept="image/*,video/*" multiple hidden></label><span class="up muted"></span></div></div>`;
+}
+// ---------------------------------------------------------------- pictures and clips on a test (the page's asset store)
+let ASSETS = null;
+const assetsReady = (async () => { try { ASSETS = window.claude && window.claude.use ? await window.claude.use('assets') : null; } catch (e) { ASSETS = null; } return ASSETS; })();
+function mediaHtml(list) {
+  return (list || []).map((m, i) => {
+    const src = typeof m.url === 'string' && (m.url.startsWith('https://') || m.url.startsWith('/_blob/')) ? m.url : '/_blob/' + encodeURIComponent(m.id || '');
+    const body = (m.type || '').startsWith('video/') ? `<video src="${esc(src)}" controls muted playsinline preload="metadata"></video>` : `<a href="${esc(src)}" target="_blank" rel="noopener"><img src="${esc(src)}" alt="${esc(m.name || 'picture')}" loading="lazy"></a>`;
+    return `<figure>${body}<figcaption>${esc(m.name || '')}<button class="x" data-unmedia="${i}" aria-label="Remove ${esc(m.name || 'this')}">\u00d7</button></figcaption></figure>`;
+  }).join('');
 }
 function paintNow() {
   if (!drawn.now) return;
@@ -169,6 +214,7 @@ function paintNow() {
     $$('button[data-mark]', it).forEach(b => b.setAttribute('aria-pressed', String(m.r === b.dataset.mark)));
     $('.stp', it).innerHTML = pill(statusOf(f));
     const ta = $('textarea', it); if (document.activeElement !== ta) ta.value = m.note || '';
+    const md = $('.media', it), mh = mediaHtml(m.media); if (md.dataset.h !== mh) { md.innerHTML = mh; md.dataset.h = mh; }
   });
   const fails = ready.filter(f => statusOf(f) === 'failed');
   $('#fails').innerHTML = fails.length ? `<div class="flist">${fails.map(f => `<div class="frow"><div class="ttl"><b>${esc(f.t)}</b><span>${pill('failed')}</span></div><p>${esc((markOf(f) || {}).note || 'No note yet: what went wrong?')}</p></div>`).join('')}</div>`
@@ -882,7 +928,7 @@ ${(D.picklog || []).map((r, i) => `<details class="more"${i === 0 ? ' open' : ''
 ${r.now ? `<details class="more"><summary>Everything as it stands (${r.now.length})</summary><div class="plog">${r.now.map(c => `<div class="prow"><span class="lbl">${esc(c.where)}</span><span>${esc(c.pick)}</span></div>`).join('')}</div></details>` : ''}</details>`).join('')}
 <h3 class="sub">Your notes, and what was done with them</h3>
 <p class="hint">Each time I build from your notes, they are cleared from their boxes and kept here with what I did, so the boxes are empty for your next round.</p>
-${(D.notelog || []).map(r => `<details class="more" open><summary>${esc(r.build)} &middot; ${r.notes.length} notes</summary><div class="nlog">${r.notes.map(n => `<div class="nrow"><span class="lbl">${esc(n.where.replace('/', ' > '))}</span><p class="q">"${esc(n.note)}"</p><p class="a">${esc(n.done)}</p></div>`).join('')}</div></details>`).join('')}
+${(D.notelog || []).map(r => `<details class="more" open><summary>${esc(r.build)} &middot; ${r.notes.length} notes</summary><div class="nlog">${r.notes.map(n => `<div class="nrow"><span class="lbl">${esc(n.where.replace('/', ' > '))}</span><p class="q">"${esc(n.note)}"</p>${(n.pics || []).length ? `<div class="media">${n.pics.map(p => `<figure><a href="${esc(p)}" target="_blank" rel="noopener"><img src="${esc(p)}" alt="Your screenshot" loading="lazy"></a></figure>`).join('')}</div>` : ''}<p class="a">${esc(n.done)}</p></div>`).join('')}</div></details>`).join('')}
 <h3 class="sub">Builds</h3>
 <div class="hist">${D.builds.map(b => `<div class="hrow${D.installs[b.sha] ? ' inst' : ''}"><div><code>${esc(b.sha)}</code><div class="when">${esc(b.when)}</div>${D.installs[b.sha] ? '<span class="pill st-ready">Installed</span>' : ''}</div><p>${esc(b.what)}</p></div>`).join('')}</div>`;
   paintHistory();

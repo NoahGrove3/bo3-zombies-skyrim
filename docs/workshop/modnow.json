@@ -1,5 +1,5 @@
 {
- "updated": "Nov 27 2026 (afternoon)",
+ "updated": "Nov 28 2026 (night)",
  "about": "Everything the mod is, as built - kept in the repo (docs/workshop/modnow.json) and updated with every build. The workshop's \"The mod now\" tab is drawn from it.",
  "sections": [
   [
@@ -25,7 +25,7 @@
   [
    "New character",
    [
-    "One loading screen from NEW to the character creator (sliders only, by body area); our own launch screen (the Alduin painting) and menu music; the main menu in Ember Tally - the painting, rising embers, the title and our own centred words (Nov 27).",
+    "One loading screen from NEW to the character creator (sliders only, by body area); our own launch screen (the Alduin painting) and menu music; the main menu in Ember Tally, ours entirely (Nov 27): the painting, rising sparks, the title and our own words; our own Load (each save's picture, Delete, a filter by character), Settings (Graphics, Display, Gameplay, Controls, Audio - restart settings marked) and co-op party page, and Skyrim's questions in our words.",
     "At Riverwood you choose your Helgen companion (<b>Ralof or Hadvar</b>) and <b>Survival Mode</b> on or off. No starting weapons. Skyrim's own underwear on both bodies (3BA, HIMBO).",
     "The class is chosen later, at the Echo Altar (changing it costs 50,000 Cursed Essence; one shared inventory)."
    ]

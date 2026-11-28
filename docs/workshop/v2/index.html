@@ -97,6 +97,15 @@ h3.sub::after { content: ""; flex: 1; height: 1px; background: linear-gradient(9
 .marks { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 textarea { width: 100%; min-height: 38px; resize: vertical; background: var(--bg2); color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font: 14px/1.45 Inter, sans-serif; }
 textarea:focus { outline: 2px solid var(--ember); outline-offset: 1px; }
+.media { display: flex; flex-wrap: wrap; gap: 10px; }
+.media:empty { display: none; }
+.media figure { margin: 0; width: min(240px, 100%); background: var(--bg2); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.media img, .media video { display: block; width: 100%; max-height: 160px; object-fit: cover; background: #000; }
+.media figcaption { display: flex; align-items: center; gap: 6px; padding: 4px 8px; font-size: 12px; color: var(--muted, inherit); min-width: 0; }
+.media figcaption { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.media .x { margin-left: auto; background: none; border: 0; color: inherit; font-size: 16px; cursor: pointer; padding: 0 2px; }
+.attach { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.attach label { cursor: pointer; }
 .saved { font: 600 12px/1 'Barlow Condensed', sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); }
 
 /* ---- buttons, chips, status pills */

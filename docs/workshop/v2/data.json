@@ -1080,13 +1080,68 @@
   {
    "id": "ld_menuwords",
    "sys": "hud",
-   "t": "Our words on the main menu",
+   "t": "The main menu, ours entirely",
    "st": "ready",
-   "what": "Your pick: the menu's words drawn by us, centred under the title in Ember Tally - the chosen one ember orange and glowing. Edge UI's list is hidden but still works for keys and pad.",
-   "how": "Launch: move through the words with the mouse, the keys and the pad; press Continue, New, Load, Co-op Party, Quit.",
-   "look": "The words under the title; each does what Edge's did. If Edge's words show instead, the log says why.",
-   "note": "",
+   "what": "Your notes on 2b534e1 (your screenshots are in History): Skyrim's (Edge UI's) menu is hidden and takes no keys - nothing of it laid over our painting any more (the layered, blurry words). Our words are larger (CONTINUE, NEW, LOAD, CO-OP PARTY, SETTINGS, QUIT); keys, pad and mouse move them; Skyrim's questions (Start a new game? Quit?) come up in our words with YES and NO.",
+   "how": "Launch: move through the words with the mouse, the arrows and the D-pad; press New and answer NO, then YES; Continue; Quit and answer NO.",
+   "look": "Big spaced words under the title; the question in our style; nothing of Edge's menu showing; your cursor on top of everything.",
+   "note": "Last test (2b534e1): \"The confirmation buttons and text need to match the new UI\".",
    "since": "2b534e1"
+  },
+  {
+   "id": "ld_menuembers",
+   "sys": "hud",
+   "t": "The main menu: embers, title, line",
+   "st": "ready",
+   "what": "Dense, real embers: sparks streaking up off the bottom, white-gold when born, cooling through orange to red as they climb, curled by a gusting wind (no circles, no blinking). The title's glow is a soft haze behind it (not eight blocky copies), and its orange line sits clear of the letters.",
+   "how": "Launch and watch the menu for a while.",
+   "look": "Fine sparks rising in drifts, not dots; a smooth glow behind the title; a gap between the letters and the line.",
+   "note": "Last test (2b534e1): \"more dense realistic embers not blinking circles in different sizes\"; \"behind the curse of alduin text it looks blocky\"; \"the bar ... should be gapped a little\".",
+   "since": "2b534e1"
+  },
+  {
+   "id": "ld_menuload",
+   "sys": "hud",
+   "t": "The main menu: our Load",
+   "st": "ready",
+   "what": "Every save on our own page: the character, level, place, date, autosave or save; the chosen one's own picture (from the save file) with its race and time played. Your picks: Delete (asked first - the save is put aside in Saves\\Deleted, not destroyed) and a filter by character.",
+   "how": "LOAD: scroll with the wheel, arrows or D-pad; PgUp/PgDn or LB/RB (or the arrows by the name) through the characters; Delete or X on an old save, NO then YES; load one.",
+   "look": "The list on the left, the picture on the right; the filter changes the list; the deleted save leaves the list; loading starts.",
+   "note": "Last test (2b534e1): \"the load page ... text looks layered and blurry\".",
+   "since": "2b534e1"
+  },
+  {
+   "id": "ld_menusettings",
+   "sys": "hud",
+   "t": "The main menu: Settings",
+   "st": "ready",
+   "what": "Your pick - five tabs on one page. GRAPHICS: brightness, shadow quality, object fade, grass distance, TAA, ambient occlusion, volumetric light, reflections, depth of field, the night's fog, screen shake, softer flashes. DISPLAY: resolution, display mode, frame rate cap, VSync, field of view (first / third). GAMEPLAY: difficulty, the dead follow it, melee and bow speed, how long bodies stay, compass, crosshair, quest markers, subtitles, autosaves. CONTROLS: mouse and controller look, aiming sensitivity, invert look, vibration, PlayStation icons. AUDIO: master, every sound category of Skyrim's own audio menu, the Echo Altar's voice. What needs a restart is saved at once and marked RESTART (your pick).",
+   "how": "SETTINGS: Q / E (LB / RB) through the tabs; up / down a row; left / right or a click changes it; Esc to leave. Change the frame rate cap and a volume; set a resolution and restart.",
+   "look": "Each change takes at once (the RESTART ones after a restart); leaving writes SkyrimPrefs.ini.",
+   "note": "Your note (Nov 27): \"add a settings tab in the menu for graphics, resolution, Fps cap, all the gameplay settings and general ones too like audio\".",
+   "since": "2b534e1"
+  },
+  {
+   "id": "ld_menuparty",
+   "sys": "hud",
+   "t": "The co-op party page, in our style",
+   "st": "ready",
+   "what": "The party on the menu (and in the Esc journal) in Ember Tally: the heading and line, your party's words (host, invite, join, leave), tonight's table, last night and your records; the keys at the foot. Your cursor is drawn over it.",
+   "how": "CO-OP PARTY on the main menu; P in the Esc journal; choose with the mouse, arrows or D-pad; Esc closes it.",
+   "look": "The same look as the menu; the cursor on top.",
+   "note": "Last test (2b534e1): \"the party UI needs to match our new UI Setup. My mouse cursor also stays behind the party UI\".",
+   "since": "2b534e1"
+  },
+  {
+   "id": "ws_media",
+   "sys": "hud",
+   "t": "Pictures and clips on your tests",
+   "st": "done",
+   "what": "Each test in the Now tab has Add a picture or clip: pick screenshots or short clips (up to 20 MB each); they stay with that test and I see them with your notes.",
+   "how": "",
+   "look": "",
+   "note": "Your note (Nov 27): \"I wasnt able to add images or clips to the test tabs in the doc\".",
+   "since": ""
   },
   {
    "id": "st_crash27",
@@ -1168,6 +1223,30 @@
  ],
  "decisions": [],
  "decided": [
+  {
+   "when": "2026-11-27",
+   "sys": "hud",
+   "q": "Our LOAD page (every save: character, level, place, date, time played): what else should it have?",
+   "pick": "The save's picture, Delete a save, Filter by character",
+   "where": "chat",
+   "done": "All three: the picture read from the save itself; Delete asked first and put aside in Saves\\Deleted; the characters in turn."
+  },
+  {
+   "when": "2026-11-27",
+   "sys": "hud",
+   "q": "Resolution, display mode and shadow quality only change when Skyrim restarts. How should those settings work?",
+   "pick": "Save, apply next launch",
+   "where": "chat",
+   "done": "Saved at once into SkyrimPrefs.ini, each marked RESTART."
+  },
+  {
+   "when": "2026-11-27",
+   "sys": "hud",
+   "q": "The new SETTINGS page on the main menu: how should it be laid out?",
+   "pick": "Tabs on one page",
+   "where": "chat",
+   "done": "GRAPHICS, DISPLAY, GAMEPLAY, CONTROLS, AUDIO across the top; LB / RB or Q / E switch them."
+  },
   {
    "when": "2026-11-27",
    "sys": "wonders",
@@ -5314,6 +5393,50 @@
   }
  ],
  "notelog": [
+  {
+   "build": "Your test of 2b534e1, Nov 27 night - the main menu",
+   "date": "2026-11-27",
+   "notes": [
+    {
+     "when": "2026-11-27 23:42",
+     "where": "chat/main menu",
+     "note": "in the main menu I want the particle effects to be more dense realistic embers not blinking circles in different sizes",
+     "pics": [
+      "shots/nov27_menu.jpg"
+     ],
+     "done": "Built: 560 sparks drawn as short bright streaks along their flight, white-gold when born and cooling to red as they climb, curled by a gusting wind; no circles, no blinking."
+    },
+    {
+     "when": "2026-11-27 23:42",
+     "where": "chat/main menu",
+     "note": "behind the curse of alduin text it looks blocky. I think the bar under \"The Curse Of Alduin\" should be gapped a little bit so the orange bar isnt touching the letters. I think the selection options in the menu should be larger",
+     "done": "Built: the title's glow is a soft haze and a thin halo (it was eight wide copies of the title - the blocks); the line moved down clear of the letters; the words half as large again (1.3 of the screen's unit, was 0.85)."
+    },
+    {
+     "when": "2026-11-27 23:42",
+     "where": "chat/main menu",
+     "note": "the load page and party page should be updated, the text looks layered and blurry and the party UI needs to match our new UI Setup. My mouse cursor also stays behind the party UI instead of over it. The confirmation buttons and text need to match the new UI.",
+     "pics": [
+      "shots/nov27_load1.jpg",
+      "shots/nov27_load2.jpg",
+      "shots/nov27_question.jpg"
+     ],
+     "done": "Built: the menu is ours entirely - Edge UI's menu hidden (it showed through a key: the layered, blurry words). Our own Load (your picks: the save's picture, Delete asked first, a filter by character), our Settings, the party page in Ember Tally with the cursor drawn over it, and Skyrim's questions in our words with YES and NO."
+    },
+    {
+     "when": "2026-11-27 23:42",
+     "where": "chat/main menu",
+     "note": "I also want to add a settings tab in the menu for graphics, resolution, Fps cap, all the gameplay settings and general ones too like audio you would know what should be in the settings.",
+     "done": "Built (your picks: tabs on one page; restart settings saved now and marked RESTART): Graphics, Display, Gameplay, Controls and Audio - see the feature in the Now tab for every row."
+    },
+    {
+     "when": "2026-11-27 23:42",
+     "where": "chat/workshop",
+     "note": "I wasnt able to add images or clips to the test tabs in the doc so I added them in the chat.",
+     "done": "Built: every test in the Now tab has Add a picture or clip; they stay with the test and come to me with your notes. Your four screenshots are kept here."
+    }
+   ]
+  },
   {
    "build": "Your decisions on build 6c22c73, Nov 27 afternoon",
    "date": "2026-11-27",
@@ -11384,7 +11507,7 @@
   ]
  },
  "modnow": {
-  "updated": "Nov 27 2026 (afternoon)",
+  "updated": "Nov 28 2026 (night)",
   "about": "Everything the mod is, as built - kept in the repo (docs/workshop/modnow.json) and updated with every build. The workshop's \"The mod now\" tab is drawn from it.",
   "sections": [
    [
@@ -11410,7 +11533,7 @@
    [
     "New character",
     [
-     "One loading screen from NEW to the character creator (sliders only, by body area); our own launch screen (the Alduin painting) and menu music; the main menu in Ember Tally - the painting, rising embers, the title and our own centred words (Nov 27).",
+     "One loading screen from NEW to the character creator (sliders only, by body area); our own launch screen (the Alduin painting) and menu music; the main menu in Ember Tally, ours entirely (Nov 27): the painting, rising sparks, the title and our own words; our own Load (each save's picture, Delete, a filter by character), Settings (Graphics, Display, Gameplay, Controls, Audio - restart settings marked) and co-op party page, and Skyrim's questions in our words.",
      "At Riverwood you choose your Helgen companion (<b>Ralof or Hadvar</b>) and <b>Survival Mode</b> on or off. No starting weapons. Skyrim's own underwear on both bodies (3BA, HIMBO).",
      "The class is chosen later, at the Echo Altar (changing it costs 50,000 Cursed Essence; one shared inventory)."
     ]

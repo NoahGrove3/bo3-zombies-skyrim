@@ -1,5 +1,49 @@
 [
  {
+  "build": "Your test of 2b534e1, Nov 27 night - the main menu",
+  "date": "2026-11-27",
+  "notes": [
+   {
+    "when": "2026-11-27 23:42",
+    "where": "chat/main menu",
+    "note": "in the main menu I want the particle effects to be more dense realistic embers not blinking circles in different sizes",
+    "pics": [
+     "shots/nov27_menu.jpg"
+    ],
+    "done": "Built: 560 sparks drawn as short bright streaks along their flight, white-gold when born and cooling to red as they climb, curled by a gusting wind; no circles, no blinking."
+   },
+   {
+    "when": "2026-11-27 23:42",
+    "where": "chat/main menu",
+    "note": "behind the curse of alduin text it looks blocky. I think the bar under \"The Curse Of Alduin\" should be gapped a little bit so the orange bar isnt touching the letters. I think the selection options in the menu should be larger",
+    "done": "Built: the title's glow is a soft haze and a thin halo (it was eight wide copies of the title - the blocks); the line moved down clear of the letters; the words half as large again (1.3 of the screen's unit, was 0.85)."
+   },
+   {
+    "when": "2026-11-27 23:42",
+    "where": "chat/main menu",
+    "note": "the load page and party page should be updated, the text looks layered and blurry and the party UI needs to match our new UI Setup. My mouse cursor also stays behind the party UI instead of over it. The confirmation buttons and text need to match the new UI.",
+    "pics": [
+     "shots/nov27_load1.jpg",
+     "shots/nov27_load2.jpg",
+     "shots/nov27_question.jpg"
+    ],
+    "done": "Built: the menu is ours entirely - Edge UI's menu hidden (it showed through a key: the layered, blurry words). Our own Load (your picks: the save's picture, Delete asked first, a filter by character), our Settings, the party page in Ember Tally with the cursor drawn over it, and Skyrim's questions in our words with YES and NO."
+   },
+   {
+    "when": "2026-11-27 23:42",
+    "where": "chat/main menu",
+    "note": "I also want to add a settings tab in the menu for graphics, resolution, Fps cap, all the gameplay settings and general ones too like audio you would know what should be in the settings.",
+    "done": "Built (your picks: tabs on one page; restart settings saved now and marked RESTART): Graphics, Display, Gameplay, Controls and Audio - see the feature in the Now tab for every row."
+   },
+   {
+    "when": "2026-11-27 23:42",
+    "where": "chat/workshop",
+    "note": "I wasnt able to add images or clips to the test tabs in the doc so I added them in the chat.",
+    "done": "Built: every test in the Now tab has Add a picture or clip; they stay with the test and come to me with your notes. Your four screenshots are kept here."
+   }
+  ]
+ },
+ {
   "build": "Your decisions on build 6c22c73, Nov 27 afternoon",
   "date": "2026-11-27",
   "notes": [

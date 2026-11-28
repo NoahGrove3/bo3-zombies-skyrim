@@ -61,6 +61,9 @@ namespace coa
 		std::atomic<int>          g_cxScroll{ 0 }, g_cxChapter{ 0 }, g_cxBook{ 0 };  // the Codex: wheel / keys since the last frame
 		std::atomic<bool>         g_padLast{ false };   // the last thing touched was a controller: show its buttons
 		std::atomic<int>          g_padMove{ 0 }, g_padAccept{ 0 }, g_padBack{ 0 }, g_padSide{ 0 }, g_wheel{ 0 };  // main menu: pad / arrow keys since the last frame
+		std::atomic<int>          g_padTab{ 0 }, g_padDel{ 0 };   // (Noah, Nov 27) the main menu's pages: LB / RB, Q / E a tab; X / Delete a save
+		std::atomic<bool>         g_menuOwn{ false };   // the Ember Tally main menu is ours entirely: Skyrim's (Edge UI's) menu under it takes no keys
+		std::atomic<bool>         g_tmSettings{ false };   // its Settings page is up (E turns its tabs there, not a press)
 		std::string               g_devPick;            // dev: a main-menu word to press as a click would (menupick)
 		std::mutex                g_devPickLock;
 		// Skyrim's main-menu buttons are kept over our picture: the frame as Skyrim drew it is copied, and in the
@@ -4462,7 +4465,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		// ---- the main menu's Load (Noah: Skyrim's own list was cut off - ours shows every save, in our style)
 		struct SaveRow
 		{
-			std::string   file, name, place, played, date;
+			std::string   file, name, place, played, date, race;
 			int           level = 0;
 			bool          autosave = false;
 			std::uint64_t when = 0;
@@ -4487,6 +4490,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						r.place = e->currentLocation.c_str() ? e->currentLocation.c_str() : "";
 						r.played = e->playTime.c_str() ? e->playTime.c_str() : "";
 						r.level = static_cast<int>(e->characterLevel);
+						r.race = e->characterRace.c_str() ? e->characterRace.c_str() : "";
 						r.autosave = e->saveType.any(RE::BGSSaveLoadFileEntry::SaveType::kAutosave, RE::BGSSaveLoadFileEntry::SaveType::kQuicksave) ||
 						             r.file.rfind("Autosave", 0) == 0 || r.file.rfind("Quicksave", 0) == 0;
 						const auto& ft = e->fileTime;
@@ -4513,7 +4517,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		{
 			logger::info("menu: loading '{}'", a_file);
 			Tasks::Add([a_file] {
-				if (auto* sl = RE::BGSSaveLoadManager::GetSingleton()) sl->Load(a_file.c_str());
+				if (auto* sl = RE::BGSSaveLoadManager::GetSingleton()) sl->Load(a_file.c_str(), false);   // (no missing-content box: it would sit under our menu)
 			});
 		}
 		// the panel: every save, newest first - its character, level, where, when and how long played; scrolls with the
@@ -4616,6 +4620,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		// over the whole screen, breathing in slowly; embers rising off the bottom on the night's wind - glowing, flickering, cooling as they
 		// climb; the title in spaced capitals with its ember glow and the thin orange line under it. Skyrim's own words (Edge UI's) stand
 		// over it as before.
+		float g_tmPageA = 0.0f;   // a page over the menu's words (Load, Settings): the title gives way to it
+		constexpr float kTallyTitleGap = 3.45f;   // (the title's orange line, in u under its top: clear of the letters)
 		void TallyMenuScene(ImDrawList* fg, ImVec2 size, float now, float dt, float fade, float openT)
 		{
 			static ID3D11ShaderResourceView* pic = nullptr;
@@ -4655,51 +4661,79 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const float br = 0.75f + 0.25f * std::sin(now * 0.9f);
 				fg->AddRectFilledMultiColor({ 0, H * 0.82f }, size, IM_COL32(255, 96, 30, 0), IM_COL32(255, 96, 30, 0), IM_COL32(255, 90, 28, static_cast<int>(46 * br * fade)), IM_COL32(255, 90, 28, static_cast<int>(46 * br * fade)));
 			}
-			// the embers: each born low, rising and drifting on the wind, swaying, its glow flickering and cooling from white-gold to deep
-			// red as it climbs; a few big soft ones near the eye, out of focus
+			// (Noah, Nov 27: "I want the particle effects to be more dense realistic embers not blinking circles in different sizes") sparks
+			// off a fire: each a short bright streak drawn along its flight (its motion blur), hot white-gold when born and cooling through
+			// orange to a dull red as it climbs; carried up on the heat and slowing as it cools, pushed about by a turbulent wind - no
+			// circles, no blinking (only the slight shimmer of a cooling spark). Three depths: far ones small, dim and slow; near ones
+			// longer, quicker and a little softer.
 			{
-				struct Ember { float x, y, vy, vx, sway, ph, r, life, age; bool nearEye; };   // ('near' is a Windows macro)
+				struct Ember { float x, y, vx, vy, ph, depth, heat, life, age; };
 				static std::vector<Ember> em;
 				static std::mt19937 rng{ 1127 };
 				std::uniform_real_distribution<float> U(0, 1);
 				auto born = [&](Ember& e, bool a_first) {
-					e.nearEye = U(rng) < 0.08f;
-					e.x = U(rng) * 1.1f - 0.05f, e.y = a_first ? U(rng) * 1.1f : 1.02f + 0.05f * U(rng);
-					e.vy = (0.035f + 0.07f * U(rng)) * (e.nearEye ? 1.6f : 1.0f), e.vx = 0.006f + 0.02f * U(rng);
-					e.sway = 0.004f + 0.01f * U(rng), e.ph = U(rng) * 6.28f, e.r = e.nearEye ? 3.0f + 4.0f * U(rng) : 0.5f + 1.3f * U(rng) * U(rng);
-					e.life = 6.0f + 9.0f * U(rng), e.age = a_first ? U(rng) * e.life : 0.0f;
+					const float d = U(rng);
+					e.depth = d < 0.55f ? 0.0f : d < 0.88f ? 0.5f : 1.0f;
+					e.x = U(rng) * 1.2f - 0.1f, e.y = a_first ? U(rng) * 1.15f : 1.02f + 0.08f * U(rng);
+					e.vy = (0.06f + 0.11f * U(rng)) * (0.7f + 0.6f * e.depth), e.vx = 0.01f + 0.035f * U(rng);
+					e.ph = U(rng) * 6.2832f, e.heat = 0.65f + 0.35f * U(rng);
+					e.life = 3.5f + 6.0f * U(rng), e.age = a_first ? U(rng) * e.life : 0.0f;
 				};
-				if (em.empty()) { em.resize(220); for (auto& e : em) born(e, true); }
+				if (em.empty()) { em.resize(560); for (auto& e : em) born(e, true); }
+				const float step = std::min(dt, 0.05f);
 				for (auto& e : em) {
-					e.age += dt;
-					e.y -= e.vy * dt, e.x += (e.vx + 0.012f * std::sin(now * 0.3f)) * dt;
-					if (e.age > e.life || e.y < -0.05f || e.x > 1.08f) born(e, false);
+					e.age += step;
+					// the wind: a slow gust from the left, and turbulence that curls each spark's path
+					const float tx = std::sin(e.y * 9.0f + now * 1.3f + e.ph) * 0.06f + std::sin(e.x * 13.0f - now * 0.8f + e.ph * 2.0f) * 0.035f;
+					const float ty = std::cos(e.x * 7.0f + now * 1.1f + e.ph) * 0.02f;
+					e.vx += (tx + (0.02f + 0.012f * std::sin(now * 0.25f)) * 0.5f - e.vx * 0.5f) * step;
+					e.vy = std::max(0.015f, e.vy * (1.0f - 0.07f * step) + ty * step);
+					e.x += e.vx * step, e.y -= e.vy * step;
+					if (e.age > e.life || e.y < -0.06f || e.x > 1.12f || e.x < -0.12f) { born(e, false); continue; }
 					const float k = e.age / e.life;   // (0 born, 1 gone)
-					const float in = std::clamp(e.age / 0.6f, 0.0f, 1.0f), out = 1.0f - std::clamp((k - 0.7f) / 0.3f, 0.0f, 1.0f);
-					const float flick = 0.65f + 0.35f * std::sin(now * (7.0f + 5.0f * std::fmod(e.ph, 1.0f)) + e.ph * 9.0f);
-					const float a = in * out * flick * fade;
-					const ImVec2 p{ (e.x + std::sin(now * 0.9f + e.ph) * e.sway) * W, e.y * H };
-					// white-gold when young, ember orange, then deep red as it cools
-					const float c = std::clamp(k * 1.4f, 0.0f, 1.0f);
-					const int R = 255, G = static_cast<int>(220 - 150 * c), B = static_cast<int>(140 - 120 * c);
-					const float r = e.r * u * 0.16f * (1.0f - 0.35f * k);
-					if (e.nearEye) {   // (out of focus: a soft disc)
-						fg->AddCircleFilled(p, r * 2.4f, IM_COL32(R, G, B, static_cast<int>(26 * a)), 20);
-						fg->AddCircleFilled(p, r * 1.3f, IM_COL32(R, G, B, static_cast<int>(40 * a)), 20);
-						continue;
-					}
-					fg->AddCircleFilled(p, r * 4.0f, IM_COL32(R, G / 2, B / 3, static_cast<int>(30 * a)), 12);
-					fg->AddCircleFilled(p, r * 2.0f, IM_COL32(R, G, B, static_cast<int>(80 * a)), 12);
-					fg->AddCircleFilled(p, std::max(0.6f, r), IM_COL32(255, 245, 220, static_cast<int>(235 * a)), 8);
+					const float in = std::clamp(e.age / 0.35f, 0.0f, 1.0f), out = 1.0f - std::clamp((k - 0.62f) / 0.38f, 0.0f, 1.0f);
+					const float shimmer = 0.88f + 0.12f * std::sin(now * (11.0f + 6.0f * std::fmod(e.ph, 1.0f)) + e.ph * 7.0f);
+					const float a = in * out * shimmer * fade * (0.55f + 0.45f * e.depth);
+					if (a <= 0.01f) continue;
+					// its colour: white-gold, orange, red as it cools
+					const float t = std::clamp(e.heat * (1.0f - 0.8f * k), 0.0f, 1.0f);
+					auto lerp = [](float p, float q, float f) { return p + (q - p) * f; };
+					float R, G, B;
+					if (t > 0.6f) { const float f = (t - 0.6f) / 0.4f; R = 255, G = lerp(150, 236, f), B = lerp(50, 190, f); }
+					else if (t > 0.3f) { const float f = (t - 0.3f) / 0.3f; R = lerp(220, 255, f), G = lerp(70, 150, f), B = lerp(18, 50, f); }
+					else { const float f = t / 0.3f; R = lerp(140, 220, f), G = lerp(28, 70, f), B = lerp(10, 18, f); }
+					// the streak: along its flight, as long as it travels in ~1/25 s (the eye's blur), the head the brightest
+					const ImVec2 head{ e.x * W, e.y * H };
+					ImVec2 v{ e.vx * W, -e.vy * H };
+					const float sp = std::sqrt(v.x * v.x + v.y * v.y);
+					const float len = std::clamp(sp * 0.04f, 1.5f, 34.0f) * (0.6f + 0.6f * e.depth) * (u / 25.6f);
+					if (sp > 0.01f) v = { v.x / sp, v.y / sp };
+					const ImVec2 tail{ head.x - v.x * len, head.y - v.y * len };
+					const float th = (0.55f + 0.9f * e.depth) * (u / 25.6f) * (1.0f - 0.35f * k) + 0.6f;
+					fg->AddLine(tail, head, IM_COL32(static_cast<int>(R), static_cast<int>(G * 0.7f), static_cast<int>(B * 0.5f), static_cast<int>(40 * a)), th * 3.2f);
+					fg->AddLine(tail, head, IM_COL32(static_cast<int>(R), static_cast<int>(G), static_cast<int>(B), static_cast<int>(170 * a)), th);
+					fg->AddLine({ head.x - v.x * len * 0.3f, head.y - v.y * len * 0.3f }, head, IM_COL32(255, static_cast<int>(std::min(255.0f, G + 40)), static_cast<int>(std::min(255.0f, B + 60)), static_cast<int>(235 * a * t)), th * 0.8f);
 				}
 			}
 			// the title: spaced capitals, ember-glowing, settling in; the thin orange line under it
 			{
-				const float in = std::clamp(openT / 1.6f, 0.0f, 1.0f), ease = 1.0f - (1.0f - in) * (1.0f - in);
+				const float in = std::clamp(openT / 1.6f, 0.0f, 1.0f) * (1.0f - g_tmPageA), ease = 1.0f - (1.0f - std::clamp(openT / 1.6f, 0.0f, 1.0f)) * (1.0f - std::clamp(openT / 1.6f, 0.0f, 1.0f));
 				const float y = H * 0.30f + (1.0f - ease) * 1.2f * u;
 				const float br = 0.85f + 0.15f * std::sin(now * 1.2f);
-				TTextC(fg, HFB(), 3.4f * u, W * 0.5f, y, Fade(kTInk, in), "THE CURSE OF ALDUIN", 0.28f, IM_COL32(232, 90, 40, static_cast<int>(140 * br * in)), 1.4f * u);
-				const float ly = y + 2.9f * u, hw = 11.0f * u * ease;
+				// (Noah, Nov 27: "behind the curse of alduin text it looks blocky") its glow is a soft warm haze behind the words and a
+				// thin halo close round them - no longer eight wide copies of the title
+				{
+					const float tw = TMeasure(HFB(), 3.4f * u, "THE CURSE OF ALDUIN", 0.28f).x;
+					const float cy = y + 1.7f * u, hx = tw * 0.62f, hy = 3.2f * u;
+					const ImU32 hz = IM_COL32(232, 90, 40, static_cast<int>(52 * br * in)), clr = IM_COL32(232, 90, 40, 0);
+					fg->AddRectFilledMultiColor({ W * 0.5f - hx, cy - hy }, { W * 0.5f, cy }, clr, clr, hz, clr);
+					fg->AddRectFilledMultiColor({ W * 0.5f, cy - hy }, { W * 0.5f + hx, cy }, clr, clr, clr, hz);
+					fg->AddRectFilledMultiColor({ W * 0.5f - hx, cy }, { W * 0.5f, cy + hy }, clr, hz, clr, clr);
+					fg->AddRectFilledMultiColor({ W * 0.5f, cy }, { W * 0.5f + hx, cy + hy }, hz, clr, clr, clr);
+				}
+				TTextC(fg, HFB(), 3.4f * u, W * 0.5f, y, Fade(kTInk, in), "THE CURSE OF ALDUIN", 0.28f, IM_COL32(232, 90, 40, static_cast<int>(110 * br * in)), 0.09f * u);
+				// (Noah: "the bar under 'The Curse Of Alduin' should be gapped a little bit so the orange bar isnt touching the letters")
+				const float ly = y + kTallyTitleGap * u, hw = 11.0f * u * ease;
 				fg->AddRectFilledMultiColor({ W * 0.5f - hw, ly }, { W * 0.5f, ly + 0.1f * u + 1.0f }, IM_COL32(255, 122, 60, 0), Fade(kTAcc, in), Fade(kTAcc, in), IM_COL32(255, 122, 60, 0));
 				fg->AddRectFilledMultiColor({ W * 0.5f, ly }, { W * 0.5f + hw, ly + 0.1f * u + 1.0f }, Fade(kTAcc, in), IM_COL32(255, 122, 60, 0), IM_COL32(255, 122, 60, 0), Fade(kTAcc, in));
 			}
@@ -4726,8 +4760,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				logger::info("menu: our words under the title: {}", all);
 			}
 			const float W = size.x, H = size.y, u = TU(size);
-			const float fs = 0.85f * u, track = 0.5f, rowH = 1.45f * u;
-			const float top = H * 0.30f + 2.9f * u + 1.3f * u;   // (under the title's orange line)
+			// (Noah, Nov 27: "the selection options in the menu should be larger")
+			const float fs = 1.3f * u, track = 0.42f, rowH = 2.15f * u;
+			const float top = H * 0.30f + kTallyTitleGap * u + 1.5f * u;   // (under the title's orange line)
 			static std::vector<float> glow;
 			glow.resize(entries.size(), 0.0f);
 			static int lastHover = -1;
@@ -4759,6 +4794,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			return true;
 		}
+#include "HudTallyMenu.inl"
 		void DrawMenu(ImVec2 size, float now, bool click)
 		{
 			auto*       fg = ImGui::GetForegroundDrawList();
@@ -5327,13 +5363,14 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			// Skyrim's questions and hints laid back over the picture: only the bright words
 			// (filming mode, dev 'hud 0': the trailer's ending films the menu's picture alone - no buttons, no words)
-			if (g_frameSrv && g_keyPs && !DevTools::HudOff()) {
+			if (g_frameSrv && g_keyPs && !DevTools::HudOff() && !(Hud::kTally && kTallyWords)) {   // (Ember Tally: none - the menu is ours entirely)
 				g_keyCursor = { -1000, -1000 };
 				fg->AddCallback(KeyOn, nullptr);
 				fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_frameSrv)), { 0, 0 }, size, { 0, 0 }, { 1, 1 });
 				fg->AddCallback(ImDrawCallback_ResetRenderState, nullptr);
 			}
-			if (Hud::kTally && kTallyWords && !DevTools::HudOff()) TallyMenuWords(fg, size, now, dt, openT, cur, click);
+			if (Hud::kTally && kTallyWords && !DevTools::HudOff()) TallyMenu(fg, size, now, dt, openT, cur, click);
+			else g_menuOwn = false;
 			// the menu: Skyrim's own entries as words only, the way the base game shows them (no plates, no boxes): the
 			// chosen word bright with a soft cold glow, the rest dim; keys and pad move Skyrim's selection, the mouse moves
 			// it by hovering a word, a click or Enter does what Skyrim would
@@ -6763,6 +6800,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			io.DeltaTime = dt;
 
 			UpdateCursor(io.DisplaySize);
+			if (!mainMenu) g_menuOwn = false, g_tmSettings = false;   // (the main menu's keys are ours only while it is up)
 			ImGui_ImplDX11_NewFrame();
 			ImGui::NewFrame();
 			if (bootScreen) {
@@ -6781,8 +6819,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					if (PartyInMainList(g_partyOpen ? 0 : clicks)) missing = 0;
 					else if (++missing > 90) over = PartyTab(ImGui::GetForegroundDrawList(), kk, clicks, "CO-OP PARTY");
 				}
-				DrawMenu(io.DisplaySize, static_cast<float>(ImGui::GetTime()), clicks > 0 && !over && !g_partyOpen);
-				if (g_partyOpen && Net::Available()) {
+				DrawMenu(io.DisplaySize, static_cast<float>(ImGui::GetTime()), clicks > 0 && !over && (!g_partyOpen || (Hud::kTally && kTallyWords)));
+				if (g_partyOpen && Net::Available() && !(Hud::kTally && kTallyWords)) {
 					PartyPanel(ImGui::GetForegroundDrawList(), io.DisplaySize, { -1, -1 }, kk, clicks > 0 && !over);
 				}
 			} else if (Hud::kTally && uiM && !uiM->IsMenuOpen(RE::MainMenu::MENU_NAME) && (uiM->IsMenuOpen(RE::InventoryMenu::MENU_NAME) || uiM->IsMenuOpen(RE::MagicMenu::MENU_NAME))) {
@@ -6805,7 +6843,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						over = PartyTab(dl, kk, clicks, "PARTY", io.DisplaySize.x);
 					}
 					if (g_partyOpen) {
-						PartyPanel(dl, io.DisplaySize, { -1, -1 }, kk, clicks > 0 && !over);
+						if (Hud::kTally) TallyPartyPanel(dl, io.DisplaySize, clicks > 0 && !over);   // (Noah, Nov 27: the party in our new style)
+						else PartyPanel(dl, io.DisplaySize, { -1, -1 }, kk, clicks > 0 && !over);
 					}
 				} else {
 					g_partyOpen = false;
@@ -7056,10 +7095,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// (Noah: "make the fps cap in the menu 60fps so i dont overwork my pc with unlimited") the menus - the main menu, the
 			// game paused under any menu (inventory, map, the altars) - held to 60; play itself stays unlimited
 			// (Noah: "can you increase the menu FPS to 120?") held to 120 now
-			float cap = gen::kFpsCap;
-			if (cap <= 0) {
+			float cap = Settings::FpsCap() > 0.0f ? Settings::FpsCap() : gen::kFpsCap;   // (Noah, Nov 27: his cap from the main menu's Settings)
+			if (cap <= 0 || cap > 120.0f) {
 				auto* ui = RE::UI::GetSingleton();
-				if (ui && (ui->GameIsPaused() || ui->IsMenuOpen(RE::MainMenu::MENU_NAME) || ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME))) cap = 120.0f;   // (loading screens too: they'd spin the GPU at full tilt)
+				if (ui && (ui->GameIsPaused() || ui->IsMenuOpen(RE::MainMenu::MENU_NAME) || ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME))) cap = cap > 0 ? std::min(cap, 120.0f) : 120.0f;   // (loading screens too: they'd spin the GPU at full tilt)
 			}
 			if (cap > 0) {
 				using C = std::chrono::steady_clock;
@@ -7107,7 +7146,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					logger::info("hud: frame rate unlimited (VSync {} -> off, Havok step follows the frame){}", a_sync, maxTime ? "" : " [no fMaxTime setting found]");
 				}
 			}
-			return g_present(a_swap, gen::kFpsCap > 0 ? a_sync : 0, a_flags);
+			return g_present(a_swap, Settings::VSync() ? 1u : (gen::kFpsCap > 0 ? a_sync : 0u), a_flags);   // (VSync: his choice in Settings)
 		}
 	}
 
@@ -7120,9 +7159,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			static RE::BSEventNotifyControl thunk(RE::MenuControls* a_this, RE::InputEvent* const* a_ev, RE::BSTEventSource<RE::InputEvent*>* a_src)
 			{
 				if (a_ev && *a_ev) RaceTidy::Keys(*a_ev);
-				if (g_partyOpen && a_ev && *a_ev) {
+				if ((g_partyOpen || g_menuOwn) && a_ev && *a_ev) {
 					auto* ui = RE::UI::GetSingleton();
-					if (ui && (ui->IsMenuOpen(RE::JournalMenu::MENU_NAME) || ui->IsMenuOpen(RE::MainMenu::MENU_NAME))) {
+					const bool main = ui && ui->IsMenuOpen(RE::MainMenu::MENU_NAME);
+					if (ui && ((g_partyOpen && (ui->IsMenuOpen(RE::JournalMenu::MENU_NAME) || main)) || (g_menuOwn && main && !ui->IsMenuOpen(RE::MessageBoxMenu::MENU_NAME)))) {
 						for (auto* e = *a_ev; e; e = e->next) {
 							if (e->GetEventType() == RE::INPUT_EVENT_TYPE::kButton || e->GetEventType() == RE::INPUT_EVENT_TYPE::kThumbstick) {
 								return RE::BSEventNotifyControl::kContinue;
@@ -7502,13 +7542,21 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				else if (id == 0x2000) ++g_padBack;   // B
 				else if (id == 0x0004) --g_padSide;   // d-pad left
 				else if (id == 0x0008) ++g_padSide;   // d-pad right
+				else if (id == 0x0100) --g_padTab;    // LB
+				else if (id == 0x0200) ++g_padTab;    // RB
+				else if (id == 0x4000) ++g_padDel;    // X
 			} else if (a_b->GetDevice() == RE::INPUT_DEVICE::kKeyboard) {
 				if (id == 0xC8 || id == 0x11) --g_padMove;       // up, W
 				else if (id == 0xD0 || id == 0x1F) ++g_padMove; // down, S
-				else if (id == 0x1C || id == 0x12) ++g_padAccept; // Enter, E
+				else if (id == 0x12 && g_tmSettings) ++g_padTab;  // E, on the Settings page: the next tab
+				else if (id == 0x10 && g_tmSettings) --g_padTab;  // Q ... the one before
+				else if (id == 0x1C || id == 0x12 || id == 0x39) ++g_padAccept; // Enter, E, Space
 				else if (id == 0x0E || id == 0x01) ++g_padBack;   // Backspace, Esc
 				else if (id == 0xCB || id == 0x1E) --g_padSide;   // left, A
 				else if (id == 0xCD || id == 0x20) ++g_padSide;   // right, D
+				else if (id == 0xD3 || id == 0x2D) ++g_padDel;    // Delete, X
+				else if (id == 0xC9) --g_padTab;                  // Page Up
+				else if (id == 0xD1) ++g_padTab;                  // Page Down
 			} else if (a_b->GetDevice() == RE::INPUT_DEVICE::kMouse) {
 				if (id == 8) --g_wheel;        // the wheel, up
 				else if (id == 9) ++g_wheel;   // ... and down

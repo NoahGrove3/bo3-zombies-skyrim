@@ -50,8 +50,30 @@ const UIP = {
   altar: (tab, body) => `<div class="c-altar"><div class="at">${ALTAR_TABS.map(([id, n, ico]) => `<span class="${id === tab ? 'on' : ''}">${ico}<b>${n}</b></span>`).join('')}</div><div class="ab">${body}</div></div>`,
   // Skyrim's own menus, ours: recoloured (Untarnished UI's layout in the Curse's colours) or remade (our own pages)
   inv: (mode, kind) => INV[kind](mode),
-  mainmenu: () => `<div class="c-title menu"><b>THE CURSE OF ALDUIN</b><i></i>${['CONTINUE', 'NEW', 'LOAD', 'SETTINGS', 'QUIT'].map((x, i) => `<small class="${i === 0 ? 'on' : ''}">${x}</small>`).join('')}</div>`,
+  mainmenu: () => `<div class="c-title menu"><b>THE CURSE OF ALDUIN</b><i></i>${['CONTINUE', 'NEW', 'LOAD', 'CO-OP PARTY', 'SETTINGS', 'QUIT'].map((x, i) => `<small class="${i === 1 ? 'on' : ''}">${x}</small>`).join('')}</div>` + EMBERS() + MHINTS([['ARROWS', 'CHOOSE'], ['ENTER', 'SELECT']]),
+  // (Noah, Nov 27 test of 2b534e1: the main menu's own pages, in the same look - Load, Settings, the party, its questions)
+  mload: () => `<div class="c-mpage"><div class="mph"><b>LOAD</b><i></i></div><div class="mpf">&lsaquo;&nbsp;&nbsp; ALL CHARACTERS &nbsp;&nbsp;&rsaquo;</div>
+    <div class="mpl">${[['PRISONER', 'Level 24 &middot; Whiterun', 'Nov 27, 2026  11:04 PM', 'SAVE', 1], ['PRISONER', 'Level 24 &middot; Dragonsreach', 'Nov 27, 2026  10:41 PM', 'AUTOSAVE'], ['PRISONER', 'Level 23 &middot; Riverwood', 'Nov 26, 2026  09:12 PM', 'SAVE'], ['ARVEL', 'Level 7 &middot; Helgen', 'Nov 25, 2026  06:30 PM', 'SAVE'], ['ARVEL', 'Level 6 &middot; Bleak Falls Barrow', 'Nov 25, 2026  05:58 PM', 'AUTOSAVE']].map(([n, l, d, t, on]) => `<div class="mr${on ? ' on' : ''}"><b>${n}</b><em>${d}</em><span>${l}</span><small class="${t === 'AUTOSAVE' ? 'auto' : ''}">${t}</small></div>`).join('')}</div>
+    <div class="mpd"><div class="shot" style="background-image:url('frames/village.jpg')"></div><b>PRISONER</b><span>Level 24 &middot; Dark Elf</span><span>Whiterun</span><small>Nov 27, 2026  11:04 PM &middot; Played 14h 22m</small></div></div>` + MHINTS([['ENTER', 'LOAD'], ['DEL', 'DELETE'], ['PGUP PGDN', 'CHARACTER'], ['ESC', 'BACK']]),
+  msettings: () => `<div class="c-mpage"><div class="mph"><b>SETTINGS</b><i></i></div><div class="mpt">${['GRAPHICS', 'DISPLAY', 'GAMEPLAY', 'CONTROLS', 'AUDIO'].map((t, i) => `<span class="${i === 1 ? 'on' : ''}">${t}</span>`).join('')}</div>
+    <div class="mps">${[['RESOLUTION', '2560 x 1600', 0, 1, 1], ['DISPLAY MODE', 'BORDERLESS', 0, 1], ['FRAME RATE CAP', '120', 0, 0], ['VSYNC', 'OFF', 0, 0], ['FIELD OF VIEW - FIRST PERSON', '130', .89], ['FIELD OF VIEW - THIRD PERSON', '120', .74]].map(([l, v, sl, rs, on]) => `<div class="ms${on ? ' on' : ''}"><b>${l}${rs ? '<small>RESTART</small>' : ''}</b>${sl ? `<i style="--v:${sl * 100}%"></i><em>${v}</em>` : `<em class="ch">&lsaquo;&nbsp; ${v} &nbsp;&rsaquo;</em>`}</div>`).join('')}</div>
+    <p class="mpn">Settings marked RESTART take effect the next time you start Skyrim.</p></div>` + MHINTS([['Q  E', 'TAB'], ['ARROWS', 'CHANGE'], ['ESC', 'BACK']]),
+  mparty: () => `<div class="c-mpage"><div class="mph"><b>CO-OP PARTY</b><i></i></div><p class="mpst">In a party &middot; 2 in the party</p><div class="mpw"><span class="on">INVITE FRIENDS</span><span class="red">CLOSE THE PARTY</span></div>
+    <div class="mpt2"><div class="hd"><span>TONIGHT</span><span>KILLS</span><span>HEADS</span><span>STREAK</span><span>ESSENCE</span><span>REVIVES</span></div><div><span>Noah (you)</span><span>431</span><span>88</span><span>42</span><span>12,480</span><span>5</span></div><div><span>Shane</span><span>302</span><span>41</span><span>27</span><span>9,215</span><span>3</span></div></div>
+    <div class="mpx"><b>LAST NIGHT &middot; NIGHT 11</b><span>398 kills &middot; 72 headshots &middot; best streak 38 &middot; 11,020 Cursed Essence</span><b>RECORDS</b><span>best night 14 &middot; nights survived 63 &middot; kills 9,881 &middot; headshots 2,140</span></div></div>` + MHINTS([['ARROWS', 'CHOOSE'], ['ENTER', 'SELECT'], ['ESC', 'CLOSE']]),
+  mask: () => `<div class="c-mask"><b>START A NEW GAME?</b><div><span class="on">YES</span><span>NO</span></div></div>` + MHINTS([['ENTER', 'CHOOSE'], ['ESC', 'NO']]),
 };
+// (Noah, Nov 27: "more dense realistic embers not blinking circles") the main menu's sparks: short bright streaks rising and cooling
+function EMBERS() {
+  const r = i => ((Math.sin(i * 91.7 + 1.3) * 43758.5453) % 1 + 1) % 1;
+  let s = '';
+  for (let i = 0; i < 90; i++) {
+    const x = r(i) * 100, y = 30 + r(i + 7) * 70, l = 0.4 + r(i + 3) * 1.4, a = -8 - r(i + 11) * 22, o = .35 + r(i + 5) * .65, h = r(i + 13);
+    s += `<i style="left:${x.toFixed(1)}%;top:${y.toFixed(1)}%;--l:${l.toFixed(2)};--a:${a.toFixed(0)}deg;--o:${o.toFixed(2)};--c:${h > .6 ? '#ffe2a8' : h > .25 ? '#ff9a3c' : '#c8401c'};animation-delay:-${(r(i + 17) * 6).toFixed(2)}s;animation-duration:${(4 + r(i + 19) * 5).toFixed(2)}s"></i>`;
+  }
+  return `<div class="c-embers" aria-hidden="true">${s}</div>`;
+}
+const MHINTS = list => `<div class="c-mhints">${list.map(([k, w]) => `<span><kbd>${k}</kbd>${w}</span>`).join('')}</div>`;
 // the HUD of a night, as it stands (every night screen starts from it)
 const NIGHT_HUD = () => UIP.night(12, 3, 17) + UIP.quests([['BEFORE THE STORM', 'Talk to the Jarl of Whiterun']]) + UIP.compass() + UIP.essence('12,480') + UIP.brews(4);
 // [group id, group name, [[id, name, what it is, frame, draw]]] - frame: the real still behind it (frames/<name>.jpg)
@@ -88,7 +110,11 @@ const UI_SCREENS = [
   ]],
   ['start', 'Starting the game', [
     ['boot', 'Launch screen', 'The Alduin painting, the title, PRESS ANY KEY. Your note: new menu music - pick it under Menu music below.', 'title', () => UIP.title()],
-    ['main', 'Main menu', 'Continue, New, Load, Settings, Quit under the title, on the Alduin painting.', 'title', () => UIP.mainmenu()],
+    ['main', 'Main menu', 'Your notes (Nov 27): denser, real embers (sparks streaking up and cooling, no circles); the title\'s glow a soft haze, not blocky; the orange line clear of the letters; the words larger. Continue, New, Load, Co-op Party, Settings, Quit.', 'title', () => UIP.mainmenu()],
+    ['m_load', 'Load', 'Your picks: every save with its picture, Delete (asked first; the save is put aside in Saves\\Deleted) and a filter by character.', 'title', () => UIP.mload()],
+    ['m_settings', 'Settings', 'Your pick: five tabs on one page - Graphics, Display, Gameplay, Controls, Audio. What needs a restart is saved now and marked RESTART.', 'title', () => UIP.msettings()],
+    ['m_party', 'Co-op party', 'Your note: the party page in the same look as the menu, your cursor over it.', 'title', () => UIP.mparty()],
+    ['m_ask', 'Questions', 'Your note: Skyrim\'s questions (Start a new game?) in our words, YES and NO.', 'title', () => UIP.mask()],
     ['setup', 'New character', 'Your note: keep the current screen as it is.', 'racemenu', () => UIP.dim() + UIP.panel('A NEW LIFE', [['Ralof', '', 1], ['Hadvar'], ['Survival Mode', 'On']], 'mid')],
     ['loading', 'Loading screens', 'Your note: the painting always covers the whole screen on your monitor and your laptop (any shape of screen: it fills, never letterboxed). A line of lore, a thin progress line.', 'loadscreen', () => UIP.loadline('The souls Alduin holds are restless. Free a city and its dead sleep.')],
   ]],
@@ -113,7 +139,7 @@ const UI_SCREENS = [
 // where each stands: in the game now (in its old look), kept, next (to be built in the picked direction), Skyrim's own
 const UI_STATE = { night: 'next', quests: 'next', compass: 'next', essence: 'next', perks: 'next', boss: 'next', foehp: 'next', hit: 'in', marker: 'next', between: 'in',
   weapon: 'next', slain: 'next', subs: 'in', death: 'next', msg: 'next', altarmenu: 'next', armory: 'next', perkmenu: 'next', thuum: 'next', trialsmenu: 'next', talk: 'next',
-  tablet: 'next', classpick: 'next', codex: 'keep', boot: 'in', main: 'in', setup: 'keep', loading: 'in',
+  tablet: 'next', classpick: 'next', codex: 'keep', boot: 'in', main: 'in', m_load: 'in', m_settings: 'in', m_party: 'in', m_ask: 'in', setup: 'keep', loading: 'in',
   co_team: 'next', co_down: 'next', co_bleed: 'next', co_plates: 'next', co_score: 'next', co_trial: 'next', co_feed: 'next',
   inv_re: 'menu', inv_new: 'menu', mag_re: 'menu', mag_new: 'menu', tab_re: 'menu', tab_new: 'menu' };
 // the two ways for each of Skyrim's menus (pick one of each pair)
